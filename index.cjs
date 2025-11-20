@@ -457,9 +457,8 @@ client.on("interactionCreate", async (interaction) => {
 
   // Gaming roles
   if (interaction.isButton() && interaction.customId === "claim_roles") {
-    const allRoles = interaction.guild.roles.cache
+    const allRoles = Array.from(interaction.guild.roles.cache.values())
       .filter(r => !r.managed && r.name !== "@everyone")
-      .toArray()
       .sort((a, b) => b.position - a.position)
       .slice(0, 25)
       .map(r => ({ label: r.name, value: r.id }));
@@ -505,9 +504,8 @@ client.on("interactionCreate", async (interaction) => {
 
   // Watch party roles
   if (interaction.isButton() && interaction.customId === "claim_watchparty") {
-    const allRoles = interaction.guild.roles.cache
+    const allRoles = Array.from(interaction.guild.roles.cache.values())
       .filter(r => !r.managed && r.name !== "@everyone")
-      .toArray()
       .sort((a, b) => b.position - a.position)
       .slice(0, 25)
       .map(r => ({ label: r.name, value: r.id }));
