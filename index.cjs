@@ -12,6 +12,7 @@ const {
 } = require("discord.js");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
+const { YouTubeExtractor } = require("@discord-player/youtube");
 require("dotenv").config(); // Loads TOKEN from .env
 const express = require("express"); // For web server
 
@@ -47,6 +48,7 @@ const token = process.env.TOKEN;
 // Initialize discord-player
 const player = new Player(client);
 player.extractors.loadMulti(DefaultExtractors);
+player.extractors.register(YouTubeExtractor, { cache: { maxSize: 100 } });
 
 // Store active players per guild
 const activePlayers = new Map();
@@ -277,9 +279,11 @@ client.on("messageCreate", async (msg) => {
         });
       }
 
-      const result = await player.search(query, { requestedBy: msg.author });
+      const searchOptions = { requestedBy: msg.author, searchEngine: "youtube" };
+      const result = await player.search(query, searchOptions);
+      
       if (!result.tracks.length) {
-        return msg.reply("No results found!");
+        return msg.reply("No results found! Try a different search term or YouTube link.");
       }
 
       const track = result.tracks[0];
@@ -299,7 +303,7 @@ client.on("messageCreate", async (msg) => {
         .setDescription(`[${track.title}](${track.url})`)
         .addFields(
           { name: "Duration", value: `${Math.floor(track.durationMS / 1000)}s`, inline: true },
-          { name: "Source", value: track.source, inline: true }
+          { name: "Source", value: track.source || "YouTube", inline: true }
         );
 
       const controls = new ActionRowBuilder().addComponents(
@@ -312,8 +316,8 @@ client.on("messageCreate", async (msg) => {
 
       msg.reply({ embeds: [embed], components: [controls] });
     } catch (error) {
-      console.error("Music play error:", error.message);
-      msg.reply(`Error: ${error.message}`);
+      console.error("Music play error:", error);
+      msg.reply(`Error: ${error.message || "Failed to play track"}`);
     }
   }
 
