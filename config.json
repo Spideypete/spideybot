@@ -6,9 +6,18 @@
       "gameRoles": [],
       "watchPartyRoles": [],
       "platformRoles": [
-        "PC",
-        "PS",
-        "XBOX"
+        {
+          "name": "PC",
+          "id": "1235300034916909158"
+        },
+        {
+          "name": "PS",
+          "id": "1235300039388303401"
+        },
+        {
+          "name": "XBOX",
+          "id": "1235299927161180211"
+        }
       ]
     }
   }

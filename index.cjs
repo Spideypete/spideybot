@@ -453,11 +453,11 @@ client.on("messageCreate", async (msg) => {
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
 client.on("interactionCreate", async (interaction) => {
   const guildConfig = getGuildConfig(interaction.guild.id);
+  autoMigrateRoles(interaction.guild.id, interaction.guild, guildConfig);
 
   // Gaming roles
   if (interaction.isButton() && interaction.customId === "claim_roles") {
     const config = getGuildConfig(interaction.guild.id);
-    autoMigrateRoles(interaction.guild.id, interaction.guild, config);
     if (config.gameRoles.length === 0) {
       return interaction.reply({ content: "❌ No gaming roles configured! Admin: use //add-game-role [name] [roleID]", ephemeral: true });
     }
@@ -503,7 +503,6 @@ client.on("interactionCreate", async (interaction) => {
   // Watch party roles
   if (interaction.isButton() && interaction.customId === "claim_watchparty") {
     const config = getGuildConfig(interaction.guild.id);
-    autoMigrateRoles(interaction.guild.id, interaction.guild, config);
     if (config.watchPartyRoles.length === 0) {
       return interaction.reply({ content: "❌ No watch party roles configured! Admin: use //add-watchparty-role [name] [roleID]", ephemeral: true });
     }
@@ -543,7 +542,6 @@ client.on("interactionCreate", async (interaction) => {
   // Platform roles
   if (interaction.isButton() && interaction.customId === "claim_platform") {
     const config = getGuildConfig(interaction.guild.id);
-    autoMigrateRoles(interaction.guild.id, interaction.guild, config);
     if (config.platformRoles.length === 0) {
       return interaction.reply({ content: "❌ No platform roles configured! Admin: use //add-platform-role [name] [roleID]", ephemeral: true });
     }
@@ -583,7 +581,6 @@ client.on("interactionCreate", async (interaction) => {
   // Remove roles
   if (interaction.isButton() && interaction.customId === "remove_all_roles") {
     const config = getGuildConfig(interaction.guild.id);
-    autoMigrateRoles(interaction.guild.id, interaction.guild, config);
     const allRoles = config.gameRoles.concat(config.watchPartyRoles, config.platformRoles).map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
     if (allRoles.length === 0) {
       return interaction.reply({ content: "❌ No roles configured yet!", ephemeral: true });
