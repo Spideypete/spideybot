@@ -342,6 +342,31 @@ client.on("messageCreate", async (msg) => {
     const roleName = msg.content.slice(23).trim();
     if (!roleName) return msg.reply("Usage: //remove-platform-role [role name]");
     const config = getGuildConfig(msg.guild.id);
+  // Setup category selector
+  if (msg.content.startsWith("//setup-category ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can set up roles!");
+    }
+    const categoryName = msg.content.slice(17).trim();
+    if (!categoryName) return msg.reply("Usage: //setup-category [category name]");
+    const categories = guildConfig.roleCategories || {};
+    if (!categories[categoryName]) {
+      return msg.reply(`❌ Category "${categoryName}" does not exist!`);
+    }
+    if (categories[categoryName].length === 0) {
+      return msg.reply(`❌ Add roles with //add-role first!`);
+    }
+    const roleOptions = categories[categoryName].map(r => ({ label: r.name, value: r.id }));
+    const selectMenu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`select_${categoryName}`)
+        .setPlaceholder(`Select ${categoryName}...`)
+        .setMinValues(1)
+        .setMaxValues(roleOptions.length)
+        .addOptions(roleOptions)
+    );
+    return msg.channel.send({ content: `**${categoryName} Roles**`, components: [selectMenu] });
+  }
     const index = config.platformRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
     config.platformRoles.splice(index, 1);
@@ -622,6 +647,31 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (interaction.isStringSelectMenu() && interaction.customId === "platform_roles") {
+  // Handle custom category role selections
+  if (interaction.isStringSelectMenu() && interaction.customId.startsWith("select_")) {
+    const categoryName = interaction.customId.slice(7);
+    const member = interaction.member;
+    const config = getGuildConfig(interaction.guild.id);
+    const addedRoles = [];
+    const failedRoles = [];
+    for (const roleId of interaction.values) {
+      const role = interaction.guild.roles.cache.get(roleId);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          const roleData = config.roleCategories[categoryName].find(r => r.id === roleId);
+          addedRoles.push(roleData.name);
+        } catch (error) {
+          failedRoles.push(roleId);
+          console.error(`Failed to add role ${roleId}: ${error.message}`);
+        }
+      }
+    }
+    let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
+    if (failedRoles.length > 0) response += `
+⚠️ Failed: ${failedRoles.length} roles`;
+    return interaction.update({ content: response || "No roles added.", components: [] });
+  }
     const member = interaction.member;
     const config = getGuildConfig(interaction.guild.id);
     const addedRoles = [];
