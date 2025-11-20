@@ -1,6 +1,5 @@
-// index.cjs - Discord bot with dropdown reactions + 24/7 uptime server
+// index.cjs - SPIDEY BOT - Multi-Server Configurable Discord Bot
 
-// ------------------ Imports ------------------
 const {
   Client,
   GatewayIntentBits,
@@ -8,14 +7,53 @@ const {
   StringSelectMenuBuilder,
   EmbedBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  PermissionFlagsBits
 } = require("discord.js");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
-require("dotenv").config(); // Loads TOKEN from .env
-const express = require("express"); // For web server
+const fs = require("fs");
+const path = require("path");
+require("dotenv").config();
+const express = require("express");
 
-// ------------------ Reaction GIFs ------------------
+// ============== CONFIG MANAGEMENT ==============
+const configFile = path.join(__dirname, "config.json");
+
+function loadConfig() {
+  if (fs.existsSync(configFile)) {
+    return JSON.parse(fs.readFileSync(configFile, "utf8"));
+  }
+  return { guilds: {} };
+}
+
+function saveConfig(config) {
+  fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+}
+
+function getGuildConfig(guildId) {
+  const config = loadConfig();
+  if (!config.guilds[guildId]) {
+    config.guilds[guildId] = {
+      welcomeChannelId: null,
+      welcomeMessage: "Welcome to our server! 🎉",
+      gameRoles: [],
+      watchPartyRoles: [],
+      platformRoles: ["PC", "PS", "XBOX"]
+    };
+    saveConfig(config);
+  }
+  return config.guilds[guildId];
+}
+
+function updateGuildConfig(guildId, updates) {
+  const config = loadConfig();
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  config.guilds[guildId] = { ...config.guilds[guildId], ...updates };
+  saveConfig(config);
+}
+
+// ============== REACTIONS & DEFAULTS ==============
 const reactions = {
   hug: [
     "https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif",
@@ -31,7 +69,14 @@ const reactions = {
   ]
 };
 
-// ------------------ Client Setup ------------------
+const defaultGameRoles = [
+  "Valorant", "Minecraft", "Call Of Duty", "Dying Light 2", "FiveM",
+  "Golf With Friends", "Need For Speed", "Fortnite", "Rust", "CarX",
+  "HellDivers", "Assetto Corsa (Competizione)", "Formula 1", "Rocket league",
+  "Overwatch", "Doom", "League Of Legends", "GTA", "CSGO", "Apex", "Destiny", "Sons Of The Forest"
+];
+
+// ============== CLIENT SETUP ==============
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -44,64 +89,96 @@ const client = new Client({
 
 const token = process.env.TOKEN;
 
-// Initialize discord-player with FFmpeg enabled
+// ============== MUSIC PLAYER ==============
 const player = new Player(client, {
   skipFFmpeg: false,
   enableLavalink: false
 });
 player.extractors.loadMulti(DefaultExtractors);
 
-// Store active players per guild
-const activePlayers = new Map();
-
-// ------------------ Ready Event ------------------
+// ============== READY EVENT ==============
 client.once("ready", () => {
-  console.log(`Logged in as ${client.user.tag}`);
+  console.log(`✅ Logged in as ${client.user.tag}`);
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
   });
 });
 
-// ------------------ Welcome New Members ------------------
+// ============== WELCOME NEW MEMBERS ==============
 client.on("guildMemberAdd", async (member) => {
-  console.log(`New member joined: ${member.user.tag}`);
+  console.log(`New member joined: ${member.user.tag} in ${member.guild.name}`);
+  
+  const guildConfig = getGuildConfig(member.guild.id);
+  if (!guildConfig.welcomeChannelId) return;
 
-  // Send welcome message to the specific welcome channel
-  const welcomeChannelId = "1235015412035358721";
-  const welcomeChannel = member.guild.channels.cache.get(welcomeChannelId);
-
+  const welcomeChannel = member.guild.channels.cache.get(guildConfig.welcomeChannelId);
   if (welcomeChannel) {
-    const welcomeMessage = `Hello ${member}
-Welcome to our community! We're thrilled to have you here. Before you begin your journey with us, we kindly ask that you take a moment to familiarize yourself with our community guidelines by reading our <#1235015412035358723>. This ensures that everyone has a positive and enjoyable experience.
-
-Next, please <#1235015412035358720> yourself to gain access to all the features and channels within our server. Verification helps us maintain a safe and welcoming environment for all members.
-
-Once you're verified, don't forget to check out our <#1235015412035358726>! These allow you to personalize your experience and join specific channels tailored to your interests. Whether you're a gamer, an artist, or a music enthusiast, there's a role for you.
-
-Thank you for joining us, and we hope you have a fantastic time connecting with fellow members and exploring everything our community has to offer!`;
-
     try {
-      await welcomeChannel.send(welcomeMessage);
-      console.log(`Sent welcome message for ${member.user.tag} to welcome channel`);
+      await welcomeChannel.send(`${member} - ${guildConfig.welcomeMessage}`);
+      console.log(`Welcome message sent to ${member.user.tag}`);
     } catch (error) {
-      console.error(`Failed to send welcome message: ${error.message}`);
+      console.error(`Failed to send welcome: ${error.message}`);
     }
-  } else {
-    console.log(`Welcome channel not found (ID: ${welcomeChannelId})`);
   }
 });
 
-// ------------------ Message Commands ------------------
+// ============== MESSAGE COMMANDS ==============
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
+  const guildConfig = getGuildConfig(msg.guild.id);
 
-  // Ping command
-  if (msg.content.toLowerCase() === "//ping") {
-    msg.reply("Pong!");
+  // Ping
+  if (msg.content === "//ping") {
+    return msg.reply("Pong!");
   }
 
-  // Trigger dropdown menu
-  if (msg.content.toLowerCase() === "//reactions") {
+  // Help - List all commands
+  if (msg.content === "//help") {
+    const helpEmbed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("🤖 SPIDEY BOT Commands")
+      .setDescription("**ADMIN COMMANDS (Server Setup):**")
+      .addFields(
+        { name: "//config-welcome-channel #channel", value: "Set welcome message channel", inline: false },
+        { name: "//config-welcome-message [text]", value: "Set custom welcome message", inline: false },
+        { name: "//setup-roles", value: "Create gaming role selector", inline: false },
+        { name: "//setup-watchparty", value: "Create watch party role selector", inline: false },
+        { name: "//setup-platform", value: "Create platform role selector (PC/PS/XBOX)", inline: false },
+        { name: "//remove-roles", value: "Show role remover", inline: false },
+        { name: "\n**FUN COMMANDS:**", value: "", inline: false },
+        { name: "//reactions", value: "Random reaction GIFs (hug, dance, wink)", inline: false },
+        { name: "\n**MUSIC COMMANDS:**", value: "", inline: false },
+        { name: "//play [song/url]", value: "Play music from YouTube", inline: false },
+        { name: "//queue", value: "Show current queue", inline: false },
+        { name: "Controls: ⏮ ⏸ ▶ ⏭ ⏹", value: "Previous, Pause, Resume, Skip, Stop", inline: false }
+      )
+      .setFooter({ text: "SPIDEY BOT - Multi-Server Ready" });
+    return msg.reply({ embeds: [helpEmbed] });
+  }
+
+  // ============== CONFIG COMMANDS ==============
+  if (msg.content.startsWith("//config-welcome-channel ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure the bot!");
+    }
+    const channel = msg.mentions.channels.first();
+    if (!channel) return msg.reply("Mention a channel: //config-welcome-channel #channel");
+    updateGuildConfig(msg.guild.id, { welcomeChannelId: channel.id });
+    return msg.reply(`✅ Welcome channel set to ${channel}`);
+  }
+
+  if (msg.content.startsWith("//config-welcome-message ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure the bot!");
+    }
+    const welcomeMsg = msg.content.slice(26).trim();
+    if (!welcomeMsg) return msg.reply("Provide a message: //config-welcome-message Your message here");
+    updateGuildConfig(msg.guild.id, { welcomeMessage: welcomeMsg });
+    return msg.reply(`✅ Welcome message updated!`);
+  }
+
+  // Reactions
+  if (msg.content === "//reactions") {
     const options = Object.keys(reactions).map((key) => ({
       label: key.charAt(0).toUpperCase() + key.slice(1),
       value: key,
@@ -114,161 +191,90 @@ client.on("messageCreate", async (msg) => {
         .setPlaceholder("Choose a reaction...")
         .addOptions(options)
     );
-
-    await msg.channel.send({ content: "Pick a reaction!", components: [row] });
+    return msg.channel.send({ content: "Pick a reaction!", components: [row] });
   }
 
-  // Setup gaming role selection message
-  if (msg.content.toLowerCase() === "//setup-roles") {
+  // Setup roles
+  if (msg.content === "//setup-roles") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can set up roles!");
+    }
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("Trippy Webs Role Selection")
-      .setDescription(
-        "By choosing self-roles, you'll have access to all the gaming voice and text channels.\n\n" +
-        "**Available Roles:**\n\n" +
-        ">Valorant\n" +
-        ">Minecraft\n" +
-        ">Call Of Duty\n" +
-        ">Dying Light 2\n" +
-        ">FiveM\n" +
-        ">Golf With Friends\n" +
-        ">Need For Speed\n" +
-        ">Fortnite\n" +
-        ">Rust\n" +
-        ">CarX\n" +
-        ">HellDivers\n" +
-        ">Assetto Corsa (Competizione)\n" +
-        ">Formula 1\n" +
-        ">Rocket league\n" +
-        ">Overwatch\n" +
-        ">Doom\n" +
-        ">League Of Legends\n" +
-        ">GTA\n" +
-        ">CSGO\n" +
-        ">Apex\n" +
-        ">Destiny\n" +
-        ">Sons Of The Forest\n\n" +
-        "Expect more server notifications upon claiming roles!"
-      )
-      .setFooter({ text: "Spidey" });
+      .setTitle("Gaming Role Selection")
+      .setDescription("Select the games you play")
+      .setFooter({ text: "SPIDEY BOT" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("claim_roles")
-        .setLabel("🔔 Claim Self-Roles")
+        .setLabel("🔔 Claim Gaming Roles")
         .setStyle(ButtonStyle.Primary)
     );
-
-    await msg.channel.send({ embeds: [embed], components: [button] });
+    return msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  // Setup watch party role selection message
-  if (msg.content.toLowerCase() === "//setup-watchparty") {
+  if (msg.content === "//setup-watchparty") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can set up roles!");
+    }
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("Trippy Webs Role Selection")
-      .setDescription(
-        "By choosing self-roles, you'll have access to all the Watch Party voice and text channels.\n\n" +
-        "**Available Roles:**\n\n" +
-        ">Anime\n" +
-        ">Formula 1 WP\n\n" +
-        "Expect more server notifications upon claiming roles!"
-      )
-      .setFooter({ text: "Spidey" });
+      .setTitle("Watch Party Role Selection")
+      .setDescription("Select watch parties to join")
+      .setFooter({ text: "SPIDEY BOT" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("claim_watchparty")
-        .setLabel("🔔 Claim Self-Roles")
+        .setLabel("🔔 Claim Watch Party Roles")
         .setStyle(ButtonStyle.Primary)
     );
-
-    await msg.channel.send({ embeds: [embed], components: [button] });
+    return msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  // Setup platform role selection message
-  if (msg.content.toLowerCase() === "//setup-platform") {
+  if (msg.content === "//setup-platform") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can set up roles!");
+    }
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("Trippy Webs Role Selection")
-      .setDescription(
-        "By choosing self-roles, it will show what platform you use.\n\n" +
-        "**Available Roles:**\n\n" +
-        ">PC\n" +
-        ">PS\n" +
-        ">XBOX\n\n" +
-        "Expect more server notifications upon claiming roles!"
-      )
-      .setFooter({ text: "Spidey" });
+      .setTitle("Platform Role Selection")
+      .setDescription("Select your gaming platform")
+      .setFooter({ text: "SPIDEY BOT" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("claim_platform")
-        .setLabel("🔔 Claim Self-Roles")
+        .setLabel("🔔 Claim Platform Roles")
         .setStyle(ButtonStyle.Primary)
     );
-
-    await msg.channel.send({ embeds: [embed], components: [button] });
+    return msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  // Unified role remover command
-  if (msg.content.toLowerCase() === "//remove-roles") {
+  if (msg.content === "//remove-roles") {
     const embed = new EmbedBuilder()
       .setColor(0xED4245)
-      .setTitle("Trippy Webs Role Remover")
-      .setDescription(
-        "This will remove the specific roles that have been added to your roles.\n\n" +
-        "**Available Roles:**\n\n" +
-        "**Games:**\n\n" +
-        ">Valorant\n" +
-        ">Minecraft\n" +
-        ">Call Of Duty\n" +
-        ">Dying Light 2\n" +
-        ">FiveM\n" +
-        ">Golf With Friends\n" +
-        ">Need For Speed\n" +
-        ">Fortnite\n" +
-        ">Rust\n" +
-        ">CarX\n" +
-        ">HellDivers\n" +
-        ">Assetto Corsa (Competizione)\n" +
-        ">Formula 1\n" +
-        ">Rocket league\n" +
-        ">Overwatch\n" +
-        ">Doom\n" +
-        ">League Of Legends\n" +
-        ">GTA\n" +
-        ">CSGO\n" +
-        ">Apex\n" +
-        ">Destiny\n\n" +
-        "**Watch Parties:**\n\n" +
-        ">Anime\n" +
-        ">Formula 1 WP\n\n" +
-        "Expect more server notifications upon claiming roles!"
-      )
-      .setFooter({ text: "Spidey" });
+      .setTitle("Remove Roles")
+      .setDescription("Select roles to remove from yourself")
+      .setFooter({ text: "SPIDEY BOT" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("remove_all_roles")
-        .setLabel("🔔 Remove Self-Roles")
+        .setLabel("🔔 Remove Roles")
         .setStyle(ButtonStyle.Danger)
     );
-
-    await msg.channel.send({ embeds: [embed], components: [button] });
+    return msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  // Music play command
-  if (msg.content.toLowerCase().startsWith("//play ")) {
+  // ============== MUSIC COMMANDS ==============
+  if (msg.content.startsWith("//play ")) {
     const query = msg.content.slice(7).trim();
-    if (!query) {
-      return msg.reply("Please provide a song name or URL");
-    }
+    if (!query) return msg.reply("Usage: //play [song name or YouTube link]");
 
     const voiceChannel = msg.member?.voice.channel;
-    if (!voiceChannel) {
-      return msg.reply("You need to join a voice channel first!");
-    }
+    if (!voiceChannel) return msg.reply("❌ Join a voice channel first!");
 
     try {
       await msg.reply(`🎵 Searching for: ${query}`);
@@ -277,7 +283,7 @@ client.on("messageCreate", async (msg) => {
       const result = await player.search(query, searchOptions);
       
       if (!result.tracks.length) {
-        return msg.reply("No results found! Try a different search term or YouTube link.");
+        return msg.reply("❌ No results found!");
       }
 
       let queue = player.queues.get(msg.guild);
@@ -319,149 +325,149 @@ client.on("messageCreate", async (msg) => {
       msg.reply({ embeds: [embed], components: [controls] });
     } catch (error) {
       console.error("Music play error:", error);
-      msg.reply(`Error: ${error.message || "Failed to play track"}`);
+      msg.reply(`❌ Error: ${error.message}`);
     }
   }
 
-  // Music queue command
-  if (msg.content.toLowerCase() === "//queue") {
+  if (msg.content === "//queue") {
     const queue = player.queues.get(msg.guild);
     if (!queue || !queue.isPlaying()) {
-      return msg.reply("No music is playing!");
+      return msg.reply("❌ No music is playing!");
     }
 
     const tracks = queue.tracks.slice(0, 10);
-    const queueStr = tracks.map((t, i) => `${i + 1}. [${t.title}](${t.url})`).join("\n");
+    const queueStr = tracks.length > 0 
+      ? tracks.map((t, i) => `${i + 1}. [${t.title}](${t.url})`).join("\n")
+      : "Queue is empty";
 
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle("🎵 Music Queue")
-      .setDescription(queueStr || "Queue is empty");
+      .setDescription(queueStr);
 
     msg.reply({ embeds: [embed] });
   }
 });
 
-// ------------------ Handle Button & Dropdown Interactions ------------------
+// ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
 client.on("interactionCreate", async (interaction) => {
-  // Handle role selection button
-  if (interaction.isButton() && interaction.customId === "claim_roles") {
-    const gameRoles = [
-      { label: "Valorant", value: "Valorant" },
-      { label: "Minecraft", value: "Minecraft" },
-      { label: "Call Of Duty", value: "Call Of Duty" },
-      { label: "Dying Light 2", value: "Dying Light 2" },
-      { label: "FiveM", value: "FiveM" },
-      { label: "Golf With Friends", value: "Golf With Friends" },
-      { label: "Need For Speed", value: "Need For Speed" },
-      { label: "Fortnite", value: "Fortnite" },
-      { label: "Rust", value: "Rust" },
-      { label: "CarX", value: "CarX" },
-      { label: "HellDivers", value: "HellDivers" },
-      { label: "Assetto Corsa (Competizione)", value: "Assetto Corsa (Competizione)" },
-      { label: "Formula 1", value: "Formula 1" },
-      { label: "Rocket league", value: "Rocket league" },
-      { label: "Overwatch", value: "Overwatch" },
-      { label: "Doom", value: "Doom" },
-      { label: "League Of Legends", value: "League Of Legends" },
-      { label: "GTA", value: "GTA" },
-      { label: "CSGO", value: "CSGO" },
-      { label: "Apex", value: "Apex" },
-      { label: "Destiny", value: "Destiny" },
-      { label: "Sons Of The Forest", value: "Sons Of The Forest" }
-    ];
+  const guildConfig = getGuildConfig(interaction.guild.id);
 
+  // Gaming roles
+  if (interaction.isButton() && interaction.customId === "claim_roles") {
+    const gameRoles = defaultGameRoles.map(r => ({ label: r, value: r }));
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("game_roles")
-        .setPlaceholder("Select your game roles...")
+        .setPlaceholder("Select games...")
         .setMinValues(1)
         .setMaxValues(gameRoles.length)
         .addOptions(gameRoles)
     );
-
-    await interaction.reply({
-      content: "Select the game roles you want to claim:",
-      components: [selectMenu],
-      ephemeral: true
-    });
+    return interaction.reply({ content: "Select gaming roles:", components: [selectMenu], ephemeral: true });
   }
 
-  // Handle watch party button
+  if (interaction.isStringSelectMenu() && interaction.customId === "game_roles") {
+    const member = interaction.member;
+    const addedRoles = [];
+    const notFoundRoles = [];
+
+    for (const roleName of interaction.values) {
+      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          addedRoles.push(roleName);
+        } catch (error) {
+          console.error(`Failed to add role ${roleName}: ${error.message}`);
+        }
+      } else {
+        notFoundRoles.push(roleName);
+      }
+    }
+
+    let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
+    if (notFoundRoles.length > 0) response += `\n⚠️ Not found: ${notFoundRoles.join(", ")}`;
+
+    return interaction.update({ content: response || "No roles added.", components: [] });
+  }
+
+  // Watch party roles
   if (interaction.isButton() && interaction.customId === "claim_watchparty") {
     const watchPartyRoles = [
       { label: "Anime", value: "Anime" },
       { label: "Formula 1 WP", value: "Formula 1 WP" }
     ];
-
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("watchparty_roles")
-        .setPlaceholder("Select your watch party roles...")
+        .setPlaceholder("Select watch parties...")
         .setMinValues(1)
         .setMaxValues(watchPartyRoles.length)
         .addOptions(watchPartyRoles)
     );
-
-    await interaction.reply({
-      content: "Select the watch party roles you want to claim:",
-      components: [selectMenu],
-      ephemeral: true
-    });
+    return interaction.reply({ content: "Select watch party roles:", components: [selectMenu], ephemeral: true });
   }
 
-  // Handle platform button
+  if (interaction.isStringSelectMenu() && interaction.customId === "watchparty_roles") {
+    const member = interaction.member;
+    const addedRoles = [];
+
+    for (const roleName of interaction.values) {
+      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          addedRoles.push(roleName);
+        } catch (error) {
+          console.error(`Failed to add role ${roleName}: ${error.message}`);
+        }
+      }
+    }
+
+    return interaction.update({ content: `✅ Added: ${addedRoles.join(", ")}`, components: [] });
+  }
+
+  // Platform roles
   if (interaction.isButton() && interaction.customId === "claim_platform") {
     const platformRoles = [
       { label: "PC", value: "PC" },
       { label: "PS", value: "PS" },
       { label: "XBOX", value: "XBOX" }
     ];
-
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("platform_roles")
-        .setPlaceholder("Select your platform...")
+        .setPlaceholder("Select platform...")
         .setMinValues(1)
         .setMaxValues(platformRoles.length)
         .addOptions(platformRoles)
     );
-
-    await interaction.reply({
-      content: "Select the platform roles you want to claim:",
-      components: [selectMenu],
-      ephemeral: true
-    });
+    return interaction.reply({ content: "Select your platform:", components: [selectMenu], ephemeral: true });
   }
 
-  // Handle unified role removal button
-  if (interaction.isButton() && interaction.customId === "remove_all_roles") {
-    const allRoles = [
-      { label: "Valorant", value: "Valorant" },
-      { label: "Minecraft", value: "Minecraft" },
-      { label: "Call Of Duty", value: "Call Of Duty" },
-      { label: "Dying Light 2", value: "Dying Light 2" },
-      { label: "FiveM", value: "FiveM" },
-      { label: "Golf With Friends", value: "Golf With Friends" },
-      { label: "Need For Speed", value: "Need For Speed" },
-      { label: "Fortnite", value: "Fortnite" },
-      { label: "Rust", value: "Rust" },
-      { label: "CarX", value: "CarX" },
-      { label: "HellDivers", value: "HellDivers" },
-      { label: "Assetto Corsa (Competizione)", value: "Assetto Corsa (Competizione)" },
-      { label: "Formula 1", value: "Formula 1" },
-      { label: "Rocket league", value: "Rocket league" },
-      { label: "Overwatch", value: "Overwatch" },
-      { label: "Doom", value: "Doom" },
-      { label: "League Of Legends", value: "League Of Legends" },
-      { label: "GTA", value: "GTA" },
-      { label: "CSGO", value: "CSGO" },
-      { label: "Apex", value: "Apex" },
-      { label: "Destiny", value: "Destiny" },
-      { label: "Anime", value: "Anime" },
-      { label: "Formula 1 WP", value: "Formula 1 WP" }
-    ];
+  if (interaction.isStringSelectMenu() && interaction.customId === "platform_roles") {
+    const member = interaction.member;
+    const addedRoles = [];
 
+    for (const roleName of interaction.values) {
+      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          addedRoles.push(roleName);
+        } catch (error) {
+          console.error(`Failed to add role ${roleName}: ${error.message}`);
+        }
+      }
+    }
+
+    return interaction.update({ content: `✅ Added: ${addedRoles.join(", ")}`, components: [] });
+  }
+
+  // Remove roles
+  if (interaction.isButton() && interaction.customId === "remove_all_roles") {
+    const allRoles = defaultGameRoles.concat(["Anime", "Formula 1 WP", "PC", "PS", "XBOX"]).map(r => ({ label: r, value: r }));
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("remove_all_roles_select")
@@ -470,127 +476,14 @@ client.on("interactionCreate", async (interaction) => {
         .setMaxValues(allRoles.length)
         .addOptions(allRoles)
     );
-
-    await interaction.reply({
-      content: "Select the roles you want to remove:",
-      components: [selectMenu],
-      ephemeral: true
-    });
+    return interaction.reply({ content: "Select roles to remove:", components: [selectMenu], ephemeral: true });
   }
 
-  // Handle game role selection
-  if (interaction.isStringSelectMenu() && interaction.customId === "game_roles") {
-    const selectedRoles = interaction.values;
-    const member = interaction.member;
-    const addedRoles = [];
-    const notFoundRoles = [];
-
-    for (const roleName of selectedRoles) {
-      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
-      if (role) {
-        try {
-          await member.roles.add(role);
-          addedRoles.push(roleName);
-        } catch (error) {
-          console.error(`Failed to add role ${roleName}: ${error.message}`);
-        }
-      } else {
-        notFoundRoles.push(roleName);
-      }
-    }
-
-    let response = "";
-    if (addedRoles.length > 0) {
-      response += `✅ Successfully added: ${addedRoles.join(", ")}`;
-    }
-    if (notFoundRoles.length > 0) {
-      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
-    }
-
-    await interaction.update({
-      content: response || "No roles were added.",
-      components: []
-    });
-  }
-
-  // Handle watch party role selection
-  if (interaction.isStringSelectMenu() && interaction.customId === "watchparty_roles") {
-    const selectedRoles = interaction.values;
-    const member = interaction.member;
-    const addedRoles = [];
-    const notFoundRoles = [];
-
-    for (const roleName of selectedRoles) {
-      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
-      if (role) {
-        try {
-          await member.roles.add(role);
-          addedRoles.push(roleName);
-        } catch (error) {
-          console.error(`Failed to add role ${roleName}: ${error.message}`);
-        }
-      } else {
-        notFoundRoles.push(roleName);
-      }
-    }
-
-    let response = "";
-    if (addedRoles.length > 0) {
-      response += `✅ Successfully added: ${addedRoles.join(", ")}`;
-    }
-    if (notFoundRoles.length > 0) {
-      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
-    }
-
-    await interaction.update({
-      content: response || "No roles were added.",
-      components: []
-    });
-  }
-
-  // Handle platform role selection
-  if (interaction.isStringSelectMenu() && interaction.customId === "platform_roles") {
-    const selectedRoles = interaction.values;
-    const member = interaction.member;
-    const addedRoles = [];
-    const notFoundRoles = [];
-
-    for (const roleName of selectedRoles) {
-      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
-      if (role) {
-        try {
-          await member.roles.add(role);
-          addedRoles.push(roleName);
-        } catch (error) {
-          console.error(`Failed to add role ${roleName}: ${error.message}`);
-        }
-      } else {
-        notFoundRoles.push(roleName);
-      }
-    }
-
-    let response = "";
-    if (addedRoles.length > 0) {
-      response += `✅ Successfully added: ${addedRoles.join(", ")}`;
-    }
-    if (notFoundRoles.length > 0) {
-      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
-    }
-
-    await interaction.update({
-      content: response || "No roles were added.",
-      components: []
-    });
-  }
-
-  // Handle unified role removal selection
   if (interaction.isStringSelectMenu() && interaction.customId === "remove_all_roles_select") {
-    const selectedRoles = interaction.values;
     const member = interaction.member;
     const removedRoles = [];
-    const notFoundRoles = [];
 
-    for (const roleName of selectedRoles) {
+    for (const roleName of interaction.values) {
       const role = interaction.guild.roles.cache.find(r => r.name === roleName);
       if (role && member.roles.cache.has(role.id)) {
         try {
@@ -599,80 +492,55 @@ client.on("interactionCreate", async (interaction) => {
         } catch (error) {
           console.error(`Failed to remove role ${roleName}: ${error.message}`);
         }
-      } else if (!role) {
-        notFoundRoles.push(roleName);
       }
     }
 
-    let response = "";
-    if (removedRoles.length > 0) {
-      response += `✅ Successfully removed: ${removedRoles.join(", ")}`;
-    }
-    if (notFoundRoles.length > 0) {
-      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
-    }
-    if (removedRoles.length === 0 && notFoundRoles.length === 0) {
-      response = "You don't have any of the selected roles.";
-    }
-
-    await interaction.update({
-      content: response,
-      components: []
-    });
+    return interaction.update({ content: `✅ Removed: ${removedRoles.join(", ")}`, components: [] });
   }
 
-  // Handle reaction menu
+  // Reactions
   if (interaction.isStringSelectMenu() && interaction.customId === "reaction_menu") {
     const choice = interaction.values[0];
     const gifs = reactions[choice];
     const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
-
-    await interaction.reply({
-      content: `${interaction.user} chose **${choice}**! ${randomGif}`,
-      ephemeral: false
-    });
+    return interaction.reply({ content: `${interaction.user} chose **${choice}**! ${randomGif}`, ephemeral: false });
   }
 
   // Music controls
   if (interaction.isButton() && interaction.customId.startsWith("music_")) {
     const queue = player.queues.get(interaction.guild);
     if (!queue || !queue.isPlaying()) {
-      return interaction.reply({ content: "No music is playing!", ephemeral: true });
+      return interaction.reply({ content: "❌ No music playing!", ephemeral: true });
     }
 
     switch (interaction.customId) {
       case "music_pause":
         queue.node.pause();
-        await interaction.reply({ content: "⏸ Music paused", ephemeral: true });
-        break;
+        return interaction.reply({ content: "⏸ Music paused", ephemeral: true });
       case "music_resume":
         queue.node.resume();
-        await interaction.reply({ content: "▶ Music resumed", ephemeral: true });
-        break;
+        return interaction.reply({ content: "▶ Music resumed", ephemeral: true });
       case "music_skip":
         queue.node.skip();
-        await interaction.reply({ content: "⏭ Skipped to next track", ephemeral: true });
-        break;
+        return interaction.reply({ content: "⏭ Skipped to next track", ephemeral: true });
       case "music_previous":
         queue.history.back();
-        await interaction.reply({ content: "⏮ Going to previous track", ephemeral: true });
-        break;
+        return interaction.reply({ content: "⏮ Previous track", ephemeral: true });
       case "music_stop":
         queue.delete();
-        await interaction.reply({ content: "⏹ Music stopped", ephemeral: true });
-        break;
+        return interaction.reply({ content: "⏹ Music stopped", ephemeral: true });
     }
   }
 });
 
-// ------------------ Tiny Web Server for 24/7 uptime ------------------
+// ============== WEB SERVER FOR UPTIME ==============
 const app = express();
-app.get("/", (req, res) => res.send("Bot is alive!"));
+app.get("/", (req, res) => res.send("🤖 SPIDEY BOT is alive!"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Web server running on port ${PORT}`);
 });
 
-// ------------------ Login ------------------
+// ============== LOGIN ==============
 client.login(token);
