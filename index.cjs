@@ -5,7 +5,10 @@ const {
   Client,
   GatewayIntentBits,
   ActionRowBuilder,
-  StringSelectMenuBuilder
+  StringSelectMenuBuilder,
+  EmbedBuilder,
+  ButtonBuilder,
+  ButtonStyle
 } = require("discord.js");
 require("dotenv").config(); // Loads TOKEN from .env
 const express = require("express"); // For web server
@@ -98,13 +101,134 @@ client.on("messageCreate", async (msg) => {
 
     await msg.channel.send({ content: "Pick a reaction!", components: [row] });
   }
+
+  // Setup role selection message
+  if (msg.content.toLowerCase() === "!setup-roles") {
+    const embed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("Trippy Webs Role Selection")
+      .setDescription(
+        "By choosing self-roles, you'll have access to all the gaming voice and text channels.\n\n" +
+        "**Available Roles:**\n\n" +
+        ">Valorant\n" +
+        ">Minecraft\n" +
+        ">Call Of Duty\n" +
+        ">Dying Light 2\n" +
+        ">FiveM\n" +
+        ">Golf With Friends\n" +
+        ">Need For Speed\n" +
+        ">Fortnite\n" +
+        ">Rust\n" +
+        ">CarX\n" +
+        ">HellDivers\n" +
+        ">Assetto Corsa (Competizione)\n" +
+        ">Formula 1\n" +
+        ">Rocket league\n" +
+        ">Overwatch\n" +
+        ">Doom\n" +
+        ">League Of Legends\n" +
+        ">GTA\n" +
+        ">CSGO\n" +
+        ">Apex\n" +
+        ">Destiny\n" +
+        ">Sons Of The Forest\n\n" +
+        "Expect more server notifications upon claiming roles!"
+      )
+      .setFooter({ text: "Spidey" });
+
+    const button = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("claim_roles")
+        .setLabel("🔔 Claim Self-Roles")
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    await msg.channel.send({ embeds: [embed], components: [button] });
+  }
 });
 
-// ------------------ Handle Dropdown Selections ------------------
+// ------------------ Handle Button & Dropdown Interactions ------------------
 client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isStringSelectMenu()) return;
+  // Handle role selection button
+  if (interaction.isButton() && interaction.customId === "claim_roles") {
+    const gameRoles = [
+      { label: "Valorant", value: "Valorant" },
+      { label: "Minecraft", value: "Minecraft" },
+      { label: "Call Of Duty", value: "Call Of Duty" },
+      { label: "Dying Light 2", value: "Dying Light 2" },
+      { label: "FiveM", value: "FiveM" },
+      { label: "Golf With Friends", value: "Golf With Friends" },
+      { label: "Need For Speed", value: "Need For Speed" },
+      { label: "Fortnite", value: "Fortnite" },
+      { label: "Rust", value: "Rust" },
+      { label: "CarX", value: "CarX" },
+      { label: "HellDivers", value: "HellDivers" },
+      { label: "Assetto Corsa (Competizione)", value: "Assetto Corsa (Competizione)" },
+      { label: "Formula 1", value: "Formula 1" },
+      { label: "Rocket league", value: "Rocket league" },
+      { label: "Overwatch", value: "Overwatch" },
+      { label: "Doom", value: "Doom" },
+      { label: "League Of Legends", value: "League Of Legends" },
+      { label: "GTA", value: "GTA" },
+      { label: "CSGO", value: "CSGO" },
+      { label: "Apex", value: "Apex" },
+      { label: "Destiny", value: "Destiny" },
+      { label: "Sons Of The Forest", value: "Sons Of The Forest" }
+    ];
 
-  if (interaction.customId === "reaction_menu") {
+    const selectMenu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId("game_roles")
+        .setPlaceholder("Select your game roles...")
+        .setMinValues(1)
+        .setMaxValues(gameRoles.length)
+        .addOptions(gameRoles)
+    );
+
+    await interaction.reply({
+      content: "Select the game roles you want to claim:",
+      components: [selectMenu],
+      ephemeral: true
+    });
+  }
+
+  // Handle game role selection
+  if (interaction.isStringSelectMenu() && interaction.customId === "game_roles") {
+    const selectedRoles = interaction.values;
+    const member = interaction.member;
+    const addedRoles = [];
+    const notFoundRoles = [];
+
+    for (const roleName of selectedRoles) {
+      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          addedRoles.push(roleName);
+        } catch (error) {
+          console.error(`Failed to add role ${roleName}: ${error.message}`);
+        }
+      } else {
+        notFoundRoles.push(roleName);
+      }
+    }
+
+    let response = "";
+    if (addedRoles.length > 0) {
+      response += `✅ Successfully added: ${addedRoles.join(", ")}`;
+    }
+    if (notFoundRoles.length > 0) {
+      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
+    }
+
+    await interaction.update({
+      content: response || "No roles were added.",
+      components: []
+    });
+  }
+
+  // Handle reaction menu
+  if (interaction.isStringSelectMenu() && interaction.customId === "reaction_menu") {
     const choice = interaction.values[0];
     const gifs = reactions[choice];
     const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
