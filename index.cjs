@@ -47,24 +47,28 @@ client.once("ready", () => {
 client.on("guildMemberAdd", async (member) => {
   console.log(`New member joined: ${member.user.tag}`);
   
-  // Send a DM to the new member
-  try {
-    await member.send(
-      `Welcome to **${member.guild.name}**, ${member.user}! 🎉\n\n` +
-      `We're glad to have you here! Feel free to explore and have fun.\n` +
-      `Type \`!ping\` to check if I'm online, or \`!reactions\` to see some fun reactions!`
-    );
-    console.log(`Sent welcome DM to ${member.user.tag}`);
-  } catch (error) {
-    console.log(`Could not send DM to ${member.user.tag} (DMs might be disabled)`);
-  }
+  // Send welcome message to the specific welcome channel
+  const welcomeChannelId = "1235015412035358721";
+  const welcomeChannel = member.guild.channels.cache.get(welcomeChannelId);
   
-  // Also send a message in the system channel (if it exists)
-  const systemChannel = member.guild.systemChannel;
-  if (systemChannel) {
-    systemChannel.send(
-      `Welcome ${member} to **${member.guild.name}**! 🎉 We're happy to have you here!`
-    );
+  if (welcomeChannel) {
+    const welcomeMessage = `Hello ${member}
+Welcome to our community! We're thrilled to have you here. Before you begin your journey with us, we kindly ask that you take a moment to familiarize yourself with our community guidelines by reading our <#1235015412035358723>. This ensures that everyone has a positive and enjoyable experience.
+
+Next, please <#1235015412035358720> yourself to gain access to all the features and channels within our server. Verification helps us maintain a safe and welcoming environment for all members.
+
+Once you're verified, don't forget to check out our 🪪𝑺𝒆𝒍𝒇-𝑹𝒐𝒍𝒆𝒔! These allow you to personalize your experience and join specific channels tailored to your interests. Whether you're a gamer, an artist, or a music enthusiast, there's a role for you.
+
+Thank you for joining us, and we hope you have a fantastic time connecting with fellow members and exploring everything our community has to offer!`;
+    
+    try {
+      await welcomeChannel.send(welcomeMessage);
+      console.log(`Sent welcome message for ${member.user.tag} to welcome channel`);
+    } catch (error) {
+      console.error(`Failed to send welcome message: ${error.message}`);
+    }
+  } else {
+    console.log(`Welcome channel not found (ID: ${welcomeChannelId})`);
   }
 });
 
