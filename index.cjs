@@ -102,7 +102,7 @@ client.on("messageCreate", async (msg) => {
     await msg.channel.send({ content: "Pick a reaction!", components: [row] });
   }
 
-  // Setup role selection message
+  // Setup gaming role selection message
   if (msg.content.toLowerCase() === "!setup-roles") {
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
@@ -139,6 +139,55 @@ client.on("messageCreate", async (msg) => {
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("claim_roles")
+        .setLabel("🔔 Claim Self-Roles")
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    await msg.channel.send({ embeds: [embed], components: [button] });
+  }
+
+  // Setup watch party role selection message
+  if (msg.content.toLowerCase() === "!setup-watchparty") {
+    const embed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("Trippy Webs Role Selection")
+      .setDescription(
+        "By choosing self-roles, you'll have access to all the Watch Party voice and text channels.\n\n" +
+        "**Available Roles:**\n\n" +
+        ">Anime\n" +
+        ">Formula 1 WP\n\n" +
+        "Expect more server notifications upon claiming roles!"
+      )
+      .setFooter({ text: "Spidey" });
+
+    const button = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("claim_watchparty")
+        .setLabel("🔔 Claim Self-Roles")
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    await msg.channel.send({ embeds: [embed], components: [button] });
+  }
+
+  // Setup platform role selection message
+  if (msg.content.toLowerCase() === "!setup-platform") {
+    const embed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("Trippy Webs Role Selection")
+      .setDescription(
+        "By choosing self-roles, it will show what platform you use.\n\n" +
+        "**Available Roles:**\n\n" +
+        ">PC\n" +
+        ">PS\n" +
+        ">XBOX\n\n" +
+        "Expect more server notifications upon claiming roles!"
+      )
+      .setFooter({ text: "Spidey" });
+
+    const button = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("claim_platform")
         .setLabel("🔔 Claim Self-Roles")
         .setStyle(ButtonStyle.Primary)
     );
@@ -192,8 +241,125 @@ client.on("interactionCreate", async (interaction) => {
     });
   }
 
+  // Handle watch party button
+  if (interaction.isButton() && interaction.customId === "claim_watchparty") {
+    const watchPartyRoles = [
+      { label: "Anime", value: "Anime" },
+      { label: "Formula 1 WP", value: "Formula 1 WP" }
+    ];
+
+    const selectMenu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId("watchparty_roles")
+        .setPlaceholder("Select your watch party roles...")
+        .setMinValues(1)
+        .setMaxValues(watchPartyRoles.length)
+        .addOptions(watchPartyRoles)
+    );
+
+    await interaction.reply({
+      content: "Select the watch party roles you want to claim:",
+      components: [selectMenu],
+      ephemeral: true
+    });
+  }
+
+  // Handle platform button
+  if (interaction.isButton() && interaction.customId === "claim_platform") {
+    const platformRoles = [
+      { label: "PC", value: "PC" },
+      { label: "PS", value: "PS" },
+      { label: "XBOX", value: "XBOX" }
+    ];
+
+    const selectMenu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId("platform_roles")
+        .setPlaceholder("Select your platform...")
+        .setMinValues(1)
+        .setMaxValues(platformRoles.length)
+        .addOptions(platformRoles)
+    );
+
+    await interaction.reply({
+      content: "Select the platform roles you want to claim:",
+      components: [selectMenu],
+      ephemeral: true
+    });
+  }
+
   // Handle game role selection
   if (interaction.isStringSelectMenu() && interaction.customId === "game_roles") {
+    const selectedRoles = interaction.values;
+    const member = interaction.member;
+    const addedRoles = [];
+    const notFoundRoles = [];
+
+    for (const roleName of selectedRoles) {
+      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          addedRoles.push(roleName);
+        } catch (error) {
+          console.error(`Failed to add role ${roleName}: ${error.message}`);
+        }
+      } else {
+        notFoundRoles.push(roleName);
+      }
+    }
+
+    let response = "";
+    if (addedRoles.length > 0) {
+      response += `✅ Successfully added: ${addedRoles.join(", ")}`;
+    }
+    if (notFoundRoles.length > 0) {
+      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
+    }
+
+    await interaction.update({
+      content: response || "No roles were added.",
+      components: []
+    });
+  }
+
+  // Handle watch party role selection
+  if (interaction.isStringSelectMenu() && interaction.customId === "watchparty_roles") {
+    const selectedRoles = interaction.values;
+    const member = interaction.member;
+    const addedRoles = [];
+    const notFoundRoles = [];
+
+    for (const roleName of selectedRoles) {
+      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          addedRoles.push(roleName);
+        } catch (error) {
+          console.error(`Failed to add role ${roleName}: ${error.message}`);
+        }
+      } else {
+        notFoundRoles.push(roleName);
+      }
+    }
+
+    let response = "";
+    if (addedRoles.length > 0) {
+      response += `✅ Successfully added: ${addedRoles.join(", ")}`;
+    }
+    if (notFoundRoles.length > 0) {
+      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
+    }
+
+    await interaction.update({
+      content: response || "No roles were added.",
+      components: []
+    });
+  }
+
+  // Handle platform role selection
+  if (interaction.isStringSelectMenu() && interaction.customId === "platform_roles") {
     const selectedRoles = interaction.values;
     const member = interaction.member;
     const addedRoles = [];
