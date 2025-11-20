@@ -37,9 +37,7 @@ function getGuildConfig(guildId) {
     config.guilds[guildId] = {
       welcomeChannelId: null,
       welcomeMessage: "Welcome to our server! 🎉",
-      gameRoles: [],
-      watchPartyRoles: [],
-      platformRoles: []
+      roleCategories: {}
     };
     saveConfig(config);
   }
@@ -51,42 +49,6 @@ function updateGuildConfig(guildId, updates) {
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
   config.guilds[guildId] = { ...config.guilds[guildId], ...updates };
   saveConfig(config);
-}
-
-// Normalize role format (handles both old string and new object format)
-function normalizeRoles(roles, guild) {
-  return roles.map(r => {
-    if (typeof r === 'string') {
-      // Old format: just a name. Look up the ID from Discord.
-      const discordRole = guild.roles.cache.find(role => role.name === r);
-      return { name: r, id: discordRole ? discordRole.id : null };
-    }
-    return r; // Already in new format
-  }).filter(r => r.id); // Only keep roles that exist in Discord
-}
-
-// Auto-migrate old format roles to new format
-function autoMigrateRoles(guildId, guild, config) {
-  let needsSave = false;
-  if (config.gameRoles.some(r => typeof r === 'string')) {
-    config.gameRoles = normalizeRoles(config.gameRoles, guild);
-    needsSave = true;
-  }
-  if (config.watchPartyRoles.some(r => typeof r === 'string')) {
-    config.watchPartyRoles = normalizeRoles(config.watchPartyRoles, guild);
-    needsSave = true;
-  }
-  if (config.platformRoles.some(r => typeof r === 'string')) {
-    config.platformRoles = normalizeRoles(config.platformRoles, guild);
-    needsSave = true;
-  }
-  if (needsSave) {
-    updateGuildConfig(guildId, {
-      gameRoles: config.gameRoles,
-      watchPartyRoles: config.watchPartyRoles,
-      platformRoles: config.platformRoles
-    });
-  }
 }
 
 // ============== CLIENT SETUP ==============
@@ -155,26 +117,93 @@ client.on("messageCreate", async (msg) => {
 
   // List all active roles
   if (msg.content === "//list-roles") {
-    const gameRolesStr = guildConfig.gameRoles.length > 0 
-      ? guildConfig.gameRoles.map(r => `• ${typeof r === 'string' ? r : r.name}`).join("\n")
-      : "None";
-    const watchPartyStr = guildConfig.watchPartyRoles.length > 0 
-      ? guildConfig.watchPartyRoles.map(r => `• ${typeof r === 'string' ? r : r.name}`).join("\n")
-      : "None";
-    const platformStr = guildConfig.platformRoles.length > 0 
-      ? guildConfig.platformRoles.map(r => `• ${typeof r === 'string' ? r : r.name}`).join("\n")
-      : "None";
+    const categories = guildConfig.roleCategories || {};
+    if (Object.keys(categories).length === 0) {
+      return msg.reply("❌ No role categories created yet! Use `//create-category [name]` to get started.");
+    }
+    
+    const fields = Object.entries(categories).map(([catName, roles]) => ({
+      name: catName,
+      value: roles.length > 0 ? roles.map(r => `• ${r.name}`).join("\n") : "No roles",
+      inline: false
+    }));
 
     const rolesEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("📋 Active Reaction Roles")
-      .addFields(
-        { name: "🎮 Gaming Roles", value: gameRolesStr, inline: false },
-        { name: "🍿 Watch Party Roles", value: watchPartyStr, inline: false },
-        { name: "💻 Platform Roles", value: platformStr, inline: false }
-      )
+      .setTitle("📋 Active Role Categories")
+      .addFields(...fields)
       .setFooter({ text: "SPIDEY BOT" });
     return msg.reply({ embeds: [rolesEmbed] });
+  }
+
+  // Create a new category
+  if (msg.content.startsWith("//create-category ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can create categories!");
+    }
+    const categoryName = msg.content.slice(18).trim();
+    if (!categoryName) return msg.reply("Usage: //create-category [name]");
+    const categories = guildConfig.roleCategories || {};
+    if (categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" already exists!`);
+    categories[categoryName] = [];
+    updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    return msg.reply(`✅ Created category: **${categoryName}**`);
+  }
+
+  // Add a role to a category
+  if (msg.content.startsWith("//add-role ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can manage roles!");
+    }
+    const args = msg.content.slice(11).trim().split(" ");
+    const categoryName = args[0];
+    const roleName = args[1];
+    const roleId = args[2];
+    if (!categoryName || !roleName || !roleId) {
+      return msg.reply("Usage: //add-role [category] [role name] [role ID]\n\nExample: //add-role Gaming Minecraft 123456789");
+    }
+    const categories = guildConfig.roleCategories || {};
+    if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" doesn't exist! Use //create-category first.`);
+    if (categories[categoryName].some(r => r.name === roleName)) {
+      return msg.reply(`❌ Role "${roleName}" already in this category!`);
+    }
+    categories[categoryName].push({ name: roleName, id: roleId });
+    updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    return msg.reply(`✅ Added **${roleName}** to category **${categoryName}**`);
+  }
+
+  // Remove a role from a category
+  if (msg.content.startsWith("//remove-role ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can manage roles!");
+    }
+    const args = msg.content.slice(14).trim().split(" ");
+    const categoryName = args[0];
+    const roleName = args[1];
+    if (!categoryName || !roleName) {
+      return msg.reply("Usage: //remove-role [category] [role name]");
+    }
+    const categories = guildConfig.roleCategories || {};
+    if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
+    const index = categories[categoryName].findIndex(r => r.name === roleName);
+    if (index === -1) return msg.reply(`❌ Role "${roleName}" not found in this category!`);
+    categories[categoryName].splice(index, 1);
+    updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    return msg.reply(`✅ Removed **${roleName}** from **${categoryName}**`);
+  }
+
+  // Delete a category
+  if (msg.content.startsWith("//delete-category ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can delete categories!");
+    }
+    const categoryName = msg.content.slice(18).trim();
+    if (!categoryName) return msg.reply("Usage: //delete-category [name]");
+    const categories = guildConfig.roleCategories || {};
+    if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
+    delete categories[categoryName];
+    updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    return msg.reply(`✅ Deleted category: **${categoryName}**`);
   }
 
   // Help - List all commands
