@@ -195,63 +195,47 @@ client.on("messageCreate", async (msg) => {
     await msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  // Remove gaming roles command
+  // Unified role remover command
   if (msg.content.toLowerCase() === "!remove-roles") {
     const embed = new EmbedBuilder()
       .setColor(0xED4245)
-      .setTitle("Remove Gaming Roles")
+      .setTitle("Trippy Webs Role Remover")
       .setDescription(
-        "Select the gaming roles you want to remove from your profile.\n\n" +
-        "Click the button below to see your available roles to remove."
+        "This will remove the specific roles that have been added to your roles.\n\n" +
+        "**Available Roles:**\n\n" +
+        "**Games:**\n\n" +
+        ">Valorant\n" +
+        ">Minecraft\n" +
+        ">Call Of Duty\n" +
+        ">Dying Light 2\n" +
+        ">FiveM\n" +
+        ">Golf With Friends\n" +
+        ">Need For Speed\n" +
+        ">Fortnite\n" +
+        ">Rust\n" +
+        ">CarX\n" +
+        ">HellDivers\n" +
+        ">Assetto Corsa (Competizione)\n" +
+        ">Formula 1\n" +
+        ">Rocket league\n" +
+        ">Overwatch\n" +
+        ">Doom\n" +
+        ">League Of Legends\n" +
+        ">GTA\n" +
+        ">CSGO\n" +
+        ">Apex\n" +
+        ">Destiny\n\n" +
+        "**Watch Parties:**\n\n" +
+        ">Anime\n" +
+        ">Formula 1 WP\n\n" +
+        "Expect more server notifications upon claiming roles!"
       )
       .setFooter({ text: "Spidey" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId("remove_game_roles")
-        .setLabel("🗑️ Remove Gaming Roles")
-        .setStyle(ButtonStyle.Danger)
-    );
-
-    await msg.channel.send({ embeds: [embed], components: [button] });
-  }
-
-  // Remove watch party roles command
-  if (msg.content.toLowerCase() === "!remove-watchparty") {
-    const embed = new EmbedBuilder()
-      .setColor(0xED4245)
-      .setTitle("Remove Watch Party Roles")
-      .setDescription(
-        "Select the watch party roles you want to remove from your profile.\n\n" +
-        "Click the button below to see your available roles to remove."
-      )
-      .setFooter({ text: "Spidey" });
-
-    const button = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("remove_watchparty_roles")
-        .setLabel("🗑️ Remove Watch Party Roles")
-        .setStyle(ButtonStyle.Danger)
-    );
-
-    await msg.channel.send({ embeds: [embed], components: [button] });
-  }
-
-  // Remove platform roles command
-  if (msg.content.toLowerCase() === "!remove-platform") {
-    const embed = new EmbedBuilder()
-      .setColor(0xED4245)
-      .setTitle("Remove Platform Roles")
-      .setDescription(
-        "Select the platform roles you want to remove from your profile.\n\n" +
-        "Click the button below to see your available roles to remove."
-      )
-      .setFooter({ text: "Spidey" });
-
-    const button = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("remove_platform_roles")
-        .setLabel("🗑️ Remove Platform Roles")
+        .setCustomId("remove_all_roles")
+        .setLabel("🔔 Remove Self-Roles")
         .setStyle(ButtonStyle.Danger)
     );
 
@@ -351,9 +335,9 @@ client.on("interactionCreate", async (interaction) => {
     });
   }
 
-  // Handle remove game roles button
-  if (interaction.isButton() && interaction.customId === "remove_game_roles") {
-    const gameRoles = [
+  // Handle unified role removal button
+  if (interaction.isButton() && interaction.customId === "remove_all_roles") {
+    const allRoles = [
       { label: "Valorant", value: "Valorant" },
       { label: "Minecraft", value: "Minecraft" },
       { label: "Call Of Duty", value: "Call Of Duty" },
@@ -375,67 +359,21 @@ client.on("interactionCreate", async (interaction) => {
       { label: "CSGO", value: "CSGO" },
       { label: "Apex", value: "Apex" },
       { label: "Destiny", value: "Destiny" },
-      { label: "Sons Of The Forest", value: "Sons Of The Forest" }
-    ];
-
-    const selectMenu = new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder()
-        .setCustomId("remove_game_roles_select")
-        .setPlaceholder("Select roles to remove...")
-        .setMinValues(1)
-        .setMaxValues(gameRoles.length)
-        .addOptions(gameRoles)
-    );
-
-    await interaction.reply({
-      content: "Select the gaming roles you want to remove:",
-      components: [selectMenu],
-      ephemeral: true
-    });
-  }
-
-  // Handle remove watch party roles button
-  if (interaction.isButton() && interaction.customId === "remove_watchparty_roles") {
-    const watchPartyRoles = [
       { label: "Anime", value: "Anime" },
       { label: "Formula 1 WP", value: "Formula 1 WP" }
     ];
 
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
-        .setCustomId("remove_watchparty_roles_select")
+        .setCustomId("remove_all_roles_select")
         .setPlaceholder("Select roles to remove...")
         .setMinValues(1)
-        .setMaxValues(watchPartyRoles.length)
-        .addOptions(watchPartyRoles)
+        .setMaxValues(allRoles.length)
+        .addOptions(allRoles)
     );
 
     await interaction.reply({
-      content: "Select the watch party roles you want to remove:",
-      components: [selectMenu],
-      ephemeral: true
-    });
-  }
-
-  // Handle remove platform roles button
-  if (interaction.isButton() && interaction.customId === "remove_platform_roles") {
-    const platformRoles = [
-      { label: "PC", value: "PC" },
-      { label: "PS", value: "PS" },
-      { label: "XBOX", value: "XBOX" }
-    ];
-
-    const selectMenu = new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder()
-        .setCustomId("remove_platform_roles_select")
-        .setPlaceholder("Select roles to remove...")
-        .setMinValues(1)
-        .setMaxValues(platformRoles.length)
-        .addOptions(platformRoles)
-    );
-
-    await interaction.reply({
-      content: "Select the platform roles you want to remove:",
+      content: "Select the roles you want to remove:",
       components: [selectMenu],
       ephemeral: true
     });
@@ -546,84 +484,8 @@ client.on("interactionCreate", async (interaction) => {
     });
   }
 
-  // Handle remove game roles selection
-  if (interaction.isStringSelectMenu() && interaction.customId === "remove_game_roles_select") {
-    const selectedRoles = interaction.values;
-    const member = interaction.member;
-    const removedRoles = [];
-    const notFoundRoles = [];
-
-    for (const roleName of selectedRoles) {
-      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
-      if (role && member.roles.cache.has(role.id)) {
-        try {
-          await member.roles.remove(role);
-          removedRoles.push(roleName);
-        } catch (error) {
-          console.error(`Failed to remove role ${roleName}: ${error.message}`);
-        }
-      } else if (!role) {
-        notFoundRoles.push(roleName);
-      }
-    }
-
-    let response = "";
-    if (removedRoles.length > 0) {
-      response += `✅ Successfully removed: ${removedRoles.join(", ")}`;
-    }
-    if (notFoundRoles.length > 0) {
-      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
-    }
-    if (removedRoles.length === 0 && notFoundRoles.length === 0) {
-      response = "You don't have any of the selected roles.";
-    }
-
-    await interaction.update({
-      content: response,
-      components: []
-    });
-  }
-
-  // Handle remove watch party roles selection
-  if (interaction.isStringSelectMenu() && interaction.customId === "remove_watchparty_roles_select") {
-    const selectedRoles = interaction.values;
-    const member = interaction.member;
-    const removedRoles = [];
-    const notFoundRoles = [];
-
-    for (const roleName of selectedRoles) {
-      const role = interaction.guild.roles.cache.find(r => r.name === roleName);
-      if (role && member.roles.cache.has(role.id)) {
-        try {
-          await member.roles.remove(role);
-          removedRoles.push(roleName);
-        } catch (error) {
-          console.error(`Failed to remove role ${roleName}: ${error.message}`);
-        }
-      } else if (!role) {
-        notFoundRoles.push(roleName);
-      }
-    }
-
-    let response = "";
-    if (removedRoles.length > 0) {
-      response += `✅ Successfully removed: ${removedRoles.join(", ")}`;
-    }
-    if (notFoundRoles.length > 0) {
-      response += `\n⚠️ Roles not found on server: ${notFoundRoles.join(", ")}`;
-    }
-    if (removedRoles.length === 0 && notFoundRoles.length === 0) {
-      response = "You don't have any of the selected roles.";
-    }
-
-    await interaction.update({
-      content: response,
-      components: []
-    });
-  }
-
-  // Handle remove platform roles selection
-  if (interaction.isStringSelectMenu() && interaction.customId === "remove_platform_roles_select") {
+  // Handle unified role removal selection
+  if (interaction.isStringSelectMenu() && interaction.customId === "remove_all_roles_select") {
     const selectedRoles = interaction.values;
     const member = interaction.member;
     const removedRoles = [];
