@@ -212,7 +212,7 @@ client.on("messageCreate", async (msg) => {
     const roleId = args[1];
     if (!roleName || !roleId) return msg.reply("Usage: //add-game-role [role name] [role ID]\n\nExample: //add-game-role Minecraft 123456789");
     const config = getGuildConfig(msg.guild.id);
-    if (config.gameRoles.some(r => (typeof r === 'string' ? r : r.name) === roleName)) return msg.reply("❌ Role already added!");
+    if (config.gameRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.gameRoles.push({ name: roleName, id: roleId });
     updateGuildConfig(msg.guild.id, { gameRoles: config.gameRoles });
     return msg.reply(`✅ Added game role: **${roleName}** (ID: ${roleId})`);
@@ -226,7 +226,7 @@ client.on("messageCreate", async (msg) => {
     const roleName = msg.content.slice(19).trim();
     if (!roleName) return msg.reply("Usage: //remove-game-role [role name]");
     const config = getGuildConfig(msg.guild.id);
-    const index = config.gameRoles.findIndex(r => (typeof r === 'string' ? r : r.name) === roleName);
+    const index = config.gameRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
     config.gameRoles.splice(index, 1);
     updateGuildConfig(msg.guild.id, { gameRoles: config.gameRoles });
@@ -243,7 +243,7 @@ client.on("messageCreate", async (msg) => {
     const roleId = args[1];
     if (!roleName || !roleId) return msg.reply("Usage: //add-watchparty-role [role name] [role ID]");
     const config = getGuildConfig(msg.guild.id);
-    if (config.watchPartyRoles.some(r => (typeof r === 'string' ? r : r.name) === roleName)) return msg.reply("❌ Role already added!");
+    if (config.watchPartyRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.watchPartyRoles.push({ name: roleName, id: roleId });
     updateGuildConfig(msg.guild.id, { watchPartyRoles: config.watchPartyRoles });
     return msg.reply(`✅ Added watch party role: **${roleName}** (ID: ${roleId})`);
@@ -257,7 +257,7 @@ client.on("messageCreate", async (msg) => {
     const roleName = msg.content.slice(25).trim();
     if (!roleName) return msg.reply("Usage: //remove-watchparty-role [role name]");
     const config = getGuildConfig(msg.guild.id);
-    const index = config.watchPartyRoles.findIndex(r => (typeof r === 'string' ? r : r.name) === roleName);
+    const index = config.watchPartyRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
     config.watchPartyRoles.splice(index, 1);
     updateGuildConfig(msg.guild.id, { watchPartyRoles: config.watchPartyRoles });
