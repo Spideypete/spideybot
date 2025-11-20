@@ -268,10 +268,14 @@ client.on("messageCreate", async (msg) => {
     }
 
     try {
-      msg.reply(`🎵 Searching for: ${query}`);
-      const queue = await player.queues.create(msg.guild, {
-        metadata: { channel: msg.channel }
-      });
+      await msg.reply(`🎵 Searching for: ${query}`);
+      
+      let queue = player.queues.get(msg.guild);
+      if (!queue) {
+        queue = player.queues.create(msg.guild, {
+          metadata: { channel: msg.channel }
+        });
+      }
 
       const result = await player.search(query, { requestedBy: msg.author });
       if (!result.tracks.length) {
@@ -279,17 +283,15 @@ client.on("messageCreate", async (msg) => {
       }
 
       const track = result.tracks[0];
+      
       if (!queue.connection) {
-        queue.connect(voiceChannel);
+        await queue.connect(voiceChannel);
       }
 
       queue.addTrack(track);
-      if (!queue.isPlaying()) queue.node.play();
-
-      activePlayers.set(msg.guild.id, {
-        queue,
-        lastMessage: null
-      });
+      if (!queue.isPlaying()) {
+        await queue.node.play();
+      }
 
       const embed = new EmbedBuilder()
         .setColor(0x00FF00)
@@ -310,8 +312,8 @@ client.on("messageCreate", async (msg) => {
 
       msg.reply({ embeds: [embed], components: [controls] });
     } catch (error) {
-      console.error("Music play error:", error);
-      msg.reply("Error playing music!");
+      console.error("Music play error:", error.message);
+      msg.reply(`Error: ${error.message}`);
     }
   }
 
