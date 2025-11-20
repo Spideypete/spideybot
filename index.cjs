@@ -44,8 +44,11 @@ const client = new Client({
 
 const token = process.env.TOKEN;
 
-// Initialize discord-player
-const player = new Player(client);
+// Initialize discord-player with FFmpeg enabled
+const player = new Player(client, {
+  skipFFmpeg: false,
+  enableLavalink: false
+});
 player.extractors.loadMulti(DefaultExtractors);
 
 // Store active players per guild
@@ -270,17 +273,6 @@ client.on("messageCreate", async (msg) => {
     try {
       await msg.reply(`🎵 Searching for: ${query}`);
       
-      let queue = player.queues.get(msg.guild);
-      
-      if (!queue) {
-        queue = player.queues.create(msg.guild, {
-          metadata: { channel: msg.channel },
-          skipFFmpeg: false,
-          selfDeaf: true
-        });
-        await queue.connect(voiceChannel);
-      }
-
       const searchOptions = { requestedBy: msg.author };
       const result = await player.search(query, searchOptions);
       
@@ -288,18 +280,23 @@ client.on("messageCreate", async (msg) => {
         return msg.reply("No results found! Try a different search term or YouTube link.");
       }
 
+      let queue = player.queues.get(msg.guild);
+      if (!queue) {
+        queue = player.queues.create(msg.guild, {
+          metadata: { channel: msg.channel },
+          selfDeaf: true
+        });
+      }
+
+      if (!queue.connection) {
+        await queue.connect(voiceChannel);
+      }
+
       const track = result.tracks[0];
       queue.addTrack(track);
       
       if (!queue.isPlaying()) {
-        try {
-          await queue.node.play();
-        } catch (playError) {
-          console.error("Play error:", playError);
-          queue.addTrack(track);
-          await new Promise(resolve => setTimeout(resolve, 500));
-          await queue.node.play();
-        }
+        await queue.node.play();
       }
 
       const embed = new EmbedBuilder()
