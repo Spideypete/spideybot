@@ -153,6 +153,30 @@ client.on("messageCreate", async (msg) => {
     return msg.reply("Pong!");
   }
 
+  // List all active roles
+  if (msg.content === "//list-roles") {
+    const gameRolesStr = guildConfig.gameRoles.length > 0 
+      ? guildConfig.gameRoles.map(r => `• ${typeof r === 'string' ? r : r.name}`).join("\n")
+      : "None";
+    const watchPartyStr = guildConfig.watchPartyRoles.length > 0 
+      ? guildConfig.watchPartyRoles.map(r => `• ${typeof r === 'string' ? r : r.name}`).join("\n")
+      : "None";
+    const platformStr = guildConfig.platformRoles.length > 0 
+      ? guildConfig.platformRoles.map(r => `• ${typeof r === 'string' ? r : r.name}`).join("\n")
+      : "None";
+
+    const rolesEmbed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("📋 Active Reaction Roles")
+      .addFields(
+        { name: "🎮 Gaming Roles", value: gameRolesStr, inline: false },
+        { name: "🍿 Watch Party Roles", value: watchPartyStr, inline: false },
+        { name: "💻 Platform Roles", value: platformStr, inline: false }
+      )
+      .setFooter({ text: "SPIDEY BOT" });
+    return msg.reply({ embeds: [rolesEmbed] });
+  }
+
   // Help - List all commands
   if (msg.content === "//help") {
     const helpEmbed = new EmbedBuilder()
@@ -168,6 +192,7 @@ client.on("messageCreate", async (msg) => {
         { name: "//remove-watchparty-role [name]", value: "Remove a watch party role", inline: false },
         { name: "//add-platform-role [name] [roleID]", value: "Add a platform role", inline: false },
         { name: "//remove-platform-role [name]", value: "Remove a platform role", inline: false },
+        { name: "//list-roles", value: "Show all active reaction roles", inline: false },
         { name: "//setup-roles", value: "Create gaming role selector", inline: false },
         { name: "//setup-watchparty", value: "Create watch party role selector", inline: false },
         { name: "//setup-platform", value: "Create platform role selector", inline: false },
