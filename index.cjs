@@ -53,6 +53,42 @@ function updateGuildConfig(guildId, updates) {
   saveConfig(config);
 }
 
+// Normalize role format (handles both old string and new object format)
+function normalizeRoles(roles, guild) {
+  return roles.map(r => {
+    if (typeof r === 'string') {
+      // Old format: just a name. Look up the ID from Discord.
+      const discordRole = guild.roles.cache.find(role => role.name === r);
+      return { name: r, id: discordRole ? discordRole.id : null };
+    }
+    return r; // Already in new format
+  }).filter(r => r.id); // Only keep roles that exist in Discord
+}
+
+// Auto-migrate old format roles to new format
+function autoMigrateRoles(guildId, guild, config) {
+  let needsSave = false;
+  if (config.gameRoles.some(r => typeof r === 'string')) {
+    config.gameRoles = normalizeRoles(config.gameRoles, guild);
+    needsSave = true;
+  }
+  if (config.watchPartyRoles.some(r => typeof r === 'string')) {
+    config.watchPartyRoles = normalizeRoles(config.watchPartyRoles, guild);
+    needsSave = true;
+  }
+  if (config.platformRoles.some(r => typeof r === 'string')) {
+    config.platformRoles = normalizeRoles(config.platformRoles, guild);
+    needsSave = true;
+  }
+  if (needsSave) {
+    updateGuildConfig(guildId, {
+      gameRoles: config.gameRoles,
+      watchPartyRoles: config.watchPartyRoles,
+      platformRoles: config.platformRoles
+    });
+  }
+}
+
 // ============== CLIENT SETUP ==============
 const client = new Client({
   intents: [
@@ -421,10 +457,11 @@ client.on("interactionCreate", async (interaction) => {
   // Gaming roles
   if (interaction.isButton() && interaction.customId === "claim_roles") {
     const config = getGuildConfig(interaction.guild.id);
+    autoMigrateRoles(interaction.guild.id, interaction.guild, config);
     if (config.gameRoles.length === 0) {
       return interaction.reply({ content: "❌ No gaming roles configured! Admin: use //add-game-role [name] [roleID]", ephemeral: true });
     }
-    const gameRoles = config.gameRoles.map(r => ({ label: r.name, value: r.id }));
+    const gameRoles = config.gameRoles.map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("game_roles")
@@ -442,18 +479,18 @@ client.on("interactionCreate", async (interaction) => {
     const addedRoles = [];
     const notFoundRoles = [];
 
-    for (const roleId of interaction.values) {
-      const roleData = config.gameRoles.find(r => r.id === roleId);
-      const role = interaction.guild.roles.cache.get(roleId);
+    for (const roleValue of interaction.values) {
+      const roleData = config.gameRoles.find(r => (typeof r === 'string' ? r : r.id) === roleValue);
+      const role = interaction.guild.roles.cache.get(roleValue);
       if (role) {
         try {
           await member.roles.add(role);
-          addedRoles.push(roleData.name);
+          addedRoles.push(typeof roleData === 'string' ? roleData : roleData.name);
         } catch (error) {
-          console.error(`Failed to add role ${roleId}: ${error.message}`);
+          console.error(`Failed to add role ${roleValue}: ${error.message}`);
         }
       } else {
-        notFoundRoles.push(roleData.name);
+        notFoundRoles.push(typeof roleData === 'string' ? roleData : roleData.name);
       }
     }
 
@@ -466,10 +503,11 @@ client.on("interactionCreate", async (interaction) => {
   // Watch party roles
   if (interaction.isButton() && interaction.customId === "claim_watchparty") {
     const config = getGuildConfig(interaction.guild.id);
+    autoMigrateRoles(interaction.guild.id, interaction.guild, config);
     if (config.watchPartyRoles.length === 0) {
       return interaction.reply({ content: "❌ No watch party roles configured! Admin: use //add-watchparty-role [name] [roleID]", ephemeral: true });
     }
-    const watchPartyRoles = config.watchPartyRoles.map(r => ({ label: r.name, value: r.id }));
+    const watchPartyRoles = config.watchPartyRoles.map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("watchparty_roles")
@@ -486,15 +524,15 @@ client.on("interactionCreate", async (interaction) => {
     const config = getGuildConfig(interaction.guild.id);
     const addedRoles = [];
 
-    for (const roleId of interaction.values) {
-      const roleData = config.watchPartyRoles.find(r => r.id === roleId);
-      const role = interaction.guild.roles.cache.get(roleId);
+    for (const roleValue of interaction.values) {
+      const roleData = config.watchPartyRoles.find(r => (typeof r === 'string' ? r : r.id) === roleValue);
+      const role = interaction.guild.roles.cache.get(roleValue);
       if (role) {
         try {
           await member.roles.add(role);
-          addedRoles.push(roleData.name);
+          addedRoles.push(typeof roleData === 'string' ? roleData : roleData.name);
         } catch (error) {
-          console.error(`Failed to add role ${roleId}: ${error.message}`);
+          console.error(`Failed to add role ${roleValue}: ${error.message}`);
         }
       }
     }
@@ -505,10 +543,11 @@ client.on("interactionCreate", async (interaction) => {
   // Platform roles
   if (interaction.isButton() && interaction.customId === "claim_platform") {
     const config = getGuildConfig(interaction.guild.id);
+    autoMigrateRoles(interaction.guild.id, interaction.guild, config);
     if (config.platformRoles.length === 0) {
       return interaction.reply({ content: "❌ No platform roles configured! Admin: use //add-platform-role [name] [roleID]", ephemeral: true });
     }
-    const platformRoles = config.platformRoles.map(r => ({ label: r.name, value: r.id }));
+    const platformRoles = config.platformRoles.map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("platform_roles")
@@ -525,15 +564,15 @@ client.on("interactionCreate", async (interaction) => {
     const config = getGuildConfig(interaction.guild.id);
     const addedRoles = [];
 
-    for (const roleId of interaction.values) {
-      const roleData = config.platformRoles.find(r => r.id === roleId);
-      const role = interaction.guild.roles.cache.get(roleId);
+    for (const roleValue of interaction.values) {
+      const roleData = config.platformRoles.find(r => (typeof r === 'string' ? r : r.id) === roleValue);
+      const role = interaction.guild.roles.cache.get(roleValue);
       if (role) {
         try {
           await member.roles.add(role);
-          addedRoles.push(roleData.name);
+          addedRoles.push(typeof roleData === 'string' ? roleData : roleData.name);
         } catch (error) {
-          console.error(`Failed to add role ${roleId}: ${error.message}`);
+          console.error(`Failed to add role ${roleValue}: ${error.message}`);
         }
       }
     }
@@ -544,7 +583,8 @@ client.on("interactionCreate", async (interaction) => {
   // Remove roles
   if (interaction.isButton() && interaction.customId === "remove_all_roles") {
     const config = getGuildConfig(interaction.guild.id);
-    const allRoles = config.gameRoles.concat(config.watchPartyRoles, config.platformRoles).map(r => ({ label: r.name, value: r.id }));
+    autoMigrateRoles(interaction.guild.id, interaction.guild, config);
+    const allRoles = config.gameRoles.concat(config.watchPartyRoles, config.platformRoles).map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
     if (allRoles.length === 0) {
       return interaction.reply({ content: "❌ No roles configured yet!", ephemeral: true });
     }
@@ -564,15 +604,15 @@ client.on("interactionCreate", async (interaction) => {
     const config = getGuildConfig(interaction.guild.id);
     const removedRoles = [];
 
-    for (const roleId of interaction.values) {
-      const role = interaction.guild.roles.cache.get(roleId);
-      const roleData = config.gameRoles.concat(config.watchPartyRoles, config.platformRoles).find(r => r.id === roleId);
+    for (const roleValue of interaction.values) {
+      const role = interaction.guild.roles.cache.get(roleValue);
+      const roleData = config.gameRoles.concat(config.watchPartyRoles, config.platformRoles).find(r => (typeof r === 'string' ? r : r.id) === roleValue);
       if (role && member.roles.cache.has(role.id)) {
         try {
           await member.roles.remove(role);
-          removedRoles.push(roleData.name);
+          removedRoles.push(typeof roleData === 'string' ? roleData : roleData.name);
         } catch (error) {
-          console.error(`Failed to remove role ${roleId}: ${error.message}`);
+          console.error(`Failed to remove role ${roleValue}: ${error.message}`);
         }
       }
     }
