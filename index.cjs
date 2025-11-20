@@ -12,7 +12,6 @@ const {
 } = require("discord.js");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
-const { YouTubeExtractor } = require("@discord-player/youtube");
 require("dotenv").config(); // Loads TOKEN from .env
 const express = require("express"); // For web server
 
@@ -48,7 +47,6 @@ const token = process.env.TOKEN;
 // Initialize discord-player
 const player = new Player(client);
 player.extractors.loadMulti(DefaultExtractors);
-player.extractors.register(YouTubeExtractor, { cache: { maxSize: 100 } });
 
 // Store active players per guild
 const activePlayers = new Map();
@@ -273,13 +271,15 @@ client.on("messageCreate", async (msg) => {
       await msg.reply(`🎵 Searching for: ${query}`);
       
       let queue = player.queues.get(msg.guild);
+      
       if (!queue) {
         queue = player.queues.create(msg.guild, {
           metadata: { channel: msg.channel }
         });
+        await queue.connect(voiceChannel);
       }
 
-      const searchOptions = { requestedBy: msg.author, searchEngine: "youtube" };
+      const searchOptions = { requestedBy: msg.author };
       const result = await player.search(query, searchOptions);
       
       if (!result.tracks.length) {
@@ -287,14 +287,17 @@ client.on("messageCreate", async (msg) => {
       }
 
       const track = result.tracks[0];
-      
-      if (!queue.connection) {
-        await queue.connect(voiceChannel);
-      }
-
       queue.addTrack(track);
+      
       if (!queue.isPlaying()) {
-        await queue.node.play();
+        try {
+          await queue.node.play();
+        } catch (playError) {
+          console.error("Play error:", playError);
+          queue.addTrack(track);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await queue.node.play();
+        }
       }
 
       const embed = new EmbedBuilder()
