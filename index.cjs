@@ -108,7 +108,15 @@ client.on("guildMemberAdd", async (member) => {
   const welcomeChannel = member.guild.channels.cache.get(guildConfig.welcomeChannelId);
   if (welcomeChannel) {
     try {
-      await welcomeChannel.send(`${member} - ${guildConfig.welcomeMessage}`);
+      let message = guildConfig.welcomeMessage || "Welcome to our server! 🎉";
+      message = message
+        .replace(/{user}/g, member.toString())
+        .replace(/{username}/g, member.user.username)
+        .replace(/{displayname}/g, member.displayName)
+        .replace(/{server}/g, member.guild.name)
+        .replace(/{membercount}/g, member.guild.memberCount);
+      
+      await welcomeChannel.send(message);
       console.log(`Welcome message sent to ${member.user.tag}`);
     } catch (error) {
       console.error(`Failed to send welcome: ${error.message}`);
@@ -166,9 +174,9 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can configure the bot!");
     }
     const welcomeMsg = msg.content.slice(26).trim();
-    if (!welcomeMsg) return msg.reply("Provide a message: //config-welcome-message Your message here");
+    if (!welcomeMsg) return msg.reply("Provide a message: //config-welcome-message Your message here\n\n**Available placeholders:**\n`{user}` - Member mention\n`{username}` - Username\n`{displayname}` - Display name\n`{server}` - Server name\n`{membercount}` - Total member count");
     updateGuildConfig(msg.guild.id, { welcomeMessage: welcomeMsg });
-    return msg.reply(`✅ Welcome message updated!`);
+    return msg.reply(`✅ Welcome message updated!\n\n**Available placeholders:**\n\`{user}\` - ${msg.member.toString()}\n\`{username}\` - ${msg.author.username}\n\`{displayname}\` - ${msg.member.displayName}\n\`{server}\` - ${msg.guild.name}\n\`{membercount}\` - ${msg.guild.memberCount}`);
   }
 
   // Add game role
