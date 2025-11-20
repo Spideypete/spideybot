@@ -11,6 +11,7 @@ const {
   ButtonStyle
 } = require("discord.js");
 const { Player } = require("discord-player");
+const { DefaultExtractors } = require("@discord-player/extractor");
 require("dotenv").config(); // Loads TOKEN from .env
 const express = require("express"); // For web server
 
@@ -36,7 +37,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildVoiceStates
   ],
 });
 
@@ -44,7 +46,7 @@ const token = process.env.TOKEN;
 
 // Initialize discord-player
 const player = new Player(client);
-player.extractors.loadDefault();
+player.extractors.loadMulti(DefaultExtractors);
 
 // Store active players per guild
 const activePlayers = new Map();
