@@ -215,21 +215,19 @@ client.on("messageCreate", async (msg) => {
       .addFields(
         { name: "//config-welcome-channel #channel", value: "Set welcome message channel", inline: false },
         { name: "//config-welcome-message [text]", value: "Set custom welcome message", inline: false },
-        { name: "//add-game-role [name] [roleID]", value: "Add a game role", inline: false },
-        { name: "//remove-game-role [name]", value: "Remove a game role", inline: false },
-        { name: "//add-watchparty-role [name] [roleID]", value: "Add a watch party role", inline: false },
-        { name: "//remove-watchparty-role [name]", value: "Remove a watch party role", inline: false },
-        { name: "//add-platform-role [name] [roleID]", value: "Add a platform role", inline: false },
-        { name: "//remove-platform-role [name]", value: "Remove a platform role", inline: false },
-        { name: "//list-roles", value: "Show all active reaction roles", inline: false },
-        { name: "//setup-roles", value: "Create gaming role selector", inline: false },
-        { name: "//setup-watchparty", value: "Create watch party role selector", inline: false },
-        { name: "//setup-platform", value: "Create platform role selector", inline: false },
+        { name: "//create-category [name]", value: "Create a custom role category", inline: false },
+        { name: "//add-role [category] [name] [roleID]", value: "Add a role to a category", inline: false },
+        { name: "//remove-role [category] [name]", value: "Remove a role from a category", inline: false },
+        { name: "//delete-category [name]", value: "Delete an entire category", inline: false },
+        { name: "//list-roles", value: "Show all active role categories", inline: false },
+        { name: "//setup-category [name]", value: "Post role selector button for a category", inline: false },
         { name: "//remove-roles", value: "Show role remover", inline: false },
         { name: "\n**MUSIC COMMANDS:**", value: "", inline: false },
         { name: "//play [song/url]", value: "Play music from YouTube", inline: false },
         { name: "//queue", value: "Show current queue", inline: false },
-        { name: "Controls: ⏮ ⏸ ▶ ⏭ ⏹", value: "Previous, Pause, Resume, Skip, Stop", inline: false }
+        { name: "Controls: ⏮ ⏸ ▶ ⏭ ⏹", value: "Previous, Pause, Resume, Skip, Stop", inline: false },
+        { name: "\n**OTHER:**", value: "", inline: false },
+        { name: "//ping", value: "Check bot status", inline: false }
       )
       .setFooter({ text: "SPIDEY BOT - Multi-Server Ready" });
     return msg.reply({ embeds: [helpEmbed] });
