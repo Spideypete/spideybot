@@ -10,6 +10,7 @@ const {
   ButtonBuilder,
   ButtonStyle
 } = require("discord.js");
+const { useMainPlayer } = require("discord-player");
 require("dotenv").config(); // Loads TOKEN from .env
 const express = require("express"); // For web server
 
@@ -41,9 +42,19 @@ const client = new Client({
 
 const token = process.env.TOKEN;
 
+// Initialize discord-player
+const player = useMainPlayer();
+player.extractors.loadDefault();
+
+// Store active players per guild
+const activePlayers = new Map();
+
 // ------------------ Ready Event ------------------
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
+  player.on("error", (queue, error) => {
+    console.error("Music player error:", error);
+  });
 });
 
 // ------------------ Welcome New Members ------------------
@@ -240,6 +251,84 @@ client.on("messageCreate", async (msg) => {
     );
 
     await msg.channel.send({ embeds: [embed], components: [button] });
+  }
+
+  // Music play command
+  if (msg.content.toLowerCase().startsWith("!play ")) {
+    const query = msg.content.slice(6).trim();
+    if (!query) {
+      return msg.reply("Please provide a song name or URL");
+    }
+
+    const voiceChannel = msg.member?.voice.channel;
+    if (!voiceChannel) {
+      return msg.reply("You need to join a voice channel first!");
+    }
+
+    try {
+      msg.reply(`🎵 Searching for: ${query}`);
+      const queue = await player.queues.create(msg.guild, {
+        metadata: { channel: msg.channel }
+      });
+
+      const result = await player.search(query, { requestedBy: msg.author });
+      if (!result.tracks.length) {
+        return msg.reply("No results found!");
+      }
+
+      const track = result.tracks[0];
+      if (!queue.connection) {
+        queue.connect(voiceChannel);
+      }
+
+      queue.addTrack(track);
+      if (!queue.isPlaying()) queue.node.play();
+
+      activePlayers.set(msg.guild.id, {
+        queue,
+        lastMessage: null
+      });
+
+      const embed = new EmbedBuilder()
+        .setColor(0x00FF00)
+        .setTitle("🎵 Now Playing")
+        .setDescription(`[${track.title}](${track.url})`)
+        .addFields(
+          { name: "Duration", value: `${Math.floor(track.durationMS / 1000)}s`, inline: true },
+          { name: "Source", value: track.source, inline: true }
+        );
+
+      const controls = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("music_previous").setLabel("⏮").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("music_pause").setLabel("⏸").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("music_resume").setLabel("▶").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("music_skip").setLabel("⏭").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("music_stop").setLabel("⏹").setStyle(ButtonStyle.Danger)
+      );
+
+      msg.reply({ embeds: [embed], components: [controls] });
+    } catch (error) {
+      console.error("Music play error:", error);
+      msg.reply("Error playing music!");
+    }
+  }
+
+  // Music queue command
+  if (msg.content.toLowerCase() === "!queue") {
+    const queue = player.queues.get(msg.guild);
+    if (!queue || !queue.isPlaying()) {
+      return msg.reply("No music is playing!");
+    }
+
+    const tracks = queue.tracks.slice(0, 10);
+    const queueStr = tracks.map((t, i) => `${i + 1}. [${t.title}](${t.url})`).join("\n");
+
+    const embed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("🎵 Music Queue")
+      .setDescription(queueStr || "Queue is empty");
+
+    msg.reply({ embeds: [embed] });
   }
 });
 
@@ -532,6 +621,37 @@ client.on("interactionCreate", async (interaction) => {
       content: `${interaction.user} chose **${choice}**! ${randomGif}`,
       ephemeral: false
     });
+  }
+
+  // Music controls
+  if (interaction.isButton() && interaction.customId.startsWith("music_")) {
+    const queue = player.queues.get(interaction.guild);
+    if (!queue || !queue.isPlaying()) {
+      return interaction.reply({ content: "No music is playing!", ephemeral: true });
+    }
+
+    switch (interaction.customId) {
+      case "music_pause":
+        queue.node.pause();
+        await interaction.reply({ content: "⏸ Music paused", ephemeral: true });
+        break;
+      case "music_resume":
+        queue.node.resume();
+        await interaction.reply({ content: "▶ Music resumed", ephemeral: true });
+        break;
+      case "music_skip":
+        queue.node.skip();
+        await interaction.reply({ content: "⏭ Skipped to next track", ephemeral: true });
+        break;
+      case "music_previous":
+        queue.history.back();
+        await interaction.reply({ content: "⏮ Going to previous track", ephemeral: true });
+        break;
+      case "music_stop":
+        queue.delete();
+        await interaction.reply({ content: "⏹ Music stopped", ephemeral: true });
+        break;
+    }
   }
 });
 
