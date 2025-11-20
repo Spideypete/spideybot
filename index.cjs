@@ -274,7 +274,9 @@ client.on("messageCreate", async (msg) => {
       
       if (!queue) {
         queue = player.queues.create(msg.guild, {
-          metadata: { channel: msg.channel }
+          metadata: { channel: msg.channel },
+          skipFFmpeg: false,
+          selfDeaf: true
         });
         await queue.connect(voiceChannel);
       }
