@@ -31,7 +31,8 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
   ],
 });
 
@@ -40,6 +41,31 @@ const token = process.env.TOKEN;
 // ------------------ Ready Event ------------------
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
+});
+
+// ------------------ Welcome New Members ------------------
+client.on("guildMemberAdd", async (member) => {
+  console.log(`New member joined: ${member.user.tag}`);
+  
+  // Send a DM to the new member
+  try {
+    await member.send(
+      `Welcome to **${member.guild.name}**, ${member.user}! 🎉\n\n` +
+      `We're glad to have you here! Feel free to explore and have fun.\n` +
+      `Type \`!ping\` to check if I'm online, or \`!reactions\` to see some fun reactions!`
+    );
+    console.log(`Sent welcome DM to ${member.user.tag}`);
+  } catch (error) {
+    console.log(`Could not send DM to ${member.user.tag} (DMs might be disabled)`);
+  }
+  
+  // Also send a message in the system channel (if it exists)
+  const systemChannel = member.guild.systemChannel;
+  if (systemChannel) {
+    systemChannel.send(
+      `Welcome ${member} to **${member.guild.name}**! 🎉 We're happy to have you here!`
+    );
+  }
 });
 
 // ------------------ Message Commands ------------------
