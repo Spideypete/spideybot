@@ -91,12 +91,12 @@ client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
 
   // Ping command
-  if (msg.content.toLowerCase() === "!ping") {
+  if (msg.content.toLowerCase() === "//ping") {
     msg.reply("Pong!");
   }
 
   // Trigger dropdown menu
-  if (msg.content.toLowerCase() === "!reactions") {
+  if (msg.content.toLowerCase() === "//reactions") {
     const options = Object.keys(reactions).map((key) => ({
       label: key.charAt(0).toUpperCase() + key.slice(1),
       value: key,
@@ -114,7 +114,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Setup gaming role selection message
-  if (msg.content.toLowerCase() === "!setup-roles") {
+  if (msg.content.toLowerCase() === "//setup-roles") {
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle("Trippy Webs Role Selection")
@@ -158,7 +158,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Setup watch party role selection message
-  if (msg.content.toLowerCase() === "!setup-watchparty") {
+  if (msg.content.toLowerCase() === "//setup-watchparty") {
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle("Trippy Webs Role Selection")
@@ -182,7 +182,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Setup platform role selection message
-  if (msg.content.toLowerCase() === "!setup-platform") {
+  if (msg.content.toLowerCase() === "//setup-platform") {
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle("Trippy Webs Role Selection")
@@ -207,7 +207,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Unified role remover command
-  if (msg.content.toLowerCase() === "!remove-roles") {
+  if (msg.content.toLowerCase() === "//remove-roles") {
     const embed = new EmbedBuilder()
       .setColor(0xED4245)
       .setTitle("Trippy Webs Role Remover")
@@ -254,8 +254,8 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Music play command
-  if (msg.content.toLowerCase().startsWith("!play ")) {
-    const query = msg.content.slice(6).trim();
+  if (msg.content.toLowerCase().startsWith("//play ")) {
+    const query = msg.content.slice(7).trim();
     if (!query) {
       return msg.reply("Please provide a song name or URL");
     }
@@ -314,7 +314,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Music queue command
-  if (msg.content.toLowerCase() === "!queue") {
+  if (msg.content.toLowerCase() === "//queue") {
     const queue = player.queues.get(msg.guild);
     if (!queue || !queue.isPlaying()) {
       return msg.reply("No music is playing!");
