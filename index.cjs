@@ -39,7 +39,7 @@ function getGuildConfig(guildId) {
       welcomeMessage: "Welcome to our server! 🎉",
       gameRoles: [],
       watchPartyRoles: [],
-      platformRoles: ["PC", "PS", "XBOX"]
+      platformRoles: []
     };
     saveConfig(config);
   }
@@ -69,12 +69,6 @@ const reactions = {
   ]
 };
 
-const defaultGameRoles = [
-  "Valorant", "Minecraft", "Call Of Duty", "Dying Light 2", "FiveM",
-  "Golf With Friends", "Need For Speed", "Fortnite", "Rust", "CarX",
-  "HellDivers", "Assetto Corsa (Competizione)", "Formula 1", "Rocket league",
-  "Overwatch", "Doom", "League Of Legends", "GTA", "CSGO", "Apex", "Destiny", "Sons Of The Forest"
-];
 
 // ============== CLIENT SETUP ==============
 const client = new Client({
@@ -175,6 +169,93 @@ client.on("messageCreate", async (msg) => {
     if (!welcomeMsg) return msg.reply("Provide a message: //config-welcome-message Your message here");
     updateGuildConfig(msg.guild.id, { welcomeMessage: welcomeMsg });
     return msg.reply(`✅ Welcome message updated!`);
+  }
+
+  // Add game role
+  if (msg.content.startsWith("//add-game-role ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can manage roles!");
+    }
+    const roleName = msg.content.slice(16).trim();
+    if (!roleName) return msg.reply("Usage: //add-game-role [role name]");
+    const config = getGuildConfig(msg.guild.id);
+    if (config.gameRoles.includes(roleName)) return msg.reply("❌ Role already added!");
+    config.gameRoles.push(roleName);
+    updateGuildConfig(msg.guild.id, { gameRoles: config.gameRoles });
+    return msg.reply(`✅ Added game role: **${roleName}**`);
+  }
+
+  // Remove game role
+  if (msg.content.startsWith("//remove-game-role ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can manage roles!");
+    }
+    const roleName = msg.content.slice(19).trim();
+    if (!roleName) return msg.reply("Usage: //remove-game-role [role name]");
+    const config = getGuildConfig(msg.guild.id);
+    const index = config.gameRoles.indexOf(roleName);
+    if (index === -1) return msg.reply("❌ Role not found!");
+    config.gameRoles.splice(index, 1);
+    updateGuildConfig(msg.guild.id, { gameRoles: config.gameRoles });
+    return msg.reply(`✅ Removed game role: **${roleName}**`);
+  }
+
+  // Add watch party role
+  if (msg.content.startsWith("//add-watchparty-role ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can manage roles!");
+    }
+    const roleName = msg.content.slice(22).trim();
+    if (!roleName) return msg.reply("Usage: //add-watchparty-role [role name]");
+    const config = getGuildConfig(msg.guild.id);
+    if (config.watchPartyRoles.includes(roleName)) return msg.reply("❌ Role already added!");
+    config.watchPartyRoles.push(roleName);
+    updateGuildConfig(msg.guild.id, { watchPartyRoles: config.watchPartyRoles });
+    return msg.reply(`✅ Added watch party role: **${roleName}**`);
+  }
+
+  // Remove watch party role
+  if (msg.content.startsWith("//remove-watchparty-role ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can manage roles!");
+    }
+    const roleName = msg.content.slice(25).trim();
+    if (!roleName) return msg.reply("Usage: //remove-watchparty-role [role name]");
+    const config = getGuildConfig(msg.guild.id);
+    const index = config.watchPartyRoles.indexOf(roleName);
+    if (index === -1) return msg.reply("❌ Role not found!");
+    config.watchPartyRoles.splice(index, 1);
+    updateGuildConfig(msg.guild.id, { watchPartyRoles: config.watchPartyRoles });
+    return msg.reply(`✅ Removed watch party role: **${roleName}**`);
+  }
+
+  // Add platform role
+  if (msg.content.startsWith("//add-platform-role ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can manage roles!");
+    }
+    const roleName = msg.content.slice(20).trim();
+    if (!roleName) return msg.reply("Usage: //add-platform-role [role name]");
+    const config = getGuildConfig(msg.guild.id);
+    if (config.platformRoles.includes(roleName)) return msg.reply("❌ Role already added!");
+    config.platformRoles.push(roleName);
+    updateGuildConfig(msg.guild.id, { platformRoles: config.platformRoles });
+    return msg.reply(`✅ Added platform role: **${roleName}**`);
+  }
+
+  // Remove platform role
+  if (msg.content.startsWith("//remove-platform-role ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can manage roles!");
+    }
+    const roleName = msg.content.slice(23).trim();
+    if (!roleName) return msg.reply("Usage: //remove-platform-role [role name]");
+    const config = getGuildConfig(msg.guild.id);
+    const index = config.platformRoles.indexOf(roleName);
+    if (index === -1) return msg.reply("❌ Role not found!");
+    config.platformRoles.splice(index, 1);
+    updateGuildConfig(msg.guild.id, { platformRoles: config.platformRoles });
+    return msg.reply(`✅ Removed platform role: **${roleName}**`);
   }
 
   // Reactions
@@ -355,7 +436,11 @@ client.on("interactionCreate", async (interaction) => {
 
   // Gaming roles
   if (interaction.isButton() && interaction.customId === "claim_roles") {
-    const gameRoles = defaultGameRoles.map(r => ({ label: r, value: r }));
+    const config = getGuildConfig(interaction.guild.id);
+    if (config.gameRoles.length === 0) {
+      return interaction.reply({ content: "❌ No gaming roles configured! Admin: use //add-game-role [name]", ephemeral: true });
+    }
+    const gameRoles = config.gameRoles.map(r => ({ label: r, value: r }));
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("game_roles")
@@ -394,10 +479,11 @@ client.on("interactionCreate", async (interaction) => {
 
   // Watch party roles
   if (interaction.isButton() && interaction.customId === "claim_watchparty") {
-    const watchPartyRoles = [
-      { label: "Anime", value: "Anime" },
-      { label: "Formula 1 WP", value: "Formula 1 WP" }
-    ];
+    const config = getGuildConfig(interaction.guild.id);
+    if (config.watchPartyRoles.length === 0) {
+      return interaction.reply({ content: "❌ No watch party roles configured! Admin: use //add-watchparty-role [name]", ephemeral: true });
+    }
+    const watchPartyRoles = config.watchPartyRoles.map(r => ({ label: r, value: r }));
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("watchparty_roles")
@@ -430,11 +516,11 @@ client.on("interactionCreate", async (interaction) => {
 
   // Platform roles
   if (interaction.isButton() && interaction.customId === "claim_platform") {
-    const platformRoles = [
-      { label: "PC", value: "PC" },
-      { label: "PS", value: "PS" },
-      { label: "XBOX", value: "XBOX" }
-    ];
+    const config = getGuildConfig(interaction.guild.id);
+    if (config.platformRoles.length === 0) {
+      return interaction.reply({ content: "❌ No platform roles configured! Admin: use //add-platform-role [name]", ephemeral: true });
+    }
+    const platformRoles = config.platformRoles.map(r => ({ label: r, value: r }));
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("platform_roles")
@@ -467,7 +553,11 @@ client.on("interactionCreate", async (interaction) => {
 
   // Remove roles
   if (interaction.isButton() && interaction.customId === "remove_all_roles") {
-    const allRoles = defaultGameRoles.concat(["Anime", "Formula 1 WP", "PC", "PS", "XBOX"]).map(r => ({ label: r, value: r }));
+    const config = getGuildConfig(interaction.guild.id);
+    const allRoles = config.gameRoles.concat(config.watchPartyRoles, config.platformRoles).map(r => ({ label: r, value: r }));
+    if (allRoles.length === 0) {
+      return interaction.reply({ content: "❌ No roles configured yet!", ephemeral: true });
+    }
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("remove_all_roles_select")

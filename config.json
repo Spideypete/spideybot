@@ -1,3 +1,15 @@
 {
-  "guilds": {}
+  "guilds": {
+    "1235015410743775294": {
+      "welcomeChannelId": "1235015412035358721",
+      "welcomeMessage": "Welcome to our server! 🎉",
+      "gameRoles": [],
+      "watchPartyRoles": [],
+      "platformRoles": [
+        "PC",
+        "PS",
+        "XBOX"
+      ]
+    }
+  }
 }
