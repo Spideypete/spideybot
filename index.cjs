@@ -10,7 +10,7 @@ const {
   ButtonBuilder,
   ButtonStyle
 } = require("discord.js");
-const { useMainPlayer } = require("discord-player");
+const { Player } = require("discord-player");
 require("dotenv").config(); // Loads TOKEN from .env
 const express = require("express"); // For web server
 
@@ -43,7 +43,7 @@ const client = new Client({
 const token = process.env.TOKEN;
 
 // Initialize discord-player
-const player = useMainPlayer();
+const player = new Player(client);
 player.extractors.loadDefault();
 
 // Store active players per guild
