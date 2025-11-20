@@ -457,86 +457,96 @@ client.on("interactionCreate", async (interaction) => {
 
   // Gaming roles
   if (interaction.isButton() && interaction.customId === "claim_roles") {
-    const config = getGuildConfig(interaction.guild.id);
-    if (config.gameRoles.length === 0) {
-      return interaction.reply({ content: "❌ No gaming roles configured! Admin: use //add-game-role [name] [roleID]", ephemeral: true });
+    const allRoles = interaction.guild.roles.cache
+      .filter(r => !r.managed && r.name !== "@everyone")
+      .sort((a, b) => b.position - a.position)
+      .slice(0, 25)
+      .map(r => ({ label: r.name, value: r.id }));
+    
+    if (allRoles.length === 0) {
+      return interaction.reply({ content: "❌ No roles available!", ephemeral: true });
     }
-    const gameRoles = config.gameRoles.map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
+    
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("game_roles")
         .setPlaceholder("Select games...")
         .setMinValues(1)
-        .setMaxValues(gameRoles.length)
-        .addOptions(gameRoles)
+        .setMaxValues(Math.min(allRoles.length, 25))
+        .addOptions(allRoles)
     );
     return interaction.reply({ content: "Select gaming roles:", components: [selectMenu], ephemeral: true });
   }
 
   if (interaction.isStringSelectMenu() && interaction.customId === "game_roles") {
     const member = interaction.member;
-    const config = getGuildConfig(interaction.guild.id);
     const addedRoles = [];
-    const notFoundRoles = [];
+    const failedRoles = [];
 
-    for (const roleValue of interaction.values) {
-      const roleData = config.gameRoles.find(r => (typeof r === 'string' ? r : r.id) === roleValue);
-      const role = interaction.guild.roles.cache.get(roleValue);
+    for (const roleId of interaction.values) {
+      const role = interaction.guild.roles.cache.get(roleId);
       if (role) {
         try {
           await member.roles.add(role);
-          addedRoles.push(typeof roleData === 'string' ? roleData : roleData.name);
+          addedRoles.push(role.name);
         } catch (error) {
-          console.error(`Failed to add role ${roleValue}: ${error.message}`);
+          failedRoles.push(role.name);
+          console.error(`Failed to add role ${roleId}: ${error.message}`);
         }
-      } else {
-        notFoundRoles.push(typeof roleData === 'string' ? roleData : roleData.name);
       }
     }
 
     let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
-    if (notFoundRoles.length > 0) response += `\n⚠️ Not found: ${notFoundRoles.join(", ")}`;
+    if (failedRoles.length > 0) response += `\n⚠️ Failed: ${failedRoles.join(", ")}`;
 
     return interaction.update({ content: response || "No roles added.", components: [] });
   }
 
   // Watch party roles
   if (interaction.isButton() && interaction.customId === "claim_watchparty") {
-    const config = getGuildConfig(interaction.guild.id);
-    if (config.watchPartyRoles.length === 0) {
-      return interaction.reply({ content: "❌ No watch party roles configured! Admin: use //add-watchparty-role [name] [roleID]", ephemeral: true });
+    const allRoles = interaction.guild.roles.cache
+      .filter(r => !r.managed && r.name !== "@everyone")
+      .sort((a, b) => b.position - a.position)
+      .slice(0, 25)
+      .map(r => ({ label: r.name, value: r.id }));
+    
+    if (allRoles.length === 0) {
+      return interaction.reply({ content: "❌ No roles available!", ephemeral: true });
     }
-    const watchPartyRoles = config.watchPartyRoles.map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
+    
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("watchparty_roles")
         .setPlaceholder("Select watch parties...")
         .setMinValues(1)
-        .setMaxValues(watchPartyRoles.length)
-        .addOptions(watchPartyRoles)
+        .setMaxValues(Math.min(allRoles.length, 25))
+        .addOptions(allRoles)
     );
     return interaction.reply({ content: "Select watch party roles:", components: [selectMenu], ephemeral: true });
   }
 
   if (interaction.isStringSelectMenu() && interaction.customId === "watchparty_roles") {
     const member = interaction.member;
-    const config = getGuildConfig(interaction.guild.id);
     const addedRoles = [];
+    const failedRoles = [];
 
-    for (const roleValue of interaction.values) {
-      const roleData = config.watchPartyRoles.find(r => (typeof r === 'string' ? r : r.id) === roleValue);
-      const role = interaction.guild.roles.cache.get(roleValue);
+    for (const roleId of interaction.values) {
+      const role = interaction.guild.roles.cache.get(roleId);
       if (role) {
         try {
           await member.roles.add(role);
-          addedRoles.push(typeof roleData === 'string' ? roleData : roleData.name);
+          addedRoles.push(role.name);
         } catch (error) {
-          console.error(`Failed to add role ${roleValue}: ${error.message}`);
+          failedRoles.push(role.name);
+          console.error(`Failed to add role ${roleId}: ${error.message}`);
         }
       }
     }
 
-    return interaction.update({ content: `✅ Added: ${addedRoles.join(", ")}`, components: [] });
+    let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
+    if (failedRoles.length > 0) response += `\n⚠️ Failed: ${failedRoles.join(", ")}`;
+
+    return interaction.update({ content: response || "No roles added.", components: [] });
   }
 
   // Platform roles
