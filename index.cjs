@@ -210,26 +210,36 @@ client.on("messageCreate", async (msg) => {
   if (msg.content === "//help") {
     const helpEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("🤖 SPIDEY BOT Commands")
-      .setDescription("**ADMIN COMMANDS (Server Setup):**")
+      .setTitle("🤖 SPIDEY BOT - Complete Command Guide")
+      .setDescription("📚 Use commands with `/` prefix for more info!")
       .addFields(
-        { name: "//config-welcome-channel #channel", value: "Set welcome message channel", inline: false },
-        { name: "//config-welcome-message [text]", value: "Set custom welcome message", inline: false },
-        { name: "//create-category [name]", value: "Create a custom role category", inline: false },
-        { name: "//add-role [category] [name] [roleID]", value: "Add a role to a category", inline: false },
-        { name: "//remove-role [category] [name]", value: "Remove a role from a category", inline: false },
-        { name: "//delete-category [name]", value: "Delete an entire category", inline: false },
-        { name: "//list-roles", value: "Show all active role categories", inline: false },
-        { name: "//setup-category [name]", value: "Post role selector button for a category", inline: false },
-        { name: "//remove-roles", value: "Show role remover", inline: false },
-        { name: "\n**MUSIC COMMANDS:**", value: "", inline: false },
-        { name: "//play [song/url]", value: "Play music from YouTube", inline: false },
-        { name: "//queue", value: "Show current queue", inline: false },
-        { name: "Controls: ⏮ ⏸ ▶ ⏭ ⏹", value: "Previous, Pause, Resume, Skip, Stop", inline: false },
-        { name: "\n**OTHER:**", value: "", inline: false },
-        { name: "//ping", value: "Check bot status", inline: false }
+        { name: "🎭 ═══ ROLE CATEGORIES ═══", value: "Create and manage custom role groups", inline: false },
+        { name: "📌 //create-category [name]", value: "Create a new role category", inline: true },
+        { name: "➕ //add-role [category] [name] [ID]", value: "Add role to category", inline: true },
+        { name: "➖ //remove-role [category] [name]", value: "Remove role from category", inline: true },
+        { name: "🗑️ //delete-category [name]", value: "Delete entire category", inline: true },
+        { name: "📋 //list-roles", value: "View all role categories", inline: true },
+        { name: "🔘 //setup-category [name]", value: "Post role selector buttons", inline: true },
+        
+        { name: "👋 ═══ WELCOME ═══", value: "Customize new member welcome messages", inline: false },
+        { name: "💬 //config-welcome-channel #channel", value: "Set welcome message channel", inline: true },
+        { name: "✍️ //config-welcome-message [text]", value: "Set custom welcome message", inline: true },
+        { name: "📝 Placeholders:", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false },
+        
+        { name: "🎵 ═══ MUSIC ═══", value: "Play and control music", inline: false },
+        { name: "🎶 //play [song/url]", value: "Play music from YouTube", inline: true },
+        { name: "📊 //queue", value: "Show next 10 tracks", inline: true },
+        { name: "🎛️ Controls", value: "⏮ Previous | ⏸ Pause | ▶ Resume | ⏭ Skip | ⏹ Stop", inline: false },
+        
+        { name: "🎯 ═══ USER ROLES ═══", value: "Manage your roles", inline: false },
+        { name: "✅ //remove-roles", value: "Remove any of your roles", inline: false },
+        
+        { name: "📞 ═══ INFO ═══", value: "", inline: false },
+        { name: "🏓 //ping", value: "Check bot status", inline: true }
       )
-      .setFooter({ text: "SPIDEY BOT - Multi-Server Ready" });
+      .setThumbnail("https://cdn.discordapp.com/embed/avatars/0.png")
+      .setColor("#5865F2")
+      .setFooter({ text: "SPIDEY BOT v2.0 - Multi-Server Ready 🚀", iconURL: "https://cdn.discordapp.com/embed/avatars/0.png" });
     return msg.reply({ embeds: [helpEmbed] });
   }
 
