@@ -1991,19 +1991,6 @@ client.on("interactionCreate", async (interaction) => {
 });
 
 // ============== WEB SERVER FOR UPTIME & WEBHOOKS ==============
-const app = express();
-app.use(express.static('public'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Session middleware
-const SESSION_SECRET = process.env.SESSION_SECRET || "spidey_secret_key_2025";
-app.use(session({
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 }
-}));
 
 // Admin authentication middleware
 function verifyAdmin(req, res, next) {
@@ -3209,7 +3196,7 @@ app.get("/logout", (req, res) => {
 // ============== ADMIN DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.sendFile(__dirname + "/public/dashboard.html");
+  res.redirect("/dashboard-app");
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
