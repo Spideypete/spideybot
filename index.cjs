@@ -2220,35 +2220,16 @@ function verifyAdmin(req, res, next) {
 // Get invite link
 const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
 
-// ============== ADMIN LOGIN ==============
-app.get("/login", (req, res) => {
-  res.sendFile(__dirname + "/public/login.html");
-});
-
-app.post("/login", express.urlencoded({ extended: true }), (req, res) => {
-  const { username, password } = req.body;
-  // Simple auth - admin/admin (change in production)
-  if (username === "admin" && password === "admin") {
-    req.session.authenticated = true;
-    req.session.username = username;
-    console.log(`✅ Admin logged in: ${username}`);
-    return res.redirect("/dashboard");
-  }
-  console.log(`❌ Failed login: ${username}`);
-  res.redirect("/login?error=1");
-});
-
-app.get("/logout", (req, res) => {
-  req.session.destroy();
-  res.redirect("/");
-});
-
-// Get invite link
-
 // ============== DISCORD OAUTH LOGIN ==============
+// Redirect login page to Discord OAuth
+app.get("/login", (req, res) => {
+  const scopes = ["identify", "guilds"];
+  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
+  res.redirect(authURL);
+});
+
 app.get("/auth/discord", (req, res) => {
   const scopes = ["identify", "guilds"];
-  const permissions = "8";
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
   res.redirect(authURL);
 });
