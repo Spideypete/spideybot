@@ -3465,6 +3465,28 @@ app.post("/api/commands/:guildId", (req, res) => {
   res.json({ success: true });
 });
 
+// ============== ADMIN PANEL CONFIG ENDPOINTS ==============
+const adminConfigs = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
+
+adminConfigs.forEach(configName => {
+  app.post(`/api/config/${configName}`, express.json(), (req, res) => {
+    if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+    
+    const config = loadConfig();
+    const firstGuild = client.guilds.cache.first();
+    if (!firstGuild) return res.json({ success: false, error: "No guild found" });
+    
+    const guildId = firstGuild.id;
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId][configName]) config.guilds[guildId][configName] = {};
+    
+    Object.assign(config.guilds[guildId][configName], req.body);
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ Config saved: ${configName}`);
+    res.json({ success: true, message: `${configName} saved successfully` });
+  });
+});
+
 // ============== API: UPDATE CONFIG ==============
 app.post("/api/config/:guildId", express.json(), (req, res) => {
   if (!req.session.user) return res.status(401).json({ success: false, error: "Not authenticated" });
