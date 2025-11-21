@@ -826,8 +826,6 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">TOOLS <div class="category-toggle active" data-section="tools-menu"></div></div>
                 <ul class="sidebar-menu" id="tools-menu">
-                    <li class="sidebar-item" data-section="recordings">🎙️ Recordings</li>
-                    <li class="sidebar-item" data-section="reminders">⏰ Reminders</li>
                     <li class="sidebar-item" data-section="giveaways">🎁 Giveaways</li>
                 </ul>
             </div>
@@ -3019,119 +3017,209 @@
                     </div>
                 </div>
 
-                <!-- RECORDINGS -->
-                <div id="recordings" class="content">
-                    <div class="page-title">🎙️ Recordings</div>
-                    <div class="page-description">Configure voice recording options</div>
-                    <div class="cards-container">
-                        <div class="card">
-                            <div class="card-header">
-                                <div>
-                                    <div class="card-title">Recording Settings</div>
-                                    <div class="card-subtitle">Voice channel recordings</div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Storage Channel</label>
-                                    <input type="text" id="recordings_channel" placeholder="Channel ID">
-                                </div>
-                                <div class="form-group">
-                                    <label>Duration Limit (min)</label>
-                                    <input type="number" id="recordings_limit" value="60" min="1">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Status</label>
-                                <div class="switch">
-                                    <span>Enabled</span>
-                                    <div class="toggle" id="recordings_enabled"></div>
-                                </div>
-                            </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('recordings')">💾 Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- REMINDERS -->
-                <div id="reminders" class="content">
-                    <div class="page-title">⏰ Reminders</div>
-                    <div class="page-description">Set up automated reminders</div>
-                    <div class="cards-container">
-                        <div class="card">
-                            <div class="card-header">
-                                <div>
-                                    <div class="card-title">Reminder Config</div>
-                                    <div class="card-subtitle">Schedule messages</div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Title</label>
-                                    <input type="text" id="reminders_title" placeholder="Daily Update">
-                                </div>
-                                <div class="form-group">
-                                    <label>Channel</label>
-                                    <input type="text" id="reminders_channel" placeholder="Channel ID">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Time (24h)</label>
-                                    <input type="time" id="reminders_time">
-                                </div>
-                                <div class="form-group">
-                                    <label>Repeat</label>
-                                    <select id="reminders_interval">
-                                        <option value="daily">Daily</option>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('reminders')">💾 Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- GIVEAWAYS -->
                 <div id="giveaways" class="content">
                     <div class="page-title">🎁 Giveaways</div>
-                    <div class="page-description">Manage server giveaways</div>
+                    <div class="page-description">Manage giveaways with reaction entries, role-based access, winner selection, and timed rewards</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Giveaway Settings</div>
-                                    <div class="card-subtitle">Prize management</div>
+                                    <div class="card-title">🎯 Giveaway Overview</div>
+                                    <div class="card-subtitle">How giveaways work</div>
                                 </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📝 Entry Mechanism:</strong><br/>
+                                    Bot posts a giveaway message with an emoji. Users react to enter, and the bot tracks all reactions for winner selection.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🔐 Role-Specific Access:</strong><br/>
+                                    Configure entry requirements - only users with specific roles can enter, or grant access via specific reactions.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🏆 Winner Selection:</strong><br/>
+                                    Bot randomly selects winner(s) from all reactions, assigns winner roles, announces in designated channel.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">⏰ Timed Access:</strong><br/>
+                                    Assign temporary winner roles that auto-remove after set duration for limited-time prizes.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Giveaway Configuration</div>
+                                    <div class="card-subtitle">Create and manage giveaways</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Prize Name</label>
+                                <input type="text" id="giveaways_prize" placeholder="Nitro Boost, Gaming PC, Exclusive Role">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Name of the prize being given away</div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Prize Name</label>
-                                    <input type="text" id="giveaways_prize" placeholder="Nitro Boost">
-                                </div>
-                                <div class="form-group">
-                                    <label>Winners</label>
+                                    <label>Number of Winners</label>
                                     <input type="number" id="giveaways_winners" value="1" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">How many winners to select</div>
                                 </div>
-                            </div>
-                            <div class="form-row">
                                 <div class="form-group">
                                     <label>Duration (hours)</label>
                                     <input type="number" id="giveaways_duration" value="24" min="1">
-                                </div>
-                                <div class="form-group">
-                                    <label>Channel</label>
-                                    <input type="text" id="giveaways_channel" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">How long giveaway runs</div>
                                 </div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('giveaways')">💾 Save</button>
+                            <div class="form-group">
+                                <label>Giveaway Channel</label>
+                                <input type="text" id="giveaways_channel" placeholder="Channel ID">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Where giveaway message is posted</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">📝 Entry Setup</div>
+                                    <div class="card-subtitle">Configure entry mechanism</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Entry Emoji</label>
+                                <input type="text" id="giveaways_emoji" placeholder="🎉" maxlength="5" style="text-align: center; font-size: 1.2rem;">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Emoji users react with to enter</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Giveaway Description/Instructions</label>
+                                <textarea id="giveaways_description" placeholder="React with 🎉 to enter! Winner announced in #announcements" style="min-height: 60px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Message shown in the giveaway post</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔐 Access Control</div>
+                                    <div class="card-subtitle">Control who can enter</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Required Roles to Enter (comma-separated)</label>
+                                <input type="text" id="giveaways_requiredRoles" placeholder="Member,Verified,Supporter">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Users must have ONE of these roles to enter (leave blank for all)</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Blocked Roles (cannot enter)</label>
+                                <input type="text" id="giveaways_blockedRoles" placeholder="Muted,Suspended">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Users with these roles cannot enter</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🏆 Winner Setup</div>
+                                    <div class="card-subtitle">Configure winner announcement and rewards</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Winner Role ID</label>
+                                    <input type="text" id="giveaways_winnerRole" placeholder="123456789">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Role to assign winner(s)</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Announcement Channel</label>
+                                    <input type="text" id="giveaways_announcementChannel" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Where winner is announced</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Winner Role Duration (hours, 0=permanent)</label>
+                                <input type="number" id="giveaways_roleDuration" placeholder="0" min="0">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Auto-remove winner role after this time</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚡ Timed Access & Rewards</div>
+                                    <div class="card-subtitle">Temporary roles and limited-time access</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Assign Temporary Winner Role</span>
+                                    <div class="toggle" id="giveaways_temporaryRole"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>DM Winner Notification</span>
+                                    <div class="toggle active" id="giveaways_dmNotify"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Require Role for Multiplied Entries</span>
+                                    <div class="toggle" id="giveaways_bonusEntries"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Bonus Entries Role (extra reactions count)</label>
+                                <input type="text" id="giveaways_bonusRole" placeholder="Supporter,Premium">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Users with these roles get 2x entry chance</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎯 Advanced Options</div>
+                                    <div class="card-subtitle">Fine-tune giveaway behavior</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Giveaway System Enabled</span>
+                                    <div class="toggle active" id="giveaways_enabled"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Prevent Multiple Entries (1 react per user)</span>
+                                    <div class="toggle active" id="giveaways_preventDupes"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Log Giveaway Activity</span>
+                                    <div class="toggle active" id="giveaways_logging"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Send Embeds</span>
+                                    <div class="toggle active" id="giveaways_embeds"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('giveaways')">💾 Save Giveaway Configuration</button>
                             </div>
                         </div>
                     </div>
