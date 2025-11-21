@@ -3358,30 +3358,30 @@
                             <div class="card-header">
                                 <div>
                                     <div class="card-title">🤖 Bot Core Settings</div>
-                                    <div class="card-subtitle">Essential bot configuration</div>
+                                    <div class="card-subtitle">Creator-only bot configuration</div>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Command Prefix</label>
-                                    <input type="text" id="creator_prefix" placeholder="//" maxlength="5">
-                                    <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Symbol that triggers bot commands (default: //)</div>
+                                    <label>Bot Nickname</label>
+                                    <input type="text" id="creator_botNickname" placeholder="SPIDEY BOT">
+                                    <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Display name for the bot globally</div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Bot Name</label>
-                                    <input type="text" id="creator_botName" placeholder="SPIDEY BOT">
-                                    <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Display name for the bot</div>
+                                    <label>Timezone</label>
+                                    <select id="creator_timezone">
+                                        <option value="GMT">GMT</option>
+                                        <option value="UTC">UTC</option>
+                                        <option value="EST">EST</option>
+                                        <option value="CST">CST</option>
+                                        <option value="MST">MST</option>
+                                        <option value="PST">PST</option>
+                                        <option value="IST">IST</option>
+                                        <option value="JST">JST</option>
+                                        <option value="AEST">AEST</option>
+                                    </select>
+                                    <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Default timezone for the bot (currently: GMT)</div>
                                 </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Bot Status Message</label>
-                                <input type="text" id="creator_statusMessage" placeholder="Protecting Discord Servers">
-                                <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Status shown under bot name</div>
-                            </div>
-                            <div class="form-group">
-                                <label>Support Server URL</label>
-                                <input type="text" id="creator_supportUrl" placeholder="https://discord.gg/...">
-                                <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Link to your Discord support server</div>
                             </div>
                         </div>
                     </div>
@@ -3725,7 +3725,12 @@
             });
 
             try {
-                const response = await fetch(`/api/config/${section}`, {
+                let endpoint = `/api/config/${section}`;
+                if (section === 'creator') {
+                    endpoint = `/api/creator/settings`;
+                }
+                
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -3739,7 +3744,12 @@
 
         async function loadConfig(section) {
             try {
-                const response = await fetch(`/api/config/${section}`);
+                let endpoint = `/api/config/${section}`;
+                if (section === 'creator') {
+                    endpoint = `/api/creator/settings`;
+                }
+                
+                const response = await fetch(endpoint);
                 const data = await response.json();
                 Object.keys(data).forEach(key => {
                     const el = document.getElementById(`${section}_${key}`);
@@ -3814,26 +3824,25 @@
 
         async function loadServers() {
             try {
-                const response = await fetch('/api/dashboard/stats');
+                const response = await fetch('/api/creator/servers');
                 const data = await response.json();
                 const serverSelect = document.getElementById('serverSelect');
                 
-                // Mock servers for demo - replace with actual API call
-                const servers = [
-                    { id: 'server1', name: 'Main Server' },
-                    { id: 'server2', name: 'Support Server' },
-                    { id: 'server3', name: 'Gaming Community' }
-                ];
+                if (!data.servers || data.servers.length === 0) {
+                    serverSelect.innerHTML = '<option value="">No servers found</option>';
+                    return;
+                }
                 
                 serverSelect.innerHTML = '';
-                servers.forEach(server => {
+                data.servers.forEach(server => {
                     const option = document.createElement('option');
                     option.value = server.id;
-                    option.textContent = server.name;
+                    option.textContent = `${server.name} (${server.memberCount} members)`;
                     serverSelect.appendChild(option);
                 });
             } catch (err) {
                 console.error('Error loading servers:', err);
+                document.getElementById('serverSelect').innerHTML = '<option value="">Error loading servers</option>';
             }
         }
 

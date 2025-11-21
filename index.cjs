@@ -2679,6 +2679,48 @@ app.get("/api/dashboard/top-members", (req, res) => {
   res.json({ members });
 });
 
+// ============== CREATOR ONLY APIS ==============
+
+// Get all servers the bot is in
+app.get("/api/creator/servers", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  
+  const servers = client.guilds.cache.map(guild => ({
+    id: guild.id,
+    name: guild.name,
+    icon: guild.iconURL(),
+    memberCount: guild.memberCount
+  }));
+  
+  res.json({ servers });
+});
+
+// Get creator settings (bot nickname, timezone)
+app.get("/api/creator/settings", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  
+  const config = loadConfig();
+  const creatorSettings = config.creator || {
+    botNickname: "SPIDEY BOT",
+    timezone: "GMT"
+  };
+  
+  res.json(creatorSettings);
+});
+
+// Save creator settings
+app.post("/api/creator/settings", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  
+  const config = loadConfig();
+  config.creator = config.creator || {};
+  config.creator.botNickname = req.body.botNickname || "SPIDEY BOT";
+  config.creator.timezone = req.body.timezone || "GMT";
+  
+  fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+  res.json({ success: true, settings: config.creator });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Web server running on port ${PORT}`);

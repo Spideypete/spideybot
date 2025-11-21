@@ -1,4 +1,8 @@
 {
+  "creator": {
+    "botNickname": "SPIDEY BOT",
+    "timezone": "GMT"
+  },
   "guilds": {
     "1235015410743775294": {
       "welcomeChannelId": "1235015412035358721",
