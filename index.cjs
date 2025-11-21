@@ -3116,66 +3116,257 @@ app.get("/login", (req, res) => {
         <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
         <title>SPIDEY BOT - Admin Login</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0a0e27 0%, #1a0f3d 100%); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; }
-          .auth-wrapper { display: flex; width: 100%; max-width: 900px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
-          .auth-left { flex: 1; background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%); padding: 3rem; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #fff; }
-          .auth-left h2 { font-size: 2rem; margin-bottom: 1rem; font-weight: 700; }
-          .auth-left p { font-size: 1rem; opacity: 0.9; margin-bottom: 2rem; }
-          .auth-left img { height: 80px; margin-bottom: 1rem; }
-          .auth-right { flex: 1; background: rgba(20, 26, 60, 0.8); backdrop-filter: blur(10px); padding: 3rem; display: flex; flex-direction: column; justify-content: center; }
-          h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: #fff; font-weight: 700; }
-          .subtitle { color: #aaa; margin-bottom: 2rem; font-size: 0.95rem; }
-          .form-group { margin-bottom: 1.5rem; }
-          label { display: block; margin-bottom: 0.6rem; color: #ddd; font-weight: 500; font-size: 0.9rem; }
-          input { width: 100%; padding: 1rem; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(145, 70, 255, 0.3); border-radius: 8px; color: #fff; font-size: 1rem; transition: all 0.3s; font-family: 'Poppins', sans-serif; }
-          input:focus { outline: none; border-color: #9146FF; background: rgba(0, 0, 0, 0.5); box-shadow: 0 0 15px rgba(145, 70, 255, 0.3); }
-          button { width: 100%; padding: 1rem; background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 1rem; transition: all 0.3s; margin-top: 0.5rem; }
-          button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(145, 70, 255, 0.4); }
-          .error { background: rgba(255, 68, 68, 0.1); border: 1px solid #ff4444; color: #ff8888; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; }
-          .recaptcha-wrapper { margin: 1.5rem 0; }
-          .link { text-align: center; margin-top: 1.5rem; color: #aaa; font-size: 0.9rem; }
-          .link a { color: #9146FF; text-decoration: none; font-weight: 600; }
-          .link a:hover { text-decoration: underline; }
-          .divider { text-align: center; margin: 1.5rem 0; color: #555; }
-          @media (max-width: 768px) { .auth-wrapper { flex-direction: column; } .auth-left { padding: 2rem; } .auth-right { padding: 2rem; } }
+          body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+          }
+          body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(145, 70, 255, 0.05) 50%, transparent 70%);
+            pointer-events: none;
+          }
+          .corner-pattern {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border: 1px solid rgba(145, 70, 255, 0.15);
+            opacity: 0.5;
+          }
+          .corner-pattern.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+          .corner-pattern.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+          .corner-pattern.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+          .corner-pattern.br { bottom: 0; right: 0; border-left: none; border-top: none; }
+          .container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 360px;
+          }
+          .logo-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+          }
+          .logo-text {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #9146FF;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+          }
+          .form-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+          }
+          h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+          }
+          .subtitle {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+          }
+          .error {
+            background: #fee;
+            border: 1px solid #f99;
+            color: #c33;
+            padding: 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+          }
+          .form-group {
+            margin-bottom: 1.2rem;
+          }
+          label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+          }
+          input[type="text"],
+          input[type="password"] {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            color: #1a1a1a;
+          }
+          input[type="text"]::placeholder,
+          input[type="password"]::placeholder {
+            color: #999;
+          }
+          input[type="text"]:focus,
+          input[type="password"]:focus {
+            outline: none;
+            border-color: #9146FF;
+            box-shadow: 0 0 0 3px rgba(145, 70, 255, 0.1);
+          }
+          .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+          }
+          .remember {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+          input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #9146FF;
+          }
+          .remember label {
+            margin: 0;
+            cursor: pointer;
+            color: #666;
+          }
+          .forgot {
+            color: #9146FF;
+            text-decoration: none;
+            font-weight: 500;
+          }
+          .forgot:hover {
+            text-decoration: underline;
+          }
+          .recaptcha-wrapper {
+            margin-bottom: 1.5rem;
+            transform: scale(0.92);
+            transform-origin: 0 0;
+          }
+          button {
+            width: 100%;
+            padding: 0.9rem;
+            background: #9146FF;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+          button:hover {
+            background: #7C3AED;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(145, 70, 255, 0.3);
+          }
+          .signup-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: #666;
+          }
+          .signup-link a {
+            color: #9146FF;
+            text-decoration: none;
+            font-weight: 600;
+          }
+          .signup-link a:hover {
+            text-decoration: underline;
+          }
+          .back-home {
+            margin-top: 1rem;
+            text-align: center;
+          }
+          .back-home a {
+            color: #9146FF;
+            text-decoration: none;
+            font-size: 0.8rem;
+          }
+          @media (max-width: 480px) {
+            .form-card { padding: 1.5rem; }
+            h1 { font-size: 1.3rem; }
+            .corner-pattern { width: 100px; height: 100px; }
+          }
         </style>
       </head>
       <body>
-        <div class="auth-wrapper">
-          <div class="auth-left">
-            <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
-            <h2>SPIDEY BOT</h2>
-            <p>Login and start managing</p>
-            <p style="font-size: 0.85rem; opacity: 0.8;">Access your server dashboard instantly</p>
+        <div class="corner-pattern tl"></div>
+        <div class="corner-pattern tr"></div>
+        <div class="corner-pattern bl"></div>
+        <div class="corner-pattern br"></div>
+        
+        <div class="container">
+          <div class="logo-section">
+            <div class="logo-text">🎵 SPIDEY</div>
           </div>
-          <div class="auth-right">
+          
+          <div class="form-card">
             <h1>Admin Login</h1>
-            <p class="subtitle">Access the SPIDEY BOT control panel</p>
+            <p class="subtitle">Please enter your details</p>
+            
             ${req.query.error ? '<div class="error">❌ Invalid username or password</div>' : ''}
+            
             <form method="POST" action="/login">
               <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required autofocus placeholder="Enter your username">
+                <input type="text" id="username" name="username" required autofocus placeholder="your-username">
               </div>
+              
               <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Enter your password">
+                <input type="password" id="password" name="password" required placeholder="••••••••">
               </div>
+              
+              <div class="form-footer">
+                <div class="remember">
+                  <input type="checkbox" id="remember" name="remember">
+                  <label for="remember">Remember me</label>
+                </div>
+                <a href="#" class="forgot">Forgot Password?</a>
+              </div>
+              
               <div class="recaptcha-wrapper">
                 <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
               </div>
-              <button type="submit">🔐 Login</button>
+              
+              <button type="submit">Login</button>
             </form>
-            <div class="divider">or</div>
-            <div class="link">
-              <p>Don't have an account? <a href="/register">Sign up here</a></p>
-              <p><a href="/" style="color: #999;">← Back to Home</a></p>
+            
+            <div class="signup-link">
+              Don't have an account? <a href="/register">Sign up</a>
+            </div>
+            
+            <div class="back-home">
+              <a href="/">← Back to Home</a>
             </div>
           </div>
         </div>
+        
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
       </body>
     </html>
