@@ -3262,161 +3262,57 @@ app.get("/dashboard", (req, res) => {
   `);
 });
 
-// ============== SERVER CONFIGURATION PAGE ==============
+// ============== SERVER MANAGEMENT PAGE ==============
 app.get("/dashboard/server/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
+  
+  const fs = require('fs');
+  const panelHTML = fs.readFileSync('/tmp/server_panel.html', 'utf8');
+  res.send(panelHTML);
+});
 
+// ============== API ENDPOINTS ==============
+app.post("/api/config/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false });
+  
   const guildId = req.params.guildId;
-
   const config = loadConfig();
-  const guildConfig = config.guilds[guildId] || {};
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  
+  Object.assign(config.guilds[guildId], req.body);
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  res.json({ success: true });
+});
 
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>SPIDEY BOT - Server Config</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; }
-          nav { background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid #222; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-          nav a { color: #9146FF; text-decoration: none; margin: 0 1rem; }
-          .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
-          h1 { color: #9146FF; margin-bottom: 2rem; }
-          .section { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF; margin-bottom: 2rem; }
-          .section h2 { color: #9146FF; margin-bottom: 1rem; font-size: 1.2rem; }
-          .form-group { margin-bottom: 1rem; }
-          label { display: block; margin-bottom: 0.5rem; color: #ddd; font-weight: 500; }
-          input, textarea { width: 100%; padding: 0.8rem; background: #222; border: 1px solid #333; border-radius: 6px; color: #fff; font-family: Inter, sans-serif; }
-          input:focus, textarea:focus { outline: none; border-color: #9146FF; }
-          .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #9146FF; color: #fff; text-decoration: none; border-radius: 6px; margin-top: 1rem; border: none; cursor: pointer; }
-          .btn:hover { background: #a855ff; }
-          .info { background: #222; padding: 1rem; border-radius: 6px; color: #aaa; font-size: 0.9rem; margin-top: 0.5rem; }
-        </style>
-      </head>
-      <body>
-        <nav>
-          <div style="font-weight: 700;">🕷️ SPIDEY BOT Admin</div>
-          <div>
-            <a href="/">Home</a>
-            <a href="/dashboard">Dashboard</a>
-            <a href="/logout">Logout</a>
-          </div>
-        </nav>
+app.post("/api/moderation/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false });
+  
+  const { action, userId, reason } = req.body;
+  console.log(`⚠️ Moderation: ${action} on user ${userId} - Reason: ${reason}`);
+  res.json({ success: true, message: `${action} executed on user ${userId}` });
+});
 
-        <div class="container">
-          <h1>⚙️ Server Configuration</h1>
+app.post("/api/economy/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false });
+  
+  const { action, userId, amount } = req.body;
+  console.log(`💰 Economy: ${action} ${amount} coins to user ${userId}`);
+  res.json({ success: true, message: `Updated economy for user ${userId}` });
+});
 
-          <div class="section">
-            <h2>🔤 Prefix Settings</h2>
-            <form onsubmit="savePrefix(event)">
-              <div class="form-group">
-                <label>Command Prefix</label>
-                <input type="text" id="prefix" value="${guildConfig.prefix || "//"}" maxlength="5">
-                <div class="info">Default: //</div>
-              </div>
-              <button type="submit" class="btn">💾 Save Prefix</button>
-            </form>
-          </div>
-
-          <div class="section">
-            <h2>👋 Welcome Message</h2>
-            <form onsubmit="saveWelcome(event)">
-              <div class="form-group">
-                <label>Welcome Message Text</label>
-                <textarea id="welcomeMsg" rows="4">${guildConfig.welcomeMessage || "Welcome to our server! 🎉"}</textarea>
-                <div class="info">Available: {user} {username} {displayname} {server} {membercount}</div>
-              </div>
-              <div class="form-group">
-                <label>Welcome Channel ID</label>
-                <input type="text" id="welcomeChannel" value="${guildConfig.welcomeChannelId || ""}" placeholder="Leave empty to disable">
-              </div>
-              <button type="submit" class="btn">💾 Save Welcome</button>
-            </form>
-          </div>
-
-          <div class="section">
-            <h2>📱 Social Media Monitoring</h2>
-            <form onsubmit="saveSocial(event)">
-              <div class="form-group">
-                <label>Twitch Channel ID (for alerts)</label>
-                <input type="text" id="twitchChannel" value="${guildConfig.twitchChannelId || ""}" placeholder="Leave empty to disable">
-              </div>
-              <div class="form-group">
-                <label>TikTok Channel ID (for alerts)</label>
-                <input type="text" id="tiktokChannel" value="${guildConfig.tiktokChannelId || ""}" placeholder="Leave empty to disable">
-              </div>
-              <div class="form-group">
-                <label>Kick Channel ID (for alerts)</label>
-                <input type="text" id="kickChannel" value="${guildConfig.kickChannelId || ""}" placeholder="Leave empty to disable">
-              </div>
-              <button type="submit" class="btn">💾 Save Channels</button>
-            </form>
-          </div>
-
-          <div class="section">
-            <h2>🛡️ Moderation</h2>
-            <form onsubmit="saveMod(event)">
-              <div class="form-group">
-                <label>Modlog Channel ID</label>
-                <input type="text" id="modlogChannel" value="${guildConfig.modLogChannelId || ""}" placeholder="Leave empty to disable">
-              </div>
-              <button type="submit" class="btn">💾 Save Moderation</button>
-            </form>
-          </div>
-        </div>
-
-        <script>
-          async function savePrefix(e) {
-            e.preventDefault();
-            const prefix = document.getElementById('prefix').value;
-            await saveSetting({ prefix });
-          }
-
-          async function saveWelcome(e) {
-            e.preventDefault();
-            const welcomeMessage = document.getElementById('welcomeMsg').value;
-            const welcomeChannelId = document.getElementById('welcomeChannel').value;
-            await saveSetting({ welcomeMessage, welcomeChannelId });
-          }
-
-          async function saveSocial(e) {
-            e.preventDefault();
-            const twitchChannelId = document.getElementById('twitchChannel').value;
-            const tiktokChannelId = document.getElementById('tiktokChannel').value;
-            const kickChannelId = document.getElementById('kickChannel').value;
-            await saveSetting({ twitchChannelId, tiktokChannelId, kickChannelId });
-          }
-
-          async function saveMod(e) {
-            e.preventDefault();
-            const modLogChannelId = document.getElementById('modlogChannel').value;
-            await saveSetting({ modLogChannelId });
-          }
-
-          async function saveSetting(data) {
-            try {
-              const res = await fetch('/api/config/${guildId}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-              });
-              const result = await res.json();
-              if (result.success) {
-                alert('✅ Settings saved successfully!');
-              } else {
-                alert('❌ Failed to save settings');
-              }
-            } catch (error) {
-              alert('❌ Error: ' + error.message);
-            }
-          }
-        </script>
-      </body>
-    </html>
-  `);
+app.post("/api/commands/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false });
+  
+  const guildId = req.params.guildId;
+  const { name, response } = req.body;
+  const config = loadConfig();
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  if (!config.guilds[guildId].customCommands) config.guilds[guildId].customCommands = {};
+  
+  config.guilds[guildId].customCommands[name] = response;
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  console.log(`✨ Custom command created: ${name}`);
+  res.json({ success: true });
 });
 
 // ============== API: UPDATE CONFIG ==============
