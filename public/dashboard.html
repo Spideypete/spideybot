@@ -2404,13 +2404,39 @@
                 <!-- SUBSCRIPTIONS -->
                 <div id="subscriptions" class="content">
                     <div class="page-title">💳 Subscriptions</div>
-                    <div class="page-description">Manage premium tier settings</div>
+                    <div class="page-description">Manage subscription tiers, notification roles, and member access control</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Premium Settings</div>
-                                    <div class="card-subtitle">Subscription management</div>
+                                    <div class="card-title">📋 Subscription Overview</div>
+                                    <div class="card-subtitle">Role-based access system</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📌 Purpose:</strong><br/>
+                                    Manage subscription tiers and notification/ping roles for event updates, announcements, and content access.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎯 Features:</strong><br/>
+                                    Tier-based role assignment, exclusive channel access, notification roles, and automated permission management.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">⚙️ Automation:</strong><br/>
+                                    Roles auto-assigned on tier purchase, removed on cancellation, with real-time access control updates.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">💰 Premium Tier Settings</div>
+                                    <div class="card-subtitle">Configure subscription options</div>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -2419,21 +2445,106 @@
                                     <option value="free">Free</option>
                                     <option value="silver">Silver ($5/mo)</option>
                                     <option value="gold">Gold ($15/mo)</option>
+                                    <option value="platinum">Platinum ($25/mo)</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Features</label>
-                                <textarea id="subscriptions_features" placeholder="List premium features..."></textarea>
+                                <label>Premium Features</label>
+                                <textarea id="subscriptions_features" placeholder="Advanced analytics, exclusive channels, priority support, custom commands..." style="min-height: 80px;"></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Status</label>
-                                <div class="switch">
-                                    <span>Enabled</span>
-                                    <div class="toggle active" id="subscriptions_enabled"></div>
+                                <label>Tier Role IDs (comma-separated)</label>
+                                <input type="text" id="subscriptions_roles" placeholder="123456789,987654321">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Discord role IDs to assign per tier</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔔 Notification Roles</div>
+                                    <div class="card-subtitle">Event pings and announcements</div>
                                 </div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('subscriptions')">💾 Save</button>
+                            <div class="form-group">
+                                <label>Available Ping Roles (comma-separated)</label>
+                                <textarea id="subscriptions_pingRoles" placeholder="event-pings, announcement-pings, stream-alerts, giveaway-alerts" style="min-height: 80px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Roles for different notification types</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Allow Self-Assignment</span>
+                                    <div class="toggle active" id="subscriptions_selfAssign"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Ping Announcements Enabled</span>
+                                    <div class="toggle active" id="subscriptions_pingEnabled"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔐 Access Control & Organization</div>
+                                    <div class="card-subtitle">Manage permissions and channels</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Premium-Only Channels (comma-separated IDs)</label>
+                                <textarea id="subscriptions_channels" placeholder="123456789,987654321,456123789" style="min-height: 60px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Channels accessible only to subscribers</div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Role Hierarchy Level</label>
+                                    <input type="number" id="subscriptions_hierarchy" placeholder="1" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Role priority (1=highest)</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Auto-Removal Days</label>
+                                    <input type="number" id="subscriptions_autoRemove" placeholder="30" min="0">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Remove role after X days inactive (0=disabled)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">📊 Enhanced Engagement</div>
+                                    <div class="card-subtitle">Boost community interaction</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Subscription System Enabled</span>
+                                    <div class="toggle active" id="subscriptions_enabled"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Member Engagement Tracking</span>
+                                    <div class="toggle active" id="subscriptions_tracking"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Tier Upgrade Notifications</span>
+                                    <div class="toggle active" id="subscriptions_notifications"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('subscriptions')">💾 Save Subscription Configuration</button>
                             </div>
                         </div>
                     </div>
@@ -2442,32 +2553,129 @@
                 <!-- INVITE TRACKING -->
                 <div id="invite-tracking" class="content">
                     <div class="page-title">📊 Invite Tracking</div>
-                    <div class="page-description">Monitor server invites</div>
+                    <div class="page-description">Monitor server invites with historical logs, audit trail, and top inviters leaderboard</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Invite Settings</div>
-                                    <div class="card-subtitle">Track who invited members</div>
+                                    <div class="card-title">📋 Tracking Overview</div>
+                                    <div class="card-subtitle">Complete invite audit system</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎯 Logging:</strong><br/>
+                                    Track all role changes and invites in dedicated audit channels with timestamps and user info.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📜 Historical:</strong><br/>
+                                    View complete invite history showing who invited each member, when, and using which invite code.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">🏆 Leaderboard:</strong><br/>
+                                    Top inviter rankings with stats on total recruits, active members brought, and invite performance.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Basic Configuration</div>
+                                    <div class="card-subtitle">Set up invite tracking</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Tracking Channel</label>
+                                    <input type="text" id="invite-tracking_channel" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Where invite events are logged</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Audit Log Channel</label>
+                                    <input type="text" id="invite-tracking_auditChannel" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Detailed audit trail for admins</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">📜 Historical Tracking</div>
+                                    <div class="card-subtitle">Maintain complete invite history</div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Tracking Channel</label>
-                                <input type="text" id="invite-tracking_channel" placeholder="Channel ID">
-                            </div>
-                            <div class="form-group">
-                                <label>Tracking Options</label>
-                                <div class="switch">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>Enable Tracking</span>
                                     <div class="toggle active" id="invite-tracking_enabled"></div>
                                 </div>
-                                <div class="switch" style="margin-top: 0.75rem;">
-                                    <span>Track Creator</span>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Track Creator Info</span>
                                     <div class="toggle active" id="invite-tracking_creator"></div>
                                 </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Store Historical Data</span>
+                                    <div class="toggle active" id="invite-tracking_history"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Track Past Invites</span>
+                                    <div class="toggle active" id="invite-tracking_past"></div>
+                                </div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('invite-tracking')">💾 Save</button>
+                            <div class="form-group">
+                                <label>History Retention (days)</label>
+                                <input type="number" id="invite-tracking_retention" placeholder="90" min="0">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">0 = Keep forever</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🏆 Top Inviters Leaderboard</div>
+                                    <div class="card-subtitle">Invite performance rankings</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Leaderboard Channel</label>
+                                    <input type="text" id="invite-tracking_leaderboard" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Where top inviters are displayed</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Update Frequency (hours)</label>
+                                    <input type="number" id="invite-tracking_leaderboardUpdate" placeholder="1" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">How often to refresh rankings</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Leaderboard Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Show Top 10</span>
+                                    <div class="toggle active" id="invite-tracking_leaderboardShow"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Award Top Inviter Role</span>
+                                    <div class="toggle active" id="invite-tracking_leaderboardRole"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('invite-tracking')">💾 Save Invite Tracking Configuration</button>
                             </div>
                         </div>
                     </div>
@@ -2509,38 +2717,135 @@
 
                 <!-- STATISTICS CHANNELS -->
                 <div id="statistics-channels" class="content">
-                    <div class="page-title">📉 Statistics Channels</div>
-                    <div class="page-description">Display real-time stats</div>
+                    <div class="page-title">📈 Statistics & Analytics</div>
+                    <div class="page-description">Display real-time Discord stats, graphs, and server analytics in dedicated channels</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Stats Channels</div>
-                                    <div class="card-subtitle">Configure stat displays</div>
+                                    <div class="card-title">📊 Stats Overview</div>
+                                    <div class="card-subtitle">Real-time server metrics</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📈 What It Tracks:</strong><br/>
+                                    Member count, message activity, role distribution, voice channel usage, and engagement trends.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📉 Graph Displays:</strong><br/>
+                                    Visual charts showing growth over time, activity patterns, and community health metrics.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">🔄 Live Updates:</strong><br/>
+                                    Auto-updating channel names or embedded messages with latest statistics.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Statistics Channels</div>
+                                    <div class="card-subtitle">Configure stat display channels</div>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Members Channel</label>
+                                    <label>Members Count Channel</label>
                                     <input type="text" id="statistics-channels_members" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Total member count display</div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Messages Channel</label>
+                                    <label>Messages Activity Channel</label>
                                     <input type="text" id="statistics-channels_messages" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Total messages sent</div>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Roles Channel</label>
+                                    <label>Roles Distribution Channel</label>
                                     <input type="text" id="statistics-channels_roles" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Active roles count</div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Update (minutes)</label>
-                                    <input type="number" id="statistics-channels_update" value="10" min="5">
+                                    <label>Voice Activity Channel</label>
+                                    <input type="text" id="statistics-channels_voice" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Voice channel statistics</div>
                                 </div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('statistics-channels')">💾 Save</button>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">📊 Graph & Analytics</div>
+                                    <div class="card-subtitle">Visual data presentation</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Analytics Channel</label>
+                                <input type="text" id="statistics-channels_analytics" placeholder="Channel ID">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Where graphs and charts are posted</div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Update Frequency (minutes)</label>
+                                    <input type="number" id="statistics-channels_update" value="10" min="5">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">How often stats refresh</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Graph Type</label>
+                                    <select id="statistics-channels_graphType">
+                                        <option value="line">📈 Line Chart</option>
+                                        <option value="bar">📊 Bar Chart</option>
+                                        <option value="pie">🥧 Pie Chart</option>
+                                        <option value="mixed">🎨 Mixed Charts</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎯 Advanced Settings</div>
+                                    <div class="card-subtitle">Fine-tune analytics</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Statistics Enabled</span>
+                                    <div class="toggle active" id="statistics-channels_enabled"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Auto-Update Channel Names</span>
+                                    <div class="toggle active" id="statistics-channels_autoUpdate"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Show Growth Trends</span>
+                                    <div class="toggle active" id="statistics-channels_trends"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Display Daily Report</span>
+                                    <div class="toggle active" id="statistics-channels_report"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('statistics-channels')">💾 Save Statistics Configuration</button>
                             </div>
                         </div>
                     </div>
@@ -2548,37 +2853,167 @@
 
                 <!-- SOCIAL NOTIFICATIONS -->
                 <div id="social-notifs" class="content">
-                    <div class="page-title">📱 Social Notifications</div>
-                    <div class="page-description">Monitor social media streams</div>
+                    <div class="page-title">📱 Social Media Monitoring</div>
+                    <div class="page-description">Monitor Twitch streams, TikTok posts, Kick streams with automated alerts and notifications</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Platform Settings</div>
-                                    <div class="card-subtitle">Twitch, TikTok, Kick alerts</div>
+                                    <div class="card-title">📡 Platform Integration</div>
+                                    <div class="card-subtitle">Connect social media accounts</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎬 Twitch:</strong><br/>
+                                    Stream live alerts, viewer count notifications, and follower updates to dedicated channel.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎵 TikTok:</strong><br/>
+                                    Monitor new TikTok posts, video uploads, and trending content from followed creators.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">⚡ Kick:</strong><br/>
+                                    Track Kick livestreams, stream starts, and channel updates in real-time.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎬 Twitch Configuration</div>
+                                    <div class="card-subtitle">Setup Twitch stream monitoring</div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Notification Channel</label>
                                 <input type="text" id="social-notifs_channel" placeholder="Channel ID">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Where Twitch alerts are posted</div>
                             </div>
                             <div class="form-group">
-                                <label>Enabled Platforms</label>
-                                <div class="switch">
-                                    <span>Twitch</span>
+                                <label>Twitch Channels to Monitor (comma-separated)</label>
+                                <textarea id="social-notifs_twitchChannels" placeholder="streamer1,streamer2,streamer3" style="min-height: 60px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Twitch usernames to track</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Twitch Enabled</span>
                                     <div class="toggle active" id="social-notifs_twitch"></div>
                                 </div>
-                                <div class="switch" style="margin-top: 0.75rem;">
-                                    <span>TikTok</span>
-                                    <div class="toggle active" id="social-notifs_tiktok"></div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Stream Live Alerts</span>
+                                    <div class="toggle active" id="social-notifs_twitchLive"></div>
                                 </div>
-                                <div class="switch" style="margin-top: 0.75rem;">
-                                    <span>Kick</span>
-                                    <div class="toggle active" id="social-notifs_kick"></div>
+                                <div class="switch">
+                                    <span>Ping Role on Stream</span>
+                                    <div class="toggle active" id="social-notifs_twitchPing"></div>
                                 </div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('social-notifs')">💾 Save</button>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎵 TikTok Configuration</div>
+                                    <div class="card-subtitle">Monitor TikTok content</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>TikTok Accounts to Monitor (comma-separated)</label>
+                                <textarea id="social-notifs_tiktokAccounts" placeholder="creator1,creator2,creator3" style="min-height: 60px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">TikTok usernames to track (without @)</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>TikTok Enabled</span>
+                                    <div class="toggle active" id="social-notifs_tiktok"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>New Post Alerts</span>
+                                    <div class="toggle active" id="social-notifs_tiktokPosts"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Trending Content Alerts</span>
+                                    <div class="toggle active" id="social-notifs_tiktokTrending"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚡ Kick Configuration</div>
+                                    <div class="card-subtitle">Monitor Kick livestreams</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Kick Channels to Monitor (comma-separated)</label>
+                                <textarea id="social-notifs_kickChannels" placeholder="streamer1,streamer2,streamer3" style="min-height: 60px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Kick channel usernames to track</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Kick Enabled</span>
+                                    <div class="toggle active" id="social-notifs_kick"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Stream Live Alerts</span>
+                                    <div class="toggle active" id="social-notifs_kickLive"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Notify on Stream Start</span>
+                                    <div class="toggle active" id="social-notifs_kickNotify"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Global Settings</div>
+                                    <div class="card-subtitle">Common notification preferences</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Default Ping Role</label>
+                                <input type="text" id="social-notifs_pingRole" placeholder="Role ID">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Role to mention on alerts (optional)</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>System Enabled</span>
+                                    <div class="toggle active" id="social-notifs_enabled"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Embed Notifications</span>
+                                    <div class="toggle active" id="social-notifs_embeds"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Daily Summary</span>
+                                    <div class="toggle" id="social-notifs_summary"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('social-notifs')">💾 Save Social Media Configuration</button>
                             </div>
                         </div>
                     </div>
