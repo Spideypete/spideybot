@@ -2282,16 +2282,21 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
   
   try {
-    const tokenRes = await axios.post("https://discord.com/api/oauth2/token", null, {
-      params: {
+    const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
+      new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         client_secret: DISCORD_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
         redirect_uri: REDIRECT_URI,
         scope: "identify guilds"
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        }
       }
-    });
+    );
     
     const { access_token } = tokenRes.data;
     const userRes = await axios.get("https://discord.com/api/users/@me", {
