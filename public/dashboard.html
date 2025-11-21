@@ -855,6 +855,18 @@
                 <div class="sidebar-section-title">TOOLS <div class="category-toggle active" data-section="tools-menu"></div></div>
                 <ul class="sidebar-menu" id="tools-menu">
                     <li class="sidebar-item" data-section="giveaways">🎁 Giveaways</li>
+                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">🎨 UI Colour</div>
+                        <select id="themeColor" onchange="changeThemeColor(this.value)" class="color-dropdown" style="width: 100%;">
+                            <option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
+                        </select>
+                    </li>
+                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem;">
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">📝 Text Colour</div>
+                        <select id="textColor" onchange="changeTextColor(this.value)" class="color-dropdown" style="width: 100%;">
+                            <option value="white">⚪ White</option><option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
+                        </select>
+                    </li>
                 </ul>
             </div>
 
@@ -887,31 +899,6 @@
             <!-- Header -->
             <div class="header">
                 <div class="header-left">
-                    <select id="themeColor" onchange="changeThemeColor(this.value)" class="color-dropdown">
-                        <option value="purple" style="background: #000; color: #fff;">🟣 Purple</option>
-                        <option value="pink" style="background: #000; color: #fff;">🩷 Pink</option>
-                        <option value="blue" style="background: #000; color: #fff;">🔵 Blue</option>
-                        <option value="cyan" style="background: #000; color: #fff;">🔷 Cyan</option>
-                        <option value="green" style="background: #000; color: #fff;">🟢 Green</option>
-                        <option value="black" style="background: #000; color: #fff;">⚫ Black</option>
-                        <option value="grey" style="background: #000; color: #fff;">⚪ Grey</option>
-                        <option value="violet" style="background: #000; color: #fff;">💜 Violet</option>
-                        <option value="baby-blue" style="background: #000; color: #fff;">👶 Baby Blue</option>
-                        <option value="baby-pink" style="background: #000; color: #fff;">👶 Baby Pink</option>
-                        <option value="red" style="background: #000; color: #fff;">🔴 Red</option>
-                        <option value="yellow" style="background: #000; color: #fff;">🟡 Yellow</option>
-                        <option value="orange" style="background: #000; color: #fff;">🟠 Orange</option>
-                        <option value="teal" style="background: #000; color: #fff;">🧿 Teal</option>
-                        <option value="lime" style="background: #000; color: #fff;">💚 Lime</option>
-                        <option value="turquoise" style="background: #000; color: #fff;">💎 Turquoise</option>
-                        <option value="coral" style="background: #000; color: #fff;">🪸 Coral</option>
-                        <option value="indigo" style="background: #000; color: #fff;">🟦 Indigo</option>
-                        <option value="maroon" style="background: #000; color: #fff;">🟫 Maroon</option>
-                        <option value="navy" style="background: #000; color: #fff;">⬛ Navy</option>
-                        <option value="olive" style="background: #000; color: #fff;">🟩 Olive</option>
-                        <option value="salmon" style="background: #000; color: #fff;">🐟 Salmon</option>
-                        <option value="gold" style="background: #000; color: #fff;">✨ Gold</option>
-                    </select>
                     <div class="mode-toggle-container">
                         <span style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; margin-right: 0.75rem;">🌙</span>
                         <div class="mode-toggle active" id="modeToggle" onclick="toggleMode()"></div>
@@ -3786,12 +3773,59 @@
                 'baby-pink': '255, 192, 203',
                 'red': '255, 67, 67',
                 'yellow': '255, 223, 0',
-                'orange': '255, 140, 0'
+                'orange': '255, 140, 0',
+                'teal': '0, 128, 128',
+                'lime': '50, 205, 50',
+                'turquoise': '64, 224, 208',
+                'coral': '255, 127, 80',
+                'indigo': '75, 0, 130',
+                'maroon': '128, 0, 0',
+                'navy': '0, 0, 128',
+                'olive': '128, 128, 0',
+                'salmon': '250, 128, 114',
+                'gold': '255, 215, 0',
+                'mint': '62, 180, 137',
+                'rose': '255, 102, 178'
             };
             
             const rgbValue = colorMap[color];
             document.documentElement.style.setProperty('--theme-color', rgbValue);
             localStorage.setItem('selectedColor', color);
+        }
+
+        function changeTextColor(color) {
+            const textColorMap = {
+                'white': '#ffffff',
+                'purple': '#8000ff',
+                'pink': '#ff69b4',
+                'blue': '#1e90ff',
+                'cyan': '#00ffff',
+                'green': '#22c55e',
+                'black': '#000000',
+                'grey': '#808080',
+                'violet': '#8b008b',
+                'baby-blue': '#add8e6',
+                'baby-pink': '#ffc0cb',
+                'red': '#ff4343',
+                'yellow': '#ffdf00',
+                'orange': '#ff8c00',
+                'teal': '#008080',
+                'lime': '#32cd32',
+                'turquoise': '#40e0d0',
+                'coral': '#ff7f50',
+                'indigo': '#4b0082',
+                'maroon': '#800000',
+                'navy': '#000080',
+                'olive': '#808000',
+                'salmon': '#fa8072',
+                'gold': '#ffd700',
+                'mint': '#3eb489',
+                'rose': '#ff66b2'
+            };
+            
+            const hexValue = textColorMap[color];
+            document.documentElement.style.setProperty('--text-color', hexValue);
+            localStorage.setItem('selectedTextColor', color);
         }
 
         function toggleMode() {
