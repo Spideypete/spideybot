@@ -2590,10 +2590,18 @@ app.get("/api/user", (req, res) => {
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
 // Load dashboard HTML once at startup
 let dashboardHtml = null;
+const dashboardPath = path.join(publicDir, 'dashboard.html');
+console.log(`📂 Attempting to load dashboard from: ${dashboardPath}`);
+console.log(`📂 File exists: ${fs.existsSync(dashboardPath)}`);
+
 try {
-  dashboardHtml = fs.readFileSync(path.join(publicDir, 'dashboard.html'), 'utf-8');
+  dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
+  console.log(`✅ Dashboard loaded successfully (${dashboardHtml.length} bytes)`);
 } catch (err) {
-  console.error('❌ Failed to load dashboard.html:', err.message);
+  console.error('❌ Failed to load dashboard.html:');
+  console.error('   Path:', dashboardPath);
+  console.error('   Error:', err.message);
+  console.error('   Code:', err.code);
   dashboardHtml = '<h1>Dashboard not found</h1>';
 }
 
