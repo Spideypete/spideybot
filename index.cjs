@@ -20,6 +20,26 @@ const express = require("express");
 // ============== CONFIG MANAGEMENT ==============
 const configFile = path.join(__dirname, "config.json");
 
+function logModAction(guild, action, mod, target, reason) {
+  const config = loadConfig();
+  const guildConfig = config.guilds[guild.id];
+  if (!guildConfig?.modLogChannelId) return;
+  
+  const modLogChannel = guild.channels.cache.get(guildConfig.modLogChannelId);
+  if (modLogChannel) {
+    const embed = new EmbedBuilder()
+      .setColor(action === "WARN" ? 0xFFBD39 : action === "KICK" ? 0xFF6B6B : action === "BAN" ? 0xED4245 : 0x5865F2)
+      .setTitle(`🛡️ ${action}`)
+      .addFields(
+        { name: "Moderator", value: mod.tag, inline: true },
+        { name: "Target", value: target, inline: true },
+        { name: "Reason", value: reason || "No reason" }
+      )
+      .setTimestamp();
+    modLogChannel.send({ embeds: [embed] }).catch(() => {});
+  }
+}
+
 function loadConfig() {
   if (fs.existsSync(configFile)) {
     return JSON.parse(fs.readFileSync(configFile, "utf8"));
@@ -37,7 +57,13 @@ function getGuildConfig(guildId) {
     config.guilds[guildId] = {
       welcomeChannelId: null,
       welcomeMessage: "Welcome to our server! 🎉",
-      roleCategories: {}
+      roleCategories: {},
+      prefix: "//",
+      modLogChannelId: null,
+      musicLoopMode: false,
+      musicShuffle: false,
+      musicVolume: 100,
+      warnings: {}
     };
     saveConfig(config);
   }
@@ -302,7 +328,30 @@ client.on("messageCreate", async (msg) => {
       .addFields(
         { name: "🎶 //play [song/url]", value: "Play from YouTube", inline: true },
         { name: "📊 //queue", value: "Show next 10 tracks", inline: true },
+        { name: "🔄 //loop", value: "Enable/disable loop", inline: true },
+        { name: "🔀 //shuffle", value: "Shuffle the queue", inline: true },
+        { name: "🔊 //volume [0-200]", value: "Set volume", inline: true },
         { name: "🎛️ Controls", value: "⏮ | ⏸ | ▶ | ⏭ | ⏹", inline: false }
+      );
+
+    const modEmbed = new EmbedBuilder()
+      .setColor(0xFF6B6B)
+      .setTitle("🛡️ MODERATION")
+      .addFields(
+        { name: "👢 //kick @user [reason]", value: "Kick a member", inline: true },
+        { name: "🔨 //ban @user [reason]", value: "Ban a member", inline: true },
+        { name: "⚠️ //warn @user [reason]", value: "Warn a member", inline: true },
+        { name: "🔇 //mute @user", value: "Mute member 1h", inline: true },
+        { name: "🔊 //unmute @user", value: "Unmute member", inline: true },
+        { name: "📋 //warnings @user", value: "Check member warnings", inline: true }
+      );
+
+    const configEmbed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("⚙️ CONFIGURATION")
+      .addFields(
+        { name: "🔤 //set-prefix [prefix]", value: "Set command prefix", inline: true },
+        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
       );
 
     const utilityEmbed = new EmbedBuilder()
@@ -319,7 +368,7 @@ client.on("messageCreate", async (msg) => {
       .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━\n✨ Interactive role management • 🎵 Music streaming • 💬 Custom welcomes ✨\n━━━━━━━━━━━━━━━━━━━━━━━━");
 
     return msg.reply({ 
-      embeds: [helpEmbed, roleEmbed, welcomeEmbed, musicEmbed, utilityEmbed],
+      embeds: [helpEmbed, roleEmbed, welcomeEmbed, musicEmbed, modEmbed, configEmbed, utilityEmbed],
       content: "** **"
     });
   }
@@ -648,6 +697,146 @@ client.on("messageCreate", async (msg) => {
       .setDescription(queueStr);
 
     msg.reply({ embeds: [embed] });
+  }
+
+  // Music enhancements
+  if (msg.content === "//loop") {
+    const queue = player.queues.get(msg.guild);
+    if (!queue || !queue.isPlaying()) {
+      return msg.reply("❌ No music playing!");
+    }
+    const isLooping = queue.repeatMode === 2;
+    queue.setRepeatMode(isLooping ? 0 : 2);
+    return msg.reply(isLooping ? "🔄 Loop disabled" : "🔄 Loop enabled - queue will repeat!");
+  }
+
+  if (msg.content === "//shuffle") {
+    const queue = player.queues.get(msg.guild);
+    if (!queue || !queue.isPlaying()) {
+      return msg.reply("❌ No music playing!");
+    }
+    queue.tracks.sort(() => Math.random() - 0.5);
+    return msg.reply("🔀 Queue shuffled!");
+  }
+
+  if (msg.content.startsWith("//volume ")) {
+    const queue = player.queues.get(msg.guild);
+    if (!queue || !queue.isPlaying()) {
+      return msg.reply("❌ No music playing!");
+    }
+    const vol = parseInt(msg.content.slice(9));
+    if (isNaN(vol) || vol < 0 || vol > 200) return msg.reply("❌ Volume must be 0-200!");
+    queue.node.setVolume(vol);
+    return msg.reply(`🔊 Volume set to ${vol}%`);
+  }
+
+  // Moderation commands
+  if (msg.content.startsWith("//kick ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.KickMembers)) {
+      return msg.reply("❌ You need kick permissions!");
+    }
+    const user = msg.mentions.members.first();
+    if (!user) return msg.reply("Usage: //kick @user [reason]");
+    const reason = msg.content.slice(6).split(" ").slice(1).join(" ") || "No reason";
+    try {
+      await user.kick(reason);
+      msg.reply(`✅ Kicked ${user.user.tag} - ${reason}`);
+      logModAction(msg.guild, "KICK", msg.author, user.user.tag, reason);
+    } catch (err) {
+      msg.reply(`❌ Failed to kick: ${err.message}`);
+    }
+  }
+
+  if (msg.content.startsWith("//ban ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.BanMembers)) {
+      return msg.reply("❌ You need ban permissions!");
+    }
+    const user = msg.mentions.members.first();
+    if (!user) return msg.reply("Usage: //ban @user [reason]");
+    const reason = msg.content.slice(5).split(" ").slice(1).join(" ") || "No reason";
+    try {
+      await user.ban({ reason });
+      msg.reply(`✅ Banned ${user.user.tag} - ${reason}`);
+      logModAction(msg.guild, "BAN", msg.author, user.user.tag, reason);
+    } catch (err) {
+      msg.reply(`❌ Failed to ban: ${err.message}`);
+    }
+  }
+
+  if (msg.content.startsWith("//warn ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+      return msg.reply("❌ You need moderation permissions!");
+    }
+    const user = msg.mentions.members.first();
+    if (!user) return msg.reply("Usage: //warn @user [reason]");
+    const reason = msg.content.slice(6).split(" ").slice(1).join(" ") || "No reason";
+    
+    const warnings = guildConfig.warnings || {};
+    if (!warnings[user.id]) warnings[user.id] = [];
+    warnings[user.id].push({ reason, warnedBy: msg.author.tag, timestamp: new Date() });
+    updateGuildConfig(msg.guild.id, { warnings });
+    
+    msg.reply(`⚠️ Warned ${user.user.tag} (${warnings[user.id].length} warnings) - ${reason}`);
+    logModAction(msg.guild, "WARN", msg.author, user.user.tag, reason);
+  }
+
+  if (msg.content.startsWith("//mute ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+      return msg.reply("❌ You need moderation permissions!");
+    }
+    const user = msg.mentions.members.first();
+    if (!user) return msg.reply("Usage: //mute @user");
+    try {
+      await user.timeout(60 * 60 * 1000);
+      msg.reply(`🔇 Muted ${user.user.tag} for 1 hour`);
+      logModAction(msg.guild, "MUTE", msg.author, user.user.tag, "1 hour timeout");
+    } catch (err) {
+      msg.reply(`❌ Failed to mute: ${err.message}`);
+    }
+  }
+
+  if (msg.content.startsWith("//unmute ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+      return msg.reply("❌ You need moderation permissions!");
+    }
+    const user = msg.mentions.members.first();
+    if (!user) return msg.reply("Usage: //unmute @user");
+    try {
+      await user.timeout(null);
+      msg.reply(`🔊 Unmuted ${user.user.tag}`);
+      logModAction(msg.guild, "UNMUTE", msg.author, user.user.tag, "Timeout removed");
+    } catch (err) {
+      msg.reply(`❌ Failed to unmute: ${err.message}`);
+    }
+  }
+
+  if (msg.content.startsWith("//warnings ")) {
+    const user = msg.mentions.members.first();
+    if (!user) return msg.reply("Usage: //warnings @user");
+    const warnings = guildConfig.warnings?.[user.id] || [];
+    const warningList = warnings.map((w, i) => `${i+1}. ${w.reason} (by ${w.warnedBy})`).join("\n") || "No warnings";
+    msg.reply(`⚠️ ${user.user.tag} has ${warnings.length} warning(s):\n${warningList}`);
+  }
+
+  // Config commands
+  if (msg.content.startsWith("//set-prefix ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can set prefix!");
+    }
+    const prefix = msg.content.slice(13).trim();
+    if (!prefix || prefix.length > 5) return msg.reply("Usage: //set-prefix [prefix] (max 5 chars)");
+    updateGuildConfig(msg.guild.id, { prefix });
+    return msg.reply(`✅ Prefix changed to \`${prefix}\``);
+  }
+
+  if (msg.content === "//config-modlog") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure modlog!");
+    }
+    const channel = msg.mentions.channels.first();
+    if (!channel) return msg.reply("Usage: //config-modlog #channel");
+    updateGuildConfig(msg.guild.id, { modLogChannelId: channel.id });
+    return msg.reply(`✅ Modlog channel set to ${channel}`);
   }
 });
 
