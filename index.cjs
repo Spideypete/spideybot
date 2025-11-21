@@ -2985,8 +2985,98 @@ app.get("/privacy", (req, res) => {
   `);
 });
 
-// ============== SIMPLE PASSWORD LOGIN ==============
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "spidey123";
+// ============== USER ACCOUNT SYSTEM ==============
+function loadUsers() {
+  try {
+    return JSON.parse(fs.readFileSync('users.json', 'utf8'));
+  } catch {
+    return { users: {} };
+  }
+}
+
+function saveUsers(data) {
+  fs.writeFileSync('users.json', JSON.stringify(data, null, 2));
+}
+
+app.get("/register", (req, res) => {
+  if (req.session.authenticated) return res.redirect("/dashboard");
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
+        <title>SPIDEY BOT - Create Account</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f0f0f 0%, #1a0033 100%); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; }
+          .auth-container { background: rgba(26, 26, 26, 0.95); padding: 3rem; border-radius: 16px; border: 2px solid #9146FF; max-width: 450px; width: 100%; box-shadow: 0 0 50px rgba(145, 70, 255, 0.3); backdrop-filter: blur(10px); }
+          .logo { text-align: center; margin-bottom: 2rem; }
+          .logo img { height: 70px; filter: drop-shadow(0 0 10px rgba(145, 70, 255, 0.5)); }
+          h1 { text-align: center; margin-bottom: 0.5rem; color: #fff; font-size: 2rem; background: linear-gradient(135deg, #fff 0%, #9146FF 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+          .subtitle { text-align: center; color: #999; margin-bottom: 2rem; }
+          .form-group { margin-bottom: 1.5rem; }
+          label { display: block; margin-bottom: 0.7rem; color: #ddd; font-weight: 600; }
+          input { width: 100%; padding: 1rem; background: #222; border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1rem; transition: all 0.3s; }
+          input:focus { outline: none; border-color: #9146FF; background: #2a2a2a; box-shadow: 0 0 15px rgba(145, 70, 255, 0.2); }
+          button { width: 100%; padding: 1rem; background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 1rem; transition: all 0.3s; margin-top: 1rem; }
+          button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(145, 70, 255, 0.4); }
+          .error { background: #3d0000; border: 1px solid #ff4444; color: #ff8888; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+          .success { background: #003d00; border: 1px solid #44ff44; color: #88ff88; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+          .link { text-align: center; margin-top: 1.5rem; color: #999; }
+          .link a { color: #9146FF; text-decoration: none; font-weight: 600; }
+          .link a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="auth-container">
+          <div class="logo">
+            <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
+          </div>
+          <h1>Create Account</h1>
+          <p class="subtitle">Join the SPIDEY BOT admin panel</p>
+          ${req.query.error === "exists" ? '<div class="error">❌ Username already taken</div>' : ''}
+          ${req.query.error === "invalid" ? '<div class="error">❌ Username must be 3+ characters</div>' : ''}
+          <form method="POST" action="/register">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" required autofocus minlength="3">
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label for="confirm">Confirm Password</label>
+              <input type="password" id="confirm" name="confirm" required minlength="6">
+            </div>
+            <button type="submit">🚀 Create Account</button>
+          </form>
+          <div class="link">
+            <p>Already have an account? <a href="/login">Login here</a></p>
+            <p><a href="/" style="color: #999;">← Back to Home</a></p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+app.post("/register", (req, res) => {
+  const { username, password, confirm } = req.body;
+  if (!username || username.length < 3) return res.redirect("/register?error=invalid");
+  if (password !== confirm) return res.redirect("/register?error=mismatch");
+  
+  const users = loadUsers();
+  if (users.users[username]) return res.redirect("/register?error=exists");
+  
+  users.users[username] = { password: password };
+  saveUsers(users);
+  req.session.authenticated = true;
+  req.session.username = username;
+  console.log(`✅ New account created: ${username}`);
+  res.redirect("/dashboard");
+});
 
 app.get("/login", (req, res) => {
   if (req.session.authenticated) return res.redirect("/dashboard");
@@ -2999,38 +3089,46 @@ app.get("/login", (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
-          .login-box { background: #1a1a1a; padding: 2.5rem; border-radius: 12px; border: 1px solid #333; max-width: 400px; width: 100%; box-shadow: 0 0 30px rgba(145, 70, 255, 0.2); }
+          body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f0f0f 0%, #1a0033 100%); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; }
+          .auth-container { background: rgba(26, 26, 26, 0.95); padding: 3rem; border-radius: 16px; border: 2px solid #9146FF; max-width: 450px; width: 100%; box-shadow: 0 0 50px rgba(145, 70, 255, 0.3); backdrop-filter: blur(10px); }
           .logo { text-align: center; margin-bottom: 2rem; }
-          .logo img { height: 60px; }
-          h1 { text-align: center; margin-bottom: 1.5rem; color: #9146FF; font-size: 1.8rem; }
+          .logo img { height: 70px; filter: drop-shadow(0 0 10px rgba(145, 70, 255, 0.5)); }
+          h1 { text-align: center; margin-bottom: 0.5rem; color: #fff; font-size: 2rem; background: linear-gradient(135deg, #fff 0%, #9146FF 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+          .subtitle { text-align: center; color: #999; margin-bottom: 2rem; }
           .form-group { margin-bottom: 1.5rem; }
-          label { display: block; margin-bottom: 0.5rem; color: #ddd; font-weight: 500; }
-          input { width: 100%; padding: 0.9rem; background: #222; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 1rem; }
-          input:focus { outline: none; border-color: #9146FF; box-shadow: 0 0 10px rgba(145, 70, 255, 0.3); }
-          button { width: 100%; padding: 0.9rem; background: #9146FF; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
-          button:hover { background: #a855ff; box-shadow: 0 0 15px rgba(145, 70, 255, 0.4); }
-          .error { color: #ff4444; text-align: center; margin-bottom: 1rem; }
-          .info { text-align: center; color: #999; font-size: 0.9rem; margin-top: 1.5rem; }
+          label { display: block; margin-bottom: 0.7rem; color: #ddd; font-weight: 600; }
+          input { width: 100%; padding: 1rem; background: #222; border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1rem; transition: all 0.3s; }
+          input:focus { outline: none; border-color: #9146FF; background: #2a2a2a; box-shadow: 0 0 15px rgba(145, 70, 255, 0.2); }
+          button { width: 100%; padding: 1rem; background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 1rem; transition: all 0.3s; margin-top: 1rem; }
+          button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(145, 70, 255, 0.4); }
+          .error { background: #3d0000; border: 1px solid #ff4444; color: #ff8888; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+          .link { text-align: center; margin-top: 1.5rem; color: #999; }
+          .link a { color: #9146FF; text-decoration: none; font-weight: 600; }
+          .link a:hover { text-decoration: underline; }
         </style>
       </head>
       <body>
-        <div class="login-box">
+        <div class="auth-container">
           <div class="logo">
             <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
           </div>
-          <h1>🔐 Admin Panel</h1>
-          ${req.query.error ? '<div class="error">❌ Incorrect password</div>' : ''}
+          <h1>Admin Login</h1>
+          <p class="subtitle">Access the SPIDEY BOT control panel</p>
+          ${req.query.error ? '<div class="error">❌ Invalid username or password</div>' : ''}
           <form method="POST" action="/login">
             <div class="form-group">
-              <label for="password">Password</label>
-              <input type="password" id="password" name="password" required autofocus>
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" required autofocus>
             </div>
-            <button type="submit">Login</button>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">🔐 Login</button>
           </form>
-          <div class="info">
-            <p>🕷️ SPIDEY BOT Admin Panel</p>
-            <p><a href="/" style="color: #9146FF; text-decoration: none;">← Back to Home</a></p>
+          <div class="link">
+            <p>Don't have an account? <a href="/register">Sign up here</a></p>
+            <p><a href="/" style="color: #999;">← Back to Home</a></p>
           </div>
         </div>
       </body>
@@ -3039,13 +3137,16 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const password = req.body.password || req.query.password || "";
-  if (password === ADMIN_PASSWORD) {
+  const { username, password } = req.body;
+  const users = loadUsers();
+  
+  if (users.users[username] && users.users[username].password === password) {
     req.session.authenticated = true;
-    console.log(`✅ Admin logged in`);
+    req.session.username = username;
+    console.log(`✅ Admin logged in: ${username}`);
     return res.redirect("/dashboard");
   }
-  console.log(`❌ Failed login attempt`);
+  console.log(`❌ Failed login attempt for: ${username}`);
   res.redirect("/login?error=1");
 });
 
@@ -3109,26 +3210,52 @@ app.get("/dashboard", (req, res) => {
         </nav>
 
         <div class="container">
-          <h1>👑 Admin Dashboard</h1>
-          
-          <div class="user-info">
-            <h3>🕷️ SPIDEY BOT Manager</h3>
-            <p style="color: #999; margin-top: 0.5rem;">Manage your server settings and configurations below</p>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+            <div>
+              <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">👑 Dashboard</h1>
+              <p style="color: #999;">Welcome back, <strong style="color: #9146FF;">${req.session.username || "Admin"}</strong></p>
+            </div>
+            <div style="text-align: right;">
+              <p style="color: #999; margin-bottom: 0.5rem;">Servers Configured</p>
+              <h2 style="font-size: 2rem; color: #9146FF;">${guildIds.length}</h2>
+            </div>
           </div>
 
-          <h2>🖥️ Your Servers</h2>
-          <table>
-            <thead>
-              <tr style="background: #222;">
-                <th>Server Name</th>
-                <th>Prefix</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${guildRows || "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #999;'>No servers configured yet. Use //setup-level-roles or any command in your server to register it.</td></tr>"}
-            </tbody>
-          </table>
+          ${guildIds.length === 0 ? `
+            <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%); border: 2px solid #9146FF; border-radius: 12px; padding: 3rem; text-align: center; margin-bottom: 2rem;">
+              <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">🚀 Ready to get started?</h3>
+              <p style="color: #999; margin-bottom: 1.5rem;">No servers configured yet. Use <code style="background: #222; padding: 0.4rem 0.8rem; border-radius: 4px; color: #9146FF;">//setup-level-roles</code> or any command in your Discord server to register it.</p>
+            </div>
+          ` : `
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">🖥️ Your Servers</h2>
+          `}
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem;">
+            ${guildRows ? guildRows.split('<tr style="border-bottom: 1px solid #333;">').slice(1).map((row, i) => {
+              const match = row.match(/<td[^>]*><strong>([^<]+)<\/strong><\/td>\s*<td[^>]*>([^<]+)<\/td>/);
+              if (!match) return '';
+              const [, name, prefix] = match;
+              const guildId = guildIds[i];
+              return `
+                <div style="background: linear-gradient(135deg, #1a1a1a 0%, #222 100%); border: 1px solid #333; border-radius: 12px; padding: 1.5rem; transition: all 0.3s; hover-effect">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.2rem; color: #fff;">${name}</h3>
+                    <span style="background: #9146FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">${prefix}</span>
+                  </div>
+                  <p style="color: #999; font-size: 0.9rem; margin-bottom: 1rem;">Server ID: ${guildId}</p>
+                  <a href="/dashboard/server/${guildId}" style="display: inline-block; background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%); color: #fff; padding: 0.7rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s;">⚙️ Configure</a>
+                </div>
+              `;
+            }).join('') : ''}
+          </div>
+
+          <style>
+            [hover-effect]:hover { 
+              transform: translateY(-5px); 
+              border-color: #9146FF; 
+              box-shadow: 0 10px 30px rgba(145, 70, 255, 0.2); 
+            }
+          </style>
         </div>
       </body>
     </html>
