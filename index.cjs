@@ -2315,6 +2315,10 @@ app.post("/webhooks/tiktok", (req, res) => {
 });
 
 // Interactions Endpoint (Discord Interactions)
+app.get("/interactions", (req, res) => {
+  res.status(200).json({ type: 1, message: "SPIDEY BOT Interactions Endpoint" });
+});
+
 app.post("/interactions", (req, res) => {
   res.status(200).json({ type: 1 });
 });
