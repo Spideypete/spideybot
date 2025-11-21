@@ -1723,7 +1723,7 @@ app.get("/", (req, res) => {
           body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
           body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 127, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(138, 43, 226, 0.05) 0%, transparent 50%); pointer-events: none; z-index: -1; }
           nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); position: relative; z-index: 10; }
-          nav a { color: white; text-decoration: none; margin: 0 1rem; font-weight: 600; transition: all 0.3s; }
+          nav a { color: #9146FF; text-decoration: none; margin: 0 1rem; font-weight: 600; transition: all 0.3s; }
           nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
           .hero { position: relative; background: linear-gradient(135deg, rgba(26, 0, 51, 0.9) 0%, rgba(45, 0, 82, 0.9) 25%, rgba(13, 0, 21, 0.9) 50%, rgba(61, 21, 115, 0.9) 75%, rgba(26, 0, 51, 0.9) 100%), url('/assets/spidey-banner.png'); background-size: cover; background-position: center; text-align: center; padding: 4rem 2rem; }
           .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); }
