@@ -1373,6 +1373,13 @@ app.get("/", (req, res) => {
           <a href="${botInviteURL}" target="_blank" class="btn">➕ Invite SPIDEY BOT Now</a>
         </div>
 
+        <div style="text-align: center; padding: 3rem 2rem; background: #1a1a1a; border-top: 2px solid #9146FF;">
+          <h2 style="color: #9146FF; margin-bottom: 1rem;">☕ Support SPIDEY BOT</h2>
+          <p style="margin-bottom: 1.5rem; opacity: 0.8;">Love SPIDEY BOT? Consider supporting development!</p>
+          <a href="https://paypal.me/YOUR_PAYPAL_USERNAME" target="_blank" class="btn" style="background: #9146FF; font-size: 1.1rem;">💜 Donate via PayPal</a>
+          <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.6;">All donations help us keep the bot running & add new features!</p>
+        </div>
+
         <footer>
           <p>🤖 SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
           <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">Use //help in Discord to see all commands • Admins use //adminhelp</p>
@@ -1500,6 +1507,12 @@ app.get("/features", (req, res) => {
 
           <div style="text-align: center; margin-top: 3rem;">
             <a href="${botInviteURL}" target="_blank" class="btn">➕ Add SPIDEY BOT to Your Server</a>
+          </div>
+
+          <div style="text-align: center; padding: 2rem; background: #1a1a1a; border-top: 2px solid #9146FF; margin-top: 3rem;">
+            <h2 style="color: #9146FF; margin-bottom: 1rem;">☕ Support SPIDEY BOT</h2>
+            <p style="margin-bottom: 1.5rem; opacity: 0.8;">Enjoy SPIDEY BOT? Support development!</p>
+            <a href="https://paypal.me/YOUR_PAYPAL_USERNAME" target="_blank" class="btn" style="background: #9146FF;">💜 Donate via PayPal</a>
           </div>
         </div>
       </body>
