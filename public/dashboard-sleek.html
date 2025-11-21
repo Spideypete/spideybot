@@ -78,6 +78,87 @@
       min-width: 20px;
     }
 
+    .nav-category {
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-category-header {
+      padding: 0.7rem 0.8rem;
+      color: #888;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      border-left: 2px solid transparent;
+      border-radius: 6px;
+      user-select: none;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-category-header:hover {
+      color: #e0e0e0;
+      background: rgba(145, 70, 255, 0.05);
+    }
+
+    .nav-toggle {
+      margin-left: auto;
+      transition: transform 0.2s;
+      font-size: 0.75rem;
+    }
+
+    .nav-category.expanded .nav-toggle {
+      transform: rotate(180deg);
+    }
+
+    .nav-submenu {
+      list-style: none;
+      display: none;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease;
+    }
+
+    .nav-category.expanded .nav-submenu {
+      display: block;
+      max-height: 500px;
+    }
+
+    .nav-submenu li {
+      display: list-item;
+    }
+
+    .nav-subitem {
+      padding: 0.5rem 0.8rem 0.5rem 2rem;
+      margin-bottom: 0.2rem;
+      border-radius: 6px;
+      color: #666;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-left: 2px solid transparent;
+    }
+
+    .nav-subitem:hover {
+      color: #e0e0e0;
+      background: rgba(145, 70, 255, 0.04);
+    }
+
+    .nav-subitem.active {
+      color: #9146FF;
+      background: rgba(145, 70, 255, 0.06);
+      border-left-color: #9146FF;
+    }
+
     .sidebar-footer {
       padding-top: 1rem;
       border-top: 1px solid rgba(145, 70, 255, 0.1);
@@ -468,12 +549,70 @@
   <div class="sidebar">
     <a class="logo" href="/"><img src="/assets/spidey-logo.png" alt="SPIDEY">SPIDEY</a>
     <ul class="nav-list">
-      <li><a class="nav-item active" onclick="switchPage('dashboard')"><span class="nav-icon">📊</span> Dashboard</a></li>
-      <li><a class="nav-item" onclick="switchPage('analytics')"><span class="nav-icon">📈</span> Analytics</a></li>
-      <li><a class="nav-item" onclick="switchPage('features')"><span class="nav-icon">⚡</span> Features</a></li>
-      <li><a class="nav-item" onclick="switchPage('members')"><span class="nav-icon">👥</span> Members</a></li>
-      <li><a class="nav-item" onclick="switchPage('settings')"><span class="nav-icon">⚙️</span> Settings</a></li>
-      <li><a class="nav-item" onclick="switchPage('moderation')"><span class="nav-icon">🛡️</span> Moderation</a></li>
+      <!-- Dashboard -->
+      <li class="nav-category expanded">
+        <div class="nav-category-header" onclick="toggleCategory(this)">
+          <span class="nav-icon">📊</span> Dashboard <span class="nav-toggle">▼</span>
+        </div>
+        <ul class="nav-submenu">
+          <li><a class="nav-subitem active" onclick="switchPage('dashboard')"><span>🏠</span> Dashboard</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('dashboard-settings')"><span>⚙️</span> Settings</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('subscriptions')"><span>💎</span> Subscriptions</a></li>
+        </ul>
+      </li>
+
+      <!-- Management -->
+      <li class="nav-category">
+        <div class="nav-category-header" onclick="toggleCategory(this)">
+          <span class="nav-icon">🛠️</span> Management <span class="nav-toggle">▼</span>
+        </div>
+        <ul class="nav-submenu">
+          <li><a class="nav-subitem" onclick="switchPage('logging')"><span>📝</span> Logging</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('moderation')"><span>🛡️</span> Moderation</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('server-guard')"><span>🔒</span> Server Guard</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('react-roles')"><span>🎯</span> React Roles</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('role-categories')"><span>📂</span> Role Categories</a></li>
+        </ul>
+      </li>
+
+      <!-- Utilities -->
+      <li class="nav-category">
+        <div class="nav-category-header" onclick="toggleCategory(this)">
+          <span class="nav-icon">⚡</span> Utilities <span class="nav-toggle">▼</span>
+        </div>
+        <ul class="nav-submenu">
+          <li><a class="nav-subitem" onclick="switchPage('server-messages')"><span>💬</span> Server Messages</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('components')"><span>🧩</span> Components</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('custom-commands')"><span>⌨️</span> Custom Commands</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('recordings')"><span>🎥</span> Recordings</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('reminders')"><span>🔔</span> Reminders</a></li>
+        </ul>
+      </li>
+
+      <!-- Insights -->
+      <li class="nav-category">
+        <div class="nav-category-header" onclick="toggleCategory(this)">
+          <span class="nav-icon">📈</span> Insights <span class="nav-toggle">▼</span>
+        </div>
+        <ul class="nav-submenu">
+          <li><a class="nav-subitem" onclick="switchPage('leaderboards')"><span>🏆</span> Leaderboards</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('invite-tracking')"><span>🔗</span> Invite Tracking</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('message-counting')"><span>📊</span> Message Counting</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('statistics-channels')"><span>📉</span> Statistics Channels</a></li>
+        </ul>
+      </li>
+
+      <!-- Engagement -->
+      <li class="nav-category">
+        <div class="nav-category-header" onclick="toggleCategory(this)">
+          <span class="nav-icon">💝</span> Engagement <span class="nav-toggle">▼</span>
+        </div>
+        <ul class="nav-submenu">
+          <li><a class="nav-subitem" onclick="switchPage('xp-levels')"><span>📈</span> XP & Levels</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('giveaways')"><span>🎁</span> Giveaways</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('social-notifs')"><span>📣</span> Social Notifs</a></li>
+        </ul>
+      </li>
     </ul>
     <div class="sidebar-footer">
       <button class="logout-btn" onclick="window.location.href='/logout'">Logout</button>
@@ -1053,14 +1192,31 @@
     });
 
     function switchPage(page) {
-      document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-      document.getElementById(page).classList.add('active');
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      event.target.closest('.nav-item').classList.add('active');
+      const pageEl = document.getElementById(page);
+      if (pageEl) {
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        pageEl.classList.add('active');
+        
+        if (page === 'analytics') loadAnalytics();
+        if (page === 'members') loadMembers();
+        if (page === 'dashboard') loadStats();
+      }
       
-      if (page === 'analytics') loadAnalytics();
-      if (page === 'members') loadMembers();
-      if (page === 'dashboard') loadStats();
+      document.querySelectorAll('.nav-subitem').forEach(el => el.classList.remove('active'));
+      event.target.closest('.nav-subitem')?.classList.add('active');
+    }
+
+    function toggleCategory(header) {
+      const category = header.closest('.nav-category');
+      const isExpanded = category.classList.contains('expanded');
+      
+      document.querySelectorAll('.nav-category').forEach(cat => {
+        cat.classList.remove('expanded');
+      });
+      
+      if (!isExpanded) {
+        category.classList.add('expanded');
+      }
     }
 
     function toggleFeature(btn) {
