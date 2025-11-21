@@ -36,7 +36,11 @@ app.use(express.static(publicDir));
 
 // Home page route
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(404).send('Index page not found');
+  }
+  res.sendFile(indexPath);
 });
 
 // ============== DISCORD OAUTH CONFIG ==============
@@ -2261,7 +2265,11 @@ const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.e
 // Redirect login page to Discord OAuth
 app.get("/login", (req, res) => {
   if (req.session.authenticated) return res.redirect("/dashboard");
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  const loginPath = path.join(__dirname, 'public', 'login.html');
+  if (!fs.existsSync(loginPath)) {
+    return res.status(404).send('Login page not found');
+  }
+  res.sendFile(loginPath);
 });
 
 app.get("/auth/discord", (req, res) => {
@@ -2337,7 +2345,11 @@ app.get("/api/user", (req, res) => {
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+  const dashboardPath = path.join(__dirname, 'public', 'dashboard.html');
+  if (!fs.existsSync(dashboardPath)) {
+    return res.status(404).send('Dashboard page not found');
+  }
+  res.sendFile(dashboardPath);
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
