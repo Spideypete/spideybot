@@ -8,38 +8,22 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0a0e27;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
             color: #e0e0e0;
             overflow-x: hidden;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(0deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
         .container {
-            position: relative;
-            z-index: 1;
             display: flex;
             min-height: 100vh;
         }
 
+        /* Sidebar */
         .sidebar {
-            width: 280px;
-            background: rgba(20, 25, 50, 0.95);
-            border-right: 2px solid rgba(0, 212, 255, 0.2);
+            width: 250px;
+            background: linear-gradient(180deg, #1a0f3d 0%, #2d1b4e 100%);
+            border-right: 1px solid rgba(0, 212, 255, 0.1);
             padding: 2rem 0;
             overflow-y: auto;
             position: fixed;
@@ -48,17 +32,32 @@
             top: 0;
         }
 
-        .sidebar-header {
+        .sidebar-logo {
             padding: 0 1.5rem 2rem;
-            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
-            margin-bottom: 1rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            margin-bottom: 1.5rem;
         }
 
-        .sidebar-title {
-            font-size: 1.5rem;
+        .logo-text {
+            font-size: 1.3rem;
             font-weight: 700;
             color: #00d4ff;
             text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 2px;
+            padding: 0 1rem 0.75rem;
+            font-weight: 600;
         }
 
         .sidebar-menu {
@@ -66,60 +65,142 @@
         }
 
         .sidebar-item {
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+            border-radius: 6px;
             color: #b0b0b0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
         }
 
         .sidebar-item:hover {
             background: rgba(0, 212, 255, 0.1);
             color: #00d4ff;
-            border-left-color: #00d4ff;
         }
 
         .sidebar-item.active {
-            background: rgba(0, 212, 255, 0.15);
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.1));
             color: #00d4ff;
-            border-left-color: #00d4ff;
-            box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00d4ff;
+            padding-left: calc(1rem - 3px);
         }
 
+        .upgrade-box {
+            margin: 2rem 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .upgrade-box:hover {
+            transform: scale(1.05);
+        }
+
+        .upgrade-box-text {
+            color: #000;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Main Content */
         .main {
-            margin-left: 280px;
+            margin-left: 250px;
             flex: 1;
-            padding: 2rem;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
+            background: linear-gradient(90deg, rgba(26, 15, 61, 0.9), rgba(45, 27, 78, 0.9));
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            backdrop-filter: blur(10px);
         }
 
-        .header h1 {
-            font-size: 2rem;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .server-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
             color: #00d4ff;
-            text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #000;
         }
 
         .logout-btn {
-            padding: 0.5rem 1.5rem;
+            padding: 0.5rem 1rem;
             background: rgba(220, 20, 60, 0.2);
             border: 1px solid rgba(220, 20, 60, 0.5);
             color: #ff6b6b;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            font-weight: 500;
         }
 
         .logout-btn:hover {
             background: rgba(220, 20, 60, 0.4);
-            box-shadow: 0 0 10px rgba(220, 20, 60, 0.4);
+            box-shadow: 0 0 15px rgba(220, 20, 60, 0.3);
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-description {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
         }
 
         .content {
@@ -136,12 +217,48 @@
             to { opacity: 1; }
         }
 
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(45, 27, 78, 0.8), rgba(26, 15, 61, 0.8));
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .card-subtitle {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
         .form-group {
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            background: rgba(0, 212, 255, 0.05);
-            border: 1px solid rgba(0, 212, 255, 0.1);
-            border-radius: 4px;
+            margin-bottom: 1.25rem;
         }
 
         label {
@@ -149,67 +266,86 @@
             margin-bottom: 0.5rem;
             color: #00d4ff;
             font-weight: 600;
-            text-transform: uppercase;
             font-size: 0.85rem;
-            letter-spacing: 1px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         input, textarea, select {
             width: 100%;
             padding: 0.75rem;
-            background: rgba(10, 14, 39, 0.8);
-            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.2);
             color: #e0e0e0;
-            border-radius: 4px;
+            border-radius: 6px;
             font-family: inherit;
             font-size: 0.95rem;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: #00d4ff;
-            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3), inset 0 0 5px rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2), inset 0 0 10px rgba(0, 212, 255, 0.05);
+            background: rgba(0, 212, 255, 0.05);
         }
 
         textarea {
             resize: vertical;
-            min-height: 120px;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
         }
 
         .button-group {
             display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 212, 255, 0.1);
         }
 
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             letter-spacing: 1px;
+            flex: 1;
         }
 
         .btn-primary {
-            background: rgba(0, 212, 255, 0.2);
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(0, 212, 255, 0.1);
             border: 1px solid #00d4ff;
             color: #00d4ff;
         }
 
-        .btn-primary:hover {
-            background: rgba(0, 212, 255, 0.4);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        .btn-secondary:hover {
+            background: rgba(0, 212, 255, 0.2);
         }
 
         .alert {
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
             animation: slideDown 0.3s ease;
         }
 
@@ -219,14 +355,14 @@
         }
 
         .alert-success {
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid #4caf50;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(56, 142, 60, 0.2));
+            border: 1px solid rgba(76, 175, 80, 0.4);
             color: #4caf50;
         }
 
         .alert-error {
-            background: rgba(220, 20, 60, 0.2);
-            border: 1px solid #dc143c;
+            background: linear-gradient(135deg, rgba(220, 20, 60, 0.2), rgba(183, 28, 28, 0.2));
+            border: 1px solid rgba(220, 20, 60, 0.4);
             color: #ff6b6b;
         }
 
@@ -234,17 +370,18 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            margin-top: 0.5rem;
         }
 
         .toggle {
             width: 50px;
             height: 24px;
             background: rgba(0, 212, 255, 0.2);
-            border: 1px solid rgba(0, 212, 255, 0.5);
+            border: 1px solid rgba(0, 212, 255, 0.4);
             border-radius: 12px;
             cursor: pointer;
             position: relative;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .toggle.active {
@@ -260,7 +397,7 @@
             border-radius: 50%;
             top: 2px;
             left: 2px;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .toggle.active::after {
@@ -273,253 +410,790 @@
                 height: auto;
                 position: relative;
                 border-right: none;
-                border-bottom: 2px solid rgba(0, 212, 255, 0.2);
+                border-bottom: 1px solid rgba(0, 212, 255, 0.1);
             }
             
             .main {
                 margin-left: 0;
+            }
+            
+            .content-area {
                 padding: 1rem;
             }
             
-            .sidebar-menu {
-                display: flex;
-                flex-wrap: wrap;
+            .cards-container {
+                grid-template-columns: 1fr;
             }
-            
-            .sidebar-item {
-                flex: 1;
-                min-width: 150px;
+
+            .form-row {
+                grid-template-columns: 1fr;
             }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.4);
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Sidebar -->
         <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title">🕷️ SPIDEY BOT</div>
+            <div class="sidebar-logo">
+                <div class="logo-text">🕷️ SPIDEY BOT</div>
             </div>
-            <ul class="sidebar-menu">
-                <li class="sidebar-item active" data-section="settings">⚙️ Settings</li>
-                <li class="sidebar-item" data-section="subscriptions">💳 Subscriptions</li>
-                <li class="sidebar-item" data-section="logging">📝 Logging</li>
-                <li class="sidebar-item" data-section="server-guard">🛡️ Server Guard</li>
-                <li class="sidebar-item" data-section="react-roles">🎭 React Roles</li>
-                <li class="sidebar-item" data-section="role-categories">📂 Role Categories</li>
-                <li class="sidebar-item" data-section="server-messages">💬 Server Messages</li>
-                <li class="sidebar-item" data-section="components">🎨 Components</li>
-                <li class="sidebar-item" data-section="custom-commands">💬 Custom Commands</li>
-                <li class="sidebar-item" data-section="recordings">🎙️ Recordings</li>
-                <li class="sidebar-item" data-section="reminders">⏰ Reminders</li>
-                <li class="sidebar-item" data-section="leaderboards">🏆 Leaderboards</li>
-                <li class="sidebar-item" data-section="invite-tracking">📊 Invite Tracking</li>
-                <li class="sidebar-item" data-section="message-counting">📈 Message Counting</li>
-                <li class="sidebar-item" data-section="statistics-channels">📉 Statistics Channels</li>
-                <li class="sidebar-item" data-section="xp-levels">⭐ XP Levels</li>
-                <li class="sidebar-item" data-section="giveaways">🎁 Giveaways</li>
-                <li class="sidebar-item" data-section="social-notifs">📱 Social Notifications</li>
-            </ul>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">CORE</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item active" data-section="settings">⚙️ Settings</li>
+                    <li class="sidebar-item" data-section="logging">📝 Logging</li>
+                    <li class="sidebar-item" data-section="server-guard">🛡️ Server Guard</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">FEATURES</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item" data-section="react-roles">🎭 React Roles</li>
+                    <li class="sidebar-item" data-section="role-categories">📂 Role Categories</li>
+                    <li class="sidebar-item" data-section="server-messages">💬 Server Messages</li>
+                    <li class="sidebar-item" data-section="custom-commands">💬 Commands</li>
+                    <li class="sidebar-item" data-section="components">🎨 Components</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">SYSTEMS</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item" data-section="xp-levels">⭐ XP Levels</li>
+                    <li class="sidebar-item" data-section="leaderboards">🏆 Leaderboards</li>
+                    <li class="sidebar-item" data-section="subscriptions">💳 Subscriptions</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MONITORING</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item" data-section="invite-tracking">📊 Invites</li>
+                    <li class="sidebar-item" data-section="message-counting">📈 Messages</li>
+                    <li class="sidebar-item" data-section="statistics-channels">📉 Stats</li>
+                    <li class="sidebar-item" data-section="social-notifs">📱 Social</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">TOOLS</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item" data-section="recordings">🎙️ Recordings</li>
+                    <li class="sidebar-item" data-section="reminders">⏰ Reminders</li>
+                    <li class="sidebar-item" data-section="giveaways">🎁 Giveaways</li>
+                </ul>
+            </div>
+
+            <div class="upgrade-box">
+                <div class="upgrade-box-text">⭐ Upgrade Now</div>
+            </div>
         </div>
 
+        <!-- Main Content -->
         <div class="main">
+            <!-- Header -->
             <div class="header">
-                <h1 id="page-title">⚙️ Settings</h1>
-                <button class="logout-btn" onclick="logout()">🚪 Logout</button>
-            </div>
-
-            <div id="alert-container"></div>
-
-            <!-- All 18 config sections -->
-            <div id="settings" class="content active">
-                <div class="form-group">
-                    <label>Command Prefix</label>
-                    <input type="text" id="settings_prefix" placeholder="//" maxlength="2" value="//">
+                <div class="header-left">
+                    <div class="server-selector">
+                        <span>Blue Shark</span>
+                        <span>▼</span>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Language</label>
-                    <select id="settings_language">
-                        <option value="en">English</option>
-                        <option value="es">Spanish</option>
-                    </select>
-                </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('settings')">💾 Save</button>
+                <div class="header-right">
+                    <div class="user-profile">
+                        <div class="user-avatar">A</div>
+                        <div>
+                            <div style="color: #fff; font-weight: 500;">DARKIE</div>
+                            <div style="color: #888; font-size: 0.8rem;">Bling</div>
+                        </div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">Log Out</button>
                 </div>
             </div>
 
-            <div id="subscriptions" class="content">
-                <div class="form-group">
-                    <label>Premium Tier</label>
-                    <select id="subscriptions_tier">
-                        <option value="free">Free</option>
-                        <option value="silver">Silver</option>
-                    </select>
-                </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('subscriptions')">💾 Save</button>
-                </div>
-            </div>
+            <!-- Content Area -->
+            <div class="content-area">
+                <div id="alert-container"></div>
 
-            <div id="logging" class="content">
-                <div class="form-group">
-                    <label>Log Channel ID</label>
-                    <input type="text" id="logging_channel" placeholder="Channel ID">
+                <!-- SETTINGS -->
+                <div id="settings" class="content active">
+                    <div class="page-title">⚙️ Settings</div>
+                    <div class="page-description">Manage your server's core settings and preferences</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">General Settings</div>
+                                    <div class="card-subtitle">Basic configuration</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Command Prefix</label>
+                                <input type="text" id="settings_prefix" placeholder="//" maxlength="2" value="//">
+                            </div>
+                            <div class="form-group">
+                                <label>Bot Nickname</label>
+                                <input type="text" id="settings_nickname" placeholder="SPIDEY BOT">
+                            </div>
+                            <div class="form-group">
+                                <label>Language</label>
+                                <select id="settings_language">
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                </select>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('settings')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('logging')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="server-guard" class="content">
-                <div class="form-group">
-                    <label>Anti-Spam Messages Per Minute</label>
-                    <input type="number" id="server-guard_msgLimit" value="5">
+                <!-- LOGGING -->
+                <div id="logging" class="content">
+                    <div class="page-title">📝 Logging</div>
+                    <div class="page-description">Configure logging for moderation and server events</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Log Settings</div>
+                                    <div class="card-subtitle">Track server activity</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Log Channel ID</label>
+                                <input type="text" id="logging_channel" placeholder="Channel ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Logging Options</label>
+                                <div class="switch">
+                                    <span>Moderation Logs</span>
+                                    <div class="toggle active" id="logging_moderation"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Message Logs</span>
+                                    <div class="toggle" id="logging_messages"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Server Changes</span>
+                                    <div class="toggle active" id="logging_server"></div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('logging')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('server-guard')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="react-roles" class="content">
-                <div class="form-group">
-                    <label>Message ID</label>
-                    <input type="text" id="react-roles_messageId" placeholder="Message ID">
+                <!-- SERVER GUARD -->
+                <div id="server-guard" class="content">
+                    <div class="page-title">🛡️ Server Guard</div>
+                    <div class="page-description">Protect your server from spam and raids</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Protection Settings</div>
+                                    <div class="card-subtitle">Anti-spam & raid protection</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Messages Per Minute</label>
+                                <input type="number" id="server-guard_msgLimit" value="5" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Join Cooldown (seconds)</label>
+                                <input type="number" id="server-guard_joinCooldown" value="30" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Protection Status</label>
+                                <div class="switch">
+                                    <span>Anti-Spam</span>
+                                    <div class="toggle active" id="server-guard_antispam"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Raid Protection</span>
+                                    <div class="toggle active" id="server-guard_raidProtection"></div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('server-guard')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('react-roles')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="role-categories" class="content">
-                <div class="form-group">
-                    <label>Category Name</label>
-                    <input type="text" id="role-categories_name" placeholder="Category">
+                <!-- REACT ROLES -->
+                <div id="react-roles" class="content">
+                    <div class="page-title">🎭 React Roles</div>
+                    <div class="page-description">Assign roles through emoji reactions</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Reaction Roles</div>
+                                    <div class="card-subtitle">Configure role reactions</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Message ID</label>
+                                <input type="text" id="react-roles_messageId" placeholder="Message ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Roles Mapping (JSON)</label>
+                                <textarea id="react-roles_mapping" placeholder='{"🎮": "gamer-role"}'></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <div class="switch">
+                                    <span>Enabled</span>
+                                    <div class="toggle active" id="react-roles_enabled"></div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('react-roles')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('role-categories')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="server-messages" class="content">
-                <div class="form-group">
-                    <label>Welcome Message</label>
-                    <textarea id="server-messages_welcome"></textarea>
+                <!-- ROLE CATEGORIES -->
+                <div id="role-categories" class="content">
+                    <div class="page-title">📂 Role Categories</div>
+                    <div class="page-description">Organize roles into categories</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Category Config</div>
+                                    <div class="card-subtitle">Create role groups</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Category Name</label>
+                                    <input type="text" id="role-categories_name" placeholder="Gaming Roles">
+                                </div>
+                                <div class="form-group">
+                                    <label>Channel ID</label>
+                                    <input type="text" id="role-categories_channel" placeholder="Channel ID">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Roles</label>
+                                <textarea id="role-categories_roles" placeholder="Role1, Role2, Role3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Banner Image URL</label>
+                                <input type="text" id="role-categories_banner" placeholder="https://...">
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('role-categories')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('server-messages')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="components" class="content">
-                <div class="form-group">
-                    <label>Component Name</label>
-                    <input type="text" id="components_name">
+                <!-- SERVER MESSAGES -->
+                <div id="server-messages" class="content">
+                    <div class="page-title">💬 Server Messages</div>
+                    <div class="page-description">Customize welcome and goodbye messages</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Message Templates</div>
+                                    <div class="card-subtitle">Greetings & farewells</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Welcome Channel</label>
+                                <input type="text" id="server-messages_channel" placeholder="Channel ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Welcome Message</label>
+                                <textarea id="server-messages_welcome" placeholder="Welcome {user} to {server}!"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Goodbye Message</label>
+                                <textarea id="server-messages_goodbye" placeholder="{user} has left {server}"></textarea>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('server-messages')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('components')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="custom-commands" class="content">
-                <div class="form-group">
-                    <label>Command Name</label>
-                    <input type="text" id="custom-commands_name">
+                <!-- CUSTOM COMMANDS -->
+                <div id="custom-commands" class="content">
+                    <div class="page-title">💬 Custom Commands</div>
+                    <div class="page-description">Create custom bot commands</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Command Builder</div>
+                                    <div class="card-subtitle">Add new commands</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Command Name</label>
+                                    <input type="text" id="custom-commands_name" placeholder="mycommand">
+                                </div>
+                                <div class="form-group">
+                                    <label>Permission Required</label>
+                                    <div class="switch">
+                                        <span>Yes</span>
+                                        <div class="toggle" id="custom-commands_permission"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Command Response</label>
+                                <textarea id="custom-commands_response" placeholder="This is the response..."></textarea>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('custom-commands')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('custom-commands')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="recordings" class="content">
-                <div class="form-group">
-                    <label>Storage Channel</label>
-                    <input type="text" id="recordings_channel">
+                <!-- COMPONENTS -->
+                <div id="components" class="content">
+                    <div class="page-title">🎨 Components</div>
+                    <div class="page-description">Manage interactive UI components</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Component Manager</div>
+                                    <div class="card-subtitle">Add buttons, menus, forms</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Component Name</label>
+                                    <input type="text" id="components_name" placeholder="Button Component">
+                                </div>
+                                <div class="form-group">
+                                    <label>Channel ID</label>
+                                    <input type="text" id="components_channel" placeholder="Channel ID">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Component Data (JSON)</label>
+                                <textarea id="components_data" placeholder='{"type": "button", "label": "Click me"}'></textarea>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('components')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('recordings')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="reminders" class="content">
-                <div class="form-group">
-                    <label>Reminder Title</label>
-                    <input type="text" id="reminders_title">
+                <!-- XP LEVELS -->
+                <div id="xp-levels" class="content">
+                    <div class="page-title">⭐ XP Levels</div>
+                    <div class="page-description">Configure the leveling system</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Level Configuration</div>
+                                    <div class="card-subtitle">Set XP requirements</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>XP Per Message</label>
+                                    <input type="number" id="xp-levels_perMessage" value="10" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>XP Per Level</label>
+                                    <input type="number" id="xp-levels_perLevel" value="500" min="100">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Max Level</label>
+                                    <input type="number" id="xp-levels_maxLevel" value="100" min="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Announce Level Up</label>
+                                    <div class="switch">
+                                        <span>Yes</span>
+                                        <div class="toggle active" id="xp-levels_announce"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('xp-levels')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('reminders')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="leaderboards" class="content">
-                <div class="form-group">
-                    <label>Leaderboard Type</label>
-                    <select id="leaderboards_type">
-                        <option value="xp">XP</option>
-                        <option value="money">Money</option>
-                    </select>
+                <!-- LEADERBOARDS -->
+                <div id="leaderboards" class="content">
+                    <div class="page-title">🏆 Leaderboards</div>
+                    <div class="page-description">Configure ranking and leaderboard display</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Leaderboard Settings</div>
+                                    <div class="card-subtitle">Rankings & rewards</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Leaderboard Type</label>
+                                    <select id="leaderboards_type">
+                                        <option value="xp">XP</option>
+                                        <option value="money">Money</option>
+                                        <option value="messages">Messages</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Update Frequency (min)</label>
+                                    <input type="number" id="leaderboards_update" value="60" min="5">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Channel ID</label>
+                                <input type="text" id="leaderboards_channel" placeholder="Channel ID">
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('leaderboards')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('leaderboards')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="invite-tracking" class="content">
-                <div class="form-group">
-                    <label>Tracking Channel</label>
-                    <input type="text" id="invite-tracking_channel">
+                <!-- SUBSCRIPTIONS -->
+                <div id="subscriptions" class="content">
+                    <div class="page-title">💳 Subscriptions</div>
+                    <div class="page-description">Manage premium tier settings</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Premium Settings</div>
+                                    <div class="card-subtitle">Subscription management</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Premium Tier</label>
+                                <select id="subscriptions_tier">
+                                    <option value="free">Free</option>
+                                    <option value="silver">Silver ($5/mo)</option>
+                                    <option value="gold">Gold ($15/mo)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Features</label>
+                                <textarea id="subscriptions_features" placeholder="List premium features..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <div class="switch">
+                                    <span>Enabled</span>
+                                    <div class="toggle active" id="subscriptions_enabled"></div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('subscriptions')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('invite-tracking')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="message-counting" class="content">
-                <div class="form-group">
-                    <label>Ignored Channels</label>
-                    <textarea id="message-counting_ignored"></textarea>
+                <!-- INVITE TRACKING -->
+                <div id="invite-tracking" class="content">
+                    <div class="page-title">📊 Invite Tracking</div>
+                    <div class="page-description">Monitor server invites</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Invite Settings</div>
+                                    <div class="card-subtitle">Track who invited members</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Tracking Channel</label>
+                                <input type="text" id="invite-tracking_channel" placeholder="Channel ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Tracking Options</label>
+                                <div class="switch">
+                                    <span>Enable Tracking</span>
+                                    <div class="toggle active" id="invite-tracking_enabled"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Track Creator</span>
+                                    <div class="toggle active" id="invite-tracking_creator"></div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('invite-tracking')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('message-counting')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="statistics-channels" class="content">
-                <div class="form-group">
-                    <label>Members Channel</label>
-                    <input type="text" id="statistics-channels_members">
+                <!-- MESSAGE COUNTING -->
+                <div id="message-counting" class="content">
+                    <div class="page-title">📈 Message Counting</div>
+                    <div class="page-description">Track message activity</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Counter Settings</div>
+                                    <div class="card-subtitle">Monitor messaging</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Options</label>
+                                <div class="switch">
+                                    <span>Enable Counting</span>
+                                    <div class="toggle active" id="message-counting_enabled"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Count Bot Messages</span>
+                                    <div class="toggle" id="message-counting_bots"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ignored Channels</label>
+                                <textarea id="message-counting_ignored" placeholder="Channel IDs (one per line)"></textarea>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('message-counting')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('statistics-channels')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="xp-levels" class="content">
-                <div class="form-group">
-                    <label>XP Per Level</label>
-                    <input type="number" id="xp-levels_perLevel" value="500">
+                <!-- STATISTICS CHANNELS -->
+                <div id="statistics-channels" class="content">
+                    <div class="page-title">📉 Statistics Channels</div>
+                    <div class="page-description">Display real-time stats</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Stats Channels</div>
+                                    <div class="card-subtitle">Configure stat displays</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Members Channel</label>
+                                    <input type="text" id="statistics-channels_members" placeholder="Channel ID">
+                                </div>
+                                <div class="form-group">
+                                    <label>Messages Channel</label>
+                                    <input type="text" id="statistics-channels_messages" placeholder="Channel ID">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Roles Channel</label>
+                                    <input type="text" id="statistics-channels_roles" placeholder="Channel ID">
+                                </div>
+                                <div class="form-group">
+                                    <label>Update (minutes)</label>
+                                    <input type="number" id="statistics-channels_update" value="10" min="5">
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('statistics-channels')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('xp-levels')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="giveaways" class="content">
-                <div class="form-group">
-                    <label>Prize Name</label>
-                    <input type="text" id="giveaways_prize">
+                <!-- SOCIAL NOTIFICATIONS -->
+                <div id="social-notifs" class="content">
+                    <div class="page-title">📱 Social Notifications</div>
+                    <div class="page-description">Monitor social media streams</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Platform Settings</div>
+                                    <div class="card-subtitle">Twitch, TikTok, Kick alerts</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Notification Channel</label>
+                                <input type="text" id="social-notifs_channel" placeholder="Channel ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Enabled Platforms</label>
+                                <div class="switch">
+                                    <span>Twitch</span>
+                                    <div class="toggle active" id="social-notifs_twitch"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>TikTok</span>
+                                    <div class="toggle active" id="social-notifs_tiktok"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Kick</span>
+                                    <div class="toggle active" id="social-notifs_kick"></div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('social-notifs')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('giveaways')">💾 Save</button>
-                </div>
-            </div>
 
-            <div id="social-notifs" class="content">
-                <div class="form-group">
-                    <label>Notification Channel</label>
-                    <input type="text" id="social-notifs_channel">
+                <!-- RECORDINGS -->
+                <div id="recordings" class="content">
+                    <div class="page-title">🎙️ Recordings</div>
+                    <div class="page-description">Configure voice recording options</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Recording Settings</div>
+                                    <div class="card-subtitle">Voice channel recordings</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Storage Channel</label>
+                                    <input type="text" id="recordings_channel" placeholder="Channel ID">
+                                </div>
+                                <div class="form-group">
+                                    <label>Duration Limit (min)</label>
+                                    <input type="number" id="recordings_limit" value="60" min="1">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <div class="switch">
+                                    <span>Enabled</span>
+                                    <div class="toggle" id="recordings_enabled"></div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('recordings')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="saveConfig('social-notifs')">💾 Save</button>
+
+                <!-- REMINDERS -->
+                <div id="reminders" class="content">
+                    <div class="page-title">⏰ Reminders</div>
+                    <div class="page-description">Set up automated reminders</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Reminder Config</div>
+                                    <div class="card-subtitle">Schedule messages</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Title</label>
+                                    <input type="text" id="reminders_title" placeholder="Daily Update">
+                                </div>
+                                <div class="form-group">
+                                    <label>Channel</label>
+                                    <input type="text" id="reminders_channel" placeholder="Channel ID">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Time (24h)</label>
+                                    <input type="time" id="reminders_time">
+                                </div>
+                                <div class="form-group">
+                                    <label>Repeat</label>
+                                    <select id="reminders_interval">
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('reminders')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GIVEAWAYS -->
+                <div id="giveaways" class="content">
+                    <div class="page-title">🎁 Giveaways</div>
+                    <div class="page-description">Manage server giveaways</div>
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Giveaway Settings</div>
+                                    <div class="card-subtitle">Prize management</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Prize Name</label>
+                                    <input type="text" id="giveaways_prize" placeholder="Nitro Boost">
+                                </div>
+                                <div class="form-group">
+                                    <label>Winners</label>
+                                    <input type="number" id="giveaways_winners" value="1" min="1">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Duration (hours)</label>
+                                    <input type="number" id="giveaways_duration" value="24" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Channel</label>
+                                    <input type="text" id="giveaways_channel" placeholder="Channel ID">
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveConfig('giveaways')">💾 Save</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -547,6 +1221,27 @@
             'social-notifs': '📱 Social Notifications'
         };
 
+        const descriptions = {
+            'settings': 'Manage your server\'s core settings and preferences',
+            'subscriptions': 'Manage premium tier settings',
+            'logging': 'Configure logging for moderation and server events',
+            'server-guard': 'Protect your server from spam and raids',
+            'react-roles': 'Assign roles through emoji reactions',
+            'role-categories': 'Organize roles into categories',
+            'server-messages': 'Customize welcome and goodbye messages',
+            'components': 'Manage interactive UI components',
+            'custom-commands': 'Create custom bot commands',
+            'recordings': 'Configure voice recording options',
+            'reminders': 'Set up automated reminders',
+            'leaderboards': 'Configure ranking and leaderboard display',
+            'invite-tracking': 'Monitor server invites',
+            'message-counting': 'Track message activity',
+            'statistics-channels': 'Display real-time stats',
+            'xp-levels': 'Configure the leveling system',
+            'giveaways': 'Manage server giveaways',
+            'social-notifs': 'Monitor social media streams'
+        };
+
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
@@ -554,8 +1249,13 @@
                 item.classList.add('active');
                 const section = item.getAttribute('data-section');
                 document.getElementById(section).classList.add('active');
-                document.getElementById('page-title').textContent = titles[section];
                 loadConfig(section);
+            });
+        });
+
+        document.querySelectorAll('.toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
             });
         });
 
@@ -565,6 +1265,10 @@
                 const key = input.id.replace(`${section}_`, '');
                 data[key] = input.value;
             });
+            document.querySelectorAll(`#${section} .toggle`).forEach(toggle => {
+                const id = toggle.id;
+                data[id.replace(`${section}_`, '')] = toggle.classList.contains('active');
+            });
 
             try {
                 const response = await fetch(`/api/config/${section}`, {
@@ -573,7 +1277,7 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                showAlert('✅ Saved successfully!', 'success');
+                showAlert('✅ Configuration saved successfully!', 'success');
             } catch (error) {
                 showAlert(`❌ Error: ${error.message}`, 'error');
             }
@@ -585,10 +1289,17 @@
                 const data = await response.json();
                 Object.keys(data).forEach(key => {
                     const el = document.getElementById(`${section}_${key}`);
-                    if (el) el.value = data[key] || '';
+                    if (el) {
+                        if (el.classList.contains('toggle')) {
+                            if (data[key]) el.classList.add('active');
+                            else el.classList.remove('active');
+                        } else {
+                            el.value = data[key] || '';
+                        }
+                    }
                 });
             } catch (e) {
-                console.log('No config for', section);
+                console.log('No config found for', section);
             }
         }
 
