@@ -1695,7 +1695,9 @@ app.get("/", (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000000; color: white; line-height: 1.6; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; line-height: 1.6; position: relative; }
+          body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
+          body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 127, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(138, 43, 226, 0.05) 0%, transparent 50%); pointer-events: none; z-index: -1; }
           nav { background: #111111; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
           nav a:hover { color: #9146FF; }
@@ -1854,13 +1856,14 @@ app.get("/features", (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000000; color: white; }
-          nav { background: #111111; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
+          body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
+          nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
-          nav a:hover { color: #9146FF; }
+          nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
           .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: white; }
-          .feature-section { background: #1a1a1a; padding: 2rem; margin: 2rem 0; border-radius: 10px; border-left: 4px solid #9146FF; }
+          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: #FF1493; text-shadow: 0 0 20px rgba(255, 20, 147, 0.5); }
+          .feature-section { background: rgba(26, 26, 26, 0.8); padding: 2rem; margin: 2rem 0; border-radius: 10px; border-left: 4px solid #9146FF; backdrop-filter: blur(10px); }
           .feature-section h2 { color: #9146FF; margin-bottom: 1rem; }
           .feature-section ul { margin-left: 2rem; }
           .feature-section li { margin: 0.5rem 0; color: white; }
@@ -1989,15 +1992,16 @@ app.get("/commands", (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000000; color: white; }
-          nav { background: #111111; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
+          body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
+          nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
-          nav a:hover { color: #9146FF; }
+          nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
           .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: white; }
-          h2 { color: #9146FF; margin: 2rem 0 1rem 0; border-bottom: 2px solid #9146FF; padding-bottom: 0.5rem; }
+          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: #FF1493; text-shadow: 0 0 20px rgba(255, 20, 147, 0.5); }
+          h2 { color: #00FFFF; margin: 2rem 0 1rem 0; border-bottom: 2px solid #9146FF; padding-bottom: 0.5rem; text-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
           .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-          .cmd-card { background: #1a1a1a; padding: 1rem; border-radius: 5px; border-left: 3px solid #9146FF; }
+          .cmd-card { background: rgba(26, 26, 26, 0.8); padding: 1rem; border-radius: 5px; border-left: 3px solid #9146FF; backdrop-filter: blur(10px); }
           .cmd-card code { background: #333; padding: 0.2rem 0.5rem; border-radius: 3px; color: #9146FF; }
           .cmd-card p { opacity: 0.8; margin-top: 0.5rem; font-size: 0.9rem; color: white; }
           .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #9146FF; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 1rem 0; }
