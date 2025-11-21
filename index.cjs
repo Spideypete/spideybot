@@ -16,6 +16,18 @@ const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 const express = require("express");
+const session = require("express-session");
+const axios = require("axios");
+
+// ============== DISCORD OAUTH CONFIG ==============
+// Render URL: https://spideybot-90sr.onrender.com/auth/discord/callback
+const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || process.env.RENDER_DEPLOY_URL;
+const REPLIT_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : null;
+const REDIRECT_URI = RENDER_URL ? `${RENDER_URL}/auth/discord/callback` : (REPLIT_URL ? `${REPLIT_URL}/auth/discord/callback` : "http://localhost:5000/auth/discord/callback");
+
+console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
 
 // ============== CONFIG MANAGEMENT ==============
 const configFile = path.join(__dirname, "config.json");
@@ -64,6 +76,8 @@ function getGuildConfig(guildId) {
       twitchUsers: [],
       tiktokChannelId: null,
       tiktokUsers: [],
+      kickChannelId: null,
+      kickUsers: [],
       musicLoopMode: false,
       musicShuffle: false,
       musicVolume: 100,
@@ -77,11 +91,19 @@ function getGuildConfig(guildId) {
       linkFilterEnabled: true,
       ticketsEnabled: false,
       ticketChannelId: null,
-      customCommands: {}
+      customCommands: {},
+      levelRoles: {}
     };
     saveConfig(config);
   }
   return config.guilds[guildId];
+}
+
+function getNumberedEmoji(num) {
+  const emojis = ['⓵', '⓶', '⓷', '⓸', '⓹', '⓺', '⓻', '⓼', '⓽', '⓾'];
+  if (num <= 10) return emojis[num - 1];
+  if (num < 20) return String(num).split('').map(d => ['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨'][d]).join('');
+  return `${num}️⃣`;
 }
 
 function updateGuildConfig(guildId, updates) {
@@ -180,6 +202,53 @@ client.on("guildMemberAdd", async (member) => {
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
   const guildConfig = getGuildConfig(msg.guild.id);
+
+  // ============== AUTO XP GAIN ==============
+  if (!msg.content.startsWith("//")) {
+    const levels = guildConfig.levels || {};
+    const userId = msg.author.id;
+    const lastXpTime = levels[`${userId}_xp_time`] || 0;
+    const now = Date.now();
+    
+    if (now - lastXpTime > 60000) {
+      const xpGain = Math.floor(Math.random() * 20) + 10;
+      levels[userId] = (levels[userId] || 0) + xpGain;
+      levels[`${userId}_xp_time`] = now;
+      
+      const currentXp = levels[userId];
+      const nextLevelXp = (Math.floor(currentXp / 500) + 1) * 500;
+      if (currentXp >= nextLevelXp) {
+        const level = Math.floor(currentXp / 500) + 1;
+        msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
+        
+        const levelRoles = guildConfig.levelRoles || {};
+        const newRoleId = levelRoles[`level_${level}`];
+        
+        try {
+          // Remove all old level roles (1-99)
+          for (let oldLevel = 1; oldLevel < level; oldLevel++) {
+            const oldRoleId = levelRoles[`level_${oldLevel}`];
+            if (oldRoleId) {
+              const oldRole = msg.guild.roles.cache.get(oldRoleId);
+              if (oldRole && msg.member.roles.cache.has(oldRoleId)) {
+                await msg.member.roles.remove(oldRole);
+              }
+            }
+          }
+          
+          // Add new level role
+          if (newRoleId) {
+            const newRole = msg.guild.roles.cache.get(newRoleId);
+            if (newRole) await msg.member.roles.add(newRole);
+          }
+        } catch (err) {
+          console.error(`Failed to manage level roles: ${err.message}`);
+        }
+      }
+      
+      updateGuildConfig(msg.guild.id, { levels });
+    }
+  }
 
   // Bot Status
   if (msg.content === "//ping") {
@@ -733,10 +802,11 @@ client.on("messageCreate", async (msg) => {
 
     const levelEmbed = new EmbedBuilder()
       .setColor(0x00D084)
-      .setTitle("📊 LEVELING (2 commands)")
+      .setTitle("📊 LEVELING (3 commands)")
       .addFields(
         { name: "📈 //level", value: "Check your level & XP", inline: true },
-        { name: "🏆 //leaderboard", value: "View top members", inline: true }
+        { name: "🏆 //xpleaderboard", value: "View top members by level", inline: true },
+        { name: "💡 Passive", value: "Gain 10-30 XP per minute chatting!", inline: true }
       );
 
     const funEmbed = new EmbedBuilder()
@@ -803,7 +873,7 @@ client.on("messageCreate", async (msg) => {
 
     const adminSocialEmbed = new EmbedBuilder()
       .setColor(0xFF1493)
-      .setTitle("📱 SOCIAL MEDIA (8 commands + API)")
+      .setTitle("📱 SOCIAL MEDIA (12 commands + API)")
       .addFields(
         { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
         { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
@@ -813,7 +883,28 @@ client.on("messageCreate", async (msg) => {
         { name: "➖ //remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
         { name: "📋 //list-tiktok-users", value: "View monitored TikTok creators", inline: true },
         { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
+        { name: "🎮 //add-kick-user [user]", value: "Add Kick streamer to monitor", inline: true },
+        { name: "➖ //remove-kick-user [user]", value: "Remove Kick streamer", inline: true },
+        { name: "📋 //list-kick-users", value: "View monitored Kick streamers", inline: true },
+        { name: "📢 //config-kick-channel #ch", value: "Set Kick alert channel", inline: true },
         { name: "🌐 WEB API", value: "Admin dashboard at `/admin` • 3 REST endpoints", inline: false }
+      );
+
+    const adminEconomyEmbed = new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle("💰 ECONOMY MANAGEMENT (3 commands)")
+      .addFields(
+        { name: "➕ //addmoney @user [amount]", value: "Give coins to member", inline: true },
+        { name: "➖ //removemoney @user [amount]", value: "Remove coins from member", inline: true },
+        { name: "🏆 //leaderboard", value: "View top richest members", inline: true }
+      );
+
+    const adminLevelEmbed = new EmbedBuilder()
+      .setColor(0x00D084)
+      .setTitle("📊 LEVEL ROLES (1 command)")
+      .addFields(
+        { name: "🎖️ //setup-level-roles", value: "Create 100 auto-assigned level roles (1-100) with emoji badges", inline: false },
+        { name: "💡 How it works", value: "Members earn XP by chatting → Auto-get level role → Badge shows next to their name! Level badges have gradient colors", inline: false }
       );
 
     const adminProtectionEmbed = new EmbedBuilder()
@@ -843,7 +934,7 @@ client.on("messageCreate", async (msg) => {
       .setFooter({ text: "💡 All actions are auto-logged to your modlog channel" });
 
     return msg.reply({ 
-      embeds: [adminMainEmbed, adminRoleEmbed, adminWelcomeEmbed, adminConfigEmbed, adminSocialEmbed, adminModEmbed, adminProtectionEmbed],
+      embeds: [adminMainEmbed, adminRoleEmbed, adminWelcomeEmbed, adminConfigEmbed, adminSocialEmbed, adminEconomyEmbed, adminLevelEmbed, adminModEmbed, adminProtectionEmbed],
       content: "** **"
     });
   }
@@ -1400,6 +1491,256 @@ client.on("messageCreate", async (msg) => {
     if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `//add-tiktok-user [username]`");
     return msg.reply(`📱 **TikTok Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
+
+  if (msg.content.startsWith("//config-kick-channel ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const channel = msg.mentions.channels.first();
+    if (!channel) return msg.reply("Usage: //config-kick-channel #channel");
+    updateGuildConfig(msg.guild.id, { kickChannelId: channel.id });
+    return msg.reply(`✅ Kick live notifications will post to ${channel}\n\n💡 *Note: Configure your Kick webhook at: https://developers.kick.com*`);
+  }
+
+  if (msg.content.startsWith("//add-kick-user ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const kickUser = msg.content.slice(16).trim().toLowerCase();
+    if (!kickUser) return msg.reply("Usage: //add-kick-user [username]\nExample: //add-kick-user xqc");
+    const users = guildConfig.kickUsers || [];
+    if (users.includes(kickUser)) return msg.reply(`❌ **${kickUser}** is already being monitored!`);
+    users.push(kickUser);
+    updateGuildConfig(msg.guild.id, { kickUsers: users });
+    return msg.reply(`✅ Added **${kickUser}** to Kick monitoring! (${users.length} total)`);
+  }
+
+  if (msg.content.startsWith("//remove-kick-user ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const kickUser = msg.content.slice(19).trim().toLowerCase();
+    if (!kickUser) return msg.reply("Usage: //remove-kick-user [username]");
+    const users = guildConfig.kickUsers || [];
+    const index = users.indexOf(kickUser);
+    if (index === -1) return msg.reply(`❌ **${kickUser}** is not being monitored!`);
+    users.splice(index, 1);
+    updateGuildConfig(msg.guild.id, { kickUsers: users });
+    return msg.reply(`✅ Removed **${kickUser}** from Kick monitoring!`);
+  }
+
+  if (msg.content === "//list-kick-users") {
+    const users = guildConfig.kickUsers || [];
+    if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `//add-kick-user [username]`");
+    return msg.reply(`🎮 **Kick Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
+  }
+
+  // ============== ECONOMY COMMANDS ==============
+  if (msg.content === "//balance") {
+    const economy = guildConfig.economy || {};
+    const balance = economy[msg.author.id] || 0;
+    return msg.reply(`💰 **${msg.author.username}** has **${balance}** coins!`);
+  }
+
+  if (msg.content === "//daily") {
+    const economy = guildConfig.economy || {};
+    const lastDaily = economy[`${msg.author.id}_daily`] || 0;
+    const now = Date.now();
+    if (now - lastDaily < 86400000) {
+      const timeLeft = Math.ceil((86400000 - (now - lastDaily)) / 3600000);
+      return msg.reply(`⏰ You can claim daily rewards in **${timeLeft}** hours!`);
+    }
+    economy[msg.author.id] = (economy[msg.author.id] || 0) + 100;
+    economy[`${msg.author.id}_daily`] = now;
+    updateGuildConfig(msg.guild.id, { economy });
+    return msg.reply(`✅ Claimed **100** coins! Total: **${economy[msg.author.id]}** 💰`);
+  }
+
+  if (msg.content === "//work") {
+    const economy = guildConfig.economy || {};
+    const lastWork = economy[`${msg.author.id}_work`] || 0;
+    const now = Date.now();
+    if (now - lastWork < 300000) {
+      const timeLeft = Math.ceil((300000 - (now - lastWork)) / 60000);
+      return msg.reply(`⏰ You can work again in **${timeLeft}** minute(s)!`);
+    }
+    const earned = Math.floor(Math.random() * 50) + 20;
+    economy[msg.author.id] = (economy[msg.author.id] || 0) + earned;
+    economy[`${msg.author.id}_work`] = now;
+    updateGuildConfig(msg.guild.id, { economy });
+    return msg.reply(`💼 You worked hard and earned **${earned}** coins! Total: **${economy[msg.author.id]}** 💰`);
+  }
+
+  if (msg.content.startsWith("//transfer ")) {
+    const target = msg.mentions.members.first();
+    const amountStr = msg.content.split(" ").pop();
+    const amount = parseInt(amountStr);
+    
+    if (!target) return msg.reply("Usage: //transfer @user [amount]");
+    if (isNaN(amount) || amount <= 0) return msg.reply("Usage: //transfer @user [amount]\nAmount must be a positive number!");
+    if (target.id === msg.author.id) return msg.reply("❌ You can't transfer to yourself!");
+    
+    const economy = guildConfig.economy || {};
+    const senderBalance = economy[msg.author.id] || 0;
+    
+    if (senderBalance < amount) return msg.reply(`❌ You only have **${senderBalance}** coins! Need **${amount}**`);
+    
+    economy[msg.author.id] = senderBalance - amount;
+    economy[target.id] = (economy[target.id] || 0) + amount;
+    updateGuildConfig(msg.guild.id, { economy });
+    
+    return msg.reply(`✅ Transferred **${amount}** coins to ${target.user.tag}!\nYour new balance: **${economy[msg.author.id]}** 💰`);
+  }
+
+  if (msg.content.startsWith("//addmoney ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can add money!");
+    }
+    const target = msg.mentions.members.first();
+    const amountStr = msg.content.split(" ").pop();
+    const amount = parseInt(amountStr);
+    
+    if (!target) return msg.reply("Usage: //addmoney @user [amount]");
+    if (isNaN(amount) || amount <= 0) return msg.reply("Amount must be a positive number!");
+    
+    const economy = guildConfig.economy || {};
+    economy[target.id] = (economy[target.id] || 0) + amount;
+    updateGuildConfig(msg.guild.id, { economy });
+    
+    return msg.reply(`✅ Added **${amount}** coins to ${target.user.tag}!\nNew balance: **${economy[target.id]}** 💰`);
+  }
+
+  if (msg.content.startsWith("//removemoney ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can remove money!");
+    }
+    const target = msg.mentions.members.first();
+    const amountStr = msg.content.split(" ").pop();
+    const amount = parseInt(amountStr);
+    
+    if (!target) return msg.reply("Usage: //removemoney @user [amount]");
+    if (isNaN(amount) || amount <= 0) return msg.reply("Amount must be a positive number!");
+    
+    const economy = guildConfig.economy || {};
+    const currentBalance = economy[target.id] || 0;
+    economy[target.id] = Math.max(0, currentBalance - amount);
+    updateGuildConfig(msg.guild.id, { economy });
+    
+    return msg.reply(`✅ Removed **${amount}** coins from ${target.user.tag}!\nNew balance: **${economy[target.id]}** 💰`);
+  }
+
+  if (msg.content === "//leaderboard") {
+    const economy = guildConfig.economy || {};
+    const members = Object.entries(economy)
+      .filter(([key]) => !key.includes("_"))
+      .map(([userId, balance]) => ({ userId, balance }))
+      .sort((a, b) => b.balance - a.balance)
+      .slice(0, 10);
+    
+    if (members.length === 0) return msg.reply("📊 No economy data yet! Use //daily or //work to start earning!");
+    
+    const leaderboard = members.map((m, i) => {
+      const user = msg.guild.members.cache.get(m.userId)?.user;
+      const name = user?.username || "Unknown";
+      return `**${i+1}.** ${name} - **${m.balance}** 💰`;
+    }).join("\n");
+    
+    return msg.reply(`🏆 **Top 10 Richest Members:**\n${leaderboard}`);
+  }
+
+  // ============== LEVELING COMMANDS ==============
+  if (msg.content === "//level") {
+    const levels = guildConfig.levels || {};
+    const userXp = levels[msg.author.id] || 0;
+    const level = Math.floor(userXp / 500) + 1;
+    const xpInLevel = userXp % 500;
+    const nextLevelXp = 500;
+    
+    const levelEmbed = new EmbedBuilder()
+      .setColor(0x00D084)
+      .setTitle(`📊 ${msg.author.username}'s Level`)
+      .addFields(
+        { name: "Level", value: `${level}`, inline: true },
+        { name: "Total XP", value: `${userXp}`, inline: true },
+        { name: "Progress", value: `${xpInLevel}/${nextLevelXp} XP`, inline: false }
+      )
+      .setThumbnail(msg.author.displayAvatarURL());
+    
+    return msg.reply({ embeds: [levelEmbed] });
+  }
+
+  if (msg.content === "//xpleaderboard") {
+    const levels = guildConfig.levels || {};
+    const members = Object.entries(levels)
+      .filter(([key]) => !key.includes("_"))
+      .map(([userId, xp]) => ({ userId, xp }))
+      .sort((a, b) => b.xp - a.xp)
+      .slice(0, 10);
+    
+    if (members.length === 0) return msg.reply("📊 No leveling data yet! Send messages to gain XP!");
+    
+    const leaderboard = members.map((m, i) => {
+      const user = msg.guild.members.cache.get(m.userId)?.user;
+      const name = user?.username || "Unknown";
+      const level = Math.floor(m.xp / 500) + 1;
+      return `**${i+1}.** ${name} - **Level ${level}** (${m.xp} XP)`;
+    }).join("\n");
+    
+    return msg.reply(`🏆 **Top 10 Members by Level:**\n${leaderboard}`);
+  }
+
+  // Setup level roles (1-100)
+  if (msg.content === "//setup-level-roles") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can setup level roles!");
+    }
+    
+    await msg.reply("⏳ Creating 100 level roles... This may take a moment!");
+    
+    const levelRoles = {};
+    let created = 0;
+    
+    const botRole = msg.guild.members.me?.roles.highest;
+    const colorGradient = (level) => {
+      const hue = (level / 100) * 360;
+      const h = hue / 60;
+      const c = 255;
+      const x = c * (1 - Math.abs((h % 2) - 1));
+      let r = 0, g = 0, b = 0;
+      if (h >= 0 && h < 1) [r, g, b] = [c, x, 0];
+      else if (h >= 1 && h < 2) [r, g, b] = [x, c, 0];
+      else if (h >= 2 && h < 3) [r, g, b] = [0, c, x];
+      else if (h >= 3 && h < 4) [r, g, b] = [0, x, c];
+      else if (h >= 4 && h < 5) [r, g, b] = [x, 0, c];
+      else [r, g, b] = [c, 0, x];
+      return (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b);
+    };
+    
+    for (let level = 1; level <= 100; level++) {
+      try {
+        const emoji = getNumberedEmoji(level);
+        const roleName = `${emoji} Level ${level}`;
+        
+        const role = await msg.guild.roles.create({
+          name: roleName,
+          color: colorGradient(level),
+          position: botRole ? botRole.position - 1 : 1
+        });
+        
+        levelRoles[`level_${level}`] = role.id;
+        created++;
+        
+        if (created % 20 === 0) {
+          console.log(`✅ Created ${created}/100 level roles`);
+        }
+      } catch (err) {
+        console.error(`Failed to create level ${level} role: ${err.message}`);
+      }
+    }
+    
+    updateGuildConfig(msg.guild.id, { levelRoles });
+    return msg.reply(`✅ Created **${created}/100** level roles with gradient colors! Members will display their level badge next to their name as they level up.`);
+  }
 });
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
@@ -1750,177 +2091,202 @@ app.get("/", (req, res) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>SPIDEY BOT - Advanced Discord Bot</title>
+        <title>SPIDEY BOT - Complete Discord Bot for Communities</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="SPIDEY BOT is the ultimate multi-server Discord bot featuring advanced music playback with YouTube search, comprehensive moderation tools, role management with GIF banners, unlimited social media monitoring, economy system, leveling with leaderboards, link filtering, ticket support, custom commands, and 40+ total commands. Perfect for community servers.">
-        <meta name="keywords" content="Discord Bot, Music Bot, Moderation, Community, Leveling">
-        <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
+        <meta name="description" content="SPIDEY BOT: Music player, moderation, economy, leveling, role management, social media monitoring, and 40+ commands. All-in-one Discord bot trusted by servers worldwide.">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Fredoka', sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; line-height: 1.6; position: relative; }
-          body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
-          body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 127, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(138, 43, 226, 0.05) 0%, transparent 50%); pointer-events: none; z-index: -1; }
-          nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); position: relative; z-index: 10; }
-          nav a { color: #9146FF; text-decoration: none; margin: 0 1rem; font-weight: 600; transition: all 0.3s; }
-          nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
-          .hero { position: relative; background: linear-gradient(135deg, rgba(26, 0, 51, 0.9) 0%, rgba(45, 0, 82, 0.9) 25%, rgba(13, 0, 21, 0.9) 50%, rgba(61, 21, 115, 0.9) 75%, rgba(26, 0, 51, 0.9) 100%), url('/assets/spidey-banner.png'); background-size: cover; background-position: center; text-align: center; padding: 4rem 2rem; }
-          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); }
-          .hero p { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.95; color: white; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8); }
-          .btn { display: inline-block; padding: 1rem 2rem; background: #9146FF; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; font-size: 1rem; }
-          .btn:hover { background: #7C3AED; transform: scale(1.05); }
-          .btn-secondary { background: transparent; color: #9146FF; border: 2px solid #9146FF; }
-          .btn-secondary:hover { background: #9146FF; color: #000; }
-          .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
-          .feature { background: #1a1a1a; padding: 2rem; border-radius: 10px; border: 1px solid #333; }
-          .feature h3 { font-size: 1.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; }
-          .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-          .stats { background: #111111; padding: 2rem; text-align: center; }
-          .stat { display: inline-block; margin: 1rem 2rem; }
-          .stat h2 { font-size: 2rem; color: #9146FF; }
-          .commands { max-width: 1200px; margin: 3rem auto; padding: 2rem; }
-          .command-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-          .command-card { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF; }
-          .command-card h4 { margin-bottom: 0.5rem; color: white; font-family: 'Fredoka One', sans-serif; }
-          .command-card p { opacity: 0.8; font-size: 0.9rem; color: white; }
-          footer { background: #111111; text-align: center; padding: 2rem; margin-top: 3rem; border-top: 1px solid #333; }
-          .description { max-width: 900px; margin: 2rem auto; padding: 2rem; background: rgba(26, 26, 26, 0.8); border-radius: 10px; border: 2px solid #9146FF; text-align: center; font-size: 1.1rem; line-height: 1.8; color: #ddd; }
-          .tags { max-width: 900px; margin: 2rem auto; text-align: center; }
-          .tag { display: inline-block; background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%); color: white; padding: 0.7rem 1.5rem; margin: 0.5rem; border-radius: 25px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(145, 70, 255, 0.3); }
+          html { scroll-behavior: smooth; }
+          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; line-height: 1.6; }
+          nav { background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid #222; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+          nav img { height: 40px; }
+          nav a { color: #999; text-decoration: none; margin: 0 1.5rem; transition: color 0.3s; font-weight: 500; }
+          nav a:hover { color: #9146FF; }
+          .hero { background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%); padding: 6rem 2rem; text-align: center; position: relative; overflow: hidden; }
+          .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.15) 0%, transparent 50%); }
+          .hero > * { position: relative; z-index: 2; }
+          .hero h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem; background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+          .hero p { font-size: 1.25rem; color: #ccc; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+          .btn-group { margin: 2rem 0; }
+          .btn { display: inline-block; padding: 0.9rem 2rem; background: #9146FF; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 0.5rem; transition: all 0.3s; border: 2px solid #9146FF; cursor: pointer; box-shadow: 0 0 20px rgba(145, 70, 255, 0.3); }
+          .btn:hover { background: #a855ff; border-color: #a855ff; transform: translateY(-2px); box-shadow: 0 0 30px rgba(145, 70, 255, 0.6); }
+          .btn-outline { background: transparent; color: #9146FF; border-color: #9146FF; }
+          .btn-outline:hover { background: #9146FF; color: #fff; border-color: #9146FF; }
+          .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+          .plugins { padding: 5rem 2rem; background: #1a1a1a; }
+          .section-title { text-align: center; font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+          .section-subtitle { text-align: center; color: #999; font-size: 1.1rem; margin-bottom: 3rem; }
+          .plugin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+          .plugin-card { background: #222; padding: 2rem; border-radius: 12px; border: 1px solid #333; transition: all 0.3s; }
+          .plugin-card:hover { border-color: #9146FF; transform: translateY(-5px); }
+          .plugin-icon { font-size: 3rem; margin-bottom: 1rem; }
+          .plugin-card h3 { font-size: 1.3rem; margin-bottom: 0.8rem; font-weight: 600; }
+          .plugin-card p { color: #bbb; font-size: 0.95rem; }
+          .features-showcase { padding: 5rem 2rem; }
+          .showcase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+          .showcase-item { background: #1a1a1a; padding: 2rem; border-radius: 12px; border-left: 4px solid #9146FF; }
+          .showcase-item h3 { margin-bottom: 1rem; font-size: 1.2rem; }
+          .showcase-item p { color: #aaa; line-height: 1.8; }
+          .stats { padding: 3rem 2rem; background: #1a1a1a; text-align: center; }
+          .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 2rem; max-width: 800px; margin: 2rem auto 0; }
+          .stat-item h2 { font-size: 2.5rem; color: #9146FF; margin-bottom: 0.5rem; }
+          .stat-item p { color: #999; }
+          .cta { padding: 4rem 2rem; background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%); text-align: center; }
+          .cta h2 { font-size: 2.2rem; margin-bottom: 1rem; }
+          .cta p { color: #ccc; margin-bottom: 2rem; font-size: 1.1rem; }
+          footer { background: #0a0a0a; padding: 3rem 2rem; text-align: center; border-top: 1px solid #222; }
+          footer a { color: #9146FF; text-decoration: none; margin: 0 1rem; }
+          footer a:hover { text-decoration: underline; }
+          @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            nav { flex-direction: column; gap: 1rem; }
+            .section-title { font-size: 2rem; }
+          }
         </style>
       </head>
       <body>
         <nav>
-          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 50px; margin-right: 1rem;">
-          <div style="font-size: 1.5rem; font-weight: bold; flex: 1;">SPIDEY BOT</div>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
+            <span style="font-weight: 700; font-size: 1.2rem;">SPIDEY BOT</span>
+          </div>
           <div>
             <a href="/">Home</a>
             <a href="/features">Features</a>
             <a href="/commands">Commands</a>
             <a href="#invite">Invite</a>
+            <a href="/auth/discord" class="btn" style="padding: 0.6rem 1.2rem; margin: 0; font-size: 0.9rem;">🔐 Login with Discord</a>
           </div>
         </nav>
 
         <div class="hero">
-          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 120px; margin-bottom: 1.5rem; filter: drop-shadow(0 4px 15px rgba(145, 70, 255, 0.5));">
-          <h1>SPIDEY BOT</h1>
-          <p>The Ultimate Discord Bot for Music, Moderation & Community Management</p>
-          <div style="margin-top: 2rem;">
-            <a href="${botInviteURL}" target="_blank" class="btn">➕ Add to Discord</a>
-            <a href="/features" class="btn btn-secondary">⭐ Explore Features</a>
-            <a href="/commands" class="btn btn-secondary">📚 View Commands</a>
+          <h1>The best all-in-one bot for Discord</h1>
+          <p>SPIDEY BOT is a complete Discord bot trusted by servers worldwide. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
+          <div class="btn-group">
+            <a href="${botInviteURL}" target="_blank" class="btn">Add to Discord</a>
+            <a href="/features" class="btn btn-outline">See Features</a>
           </div>
         </div>
 
-        <div class="description">
-          🕷️ SPIDEY BOT is the ultimate multi-server Discord bot featuring advanced music playback with YouTube search, comprehensive moderation tools, role management with GIF banners, unlimited social media monitoring, economy system, leveling with leaderboards, link filtering, ticket support, custom commands, and 40+ total commands. Perfect for community servers with complete per-server configuration!
+        <div class="plugins">
+          <div class="container">
+            <h2 class="section-title">Plugins & Features</h2>
+            <p class="section-subtitle">Everything you need to manage, protect, and grow your Discord community</p>
+            <div class="plugin-grid">
+              <div class="plugin-card">
+                <div class="plugin-icon">🎵</div>
+                <h3>Music & Entertainment</h3>
+                <p>Advanced music player with YouTube search, queue management, loop, shuffle, volume control, and interactive buttons</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">🛡️</div>
+                <h3>Moderation & Management</h3>
+                <p>Kick, ban, warn, mute with automatic logging. Link filtering, profanity filter, and warning tracking</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">🎭</div>
+                <h3>Role Management</h3>
+                <p>Create custom role categories with GIF banners. Interactive role selectors for easy member management</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">📱</div>
+                <h3>Social Media Monitoring</h3>
+                <p>Monitor unlimited Twitch, TikTok, and Kick streamers. Auto-announce live streams and new posts to your server</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">💰</div>
+                <h3>Economy System</h3>
+                <p>Currency system with daily rewards, work commands, transfers, and leaderboards. Admin controls for money management</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">📈</div>
+                <h3>Leveling & XP</h3>
+                <p>Passive XP gains from chatting. Auto-assigned level roles with emoji badges (1-100) and leaderboards</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">👋</div>
+                <h3>Welcome Messages</h3>
+                <p>Custom welcome messages with placeholders. Personalize greetings for every new member</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">🎫</div>
+                <h3>Ticket Support</h3>
+                <p>Support ticket system for member assistance. Easy ticket creation and management</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="tags">
-          <span class="tag">🎵 Music Bot</span>
-          <span class="tag">🛡️ Moderation</span>
-          <span class="tag">👥 Community</span>
-          <span class="tag">📈 Leveling</span>
-          <span class="tag">⚙️ Utility</span>
+        <div class="features-showcase">
+          <div class="container">
+            <h2 class="section-title">Why Choose SPIDEY BOT?</h2>
+            <div class="showcase-grid">
+              <div class="showcase-item">
+                <h3>✨ All-in-One Solution</h3>
+                <p>40+ commands covering music, moderation, economy, leveling, social media, and more. Everything in one bot.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>🔧 Per-Server Configuration</h3>
+                <p>Each server has independent settings, custom prefix, role categories, and configurations. Total control.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>⚡ Easy to Use</h3>
+                <p>Simple commands, intuitive interface, and helpful documentation. Get started in minutes, not hours.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>🌐 Unlimited Creators</h3>
+                <p>Monitor unlimited Twitch, TikTok, and Kick streamers per server. No limits on social media monitoring.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>🎖️ Gamification</h3>
+                <p>Level roles with gradient colors, economy system, and leaderboards to keep members engaged.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>24/7 Uptime</h3>
+                <p>Deployed on Render for reliable 24/7 operation. Your community always has the tools it needs.</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="stats">
-          <div class="stat">
-            <h2>35+</h2>
-            <p>Commands</p>
-          </div>
-          <div class="stat">
-            <h2>∞</h2>
-            <p>Servers</p>
-          </div>
-          <div class="stat">
-            <h2>5</h2>
-            <p>Feature Categories</p>
-          </div>
-        </div>
-
-        <div class="features">
-          <div class="feature">
-            <div class="feature-icon">🎵</div>
-            <h3>Advanced Music</h3>
-            <p>Search YouTube, create playlists, loop/shuffle, volume control with button controls</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">🎭</div>
-            <h3>Role Management</h3>
-            <p>Custom role categories with GIF banners, interactive role selectors</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">🛡️</div>
-            <h3>Moderation</h3>
-            <p>Kick, ban, warn with automatic logging. Track member warnings</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">📱</div>
-            <h3>Social Media</h3>
-            <p>Monitor unlimited Twitch streamers and TikTok creators with auto-alerts</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">👋</div>
-            <h3>Welcome System</h3>
-            <p>Custom welcome messages with placeholders for user info and server details</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">⚙️</div>
-            <h3>Per-Server Config</h3>
-            <p>Each server gets independent settings, prefix, and customization</p>
-          </div>
-        </div>
-
-        <div class="commands">
-          <h2 style="text-align: center; margin-bottom: 2rem;">🎯 Core Features</h2>
-          <div class="command-row">
-            <div class="command-card">
-              <h4>🎵 Music Player</h4>
-              <p>//play [song] • //queue • //loop • //shuffle • //volume [0-200]</p>
-            </div>
-            <div class="command-card">
-              <h4>🎭 Role Categories</h4>
-              <p>//create-category • //add-role • //setup-category • //list-roles</p>
-            </div>
-            <div class="command-card">
-              <h4>🛡️ Moderation</h4>
-              <p>//kick • //ban • //warn • //mute • //unmute • //warnings</p>
-            </div>
-            <div class="command-card">
-              <h4>📱 Social Media</h4>
-              <p>//add-twitch-user • //add-tiktok-user • //config-twitch-channel</p>
-            </div>
-            <div class="command-card">
-              <h4>👋 Welcome</h4>
-              <p>//config-welcome-channel • //config-welcome-message</p>
-            </div>
-            <div class="command-card">
-              <h4>⚙️ Configuration</h4>
-              <p>//set-prefix • //config-modlog • Unlimited per-server customization</p>
+          <div class="container">
+            <h2 class="section-title">Trusted by Communities</h2>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <h2>40+</h2>
+                <p>Commands</p>
+              </div>
+              <div class="stat-item">
+                <h2>∞</h2>
+                <p>Servers</p>
+              </div>
+              <div class="stat-item">
+                <h2>8</h2>
+                <p>Feature Categories</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div id="invite" style="text-align: center; padding: 3rem 2rem; background: rgba(0,0,0,0.3);">
-          <h2>Ready to Add SPIDEY BOT?</h2>
-          <p style="margin: 1rem 0;">Get your server powered up with music, moderation & more!</p>
-          <a href="${botInviteURL}" target="_blank" class="btn">➕ Invite SPIDEY BOT Now</a>
-        </div>
-
-        <div style="text-align: center; padding: 3rem 2rem; background: #1a1a1a; border-top: 2px solid #9146FF;">
-          <h2 style="color: #9146FF; margin-bottom: 1rem;">☕ Support SPIDEY BOT</h2>
-          <p style="margin-bottom: 1.5rem; opacity: 0.8;">Love SPIDEY BOT? Consider supporting development!</p>
-          <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=peterburke122000@gmail.com&item_name=Support+SPIDEY+BOT&amount=10.00&currency_code=USD" target="_blank" class="btn" style="background: #9146FF; font-size: 1.1rem;">💜 Donate via PayPal</a>
-          <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.6;">All donations help us keep the bot running & add new features!</p>
+        <div class="cta" id="invite">
+          <div class="container">
+            <h2>Ready to add SPIDEY BOT to your server?</h2>
+            <p>Join thousands of communities already using SPIDEY BOT</p>
+            <a href="${botInviteURL}" target="_blank" class="btn">Add SPIDEY BOT Now</a>
+          </div>
         </div>
 
         <footer>
-          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 40px; margin-bottom: 0.5rem;">
-          <p>SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
-          <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">Use //help in Discord to see all commands • Admins use //adminhelp</p>
-          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #333;">
-            <a href="/tos" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
-            <a href="/privacy" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 40px; margin-bottom: 1rem;">
+          <p>SPIDEY BOT © 2025 • The complete Discord bot for your community</p>
+          <p style="margin: 1rem 0; color: #666; font-size: 0.9rem;">Use <strong>//help</strong> in Discord for commands • <strong>//adminhelp</strong> for admin features</p>
+          <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #222;">
+            <a href="/tos">Terms of Service</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/features">Features</a>
+            <a href="/commands">Commands</a>
           </div>
         </footer>
         ${supportWidget}
@@ -2161,6 +2527,10 @@ app.get("/commands", (req, res) => {
             <div class="cmd-card"><code>//remove-tiktok-user [user]</code><p>Stop monitoring</p></div>
             <div class="cmd-card"><code>//list-tiktok-users</code><p>View monitored creators</p></div>
             <div class="cmd-card"><code>//config-tiktok-channel #ch</code><p>Set alert channel</p></div>
+            <div class="cmd-card"><code>//add-kick-user [user]</code><p>Monitor Kick streamer</p></div>
+            <div class="cmd-card"><code>//remove-kick-user [user]</code><p>Stop monitoring</p></div>
+            <div class="cmd-card"><code>//list-kick-users</code><p>View monitored streamers</p></div>
+            <div class="cmd-card"><code>//config-kick-channel #ch</code><p>Set alert channel</p></div>
           </div>
 
           <h2>⚙️ Configuration (Admin)</h2>
@@ -2331,7 +2701,7 @@ app.post("/webhooks/twitch", (req, res) => {
           const embed = new EmbedBuilder()
             .setColor(0x9146FF)
             .setTitle("🎮 TWITCH LIVE!")
-            .setDescription(`**${body.event?.broadcaster_user_login}** is now live on Twitch!`)
+            .setDescription(`**${body.event?.broadcaster_user_login}** is live! Please support and follow thanks!`)
             .setURL(`https://twitch.tv/${body.event?.broadcaster_user_login}`)
             .addFields(
               { name: "Title", value: body.event?.title || "No title", inline: false }
@@ -2364,6 +2734,35 @@ app.post("/webhooks/tiktok", (req, res) => {
             .setURL(`https://www.tiktok.com/@${body.data?.author_username || body.creator}`)
             .addFields(
               { name: "Caption", value: body.data?.caption || "No caption", inline: false }
+            );
+          channel.send({ embeds: [embed] }).catch(() => {});
+        }
+      }
+    }
+  }
+  res.status(200).json({ status: "ok" });
+});
+
+// Kick webhook
+app.post("/webhooks/kick", (req, res) => {
+  const body = req.body;
+  if (body.event_type === "live" || body.type === "stream_online") {
+    const config = loadConfig();
+    const kickUser = (body.data?.username || body.streamer)?.toLowerCase();
+    const viewers = body.data?.viewers || body.viewer_count || 0;
+    
+    for (const [guildId, guildConfig] of Object.entries(config.guilds || {})) {
+      const monitoredUsers = guildConfig.kickUsers || [];
+      if (monitoredUsers.some(u => u.toLowerCase() === kickUser) && guildConfig.kickChannelId) {
+        const channel = client.channels.cache.get(guildConfig.kickChannelId);
+        if (channel) {
+          const embed = new EmbedBuilder()
+            .setColor(0x00FFA3)
+            .setTitle("🎮 KICK LIVE!")
+            .setDescription(`**${body.data?.username || body.streamer}** is live with ${viewers} viewers please support and follow thanks!`)
+            .setURL(`https://kick.com/${body.data?.username || body.streamer}`)
+            .addFields(
+              { name: "Viewers", value: `${viewers}`, inline: true }
             );
           channel.send({ embeds: [embed] }).catch(() => {});
         }
@@ -2569,6 +2968,305 @@ app.get("/privacy", (req, res) => {
       </body>
     </html>
   `);
+});
+
+// ============== DISCORD OAUTH ROUTES ==============
+app.get("/auth/discord", (req, res) => {
+  const scopes = ["identify", "guilds"];
+  const discordAuthURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
+  res.redirect(discordAuthURL);
+});
+
+app.get("/auth/discord/callback", async (req, res) => {
+  const code = req.query.code;
+  if (!code) return res.redirect("/");
+  
+  try {
+    const tokenResponse = await axios.post("https://discord.com/api/oauth2/token", {
+      client_id: DISCORD_CLIENT_ID,
+      client_secret: DISCORD_CLIENT_SECRET,
+      code: code,
+      grant_type: "authorization_code",
+      redirect_uri: REDIRECT_URI,
+      scope: "identify guilds"
+    });
+
+    const userResponse = await axios.get("https://discord.com/api/users/@me", {
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
+    });
+
+    const guildsResponse = await axios.get("https://discord.com/api/users/@me/guilds", {
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
+    });
+
+    req.session.user = userResponse.data;
+    req.session.accessToken = tokenResponse.data.access_token;
+    req.session.guilds = guildsResponse.data;
+    res.redirect("/dashboard");
+  } catch (error) {
+    console.error("OAuth error:", error.message);
+    res.redirect("/?error=oauth_failed");
+  }
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/");
+});
+
+// ============== ADMIN DASHBOARD ==============
+app.get("/dashboard", (req, res) => {
+  if (!req.session.user) return res.redirect("/auth/discord");
+
+  const config = loadConfig();
+  const userGuilds = req.session.guilds || [];
+  
+  let guildRows = "";
+  userGuilds.forEach(guild => {
+    const guildConfig = config.guilds[guild.id] || {};
+    guildRows += `
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 12px;"><strong>${guild.name}</strong></td>
+        <td style="padding: 12px;">${guildConfig.prefix || "//"}</td>
+        <td style="padding: 12px;"><a href="/dashboard/server/${guild.id}" style="color: #9146FF; text-decoration: none;">⚙️ Configure</a></td>
+      </tr>
+    `;
+  });
+
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>SPIDEY BOT - Admin Dashboard</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; }
+          nav { background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid #222; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          nav a { color: #9146FF; text-decoration: none; margin: 0 1rem; }
+          .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+          h1 { color: #9146FF; margin-bottom: 2rem; }
+          h2 { color: #9146FF; margin: 2rem 0 1rem 0; }
+          .user-info { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF; margin-bottom: 2rem; }
+          table { width: 100%; background: #1a1a1a; border-radius: 8px; overflow: hidden; border: 1px solid #333; }
+          th { background: #222; padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+          .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #9146FF; color: #fff; text-decoration: none; border-radius: 6px; margin-top: 1rem; border: none; cursor: pointer; }
+          .btn:hover { background: #a855ff; }
+          .btn-danger { background: #ff4444; }
+          .btn-danger:hover { background: #ff2222; }
+        </style>
+      </head>
+      <body>
+        <nav>
+          <div style="font-weight: 700;">🕷️ SPIDEY BOT Admin</div>
+          <div>
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </nav>
+
+        <div class="container">
+          <h1>👑 Admin Dashboard</h1>
+          
+          <div class="user-info">
+            <h3>${req.session.user.username}#${req.session.user.discriminator}</h3>
+            <p style="color: #999; margin-top: 0.5rem;">Manage your server settings and configurations below</p>
+          </div>
+
+          <h2>🖥️ Your Servers</h2>
+          <table>
+            <thead>
+              <tr style="background: #222;">
+                <th>Server Name</th>
+                <th>Prefix</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${guildRows || "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #999;'>No servers found. Add SPIDEY BOT to your server first!</td></tr>"}
+            </tbody>
+          </table>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+// ============== SERVER CONFIGURATION PAGE ==============
+app.get("/dashboard/server/:guildId", (req, res) => {
+  if (!req.session.user) return res.redirect("/auth/discord");
+
+  const guildId = req.params.guildId;
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  
+  if (!hasAccess) return res.status(403).send("❌ You don't have access to this server");
+
+  const config = loadConfig();
+  const guildConfig = config.guilds[guildId] || {};
+
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>SPIDEY BOT - Server Config</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; }
+          nav { background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid #222; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          nav a { color: #9146FF; text-decoration: none; margin: 0 1rem; }
+          .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+          h1 { color: #9146FF; margin-bottom: 2rem; }
+          .section { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF; margin-bottom: 2rem; }
+          .section h2 { color: #9146FF; margin-bottom: 1rem; font-size: 1.2rem; }
+          .form-group { margin-bottom: 1rem; }
+          label { display: block; margin-bottom: 0.5rem; color: #ddd; font-weight: 500; }
+          input, textarea { width: 100%; padding: 0.8rem; background: #222; border: 1px solid #333; border-radius: 6px; color: #fff; font-family: Inter, sans-serif; }
+          input:focus, textarea:focus { outline: none; border-color: #9146FF; }
+          .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #9146FF; color: #fff; text-decoration: none; border-radius: 6px; margin-top: 1rem; border: none; cursor: pointer; }
+          .btn:hover { background: #a855ff; }
+          .info { background: #222; padding: 1rem; border-radius: 6px; color: #aaa; font-size: 0.9rem; margin-top: 0.5rem; }
+        </style>
+      </head>
+      <body>
+        <nav>
+          <div style="font-weight: 700;">🕷️ SPIDEY BOT Admin</div>
+          <div>
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </nav>
+
+        <div class="container">
+          <h1>⚙️ Server Configuration</h1>
+
+          <div class="section">
+            <h2>🔤 Prefix Settings</h2>
+            <form onsubmit="savePrefix(event)">
+              <div class="form-group">
+                <label>Command Prefix</label>
+                <input type="text" id="prefix" value="${guildConfig.prefix || "//"}" maxlength="5">
+                <div class="info">Default: //</div>
+              </div>
+              <button type="submit" class="btn">💾 Save Prefix</button>
+            </form>
+          </div>
+
+          <div class="section">
+            <h2>👋 Welcome Message</h2>
+            <form onsubmit="saveWelcome(event)">
+              <div class="form-group">
+                <label>Welcome Message Text</label>
+                <textarea id="welcomeMsg" rows="4">${guildConfig.welcomeMessage || "Welcome to our server! 🎉"}</textarea>
+                <div class="info">Available: {user} {username} {displayname} {server} {membercount}</div>
+              </div>
+              <div class="form-group">
+                <label>Welcome Channel ID</label>
+                <input type="text" id="welcomeChannel" value="${guildConfig.welcomeChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <button type="submit" class="btn">💾 Save Welcome</button>
+            </form>
+          </div>
+
+          <div class="section">
+            <h2>📱 Social Media Monitoring</h2>
+            <form onsubmit="saveSocial(event)">
+              <div class="form-group">
+                <label>Twitch Channel ID (for alerts)</label>
+                <input type="text" id="twitchChannel" value="${guildConfig.twitchChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <div class="form-group">
+                <label>TikTok Channel ID (for alerts)</label>
+                <input type="text" id="tiktokChannel" value="${guildConfig.tiktokChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <div class="form-group">
+                <label>Kick Channel ID (for alerts)</label>
+                <input type="text" id="kickChannel" value="${guildConfig.kickChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <button type="submit" class="btn">💾 Save Channels</button>
+            </form>
+          </div>
+
+          <div class="section">
+            <h2>🛡️ Moderation</h2>
+            <form onsubmit="saveMod(event)">
+              <div class="form-group">
+                <label>Modlog Channel ID</label>
+                <input type="text" id="modlogChannel" value="${guildConfig.modLogChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <button type="submit" class="btn">💾 Save Moderation</button>
+            </form>
+          </div>
+        </div>
+
+        <script>
+          async function savePrefix(e) {
+            e.preventDefault();
+            const prefix = document.getElementById('prefix').value;
+            await saveSetting({ prefix });
+          }
+
+          async function saveWelcome(e) {
+            e.preventDefault();
+            const welcomeMessage = document.getElementById('welcomeMsg').value;
+            const welcomeChannelId = document.getElementById('welcomeChannel').value;
+            await saveSetting({ welcomeMessage, welcomeChannelId });
+          }
+
+          async function saveSocial(e) {
+            e.preventDefault();
+            const twitchChannelId = document.getElementById('twitchChannel').value;
+            const tiktokChannelId = document.getElementById('tiktokChannel').value;
+            const kickChannelId = document.getElementById('kickChannel').value;
+            await saveSetting({ twitchChannelId, tiktokChannelId, kickChannelId });
+          }
+
+          async function saveMod(e) {
+            e.preventDefault();
+            const modLogChannelId = document.getElementById('modlogChannel').value;
+            await saveSetting({ modLogChannelId });
+          }
+
+          async function saveSetting(data) {
+            try {
+              const res = await fetch('/api/config/${guildId}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+              });
+              const result = await res.json();
+              if (result.success) {
+                alert('✅ Settings saved successfully!');
+              } else {
+                alert('❌ Failed to save settings');
+              }
+            } catch (error) {
+              alert('❌ Error: ' + error.message);
+            }
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+// ============== API: UPDATE CONFIG ==============
+app.post("/api/config/:guildId", express.json(), (req, res) => {
+  if (!req.session.user) return res.status(401).json({ success: false, error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
+  updateGuildConfig(guildId, req.body);
+  res.json({ success: true, config: getGuildConfig(guildId) });
 });
 
 const PORT = process.env.PORT || 5000;
