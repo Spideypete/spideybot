@@ -20,6 +20,7 @@ const session = require("express-session");
 const axios = require("axios");
 
 // ============== SETUP EXPRESS APP ==============
+const publicDir = path.join(__dirname, 'public');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
