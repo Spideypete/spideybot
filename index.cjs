@@ -851,7 +851,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Prefix changed to \`${prefix}\``);
   }
 
-  if (msg.content === "//config-modlog") {
+  if (msg.content.startsWith("//config-modlog")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure modlog!");
     }
