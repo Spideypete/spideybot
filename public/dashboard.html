@@ -830,6 +830,13 @@
                 </ul>
             </div>
 
+            <div class="sidebar-section" id="creator-section" style="display: none;">
+                <div class="sidebar-section-title">CREATOR <div class="category-toggle active" data-section="creator-menu"></div></div>
+                <ul class="sidebar-menu" id="creator-menu">
+                    <li class="sidebar-item" data-section="creator">👑 Creator Panel</li>
+                </ul>
+            </div>
+
             <div class="upgrade-box">
                 <div class="upgrade-box-text">⭐ Upgrade Now</div>
             </div>
@@ -3790,7 +3797,20 @@
         }
 
         // Initialize mode and color on page load
+        // Check if user is creator and show/hide creator panel
+        function initCreatorAccess() {
+            const userDisplay = document.querySelector('.user-profile div:first-child')?.textContent?.trim() || '';
+            const creatorSection = document.getElementById('creator-section');
+            
+            if (userDisplay === 'DARKIE') {
+                if (creatorSection) creatorSection.style.display = 'block';
+            } else {
+                if (creatorSection) creatorSection.style.display = 'none';
+            }
+        }
+
         window.addEventListener('load', () => {
+            initCreatorAccess();
             const isDarkMode = localStorage.getItem('darkMode') !== 'false';
             if (!isDarkMode) {
                 document.body.classList.add('light-mode');
