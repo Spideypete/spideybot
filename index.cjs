@@ -1232,29 +1232,384 @@ function verifyAdmin(req, res, next) {
   next();
 }
 
+// Get invite link
+const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
+
+// Landing Page
 app.get("/", (req, res) => {
-  const uptime = Math.floor(process.uptime());
-  const hours = Math.floor(uptime / 3600);
-  const minutes = Math.floor((uptime % 3600) / 60);
-  const seconds = uptime % 60;
   res.send(`
+    <!DOCTYPE html>
     <html>
       <head>
-        <title>SPIDEY BOT Status</title>
+        <title>SPIDEY BOT - Advanced Discord Bot</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-          body { background: #5865F2; color: white; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-          .container { text-align: center; }
-          h1 { font-size: 3em; }
-          p { font-size: 1.2em; }
-          a { color: #FFD700; text-decoration: none; margin-top: 20px; display: inline-block; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #5865F2 0%, #2c3e50 100%); color: white; line-height: 1.6; }
+          nav { background: rgba(0,0,0,0.3); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          nav a { color: white; text-decoration: none; margin: 0 1rem; }
+          nav a:hover { color: #FFD700; }
+          .hero { text-align: center; padding: 6rem 2rem; }
+          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; }
+          .hero p { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9; }
+          .btn { display: inline-block; padding: 1rem 2rem; background: #FFD700; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; font-size: 1rem; }
+          .btn:hover { background: #FFC700; transform: scale(1.05); }
+          .btn-secondary { background: transparent; color: #FFD700; border: 2px solid #FFD700; }
+          .btn-secondary:hover { background: #FFD700; color: #000; }
+          .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
+          .feature { background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+          .feature h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+          .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+          .stats { background: rgba(0,0,0,0.2); padding: 2rem; text-align: center; }
+          .stat { display: inline-block; margin: 1rem 2rem; }
+          .stat h2 { font-size: 2rem; color: #FFD700; }
+          .commands { max-width: 1200px; margin: 3rem auto; padding: 2rem; }
+          .command-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+          .command-card { background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #FFD700; }
+          .command-card h4 { margin-bottom: 0.5rem; }
+          .command-card p { opacity: 0.8; font-size: 0.9rem; }
+          footer { background: rgba(0,0,0,0.5); text-align: center; padding: 2rem; margin-top: 3rem; }
         </style>
       </head>
       <body>
-        <div class="container">
+        <nav>
+          <div style="font-size: 1.5rem; font-weight: bold;">🤖 SPIDEY BOT</div>
+          <div>
+            <a href="/">Home</a>
+            <a href="/features">Features</a>
+            <a href="/commands">Commands</a>
+            <a href="#invite">Invite</a>
+          </div>
+        </nav>
+
+        <div class="hero">
           <h1>🤖 SPIDEY BOT</h1>
-          <p>✅ BOT IS ALIVE AND RUNNING</p>
-          <p>⏱️ Uptime: ${hours}h ${minutes}m ${seconds}s</p>
-          <a href="/admin?token=spidey123">📊 Admin Dashboard</a>
+          <p>The Ultimate Discord Bot for Music, Moderation & Community Management</p>
+          <a href="${botInviteURL}" target="_blank" class="btn">➕ Add to Discord</a>
+          <a href="/commands" class="btn btn-secondary">📚 View Commands</a>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <h2>35+</h2>
+            <p>Commands</p>
+          </div>
+          <div class="stat">
+            <h2>∞</h2>
+            <p>Servers</p>
+          </div>
+          <div class="stat">
+            <h2>5</h2>
+            <p>Feature Categories</p>
+          </div>
+        </div>
+
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">🎵</div>
+            <h3>Advanced Music</h3>
+            <p>Search YouTube, create playlists, loop/shuffle, volume control with button controls</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🎭</div>
+            <h3>Role Management</h3>
+            <p>Custom role categories with GIF banners, interactive role selectors</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🛡️</div>
+            <h3>Moderation</h3>
+            <p>Kick, ban, warn with automatic logging. Track member warnings</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">📱</div>
+            <h3>Social Media</h3>
+            <p>Monitor unlimited Twitch streamers and TikTok creators with auto-alerts</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">👋</div>
+            <h3>Welcome System</h3>
+            <p>Custom welcome messages with placeholders for user info and server details</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">⚙️</div>
+            <h3>Per-Server Config</h3>
+            <p>Each server gets independent settings, prefix, and customization</p>
+          </div>
+        </div>
+
+        <div class="commands">
+          <h2 style="text-align: center; margin-bottom: 2rem;">🎯 Core Features</h2>
+          <div class="command-row">
+            <div class="command-card">
+              <h4>🎵 Music Player</h4>
+              <p>//play [song] • //queue • //loop • //shuffle • //volume [0-200]</p>
+            </div>
+            <div class="command-card">
+              <h4>🎭 Role Categories</h4>
+              <p>//create-category • //add-role • //setup-category • //list-roles</p>
+            </div>
+            <div class="command-card">
+              <h4>🛡️ Moderation</h4>
+              <p>//kick • //ban • //warn • //mute • //unmute • //warnings</p>
+            </div>
+            <div class="command-card">
+              <h4>📱 Social Media</h4>
+              <p>//add-twitch-user • //add-tiktok-user • //config-twitch-channel</p>
+            </div>
+            <div class="command-card">
+              <h4>👋 Welcome</h4>
+              <p>//config-welcome-channel • //config-welcome-message</p>
+            </div>
+            <div class="command-card">
+              <h4>⚙️ Configuration</h4>
+              <p>//set-prefix • //config-modlog • Unlimited per-server customization</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="invite" style="text-align: center; padding: 3rem 2rem; background: rgba(0,0,0,0.3);">
+          <h2>Ready to Add SPIDEY BOT?</h2>
+          <p style="margin: 1rem 0;">Get your server powered up with music, moderation & more!</p>
+          <a href="${botInviteURL}" target="_blank" class="btn">➕ Invite SPIDEY BOT Now</a>
+        </div>
+
+        <footer>
+          <p>🤖 SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
+          <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">Use //help in Discord to see all commands • Admins use //adminhelp</p>
+        </footer>
+      </body>
+    </html>
+  `);
+});
+
+// Features Page
+app.get("/features", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Features - SPIDEY BOT</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #5865F2 0%, #2c3e50 100%); color: white; }
+          nav { background: rgba(0,0,0,0.3); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          nav a { color: white; text-decoration: none; margin: 0 1rem; }
+          nav a:hover { color: #FFD700; }
+          .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; }
+          .feature-section { background: rgba(255,255,255,0.1); padding: 2rem; margin: 2rem 0; border-radius: 10px; border-left: 4px solid #FFD700; }
+          .feature-section h2 { color: #FFD700; margin-bottom: 1rem; }
+          .feature-section ul { margin-left: 2rem; }
+          .feature-section li { margin: 0.5rem 0; }
+          .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #FFD700; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 1rem 0; }
+          .btn:hover { background: #FFC700; }
+        </style>
+      </head>
+      <body>
+        <nav>
+          <div style="font-size: 1.5rem; font-weight: bold;">🤖 SPIDEY BOT</div>
+          <div>
+            <a href="/">Home</a>
+            <a href="/features">Features</a>
+            <a href="/commands">Commands</a>
+          </div>
+        </nav>
+
+        <div class="container">
+          <h1>✨ Features</h1>
+
+          <div class="feature-section">
+            <h2>🎵 Advanced Music Player</h2>
+            <ul>
+              <li>Search and play songs from YouTube</li>
+              <li>Queue management (view next 10 songs)</li>
+              <li>Loop entire queue or single songs</li>
+              <li>Shuffle randomization</li>
+              <li>Volume control (0-200%)</li>
+              <li>Interactive button controls (prev, pause, resume, skip, stop)</li>
+            </ul>
+          </div>
+
+          <div class="feature-section">
+            <h2>🎭 Role Categories with GIF Banners</h2>
+            <ul>
+              <li>Create unlimited custom role categories</li>
+              <li>Add GIF banners for visual appeal</li>
+              <li>Interactive role selector buttons</li>
+              <li>Users can add/remove roles themselves</li>
+              <li>Fully customizable per server</li>
+            </ul>
+          </div>
+
+          <div class="feature-section">
+            <h2>🛡️ Complete Moderation Suite</h2>
+            <ul>
+              <li>Kick members with reasons</li>
+              <li>Ban members permanently</li>
+              <li>Warn system with tracking</li>
+              <li>Mute/timeout (1 hour default)</li>
+              <li>Automatic logging to modlog channel</li>
+              <li>Warning history per member</li>
+            </ul>
+          </div>
+
+          <div class="feature-section">
+            <h2>📱 Unlimited Social Media Monitoring</h2>
+            <ul>
+              <li>Monitor multiple Twitch streamers per server</li>
+              <li>Monitor multiple TikTok creators per server</li>
+              <li>Auto-announce when streamers go live</li>
+              <li>Auto-announce TikTok posts</li>
+              <li>Customizable alert channels</li>
+              <li>Web admin dashboard for easy management</li>
+            </ul>
+          </div>
+
+          <div class="feature-section">
+            <h2>👋 Welcome System</h2>
+            <ul>
+              <li>Custom welcome messages per server</li>
+              <li>Placeholder support: {user}, {username}, {displayname}, {server}, {membercount}</li>
+              <li>Set specific channel for welcomes</li>
+              <li>Personalized for every new member</li>
+            </ul>
+          </div>
+
+          <div class="feature-section">
+            <h2>⚙️ Per-Server Configuration</h2>
+            <ul>
+              <li>Custom command prefix per server</li>
+              <li>Independent modlog channels</li>
+              <li>Individual role categories</li>
+              <li>Separate music settings</li>
+              <li>All settings completely isolated</li>
+            </ul>
+          </div>
+
+          <div class="feature-section">
+            <h2>🌐 Web Admin Dashboard</h2>
+            <ul>
+              <li>Access all servers at a glance</li>
+              <li>View current configurations</li>
+              <li>Manage multiple servers from web interface</li>
+              <li>REST API for automation</li>
+              <li>Secure token-based access</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin-top: 3rem;">
+            <a href="${botInviteURL}" target="_blank" class="btn">➕ Add SPIDEY BOT to Your Server</a>
+          </div>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+// Commands Page
+app.get("/commands", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Commands - SPIDEY BOT</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #5865F2 0%, #2c3e50 100%); color: white; }
+          nav { background: rgba(0,0,0,0.3); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          nav a { color: white; text-decoration: none; margin: 0 1rem; }
+          nav a:hover { color: #FFD700; }
+          .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; }
+          h2 { color: #FFD700; margin: 2rem 0 1rem 0; border-bottom: 2px solid #FFD700; padding-bottom: 0.5rem; }
+          .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+          .cmd-card { background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 5px; border-left: 3px solid #FFD700; }
+          .cmd-card code { background: rgba(0,0,0,0.3); padding: 0.2rem 0.5rem; border-radius: 3px; }
+          .cmd-card p { opacity: 0.8; margin-top: 0.5rem; font-size: 0.9rem; }
+          .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #FFD700; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 1rem 0; }
+          .btn:hover { background: #FFC700; }
+          .note { background: rgba(255, 215, 0, 0.2); padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        </style>
+      </head>
+      <body>
+        <nav>
+          <div style="font-size: 1.5rem; font-weight: bold;">🤖 SPIDEY BOT</div>
+          <div>
+            <a href="/">Home</a>
+            <a href="/features">Features</a>
+            <a href="/commands">Commands</a>
+          </div>
+        </nav>
+
+        <div class="container">
+          <h1>📚 Commands</h1>
+          
+          <div class="note">
+            <strong>💡 Tip:</strong> In your Discord server, use <code>//help</code> for user commands and <code>//adminhelp</code> for admin commands (requires Administrator permission)
+          </div>
+
+          <h2>🎵 Music Commands</h2>
+          <div class="cmd-grid">
+            <div class="cmd-card"><code>//play [song]</code><p>Search & play from YouTube</p></div>
+            <div class="cmd-card"><code>//queue</code><p>View next 10 songs</p></div>
+            <div class="cmd-card"><code>//loop</code><p>Toggle queue repeat</p></div>
+            <div class="cmd-card"><code>//shuffle</code><p>Randomize playlist</p></div>
+            <div class="cmd-card"><code>//volume [0-200]</code><p>Adjust volume</p></div>
+          </div>
+
+          <h2>🎭 Role Categories (Admin)</h2>
+          <div class="cmd-grid">
+            <div class="cmd-card"><code>//create-category [name]</code><p>Create role category</p></div>
+            <div class="cmd-card"><code>//add-role [cat] [name] [ID]</code><p>Add role to category</p></div>
+            <div class="cmd-card"><code>//remove-role [cat] [name]</code><p>Remove role</p></div>
+            <div class="cmd-card"><code>//set-category-banner [cat] [url]</code><p>Add GIF banner</p></div>
+            <div class="cmd-card"><code>//setup-category [name]</code><p>Post selector button</p></div>
+            <div class="cmd-card"><code>//list-roles</code><p>View all roles</p></div>
+          </div>
+
+          <h2>🛡️ Moderation (Admin)</h2>
+          <div class="cmd-grid">
+            <div class="cmd-card"><code>//kick @user [reason]</code><p>Remove member</p></div>
+            <div class="cmd-card"><code>//ban @user [reason]</code><p>Permanently ban</p></div>
+            <div class="cmd-card"><code>//warn @user [reason]</code><p>Warn member</p></div>
+            <div class="cmd-card"><code>//mute @user</code><p>Timeout 1 hour</p></div>
+            <div class="cmd-card"><code>//unmute @user</code><p>Remove timeout</p></div>
+            <div class="cmd-card"><code>//warnings @user</code><p>View history</p></div>
+          </div>
+
+          <h2>📱 Social Media (Admin)</h2>
+          <div class="cmd-grid">
+            <div class="cmd-card"><code>//add-twitch-user [user]</code><p>Monitor Twitch streamer</p></div>
+            <div class="cmd-card"><code>//remove-twitch-user [user]</code><p>Stop monitoring</p></div>
+            <div class="cmd-card"><code>//list-twitch-users</code><p>View monitored streamers</p></div>
+            <div class="cmd-card"><code>//config-twitch-channel #ch</code><p>Set alert channel</p></div>
+            <div class="cmd-card"><code>//add-tiktok-user [user]</code><p>Monitor TikTok creator</p></div>
+            <div class="cmd-card"><code>//remove-tiktok-user [user]</code><p>Stop monitoring</p></div>
+            <div class="cmd-card"><code>//list-tiktok-users</code><p>View monitored creators</p></div>
+            <div class="cmd-card"><code>//config-tiktok-channel #ch</code><p>Set alert channel</p></div>
+          </div>
+
+          <h2>⚙️ Configuration (Admin)</h2>
+          <div class="cmd-grid">
+            <div class="cmd-card"><code>//set-prefix [prefix]</code><p>Change command prefix</p></div>
+            <div class="cmd-card"><code>//config-modlog #channel</code><p>Set moderation log</p></div>
+            <div class="cmd-card"><code>//config-welcome-channel #ch</code><p>Set welcome channel</p></div>
+            <div class="cmd-card"><code>//config-welcome-message [text]</code><p>Custom welcome</p></div>
+          </div>
+
+          <h2>📞 Utilities</h2>
+          <div class="cmd-grid">
+            <div class="cmd-card"><code>//help</code><p>User command guide</p></div>
+            <div class="cmd-card"><code>//adminhelp</code><p>Admin command guide</p></div>
+            <div class="cmd-card"><code>//ping</code><p>Bot status</p></div>
+            <div class="cmd-card"><code>//remove-roles</code><p>Remove your roles</p></div>
+          </div>
+
+          <div style="text-align: center; margin-top: 3rem;">
+            <a href="${botInviteURL}" target="_blank" class="btn">➕ Add SPIDEY BOT Now</a>
+          </div>
         </div>
       </body>
     </html>
