@@ -33,15 +33,25 @@ app.use(session({
 
 // Serve static files from public (automatically serves index.html for /)
 app.use(express.static(publicDir));
+app.set('trust proxy', true);
 
 // ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
-const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
 const REPLIT_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : null;
-const BASE_REDIRECT_URI = RENDER_URL || (REPLIT_URL ? REPLIT_URL : "http://localhost:5000");
-const REDIRECT_URI = `${BASE_REDIRECT_URI}/auth/discord/callback`;
 
+// Build proper redirect URI
+let BASE_REDIRECT_URI;
+if (RENDER_EXTERNAL_URL) {
+  BASE_REDIRECT_URI = RENDER_EXTERNAL_URL.endsWith('/') ? RENDER_EXTERNAL_URL.slice(0, -1) : RENDER_EXTERNAL_URL;
+} else if (REPLIT_URL) {
+  BASE_REDIRECT_URI = REPLIT_URL;
+} else {
+  BASE_REDIRECT_URI = "http://localhost:5000";
+}
+
+const REDIRECT_URI = `${BASE_REDIRECT_URI}/auth/discord/callback`;
 console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
 
 // ============== CONFIG MANAGEMENT ==============
@@ -2505,10 +2515,7 @@ app.get("/login", (req, res) => {
 
 app.get("/auth/discord", (req, res) => {
   const scopes = ["identify", "guilds"];
-  const protocol = req.protocol || 'https';
-  const host = req.get('host');
-  const dynamicRedirectUri = `${protocol}://${host}/auth/discord/callback`;
-  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(dynamicRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
+  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
   res.redirect(authURL);
 });
 
@@ -2517,17 +2524,13 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
-    const protocol = req.protocol || 'https';
-    const host = req.get('host');
-    const dynamicRedirectUri = `${protocol}://${host}/auth/discord/callback`;
-    
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         client_secret: DISCORD_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
-        redirect_uri: dynamicRedirectUri,
+        redirect_uri: REDIRECT_URI,
         scope: "identify guilds"
       }),
       {
