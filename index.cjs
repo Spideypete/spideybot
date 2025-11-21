@@ -1693,6 +1693,8 @@ app.get("/", (req, res) => {
       <head>
         <title>SPIDEY BOT - Advanced Discord Bot</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="SPIDEY BOT is the ultimate multi-server Discord bot featuring advanced music playback with YouTube search, comprehensive moderation tools, role management with GIF banners, unlimited social media monitoring, economy system, leveling with leaderboards, link filtering, ticket support, custom commands, and 40+ total commands. Perfect for community servers.">
+        <meta name="keywords" content="Discord Bot, Music Bot, Moderation, Community, Leveling">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; line-height: 1.6; position: relative; }
@@ -1721,6 +1723,9 @@ app.get("/", (req, res) => {
           .command-card h4 { margin-bottom: 0.5rem; color: white; }
           .command-card p { opacity: 0.8; font-size: 0.9rem; color: white; }
           footer { background: #111111; text-align: center; padding: 2rem; margin-top: 3rem; border-top: 1px solid #333; }
+          .description { max-width: 900px; margin: 2rem auto; padding: 2rem; background: rgba(26, 26, 26, 0.8); border-radius: 10px; border: 2px solid #9146FF; text-align: center; font-size: 1.1rem; line-height: 1.8; color: #ddd; }
+          .tags { max-width: 900px; margin: 2rem auto; text-align: center; }
+          .tag { display: inline-block; background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%); color: white; padding: 0.7rem 1.5rem; margin: 0.5rem; border-radius: 25px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(145, 70, 255, 0.3); }
         </style>
       </head>
       <body>
@@ -1742,6 +1747,18 @@ app.get("/", (req, res) => {
           <p>The Ultimate Discord Bot for Music, Moderation & Community Management</p>
           <a href="${botInviteURL}" target="_blank" class="btn">➕ Add to Discord</a>
           <a href="/commands" class="btn btn-secondary">📚 View Commands</a>
+        </div>
+
+        <div class="description">
+          🕷️ SPIDEY BOT is the ultimate multi-server Discord bot featuring advanced music playback with YouTube search, comprehensive moderation tools, role management with GIF banners, unlimited social media monitoring, economy system, leveling with leaderboards, link filtering, ticket support, custom commands, and 40+ total commands. Perfect for community servers with complete per-server configuration!
+        </div>
+
+        <div class="tags">
+          <span class="tag">🎵 Music Bot</span>
+          <span class="tag">🛡️ Moderation</span>
+          <span class="tag">👥 Community</span>
+          <span class="tag">📈 Leveling</span>
+          <span class="tag">⚙️ Utility</span>
         </div>
 
         <div class="stats">
