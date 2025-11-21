@@ -838,7 +838,9 @@
         <ul class="nav-submenu">
           <li><a class="nav-subitem" onclick="switchPage('xp-levels')"><span>📈</span> XP & Levels</a></li>
           <li><a class="nav-subitem" onclick="switchPage('giveaways')"><span>🎁</span> Giveaways</a></li>
-          <li><a class="nav-subitem" onclick="switchPage('social-notifs')"><span>📣</span> Social Notifs</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('twitch-notifs')"><span>🎮</span> Twitch Alerts</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('kick-notifs')"><span>👟</span> Kick Alerts</a></li>
+          <li><a class="nav-subitem" onclick="switchPage('tiktok-notifs')"><span>📱</span> TikTok Alerts</a></li>
         </ul>
       </li>
     </ul>
@@ -1556,97 +1558,104 @@
         </div>
       </div>
 
-      <!-- Social Notifications -->
-      <div id="social-notifs" class="page">
-        <div class="section-title">📣 Social Notifications</div>
+      <!-- Twitch Notifications -->
+      <div id="twitch-notifs" class="page">
+        <div class="section-title">🎮 Twitch Live Alerts</div>
         <div class="features">
           <div class="feature" style="grid-column: 1 / -1; max-width: 600px;">
+            <label style="color: #6B21A8;"><input type="checkbox" id="notif-twitch-enabled" checked> Enable Twitch Alerts</label>
             
-            <!-- Twitch -->
-            <div style="border-bottom: 1px solid rgba(0, 212, 255, 0.2); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-              <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.8rem;">🎮 Twitch Live Alerts</label>
-              <label style="color: #6B21A8;"><input type="checkbox" id="notif-twitch-enabled" checked> Enable Twitch</label>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Channel ID to notify</label>
-                <input class="config-input" id="notif-twitch-channel" type="text" placeholder="Channel ID" style="margin-top: 0.4rem;">
-              </div>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Streamers to monitor</label>
-                <div style="display: grid; grid-template-columns: 1fr 0.6fr; gap: 0.4rem; margin-top: 0.4rem;">
-                  <input class="config-input" id="twitch-username" type="text" placeholder="Username" style="margin-bottom: 0;">
-                  <button class="config-btn" onclick="addTwitchStreamer()" style="width: 100%; padding: 0.7rem;">➕</button>
-                </div>
-              </div>
-              
-              <div id="twitch-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 4px; padding: 0.6rem; margin-top: 0.6rem; min-height: 30px; max-height: 120px; overflow-y: auto;">
-                <div style="color: #666; font-size: 0.85rem; text-align: center;">No streamers added</div>
-              </div>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Go Live Message</label>
-                <textarea class="config-input" id="notif-twitch-message" placeholder="e.g., 🎮 {username} is now live on Twitch! Watch here: {url}" style="margin-top: 0.4rem; min-height: 60px; resize: none;"></textarea>
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Channel ID to notify</label>
+              <input class="config-input" id="notif-twitch-channel" type="text" placeholder="Channel ID" style="margin-top: 0.4rem;">
+            </div>
+            
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Streamers to monitor</label>
+              <div style="display: grid; grid-template-columns: 1fr 0.6fr; gap: 0.4rem; margin-top: 0.4rem;">
+                <input class="config-input" id="twitch-username" type="text" placeholder="Username" style="margin-bottom: 0;">
+                <button class="config-btn" onclick="addTwitchStreamer()" style="width: 100%; padding: 0.7rem;">➕</button>
               </div>
             </div>
             
-            <!-- Kick -->
-            <div style="border-bottom: 1px solid rgba(0, 212, 255, 0.2); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-              <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.8rem;">👟 Kick Live Alerts</label>
-              <label style="color: #6B21A8;"><input type="checkbox" id="notif-kick-enabled" checked> Enable Kick</label>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Channel ID to notify</label>
-                <input class="config-input" id="notif-kick-channel" type="text" placeholder="Channel ID" style="margin-top: 0.4rem;">
-              </div>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Streamers to monitor</label>
-                <div style="display: grid; grid-template-columns: 1fr 0.6fr; gap: 0.4rem; margin-top: 0.4rem;">
-                  <input class="config-input" id="kick-username" type="text" placeholder="Username" style="margin-bottom: 0;">
-                  <button class="config-btn" onclick="addKickStreamer()" style="width: 100%; padding: 0.7rem;">➕</button>
-                </div>
-              </div>
-              
-              <div id="kick-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 4px; padding: 0.6rem; margin-top: 0.6rem; min-height: 30px; max-height: 120px; overflow-y: auto;">
-                <div style="color: #666; font-size: 0.85rem; text-align: center;">No streamers added</div>
-              </div>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Go Live Message</label>
-                <textarea class="config-input" id="notif-kick-message" placeholder="e.g., 🔴 {username} is now live on Kick! Watch here: {url}" style="margin-top: 0.4rem; min-height: 60px; resize: none;"></textarea>
+            <div id="twitch-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 4px; padding: 0.6rem; margin-top: 0.6rem; min-height: 30px; max-height: 120px; overflow-y: auto;">
+              <div style="color: #666; font-size: 0.85rem; text-align: center;">No streamers added</div>
+            </div>
+            
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Go Live Message</label>
+              <textarea class="config-input" id="notif-twitch-message" placeholder="e.g., 🎮 {username} is now live on Twitch! Watch here: {url}" style="margin-top: 0.4rem; min-height: 100px; resize: none;"></textarea>
+            </div>
+            
+            <button class="config-btn" onclick="saveTwitchNotifs()" style="margin-top: 1rem;">💾 Save Twitch Alerts</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kick Notifications -->
+      <div id="kick-notifs" class="page">
+        <div class="section-title">👟 Kick Live Alerts</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 600px;">
+            <label style="color: #6B21A8;"><input type="checkbox" id="notif-kick-enabled" checked> Enable Kick Alerts</label>
+            
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Channel ID to notify</label>
+              <input class="config-input" id="notif-kick-channel" type="text" placeholder="Channel ID" style="margin-top: 0.4rem;">
+            </div>
+            
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Streamers to monitor</label>
+              <div style="display: grid; grid-template-columns: 1fr 0.6fr; gap: 0.4rem; margin-top: 0.4rem;">
+                <input class="config-input" id="kick-username" type="text" placeholder="Username" style="margin-bottom: 0;">
+                <button class="config-btn" onclick="addKickStreamer()" style="width: 100%; padding: 0.7rem;">➕</button>
               </div>
             </div>
             
-            <!-- TikTok -->
-            <div>
-              <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.8rem;">📱 TikTok Post Alerts</label>
-              <label style="color: #6B21A8;"><input type="checkbox" id="notif-tiktok-enabled" checked> Enable TikTok</label>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Channel ID to notify</label>
-                <input class="config-input" id="notif-tiktok-channel" type="text" placeholder="Channel ID" style="margin-top: 0.4rem;">
-              </div>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Accounts to monitor</label>
-                <div style="display: grid; grid-template-columns: 1fr 0.6fr; gap: 0.4rem; margin-top: 0.4rem;">
-                  <input class="config-input" id="tiktok-username" type="text" placeholder="Username" style="margin-bottom: 0;">
-                  <button class="config-btn" onclick="addTikTokAccount()" style="width: 100%; padding: 0.7rem;">➕</button>
-                </div>
-              </div>
-              
-              <div id="tiktok-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 4px; padding: 0.6rem; margin-top: 0.6rem; min-height: 30px; max-height: 120px; overflow-y: auto;">
-                <div style="color: #666; font-size: 0.85rem; text-align: center;">No accounts added</div>
-              </div>
-              
-              <div style="margin-top: 0.8rem;">
-                <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">New Post Message</label>
-                <textarea class="config-input" id="notif-tiktok-message" placeholder="e.g., 🎬 New post from {username} on TikTok!" style="margin-top: 0.4rem; min-height: 60px; resize: none;"></textarea>
+            <div id="kick-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 4px; padding: 0.6rem; margin-top: 0.6rem; min-height: 30px; max-height: 120px; overflow-y: auto;">
+              <div style="color: #666; font-size: 0.85rem; text-align: center;">No streamers added</div>
+            </div>
+            
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Go Live Message</label>
+              <textarea class="config-input" id="notif-kick-message" placeholder="e.g., 🔴 {username} is now live on Kick! Watch here: {url}" style="margin-top: 0.4rem; min-height: 100px; resize: none;"></textarea>
+            </div>
+            
+            <button class="config-btn" onclick="saveKickNotifs()" style="margin-top: 1rem;">💾 Save Kick Alerts</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TikTok Notifications -->
+      <div id="tiktok-notifs" class="page">
+        <div class="section-title">📱 TikTok Post Alerts</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 600px;">
+            <label style="color: #6B21A8;"><input type="checkbox" id="notif-tiktok-enabled" checked> Enable TikTok Alerts</label>
+            
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Channel ID to notify</label>
+              <input class="config-input" id="notif-tiktok-channel" type="text" placeholder="Channel ID" style="margin-top: 0.4rem;">
+            </div>
+            
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">Accounts to monitor</label>
+              <div style="display: grid; grid-template-columns: 1fr 0.6fr; gap: 0.4rem; margin-top: 0.4rem;">
+                <input class="config-input" id="tiktok-username" type="text" placeholder="Username" style="margin-bottom: 0;">
+                <button class="config-btn" onclick="addTikTokAccount()" style="width: 100%; padding: 0.7rem;">➕</button>
               </div>
             </div>
             
-            <button class="config-btn" onclick="saveSocialNotifs()" style="margin-top: 1.5rem; width: 100%;">💬 Save All Notifications</button>
+            <div id="tiktok-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 4px; padding: 0.6rem; margin-top: 0.6rem; min-height: 30px; max-height: 120px; overflow-y: auto;">
+              <div style="color: #666; font-size: 0.85rem; text-align: center;">No accounts added</div>
+            </div>
+            
+            <div style="margin-top: 0.8rem;">
+              <label style="color: #00d4ff; font-size: 0.85rem; font-weight: 600;">New Post Message</label>
+              <textarea class="config-input" id="notif-tiktok-message" placeholder="e.g., 🎬 New post from {username} on TikTok!" style="margin-top: 0.4rem; min-height: 100px; resize: none;"></textarea>
+            </div>
+            
+            <button class="config-btn" onclick="saveTikTokNotifs()" style="margin-top: 1rem;">💾 Save TikTok Alerts</button>
           </div>
         </div>
       </div>
@@ -1860,10 +1869,12 @@
         if (page === 'dashboard') loadStats();
         if (page === 'activity') loadActivity();
         if (page === 'settings') loadSettings();
-        if (page === 'social-notifs') loadSocialNotifs();
+        if (page === 'twitch-notifs') loadTwitchNotifs();
+        if (page === 'kick-notifs') loadKickNotifs();
+        if (page === 'tiktok-notifs') loadTikTokNotifs();
         
         // Load config for all config pages
-        const configPages = ['subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
+        const configPages = ['subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways'];
         if (configPages.includes(page)) {
           if (page === 'role-categories') {
             loadRoleCategories();
@@ -2056,31 +2067,62 @@
       }
     }
 
-    async function saveSocialNotifs() {
+    async function saveTwitchNotifs() {
       const data = {
-        twitchEnabled: document.getElementById('notif-twitch-enabled').checked,
-        twitchChannel: document.getElementById('notif-twitch-channel').value,
-        twitchStreamers: twitchStreamers,
-        twitchMessage: document.getElementById('notif-twitch-message').value,
-        kickEnabled: document.getElementById('notif-kick-enabled').checked,
-        kickChannel: document.getElementById('notif-kick-channel').value,
-        kickStreamers: kickStreamers,
-        kickMessage: document.getElementById('notif-kick-message').value,
-        tiktokEnabled: document.getElementById('notif-tiktok-enabled').checked,
-        tiktokChannel: document.getElementById('notif-tiktok-channel').value,
-        tiktokAccounts: tiktokAccounts,
-        tiktokMessage: document.getElementById('notif-tiktok-message').value
+        enabled: document.getElementById('notif-twitch-enabled').checked,
+        channel: document.getElementById('notif-twitch-channel').value,
+        streamers: twitchStreamers,
+        message: document.getElementById('notif-twitch-message').value
       };
-
       try {
-        const res = await fetch('/api/config/social-notifs', {
+        const res = await fetch('/api/config/twitch-notifs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (res.ok) showNotification('✅ Social notifications saved!');
+        if (res.ok) showNotification('✅ Twitch alerts saved!');
       } catch (e) {
-        showNotification('❌ Error saving notifications');
+        showNotification('❌ Error saving');
+        console.error(e);
+      }
+    }
+
+    async function saveKickNotifs() {
+      const data = {
+        enabled: document.getElementById('notif-kick-enabled').checked,
+        channel: document.getElementById('notif-kick-channel').value,
+        streamers: kickStreamers,
+        message: document.getElementById('notif-kick-message').value
+      };
+      try {
+        const res = await fetch('/api/config/kick-notifs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) showNotification('✅ Kick alerts saved!');
+      } catch (e) {
+        showNotification('❌ Error saving');
+        console.error(e);
+      }
+    }
+
+    async function saveTikTokNotifs() {
+      const data = {
+        enabled: document.getElementById('notif-tiktok-enabled').checked,
+        channel: document.getElementById('notif-tiktok-channel').value,
+        accounts: tiktokAccounts,
+        message: document.getElementById('notif-tiktok-message').value
+      };
+      try {
+        const res = await fetch('/api/config/tiktok-notifs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) showNotification('✅ TikTok alerts saved!');
+      } catch (e) {
+        showNotification('❌ Error saving');
         console.error(e);
       }
     }
@@ -2099,30 +2141,48 @@
       }
     }
 
-    async function loadSocialNotifs() {
+    async function loadTwitchNotifs() {
       try {
-        const res = await fetch('/api/config/social-notifs');
+        const res = await fetch('/api/config/twitch-notifs');
         if (!res.ok) return;
         const data = await res.json();
-        document.getElementById('notif-twitch-enabled').checked = data.twitchEnabled !== false;
-        document.getElementById('notif-twitch-channel').value = data.twitchChannel || '';
-        document.getElementById('notif-twitch-message').value = data.twitchMessage || '';
-        twitchStreamers = data.twitchStreamers || [];
+        document.getElementById('notif-twitch-enabled').checked = data.enabled !== false;
+        document.getElementById('notif-twitch-channel').value = data.channel || '';
+        document.getElementById('notif-twitch-message').value = data.message || '';
+        twitchStreamers = data.streamers || [];
         updateTwitchList();
-        
-        document.getElementById('notif-kick-enabled').checked = data.kickEnabled !== false;
-        document.getElementById('notif-kick-channel').value = data.kickChannel || '';
-        document.getElementById('notif-kick-message').value = data.kickMessage || '';
-        kickStreamers = data.kickStreamers || [];
+      } catch (e) {
+        console.error('Error loading:', e);
+      }
+    }
+
+    async function loadKickNotifs() {
+      try {
+        const res = await fetch('/api/config/kick-notifs');
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('notif-kick-enabled').checked = data.enabled !== false;
+        document.getElementById('notif-kick-channel').value = data.channel || '';
+        document.getElementById('notif-kick-message').value = data.message || '';
+        kickStreamers = data.streamers || [];
         updateKickList();
-        
-        document.getElementById('notif-tiktok-enabled').checked = data.tiktokEnabled !== false;
-        document.getElementById('notif-tiktok-channel').value = data.tiktokChannel || '';
-        document.getElementById('notif-tiktok-message').value = data.tiktokMessage || '';
-        tiktokAccounts = data.tiktokAccounts || [];
+      } catch (e) {
+        console.error('Error loading:', e);
+      }
+    }
+
+    async function loadTikTokNotifs() {
+      try {
+        const res = await fetch('/api/config/tiktok-notifs');
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('notif-tiktok-enabled').checked = data.enabled !== false;
+        document.getElementById('notif-tiktok-channel').value = data.channel || '';
+        document.getElementById('notif-tiktok-message').value = data.message || '';
+        tiktokAccounts = data.accounts || [];
         updateTikTokList();
       } catch (e) {
-        console.error('Error loading social notifs:', e);
+        console.error('Error loading:', e);
       }
     }
 
