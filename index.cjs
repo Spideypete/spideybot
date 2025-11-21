@@ -1701,12 +1701,12 @@ app.get("/", (req, res) => {
           body { font-family: 'Fredoka', sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; line-height: 1.6; position: relative; }
           body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
           body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 127, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(138, 43, 226, 0.05) 0%, transparent 50%); pointer-events: none; z-index: -1; }
-          nav { background: #111111; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-          nav a { color: white; text-decoration: none; margin: 0 1rem; }
-          nav a:hover { color: #9146FF; }
-          .hero { text-align: center; padding: 6rem 2rem; }
-          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; }
-          .hero p { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9; color: white; }
+          nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); position: relative; z-index: 10; }
+          nav a { color: white; text-decoration: none; margin: 0 1rem; font-weight: 600; transition: all 0.3s; }
+          nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
+          .hero { position: relative; background: linear-gradient(135deg, rgba(26, 0, 51, 0.9) 0%, rgba(45, 0, 82, 0.9) 25%, rgba(13, 0, 21, 0.9) 50%, rgba(61, 21, 115, 0.9) 75%, rgba(26, 0, 51, 0.9) 100%), url('/assets/spidey-banner.png'); background-size: cover; background-position: center; text-align: center; padding: 4rem 2rem; }
+          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); }
+          .hero p { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.95; color: white; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8); }
           .btn { display: inline-block; padding: 1rem 2rem; background: #9146FF; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; font-size: 1rem; }
           .btn:hover { background: #7C3AED; transform: scale(1.05); }
           .btn-secondary { background: transparent; color: #9146FF; border: 2px solid #9146FF; }
@@ -1741,13 +1741,15 @@ app.get("/", (req, res) => {
           </div>
         </nav>
 
-        <img src="/assets/spidey-banner.png" alt="SPIDEY BOT Banner" style="width: 100%; max-height: 300px; object-fit: cover; display: block;">
         <div class="hero">
-          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 150px; margin-bottom: 1rem;">
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 120px; margin-bottom: 1.5rem; filter: drop-shadow(0 4px 15px rgba(145, 70, 255, 0.5));">
           <h1>SPIDEY BOT</h1>
           <p>The Ultimate Discord Bot for Music, Moderation & Community Management</p>
-          <a href="${botInviteURL}" target="_blank" class="btn">➕ Add to Discord</a>
-          <a href="/commands" class="btn btn-secondary">📚 View Commands</a>
+          <div style="margin-top: 2rem;">
+            <a href="${botInviteURL}" target="_blank" class="btn">➕ Add to Discord</a>
+            <a href="/features" class="btn btn-secondary">⭐ Explore Features</a>
+            <a href="/commands" class="btn btn-secondary">📚 View Commands</a>
+          </div>
         </div>
 
         <div class="description">
