@@ -1857,9 +1857,9 @@ app.get("/", (req, res) => {
           <p>SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
           <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">Use //help in Discord to see all commands • Admins use //adminhelp</p>
           <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #333;">
-            <a href="/tos" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
-            <a href="/privacy" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
-            <a href="/interactions" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
+            <a href="/tos" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
+            <a href="/privacy" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
+            <a href="/interactions" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
           </div>
         </footer>
         ${supportWidget}
@@ -2001,9 +2001,9 @@ app.get("/features", (req, res) => {
           <footer style="text-align: center; padding: 2rem; color: #999; border-top: 2px solid #9146FF; margin-top: 3rem;">
             <p>© 2025 SPIDEY BOT. All rights reserved.</p>
             <div style="margin-top: 1rem;">
-              <a href="/tos" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
-              <a href="/privacy" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
-              <a href="/interactions" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
+              <a href="/tos" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
+              <a href="/privacy" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
+              <a href="/interactions" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
             </div>
           </footer>
         </div>
@@ -2385,9 +2385,9 @@ app.get("/tos", (req, res) => {
         <footer style="text-align: center; padding: 2rem; color: #999; border-top: 2px solid #9146FF; margin-top: 3rem;">
           <p>© 2025 SPIDEY BOT. All rights reserved.</p>
           <div style="margin-top: 1rem;">
-            <a href="/" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🏠 Home</a>
-            <a href="/privacy" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
-            <a href="/interactions" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
+            <a href="/" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🏠 Home</a>
+            <a href="/privacy" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
+            <a href="/interactions" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
           </div>
         </footer>
       </body>
@@ -2469,9 +2469,9 @@ app.get("/privacy", (req, res) => {
         <footer style="text-align: center; padding: 2rem; color: #999; border-top: 2px solid #9146FF; margin-top: 3rem;">
           <p>© 2025 SPIDEY BOT. All rights reserved.</p>
           <div style="margin-top: 1rem;">
-            <a href="/" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🏠 Home</a>
-            <a href="/tos" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
-            <a href="/interactions" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
+            <a href="/" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🏠 Home</a>
+            <a href="/tos" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
+            <a href="/interactions" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
           </div>
         </footer>
       </body>
