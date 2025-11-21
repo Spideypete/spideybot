@@ -3004,6 +3004,10 @@ app.get("/auth/discord/callback", async (req, res) => {
       `);
     }
 
+    console.log(`🔍 OAuth attempt with CLIENT_ID: ${DISCORD_CLIENT_ID ? "✓ Set" : "✗ Missing"}`);
+    console.log(`🔍 Redirect URI: ${REDIRECT_URI}`);
+    console.log(`🔍 Code received: ${code ? "✓ Yes" : "✗ No"}`);
+    
     const tokenResponse = await axios.post("https://discord.com/api/oauth2/token", {
       client_id: DISCORD_CLIENT_ID,
       client_secret: DISCORD_CLIENT_SECRET,
@@ -3028,6 +3032,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     res.redirect("/dashboard");
   } catch (error) {
     console.error("❌ OAuth error:", error.response?.data || error.message);
+    console.error("❌ Full error details:", error);
     res.send(`
       <html>
         <head><title>OAuth Error</title></head>
