@@ -2091,6 +2091,7 @@ app.get("/", (req, res) => {
     <!DOCTYPE html>
     <html>
       <head>
+        <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
         <title>SPIDEY BOT - Complete Discord Bot for Communities</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="SPIDEY BOT: Music player, moderation, economy, leveling, role management, social media monitoring, and 40+ commands. All-in-one Discord bot trusted by servers worldwide.">
@@ -2301,6 +2302,7 @@ app.get("/features", (req, res) => {
     <!DOCTYPE html>
     <html>
       <head>
+        <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
         <title>Features - SPIDEY BOT</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -2446,6 +2448,7 @@ app.get("/commands", (req, res) => {
     <!DOCTYPE html>
     <html>
       <head>
+        <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
         <title>Commands - SPIDEY BOT</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -2567,6 +2570,7 @@ app.get("/admin", (req, res) => {
     return res.send(`
       <html>
         <head>
+          <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
           <title>Admin Login</title>
           <style>
             body { background: #5865F2; color: white; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -2615,6 +2619,7 @@ app.get("/admin", (req, res) => {
   res.send(`
     <html>
       <head>
+        <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
         <title>SPIDEY BOT Admin Dashboard</title>
         <style>
           body { background: #5865F2; color: white; font-family: Arial; margin: 0; padding: 20px; }
