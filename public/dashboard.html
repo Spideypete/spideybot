@@ -1838,35 +1838,182 @@
                 <!-- ROLE CATEGORIES -->
                 <div id="role-categories" class="content">
                     <div class="page-title">📂 Role Categories</div>
-                    <div class="page-description">Organize roles into categories</div>
+                    <div class="page-description">Organize and display roles into themed categories with custom branding & controls</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Category Config</div>
-                                    <div class="card-subtitle">Create role groups</div>
+                                    <div class="card-title">💡 What Are Role Categories?</div>
+                                    <div class="card-subtitle">Understand the system</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎯 Purpose:</strong><br/>
+                                    Group related roles together (Gaming, Pronouns, Notifications) with visual banners and descriptions for better organization.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🖼️ Features:</strong><br/>
+                                    Custom category banners, role descriptions, selective role display, and interactive role selection panels.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Basic Configuration</div>
+                                    <div class="card-subtitle">Create and set up a role category</div>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Category Name</label>
                                     <input type="text" id="role-categories_name" placeholder="Gaming Roles">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Display name for this role category</div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Channel ID</label>
-                                    <input type="text" id="role-categories_channel" placeholder="Channel ID">
+                                    <label>Category Emoji</label>
+                                    <input type="text" id="role-categories_emoji" placeholder="🎮" maxlength="5" style="text-align: center; font-size: 1.2rem;">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Icon to represent this category</div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Roles</label>
-                                <textarea id="role-categories_roles" placeholder="Role1, Role2, Role3"></textarea>
+                                <label>Category Description</label>
+                                <textarea id="role-categories_description" placeholder="Choose your gaming platform and interests..." style="min-height: 60px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Help text shown to members selecting roles</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Display Channel</label>
+                                <input type="text" id="role-categories_channel" placeholder="Channel ID">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Channel where the category panel will be shown</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎨 Visual & Display Settings</div>
+                                    <div class="card-subtitle">Customize appearance and styling</div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Banner Image URL</label>
-                                <input type="text" id="role-categories_banner" placeholder="https://...">
+                                <input type="text" id="role-categories_banner" placeholder="https://example.com/banner.png">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Header image for the category (recommended: 1200x300px)</div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('role-categories')">💾 Save</button>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Category Color (Hex)</label>
+                                    <input type="text" id="role-categories_color" placeholder="#7C3AED">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Accent color for category styling</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Position/Order</label>
+                                    <input type="number" id="role-categories_position" placeholder="1" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Display order (1 = first, 2 = second, etc.)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">👥 Roles & Membership</div>
+                                    <div class="card-subtitle">Configure roles in this category</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Roles in Category (comma-separated)</label>
+                                <textarea id="role-categories_roles" placeholder="GamerRole, PCGamer, ConsoleGamer" style="min-height: 80px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">List of Discord role names to include</div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Max Roles Per User</label>
+                                    <input type="number" id="role-categories_maxRoles" placeholder="Unlimited" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Max roles a member can select (leave blank for unlimited)</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Min Level Required</label>
+                                    <input type="number" id="role-categories_minLevel" placeholder="1" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Minimum member level to access roles</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔧 Advanced Features</div>
+                                    <div class="card-subtitle">Fine-tune category behavior</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Logging Channel</label>
+                                <input type="text" id="role-categories_logChannel" placeholder="Channel ID">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Channel to log all role changes in this category</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Category Enabled</span>
+                                    <div class="toggle active" id="role-categories_enabled"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Show Role Descriptions</span>
+                                    <div class="toggle active" id="role-categories_showDesc"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Allow Multiple Selection</span>
+                                    <div class="toggle active" id="role-categories_multiple"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Auto-Remove Unselected Roles</span>
+                                    <div class="toggle" id="role-categories_autoRemove"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Role Logging Enabled</span>
+                                    <div class="toggle active" id="role-categories_logging"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔐 Access Control</div>
+                                    <div class="card-subtitle">Control who can select roles</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Required Roles (comma-separated)</label>
+                                <input type="text" id="role-categories_requiredRoles" placeholder="Member,Verified">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Users must have ONE of these roles to access category</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Blocked Roles (comma-separated)</label>
+                                <input type="text" id="role-categories_blockedRoles" placeholder="Muted,Suspended">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Users with these roles cannot access category</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('role-categories')">💾 Save Role Category Configuration</button>
                             </div>
                         </div>
                     </div>
