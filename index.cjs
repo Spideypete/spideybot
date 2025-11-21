@@ -822,6 +822,15 @@ client.on("messageCreate", async (msg) => {
         { name: "🌐 WEB API", value: "Admin dashboard at `/admin` • 3 REST endpoints", inline: false }
       );
 
+    const adminEconomyEmbed = new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle("💰 ECONOMY MANAGEMENT (3 commands)")
+      .addFields(
+        { name: "➕ //addmoney @user [amount]", value: "Give coins to member", inline: true },
+        { name: "➖ //removemoney @user [amount]", value: "Remove coins from member", inline: true },
+        { name: "🏆 //leaderboard", value: "View top richest members", inline: true }
+      );
+
     const adminProtectionEmbed = new EmbedBuilder()
       .setColor(0xFF6B6B)
       .setTitle("🛡️ PROTECTION & TOOLS (7 commands)")
@@ -1448,6 +1457,119 @@ client.on("messageCreate", async (msg) => {
     const users = guildConfig.kickUsers || [];
     if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `//add-kick-user [username]`");
     return msg.reply(`🎮 **Kick Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
+  }
+
+  // ============== ECONOMY COMMANDS ==============
+  if (msg.content === "//balance") {
+    const economy = guildConfig.economy || {};
+    const balance = economy[msg.author.id] || 0;
+    return msg.reply(`💰 **${msg.author.username}** has **${balance}** coins!`);
+  }
+
+  if (msg.content === "//daily") {
+    const economy = guildConfig.economy || {};
+    const lastDaily = economy[`${msg.author.id}_daily`] || 0;
+    const now = Date.now();
+    if (now - lastDaily < 86400000) {
+      const timeLeft = Math.ceil((86400000 - (now - lastDaily)) / 3600000);
+      return msg.reply(`⏰ You can claim daily rewards in **${timeLeft}** hours!`);
+    }
+    economy[msg.author.id] = (economy[msg.author.id] || 0) + 100;
+    economy[`${msg.author.id}_daily`] = now;
+    updateGuildConfig(msg.guild.id, { economy });
+    return msg.reply(`✅ Claimed **100** coins! Total: **${economy[msg.author.id]}** 💰`);
+  }
+
+  if (msg.content === "//work") {
+    const economy = guildConfig.economy || {};
+    const lastWork = economy[`${msg.author.id}_work`] || 0;
+    const now = Date.now();
+    if (now - lastWork < 300000) {
+      const timeLeft = Math.ceil((300000 - (now - lastWork)) / 60000);
+      return msg.reply(`⏰ You can work again in **${timeLeft}** minute(s)!`);
+    }
+    const earned = Math.floor(Math.random() * 50) + 20;
+    economy[msg.author.id] = (economy[msg.author.id] || 0) + earned;
+    economy[`${msg.author.id}_work`] = now;
+    updateGuildConfig(msg.guild.id, { economy });
+    return msg.reply(`💼 You worked hard and earned **${earned}** coins! Total: **${economy[msg.author.id]}** 💰`);
+  }
+
+  if (msg.content.startsWith("//transfer ")) {
+    const target = msg.mentions.members.first();
+    const amountStr = msg.content.split(" ").pop();
+    const amount = parseInt(amountStr);
+    
+    if (!target) return msg.reply("Usage: //transfer @user [amount]");
+    if (isNaN(amount) || amount <= 0) return msg.reply("Usage: //transfer @user [amount]\nAmount must be a positive number!");
+    if (target.id === msg.author.id) return msg.reply("❌ You can't transfer to yourself!");
+    
+    const economy = guildConfig.economy || {};
+    const senderBalance = economy[msg.author.id] || 0;
+    
+    if (senderBalance < amount) return msg.reply(`❌ You only have **${senderBalance}** coins! Need **${amount}**`);
+    
+    economy[msg.author.id] = senderBalance - amount;
+    economy[target.id] = (economy[target.id] || 0) + amount;
+    updateGuildConfig(msg.guild.id, { economy });
+    
+    return msg.reply(`✅ Transferred **${amount}** coins to ${target.user.tag}!\nYour new balance: **${economy[msg.author.id]}** 💰`);
+  }
+
+  if (msg.content.startsWith("//addmoney ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can add money!");
+    }
+    const target = msg.mentions.members.first();
+    const amountStr = msg.content.split(" ").pop();
+    const amount = parseInt(amountStr);
+    
+    if (!target) return msg.reply("Usage: //addmoney @user [amount]");
+    if (isNaN(amount) || amount <= 0) return msg.reply("Amount must be a positive number!");
+    
+    const economy = guildConfig.economy || {};
+    economy[target.id] = (economy[target.id] || 0) + amount;
+    updateGuildConfig(msg.guild.id, { economy });
+    
+    return msg.reply(`✅ Added **${amount}** coins to ${target.user.tag}!\nNew balance: **${economy[target.id]}** 💰`);
+  }
+
+  if (msg.content.startsWith("//removemoney ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can remove money!");
+    }
+    const target = msg.mentions.members.first();
+    const amountStr = msg.content.split(" ").pop();
+    const amount = parseInt(amountStr);
+    
+    if (!target) return msg.reply("Usage: //removemoney @user [amount]");
+    if (isNaN(amount) || amount <= 0) return msg.reply("Amount must be a positive number!");
+    
+    const economy = guildConfig.economy || {};
+    const currentBalance = economy[target.id] || 0;
+    economy[target.id] = Math.max(0, currentBalance - amount);
+    updateGuildConfig(msg.guild.id, { economy });
+    
+    return msg.reply(`✅ Removed **${amount}** coins from ${target.user.tag}!\nNew balance: **${economy[target.id]}** 💰`);
+  }
+
+  if (msg.content === "//leaderboard") {
+    const economy = guildConfig.economy || {};
+    const members = Object.entries(economy)
+      .filter(([key]) => !key.includes("_"))
+      .map(([userId, balance]) => ({ userId, balance }))
+      .sort((a, b) => b.balance - a.balance)
+      .slice(0, 10);
+    
+    if (members.length === 0) return msg.reply("📊 No economy data yet! Use //daily or //work to start earning!");
+    
+    const leaderboard = members.map((m, i) => {
+      const user = msg.guild.members.cache.get(m.userId)?.user;
+      const name = user?.username || "Unknown";
+      return `**${i+1}.** ${name} - **${m.balance}** 💰`;
+    }).join("\n");
+    
+    return msg.reply(`🏆 **Top 10 Richest Members:**\n${leaderboard}`);
   }
 });
 
