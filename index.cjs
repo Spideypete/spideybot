@@ -1695,16 +1695,17 @@ app.get("/", (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="SPIDEY BOT is the ultimate multi-server Discord bot featuring advanced music playback with YouTube search, comprehensive moderation tools, role management with GIF banners, unlimited social media monitoring, economy system, leveling with leaderboards, link filtering, ticket support, custom commands, and 40+ total commands. Perfect for community servers.">
         <meta name="keywords" content="Discord Bot, Music Bot, Moderation, Community, Leveling">
+        <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; line-height: 1.6; position: relative; }
+          body { font-family: 'Fredoka', sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; line-height: 1.6; position: relative; }
           body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
           body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 127, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(138, 43, 226, 0.05) 0%, transparent 50%); pointer-events: none; z-index: -1; }
           nav { background: #111111; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
           nav a:hover { color: #9146FF; }
           .hero { text-align: center; padding: 6rem 2rem; }
-          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: white; }
+          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; }
           .hero p { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9; color: white; }
           .btn { display: inline-block; padding: 1rem 2rem; background: #9146FF; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; font-size: 1rem; }
           .btn:hover { background: #7C3AED; transform: scale(1.05); }
@@ -1712,7 +1713,7 @@ app.get("/", (req, res) => {
           .btn-secondary:hover { background: #9146FF; color: #000; }
           .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
           .feature { background: #1a1a1a; padding: 2rem; border-radius: 10px; border: 1px solid #333; }
-          .feature h3 { font-size: 1.5rem; margin-bottom: 1rem; color: white; }
+          .feature h3 { font-size: 1.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; }
           .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
           .stats { background: #111111; padding: 2rem; text-align: center; }
           .stat { display: inline-block; margin: 1rem 2rem; }
@@ -1720,7 +1721,7 @@ app.get("/", (req, res) => {
           .commands { max-width: 1200px; margin: 3rem auto; padding: 2rem; }
           .command-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
           .command-card { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF; }
-          .command-card h4 { margin-bottom: 0.5rem; color: white; }
+          .command-card h4 { margin-bottom: 0.5rem; color: white; font-family: 'Fredoka One', sans-serif; }
           .command-card p { opacity: 0.8; font-size: 0.9rem; color: white; }
           footer { background: #111111; text-align: center; padding: 2rem; margin-top: 3rem; border-top: 1px solid #333; }
           .description { max-width: 900px; margin: 2rem auto; padding: 2rem; background: rgba(26, 26, 26, 0.8); border-radius: 10px; border: 2px solid #9146FF; text-align: center; font-size: 1.1rem; line-height: 1.8; color: #ddd; }
@@ -1876,17 +1877,18 @@ app.get("/features", (req, res) => {
       <head>
         <title>Features - SPIDEY BOT</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
+          body { font-family: 'Fredoka', sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
           body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
           nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
           nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
           .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: #FF1493; text-shadow: 0 0 20px rgba(255, 20, 147, 0.5); }
+          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: #FF1493; text-shadow: 0 0 20px rgba(255, 20, 147, 0.5); font-family: 'Fredoka One', sans-serif; }
           .feature-section { background: rgba(26, 26, 26, 0.8); padding: 2rem; margin: 2rem 0; border-radius: 10px; border-left: 4px solid #9146FF; backdrop-filter: blur(10px); }
-          .feature-section h2 { color: #9146FF; margin-bottom: 1rem; }
+          .feature-section h2 { color: #9146FF; margin-bottom: 1rem; font-family: 'Fredoka One', sans-serif; }
           .feature-section ul { margin-left: 2rem; }
           .feature-section li { margin: 0.5rem 0; color: white; }
           .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #9146FF; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 1rem 0; }
@@ -2021,16 +2023,17 @@ app.get("/commands", (req, res) => {
       <head>
         <title>Commands - SPIDEY BOT</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
+          body { font-family: 'Fredoka', sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
           body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
           nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
           nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
           .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: #FF1493; text-shadow: 0 0 20px rgba(255, 20, 147, 0.5); }
-          h2 { color: #00FFFF; margin: 2rem 0 1rem 0; border-bottom: 2px solid #9146FF; padding-bottom: 0.5rem; text-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
+          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: #FF1493; text-shadow: 0 0 20px rgba(255, 20, 147, 0.5); font-family: 'Fredoka One', sans-serif; }
+          h2 { color: #00FFFF; margin: 2rem 0 1rem 0; border-bottom: 2px solid #9146FF; padding-bottom: 0.5rem; text-shadow: 0 0 10px rgba(0, 255, 255, 0.3); font-family: 'Fredoka One', sans-serif; }
           .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
           .cmd-card { background: rgba(26, 26, 26, 0.8); padding: 1rem; border-radius: 5px; border-left: 3px solid #9146FF; backdrop-filter: blur(10px); }
           .cmd-card code { background: #333; padding: 0.2rem 0.5rem; border-radius: 3px; color: #9146FF; }
@@ -2324,9 +2327,10 @@ app.get("/tos", (req, res) => {
       <head>
         <title>Terms of Service - SPIDEY BOT</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
+          body { font-family: 'Fredoka', sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
           body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
           nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
@@ -2345,10 +2349,10 @@ app.get("/tos", (req, res) => {
           <a href="/privacy">📋 Privacy Policy</a>
         </nav>
         <div class="container">
-          <h1>🕷️ SPIDEY BOT - Terms of Service</h1>
+          <h1 style="font-family: 'Fredoka One', sans-serif;">🕷️ SPIDEY BOT - Terms of Service</h1>
           <p><strong>Last Updated: November 21, 2025</strong></p>
           
-          <h2>1. Acceptance of Terms</h2>
+          <h2 style="font-family: 'Fredoka One', sans-serif;">1. Acceptance of Terms</h2>
           <p>By adding SPIDEY BOT to your Discord server, you agree to comply with these Terms of Service. If you do not agree, do not use the bot.</p>
           
           <h2>2. Use License</h2>
@@ -2424,10 +2428,10 @@ app.get("/privacy", (req, res) => {
           <a href="/tos">⚖️ Terms of Service</a>
         </nav>
         <div class="container">
-          <h1>🕷️ SPIDEY BOT - Privacy Policy</h1>
+          <h1 style="font-family: 'Fredoka One', sans-serif;">🕷️ SPIDEY BOT - Privacy Policy</h1>
           <p><strong>Last Updated: November 21, 2025</strong></p>
           
-          <h2>1. Information We Collect</h2>
+          <h2 style="font-family: 'Fredoka One', sans-serif;">1. Information We Collect</h2>
           <p>SPIDEY BOT collects the following information to provide its services:</p>
           <ul>
             <li>Discord User IDs and Server IDs</li>
