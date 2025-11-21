@@ -481,6 +481,155 @@
       to { opacity: 1; }
     }
 
+    .welcome-banner {
+      background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .welcome-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .welcome-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .member-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .member-card {
+      position: relative;
+      border-radius: 12px;
+      padding: 1.5rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 2px solid transparent;
+    }
+
+    .member-card:nth-child(1) {
+      background: linear-gradient(135deg, #FF006E 0%, #FB5607 100%);
+    }
+
+    .member-card:nth-child(2) {
+      background: linear-gradient(135deg, #00D9FF 0%, #0099FF 100%);
+    }
+
+    .member-card:nth-child(3) {
+      background: linear-gradient(135deg, #FFB703 0%, #FB5607 100%);
+    }
+
+    .member-card:nth-child(4) {
+      background: linear-gradient(135deg, #8338EC 0%, #3A86FF 100%);
+    }
+
+    .member-card:nth-child(5) {
+      background: linear-gradient(135deg, #06FFA5 0%, #00D9FF 100%);
+    }
+
+    .member-card:nth-child(n+6) {
+      background: linear-gradient(135deg, #FF006E 0%, #8338EC 100%);
+    }
+
+    .member-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 300px;
+      height: 300px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .member-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .member-card-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .member-card-avatar {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 0.8rem;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .member-card-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+
+    .member-card-role {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 0.8rem;
+    }
+
+    .member-card-stats {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: auto;
+    }
+
+    .member-card-stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
     .member-item {
       display: flex;
       align-items: center;
@@ -631,7 +780,35 @@
     <div class="content">
       <!-- Dashboard -->
       <div id="dashboard" class="page active">
-        <div class="section-title">Overview</div>
+        <!-- Welcome Section -->
+        <div class="welcome-banner">
+          <div class="welcome-content">
+            <div class="welcome-title">Welcome to SPIDEY 🕷️</div>
+            <div class="welcome-subtitle">Your server's top performers this week</div>
+          </div>
+        </div>
+
+        <div class="member-cards-grid" id="member-cards">
+          <div class="member-card">
+            <div class="member-card-content">
+              <div class="member-card-avatar">👑</div>
+              <div class="member-card-name">Member 1</div>
+              <div class="member-card-role">Elite Member</div>
+              <div class="member-card-stats">
+                <div class="member-card-stat">
+                  <span>Level</span>
+                  <strong>0</strong>
+                </div>
+                <div class="member-card-stat">
+                  <span>XP</span>
+                  <strong>0K</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top: 2rem;">Overview</div>
         <div class="stats-grid">
           <div class="stat">
             <div class="stat-label">Status</div>
@@ -1093,13 +1270,36 @@
         const data = await res.json();
         if (!data.members || data.members.length === 0) return;
         
-        const container = document.getElementById('top-members-list');
-        const medals = ['🥇', '🥈', '🥉'];
+        // Load welcome member cards
+        const cardContainer = document.getElementById('member-cards');
+        const medals = ['👑', '⭐', '💫', '✨', '🌟', '💎'];
         
+        cardContainer.innerHTML = data.members.slice(0, 6).map((m, i) => `
+          <div class="member-card">
+            <div class="member-card-content">
+              <div class="member-card-avatar">${medals[i] || i + 1}</div>
+              <div class="member-card-name">${m.username}</div>
+              <div class="member-card-role">Rank #${m.rank}</div>
+              <div class="member-card-stats">
+                <div class="member-card-stat">
+                  <span>Level</span>
+                  <strong>${m.level}</strong>
+                </div>
+                <div class="member-card-stat">
+                  <span>XP</span>
+                  <strong>${(m.xp / 1000).toFixed(1)}K</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        
+        // Load leaderboard list
+        const container = document.getElementById('top-members-list');
         container.innerHTML = data.members.map((m, i) => `
           <div class="member-item">
             <div class="member-info">
-              <div class="member-avatar">${medals[i] || i + 1}</div>
+              <div class="member-avatar">${medals[i % medals.length]}</div>
               <span class="member-name">${m.username}</span>
             </div>
             <div class="member-level">Level ${m.level} • ${(m.xp / 1000).toFixed(1)}K XP</div>
