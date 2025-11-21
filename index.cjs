@@ -887,6 +887,14 @@ client.on("messageCreate", async (msg) => {
         { name: "🏆 //leaderboard", value: "View top richest members", inline: true }
       );
 
+    const adminLevelEmbed = new EmbedBuilder()
+      .setColor(0x00D084)
+      .setTitle("📊 LEVEL ROLES (1 command)")
+      .addFields(
+        { name: "🎖️ //setup-level-roles", value: "Create 100 auto-assigned level roles (1-100) with emoji badges", inline: false },
+        { name: "💡 How it works", value: "Members earn XP by chatting → Auto-get level role → Badge shows next to their name! Level badges have gradient colors", inline: false }
+      );
+
     const adminProtectionEmbed = new EmbedBuilder()
       .setColor(0xFF6B6B)
       .setTitle("🛡️ PROTECTION & TOOLS (7 commands)")
@@ -914,7 +922,7 @@ client.on("messageCreate", async (msg) => {
       .setFooter({ text: "💡 All actions are auto-logged to your modlog channel" });
 
     return msg.reply({ 
-      embeds: [adminMainEmbed, adminRoleEmbed, adminWelcomeEmbed, adminConfigEmbed, adminSocialEmbed, adminModEmbed, adminProtectionEmbed],
+      embeds: [adminMainEmbed, adminRoleEmbed, adminWelcomeEmbed, adminConfigEmbed, adminSocialEmbed, adminEconomyEmbed, adminLevelEmbed, adminModEmbed, adminProtectionEmbed],
       content: "** **"
     });
   }
