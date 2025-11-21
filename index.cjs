@@ -2301,7 +2301,7 @@ app.get("/logout", (req, res) => {
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.sendFile(__dirname + "/public/dashboard-sleek.html");
+  res.sendFile(__dirname + "/public/dashboard.html");
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
