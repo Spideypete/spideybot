@@ -544,26 +544,58 @@
                             <div class="card-header">
                                 <div>
                                     <div class="card-title">General Settings</div>
-                                    <div class="card-subtitle">Basic configuration</div>
+                                    <div class="card-subtitle">Core bot configuration</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Command Prefix</label>
+                                    <input type="text" id="settings_prefix" placeholder="//" maxlength="2" value="//">
+                                </div>
+                                <div class="form-group">
+                                    <label>Bot Nickname</label>
+                                    <input type="text" id="settings_nickname" placeholder="SPIDEY BOT">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Timezone</label>
+                                    <select id="settings_timezone">
+                                        <option value="UTC">UTC</option>
+                                        <option value="America/New_York">Eastern (ET)</option>
+                                        <option value="America/Chicago">Central (CT)</option>
+                                        <option value="America/Denver">Mountain (MT)</option>
+                                        <option value="America/Los_Angeles">Pacific (PT)</option>
+                                        <option value="America/Anchorage">Alaska (AKT)</option>
+                                        <option value="Pacific/Honolulu">Hawaii (HST)</option>
+                                        <option value="Europe/London">London (GMT)</option>
+                                        <option value="Europe/Paris">Central Europe (CET)</option>
+                                        <option value="Europe/Moscow">Moscow (MSK)</option>
+                                        <option value="Asia/Dubai">Dubai (GST)</option>
+                                        <option value="Asia/Kolkata">India (IST)</option>
+                                        <option value="Asia/Bangkok">Bangkok (ICT)</option>
+                                        <option value="Asia/Shanghai">China (CST)</option>
+                                        <option value="Asia/Tokyo">Tokyo (JST)</option>
+                                        <option value="Australia/Sydney">Sydney (AEDT)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Language</label>
+                                    <select id="settings_language">
+                                        <option value="en">English</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="fr">French</option>
+                                        <option value="de">German</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Command Prefix</label>
-                                <input type="text" id="settings_prefix" placeholder="//" maxlength="2" value="//">
-                            </div>
-                            <div class="form-group">
-                                <label>Bot Nickname</label>
-                                <input type="text" id="settings_nickname" placeholder="SPIDEY BOT">
-                            </div>
-                            <div class="form-group">
-                                <label>Language</label>
-                                <select id="settings_language">
-                                    <option value="en">English</option>
-                                    <option value="es">Spanish</option>
-                                </select>
+                                <label>Manager/Admin Roles (comma-separated role IDs)</label>
+                                <input type="text" id="settings_adminRoles" placeholder="123456789,987654321" style="font-size: 0.85rem;">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Enter Discord role IDs that have access to this dashboard</div>
                             </div>
                             <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('settings')">💾 Save</button>
+                                <button class="btn btn-primary" onclick="saveConfig('settings')">💾 Save Settings</button>
                             </div>
                         </div>
                     </div>
