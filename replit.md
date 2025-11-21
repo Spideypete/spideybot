@@ -29,13 +29,24 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot with music playback, mode
 ```
 index.cjs              - Main bot file (3900+ lines)
 config.json            - Server configurations
-package.json           - Dependencies
+package.json           - Dependencies (Express + React components)
 .env                   - Secrets (TOKEN, CLIENT_ID, etc.)
+src/
+  ├── api/              - API integrations (bot.ts, discord.ts)
+  ├── components/       - React components (forms, charts, features)
+  ├── pages/            - Dashboard pages
+  ├── config/           - Configuration files
+  ├── utils/            - Utility functions
+  ├── stores/           - State management (Zustand)
+  ├── styles/           - CSS/theme styles
+  └── theme/            - Theme configuration
 public/
-  ├── dashboard-sleek.html  - Admin dashboard
+  ├── dashboard-sleek.html  - Admin dashboard (legacy)
+  ├── admin-panel.html      - Server dashboard
   ├── index.html            - Homepage
   ├── features.html         - Features page
   └── assets/               - Logo and banner images
+document/              - Documentation and guides
 ```
 
 ## API Endpoints (40+)
@@ -139,6 +150,11 @@ All settings auto-save to config.json and load per-server from dashboard.
 - ✅ Settings page now saves properly
 - ✅ 40+ API endpoints fully functional
 - ✅ Per-server configuration system complete
+- ✅ Merged professional Next.js/React dashboard UI
+- ✅ Integrated Chakra UI component library
+- ✅ Added React components for forms, charts, features
+- ✅ Integrated state management (Zustand)
+- ✅ Dashboard API utilities ready
 
 ## Next Steps
 1. Deploy to Render via git push
