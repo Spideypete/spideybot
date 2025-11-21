@@ -799,7 +799,7 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-logo">
-                <div class="logo-text">🕷️ SPIDEY BOT</div>
+                <div class="logo-text" id="userDisplayName">🕷️ Loading...</div>
             </div>
 
             <div class="sidebar-section">
@@ -3858,7 +3858,21 @@
             }
         }
 
+        // Load and display user's Discord username
+        async function loadUserInfo() {
+            try {
+                const res = await fetch('/api/user');
+                const data = await res.json();
+                if (data.user && data.user.username) {
+                    document.getElementById('userDisplayName').textContent = `👤 ${data.user.username}`;
+                }
+            } catch (err) {
+                console.error('Failed to load user info:', err);
+            }
+        }
+
         window.addEventListener('load', () => {
+            loadUserInfo();
             checkServerSelection();
             initCreatorAccess();
             const isDarkMode = localStorage.getItem('darkMode') !== 'false';
