@@ -59,6 +59,8 @@ console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
 const configFile = path.join(__dirname, "config.json");
 
 function logModAction(guild, action, mod, target, reason) {
+  addActivity(guild.id, "🛡️", mod.username || mod.name, `${action} ${target}`);
+
   const config = loadConfig();
   const guildConfig = config.guilds[guild.id];
   if (!guildConfig?.modLogChannelId) return;
@@ -198,9 +200,28 @@ client.once("ready", () => {
   });
 });
 
+// ============== ACTIVITY LOGGING ==============
+function addActivity(guildId, icon, text, action, time = null) {
+  const config = loadConfig();
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  if (!config.guilds[guildId].activities) config.guilds[guildId].activities = [];
+  
+  const activity = {
+    icon,
+    text: text.substring(0, 50),
+    action,
+    time: time || new Date().toLocaleTimeString()
+  };
+  
+  config.guilds[guildId].activities.unshift(activity);
+  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 20);
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+}
+
 // ============== WELCOME NEW MEMBERS ==============
 client.on("guildMemberAdd", async (member) => {
   console.log(`New member joined: ${member.user.tag} in ${member.guild.name}`);
+  addActivity(member.guild.id, "👤", member.user.username, "joined the server");
   
   const guildConfig = getGuildConfig(member.guild.id);
   if (!guildConfig.welcomeChannelId) return;
@@ -255,6 +276,7 @@ client.on("messageCreate", async (msg) => {
       if (currentXp >= nextLevelXp) {
         const level = Math.floor(currentXp / 500) + 1;
         msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
+        addActivity(msg.guild.id, "⬆️", msg.author.username, `leveled up to Level ${level}`);
         
         const levelRoles = guildConfig.levelRoles || {};
         const newRoleId = levelRoles[`level_${level}`];
@@ -3647,6 +3669,7 @@ app.post("/api/commands/:guildId", (req, res) => {
   config.guilds[guildId].customCommands[name] = response;
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   console.log(`✨ Custom command created: ${name}`);
+  addActivity(guildId, "💬", "Admin", `created custom command: ${name}`);
   res.json({ success: true });
 });
 
@@ -3826,13 +3849,11 @@ app.get("/api/dashboard/members", (req, res) => {
 app.get("/api/dashboard/activity", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
   
-  const activities = [
-    { icon: "👤", text: "Sarah#2041", action: "joined the server", time: "2 minutes ago" },
-    { icon: "🎵", text: "Alex#5892", action: "played a song", time: "5 minutes ago" },
-    { icon: "⬆️", text: "Jordan#1234", action: "leveled up to Level 12", time: "12 minutes ago" },
-    { icon: "💬", text: "Admin", action: "created custom command", time: "1 hour ago" },
-    { icon: "🛡️", text: "Admin", action: "warned user for spam", time: "3 hours ago" }
-  ];
+  const firstGuild = client.guilds.cache.first();
+  if (!firstGuild) return res.json({ activities: [] });
+  
+  const config = getGuildConfig(firstGuild.id);
+  const activities = config.activities || [];
   
   res.json({ activities });
 });
