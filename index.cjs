@@ -1856,6 +1856,11 @@ app.get("/", (req, res) => {
           <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 40px; margin-bottom: 0.5rem;">
           <p>SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
           <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">Use //help in Discord to see all commands • Admins use //adminhelp</p>
+          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #333;">
+            <a href="/tos" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
+            <a href="/privacy" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
+            <a href="/interactions" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
+          </div>
         </footer>
         ${supportWidget}
       </body>
@@ -1992,6 +1997,15 @@ app.get("/features", (req, res) => {
             <p style="margin-bottom: 1.5rem; opacity: 0.8;">Enjoy SPIDEY BOT? Support development!</p>
             <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=peterburke122000@gmail.com&item_name=Support+SPIDEY+BOT&amount=10.00&currency_code=USD" target="_blank" class="btn" style="background: #9146FF;">💜 Donate via PayPal</a>
           </div>
+
+          <footer style="text-align: center; padding: 2rem; color: #999; border-top: 2px solid #9146FF; margin-top: 3rem;">
+            <p>© 2025 SPIDEY BOT. All rights reserved.</p>
+            <div style="margin-top: 1rem;">
+              <a href="/tos" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
+              <a href="/privacy" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
+              <a href="/interactions" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
+            </div>
+          </footer>
         </div>
         ${supportWidget}
       </body>
@@ -2368,7 +2382,14 @@ app.get("/tos", (req, res) => {
           <h2>8. Contact</h2>
           <p>For questions about these Terms of Service, please contact us through our Discord support server.</p>
         </div>
-        <footer>© 2025 SPIDEY BOT. All rights reserved.</footer>
+        <footer style="text-align: center; padding: 2rem; color: #999; border-top: 2px solid #9146FF; margin-top: 3rem;">
+          <p>© 2025 SPIDEY BOT. All rights reserved.</p>
+          <div style="margin-top: 1rem;">
+            <a href="/" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🏠 Home</a>
+            <a href="/privacy" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
+            <a href="/interactions" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
+          </div>
+        </footer>
       </body>
     </html>
   `);
@@ -2445,7 +2466,14 @@ app.get("/privacy", (req, res) => {
           <h2>8. Contact</h2>
           <p>For privacy concerns, please contact us through our Discord support server or visit our GitHub repository.</p>
         </div>
-        <footer>© 2025 SPIDEY BOT. All rights reserved.</footer>
+        <footer style="text-align: center; padding: 2rem; color: #999; border-top: 2px solid #9146FF; margin-top: 3rem;">
+          <p>© 2025 SPIDEY BOT. All rights reserved.</p>
+          <div style="margin-top: 1rem;">
+            <a href="/" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🏠 Home</a>
+            <a href="/tos" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
+            <a href="/interactions" style="color: #9146FF; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
+          </div>
+        </footer>
       </body>
     </html>
   `);
