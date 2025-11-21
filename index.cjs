@@ -61,9 +61,9 @@ function getGuildConfig(guildId) {
       prefix: "//",
       modLogChannelId: null,
       twitchChannelId: null,
-      twitchUsername: null,
+      twitchUsers: [],
       tiktokChannelId: null,
-      tiktokUsername: null,
+      tiktokUsers: [],
       musicLoopMode: false,
       musicShuffle: false,
       musicVolume: 100,
@@ -378,14 +378,18 @@ client.on("messageCreate", async (msg) => {
 
     const configEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("⚙️ CONFIGURATION (6 commands)")
+      .setTitle("⚙️ CONFIGURATION (10 commands)")
       .addFields(
         { name: "🔤 //set-prefix [prefix]", value: "Change command prefix", inline: true },
         { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true },
-        { name: "🎮 //set-twitch-user [username]", value: "Set Twitch username to monitor", inline: true },
-        { name: "📢 //config-twitch-channel #channel", value: "Set Twitch live notification channel", inline: true },
-        { name: "🎵 //set-tiktok-user [username]", value: "Set TikTok username to monitor", inline: true },
-        { name: "📢 //config-tiktok-channel #channel", value: "Set TikTok post notification channel", inline: true }
+        { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
+        { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
+        { name: "📋 //list-twitch-users", value: "View monitored Twitch creators", inline: true },
+        { name: "📢 //config-twitch-channel #ch", value: "Set Twitch alert channel", inline: true },
+        { name: "🎵 //add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
+        { name: "➖ //remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
+        { name: "📋 //list-tiktok-users", value: "View monitored TikTok creators", inline: true },
+        { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true }
       );
 
     const utilityEmbed = new EmbedBuilder()
@@ -890,24 +894,70 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ TikTok post notifications will post to ${channel}\n\n💡 *Note: Configure your TikTok webhook at: https://developer.tiktok.com*`);
   }
 
-  if (msg.content.startsWith("//set-twitch-user ")) {
+  if (msg.content.startsWith("//add-twitch-user ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const twitchUser = msg.content.slice(18).trim();
-    if (!twitchUser) return msg.reply("Usage: //set-twitch-user [username]\nExample: //set-twitch-user xqc");
-    updateGuildConfig(msg.guild.id, { twitchUsername: twitchUser });
-    return msg.reply(`✅ Twitch user set to: **${twitchUser}**`);
+    const twitchUser = msg.content.slice(18).trim().toLowerCase();
+    if (!twitchUser) return msg.reply("Usage: //add-twitch-user [username]\nExample: //add-twitch-user xqc");
+    const users = guildConfig.twitchUsers || [];
+    if (users.includes(twitchUser)) return msg.reply(`❌ **${twitchUser}** is already being monitored!`);
+    users.push(twitchUser);
+    updateGuildConfig(msg.guild.id, { twitchUsers: users });
+    return msg.reply(`✅ Added **${twitchUser}** to Twitch monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("//set-tiktok-user ")) {
+  if (msg.content.startsWith("//remove-twitch-user ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const tiktokUser = msg.content.slice(18).trim();
-    if (!tiktokUser) return msg.reply("Usage: //set-tiktok-user [username]\nExample: //set-tiktok-user charlidamelio");
-    updateGuildConfig(msg.guild.id, { tiktokUsername: tiktokUser });
-    return msg.reply(`✅ TikTok user set to: **${tiktokUser}**`);
+    const twitchUser = msg.content.slice(21).trim().toLowerCase();
+    if (!twitchUser) return msg.reply("Usage: //remove-twitch-user [username]");
+    const users = guildConfig.twitchUsers || [];
+    const index = users.indexOf(twitchUser);
+    if (index === -1) return msg.reply(`❌ **${twitchUser}** is not being monitored!`);
+    users.splice(index, 1);
+    updateGuildConfig(msg.guild.id, { twitchUsers: users });
+    return msg.reply(`✅ Removed **${twitchUser}** from Twitch monitoring!`);
+  }
+
+  if (msg.content === "//list-twitch-users") {
+    const users = guildConfig.twitchUsers || [];
+    if (users.length === 0) return msg.reply("❌ No Twitch users being monitored! Use `//add-twitch-user [username]`");
+    return msg.reply(`🎮 **Twitch Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
+  }
+
+  if (msg.content.startsWith("//add-tiktok-user ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const tiktokUser = msg.content.slice(18).trim().toLowerCase();
+    if (!tiktokUser) return msg.reply("Usage: //add-tiktok-user [username]\nExample: //add-tiktok-user charlidamelio");
+    const users = guildConfig.tiktokUsers || [];
+    if (users.includes(tiktokUser)) return msg.reply(`❌ **${tiktokUser}** is already being monitored!`);
+    users.push(tiktokUser);
+    updateGuildConfig(msg.guild.id, { tiktokUsers: users });
+    return msg.reply(`✅ Added **${tiktokUser}** to TikTok monitoring! (${users.length} total)`);
+  }
+
+  if (msg.content.startsWith("//remove-tiktok-user ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const tiktokUser = msg.content.slice(21).trim().toLowerCase();
+    if (!tiktokUser) return msg.reply("Usage: //remove-tiktok-user [username]");
+    const users = guildConfig.tiktokUsers || [];
+    const index = users.indexOf(tiktokUser);
+    if (index === -1) return msg.reply(`❌ **${tiktokUser}** is not being monitored!`);
+    users.splice(index, 1);
+    updateGuildConfig(msg.guild.id, { tiktokUsers: users });
+    return msg.reply(`✅ Removed **${tiktokUser}** from TikTok monitoring!`);
+  }
+
+  if (msg.content === "//list-tiktok-users") {
+    const users = guildConfig.tiktokUsers || [];
+    if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `//add-tiktok-user [username]`");
+    return msg.reply(`📱 **TikTok Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 });
 
@@ -1176,17 +1226,18 @@ app.post("/webhooks/twitch", (req, res) => {
   const body = req.body;
   if (body.subscription?.type === "stream.online") {
     const config = loadConfig();
-    const broadcasterName = body.event?.broadcaster_user_login;
+    const broadcasterName = body.event?.broadcaster_user_login?.toLowerCase();
     
     for (const [guildId, guildConfig] of Object.entries(config.guilds || {})) {
-      if (guildConfig.twitchUsername?.toLowerCase() === broadcasterName?.toLowerCase() && guildConfig.twitchChannelId) {
+      const monitoredUsers = guildConfig.twitchUsers || [];
+      if (monitoredUsers.some(u => u.toLowerCase() === broadcasterName) && guildConfig.twitchChannelId) {
         const channel = client.channels.cache.get(guildConfig.twitchChannelId);
         if (channel) {
           const embed = new EmbedBuilder()
             .setColor(0x9146FF)
             .setTitle("🎮 TWITCH LIVE!")
-            .setDescription(`**${broadcasterName}** is now live on Twitch!`)
-            .setURL(`https://twitch.tv/${broadcasterName}`)
+            .setDescription(`**${body.event?.broadcaster_user_login}** is now live on Twitch!`)
+            .setURL(`https://twitch.tv/${body.event?.broadcaster_user_login}`)
             .addFields(
               { name: "Title", value: body.event?.title || "No title", inline: false }
             )
@@ -1204,17 +1255,18 @@ app.post("/webhooks/tiktok", (req, res) => {
   const body = req.body;
   if (body.event === "post.publish" || body.type === "video") {
     const config = loadConfig();
-    const tiktokUser = body.data?.author_username || body.creator;
+    const tiktokUser = (body.data?.author_username || body.creator)?.toLowerCase();
     
     for (const [guildId, guildConfig] of Object.entries(config.guilds || {})) {
-      if (guildConfig.tiktokUsername?.toLowerCase() === tiktokUser?.toLowerCase() && guildConfig.tiktokChannelId) {
+      const monitoredUsers = guildConfig.tiktokUsers || [];
+      if (monitoredUsers.some(u => u.toLowerCase() === tiktokUser) && guildConfig.tiktokChannelId) {
         const channel = client.channels.cache.get(guildConfig.tiktokChannelId);
         if (channel) {
           const embed = new EmbedBuilder()
             .setColor(0x000000)
             .setTitle("📱 NEW TIKTOK POST!")
-            .setDescription(`**${tiktokUser}** just posted on TikTok!`)
-            .setURL(`https://www.tiktok.com/@${tiktokUser}`)
+            .setDescription(`**${body.data?.author_username || body.creator}** just posted on TikTok!`)
+            .setURL(`https://www.tiktok.com/@${body.data?.author_username || body.creator}`)
             .addFields(
               { name: "Caption", value: body.data?.caption || "No caption", inline: false }
             );
