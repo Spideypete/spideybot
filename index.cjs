@@ -1976,6 +1976,12 @@ client.on("interactionCreate", async (interaction) => {
 const app = express();
 app.use(express.static('public'));
 app.use(express.json());
+app.use(session({
+  secret: process.env.SESSION_SECRET || "spidey-secret-key-2025",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }
+}));
 
 // Admin authentication middleware
 function verifyAdmin(req, res, next) {
@@ -2982,6 +2988,23 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.redirect("/");
   
   try {
+    if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET || DISCORD_CLIENT_SECRET === "default_secret") {
+      console.error("❌ Missing DISCORD_CLIENT_SECRET! Add it to secrets in Replit.");
+      return res.send(`
+        <html>
+          <head><title>Missing Configuration</title></head>
+          <body style="background: #0f0f0f; color: #fff; font-family: Arial; text-align: center; padding: 50px;">
+            <h1>❌ Configuration Error</h1>
+            <p>DISCORD_CLIENT_SECRET is not set!</p>
+            <p>You need to add your Discord Client Secret to make OAuth work.</p>
+            <p>Go to Discord Developer Portal → Your Bot → OAuth2 → General → Copy Client Secret</p>
+            <p>Then add it to Replit Secrets</p>
+            <a href="/" style="color: #9146FF;">← Go Back Home</a>
+          </body>
+        </html>
+      `);
+    }
+
     const tokenResponse = await axios.post("https://discord.com/api/oauth2/token", {
       client_id: DISCORD_CLIENT_ID,
       client_secret: DISCORD_CLIENT_SECRET,
@@ -3002,10 +3025,21 @@ app.get("/auth/discord/callback", async (req, res) => {
     req.session.user = userResponse.data;
     req.session.accessToken = tokenResponse.data.access_token;
     req.session.guilds = guildsResponse.data;
+    console.log(`✅ User logged in: ${userResponse.data.username}#${userResponse.data.discriminator}`);
     res.redirect("/dashboard");
   } catch (error) {
-    console.error("OAuth error:", error.message);
-    res.redirect("/?error=oauth_failed");
+    console.error("❌ OAuth error:", error.response?.data || error.message);
+    res.send(`
+      <html>
+        <head><title>OAuth Error</title></head>
+        <body style="background: #0f0f0f; color: #fff; font-family: Arial; text-align: center; padding: 50px;">
+          <h1>❌ Login Failed</h1>
+          <p>Error: ${error.response?.data?.error_description || error.message}</p>
+          <p>Make sure you added the redirect URL to Discord Developer Portal</p>
+          <a href="/" style="color: #9146FF;">← Go Back Home</a>
+        </body>
+      </html>
+    `);
   }
 });
 
