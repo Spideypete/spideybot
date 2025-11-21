@@ -3165,13 +3165,26 @@ app.get("/login", (req, res) => {
             text-align: center;
             margin-bottom: 2.5rem;
           }
-          .logo-text {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #9146FF;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+          .logo-image {
+            width: 80px;
+            height: 80px;
             margin-bottom: 1rem;
+            filter: drop-shadow(0 4px 12px rgba(145, 70, 255, 0.3));
+            animation: floatLogo 3s ease-in-out infinite;
+          }
+          @keyframes floatLogo {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+          }
+          .logo-text {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #9146FF, #7C3AED);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
           }
           .form-card {
             background: #fff;
@@ -3322,6 +3335,7 @@ app.get("/login", (req, res) => {
         
         <div class="container">
           <div class="logo-section">
+            <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" class="logo-image">
             <div class="logo-text">🎵 SPIDEY</div>
           </div>
           
