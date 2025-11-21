@@ -87,6 +87,7 @@ player.on("connectionError", (queue, error) => {
 // ============== READY EVENT ==============
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
+  client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
   });
@@ -123,9 +124,32 @@ client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
   const guildConfig = getGuildConfig(msg.guild.id);
 
-  // Ping
+  // Bot Status
   if (msg.content === "//ping") {
-    return msg.reply("Pong!");
+    const uptime = process.uptime();
+    const hours = Math.floor(uptime / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    const seconds = Math.floor(uptime % 60);
+    const memory = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
+    const guilds = client.guilds.cache.size;
+    const activeQueues = player.queues.size;
+    
+    const statusEmbed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("🤖 SPIDEY BOT - Status")
+      .addFields(
+        { name: "🔌 Latency", value: `${client.ws.ping}ms`, inline: true },
+        { name: "⏱️ Uptime", value: `${hours}h ${minutes}m ${seconds}s`, inline: true },
+        { name: "🖥️ Memory", value: `${memory}MB`, inline: true },
+        { name: "🏢 Servers", value: `${guilds}`, inline: true },
+        { name: "🎵 Active Music", value: `${activeQueues} queue${activeQueues !== 1 ? "s" : ""}`, inline: true },
+        { name: "👤 Bot Version", value: "v2.0", inline: true },
+        { name: "Status", value: "✅ **ONLINE** - All systems operational!", inline: false }
+      )
+      .setFooter({ text: "SPIDEY BOT • Always ready to serve" })
+      .setTimestamp();
+    
+    return msg.reply({ embeds: [statusEmbed] });
   }
 
   // List all active roles
