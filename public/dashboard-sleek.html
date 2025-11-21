@@ -1341,16 +1341,32 @@
       <div id="role-categories" class="page">
         <div class="section-title">📂 Role Categories</div>
         <div class="features">
-          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 550px;">
             <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem;">📦 Category Name</label>
             <input class="config-input" type="text" id="cat-name" placeholder="e.g., Gaming Roles">
             
-            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">🎯 Roles</label>
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-              <input class="config-input" type="text" id="role-input" placeholder="Add a role" style="flex: 1;">
-              <button class="config-btn" onclick="addRoleToList()" style="width: auto; padding: 0.7rem 1.2rem;">➕</button>
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.8rem; margin-top: 1rem;">🎯 Roles</label>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 0.8fr; gap: 0.4rem; margin-bottom: 0.8rem;">
+              <div>
+                <label style="color: #00d4ff; font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.3rem;">Role ID</label>
+                <input class="config-input" type="text" id="role-id" placeholder="123456..." style="margin-bottom: 0;">
+              </div>
+              <div>
+                <label style="color: #00d4ff; font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.3rem;">Role Name</label>
+                <input class="config-input" type="text" id="role-name" placeholder="developer" style="margin-bottom: 0;">
+              </div>
+              <div>
+                <label style="color: #00d4ff; font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.3rem;">Display Name</label>
+                <input class="config-input" type="text" id="role-display" placeholder="👨‍💻 Developer" style="margin-bottom: 0;">
+              </div>
+              <div>
+                <label style="color: #00d4ff; font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.3rem;">Action</label>
+                <button class="config-btn" onclick="addRoleToList()" style="width: 100%; padding: 0.7rem 0; margin-bottom: 0;">➕</button>
+              </div>
             </div>
-            <div id="roles-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 6px; padding: 0.8rem; min-height: 40px; max-height: 150px; overflow-y: auto;">
+            
+            <div id="roles-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 6px; padding: 0.8rem; min-height: 50px; max-height: 200px; overflow-y: auto;">
               <div style="color: #666; font-size: 0.9rem; text-align: center;">No roles added yet</div>
             </div>
             
@@ -1779,12 +1795,20 @@
     let rolesArray = [];
 
     function addRoleToList() {
-      const input = document.getElementById('role-input');
-      const role = input.value.trim();
-      if (!role) return;
+      const roleId = document.getElementById('role-id').value.trim();
+      const roleName = document.getElementById('role-name').value.trim();
+      const roleDisplay = document.getElementById('role-display').value.trim();
       
-      rolesArray.push(role);
-      input.value = '';
+      if (!roleId || !roleName || !roleDisplay) {
+        showNotification('❌ Please fill Role ID, Name, and Display Name');
+        return;
+      }
+      
+      rolesArray.push({ id: roleId, name: roleName, display: roleDisplay });
+      document.getElementById('role-id').value = '';
+      document.getElementById('role-name').value = '';
+      document.getElementById('role-display').value = '';
+      document.getElementById('role-id').focus();
       updateRolesList();
     }
 
@@ -1799,9 +1823,14 @@
         list.innerHTML = '<div style="color: #666; font-size: 0.9rem; text-align: center;">No roles added yet</div>';
       } else {
         list.innerHTML = rolesArray.map((role, i) => `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem; background: rgba(0, 212, 255, 0.1); border-radius: 4px; margin-bottom: 0.4rem; color: #e0e0e0;">
-            <span>🎯 ${role}</span>
-            <button onclick="removeRole(${i})" style="background: rgba(255, 100, 100, 0.3); color: #ff6464; border: 1px solid rgba(255, 100, 100, 0.5); border-radius: 4px; padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">✕</button>
+          <div style="padding: 0.8rem; background: rgba(0, 212, 255, 0.1); border-radius: 4px; margin-bottom: 0.6rem; color: #e0e0e0;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+              <div>
+                <div style="font-size: 0.85rem; color: #00d4ff; font-weight: 600;">🎯 ${role.display}</div>
+                <div style="font-size: 0.75rem; color: #999; margin-top: 0.2rem;">ID: ${role.id} • Name: ${role.name}</div>
+              </div>
+              <button onclick="removeRole(${i})" style="background: rgba(255, 100, 100, 0.3); color: #ff6464; border: 1px solid rgba(255, 100, 100, 0.5); border-radius: 4px; padding: 0.4rem 0.8rem; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; flex-shrink: 0;">✕ Remove</button>
+            </div>
           </div>
         `).join('');
       }
