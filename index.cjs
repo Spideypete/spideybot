@@ -2097,10 +2097,10 @@ app.get("/", (req, res) => {
           .hero h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem; background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
           .hero p { font-size: 1.25rem; color: #ccc; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
           .btn-group { margin: 2rem 0; }
-          .btn { display: inline-block; padding: 0.9rem 2rem; background: #9146FF; color: #000; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 0.5rem; transition: all 0.3s; border: 2px solid #9146FF; cursor: pointer; }
-          .btn:hover { background: #7C3AED; border-color: #7C3AED; transform: translateY(-2px); }
-          .btn-outline { background: transparent; color: #9146FF; }
-          .btn-outline:hover { background: #9146FF; color: #000; }
+          .btn { display: inline-block; padding: 0.9rem 2rem; background: #9146FF; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 0.5rem; transition: all 0.3s; border: 2px solid #9146FF; cursor: pointer; box-shadow: 0 0 20px rgba(145, 70, 255, 0.3); }
+          .btn:hover { background: #a855ff; border-color: #a855ff; transform: translateY(-2px); box-shadow: 0 0 30px rgba(145, 70, 255, 0.6); }
+          .btn-outline { background: transparent; color: #9146FF; border-color: #9146FF; }
+          .btn-outline:hover { background: #9146FF; color: #fff; border-color: #9146FF; }
           .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
           .plugins { padding: 5rem 2rem; background: #1a1a1a; }
           .section-title { text-align: center; font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
