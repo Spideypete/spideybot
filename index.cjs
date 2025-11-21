@@ -21,7 +21,6 @@ const axios = require("axios");
 
 // ============== SETUP EXPRESS APP ==============
 const app = express();
-const publicDir = path.join(__dirname, 'public');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
@@ -32,11 +31,11 @@ app.use(session({
 }));
 
 // Serve static files from public
-app.use(express.static(publicDir));
+// REMOVED: static public folder
 
 // Home page route
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.send('Bot is running');
 });
 
 // ============== DISCORD OAUTH CONFIG ==============
@@ -2338,7 +2337,7 @@ app.get("/api/user", (req, res) => {
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.sendFile(__dirname + "/public/dashboard.html");
+  res.send('Bot is running');
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
