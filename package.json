@@ -4,12 +4,13 @@
   "description": "SPIDEY BOT - Discord Bot with Dashboard",
   "main": "index.cjs",
   "scripts": {
+    "start": "node index.cjs",
+    "dev": "node index.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "@discord-player/extractor": "^7.1.0",
     "axios": "^1.13.2",
