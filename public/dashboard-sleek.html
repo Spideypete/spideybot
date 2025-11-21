@@ -1342,10 +1342,17 @@
         <div class="section-title">📂 Role Categories</div>
         <div class="features">
           <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
-            <input class="config-input" type="text" placeholder="Category Name">
-            <input class="config-input" type="text" placeholder="Roles (comma-separated)" placeholder="Dev, Designer, Manager">
-            <label style="color: #6B21A8;"><input type="checkbox" checked> Allow Multiple Roles</label>
-            <button class="config-btn" onclick="saveConfig('role-categories')">✨ Create Category</button>
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem;">📦 Category Name</label>
+            <input class="config-input" type="text" placeholder="e.g., Gaming Roles">
+            
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">🎯 Roles (comma-separated)</label>
+            <input class="config-input" type="text" placeholder="Dev, Designer, Manager, Artist">
+            
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">💬 Channel</label>
+            <input class="config-input" type="text" placeholder="Channel ID or #channel-name">
+            
+            <label style="color: #ccc; margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked> Allow Multiple Roles</label>
+            <button class="config-btn" onclick="saveConfig('role-categories')" style="margin-top: 1.5rem;">✨ Create Category</button>
           </div>
         </div>
       </div>
