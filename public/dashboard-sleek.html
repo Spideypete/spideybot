@@ -1767,6 +1767,16 @@
         if (page === 'analytics') loadAnalytics();
         if (page === 'members') loadMembers();
         if (page === 'dashboard') loadStats();
+        
+        // Load config for all config pages
+        const configPages = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
+        if (configPages.includes(page)) {
+          if (page === 'role-categories') {
+            loadRoleCategories();
+          } else {
+            loadConfig(page);
+          }
+        }
       }
       
       document.querySelectorAll('.nav-subitem').forEach(el => el.classList.remove('active'));
@@ -1836,6 +1846,18 @@
       }
     }
 
+    async function loadRoleCategories() {
+      try {
+        const res = await fetch('/api/config/role-categories');
+        if (!res.ok) return;
+        const categories = await res.json();
+        // Categories loaded for reference, can be used to populate UI
+        console.log('Role categories loaded:', categories);
+      } catch (e) {
+        console.error('Error loading role categories:', e);
+      }
+    }
+
     function saveRoleCategories() {
       const catName = document.getElementById('cat-name').value.trim();
       const catChannel = document.getElementById('cat-channel').value.trim();
@@ -1862,11 +1884,28 @@
           document.getElementById('cat-channel').value = '';
           rolesArray = [];
           updateRolesList();
+          loadRoleCategories();
         }
       }).catch(e => {
         showNotification('❌ Error saving role category');
         console.error(e);
       });
+    }
+
+    async function loadConfig(page) {
+      try {
+        const res = await fetch(`/api/config/${page}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const inputs = document.querySelector(`#${page}`)?.querySelectorAll('.config-input');
+        if (inputs) {
+          Object.entries(data).forEach((entry, i) => {
+            if (inputs[i]) inputs[i].value = entry[1] || '';
+          });
+        }
+      } catch (e) {
+        console.error(`Error loading ${page}:`, e);
+      }
     }
 
     async function saveConfig(page) {
@@ -1885,6 +1924,7 @@
         
         if (res.ok) {
           showNotification(`✅ ${page} saved!`);
+          loadConfig(page);
         }
       } catch (e) {
         showNotification(`❌ Error saving ${page}`);

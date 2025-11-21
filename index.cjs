@@ -227,7 +227,16 @@ client.on("guildMemberAdd", async (member) => {
 // ============== MESSAGE COMMANDS ==============
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
+  if (!msg.member) return;
   const guildConfig = getGuildConfig(msg.guild.id);
+
+  // ============== @MEMBERS ROLE CHECK ==============
+  if (msg.content.startsWith("//")) {
+    const hasMembersRole = msg.member.roles.cache.some(role => role.name === "Members");
+    if (!hasMembersRole) {
+      return msg.reply("❌ Only members with the **@Members** role can use bot commands!");
+    }
+  }
 
   // ============== AUTO XP GAIN ==============
   if (!msg.content.startsWith("//")) {
