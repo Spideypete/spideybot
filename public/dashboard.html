@@ -38,10 +38,10 @@
         }
 
         .sidebar-logo {
-            padding: 0 1.5rem 2rem;
+            padding: 0 1.5rem 1rem;
             text-align: center;
             border-bottom: 1px solid rgba(var(--theme-color), 0.3);
-            margin-bottom: 1.5rem;
+            margin-bottom: 0;
         }
 
         .logo-text {
@@ -49,6 +49,105 @@
             font-weight: 700;
             color: rgba(255, 255, 255, 0.95);
             text-shadow: 0 0 15px rgba(var(--theme-color), 0.6);
+        }
+
+        .server-selector-dropdown {
+            position: relative;
+            margin-top: 1rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .server-dropdown-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(var(--theme-color), 0.1);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.768rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .server-dropdown-btn:hover {
+            background: rgba(var(--theme-color), 0.15);
+            border-color: rgba(var(--theme-color), 0.5);
+        }
+
+        .server-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(10, 14, 39, 0.95);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-radius: 10px;
+            margin-top: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .server-dropdown-menu.active {
+            display: block;
+        }
+
+        .server-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(var(--theme-color), 0.1);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.768rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .server-item:hover {
+            background: rgba(var(--theme-color), 0.15);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .server-item.active {
+            background: rgba(var(--theme-color), 0.25);
+            color: rgba(var(--theme-color), 1);
+            font-weight: 600;
+        }
+
+        .server-item-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(var(--theme-color), 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.576rem;
+            flex-shrink: 0;
+        }
+
+        .add-server-item {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid rgba(var(--theme-color), 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.768rem;
+            color: rgba(var(--theme-color), 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .add-server-item:hover {
+            background: rgba(var(--theme-color), 0.1);
+            color: rgba(var(--theme-color), 1);
         }
 
         .sidebar-section {
@@ -796,6 +895,20 @@
             <div class="sidebar-logo">
                 <img id="serverIcon" src="" alt="Server" style="width: 40px; height: 40px; border-radius: 50%; margin-bottom: 0.5rem; border: 2px solid rgba(var(--theme-color), 0.6);">
                 <div class="logo-text" id="serverDisplayName" style="font-size: 0.95rem;">Loading...</div>
+                
+                <div class="server-selector-dropdown">
+                    <button class="server-dropdown-btn" onclick="toggleServerDropdown()">
+                        <span id="currentServerName">Select Server</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="server-dropdown-menu" id="serverDropdownMenu">
+                        <div id="serversList"></div>
+                        <div class="add-server-item" onclick="addNewServer()">
+                            <span>⊕</span>
+                            <span>Add new server</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="sidebar-section">
@@ -3986,6 +4099,48 @@
             }
         }
 
+        // Server dropdown functions
+        function toggleServerDropdown() {
+            const menu = document.getElementById('serverDropdownMenu');
+            menu.classList.toggle('active');
+            if (menu.classList.contains('active')) {
+                loadServerDropdown();
+            }
+        }
+
+        async function loadServerDropdown() {
+            try {
+                const res = await fetch(`/api/creator/servers`);
+                const data = await res.json();
+                const serversList = document.getElementById('serversList');
+                const currentServerId = localStorage.getItem('selectedServerId');
+                
+                serversList.innerHTML = '';
+                data.servers.forEach(server => {
+                    const item = document.createElement('div');
+                    item.className = `server-item ${server.id === currentServerId ? 'active' : ''}`;
+                    item.onclick = () => switchServer(server.id);
+                    item.innerHTML = `
+                        <div class="server-item-icon">${server.icon ? '✓' : '🏢'}</div>
+                        <span>${server.name}</span>
+                    `;
+                    serversList.appendChild(item);
+                });
+            } catch (err) {
+                console.error('Failed to load server dropdown:', err);
+            }
+        }
+
+        function switchServer(serverId) {
+            localStorage.setItem('selectedServerId', serverId);
+            document.getElementById('serverDropdownMenu').classList.remove('active');
+            location.reload();
+        }
+
+        function addNewServer() {
+            window.open('https://discord.com/api/oauth2/authorize?client_id=' + (window.CLIENT_ID || ''), '_blank');
+        }
+
         // Load and display server info
         async function loadServerInfo() {
             try {
@@ -3998,6 +4153,7 @@
                 
                 if (server) {
                     document.getElementById('serverDisplayName').textContent = server.name;
+                    document.getElementById('currentServerName').textContent = server.name;
                     if (server.icon) {
                         document.getElementById('serverIcon').src = server.icon;
                     }
