@@ -2244,7 +2244,6 @@ app.get("/logout", (req, res) => {
 });
 
 // Get invite link
-const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
 
 // ============== DISCORD OAUTH LOGIN ==============
 app.get("/auth/discord", (req, res) => {
@@ -2643,10 +2642,4 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 // ============== LOGIN ==============
-client.login(token);
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Web server running on port ${PORT}`);
-});
-
 client.login(token);
