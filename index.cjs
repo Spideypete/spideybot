@@ -2343,10 +2343,7 @@ app.get("/dashboard", (req, res) => {
 // ============== SERVER MANAGEMENT PAGE ==============
 app.get("/dashboard/server/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  
-  const fs = require('fs');
-  const panelHTML = fs.readFileSync('/home/runner/workspace/public/admin-panel.html', 'utf8');
-  res.send(panelHTML);
+  res.redirect("/dashboard");
 });
 
 // ============== API ENDPOINTS ==============
