@@ -384,9 +384,9 @@ client.on("messageCreate", async (msg) => {
         { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
       );
 
-    const serverMasterEmbed = new EmbedBuilder()
-      .setColor(0xFFD700)
-      .setTitle("👑 SERVER MASTER (8 Discord + 3 API)")
+    const socialMediaEmbed = new EmbedBuilder()
+      .setColor(0xFF1493)
+      .setTitle("📱 SOCIAL MEDIA (8 Discord + 3 API)")
       .addFields(
         { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
         { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
@@ -412,7 +412,7 @@ client.on("messageCreate", async (msg) => {
       .setFooter({ text: "💡 Tip: All admin commands require Administrator permission • Moderation actions are auto-logged" });
 
     return msg.reply({ 
-      embeds: [mainEmbed, roleEmbed, welcomeEmbed, musicEmbed, modEmbed, configEmbed, serverMasterEmbed, utilityEmbed],
+      embeds: [mainEmbed, roleEmbed, welcomeEmbed, musicEmbed, modEmbed, configEmbed, socialMediaEmbed, utilityEmbed],
       content: "** **"
     });
   }
