@@ -564,6 +564,23 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`You chose **${userChoice}**, I chose **${botChoice}**\n${result}`);
   }
 
+  // ============== DEVELOPERS ==============
+  if (msg.content === "//developers") {
+    const developersEmbed = new EmbedBuilder()
+      .setColor(0x9146FF)
+      .setTitle("👨‍💻 SPIDEY BOT Developers")
+      .setDescription("Meet the team behind SPIDEY BOT!")
+      .addFields(
+        { name: "🕷️ Main Developer", value: "Peter Burke", inline: false },
+        { name: "💜 Support", value: "Join our developer community to help shape SPIDEY BOT's future!", inline: false }
+      )
+      .addFields(
+        { name: "🔗 Developer Discord", value: "[Join the Dev Server](https://discord.gg/spideybotdev)", inline: true }
+      )
+      .setFooter({ text: "Want to contribute? Join our Discord!" });
+    return msg.reply({ embeds: [developersEmbed] });
+  }
+
   // Help - List general user commands
   if (msg.content === "//help") {
     const mainEmbed = new EmbedBuilder()
@@ -588,11 +605,12 @@ client.on("messageCreate", async (msg) => {
 
     const utilityEmbed = new EmbedBuilder()
       .setColor(0x3498DB)
-      .setTitle("📞 UTILITIES (3 commands)")
+      .setTitle("📞 UTILITIES (4 commands)")
       .addFields(
         { name: "✅ //remove-roles", value: "Remove any roles you have", inline: true },
         { name: "🏓 //ping", value: "Check bot status & stats", inline: true },
-        { name: "👑 //adminhelp", value: "View all admin commands (admins only)", inline: true }
+        { name: "👑 //adminhelp", value: "View all admin commands (admins only)", inline: true },
+        { name: "👨‍💻 //developers", value: "Meet the dev team & join Discord", inline: true }
       );
 
     const economyEmbed = new EmbedBuilder()
