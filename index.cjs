@@ -79,11 +79,19 @@ function getGuildConfig(guildId) {
       linkFilterEnabled: true,
       ticketsEnabled: false,
       ticketChannelId: null,
-      customCommands: {}
+      customCommands: {},
+      levelRoles: {}
     };
     saveConfig(config);
   }
   return config.guilds[guildId];
+}
+
+function getNumberedEmoji(num) {
+  const emojis = ['⓵', '⓶', '⓷', '⓸', '⓹', '⓺', '⓻', '⓼', '⓽', '⓾'];
+  if (num <= 10) return emojis[num - 1];
+  if (num < 20) return String(num).split('').map(d => ['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨'][d]).join('');
+  return `${num}️⃣`;
 }
 
 function updateGuildConfig(guildId, updates) {
@@ -200,6 +208,17 @@ client.on("messageCreate", async (msg) => {
       if (currentXp >= nextLevelXp) {
         const level = Math.floor(currentXp / 500) + 1;
         msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
+        
+        const levelRoles = guildConfig.levelRoles || {};
+        const roleId = levelRoles[`level_${level}`];
+        if (roleId) {
+          try {
+            const role = msg.guild.roles.cache.get(roleId);
+            if (role) await msg.member.roles.add(role);
+          } catch (err) {
+            console.error(`Failed to assign level role: ${err.message}`);
+          }
+        }
       }
       
       updateGuildConfig(msg.guild.id, { levels });
@@ -1635,6 +1654,43 @@ client.on("messageCreate", async (msg) => {
     }).join("\n");
     
     return msg.reply(`🏆 **Top 10 Members by Level:**\n${leaderboard}`);
+  }
+
+  // Setup level roles (1-100)
+  if (msg.content === "//setup-level-roles") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can setup level roles!");
+    }
+    
+    await msg.reply("⏳ Creating 100 level roles... This may take a moment!");
+    
+    const levelRoles = {};
+    let created = 0;
+    
+    for (let level = 1; level <= 100; level++) {
+      try {
+        const emoji = getNumberedEmoji(level);
+        const roleName = `${emoji} Level ${level}`;
+        
+        const role = await msg.guild.roles.create({
+          name: roleName,
+          color: Math.floor(Math.random() * 16777215),
+          position: 1
+        });
+        
+        levelRoles[`level_${level}`] = role.id;
+        created++;
+        
+        if (created % 20 === 0) {
+          console.log(`✅ Created ${created}/100 level roles`);
+        }
+      } catch (err) {
+        console.error(`Failed to create level ${level} role: ${err.message}`);
+      }
+    }
+    
+    updateGuildConfig(msg.guild.id, { levelRoles });
+    return msg.reply(`✅ Created **${created}/100** level roles! Members will get roles automatically as they level up.`);
   }
 });
 
