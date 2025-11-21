@@ -6,141 +6,315 @@
   <title>SPIDEY BOT Admin Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --theme-color: 128, 0, 255;
+    }
+
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      border-radius: 15px;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      background: #000000;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: rgba(255, 255, 255, 0.9);
+      overflow: hidden;
+      position: relative;
     }
-    .login-container {
-      background: rgba(20, 20, 20, 0.8);
-      border: 2px solid #9146FF;
-      border-radius: 12px;
-      padding: 3rem;
+
+    /* Subtle background effect */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 20px 60px rgba(145, 70, 255, 0.3);
-      backdrop-filter: blur(10px);
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, rgba(var(--theme-color), 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(var(--theme-color), 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
     }
+
+    .login-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 450px;
+      padding: 2rem;
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(var(--theme-color), 0.3);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+                  0 0 20px rgba(var(--theme-color), 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .login-container:hover {
+      border-color: rgba(var(--theme-color), 0.5);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 
+                  0 0 25px rgba(var(--theme-color), 0.15);
+    }
+
     .logo-section {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
-    .logo-section img {
-      height: 60px;
+
+    .logo-section .logo-icon {
+      font-size: 3rem;
       margin-bottom: 1rem;
+      display: inline-block;
     }
+
     .logo-section h1 {
-      font-size: 1.8rem;
-      color: #9146FF;
-      margin-bottom: 0.5rem;
+      font-size: 1.9rem;
+      color: rgba(255, 255, 255, 0.95);
+      margin-bottom: 0.3rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 20px rgba(var(--theme-color), 0.3);
     }
+
     .logo-section p {
-      color: #aaa;
+      color: rgba(255, 255, 255, 0.6);
       font-size: 0.9rem;
+      font-weight: 500;
     }
+
     .form-group {
       margin-bottom: 1.5rem;
     }
+
     .form-group label {
       display: block;
-      margin-bottom: 0.5rem;
-      color: #ddd;
+      margin-bottom: 0.6rem;
+      color: rgba(255, 255, 255, 0.8);
       font-weight: 600;
       font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
+
     .form-group input {
       width: 100%;
-      padding: 0.9rem;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(145, 70, 255, 0.3);
-      border-radius: 8px;
-      color: #fff;
+      padding: 0.85rem 1rem;
+      background: rgba(var(--theme-color), 0.08);
+      border: 1px solid rgba(var(--theme-color), 0.3);
+      color: rgba(255, 255, 255, 0.9);
       font-family: 'Inter', sans-serif;
-      font-size: 1rem;
-      transition: all 0.3s;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
     }
+
+    .form-group input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .form-group input:hover {
+      background: rgba(var(--theme-color), 0.12);
+      border-color: rgba(var(--theme-color), 0.5);
+      box-shadow: 0 0 12px rgba(var(--theme-color), 0.1);
+    }
+
     .form-group input:focus {
       outline: none;
-      border-color: #9146FF;
-      box-shadow: 0 0 10px rgba(145, 70, 255, 0.3);
+      background: rgba(var(--theme-color), 0.15);
+      border-color: rgba(var(--theme-color), 0.7);
+      box-shadow: 0 0 16px rgba(var(--theme-color), 0.2);
     }
-    .form-group input::placeholder {
-      color: #666;
-    }
+
     .btn {
       width: 100%;
-      padding: 0.9rem;
-      background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%);
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-weight: 600;
-      font-size: 1rem;
+      padding: 1rem;
+      background: rgba(var(--theme-color), 0.6);
+      border: 1px solid rgba(var(--theme-color), 0.8);
+      color: rgba(255, 255, 255, 0.95);
+      font-weight: 700;
+      font-size: 0.95rem;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 15px rgba(var(--theme-color), 0.2);
     }
+
     .btn:hover {
+      background: rgba(var(--theme-color), 0.75);
+      border-color: rgba(var(--theme-color), 1);
+      box-shadow: 0 0 25px rgba(var(--theme-color), 0.4);
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(145, 70, 255, 0.4);
     }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 0 15px rgba(var(--theme-color), 0.2);
+    }
+
     .error {
-      background: rgba(255, 107, 107, 0.1);
-      border: 1px solid #ff6b6b;
-      color: #ff6b6b;
-      padding: 0.8rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+      background: rgba(255, 67, 67, 0.1);
+      border: 1px solid rgba(255, 67, 67, 0.5);
+      color: rgba(255, 127, 127, 0.9);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
       text-align: center;
       font-size: 0.9rem;
       display: none;
+      font-weight: 500;
     }
+
     .error.show {
       display: block;
+      animation: slideDown 0.3s ease;
     }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .footer {
       text-align: center;
       margin-top: 2rem;
       font-size: 0.85rem;
-      color: #666;
+      color: rgba(255, 255, 255, 0.5);
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(var(--theme-color), 0.2);
     }
-    .footer a {
-      color: #9146FF;
-      text-decoration: none;
+
+    .footer span {
+      display: inline-block;
+      color: rgba(var(--theme-color), 0.8);
+    }
+
+    /* Light Mode */
+    body.light-mode {
+      background: #f5f5f5;
+    }
+
+    body.light-mode .login-container {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(var(--theme-color), 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                  0 0 20px rgba(var(--theme-color), 0.08);
+    }
+
+    body.light-mode .login-container:hover {
+      border-color: rgba(var(--theme-color), 0.4);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 
+                  0 0 25px rgba(var(--theme-color), 0.12);
+    }
+
+    body.light-mode .logo-section h1 {
+      color: rgba(0, 0, 0, 0.95);
+      text-shadow: 0 0 20px rgba(var(--theme-color), 0.15);
+    }
+
+    body.light-mode .logo-section p {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    body.light-mode .form-group label {
+      color: rgba(0, 0, 0, 0.8);
+    }
+
+    body.light-mode .form-group input {
+      background: rgba(var(--theme-color), 0.08);
+      border: 1px solid rgba(var(--theme-color), 0.2);
+      color: rgba(0, 0, 0, 0.9);
+    }
+
+    body.light-mode .form-group input::placeholder {
+      color: rgba(0, 0, 0, 0.3);
+    }
+
+    body.light-mode .form-group input:hover {
+      background: rgba(var(--theme-color), 0.12);
+      border-color: rgba(var(--theme-color), 0.4);
+      box-shadow: 0 0 12px rgba(var(--theme-color), 0.08);
+    }
+
+    body.light-mode .form-group input:focus {
+      background: rgba(var(--theme-color), 0.15);
+      border-color: rgba(var(--theme-color), 0.6);
+      box-shadow: 0 0 16px rgba(var(--theme-color), 0.15);
+    }
+
+    body.light-mode .footer {
+      color: rgba(0, 0, 0, 0.5);
+      border-top: 1px solid rgba(var(--theme-color), 0.15);
+    }
+
+    body.light-mode .error {
+      background: rgba(255, 67, 67, 0.08);
+      color: rgba(255, 67, 67, 0.85);
+    }
+
+    @media (max-width: 600px) {
+      .login-wrapper {
+        padding: 1rem;
+      }
+
+      .login-container {
+        padding: 2rem;
+      }
+
+      .logo-section h1 {
+        font-size: 1.6rem;
+      }
+
+      .logo-section .logo-icon {
+        font-size: 2.5rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <div class="logo-section">
-      <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
-      <h1>SPIDEY BOT</h1>
-      <p>Admin Dashboard</p>
-    </div>
-
-    <div class="error" id="errorMsg">❌ Invalid username or password</div>
-
-    <form method="POST" action="/login">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" placeholder="admin" required autofocus>
+  <div class="login-wrapper">
+    <div class="login-container">
+      <div class="logo-section">
+        <div class="logo-icon">🕷️</div>
+        <h1>SPIDEY BOT</h1>
+        <p>Admin Dashboard</p>
       </div>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="••••••••" required>
+      <div class="error" id="errorMsg">❌ Invalid username or password</div>
+
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="admin" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn">Login</button>
+      </form>
+
+      <div class="footer">
+        <p><span>🕷️</span> SPIDEY BOT Admin Panel</p>
       </div>
-
-      <button type="submit" class="btn">Login</button>
-    </form>
-
-    <div class="footer">
-      <p>🕷️ SPIDEY BOT Admin Panel</p>
     </div>
   </div>
 
@@ -148,6 +322,12 @@
     const params = new URLSearchParams(window.location.search);
     if (params.get('error')) {
       document.getElementById('errorMsg').classList.add('show');
+    }
+
+    // Dark/Light mode support
+    const savedMode = localStorage.getItem('darkMode') !== 'false';
+    if (!savedMode) {
+      document.body.classList.add('light-mode');
     }
   </script>
 </body>
