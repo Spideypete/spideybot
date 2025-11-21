@@ -37,6 +37,12 @@ app.use(express.static('public'));
 const dashboardPath = path.join(__dirname, 'dashboard-template', 'dist');
 app.use('/dashboard-app', express.static(dashboardPath));
 
+// SPA fallback for React router - serve index.html for all dashboard-app routes
+app.get('/dashboard-app*', (req, res) => {
+  const indexPath = path.join(dashboardPath, 'index.html');
+  res.sendFile(indexPath);
+});
+
 // ============== DISCORD OAUTH CONFIG ==============
 // Render URL: https://spideybot-90sr.onrender.com/auth/discord/callback
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
