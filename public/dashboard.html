@@ -4,450 +4,401 @@
   <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
   <title>SPIDEY BOT - Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body { 
-      font-family: 'Poppins', sans-serif; 
-      background: linear-gradient(135deg, #0a0e27 0%, #1a0f3d 100%);
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e27;
       color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation */
+    .topnav {
+      background: rgba(15, 20, 45, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(145, 70, 255, 0.15);
+      padding: 1rem 2rem;
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    /* Sidebar */
-    .sidebar {
-      width: 180px;
-      background: rgba(10, 14, 39, 0.95);
-      border-right: 1px solid rgba(145, 70, 255, 0.2);
-      padding: 1.5rem 0;
+    .logo-section {
       display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow-y: auto;
+      align-items: center;
+      gap: 0.8rem;
     }
 
-    .sidebar-header {
-      padding: 0 1.5rem 2rem;
-      text-align: center;
+    .logo-section img {
+      height: 35px;
     }
 
-    .sidebar-header h2 {
-      font-size: 1.3rem;
+    .logo-text {
+      font-size: 1.1rem;
       font-weight: 700;
       background: linear-gradient(135deg, #9146FF, #00D4FF);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .sidebar-nav {
-      flex: 1;
+    .nav-right {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
     }
 
-    .nav-item {
-      padding: 1rem 1.5rem;
+    .nav-link {
       color: #aaa;
       text-decoration: none;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 0.95rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-
-    .nav-item:hover {
-      color: #fff;
-      background: rgba(145, 70, 255, 0.1);
-    }
-
-    .nav-item.active {
-      color: #9146FF;
-      background: rgba(145, 70, 255, 0.2);
-      border-left: 3px solid #9146FF;
-    }
-
-    .nav-icon {
-      font-size: 1.2rem;
-    }
-
-    .sidebar-footer {
-      padding: 1.5rem;
-      border-top: 1px solid rgba(145, 70, 255, 0.2);
-      text-align: center;
-    }
-
-    .server-info {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      margin-bottom: 1rem;
-    }
-
-    .server-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #9146FF, #7C3AED);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
       font-size: 0.9rem;
+      transition: all 0.3s;
+      cursor: pointer;
     }
 
-    .server-name {
-      font-size: 0.85rem;
+    .nav-link:hover {
+      color: #9146FF;
+    }
+
+    .logout-btn {
+      background: #9146FF;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
       font-weight: 600;
-      color: #ddd;
+      font-size: 0.85rem;
+      transition: all 0.3s;
     }
 
-    .server-status {
+    .logout-btn:hover {
+      background: #7C3AED;
+      transform: translateY(-2px);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+
+    .page-subtitle {
+      color: #888;
+      font-size: 0.95rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(0, 212, 255, 0.05) 100%);
+      border: 1px solid rgba(145, 70, 255, 0.25);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+
+    .stat-box:hover {
+      border-color: #9146FF;
+      box-shadow: 0 8px 25px rgba(145, 70, 255, 0.15);
+    }
+
+    .stat-icon {
+      font-size: 2rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .stat-label {
+      color: #9146FF;
       font-size: 0.75rem;
-      color: #666;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
     }
 
-    /* Main */
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .header {
-      background: rgba(10, 14, 39, 0.5);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(145, 70, 255, 0.2);
-      padding: 1.5rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .header-left h1 {
+    .stat-value {
       font-size: 1.8rem;
       font-weight: 700;
-      margin-bottom: 0.3rem;
+      color: #fff;
     }
 
-    .header-subtitle {
-      font-size: 0.85rem;
-      color: #aaa;
+    /* Two Column Layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
     }
 
-    .header-actions {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-
-    .breadcrumb {
-      font-size: 0.85rem;
-      color: #aaa;
-    }
-
-    .breadcrumb a {
-      color: #9146FF;
-      text-decoration: none;
-    }
-
-    .user-menu {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #9146FF, #7C3AED);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 2rem;
-    }
-
-    /* Cards */
+    /* Card */
     .card {
-      background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
-      border: 1px solid rgba(145, 70, 255, 0.3);
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(0, 212, 255, 0.03) 100%);
+      border: 1px solid rgba(145, 70, 255, 0.25);
       border-radius: 16px;
       padding: 2rem;
-      margin-bottom: 2rem;
       transition: all 0.3s;
     }
 
     .card:hover {
-      transform: translateY(-5px);
       border-color: #9146FF;
-      box-shadow: 0 10px 30px rgba(145, 70, 255, 0.2);
+      box-shadow: 0 12px 40px rgba(145, 70, 255, 0.2);
+      transform: translateY(-5px);
     }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .card-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    /* Invite Card */
-    .invite-card {
-      background: linear-gradient(135deg, #7C3AED 0%, #9146FF 100%);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 2rem;
-    }
-
-    .invite-content h3 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .invite-content p {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-    }
-
-    .btn {
-      background: #fff;
-      color: #9146FF;
-      border: none;
-      padding: 0.7rem 1.5rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-      transition: all 0.3s;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-    }
-
-    .invite-icon {
-      font-size: 3rem;
-    }
-
-    /* Music Player */
-    .music-container {
-      display: grid;
-      grid-template-columns: 300px 1fr;
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .album-art {
-      width: 300px;
-      height: 300px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #9146FF, #7C3AED);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4rem;
-      box-shadow: 0 10px 40px rgba(145, 70, 255, 0.3);
-    }
-
-    .music-info {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .music-label {
-      font-size: 0.85rem;
-      color: #9146FF;
-      text-transform: uppercase;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .now-playing {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .now-playing-icon {
-      width: 8px;
-      height: 8px;
-      background: #9146FF;
-      border-radius: 50%;
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .song-name {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 2rem;
-    }
-
-    .playback-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
       margin-bottom: 1.5rem;
     }
 
-    .control-btn {
-      background: transparent;
-      border: none;
-      color: #9146FF;
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-icon {
       font-size: 1.5rem;
-      cursor: pointer;
-      transition: all 0.3s;
     }
 
-    .control-btn:hover {
-      transform: scale(1.1);
+    /* Music Player Card */
+    .music-player {
+      background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%);
     }
 
-    .play-btn {
+    .music-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+
+    .music-cover {
       width: 60px;
       height: 60px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #9146FF, #7C3AED);
-      border: none;
-      color: #fff;
-      font-size: 1.8rem;
-      cursor: pointer;
-      transition: all 0.3s;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
     }
 
-    .play-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 8px 20px rgba(145, 70, 255, 0.4);
+    .music-info {
+      flex: 1;
     }
 
-    .progress-bar {
-      width: 100%;
-      height: 6px;
-      background: rgba(145, 70, 255, 0.2);
-      border-radius: 3px;
+    .music-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+
+    .music-artist {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .music-bar {
+      height: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 2px;
       overflow: hidden;
       margin-bottom: 0.5rem;
     }
 
-    .progress-fill {
+    .music-progress {
       height: 100%;
-      background: linear-gradient(90deg, #9146FF, #00D4FF);
-      width: 45%;
-      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.8);
+      width: 60%;
     }
 
-    .time-display {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.8rem;
-      color: #aaa;
+    .music-time {
+      font-size: 0.75rem;
+      opacity: 0.8;
     }
 
-    /* Voice Channels */
-    .channels-grid {
+    .play-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .play-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Feature Grid */
+    .feature-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 1rem;
-      margin-top: 1.5rem;
     }
 
-    .channel-item {
-      background: rgba(0, 0, 0, 0.2);
+    .feature-item {
+      background: rgba(145, 70, 255, 0.1);
       border: 1px solid rgba(145, 70, 255, 0.2);
       border-radius: 12px;
       padding: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      text-align: center;
       cursor: pointer;
       transition: all 0.3s;
     }
 
-    .channel-item:hover {
-      background: rgba(145, 70, 255, 0.1);
+    .feature-item:hover {
+      background: rgba(145, 70, 255, 0.2);
       border-color: #9146FF;
+      transform: translateY(-3px);
     }
 
-    .channel-icon {
-      font-size: 1.5rem;
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 0.8rem;
     }
 
-    .channel-name {
+    .feature-name {
+      font-size: 0.85rem;
       font-weight: 600;
       color: #ddd;
     }
 
-    .channel-status {
-      font-size: 0.75rem;
-      color: #666;
-      margin-top: 0.3rem;
+    /* Settings List */
+    .settings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
     }
 
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      border: 1px solid rgba(145, 70, 255, 0.15);
     }
 
-    .empty-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
+    .setting-label {
+      font-weight: 500;
+      color: #ddd;
     }
 
-    .empty-text {
-      color: #aaa;
-      font-size: 0.95rem;
+    .setting-value {
+      color: #9146FF;
+      font-weight: 600;
     }
 
-    @media (max-width: 1024px) {
-      .music-container {
-        grid-template-columns: 1fr;
-      }
-      .album-art {
-        width: 100%;
-        max-width: 300px;
-        margin: 0 auto;
-      }
+    /* Toggle */
+    .toggle {
+      width: 50px;
+      height: 28px;
+      background: #333;
+      border-radius: 14px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+      border: none;
+    }
+
+    .toggle.on {
+      background: #9146FF;
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s;
+    }
+
+    .toggle.on::after {
+      left: 24px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(145, 70, 255, 0.15);
+    }
+
+    .tab {
+      padding: 0.8rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab:hover {
+      color: #9146FF;
+    }
+
+    .tab.active {
+      color: #9146FF;
+      border-bottom-color: #9146FF;
+    }
+
+    /* Content Grid */
+    .content-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
     }
 
     @media (max-width: 768px) {
-      .sidebar {
-        width: 100%;
-        flex-direction: row;
-        height: auto;
-        border-right: none;
-        border-bottom: 1px solid rgba(145, 70, 255, 0.2);
-      }
-      .sidebar-header {
-        padding: 1rem 1.5rem;
-      }
-      .sidebar-nav {
-        display: flex;
+      .topnav {
+        flex-direction: column;
         gap: 1rem;
       }
-      .content {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .container {
         padding: 1rem;
+      }
+      .page-title {
+        font-size: 1.5rem;
       }
     }
 
@@ -458,198 +409,220 @@
       background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(145, 70, 255, 0.5);
+      background: rgba(145, 70, 255, 0.4);
       border-radius: 4px;
     }
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h2>SPIDEY</h2>
+  <!-- Top Navigation -->
+  <div class="topnav">
+    <div class="logo-section">
+      <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
+      <div class="logo-text">SPIDEY BOT</div>
     </div>
-
-    <div class="sidebar-nav">
-      <a class="nav-item active" onclick="switchPage('dashboard')">
-        <span class="nav-icon">📊</span>
-        Dashboard
-      </a>
-      <a class="nav-item" onclick="switchPage('profile')">
-        <span class="nav-icon">👤</span>
-        Profile
-      </a>
-      <a class="nav-item" onclick="switchPage('economy')">
-        <span class="nav-icon">💰</span>
-        Economy
-      </a>
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="server-info">
-        <div class="server-avatar">🕷️</div>
-        <div>
-          <div class="server-name">SPIDEY</div>
-          <div class="server-status">Community</div>
-        </div>
-      </div>
-      <button class="btn" onclick="logoutUser()" style="width: 100%; font-size: 0.85rem;">Logout</button>
+    <div class="nav-right">
+      <a href="#" class="nav-link">📊 Dashboard</a>
+      <a href="#" class="nav-link">⚙️ Settings</a>
+      <a href="#" class="nav-link">📚 Docs</a>
+      <button class="logout-btn" onclick="window.location.href='/logout'">Logout</button>
     </div>
   </div>
 
   <!-- Main Content -->
-  <div class="main">
-    <!-- Header -->
-    <div class="header">
-      <div class="header-left">
-        <div class="breadcrumb">
-          <a href="#" onclick="switchPage('dashboard')">Pages</a> &gt; 
-          <span>Dashboard</span>
-        </div>
-        <h1>Dashboard</h1>
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">Server Dashboard</div>
+      <div class="page-subtitle">Welcome back! Here's your bot overview</div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-icon">🟢</div>
+        <div class="stat-label">Status</div>
+        <div class="stat-value">Online</div>
       </div>
-      <div class="header-actions">
-        <div class="user-menu">👤</div>
+      <div class="stat-box">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Members</div>
+        <div class="stat-value">2,547</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon">💬</div>
+        <div class="stat-label">Messages Today</div>
+        <div class="stat-value">12.4K</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-label">Commands Used</div>
+        <div class="stat-value">847</div>
       </div>
     </div>
 
-    <!-- Content -->
-    <div class="content">
-      <!-- Invite Card -->
-      <div class="card invite-card" id="dashboard">
-        <div class="invite-content">
-          <h3>Invite our Bot</h3>
-          <p>Try our discord bot with one-click</p>
-          <button class="btn" onclick="inviteBot()">Invite now</button>
+    <!-- Two Column Section -->
+    <div class="grid-2">
+      <!-- Left: Music Player -->
+      <div class="card music-player">
+        <div class="card-header">
+          <div class="card-title">🎵 Now Playing</div>
+          <div class="card-icon">▶️</div>
         </div>
-        <div class="invite-icon">🤖</div>
-      </div>
 
-      <!-- Music Player -->
-      <div>
-        <div class="card-title" style="margin-bottom: 1.5rem;">Music Time</div>
-        <div class="music-container">
-          <div class="album-art">🎵</div>
+        <div class="music-item">
+          <div class="music-cover">🎵</div>
           <div class="music-info">
-            <div class="music-label">🎵 Now Playing</div>
-            <div class="now-playing">
-              <div class="now-playing-icon"></div>
-              <span style="font-size: 0.9rem; color: #9146FF; font-weight: 600;">ZUTOMAYO – Study Me</span>
+            <div class="music-title">ZUTOMAYO – Study Me</div>
+            <div class="music-artist">Lo-fi Hip Hop</div>
+            <div class="music-bar">
+              <div class="music-progress"></div>
             </div>
-            <div class="song-name">ZUTOMAYO – Study Me</div>
-            
-            <div class="playback-controls">
-              <button class="control-btn">⏮️</button>
-              <button class="play-btn">▶️</button>
-              <button class="control-btn">⏭️</button>
-            </div>
-
-            <div class="progress-bar">
-              <div class="progress-fill"></div>
-            </div>
-            <div class="time-display">
-              <span>1:20</span>
-              <span>3:45</span>
-            </div>
-
-            <div style="text-align: right; margin-top: 1rem; color: #aaa; font-size: 0.85rem;">
-              👁️ 4258 views
-            </div>
+            <div class="music-time">1:45 / 3:22</div>
           </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <button class="play-btn">⏮️ Previous</button>
+          <button class="play-btn">⏭️ Next</button>
         </div>
       </div>
 
-      <!-- Voice Channels -->
-      <div style="margin-top: 3rem;">
-        <div class="card-title" style="margin-bottom: 1.5rem;">Created Voice channels</div>
+      <!-- Right: Quick Settings -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚙️ Quick Settings</div>
+        </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          <div style="background: rgba(145, 70, 255, 0.1); border: 1px solid rgba(145, 70, 255, 0.3); border-radius: 16px; padding: 2rem; text-align: center;">
-            <div class="empty-icon">🎵</div>
-            <div class="empty-text">Create a voice channel</div>
+        <div class="settings-list">
+          <div class="setting-item">
+            <span class="setting-label">Welcome Msg</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
           </div>
-
-          <div>
-            <div class="channels-grid">
-              <div class="channel-item">
-                <div class="channel-icon">🟢</div>
-                <div>
-                  <div class="channel-name">My Channel</div>
-                  <div class="channel-status">0 members</div>
-                </div>
-              </div>
-
-              <div class="channel-item">
-                <div class="channel-icon">🟢</div>
-                <div>
-                  <div class="channel-name">My Channel</div>
-                  <div class="channel-status">0 members</div>
-                </div>
-              </div>
-
-              <div class="channel-item">
-                <div class="channel-icon">🟢</div>
-                <div>
-                  <div class="channel-name">My Channel</div>
-                  <div class="channel-status">0 members</div>
-                </div>
-              </div>
-            </div>
+          <div class="setting-item">
+            <span class="setting-label">Auto Role</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">Anti Spam</span>
+            <button class="toggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">Modlog</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
           </div>
         </div>
       </div>
-
-      <!-- Profile Page -->
-      <div id="profile" class="tab-content" style="display: none;">
-        <div class="card">
-          <div class="card-title">Your Profile</div>
-          <div style="margin-top: 2rem; text-align: center;">
-            <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #9146FF, #7C3AED); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem;">👤</div>
-            <div style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">Admin User</div>
-            <div style="color: #aaa;">Administrator</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Economy Page -->
-      <div id="economy" class="tab-content" style="display: none;">
-        <div class="card">
-          <div class="card-title">Economy System</div>
-          <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-            <div style="background: rgba(145, 70, 255, 0.2); border-radius: 12px; padding: 1.5rem; text-align: center;">
-              <div style="font-size: 0.85rem; color: #9146FF; margin-bottom: 0.5rem;">Your Balance</div>
-              <div style="font-size: 2rem; font-weight: 700;">💰 10,500</div>
-            </div>
-            <div style="background: rgba(0, 212, 255, 0.2); border-radius: 12px; padding: 1.5rem; text-align: center;">
-              <div style="font-size: 0.85rem; color: #00D4FF; margin-bottom: 0.5rem;">Daily Reward</div>
-              <div style="font-size: 2rem; font-weight: 700;">✨ 100</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
+
+    <!-- Features Section -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-header">
+        <div class="card-title">✨ Available Features</div>
+      </div>
+      
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-icon">🎵</div>
+          <div class="feature-name">Music Player</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💰</div>
+          <div class="feature-name">Economy</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📈</div>
+          <div class="feature-name">Leveling</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎭</div>
+          <div class="feature-name">Roles</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🛡️</div>
+          <div class="feature-name">Moderation</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📱</div>
+          <div class="feature-name">Social Media</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎟️</div>
+          <div class="feature-name">Tickets</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-name">Custom Cmds</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration Tabs -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔧 Configuration</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('general')">General</button>
+        <button class="tab" onclick="switchTab('moderation')">Moderation</button>
+        <button class="tab" onclick="switchTab('economy')">Economy</button>
+      </div>
+
+      <!-- General Tab -->
+      <div id="general" style="display: block;">
+        <div class="content-row">
+          <div style="background: rgba(145, 70, 255, 0.1); border: 1px solid rgba(145, 70, 255, 0.2); border-radius: 10px; padding: 1.5rem;">
+            <div style="color: #9146FF; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Command Prefix</div>
+            <div style="font-size: 1.3rem; font-weight: 700;">//</div>
+          </div>
+          <div style="background: rgba(145, 70, 255, 0.1); border: 1px solid rgba(145, 70, 255, 0.2); border-radius: 10px; padding: 1.5rem;">
+            <div style="color: #9146FF; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Language</div>
+            <div style="font-size: 1.3rem; font-weight: 700;">English</div>
+          </div>
+          <div style="background: rgba(145, 70, 255, 0.1); border: 1px solid rgba(145, 70, 255, 0.2); border-radius: 10px; padding: 1.5rem;">
+            <div style="color: #9146FF; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Time Zone</div>
+            <div style="font-size: 1.3rem; font-weight: 700;">UTC</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Moderation Tab -->
+      <div id="moderation" style="display: none;">
+        <div style="background: rgba(145, 70, 255, 0.1); border: 1px solid rgba(145, 70, 255, 0.2); border-radius: 10px; padding: 2rem; text-align: center; color: #aaa;">
+          <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">🛡️ Moderation Tools</div>
+          <div>Ban, kick, warn, and mute members directly from Discord</div>
+        </div>
+      </div>
+
+      <!-- Economy Tab -->
+      <div id="economy" style="display: none;">
+        <div class="content-row">
+          <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 1.5rem;">
+            <div style="color: #00D4FF; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Daily Reward</div>
+            <div style="font-size: 1.3rem; font-weight: 700;">💰 100</div>
+          </div>
+          <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 1.5rem;">
+            <div style="color: #00D4FF; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Hourly Reward</div>
+            <div style="font-size: 1.3rem; font-weight: 700;">💰 10</div>
+          </div>
+          <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 1.5rem;">
+            <div style="color: #00D4FF; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Total Users</div>
+            <div style="font-size: 1.3rem; font-weight: 700;">👥 1,247</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    function switchPage(page) {
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    function switchTab(tab) {
+      document.querySelectorAll('[id="general"], [id="moderation"], [id="economy"]').forEach(el => el.style.display = 'none');
+      document.getElementById(tab).style.display = 'block';
       
-      document.querySelector(`[onclick*="${page}"]`).classList.add('active');
-      const content = document.getElementById(page);
-      if (content) content.style.display = 'block';
-      else document.querySelector('.content > div:first-child').style.display = 'block';
-    }
-
-    function inviteBot() {
-      alert('🎉 Invite link: https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID');
-    }
-
-    function logoutUser() {
-      if (confirm('Are you sure you want to logout?')) {
-        window.location.href = '/logout';
-      }
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      event.target.classList.add('active');
     }
   </script>
 </body>
