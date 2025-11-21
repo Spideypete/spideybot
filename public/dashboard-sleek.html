@@ -836,11 +836,112 @@
   </div>
 
   <script>
+    // Real-time data refresh
+    let guildId = null;
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        const data = await res.json();
+        document.querySelectorAll('.stat')[0].querySelector('.stat-value').textContent = data.status === 'online' ? '✓' : '✗';
+        document.querySelectorAll('.stat')[1].querySelector('.stat-value').textContent = (data.members / 1000).toFixed(1) + 'K';
+        document.querySelectorAll('.stat')[2].querySelector('.stat-value').textContent = data.activity;
+        document.querySelectorAll('.stat')[3].querySelector('.stat-value').textContent = data.commands + '+';
+      } catch (e) { console.log('Stats error:', e); }
+    }
+
+    async function loadAnalytics() {
+      try {
+        const res = await fetch('/api/dashboard/analytics');
+        const data = await res.json();
+        
+        const analytics = document.querySelectorAll('#analytics .stat');
+        if (analytics[0]) analytics[0].querySelector('.stat-value').textContent = (data.avgOnline / 1000).toFixed(1) + 'K';
+        if (analytics[1]) analytics[1].querySelector('.stat-value').textContent = (data.dailyMessages / 1000).toFixed(1) + 'K';
+        if (analytics[2]) analytics[2].querySelector('.stat-value').textContent = data.avgSession;
+        if (analytics[3]) analytics[3].querySelector('.stat-value').textContent = '+' + data.newMembers;
+        
+        // Update growth bars
+        const bars = document.querySelectorAll('#analytics .mini-chart .bar');
+        data.growth.forEach((h, i) => {
+          if (bars[i]) bars[i].style.height = h + '%';
+        });
+        
+        // Update retention
+        const retentionEl = document.querySelector('#analytics .chart-section:nth-child(2) div:last-child');
+        if (retentionEl) {
+          retentionEl.innerHTML = `
+            <div>🟢 Very Active: ${data.retention.veryActive}% (${data.retention.veryActive})</div>
+            <div>🟡 Active: ${data.retention.active}% (${data.retention.active})</div>
+            <div>🔵 Inactive: ${data.retention.inactive}% (${data.retention.inactive})</div>
+            <div style="margin-top: 0.5rem; color: #666;">Tracked over 30 days</div>
+          `;
+        }
+      } catch (e) { console.log('Analytics error:', e); }
+    }
+
+    async function loadMembers() {
+      try {
+        const res = await fetch('/api/dashboard/members');
+        const data = await res.json();
+        
+        const container = document.querySelector('#members [style*="background: rgba"]');
+        if (container && data.members.length > 0) {
+          container.innerHTML = data.members.map((m, i) => `
+            <div class="member-item">
+              <div class="member-info">
+                <div class="member-avatar">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : m.rank}</div>
+                <span class="member-name">User#${m.userId.slice(0, 4)}</span>
+              </div>
+              <div class="member-level">Level ${m.level} • ${m.xp}K XP</div>
+            </div>
+          `).join('');
+        }
+      } catch (e) { console.log('Members error:', e); }
+    }
+
+    async function loadActivity() {
+      try {
+        const res = await fetch('/api/dashboard/activity');
+        const data = await res.json();
+        
+        const feedEl = document.querySelector('.activity-feed');
+        if (feedEl) {
+          feedEl.innerHTML = data.activities.map(a => `
+            <div class="activity-item">
+              <span class="activity-icon">${a.icon}</span>
+              <div class="activity-text">
+                <span class="activity-user">${a.text}</span> ${a.action}
+                <div class="activity-time">${a.time}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) { console.log('Activity error:', e); }
+    }
+
+    function refreshAllData() {
+      loadStats();
+      loadAnalytics();
+      loadMembers();
+      loadActivity();
+    }
+
+    // Refresh on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshAllData();
+      setInterval(refreshAllData, 5000);
+    });
+
     function switchPage(page) {
       document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
       document.getElementById(page).classList.add('active');
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       event.target.closest('.nav-item').classList.add('active');
+      
+      if (page === 'analytics') loadAnalytics();
+      if (page === 'members') loadMembers();
+      if (page === 'dashboard') loadStats();
     }
 
     function toggleFeature(btn) {
