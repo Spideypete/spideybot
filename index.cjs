@@ -21,6 +21,7 @@ const axios = require("axios");
 
 // ============== SETUP EXPRESS APP ==============
 const app = express();
+const publicDir = path.join(__dirname, 'public');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
@@ -31,7 +32,7 @@ app.use(session({
 }));
 
 // Serve static files from public
-app.use(express.static('public'));
+app.use(express.static(publicDir));
 
 // Home page route
 app.get("/", (req, res) => {
