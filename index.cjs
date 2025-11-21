@@ -1654,11 +1654,14 @@ const supportWidget = `
 <style>
   .support-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #9146FF; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(145, 70, 255, 0.4); z-index: 999; transition: all 0.3s; }
   .support-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(145, 70, 255, 0.6); }
-  .support-modal { display: none; position: fixed; bottom: 100px; right: 20px; width: 380px; max-width: 90vw; background: #1a1a1a; border: 2px solid #9146FF; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999; max-height: 600px; overflow: hidden; display: flex; flex-direction: column; }
+  .support-modal { display: none; position: fixed; bottom: 100px; right: 20px; width: 380px; max-width: 90vw; background: #1a1a1a; border: 2px solid #9146FF; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999; max-height: 600px; overflow: hidden; flex-direction: column; }
   .support-modal.active { display: flex !important; animation: slideUp 0.3s ease; }
+  .support-modal.minimized { display: none !important; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   .support-header { background: #9146FF; padding: 15px; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-  .support-header button { background: none; border: none; color: white; cursor: pointer; font-size: 20px; }
+  .support-header-buttons { display: flex; gap: 8px; }
+  .support-header button { background: none; border: none; color: white; cursor: pointer; font-size: 18px; transition: all 0.3s; padding: 4px 8px; }
+  .support-header button:hover { transform: scale(1.2); }
   .support-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
   .support-message { padding: 10px 12px; border-radius: 8px; max-width: 85%; word-wrap: break-word; }
   .support-message.user { background: #9146FF; color: white; align-self: flex-end; }
@@ -1671,7 +1674,10 @@ const supportWidget = `
 <div class="support-modal" id="supportModal">
   <div class="support-header">
     <span>🤖 SPIDEY Support AI</span>
-    <button onclick="closeSupportModal()">✕</button>
+    <div class="support-header-buttons">
+      <button onclick="minimizeSupportModal()" title="Minimize">−</button>
+      <button onclick="closeSupportModal()" title="Close">✕</button>
+    </div>
   </div>
   <div class="support-messages" id="supportMessages">
     <div class="support-message bot">👋 Hey! I'm SPIDEY's AI assistant. Ask me anything about the bot!</div>
@@ -1683,8 +1689,34 @@ const supportWidget = `
 </div>
 <button class="support-btn" onclick="toggleSupportModal()">💬</button>
 <script>
-function toggleSupportModal() { document.getElementById('supportModal').classList.toggle('active'); }
-function closeSupportModal() { document.getElementById('supportModal').classList.remove('active'); }
+let inactivityTimer = null;
+function toggleSupportModal() { 
+  const modal = document.getElementById('supportModal');
+  if (modal.classList.contains('minimized')) {
+    modal.classList.remove('minimized');
+    modal.classList.add('active');
+  } else {
+    modal.classList.toggle('active');
+  }
+  resetInactivityTimer();
+}
+function minimizeSupportModal() { 
+  document.getElementById('supportModal').classList.remove('active');
+  document.getElementById('supportModal').classList.add('minimized');
+}
+function closeSupportModal() { 
+  document.getElementById('supportModal').classList.remove('active');
+  document.getElementById('supportModal').classList.add('minimized');
+}
+function resetInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    const modal = document.getElementById('supportModal');
+    if (modal.classList.contains('active')) {
+      minimizeSupportModal();
+    }
+  }, 300000);
+}
 async function sendSupportMessage() {
   const input = document.getElementById('supportInput');
   const message = input.value.trim();
@@ -1693,6 +1725,7 @@ async function sendSupportMessage() {
   messagesDiv.innerHTML += '<div class="support-message user">' + escapeHtml(message) + '</div>';
   input.value = '';
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  resetInactivityTimer();
   try {
     const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message }) });
     const data = await res.json();
@@ -1703,6 +1736,11 @@ async function sendSupportMessage() {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 function escapeHtml(text) { const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }; return text.replace(/[&<>"']/g, m => map[m]); }
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.support-modal') && !e.target.closest('.support-btn')) {
+    resetInactivityTimer();
+  }
+});
 </script>
 `;
 
