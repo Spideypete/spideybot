@@ -208,39 +208,53 @@ client.on("messageCreate", async (msg) => {
 
   // Help - List all commands
   if (msg.content === "//help") {
+    const roleEmbed = new EmbedBuilder()
+      .setColor(0x9B59B6)
+      .setTitle("🎭 ROLE CATEGORIES")
+      .addFields(
+        { name: "📌 //create-category [name]", value: "✨ Create a new role category", inline: true },
+        { name: "➕ //add-role [cat] [name] [ID]", value: "✨ Add role to category", inline: true },
+        { name: "➖ //remove-role [cat] [name]", value: "✨ Remove role from category", inline: true },
+        { name: "🗑️ //delete-category [name]", value: "✨ Delete entire category", inline: true },
+        { name: "📋 //list-roles", value: "✨ View all role categories", inline: true },
+        { name: "🔘 //setup-category [name]", value: "✨ Post role selector", inline: true }
+      );
+
+    const welcomeEmbed = new EmbedBuilder()
+      .setColor(0xE91E63)
+      .setTitle("👋 WELCOME MESSAGES")
+      .addFields(
+        { name: "💬 //config-welcome-channel", value: "Set welcome channel", inline: true },
+        { name: "✍️ //config-welcome-message [text]", value: "Set welcome message", inline: true },
+        { name: "📝 Placeholders", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false }
+      );
+
+    const musicEmbed = new EmbedBuilder()
+      .setColor(0x00D084)
+      .setTitle("🎵 MUSIC PLAYER")
+      .addFields(
+        { name: "🎶 //play [song/url]", value: "Play from YouTube", inline: true },
+        { name: "📊 //queue", value: "Show next 10 tracks", inline: true },
+        { name: "🎛️ Controls", value: "⏮ | ⏸ | ▶ | ⏭ | ⏹", inline: false }
+      );
+
+    const utilityEmbed = new EmbedBuilder()
+      .setColor(0x3498DB)
+      .setTitle("⚙️ UTILITIES")
+      .addFields(
+        { name: "✅ //remove-roles", value: "Remove your roles", inline: true },
+        { name: "🏓 //ping", value: "Check bot status", inline: true }
+      );
+
     const helpEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle("🤖 SPIDEY BOT - Complete Command Guide")
-      .setDescription("📚 Use commands with `/` prefix for more info!")
-      .addFields(
-        { name: "🎭 ═══ ROLE CATEGORIES ═══", value: "Create and manage custom role groups", inline: false },
-        { name: "📌 //create-category [name]", value: "Create a new role category", inline: true },
-        { name: "➕ //add-role [category] [name] [ID]", value: "Add role to category", inline: true },
-        { name: "➖ //remove-role [category] [name]", value: "Remove role from category", inline: true },
-        { name: "🗑️ //delete-category [name]", value: "Delete entire category", inline: true },
-        { name: "📋 //list-roles", value: "View all role categories", inline: true },
-        { name: "🔘 //setup-category [name]", value: "Post role selector buttons", inline: true },
-        
-        { name: "👋 ═══ WELCOME ═══", value: "Customize new member welcome messages", inline: false },
-        { name: "💬 //config-welcome-channel #channel", value: "Set welcome message channel", inline: true },
-        { name: "✍️ //config-welcome-message [text]", value: "Set custom welcome message", inline: true },
-        { name: "📝 Placeholders:", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false },
-        
-        { name: "🎵 ═══ MUSIC ═══", value: "Play and control music", inline: false },
-        { name: "🎶 //play [song/url]", value: "Play music from YouTube", inline: true },
-        { name: "📊 //queue", value: "Show next 10 tracks", inline: true },
-        { name: "🎛️ Controls", value: "⏮ Previous | ⏸ Pause | ▶ Resume | ⏭ Skip | ⏹ Stop", inline: false },
-        
-        { name: "🎯 ═══ USER ROLES ═══", value: "Manage your roles", inline: false },
-        { name: "✅ //remove-roles", value: "Remove any of your roles", inline: false },
-        
-        { name: "📞 ═══ INFO ═══", value: "", inline: false },
-        { name: "🏓 //ping", value: "Check bot status", inline: true }
-      )
-      .setThumbnail("https://cdn.discordapp.com/embed/avatars/0.png")
-      .setColor("#5865F2")
-      .setFooter({ text: "SPIDEY BOT v2.0 - Multi-Server Ready 🚀", iconURL: "https://cdn.discordapp.com/embed/avatars/0.png" });
-    return msg.reply({ embeds: [helpEmbed] });
+      .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━\n✨ Interactive role management • 🎵 Music streaming • 💬 Custom welcomes ✨\n━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return msg.reply({ 
+      embeds: [helpEmbed, roleEmbed, welcomeEmbed, musicEmbed, utilityEmbed],
+      content: "** **"
+    });
   }
 
   // ============== CONFIG COMMANDS ==============
@@ -364,16 +378,26 @@ client.on("messageCreate", async (msg) => {
     if (categories[categoryName].length === 0) {
       return msg.reply(`❌ Add roles with //add-role first!`);
     }
-    const roleOptions = categories[categoryName].map(r => ({ label: r.name, value: r.id }));
+    const roleOptions = categories[categoryName].map(r => ({ label: `✨ ${r.name}`, value: r.id }));
+    const colorMap = { gaming: 0xFF6B6B, streaming: 0x4ECDC4, platform: 0x45B7D1, community: 0x96CEB4, events: 0xFFBD39, other: 0x9B59B6 };
+    const categoryLower = categoryName.toLowerCase();
+    let embedColor = colorMap[categoryLower] || 0x5865F2;
+    
+    const embed = new EmbedBuilder()
+      .setColor(embedColor)
+      .setTitle(`🎯 ${categoryName.toUpperCase()} ROLES`)
+      .setDescription(`✨ Click below to select your ${categoryName.toLowerCase()} roles!\n\n*Choose multiple roles to add yourself to communities*`)
+      .setFooter({ text: "SPIDEY BOT • Select roles to join communities" });
+
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(`select_${categoryName}`)
-        .setPlaceholder(`Select ${categoryName}...`)
+        .setPlaceholder(`🔍 Select ${categoryName.toLowerCase()} roles...`)
         .setMinValues(1)
         .setMaxValues(roleOptions.length)
         .addOptions(roleOptions)
     );
-    return msg.channel.send({ content: `**${categoryName} Roles**`, components: [selectMenu] });
+    return msg.channel.send({ embeds: [embed], components: [selectMenu] });
   }
     const index = config.platformRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
@@ -388,16 +412,20 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can set up roles!");
     }
     const embed = new EmbedBuilder()
-      .setColor(0x5865F2)
-      .setTitle("Gaming Role Selection")
-      .setDescription("Select the games you play")
-      .setFooter({ text: "SPIDEY BOT" });
+      .setColor(0xFF6B6B)
+      .setTitle("🎮 GAMING ROLE SELECTION")
+      .setDescription("✨ Choose the games you play and join gaming communities!\n\n*Click the button below to see available gaming roles*")
+      .addFields(
+        { name: "What's this?", value: "Get roles for your favorite games and find other players!" }
+      )
+      .setFooter({ text: "SPIDEY BOT • Gaming Community" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("claim_roles")
-        .setLabel("🔔 Claim Gaming Roles")
+        .setLabel("🎮 SELECT GAMING ROLES")
         .setStyle(ButtonStyle.Primary)
+        .setEmoji("🎯")
     );
     return msg.channel.send({ embeds: [embed], components: [button] });
   }
@@ -407,16 +435,20 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can set up roles!");
     }
     const embed = new EmbedBuilder()
-      .setColor(0x5865F2)
-      .setTitle("Watch Party Role Selection")
-      .setDescription("Select watch parties to join")
-      .setFooter({ text: "SPIDEY BOT" });
+      .setColor(0x4ECDC4)
+      .setTitle("🎬 WATCH PARTY ROLE SELECTION")
+      .setDescription("✨ Join watch parties and stream together!\n\n*Click the button below to see available watch party roles*")
+      .addFields(
+        { name: "What's this?", value: "Get notified about watch parties and join streams with your community!" }
+      )
+      .setFooter({ text: "SPIDEY BOT • Watch Party Community" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("claim_watchparty")
-        .setLabel("🔔 Claim Watch Party Roles")
+        .setLabel("🎬 SELECT WATCH PARTY ROLES")
         .setStyle(ButtonStyle.Primary)
+        .setEmoji("📺")
     );
     return msg.channel.send({ embeds: [embed], components: [button] });
   }
@@ -426,16 +458,20 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can set up roles!");
     }
     const embed = new EmbedBuilder()
-      .setColor(0x5865F2)
-      .setTitle("Platform Role Selection")
-      .setDescription("Select your gaming platform")
-      .setFooter({ text: "SPIDEY BOT" });
+      .setColor(0x45B7D1)
+      .setTitle("💻 PLATFORM ROLE SELECTION")
+      .setDescription("✨ Select your gaming platforms!\n\n*Click the button below to see available platform roles*")
+      .addFields(
+        { name: "What's this?", value: "Tell everyone what platforms you game on and find crossplay buddies!" }
+      )
+      .setFooter({ text: "SPIDEY BOT • Platform Community" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("claim_platform")
-        .setLabel("🔔 Claim Platform Roles")
+        .setLabel("💻 SELECT PLATFORM ROLES")
         .setStyle(ButtonStyle.Primary)
+        .setEmoji("🖥️")
     );
     return msg.channel.send({ embeds: [embed], components: [button] });
   }
@@ -443,15 +479,19 @@ client.on("messageCreate", async (msg) => {
   if (msg.content === "//remove-roles") {
     const embed = new EmbedBuilder()
       .setColor(0xED4245)
-      .setTitle("Remove Roles")
-      .setDescription("Select roles to remove from yourself")
-      .setFooter({ text: "SPIDEY BOT" });
+      .setTitle("🗑️ REMOVE ROLES")
+      .setDescription("❌ Remove roles you no longer want!\n\n*Click the button below to manage your roles*")
+      .addFields(
+        { name: "What's this?", value: "Deselect roles and remove yourself from communities!" }
+      )
+      .setFooter({ text: "SPIDEY BOT • Role Management" });
 
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("remove_all_roles")
-        .setLabel("🔔 Remove Roles")
+        .setLabel("🗑️ REMOVE ROLES")
         .setStyle(ButtonStyle.Danger)
+        .setEmoji("❌")
     );
     return msg.channel.send({ embeds: [embed], components: [button] });
   }
