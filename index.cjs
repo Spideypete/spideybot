@@ -386,7 +386,7 @@ client.on("messageCreate", async (msg) => {
 
     const serverMasterEmbed = new EmbedBuilder()
       .setColor(0xFFD700)
-      .setTitle("👑 SERVER MASTER (8 commands)")
+      .setTitle("👑 SERVER MASTER (8 Discord + 3 API)")
       .addFields(
         { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
         { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
@@ -395,7 +395,11 @@ client.on("messageCreate", async (msg) => {
         { name: "🎵 //add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
         { name: "➖ //remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
         { name: "📋 //list-tiktok-users", value: "View monitored TikTok creators", inline: true },
-        { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true }
+        { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
+        { name: "🌐 WEB API Endpoints", value: "Admin dashboard at `/admin` • Manage all servers from web interface", inline: false },
+        { name: "📡 GET /api/guilds", value: "List all server configs (requires token)", inline: true },
+        { name: "📡 GET /api/guild/:id", value: "Get specific server config (requires token)", inline: true },
+        { name: "📡 POST /api/guild/:id", value: "Update server config (requires token)", inline: true }
       );
 
     const utilityEmbed = new EmbedBuilder()
