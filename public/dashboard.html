@@ -2681,33 +2681,137 @@
 
                 <!-- MESSAGE COUNTING -->
                 <div id="message-counting" class="content">
-                    <div class="page-title">📈 Message Counting</div>
-                    <div class="page-description">Track message activity</div>
+                    <div class="page-title">📈 Message Counter</div>
+                    <div class="page-description">Track message activity, user engagement, and channel statistics</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Counter Settings</div>
-                                    <div class="card-subtitle">Monitor messaging</div>
+                                    <div class="card-title">📊 Counter Overview</div>
+                                    <div class="card-subtitle">Real-time message tracking system</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎯 Tracking:</strong><br/>
+                                    Monitor total messages sent, track per-user message counts, and identify most active channels.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📈 Statistics:</strong><br/>
+                                    View top messengers, channel activity, user engagement levels, and messaging trends.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">🛠️ Command:</strong><br/>
+                                    Use <code>//stats</code> to view message statistics and top contributors.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Message Counting Settings</div>
+                                    <div class="card-subtitle">Configure tracking options</div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Options</label>
-                                <div class="switch">
-                                    <span>Enable Counting</span>
+                                <label>Main Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Enable Message Counting</span>
                                     <div class="toggle active" id="message-counting_enabled"></div>
                                 </div>
-                                <div class="switch" style="margin-top: 0.75rem;">
+                                <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>Count Bot Messages</span>
                                     <div class="toggle" id="message-counting_bots"></div>
                                 </div>
+                                <div class="switch">
+                                    <span>Track User Statistics</span>
+                                    <div class="toggle active" id="message-counting_tracking"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🚫 Ignore Configuration</div>
+                                    <div class="card-subtitle">Exclude channels from tracking</div>
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label>Ignored Channels</label>
-                                <textarea id="message-counting_ignored" placeholder="Channel IDs (one per line)"></textarea>
+                                <label>Ignored Channels (comma-separated IDs)</label>
+                                <textarea id="message-counting_ignored" placeholder="123456789,987654321,456789123" style="min-height: 60px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Messages in these channels won't be counted (e.g., spam, archive)</div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('message-counting')">💾 Save</button>
+                            <div class="form-group">
+                                <label>Ignored Roles (won't be counted)</label>
+                                <input type="text" id="message-counting_ignoredRoles" placeholder="Muted,Bot,Suspended">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Users with these roles won't be counted</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">📊 Data Management</div>
+                                    <div class="card-subtitle">View and manage statistics</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Statistics Retention</label>
+                                <input type="number" id="message-counting_retention" placeholder="90" min="0" value="90">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Days to keep statistics (0 = unlimited)</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Auto-Reset Daily</span>
+                                    <div class="toggle" id="message-counting_autoReset"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Store Channel History</span>
+                                    <div class="toggle active" id="message-counting_history"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Enable Leaderboard</span>
+                                    <div class="toggle active" id="message-counting_leaderboard"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">📋 Display Options</div>
+                                    <div class="card-subtitle">Configure public statistics display</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Leaderboard Channel (where //stats displays)</label>
+                                <input type="text" id="message-counting_leaderboardChannel" placeholder="Channel ID">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Optional: Post daily leaderboard</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Top Users to Display</label>
+                                <input type="number" id="message-counting_topCount" placeholder="10" min="1" max="50">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Number of top messengers to show</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('message-counting')">💾 Save Message Counter Configuration</button>
                             </div>
                         </div>
                     </div>

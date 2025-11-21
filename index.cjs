@@ -247,9 +247,24 @@ client.on("guildMemberAdd", async (member) => {
 
 // ============== MESSAGE COMMANDS ==============
 client.on("messageCreate", async (msg) => {
-  if (msg.author.bot) return;
+  if (msg.author.bot && !msg.guild.config?.messageCountingBots) return;
   if (!msg.member) return;
   const guildConfig = getGuildConfig(msg.guild.id);
+
+  // ============== MESSAGE COUNTING ==============
+  const messageCounting = guildConfig.messageCounting || {};
+  if (messageCounting.enabled !== false) {
+    const ignoredChannels = messageCounting.ignoredChannels || [];
+    if (!ignoredChannels.includes(msg.channelId)) {
+      messageCounting.totalMessages = (messageCounting.totalMessages || 0) + 1;
+      messageCounting.byUser = messageCounting.byUser || {};
+      messageCounting.byChannel = messageCounting.byChannel || {};
+      messageCounting.byUser[msg.author.id] = (messageCounting.byUser[msg.author.id] || 0) + 1;
+      messageCounting.byChannel[msg.channelId] = (messageCounting.byChannel[msg.channelId] || 0) + 1;
+      guildConfig.messageCounting = messageCounting;
+      updateGuildConfig(msg.guild.id, { messageCounting });
+    }
+  }
 
   // ============== @MEMBERS ROLE CHECK ==============
   if (msg.content.startsWith("//")) {
@@ -305,6 +320,34 @@ client.on("messageCreate", async (msg) => {
       
       updateGuildConfig(msg.guild.id, { levels });
     }
+  }
+
+  // Message Statistics
+  if (msg.content === "//stats") {
+    const messageCounting = guildConfig.messageCounting || {};
+    const userCount = Object.keys(messageCounting.byUser || {}).length;
+    const channelCount = Object.keys(messageCounting.byChannel || {}).length;
+    const userMessages = messageCounting.byUser?.[msg.author.id] || 0;
+    const topUsers = Object.entries(messageCounting.byUser || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([userId, count]) => `<@${userId}>: **${count}**`)
+      .join("\n");
+
+    const statsEmbed = new EmbedBuilder()
+      .setColor(0x00D4FF)
+      .setTitle("📊 Message Statistics")
+      .addFields(
+        { name: "📈 Total Messages", value: `${messageCounting.totalMessages || 0}`, inline: true },
+        { name: "👥 Active Users", value: `${userCount}`, inline: true },
+        { name: "💬 Active Channels", value: `${channelCount}`, inline: true },
+        { name: "📝 Your Messages", value: `${userMessages}`, inline: true },
+        { name: "🏆 Top 5 Messengers", value: topUsers || "No data yet" }
+      )
+      .setFooter({ text: "SPIDEY BOT • Message Counter" })
+      .setTimestamp();
+    
+    return msg.reply({ embeds: [statsEmbed] });
   }
 
   // Bot Status
