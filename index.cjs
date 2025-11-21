@@ -33,21 +33,9 @@ app.use(session({
 // Serve static files from public
 app.use(express.static('public'));
 
-// Serve React dashboard from dist folder
-const dashboardPath = path.join(__dirname, 'dashboard-template', 'dist');
-app.use('/dashboard-app', express.static(dashboardPath));
-
 // Home page route
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// SPA fallback for React router - serve index.html for all dashboard-app routes
-app.get(/^\/dashboard-app\/.*/, (req, res) => {
-  const indexPath = path.join(dashboardPath, 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) res.status(500).send('Error loading dashboard');
-  });
 });
 
 // ============== DISCORD OAUTH CONFIG ==============
