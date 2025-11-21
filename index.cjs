@@ -3645,6 +3645,20 @@ app.post("/api/commands/:guildId", (req, res) => {
 const adminConfigs = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
 
 adminConfigs.forEach(configName => {
+  // GET endpoint to load config
+  app.get(`/api/config/${configName}`, (req, res) => {
+    if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+    
+    const config = loadConfig();
+    const firstGuild = client.guilds.cache.first();
+    if (!firstGuild) return res.json({});
+    
+    const guildId = firstGuild.id;
+    const data = config.guilds[guildId]?.[configName] || {};
+    res.json(data);
+  });
+
+  // POST endpoint to save config
   app.post(`/api/config/${configName}`, express.json(), (req, res) => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
     
@@ -3661,6 +3675,39 @@ adminConfigs.forEach(configName => {
     console.log(`✅ Config saved: ${configName}`);
     res.json({ success: true, message: `${configName} saved successfully` });
   });
+});
+
+// ============== API: GET ROLE CATEGORIES ==============
+app.get("/api/config/role-categories", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  
+  const config = loadConfig();
+  const firstGuild = client.guilds.cache.first();
+  if (!firstGuild) return res.json({});
+  
+  const guildId = firstGuild.id;
+  const data = config.guilds[guildId]?.roleCategories || {};
+  res.json(data);
+});
+
+// ============== API: SAVE ROLE CATEGORIES ==============
+app.post("/api/config/role-categories", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  
+  const config = loadConfig();
+  const firstGuild = client.guilds.cache.first();
+  if (!firstGuild) return res.json({ success: false, error: "No guild found" });
+  
+  const guildId = firstGuild.id;
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  
+  const { categoryName, roles, channel } = req.body;
+  if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
+  
+  config.guilds[guildId].roleCategories[categoryName] = { roles, channel };
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  console.log(`✅ Role category saved: ${categoryName}`);
+  res.json({ success: true, message: "Role category saved successfully" });
 });
 
 // ============== API: UPDATE CONFIG ==============
