@@ -16,6 +16,13 @@ const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 const express = require("express");
+const session = require("express-session");
+const axios = require("axios");
+
+// ============== DISCORD OAUTH CONFIG ==============
+const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
+const REDIRECT_URI = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}/auth/discord/callback` : "http://localhost:5000/auth/discord/callback";
 
 // ============== CONFIG MANAGEMENT ==============
 const configFile = path.join(__dirname, "config.json");
