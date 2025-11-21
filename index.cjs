@@ -2973,12 +2973,12 @@ app.get("/api/creator/servers", (req, res) => {
   res.json({ servers });
 });
 
-// Get creator settings (bot nickname, timezone)
+// Get creator settings (bot nickname, timezone - LOCKED)
 app.get("/api/creator/settings", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  const config = loadConfig();
-  const creatorSettings = config.creator || {
+  // These values are locked and cannot be changed
+  const creatorSettings = {
     botNickname: "SPIDEY BOT",
     timezone: "GMT"
   };
@@ -2986,17 +2986,18 @@ app.get("/api/creator/settings", (req, res) => {
   res.json(creatorSettings);
 });
 
-// Save creator settings
+// Save creator settings (bot nickname and timezone are LOCKED - cannot be modified)
 app.post("/api/creator/settings", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
   config.creator = config.creator || {};
-  config.creator.botNickname = req.body.botNickname || "SPIDEY BOT";
-  config.creator.timezone = req.body.timezone || "GMT";
+  // Bot nickname and timezone are IMMUTABLE - always locked to these values
+  config.creator.botNickname = "SPIDEY BOT";
+  config.creator.timezone = "GMT";
 
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
-  res.json({ success: true, settings: config.creator });
+  res.json({ success: true, settings: { botNickname: "SPIDEY BOT", timezone: "GMT" } });
 });
 
 const PORT = process.env.PORT || 5000;
