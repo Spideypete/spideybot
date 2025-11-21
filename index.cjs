@@ -37,6 +37,11 @@ app.use(express.static('public'));
 const dashboardPath = path.join(__dirname, 'dashboard-template', 'dist');
 app.use('/dashboard-app', express.static(dashboardPath));
 
+// Home page route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // SPA fallback for React router - serve index.html for all dashboard-app routes
 app.get(/^\/dashboard-app\/.*/, (req, res) => {
   const indexPath = path.join(dashboardPath, 'index.html');
@@ -2681,16 +2686,33 @@ app.get("/api/dashboard/top-members", (req, res) => {
 
 // ============== CREATOR ONLY APIS ==============
 
-// Get all servers the bot is in
+// Get all servers the bot is in (filtered to only admin-accessible servers)
 app.get("/api/creator/servers", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
   
-  const servers = client.guilds.cache.map(guild => ({
-    id: guild.id,
-    name: guild.name,
-    icon: guild.iconURL(),
-    memberCount: guild.memberCount
-  }));
+  // Get user's guilds from Discord OAuth (includes permission info)
+  const userGuilds = req.session.guilds || [];
+  
+  // Discord admin permission flag is 8
+  const ADMIN_PERMISSION = 8;
+  
+  // Filter to only guilds where user is admin
+  const adminGuildIds = userGuilds
+    .filter(guild => {
+      const permissions = BigInt(guild.permissions);
+      return (permissions & BigInt(ADMIN_PERMISSION)) === BigInt(ADMIN_PERMISSION);
+    })
+    .map(guild => guild.id);
+  
+  // Get bot's servers that user can admin
+  const servers = client.guilds.cache
+    .filter(guild => adminGuildIds.includes(guild.id))
+    .map(guild => ({
+      id: guild.id,
+      name: guild.name,
+      icon: guild.iconURL(),
+      memberCount: guild.memberCount
+    }));
   
   res.json({ servers });
 });
