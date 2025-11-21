@@ -210,14 +210,27 @@ client.on("messageCreate", async (msg) => {
         msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
         
         const levelRoles = guildConfig.levelRoles || {};
-        const roleId = levelRoles[`level_${level}`];
-        if (roleId) {
-          try {
-            const role = msg.guild.roles.cache.get(roleId);
-            if (role) await msg.member.roles.add(role);
-          } catch (err) {
-            console.error(`Failed to assign level role: ${err.message}`);
+        const newRoleId = levelRoles[`level_${level}`];
+        
+        try {
+          // Remove all old level roles (1-99)
+          for (let oldLevel = 1; oldLevel < level; oldLevel++) {
+            const oldRoleId = levelRoles[`level_${oldLevel}`];
+            if (oldRoleId) {
+              const oldRole = msg.guild.roles.cache.get(oldRoleId);
+              if (oldRole && msg.member.roles.cache.has(oldRoleId)) {
+                await msg.member.roles.remove(oldRole);
+              }
+            }
           }
+          
+          // Add new level role
+          if (newRoleId) {
+            const newRole = msg.guild.roles.cache.get(newRoleId);
+            if (newRole) await msg.member.roles.add(newRole);
+          }
+        } catch (err) {
+          console.error(`Failed to manage level roles: ${err.message}`);
         }
       }
       
@@ -1667,6 +1680,22 @@ client.on("messageCreate", async (msg) => {
     const levelRoles = {};
     let created = 0;
     
+    const botRole = msg.guild.members.me?.roles.highest;
+    const colorGradient = (level) => {
+      const hue = (level / 100) * 360;
+      const h = hue / 60;
+      const c = 255;
+      const x = c * (1 - Math.abs((h % 2) - 1));
+      let r = 0, g = 0, b = 0;
+      if (h >= 0 && h < 1) [r, g, b] = [c, x, 0];
+      else if (h >= 1 && h < 2) [r, g, b] = [x, c, 0];
+      else if (h >= 2 && h < 3) [r, g, b] = [0, c, x];
+      else if (h >= 3 && h < 4) [r, g, b] = [0, x, c];
+      else if (h >= 4 && h < 5) [r, g, b] = [x, 0, c];
+      else [r, g, b] = [c, 0, x];
+      return (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b);
+    };
+    
     for (let level = 1; level <= 100; level++) {
       try {
         const emoji = getNumberedEmoji(level);
@@ -1674,8 +1703,8 @@ client.on("messageCreate", async (msg) => {
         
         const role = await msg.guild.roles.create({
           name: roleName,
-          color: Math.floor(Math.random() * 16777215),
-          position: 1
+          color: colorGradient(level),
+          position: botRole ? botRole.position - 1 : 1
         });
         
         levelRoles[`level_${level}`] = role.id;
@@ -1690,7 +1719,7 @@ client.on("messageCreate", async (msg) => {
     }
     
     updateGuildConfig(msg.guild.id, { levelRoles });
-    return msg.reply(`✅ Created **${created}/100** level roles! Members will get roles automatically as they level up.`);
+    return msg.reply(`✅ Created **${created}/100** level roles with gradient colors! Members will display their level badge next to their name as they level up.`);
   }
 });
 
