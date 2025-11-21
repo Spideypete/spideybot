@@ -1235,6 +1235,42 @@ function verifyAdmin(req, res, next) {
 // Get invite link
 const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
 
+// Support Chat Widget HTML
+const supportWidget = `
+<style>
+  .support-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #9146FF; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(145, 70, 255, 0.4); z-index: 999; transition: all 0.3s; }
+  .support-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(145, 70, 255, 0.6); }
+  .support-modal { display: none; position: fixed; bottom: 100px; right: 20px; width: 350px; max-width: 90vw; background: #1a1a1a; border: 2px solid #9146FF; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999; max-height: 500px; overflow-y: auto; }
+  .support-modal.active { display: block; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .support-header { background: #9146FF; padding: 15px; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+  .support-header button { background: none; border: none; color: white; cursor: pointer; font-size: 20px; }
+  .support-content { padding: 15px; }
+  .support-option { background: #111; padding: 12px; margin: 8px 0; border-radius: 5px; border-left: 3px solid #9146FF; cursor: pointer; transition: all 0.2s; }
+  .support-option:hover { background: #222; transform: translateX(5px); }
+  .support-option a { color: white; text-decoration: none; display: block; }
+</style>
+<div class="support-modal" id="supportModal">
+  <div class="support-header">
+    <span>💬 Live Support</span>
+    <button onclick="closeSupportModal()">✕</button>
+  </div>
+  <div class="support-content">
+    <p style="color: white; margin-bottom: 15px;">Need help? Choose an option:</p>
+    <div class="support-option"><a href="https://discord.gg/DISCORD_SERVER_ID" target="_blank">🔗 Join Discord Support Server</a></div>
+    <div class="support-option"><a href="/commands">📚 View Commands</a></div>
+    <div class="support-option"><a href="https://github.com/YOUR_GITHUB/SPIDEY-BOT" target="_blank">🐛 Report Issue</a></div>
+    <div class="support-option"><a href="https://paypal.me/YOUR_PAYPAL_USERNAME" target="_blank">💜 Support Us</a></div>
+  </div>
+</div>
+<button class="support-btn" onclick="toggleSupportModal()">💬</button>
+<script>
+function toggleSupportModal() { document.getElementById('supportModal').classList.toggle('active'); }
+function closeSupportModal() { document.getElementById('supportModal').classList.remove('active'); }
+document.addEventListener('click', function(e) { if (!e.target.closest('.support-modal') && !e.target.closest('.support-btn')) closeSupportModal(); });
+</script>
+`;
+
 // Landing Page
 app.get("/", (req, res) => {
   res.send(`
@@ -1384,6 +1420,7 @@ app.get("/", (req, res) => {
           <p>🤖 SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
           <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">Use //help in Discord to see all commands • Admins use //adminhelp</p>
         </footer>
+        ${supportWidget}
       </body>
     </html>
   `);
@@ -1515,6 +1552,7 @@ app.get("/features", (req, res) => {
             <a href="https://paypal.me/YOUR_PAYPAL_USERNAME" target="_blank" class="btn" style="background: #9146FF;">💜 Donate via PayPal</a>
           </div>
         </div>
+        ${supportWidget}
       </body>
     </html>
   `);
@@ -1624,6 +1662,7 @@ app.get("/commands", (req, res) => {
             <a href="${botInviteURL}" target="_blank" class="btn">➕ Add SPIDEY BOT Now</a>
           </div>
         </div>
+        ${supportWidget}
       </body>
     </html>
   `);
