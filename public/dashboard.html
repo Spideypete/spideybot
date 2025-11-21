@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SPIDEY BOT - Admin Dashboard</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; border-radius: 15px; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
-            color: #e0e0e0;
+            background: #000000;
+            color: rgba(255, 255, 255, 0.9);
             overflow-x: hidden;
         }
 
@@ -22,28 +22,29 @@
         /* Sidebar */
         .sidebar {
             width: 250px;
-            background: linear-gradient(180deg, #1a0f3d 0%, #2d1b4e 100%);
-            border-right: 1px solid rgba(0, 212, 255, 0.1);
+            background: #000000;
+            border-right: 2px solid rgba(128, 0, 255, 0.4);
             padding: 2rem 0;
             overflow-y: auto;
             position: fixed;
             height: 100vh;
             left: 0;
             top: 0;
+            box-shadow: 0 0 20px rgba(128, 0, 255, 0.2);
         }
 
         .sidebar-logo {
             padding: 0 1.5rem 2rem;
             text-align: center;
-            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            border-bottom: 1px solid rgba(128, 0, 255, 0.3);
             margin-bottom: 1.5rem;
         }
 
         .logo-text {
             font-size: 1.3rem;
             font-weight: 700;
-            color: #00d4ff;
-            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0 0 15px rgba(128, 0, 255, 0.6);
         }
 
         .sidebar-section {
@@ -54,57 +55,101 @@
         .sidebar-section-title {
             font-size: 0.7rem;
             text-transform: uppercase;
-            color: #888;
+            color: rgba(255, 255, 255, 0.5);
             letter-spacing: 2px;
             padding: 0 1rem 0.75rem;
             font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-toggle {
+            width: 40px;
+            height: 20px;
+            background: rgba(128, 0, 255, 0.2);
+            border: 1px solid rgba(128, 0, 255, 0.5);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .category-toggle.active {
+            background: rgba(128, 0, 255, 0.5);
+        }
+
+        .category-toggle::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: rgba(128, 0, 255, 0.8);
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .category-toggle.active::after {
+            left: 22px;
+            background: rgba(128, 0, 255, 1);
         }
 
         .sidebar-menu {
             list-style: none;
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .sidebar-menu.collapsed {
+            max-height: 0;
         }
 
         .sidebar-item {
             padding: 0.75rem 1rem;
             margin: 0.25rem 0;
             cursor: pointer;
-            transition: all 0.2s ease;
-            border-radius: 6px;
-            color: #b0b0b0;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.7);
             display: flex;
             align-items: center;
             gap: 0.75rem;
             font-size: 0.95rem;
+            border: 1px solid transparent;
         }
 
         .sidebar-item:hover {
-            background: rgba(0, 212, 255, 0.1);
-            color: #00d4ff;
+            background: rgba(128, 0, 255, 0.15);
+            color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(128, 0, 255, 0.4);
+            box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
         }
 
         .sidebar-item.active {
-            background: linear-gradient(90deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.1));
-            color: #00d4ff;
-            border-left: 3px solid #00d4ff;
-            padding-left: calc(1rem - 3px);
+            background: rgba(128, 0, 255, 0.25);
+            color: rgba(255, 255, 255, 1);
+            border: 1px solid rgba(128, 0, 255, 0.6);
+            box-shadow: 0 0 15px rgba(128, 0, 255, 0.4);
         }
 
         .upgrade-box {
             margin: 2rem 1rem;
             padding: 1rem;
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            border-radius: 8px;
+            background: rgba(128, 0, 255, 0.2);
+            border: 2px solid rgba(128, 0, 255, 0.6);
             text-align: center;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.3s;
         }
 
         .upgrade-box:hover {
+            background: rgba(128, 0, 255, 0.35);
+            box-shadow: 0 0 20px rgba(128, 0, 255, 0.5);
             transform: scale(1.05);
         }
 
         .upgrade-box-text {
-            color: #000;
+            color: rgba(255, 255, 255, 0.95);
             font-weight: 600;
             font-size: 0.9rem;
         }
@@ -115,16 +160,17 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            background: #000000;
         }
 
         .header {
-            background: linear-gradient(90deg, rgba(26, 15, 61, 0.9), rgba(45, 27, 78, 0.9));
-            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid rgba(128, 0, 255, 0.3);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 0 15px rgba(128, 0, 255, 0.2);
         }
 
         .header-left {
@@ -137,11 +183,17 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(0, 212, 255, 0.1);
+            background: rgba(128, 0, 255, 0.15);
             padding: 0.5rem 1rem;
-            border-radius: 6px;
             cursor: pointer;
-            color: #00d4ff;
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(128, 0, 255, 0.4);
+            transition: all 0.3s;
+        }
+
+        .server-selector:hover {
+            background: rgba(128, 0, 255, 0.25);
+            box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
         }
 
         .header-right {
@@ -159,46 +211,46 @@
         .user-avatar {
             width: 36px;
             height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            background: rgba(128, 0, 255, 0.3);
+            border: 2px solid rgba(128, 0, 255, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            color: #000;
+            color: rgba(255, 255, 255, 0.9);
         }
 
         .logout-btn {
             padding: 0.5rem 1rem;
-            background: rgba(220, 20, 60, 0.2);
-            border: 1px solid rgba(220, 20, 60, 0.5);
-            color: #ff6b6b;
-            border-radius: 6px;
+            background: rgba(128, 0, 255, 0.15);
+            border: 1px solid rgba(128, 0, 255, 0.4);
+            color: rgba(255, 255, 255, 0.9);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             font-weight: 500;
         }
 
         .logout-btn:hover {
-            background: rgba(220, 20, 60, 0.4);
-            box-shadow: 0 0 15px rgba(220, 20, 60, 0.3);
+            background: rgba(128, 0, 255, 0.3);
+            box-shadow: 0 0 15px rgba(128, 0, 255, 0.4);
         }
 
         .content-area {
             flex: 1;
             padding: 2rem;
             overflow-y: auto;
+            background: #000000;
         }
 
         .page-title {
             font-size: 2rem;
             font-weight: 700;
-            color: #fff;
+            color: rgba(255, 255, 255, 0.95);
             margin-bottom: 0.5rem;
         }
 
         .page-description {
-            color: #888;
+            color: rgba(255, 255, 255, 0.5);
             margin-bottom: 2rem;
             font-size: 0.95rem;
         }
@@ -224,16 +276,16 @@
         }
 
         .card {
-            background: linear-gradient(135deg, rgba(45, 27, 78, 0.8), rgba(26, 15, 61, 0.8));
-            border: 1px solid rgba(0, 212, 255, 0.15);
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(128, 0, 255, 0.3);
             padding: 1.5rem;
             transition: all 0.3s ease;
         }
 
         .card:hover {
-            border-color: rgba(0, 212, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+            background: rgba(128, 0, 255, 0.08);
+            border-color: rgba(128, 0, 255, 0.6);
+            box-shadow: 0 0 25px rgba(128, 0, 255, 0.4);
         }
 
         .card-header {
@@ -242,17 +294,17 @@
             align-items: center;
             margin-bottom: 1rem;
             padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            border-bottom: 1px solid rgba(128, 0, 255, 0.2);
         }
 
         .card-title {
             font-weight: 600;
-            color: #fff;
+            color: rgba(255, 255, 255, 0.95);
             font-size: 1.1rem;
         }
 
         .card-subtitle {
-            color: #888;
+            color: rgba(255, 255, 255, 0.5);
             font-size: 0.85rem;
             margin-top: 0.25rem;
         }
@@ -264,7 +316,7 @@
         label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #00d4ff;
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 600;
             font-size: 0.85rem;
             text-transform: uppercase;
@@ -274,20 +326,24 @@
         input, textarea, select {
             width: 100%;
             padding: 0.75rem;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            color: #e0e0e0;
-            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(128, 0, 255, 0.3);
+            color: rgba(255, 255, 255, 0.9);
             font-family: inherit;
             font-size: 0.95rem;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
 
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: #00d4ff;
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2), inset 0 0 10px rgba(0, 212, 255, 0.05);
-            background: rgba(0, 212, 255, 0.05);
+            background: rgba(128, 0, 255, 0.1);
+            border-color: rgba(128, 0, 255, 0.6);
+            box-shadow: 0 0 15px rgba(128, 0, 255, 0.3), inset 0 0 10px rgba(128, 0, 255, 0.1);
+        }
+
+        input:hover, textarea:hover, select:hover {
+            background: rgba(128, 0, 255, 0.05);
+            border-color: rgba(128, 0, 255, 0.4);
         }
 
         textarea {
@@ -306,47 +362,42 @@
             gap: 0.75rem;
             margin-top: 1.5rem;
             padding-top: 1rem;
-            border-top: 1px solid rgba(0, 212, 255, 0.1);
+            border-top: 1px solid rgba(128, 0, 255, 0.2);
         }
 
         .btn {
             padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 6px;
+            border: 1px solid rgba(128, 0, 255, 0.5);
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 1px;
             flex: 1;
+            background: rgba(128, 0, 255, 0.2);
+            color: rgba(255, 255, 255, 0.95);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            color: #000;
+            background: rgba(128, 0, 255, 0.2);
+            border: 1px solid rgba(128, 0, 255, 0.6);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
-        }
-
-        .btn-secondary {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid #00d4ff;
-            color: #00d4ff;
+            background: rgba(128, 0, 255, 0.4);
+            box-shadow: 0 0 20px rgba(128, 0, 255, 0.5);
         }
 
         .btn-secondary:hover {
-            background: rgba(0, 212, 255, 0.2);
+            background: rgba(128, 0, 255, 0.25);
         }
 
         .alert {
             padding: 1rem 1.5rem;
-            border-radius: 6px;
             margin-bottom: 1.5rem;
             animation: slideDown 0.3s ease;
+            border: 1px solid rgba(128, 0, 255, 0.4);
         }
 
         @keyframes slideDown {
@@ -355,15 +406,15 @@
         }
 
         .alert-success {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(56, 142, 60, 0.2));
+            background: rgba(76, 175, 80, 0.15);
             border: 1px solid rgba(76, 175, 80, 0.4);
-            color: #4caf50;
+            color: rgba(144, 238, 144, 0.9);
         }
 
         .alert-error {
-            background: linear-gradient(135deg, rgba(220, 20, 60, 0.2), rgba(183, 28, 28, 0.2));
+            background: rgba(220, 20, 60, 0.15);
             border: 1px solid rgba(220, 20, 60, 0.4);
-            color: #ff6b6b;
+            color: rgba(255, 127, 127, 0.9);
         }
 
         .switch {
@@ -376,16 +427,21 @@
         .toggle {
             width: 50px;
             height: 24px;
-            background: rgba(0, 212, 255, 0.2);
-            border: 1px solid rgba(0, 212, 255, 0.4);
-            border-radius: 12px;
+            background: rgba(128, 0, 255, 0.2);
+            border: 1px solid rgba(128, 0, 255, 0.4);
             cursor: pointer;
             position: relative;
-            transition: all 0.2s;
+            transition: all 0.3s;
+        }
+
+        .toggle:hover {
+            background: rgba(128, 0, 255, 0.3);
+            box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
         }
 
         .toggle.active {
-            background: rgba(0, 212, 255, 0.4);
+            background: rgba(128, 0, 255, 0.4);
+            border-color: rgba(128, 0, 255, 0.7);
         }
 
         .toggle::after {
@@ -393,59 +449,31 @@
             position: absolute;
             width: 20px;
             height: 20px;
-            background: #00d4ff;
-            border-radius: 50%;
+            background: rgba(128, 0, 255, 0.8);
             top: 2px;
             left: 2px;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            box-shadow: 0 0 8px rgba(128, 0, 255, 0.4);
         }
 
         .toggle.active::after {
             left: 28px;
+            background: rgba(128, 0, 255, 1);
+            box-shadow: 0 0 12px rgba(128, 0, 255, 0.6);
         }
 
         @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                border-right: none;
-                border-bottom: 1px solid rgba(0, 212, 255, 0.1);
-            }
-            
-            .main {
-                margin-left: 0;
-            }
-            
-            .content-area {
-                padding: 1rem;
-            }
-            
-            .cards-container {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 2px solid rgba(128, 0, 255, 0.3); }
+            .main { margin-left: 0; }
+            .content-area { padding: 1rem; }
+            .cards-container { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
         }
 
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 212, 255, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0, 212, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 212, 255, 0.4);
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(128, 0, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(128, 0, 255, 0.3); }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(128, 0, 255, 0.5); }
     </style>
 </head>
 <body>
@@ -457,15 +485,15 @@
             </div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">MAIN</div>
-                <ul class="sidebar-menu">
+                <div class="sidebar-section-title">MAIN <div class="category-toggle active" data-section="main-menu"></div></div>
+                <ul class="sidebar-menu" id="main-menu">
                     <li class="sidebar-item" data-section="dashboard">📊 Dashboard</li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">CORE</div>
-                <ul class="sidebar-menu">
+                <div class="sidebar-section-title">CORE <div class="category-toggle active" data-section="core-menu"></div></div>
+                <ul class="sidebar-menu" id="core-menu">
                     <li class="sidebar-item active" data-section="settings">⚙️ Settings</li>
                     <li class="sidebar-item" data-section="logging">📝 Logging</li>
                     <li class="sidebar-item" data-section="server-guard">🛡️ Server Guard</li>
@@ -473,8 +501,8 @@
             </div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">FEATURES</div>
-                <ul class="sidebar-menu">
+                <div class="sidebar-section-title">FEATURES <div class="category-toggle active" data-section="features-menu"></div></div>
+                <ul class="sidebar-menu" id="features-menu">
                     <li class="sidebar-item" data-section="react-roles">🎭 React Roles</li>
                     <li class="sidebar-item" data-section="role-categories">📂 Role Categories</li>
                     <li class="sidebar-item" data-section="server-messages">💬 Server Messages</li>
@@ -484,8 +512,8 @@
             </div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">SYSTEMS</div>
-                <ul class="sidebar-menu">
+                <div class="sidebar-section-title">SYSTEMS <div class="category-toggle active" data-section="systems-menu"></div></div>
+                <ul class="sidebar-menu" id="systems-menu">
                     <li class="sidebar-item" data-section="xp-levels">⭐ XP Levels</li>
                     <li class="sidebar-item" data-section="leaderboards">🏆 Leaderboards</li>
                     <li class="sidebar-item" data-section="subscriptions">💳 Subscriptions</li>
@@ -493,8 +521,8 @@
             </div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">MONITORING</div>
-                <ul class="sidebar-menu">
+                <div class="sidebar-section-title">MONITORING <div class="category-toggle active" data-section="monitoring-menu"></div></div>
+                <ul class="sidebar-menu" id="monitoring-menu">
                     <li class="sidebar-item" data-section="invite-tracking">📊 Invites</li>
                     <li class="sidebar-item" data-section="message-counting">📈 Messages</li>
                     <li class="sidebar-item" data-section="statistics-channels">📉 Stats</li>
@@ -503,8 +531,8 @@
             </div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">TOOLS</div>
-                <ul class="sidebar-menu">
+                <div class="sidebar-section-title">TOOLS <div class="category-toggle active" data-section="tools-menu"></div></div>
+                <ul class="sidebar-menu" id="tools-menu">
                     <li class="sidebar-item" data-section="recordings">🎙️ Recordings</li>
                     <li class="sidebar-item" data-section="reminders">⏰ Reminders</li>
                     <li class="sidebar-item" data-section="giveaways">🎁 Giveaways</li>
@@ -1619,6 +1647,16 @@
             'giveaways': 'Manage server giveaways',
             'social-notifs': 'Monitor social media streams'
         };
+
+        document.querySelectorAll('.category-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const sectionId = toggle.getAttribute('data-section');
+                const menu = document.getElementById(sectionId);
+                toggle.classList.toggle('active');
+                menu.classList.toggle('collapsed');
+            });
+        });
 
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.addEventListener('click', () => {
