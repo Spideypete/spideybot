@@ -67,7 +67,13 @@ function getGuildConfig(guildId) {
       musicLoopMode: false,
       musicShuffle: false,
       musicVolume: 100,
-      warnings: {}
+      warnings: {},
+      economy: {},
+      levels: {},
+      profanityFilterEnabled: true,
+      suggestionsChannelId: null,
+      giveaways: {},
+      badWords: ["badword1", "badword2"]
     };
     saveConfig(config);
   }
@@ -319,6 +325,245 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Deleted category: **${categoryName}**`);
   }
 
+  // ============== ECONOMY SYSTEM ==============
+  if (msg.content === "//balance") {
+    const economy = guildConfig.economy || {};
+    const balance = economy[msg.author.id] || 0;
+    const balanceEmbed = new EmbedBuilder()
+      .setColor(0x9146FF)
+      .setTitle("💰 Your Balance")
+      .setDescription(`You have **${balance} coins** 🪙`)
+      .setFooter({ text: "SPIDEY BOT Economy" });
+    return msg.reply({ embeds: [balanceEmbed] });
+  }
+
+  if (msg.content === "//daily") {
+    const economy = guildConfig.economy || {};
+    const lastDaily = economy[msg.author.id + "_daily"] || 0;
+    const now = Date.now();
+    if (now - lastDaily < 86400000) {
+      const remaining = Math.ceil((86400000 - (now - lastDaily)) / 3600000);
+      return msg.reply(`⏳ You can claim your daily reward in ${remaining} hours!`);
+    }
+    const reward = 100;
+    economy[msg.author.id] = (economy[msg.author.id] || 0) + reward;
+    economy[msg.author.id + "_daily"] = now;
+    updateGuildConfig(msg.guild.id, { economy });
+    return msg.reply(`✅ Claimed daily reward! You got **${reward} coins** 🪙`);
+  }
+
+  if (msg.content.startsWith("//work")) {
+    const economy = guildConfig.economy || {};
+    const lastWork = economy[msg.author.id + "_work"] || 0;
+    if (Date.now() - lastWork < 300000) {
+      return msg.reply("⏳ You need to wait 5 minutes between work shifts!");
+    }
+    const earnings = Math.floor(Math.random() * 50) + 25;
+    economy[msg.author.id] = (economy[msg.author.id] || 0) + earnings;
+    economy[msg.author.id + "_work"] = Date.now();
+    updateGuildConfig(msg.guild.id, { economy });
+    return msg.reply(`💼 You worked and earned **${earnings} coins**! 🪙`);
+  }
+
+  if (msg.content.startsWith("//transfer ")) {
+    const args = msg.content.slice(11).trim().split(" ");
+    const target = msg.mentions.users.first();
+    const amount = parseInt(args[1]);
+    if (!target || !amount || amount <= 0) return msg.reply("Usage: //transfer @user [amount]");
+    const economy = guildConfig.economy || {};
+    const senderBalance = economy[msg.author.id] || 0;
+    if (senderBalance < amount) return msg.reply(`❌ Insufficient funds! You only have ${senderBalance} coins.`);
+    economy[msg.author.id] = senderBalance - amount;
+    economy[target.id] = (economy[target.id] || 0) + amount;
+    updateGuildConfig(msg.guild.id, { economy });
+    return msg.reply(`✅ Transferred **${amount} coins** to ${target.toString()}! 🪙`);
+  }
+
+  // ============== LEVELING SYSTEM ==============
+  if (msg.content === "//level") {
+    const levels = guildConfig.levels || {};
+    const level = levels[msg.author.id] || 0;
+    const xp = levels[msg.author.id + "_xp"] || 0;
+    const levelEmbed = new EmbedBuilder()
+      .setColor(0x9146FF)
+      .setTitle("📊 Your Level")
+      .addFields(
+        { name: "Level", value: `${level}`, inline: true },
+        { name: "XP", value: `${xp} / ${(level + 1) * 100}`, inline: true }
+      )
+      .setFooter({ text: "SPIDEY BOT Leveling" });
+    return msg.reply({ embeds: [levelEmbed] });
+  }
+
+  if (msg.content === "//leaderboard") {
+    const levels = guildConfig.levels || {};
+    const sorted = Object.entries(levels)
+      .filter(([k, v]) => !k.includes("_"))
+      .map(([userId, level]) => ({ userId, level }))
+      .sort((a, b) => b.level - a.level)
+      .slice(0, 10);
+    
+    const leaderboardEmbed = new EmbedBuilder()
+      .setColor(0x9146FF)
+      .setTitle("🏆 Server Leaderboard")
+      .setDescription(sorted.length === 0 ? "No data yet!" : sorted.map((e, i) => `**${i + 1}.** <@${e.userId}> - Level ${e.level}`).join("\n"))
+      .setFooter({ text: "SPIDEY BOT Leaderboard" });
+    return msg.reply({ embeds: [leaderboardEmbed] });
+  }
+
+  // Gain XP on message (every message)
+  if (!guildConfig.levels) guildConfig.levels = {};
+  const levels = guildConfig.levels;
+  const xpGain = Math.floor(Math.random() * 25) + 5;
+  levels[msg.author.id + "_xp"] = (levels[msg.author.id + "_xp"] || 0) + xpGain;
+  const currentLevel = levels[msg.author.id] || 0;
+  const xpNeeded = (currentLevel + 1) * 100;
+  if (levels[msg.author.id + "_xp"] >= xpNeeded) {
+    levels[msg.author.id] = currentLevel + 1;
+    levels[msg.author.id + "_xp"] = 0;
+    updateGuildConfig(msg.guild.id, { levels });
+    msg.reply(`🎉 ${msg.author} leveled up to **Level ${currentLevel + 1}**!`).catch(() => {});
+  } else {
+    updateGuildConfig(msg.guild.id, { levels });
+  }
+
+  // ============== SERVER PROTECTION ==============
+  if (msg.content.startsWith("//filter-toggle")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can toggle the filter!");
+    }
+    const newState = !guildConfig.profanityFilterEnabled;
+    updateGuildConfig(msg.guild.id, { profanityFilterEnabled: newState });
+    return msg.reply(`✅ Profanity filter is now **${newState ? "ON" : "OFF"}**`);
+  }
+
+  // Auto-delete messages with profanity
+  if (guildConfig.profanityFilterEnabled && guildConfig.badWords) {
+    const hasSwearing = guildConfig.badWords.some(word => msg.content.toLowerCase().includes(word.toLowerCase()));
+    if (hasSwearing && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      msg.delete().catch(() => {});
+      return msg.author.send("⚠️ Your message was deleted because it contains profanity.").catch(() => {});
+    }
+  }
+
+  // ============== COMMUNITY TOOLS ==============
+  if (msg.content === "//suggest") {
+    return msg.reply("Usage: //suggest [your suggestion]");
+  }
+
+  if (msg.content.startsWith("//suggest ")) {
+    const suggestion = msg.content.slice(10).trim();
+    if (!suggestion) return msg.reply("Usage: //suggest [your suggestion]");
+    const suggestionsChannel = guildConfig.suggestionsChannelId ? msg.guild.channels.cache.get(guildConfig.suggestionsChannelId) : null;
+    if (!suggestionsChannel) return msg.reply("❌ Suggestions channel not configured! Admin needs to set it with `//config-suggestions #channel`");
+    
+    const suggestionEmbed = new EmbedBuilder()
+      .setColor(0x9146FF)
+      .setTitle("📝 New Suggestion")
+      .setDescription(suggestion)
+      .setAuthor({ name: msg.author.username, iconURL: msg.author.displayAvatarURL() })
+      .setFooter({ text: "React with 👍 or 👎 to vote" });
+    
+    const suggestionMsg = await suggestionsChannel.send({ embeds: [suggestionEmbed] });
+    await suggestionMsg.react("👍");
+    await suggestionMsg.react("👎");
+    return msg.reply("✅ Suggestion submitted!");
+  }
+
+  if (msg.content.startsWith("//config-suggestions ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure channels!");
+    }
+    const channel = msg.mentions.channels.first();
+    if (!channel) return msg.reply("Usage: //config-suggestions #channel");
+    updateGuildConfig(msg.guild.id, { suggestionsChannelId: channel.id });
+    return msg.reply(`✅ Suggestions channel set to ${channel}`);
+  }
+
+  if (msg.content.startsWith("//giveaway ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can create giveaways!");
+    }
+    const args = msg.content.slice(11).trim().split(" ");
+    const prize = args[0];
+    const duration = parseInt(args[1]) || 60;
+    if (!prize) return msg.reply("Usage: //giveaway [prize] [duration in seconds]");
+    
+    const giveawayEmbed = new EmbedBuilder()
+      .setColor(0x9146FF)
+      .setTitle("🎁 GIVEAWAY!")
+      .setDescription(`**Prize:** ${prize}\n**Duration:** ${duration} seconds\n\nReact with 🎉 to enter!`)
+      .setFooter({ text: "SPIDEY BOT Giveaway" });
+    
+    const giveawayMsg = await msg.channel.send({ embeds: [giveawayEmbed] });
+    await giveawayMsg.react("🎉");
+    
+    setTimeout(async () => {
+      const reactions = giveawayMsg.reactions.cache.get("🎉");
+      if (!reactions) return;
+      const users = await reactions.users.fetch();
+      const filteredUsers = users.filter(u => !u.bot).map(u => u.id);
+      const winner = filteredUsers[Math.floor(Math.random() * filteredUsers.length)];
+      if (!winner) return msg.channel.send("❌ No valid entries!");
+      msg.channel.send(`🎉 Winner: <@${winner}> won **${prize}**!`);
+    }, duration * 1000);
+    
+    return msg.reply("✅ Giveaway started!");
+  }
+
+  // ============== FUN COMMANDS ==============
+  if (msg.content === "//8ball") {
+    const responses = ["Yes! 🎯", "No! ❌", "Maybe... 🤔", "Absolutely! ✅", "Not likely! 😅", "Ask again later 🔮", "Definitely! 💯", "I don't think so 👎"];
+    return msg.reply(responses[Math.floor(Math.random() * responses.length)]);
+  }
+
+  if (msg.content === "//dice") {
+    const roll = Math.floor(Math.random() * 6) + 1;
+    return msg.reply(`🎲 You rolled a **${roll}**!`);
+  }
+
+  if (msg.content === "//coin") {
+    const flip = Math.random() < 0.5 ? "Heads" : "Tails";
+    return msg.reply(`🪙 **${flip}**!`);
+  }
+
+  if (msg.content === "//trivia") {
+    const trivia = [
+      { question: "What is the capital of France?", answer: "Paris" },
+      { question: "What is 2 + 2?", answer: "4" },
+      { question: "What is the largest planet?", answer: "Jupiter" }
+    ];
+    const q = trivia[Math.floor(Math.random() * trivia.length)];
+    const triviaEmbed = new EmbedBuilder()
+      .setColor(0x9146FF)
+      .setTitle("🧠 Trivia Question")
+      .setDescription(q.question)
+      .setFooter({ text: `Answer: ${q.answer}` });
+    return msg.reply({ embeds: [triviaEmbed] });
+  }
+
+  if (msg.content === "//rps") {
+    return msg.reply("Usage: //rps [rock/paper/scissors]");
+  }
+
+  if (msg.content.startsWith("//rps ")) {
+    const choices = ["rock", "paper", "scissors"];
+    const userChoice = msg.content.slice(6).trim().toLowerCase();
+    if (!choices.includes(userChoice)) return msg.reply("Choose: rock, paper, or scissors!");
+    const botChoice = choices[Math.floor(Math.random() * choices.length)];
+    const results = {
+      "rock_scissors": "You won! 🎉",
+      "paper_rock": "You won! 🎉",
+      "scissors_paper": "You won! 🎉",
+      "rock_rock": "It's a tie! 🤝",
+      "paper_paper": "It's a tie! 🤝",
+      "scissors_scissors": "It's a tie! 🤝"
+    };
+    const key = userChoice + "_" + botChoice;
+    const result = results[key] || "I won! 😎";
+    return msg.reply(`You chose **${userChoice}**, I chose **${botChoice}**\n${result}`);
+  }
+
   // Help - List general user commands
   if (msg.content === "//help") {
     const mainEmbed = new EmbedBuilder()
@@ -348,11 +593,40 @@ client.on("messageCreate", async (msg) => {
         { name: "✅ //remove-roles", value: "Remove any roles you have", inline: true },
         { name: "🏓 //ping", value: "Check bot status & stats", inline: true },
         { name: "👑 //adminhelp", value: "View all admin commands (admins only)", inline: true }
+      );
+
+    const economyEmbed = new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle("💰 ECONOMY (4 commands)")
+      .addFields(
+        { name: "💰 //balance", value: "Check your coin balance", inline: true },
+        { name: "📅 //daily", value: "Claim 100 coins daily", inline: true },
+        { name: "💼 //work", value: "Work for coins (5 min cooldown)", inline: true },
+        { name: "🔄 //transfer @user [amount]", value: "Send coins to others", inline: true }
+      );
+
+    const levelEmbed = new EmbedBuilder()
+      .setColor(0x00D084)
+      .setTitle("📊 LEVELING (2 commands)")
+      .addFields(
+        { name: "📈 //level", value: "Check your level & XP", inline: true },
+        { name: "🏆 //leaderboard", value: "View top members", inline: true }
+      );
+
+    const funEmbed = new EmbedBuilder()
+      .setColor(0xFF6B9D)
+      .setTitle("🎮 FUN GAMES (5 commands)")
+      .addFields(
+        { name: "🎱 //8ball", value: "Ask the magic 8ball", inline: true },
+        { name: "🎲 //dice", value: "Roll a dice (1-6)", inline: true },
+        { name: "🪙 //coin", value: "Flip a coin", inline: true },
+        { name: "🧠 //trivia", value: "Random trivia question", inline: true },
+        { name: "✂️ //rps [rock/paper/scissors]", value: "Rock paper scissors", inline: true }
       )
       .setFooter({ text: "💡 Admins: Use //adminhelp for full command list" });
 
     return msg.reply({ 
-      embeds: [mainEmbed, musicEmbed, utilityEmbed],
+      embeds: [mainEmbed, musicEmbed, utilityEmbed, economyEmbed, levelEmbed, funEmbed],
       content: "** **"
     });
   }
