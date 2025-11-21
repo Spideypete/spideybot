@@ -2588,11 +2588,19 @@ app.get("/api/user", (req, res) => {
 });
 
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
+// Load dashboard HTML once at startup
+let dashboardHtml = null;
+try {
+  dashboardHtml = fs.readFileSync(path.join(publicDir, 'dashboard.html'), 'utf-8');
+} catch (err) {
+  console.error('❌ Failed to load dashboard.html:', err.message);
+  dashboardHtml = '<h1>Dashboard not found</h1>';
+}
+
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.sendFile(path.join(publicDir, 'dashboard.html'), (err) => {
-    if (err) res.status(404).send('Dashboard page not found');
-  });
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(dashboardHtml);
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
