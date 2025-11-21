@@ -183,6 +183,29 @@ client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
   const guildConfig = getGuildConfig(msg.guild.id);
 
+  // ============== AUTO XP GAIN ==============
+  if (!msg.content.startsWith("//")) {
+    const levels = guildConfig.levels || {};
+    const userId = msg.author.id;
+    const lastXpTime = levels[`${userId}_xp_time`] || 0;
+    const now = Date.now();
+    
+    if (now - lastXpTime > 60000) {
+      const xpGain = Math.floor(Math.random() * 20) + 10;
+      levels[userId] = (levels[userId] || 0) + xpGain;
+      levels[`${userId}_xp_time`] = now;
+      
+      const currentXp = levels[userId];
+      const nextLevelXp = (Math.floor(currentXp / 500) + 1) * 500;
+      if (currentXp >= nextLevelXp) {
+        const level = Math.floor(currentXp / 500) + 1;
+        msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
+      }
+      
+      updateGuildConfig(msg.guild.id, { levels });
+    }
+  }
+
   // Bot Status
   if (msg.content === "//ping") {
     const uptime = process.uptime();
@@ -735,10 +758,11 @@ client.on("messageCreate", async (msg) => {
 
     const levelEmbed = new EmbedBuilder()
       .setColor(0x00D084)
-      .setTitle("📊 LEVELING (2 commands)")
+      .setTitle("📊 LEVELING (3 commands)")
       .addFields(
         { name: "📈 //level", value: "Check your level & XP", inline: true },
-        { name: "🏆 //leaderboard", value: "View top members", inline: true }
+        { name: "🏆 //xpleaderboard", value: "View top members by level", inline: true },
+        { name: "💡 Passive", value: "Gain 10-30 XP per minute chatting!", inline: true }
       );
 
     const funEmbed = new EmbedBuilder()
@@ -1570,6 +1594,47 @@ client.on("messageCreate", async (msg) => {
     }).join("\n");
     
     return msg.reply(`🏆 **Top 10 Richest Members:**\n${leaderboard}`);
+  }
+
+  // ============== LEVELING COMMANDS ==============
+  if (msg.content === "//level") {
+    const levels = guildConfig.levels || {};
+    const userXp = levels[msg.author.id] || 0;
+    const level = Math.floor(userXp / 500) + 1;
+    const xpInLevel = userXp % 500;
+    const nextLevelXp = 500;
+    
+    const levelEmbed = new EmbedBuilder()
+      .setColor(0x00D084)
+      .setTitle(`📊 ${msg.author.username}'s Level`)
+      .addFields(
+        { name: "Level", value: `${level}`, inline: true },
+        { name: "Total XP", value: `${userXp}`, inline: true },
+        { name: "Progress", value: `${xpInLevel}/${nextLevelXp} XP`, inline: false }
+      )
+      .setThumbnail(msg.author.displayAvatarURL());
+    
+    return msg.reply({ embeds: [levelEmbed] });
+  }
+
+  if (msg.content === "//xpleaderboard") {
+    const levels = guildConfig.levels || {};
+    const members = Object.entries(levels)
+      .filter(([key]) => !key.includes("_"))
+      .map(([userId, xp]) => ({ userId, xp }))
+      .sort((a, b) => b.xp - a.xp)
+      .slice(0, 10);
+    
+    if (members.length === 0) return msg.reply("📊 No leveling data yet! Send messages to gain XP!");
+    
+    const leaderboard = members.map((m, i) => {
+      const user = msg.guild.members.cache.get(m.userId)?.user;
+      const name = user?.username || "Unknown";
+      const level = Math.floor(m.xp / 500) + 1;
+      return `**${i+1}.** ${name} - **Level ${level}** (${m.xp} XP)`;
+    }).join("\n");
+    
+    return msg.reply(`🏆 **Top 10 Members by Level:**\n${leaderboard}`);
   }
 });
 
