@@ -2322,6 +2322,18 @@ app.get("/logout", (req, res) => {
   });
 });
 
+// ============== USER API ==============
+app.get("/api/user", (req, res) => {
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  res.json({
+    user: req.session.user,
+    guilds: req.session.guilds
+  });
+});
+
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
