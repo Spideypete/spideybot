@@ -31,11 +31,11 @@ app.use(session({
 }));
 
 // Serve static files from public
-// REMOVED: static public folder
+app.use(express.static(publicDir));
 
 // Home page route
 app.get("/", (req, res) => {
-  res.send('Bot is running');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ============== DISCORD OAUTH CONFIG ==============
@@ -2259,9 +2259,8 @@ const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.e
 // ============== DISCORD OAUTH LOGIN ==============
 // Redirect login page to Discord OAuth
 app.get("/login", (req, res) => {
-  const scopes = ["identify", "guilds"];
-  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
-  res.redirect(authURL);
+  if (req.session.authenticated) return res.redirect("/dashboard");
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.get("/auth/discord", (req, res) => {
@@ -2337,7 +2336,7 @@ app.get("/api/user", (req, res) => {
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.send('Bot is running');
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
