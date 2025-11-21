@@ -2210,6 +2210,10 @@ app.get("/commands", (req, res) => {
             <div class="cmd-card"><code>//remove-tiktok-user [user]</code><p>Stop monitoring</p></div>
             <div class="cmd-card"><code>//list-tiktok-users</code><p>View monitored creators</p></div>
             <div class="cmd-card"><code>//config-tiktok-channel #ch</code><p>Set alert channel</p></div>
+            <div class="cmd-card"><code>//add-kick-user [user]</code><p>Monitor Kick streamer</p></div>
+            <div class="cmd-card"><code>//remove-kick-user [user]</code><p>Stop monitoring</p></div>
+            <div class="cmd-card"><code>//list-kick-users</code><p>View monitored streamers</p></div>
+            <div class="cmd-card"><code>//config-kick-channel #ch</code><p>Set alert channel</p></div>
           </div>
 
           <h2>⚙️ Configuration (Admin)</h2>
