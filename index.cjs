@@ -19,6 +19,24 @@ const express = require("express");
 const session = require("express-session");
 const axios = require("axios");
 
+// ============== SETUP EXPRESS APP ==============
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: 'spidey-bot-secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { maxAge: 24 * 60 * 60 * 1000 }
+}));
+
+// Serve static files from public
+app.use(express.static('public'));
+
+// Serve React dashboard from dist folder
+const dashboardPath = path.join(__dirname, 'dashboard-template', 'dist');
+app.use('/dashboard-app', express.static(dashboardPath));
+
 // ============== DISCORD OAUTH CONFIG ==============
 // Render URL: https://spideybot-90sr.onrender.com/auth/discord/callback
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
