@@ -64,6 +64,8 @@ function getGuildConfig(guildId) {
       twitchUsers: [],
       tiktokChannelId: null,
       tiktokUsers: [],
+      kickChannelId: null,
+      kickUsers: [],
       musicLoopMode: false,
       musicShuffle: false,
       musicVolume: 100,
@@ -803,7 +805,7 @@ client.on("messageCreate", async (msg) => {
 
     const adminSocialEmbed = new EmbedBuilder()
       .setColor(0xFF1493)
-      .setTitle("📱 SOCIAL MEDIA (8 commands + API)")
+      .setTitle("📱 SOCIAL MEDIA (12 commands + API)")
       .addFields(
         { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
         { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
@@ -813,6 +815,10 @@ client.on("messageCreate", async (msg) => {
         { name: "➖ //remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
         { name: "📋 //list-tiktok-users", value: "View monitored TikTok creators", inline: true },
         { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
+        { name: "🎮 //add-kick-user [user]", value: "Add Kick streamer to monitor", inline: true },
+        { name: "➖ //remove-kick-user [user]", value: "Remove Kick streamer", inline: true },
+        { name: "📋 //list-kick-users", value: "View monitored Kick streamers", inline: true },
+        { name: "📢 //config-kick-channel #ch", value: "Set Kick alert channel", inline: true },
         { name: "🌐 WEB API", value: "Admin dashboard at `/admin` • 3 REST endpoints", inline: false }
       );
 
@@ -1399,6 +1405,49 @@ client.on("messageCreate", async (msg) => {
     const users = guildConfig.tiktokUsers || [];
     if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `//add-tiktok-user [username]`");
     return msg.reply(`📱 **TikTok Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
+  }
+
+  if (msg.content.startsWith("//config-kick-channel ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const channel = msg.mentions.channels.first();
+    if (!channel) return msg.reply("Usage: //config-kick-channel #channel");
+    updateGuildConfig(msg.guild.id, { kickChannelId: channel.id });
+    return msg.reply(`✅ Kick live notifications will post to ${channel}\n\n💡 *Note: Configure your Kick webhook at: https://developers.kick.com*`);
+  }
+
+  if (msg.content.startsWith("//add-kick-user ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const kickUser = msg.content.slice(16).trim().toLowerCase();
+    if (!kickUser) return msg.reply("Usage: //add-kick-user [username]\nExample: //add-kick-user xqc");
+    const users = guildConfig.kickUsers || [];
+    if (users.includes(kickUser)) return msg.reply(`❌ **${kickUser}** is already being monitored!`);
+    users.push(kickUser);
+    updateGuildConfig(msg.guild.id, { kickUsers: users });
+    return msg.reply(`✅ Added **${kickUser}** to Kick monitoring! (${users.length} total)`);
+  }
+
+  if (msg.content.startsWith("//remove-kick-user ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const kickUser = msg.content.slice(19).trim().toLowerCase();
+    if (!kickUser) return msg.reply("Usage: //remove-kick-user [username]");
+    const users = guildConfig.kickUsers || [];
+    const index = users.indexOf(kickUser);
+    if (index === -1) return msg.reply(`❌ **${kickUser}** is not being monitored!`);
+    users.splice(index, 1);
+    updateGuildConfig(msg.guild.id, { kickUsers: users });
+    return msg.reply(`✅ Removed **${kickUser}** from Kick monitoring!`);
+  }
+
+  if (msg.content === "//list-kick-users") {
+    const users = guildConfig.kickUsers || [];
+    if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `//add-kick-user [username]`");
+    return msg.reply(`🎮 **Kick Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 });
 
@@ -2364,6 +2413,35 @@ app.post("/webhooks/tiktok", (req, res) => {
             .setURL(`https://www.tiktok.com/@${body.data?.author_username || body.creator}`)
             .addFields(
               { name: "Caption", value: body.data?.caption || "No caption", inline: false }
+            );
+          channel.send({ embeds: [embed] }).catch(() => {});
+        }
+      }
+    }
+  }
+  res.status(200).json({ status: "ok" });
+});
+
+// Kick webhook
+app.post("/webhooks/kick", (req, res) => {
+  const body = req.body;
+  if (body.event_type === "live" || body.type === "stream_online") {
+    const config = loadConfig();
+    const kickUser = (body.data?.username || body.streamer)?.toLowerCase();
+    const viewers = body.data?.viewers || body.viewer_count || 0;
+    
+    for (const [guildId, guildConfig] of Object.entries(config.guilds || {})) {
+      const monitoredUsers = guildConfig.kickUsers || [];
+      if (monitoredUsers.some(u => u.toLowerCase() === kickUser) && guildConfig.kickChannelId) {
+        const channel = client.channels.cache.get(guildConfig.kickChannelId);
+        if (channel) {
+          const embed = new EmbedBuilder()
+            .setColor(0x00FFA3)
+            .setTitle("🎮 KICK LIVE!")
+            .setDescription(`**${body.data?.username || body.streamer}** is live with ${viewers} viewers please support and follow thanks!`)
+            .setURL(`https://kick.com/${body.data?.username || body.streamer}`)
+            .addFields(
+              { name: "Viewers", value: `${viewers}`, inline: true }
             );
           channel.send({ embeds: [embed] }).catch(() => {});
         }
