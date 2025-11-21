@@ -77,6 +77,23 @@ function updateGuildConfig(guildId, updates) {
   saveConfig(config);
 }
 
+function autoMigrateRoles(guildId, guild, guildConfig) {
+  const categories = guildConfig.roleCategories || {};
+  let hasChanges = false;
+  
+  Object.keys(categories).forEach(catName => {
+    const catData = categories[catName];
+    if (Array.isArray(catData)) {
+      categories[catName] = { roles: catData, banner: null };
+      hasChanges = true;
+    }
+  });
+  
+  if (hasChanges) {
+    updateGuildConfig(guildId, { roleCategories: categories });
+  }
+}
+
 // ============== CLIENT SETUP ==============
 const client = new Client({
   intents: [
