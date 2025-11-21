@@ -1203,36 +1203,196 @@
                 <!-- SERVER GUARD -->
                 <div id="server-guard" class="content">
                     <div class="page-title">🛡️ Server Guard</div>
-                    <div class="page-description">Protect your server from spam and raids</div>
+                    <div class="page-description">Protect your server from spam, raids, and threats</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Protection Settings</div>
-                                    <div class="card-subtitle">Anti-spam & raid protection</div>
+                                    <div class="card-title">Verification System</div>
+                                    <div class="card-subtitle">CAPTCHA & member verification</div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Messages Per Minute</label>
-                                <input type="number" id="server-guard_msgLimit" value="5" min="1">
-                            </div>
-                            <div class="form-group">
-                                <label>Join Cooldown (seconds)</label>
-                                <input type="number" id="server-guard_joinCooldown" value="30" min="1">
-                            </div>
-                            <div class="form-group">
-                                <label>Protection Status</label>
+                                <label>Verification Status</label>
                                 <div class="switch">
-                                    <span>Anti-Spam</span>
-                                    <div class="toggle active" id="server-guard_antispam"></div>
+                                    <span>Enable Verification</span>
+                                    <div class="toggle active" id="server-guard_verifyEnabled"></div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Verification Type</label>
+                                    <select id="server-guard_verifyType">
+                                        <option value="captcha">CAPTCHA</option>
+                                        <option value="reaction">Reaction</option>
+                                        <option value="role">Role Assignment</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Max Attempts</label>
+                                    <input type="number" id="server-guard_verifyAttempts" value="3" min="1">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Verified Role ID</label>
+                                <input type="text" id="server-guard_verifyRole" placeholder="Role ID">
+                                <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; margin-top: 0.5rem;">Role assigned to verified members</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Verification Channel</label>
+                                <input type="text" id="server-guard_verifyChannel" placeholder="Channel ID">
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Anti-Raid & Anti-Bot Protection</div>
+                                    <div class="card-subtitle">Detect raids & automated accounts</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Protection Toggles</label>
+                                <div class="switch">
+                                    <span>Enable Anti-Raid</span>
+                                    <div class="toggle active" id="server-guard_antiRaid"></div>
                                 </div>
                                 <div class="switch" style="margin-top: 0.75rem;">
-                                    <span>Raid Protection</span>
-                                    <div class="toggle active" id="server-guard_raidProtection"></div>
+                                    <span>Enable Anti-Bot</span>
+                                    <div class="toggle active" id="server-guard_antiBot"></div>
                                 </div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('server-guard')">💾 Save</button>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Bot Limit (per 10s)</label>
+                                    <input type="number" id="server-guard_botLimit" value="5" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Joins per Minute</label>
+                                    <input type="number" id="server-guard_joinsPerMin" value="10" min="1">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Min Account Age (days)</label>
+                                    <input type="number" id="server-guard_accountAge" value="1" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Auto-Action</label>
+                                    <select id="server-guard_raidAction">
+                                        <option value="kick">Kick</option>
+                                        <option value="ban">Ban</option>
+                                        <option value="mute">Mute</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Moderation & Logging</div>
+                                    <div class="card-subtitle">Action logging & alerts</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Security Log Channel</label>
+                                <input type="text" id="server-guard_logChannel" placeholder="Channel ID">
+                                <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; margin-top: 0.5rem;">Where security alerts & moderation logs are posted</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Log Events</label>
+                                <div class="switch">
+                                    <span>Log Failed Verifications</span>
+                                    <div class="toggle active" id="server-guard_logFailed"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Auto-Actions</span>
+                                    <div class="toggle active" id="server-guard_logActions"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Raid Attempts</span>
+                                    <div class="toggle active" id="server-guard_logRaids"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Alert on Suspicious Activity</span>
+                                    <div class="toggle active" id="server-guard_alertSuspicious"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Custom Rules</div>
+                                    <div class="card-subtitle">Prevent abuse of specific actions</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Action Limits</label>
+                                <div class="switch">
+                                    <span>Limit Ban Creation</span>
+                                    <div class="toggle active" id="server-guard_limitBans"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Limit Channel/Role Creation</span>
+                                    <div class="toggle active" id="server-guard_limitCreation"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Limit @everyone/@here Mentions</span>
+                                    <div class="toggle active" id="server-guard_limitMentions"></div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Max Bans/Hour</label>
+                                    <input type="number" id="server-guard_maxBansHour" value="20" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Max Channels/Hour</label>
+                                    <input type="number" id="server-guard_maxChannelsHour" value="5" min="1">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Mention Spam Threshold</label>
+                                <input type="number" id="server-guard_mentionSpam" value="3" min="1">
+                                <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; margin-top: 0.5rem;">Max @everyone/@here mentions per minute</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="form-group">
+                                <label>Basic Protection Settings</label>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Messages Per Minute</label>
+                                        <input type="number" id="server-guard_msgLimit" value="5" min="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Join Cooldown (seconds)</label>
+                                        <input type="number" id="server-guard_joinCooldown" value="30" min="1">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <div class="switch">
+                                        <span>Anti-Spam</span>
+                                        <div class="toggle active" id="server-guard_antispam"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('server-guard')">💾 Save All Protection Settings</button>
                             </div>
                         </div>
                     </div>
