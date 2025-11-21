@@ -179,7 +179,120 @@
         .header-left {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 2rem;
+        }
+
+        .mode-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mode-toggle {
+            width: 50px;
+            height: 24px;
+            background: rgba(128, 0, 255, 0.2);
+            border: 1px solid rgba(128, 0, 255, 0.4);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+            border-radius: 50%;
+        }
+
+        .mode-toggle:hover {
+            background: rgba(128, 0, 255, 0.3);
+            box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
+        }
+
+        .mode-toggle.active {
+            background: rgba(128, 0, 255, 0.4);
+            border-color: rgba(128, 0, 255, 0.7);
+        }
+
+        .mode-toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(128, 0, 255, 0.8);
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(128, 0, 255, 0.4);
+        }
+
+        .mode-toggle.active::after {
+            left: 28px;
+            background: rgba(128, 0, 255, 1);
+            box-shadow: 0 0 12px rgba(128, 0, 255, 0.6);
+        }
+
+        body.light-mode {
+            background: #f5f5f5;
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        body.light-mode .sidebar {
+            background: #ffffff;
+            border-right: 2px solid rgba(128, 0, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .sidebar-item:hover {
+            background: rgba(128, 0, 255, 0.1);
+            border: 1px solid rgba(128, 0, 255, 0.3);
+        }
+
+        body.light-mode .main {
+            background: #f5f5f5;
+        }
+
+        body.light-mode .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 2px solid rgba(128, 0, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .content-area {
+            background: #f5f5f5;
+        }
+
+        body.light-mode .card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(128, 0, 255, 0.2);
+        }
+
+        body.light-mode .card:hover {
+            background: rgba(255, 255, 255, 1);
+            border-color: rgba(128, 0, 255, 0.5);
+            box-shadow: 0 0 25px rgba(128, 0, 255, 0.2);
+        }
+
+        body.light-mode input, body.light-mode textarea, body.light-mode select {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(128, 0, 255, 0.3);
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        body.light-mode label {
+            color: rgba(128, 0, 255, 0.8);
+        }
+
+        body.light-mode .page-title {
+            color: rgba(0, 0, 0, 0.95);
+        }
+
+        body.light-mode .page-description {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        body.light-mode .card-title {
+            color: rgba(0, 0, 0, 0.95);
+        }
+
+        body.light-mode .card-subtitle {
+            color: rgba(0, 0, 0, 0.6);
         }
 
         .server-selector {
@@ -597,6 +710,11 @@
                             <option value="yellow" style="background: #000; color: #fff;">🟡 Yellow</option>
                             <option value="orange" style="background: #000; color: #fff;">🟠 Orange</option>
                         </select>
+                    </div>
+                    <div class="mode-toggle-container">
+                        <span style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-right: 0.75rem;">🌙</span>
+                        <div class="mode-toggle active" id="modeToggle" onclick="toggleMode()"></div>
+                        <span style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-left: 0.75rem;">☀️</span>
                     </div>
                 </div>
                 <div class="header-right">
@@ -2177,6 +2295,31 @@
             localStorage.setItem('selectedColor', color);
             alert(`Theme color changed to ${color}!`);
         }
+
+        function toggleMode() {
+            const toggle = document.getElementById('modeToggle');
+            const body = document.body;
+            const isLightMode = body.classList.contains('light-mode');
+            
+            if (isLightMode) {
+                body.classList.remove('light-mode');
+                toggle.classList.add('active');
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                body.classList.add('light-mode');
+                toggle.classList.remove('active');
+                localStorage.setItem('darkMode', 'false');
+            }
+        }
+
+        // Initialize mode on page load
+        window.addEventListener('load', () => {
+            const isDarkMode = localStorage.getItem('darkMode') !== 'false';
+            if (!isDarkMode) {
+                document.body.classList.add('light-mode');
+                document.getElementById('modeToggle').classList.remove('active');
+            }
+        });
 
         loadConfig('settings');
     </script>
