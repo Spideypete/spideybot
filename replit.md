@@ -145,37 +145,77 @@ All settings auto-save to config.json and load per-server from dashboard.
 - Aesthetic: Cyberpunk with subtle grid patterns & glowing effects
 
 ## Recent Changes (November 21, 2025)
-- ✅ Completely rebuilt admin panel with all 18 configuration categories
-- ✅ Fixed all syntax errors in index.cjs (removed duplicate variables/listeners)
-- ✅ Implemented Tron aesthetic admin dashboard (cyan #00D4FF, grid patterns, neon effects)
-- ✅ Added simple admin login system (username: admin, password: admin)
-- ✅ All 18 config pages with forms: settings, subscriptions, logging, server-guard, react-roles, role-categories, server-messages, components, custom-commands, recordings, reminders, leaderboards, invite-tracking, message-counting, statistics-channels, xp-levels, giveaways, social-notifs
-- ✅ Auto-load and auto-save functionality for all configuration pages
-- ✅ Session-based authentication integrated with Express backend
-- ✅ Sidebar navigation with all categories instantly accessible
-- ✅ Toggle switches, text inputs, dropdowns, and textarea fields for all settings
-- ✅ API endpoints connected (/api/config/{name} GET/POST)
-- ✅ Added @Members role restriction to all commands
-- ✅ Transformed all embeds to Tron aesthetic
-- ✅ 40+ API endpoints fully functional
+- ✅ Renamed creator from "DARKIE" to "spidey"
+- ✅ Added server selector modal (must choose server before accessing panels)
+- ✅ Created `/api/creator/servers` endpoint (fetches real Discord servers bot is in)
+- ✅ Created `/api/creator/settings` API (bot nickname + timezone management)
+- ✅ Creator Panel with Bot Nickname & Timezone (GMT) fields
+- ✅ Removed logging channels from Settings panel
+- ✅ Font size reduced 20% (text more compact)
+- ✅ All admin configuration pages with 18 categories working
+- ✅ Production APIs fully functional and tested
+- ✅ Discord OAuth login with session authentication
 - ✅ Per-server configuration system complete
 
 ## How to Access Admin Panel
-1. **Login URL**: https://[replit-domain]/login
-2. **Credentials**: 
-   - Username: `admin`
-   - Password: `admin`
-3. **After Login**: Access `/dashboard` - complete admin panel with all 18 categories
-4. **Configuration**: All settings auto-save via API endpoints to config.json
+1. **Login with Discord**: Visit `/login` to authenticate with Discord OAuth
+2. **Select Server**: Choose which server to configure (shows real servers bot is in)
+3. **Access Dashboard**: Navigate `/dashboard` - complete admin panel with 18 categories
+4. **Creator Access**: Only "spidey" user can access Creator Panel for bot settings
+5. **Configuration**: All settings auto-save via API endpoints to config.json
 
-## Next Steps for Production
-1. Follow RENDER_DEPLOYMENT.md for complete setup
-2. Register Discord OAuth redirect URI for Render domain
-3. Deploy to Render via git push (or GitHub integration)
-4. Add environment variables in Render dashboard
-5. Test login on Render URL with Discord account
-6. Monitor bot performance in production
-7. Collect user feedback on dashboard UX
+## 🚀 DEPLOYMENT CHECKLIST (READY FOR LIVE)
+
+### Prerequisites ✅
+- Bot code fully functional and tested locally
+- All APIs working (dashboard, creator, config)
+- Discord OAuth configured
+- config.json with creator settings
+- Environment variables ready
+
+### Step 1: GitHub Setup (YOU DO THIS)
+```bash
+git add -A
+git commit -m "SPIDEY BOT production ready - all features implemented"
+git push origin main
+```
+
+### Step 2: Render Configuration (YOU DO THIS)
+1. Go to https://dashboard.render.com
+2. Create/select "spideybot-90sr" Web Service
+3. Connect to your GitHub repo
+4. Set **Build Command**: `npm install`
+5. Set **Start Command**: `node index.cjs`
+
+### Step 3: Environment Variables in Render (YOU DO THIS)
+Add these in Render dashboard → Environment:
+```
+TOKEN = [your Discord bot token]
+CLIENT_ID = [your Discord app Client ID]
+DISCORD_CLIENT_SECRET = [your Discord app Client Secret]
+SESSION_SECRET = [generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"]
+OPENAI_API_KEY = [optional, for AI features]
+```
+
+### Step 4: Discord OAuth Setup (YOU DO THIS)
+1. Go to Discord Developer Portal → Your App → OAuth2
+2. Add these Redirect URIs:
+   - `https://spideybot-90sr.onrender.com/auth/discord/callback`
+   - `https://spideybot-90sr.onrender.com/login`
+3. Save changes
+
+### Step 5: Deploy (YOU DO THIS)
+- Push code to GitHub (Step 1)
+- Render auto-deploys when it detects changes
+- Monitor deployment in Render dashboard
+
+### Step 6: Test Live (YOU DO THIS)
+- Visit: https://spideybot-90sr.onrender.com
+- Login with Discord
+- Select your server
+- Test admin panel functionality
+
+✅ **STATUS**: PRODUCTION READY - Just push to GitHub!
 
 ## Quick Render Setup Checklist
 - [ ] Create Render account
