@@ -1860,7 +1860,6 @@ app.get("/", (req, res) => {
           <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #333;">
             <a href="/tos" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
             <a href="/privacy" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
-            <a href="/interactions" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
           </div>
         </footer>
         ${supportWidget}
@@ -2005,7 +2004,6 @@ app.get("/features", (req, res) => {
             <div style="margin-top: 1rem;">
               <a href="/tos" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
               <a href="/privacy" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
-              <a href="/interactions" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
             </div>
           </footer>
         </div>
@@ -2395,7 +2393,6 @@ app.get("/tos", (req, res) => {
           <div style="margin-top: 1rem;">
             <a href="/" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🏠 Home</a>
             <a href="/privacy" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
-            <a href="/interactions" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
           </div>
         </footer>
       </body>
@@ -2479,7 +2476,6 @@ app.get("/privacy", (req, res) => {
           <div style="margin-top: 1rem;">
             <a href="/" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🏠 Home</a>
             <a href="/tos" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
-            <a href="/interactions" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">🔗 API</a>
           </div>
         </footer>
       </body>
