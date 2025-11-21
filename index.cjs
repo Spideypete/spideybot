@@ -22,7 +22,9 @@ const axios = require("axios");
 // ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
-const REDIRECT_URI = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}/auth/discord/callback` : "http://localhost:5000/auth/discord/callback";
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || process.env.RENDER_DEPLOY_URL;
+const REPLIT_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : null;
+const REDIRECT_URI = RENDER_URL ? `${RENDER_URL}/auth/discord/callback` : (REPLIT_URL ? `${REPLIT_URL}/auth/discord/callback` : "http://localhost:5000/auth/discord/callback");
 
 // ============== CONFIG MANAGEMENT ==============
 const configFile = path.join(__dirname, "config.json");
