@@ -2297,6 +2297,160 @@ app.post("/webhooks/tiktok", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+// Interactions Endpoint (Discord Interactions)
+app.post("/interactions", (req, res) => {
+  res.status(200).json({ type: 1 });
+});
+
+// Terms of Service Page
+app.get("/tos", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Terms of Service - SPIDEY BOT</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
+          body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
+          nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); }
+          nav a { color: white; text-decoration: none; margin: 0 1rem; }
+          nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
+          .container { max-width: 900px; margin: 0 auto; padding: 2rem; background: rgba(26, 26, 26, 0.8); border-radius: 10px; margin-top: 2rem; margin-bottom: 2rem; border: 2px solid #9146FF; }
+          h1 { color: #FF1493; text-shadow: 0 0 20px rgba(255, 20, 147, 0.5); margin-bottom: 2rem; }
+          h2 { color: #00FFFF; margin-top: 2rem; margin-bottom: 1rem; text-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
+          p { line-height: 1.8; margin-bottom: 1rem; color: #ddd; }
+          li { margin-left: 2rem; margin-bottom: 0.5rem; color: #ddd; }
+          footer { text-align: center; padding: 2rem; color: #999; border-top: 2px solid #9146FF; margin-top: 3rem; }
+        </style>
+      </head>
+      <body>
+        <nav>
+          <a href="/">🏠 Home</a>
+          <a href="/privacy">📋 Privacy Policy</a>
+        </nav>
+        <div class="container">
+          <h1>🕷️ SPIDEY BOT - Terms of Service</h1>
+          <p><strong>Last Updated: November 21, 2025</strong></p>
+          
+          <h2>1. Acceptance of Terms</h2>
+          <p>By adding SPIDEY BOT to your Discord server, you agree to comply with these Terms of Service. If you do not agree, do not use the bot.</p>
+          
+          <h2>2. Use License</h2>
+          <p>SPIDEY BOT is provided as-is for use in Discord servers. You are granted a non-exclusive, non-transferable license to use the bot in accordance with these terms.</p>
+          
+          <h2>3. User Responsibilities</h2>
+          <ul>
+            <li>You are responsible for all content and commands executed through SPIDEY BOT</li>
+            <li>You agree not to use the bot for harassment, spam, or illegal activities</li>
+            <li>You must comply with Discord's Terms of Service</li>
+            <li>You are responsible for configuring the bot appropriately for your server</li>
+          </ul>
+          
+          <h2>4. Prohibited Activities</h2>
+          <ul>
+            <li>Using the bot to harass, threaten, or abuse other users</li>
+            <li>Sending spam or unsolicited messages through the bot</li>
+            <li>Attempting to hack, bypass, or exploit the bot</li>
+            <li>Using the bot for commercial purposes without permission</li>
+          </ul>
+          
+          <h2>5. Disclaimer of Warranties</h2>
+          <p>SPIDEY BOT is provided "AS IS" without any warranties, expressed or implied. We do not guarantee uninterrupted service or error-free operation.</p>
+          
+          <h2>6. Limitation of Liability</h2>
+          <p>In no event shall SPIDEY BOT be liable for any indirect, incidental, or consequential damages arising from the use of the bot.</p>
+          
+          <h2>7. Modifications</h2>
+          <p>We reserve the right to modify, suspend, or discontinue the bot at any time without notice.</p>
+          
+          <h2>8. Contact</h2>
+          <p>For questions about these Terms of Service, please contact us through our Discord support server.</p>
+        </div>
+        <footer>© 2025 SPIDEY BOT. All rights reserved.</footer>
+      </body>
+    </html>
+  `);
+});
+
+// Privacy Policy Page
+app.get("/privacy", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Privacy Policy - SPIDEY BOT</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; position: relative; }
+          body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
+          nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); }
+          nav a { color: white; text-decoration: none; margin: 0 1rem; }
+          nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
+          .container { max-width: 900px; margin: 0 auto; padding: 2rem; background: rgba(26, 26, 26, 0.8); border-radius: 10px; margin-top: 2rem; margin-bottom: 2rem; border: 2px solid #9146FF; }
+          h1 { color: #FF1493; text-shadow: 0 0 20px rgba(255, 20, 147, 0.5); margin-bottom: 2rem; }
+          h2 { color: #00FFFF; margin-top: 2rem; margin-bottom: 1rem; text-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
+          p { line-height: 1.8; margin-bottom: 1rem; color: #ddd; }
+          li { margin-left: 2rem; margin-bottom: 0.5rem; color: #ddd; }
+          footer { text-align: center; padding: 2rem; color: #999; border-top: 2px solid #9146FF; margin-top: 3rem; }
+        </style>
+      </head>
+      <body>
+        <nav>
+          <a href="/">🏠 Home</a>
+          <a href="/tos">⚖️ Terms of Service</a>
+        </nav>
+        <div class="container">
+          <h1>🕷️ SPIDEY BOT - Privacy Policy</h1>
+          <p><strong>Last Updated: November 21, 2025</strong></p>
+          
+          <h2>1. Information We Collect</h2>
+          <p>SPIDEY BOT collects the following information to provide its services:</p>
+          <ul>
+            <li>Discord User IDs and Server IDs</li>
+            <li>Server configuration data (prefix, channels, settings)</li>
+            <li>User economy and leveling data</li>
+            <li>Messages and commands executed through the bot</li>
+          </ul>
+          
+          <h2>2. How We Use Your Information</h2>
+          <ul>
+            <li>To provide and improve bot functionality</li>
+            <li>To personalize your experience with per-server configuration</li>
+            <li>To store your economy, levels, and other game data</li>
+            <li>To enforce our Terms of Service</li>
+          </ul>
+          
+          <h2>3. Data Storage</h2>
+          <p>Your data is stored securely in our database and is not shared with third parties except as required by law.</p>
+          
+          <h2>4. Data Retention</h2>
+          <p>We retain your data for as long as you use the bot. Upon bot removal from your server, data may be retained for backup purposes.</p>
+          
+          <h2>5. Your Rights</h2>
+          <ul>
+            <li>You have the right to request your data through our support server</li>
+            <li>You have the right to have your data deleted upon request</li>
+            <li>You have the right to opt-out of data collection for specific features</li>
+          </ul>
+          
+          <h2>6. Third-Party Services</h2>
+          <p>SPIDEY BOT integrates with Discord, YouTube, Twitch, and TikTok APIs. Please review their privacy policies for information on how they handle your data.</p>
+          
+          <h2>7. Security</h2>
+          <p>We take reasonable measures to protect your data. However, no method of transmission over the internet is 100% secure.</p>
+          
+          <h2>8. Contact</h2>
+          <p>For privacy concerns, please contact us through our Discord support server or visit our GitHub repository.</p>
+        </div>
+        <footer>© 2025 SPIDEY BOT. All rights reserved.</footer>
+      </body>
+    </html>
+  `);
+});
+
 const PORT = 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Web server running on port ${PORT}`);
