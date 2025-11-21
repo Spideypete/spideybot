@@ -2220,63 +2220,37 @@ function verifyAdmin(req, res, next) {
 // Get invite link
 const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
 
-// ============== DISCORD OAUTH LOGIN ==============
-app.get("/auth/discord", (req, res) => {
-  const scopes = ["identify", "guilds"];
-  const permissions = "8";
-  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
-  res.redirect(authURL);
+// ============== ADMIN LOGIN ==============
+app.get("/login", (req, res) => {
+  res.sendFile(__dirname + "/public/login.html");
 });
 
-app.get("/auth/discord/callback", async (req, res) => {
-  const code = req.query.code;
-  if (!code) return res.status(400).send("No code provided");
-  
-  try {
-    const tokenRes = await axios.post("https://discord.com/api/oauth2/token", null, {
-      params: {
-        client_id: DISCORD_CLIENT_ID,
-        client_secret: DISCORD_CLIENT_SECRET,
-        code,
-        grant_type: "authorization_code",
-        redirect_uri: REDIRECT_URI,
-        scope: "identify guilds"
-      }
-    });
-    
-    const { access_token } = tokenRes.data;
-    const userRes = await axios.get("https://discord.com/api/users/@me", {
-      headers: { Authorization: `Bearer ${access_token}` }
-    });
-    
-    const guildsRes = await axios.get("https://discord.com/api/users/@me/guilds", {
-      headers: { Authorization: `Bearer ${access_token}` }
-    });
-    
+app.post("/login", express.urlencoded({ extended: true }), (req, res) => {
+  const { username, password } = req.body;
+  // Simple auth - admin/admin (change in production)
+  if (username === "admin" && password === "admin") {
     req.session.authenticated = true;
-    req.session.user = userRes.data;
-    req.session.guilds = guildsRes.data;
-    req.session.accessToken = access_token;
-    
-    console.log(`✅ User logged in via Discord: ${userRes.data.username}`);
-    res.redirect("/dashboard");
-  } catch (err) {
-    console.error("OAuth error:", err.message);
-    res.status(500).send("Authentication failed");
+    req.session.username = username;
+    console.log(`✅ Admin logged in: ${username}`);
+    return res.redirect("/dashboard");
   }
+  console.log(`❌ Failed login: ${username}`);
+  res.redirect("/login?error=1");
 });
 
 app.get("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) console.error("Logout error:", err);
-    res.redirect("/");
-  });
+  req.session.destroy();
+  res.redirect("/");
 });
 
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/index.html");
+});
+
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.sendFile(__dirname + "/public/dashboard-sleek.html");
+  res.sendFile(__dirname + "/dashboard-template/dist/index.html");
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
