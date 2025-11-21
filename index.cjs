@@ -2254,18 +2254,253 @@ const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.e
 
 // ============== HOMEPAGE ==============
 app.get("/", (req, res) => {
-  res.sendFile(path.join(publicDir, 'index.html'), (err) => {
-    if (err) res.status(404).send('Index page not found');
-  });
+  const indexHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPIDEY BOT - Complete Discord Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      line-height: 1.6;
+    }
+    nav {
+      background: rgba(20, 20, 20, 0.95);
+      border-bottom: 1px solid #222;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1.5rem;
+      transition: color 0.3s;
+      font-weight: 500;
+    }
+    nav a:hover { color: #9146FF; }
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      padding: 6rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.15) 0%, transparent 50%);
+    }
+    .hero > * { position: relative; z-index: 2; }
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1.25rem;
+      color: #ccc;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn-group { margin: 2rem 0; }
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 2rem;
+      margin: 0.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #9146FF;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #7a35cc;
+      transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #9146FF;
+      border-color: #9146FF;
+    }
+    .btn-secondary:hover {
+      background: #9146FF;
+      color: #fff;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    footer {
+      background: #000;
+      border-top: 1px solid #222;
+      padding: 2rem;
+      text-align: center;
+      color: #666;
+      margin-top: 4rem;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div style="font-weight: 700; font-size: 1.5rem; color: #fff;">🕷️ SPIDEY BOT</div>
+    <div>
+      <a href="#home">Home</a>
+      <a href="#features">Features</a>
+      <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
+    </div>
+  </nav>
+  <div class="hero">
+    <h1>The best all-in-one bot for Discord</h1>
+    <p>SPIDEY BOT is a complete Discord bot trusted by servers worldwide. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
+    <div class="btn-group">
+      <a id="addToDiscord" class="btn btn-primary">Add to Discord</a>
+      <a href="#features" class="btn btn-secondary">See Features</a>
+    </div>
+  </div>
+  <div class="container">
+    <h2 style="margin-top: 3rem; margin-bottom: 2rem; font-size: 2rem;">✨ Features</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
+        <h3>🎵 Music Player</h3>
+        <p style="color: #aaa; font-size: 0.9rem;">YouTube search, queue management, loop, shuffle, and volume control</p>
+      </div>
+      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
+        <h3>🛡️ Moderation</h3>
+        <p style="color: #aaa; font-size: 0.9rem;">Kick, ban, warn, mute with automatic logging</p>
+      </div>
+      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
+        <h3>📈 Leveling/XP</h3>
+        <p style="color: #aaa; font-size: 0.9rem;">Passive XP gains, auto-assigned level roles with emoji badges</p>
+      </div>
+      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
+        <h3>💰 Economy</h3>
+        <p style="color: #aaa; font-size: 0.9rem;">Daily rewards, work commands, transfers, and leaderboards</p>
+      </div>
+      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
+        <h3>📱 Social Media</h3>
+        <p style="color: #aaa; font-size: 0.9rem;">Monitor Twitch, TikTok, Kick streamers with auto-alerts</p>
+      </div>
+      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
+        <h3>⚙️ Admin Dashboard</h3>
+        <p style="color: #aaa; font-size: 0.9rem;">Configure all bot settings with an intuitive web dashboard</p>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <p>&copy; 2025 SPIDEY BOT. All rights reserved. | Developed by spidey</p>
+  </footer>
+  <script>
+    document.getElementById('addToDiscord').addEventListener('click', function() {
+      window.location.href = 'https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8';
+    });
+  </script>
+</body>
+</html>`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(indexHtml);
 });
 
 // ============== DISCORD OAUTH LOGIN ==============
 // Redirect login page to Discord OAuth
 app.get("/login", (req, res) => {
   if (req.session.authenticated) return res.redirect("/dashboard");
-  res.sendFile(path.join(publicDir, 'login.html'), (err) => {
-    if (err) res.status(404).send('Login page not found');
-  });
+  const loginHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPIDEY BOT Admin Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #000000;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .login-container {
+      text-align: center;
+      padding: 3rem;
+      background: rgba(145, 70, 255, 0.1);
+      border: 2px solid rgba(145, 70, 255, 0.3);
+      border-radius: 15px;
+      max-width: 400px;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 2rem;
+      background: linear-gradient(135deg, #fff 0%, #9146FF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    p {
+      color: #aaa;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+    .btn-discord {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: #5865F2;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-discord:hover {
+      background: #4752C4;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(88, 101, 242, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>🕷️ SPIDEY BOT</h1>
+    <p>Admin Dashboard - Login with Discord</p>
+    <a href="/auth/discord" class="btn-discord">Login with Discord</a>
+  </div>
+</body>
+</html>`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(loginHtml);
 });
 
 app.get("/auth/discord", (req, res) => {
