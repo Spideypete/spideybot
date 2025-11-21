@@ -417,6 +417,84 @@ client.on("messageCreate", async (msg) => {
     });
   }
 
+  // Admin Help - List only admin commands
+  if (msg.content === "//adminhelp") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can view admin help!");
+    }
+
+    const adminMainEmbed = new EmbedBuilder()
+      .setColor(0xFF6B6B)
+      .setTitle("👑 ADMIN COMMAND GUIDE")
+      .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔐 **Administrator-Only Commands** 🔐\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+      .addFields(
+        { name: "📊 Admin Categories", value: "**5 Sections** with full server management tools", inline: false }
+      );
+
+    const adminRoleEmbed = new EmbedBuilder()
+      .setColor(0x9B59B6)
+      .setTitle("🎭 ROLE CATEGORIES (7 commands)")
+      .addFields(
+        { name: "📌 //create-category [name]", value: "Create a custom role category", inline: true },
+        { name: "➕ //add-role [cat] [name] [ID]", value: "Add role to category", inline: true },
+        { name: "➖ //remove-role [cat] [name]", value: "Remove role from category", inline: true },
+        { name: "🎬 //set-category-banner [cat] [url]", value: "Add GIF banner", inline: true },
+        { name: "🔘 //setup-category [name]", value: "Post selector button with banner", inline: true },
+        { name: "📋 //list-roles", value: "View all categories & roles", inline: true },
+        { name: "🗑️ //delete-category [name]", value: "Delete entire category", inline: true }
+      );
+
+    const adminWelcomeEmbed = new EmbedBuilder()
+      .setColor(0xE91E63)
+      .setTitle("👋 WELCOME MESSAGES (2 commands)")
+      .addFields(
+        { name: "💬 //config-welcome-channel #channel", value: "Set welcome message channel", inline: true },
+        { name: "✍️ //config-welcome-message [text]", value: "Create custom welcome message", inline: true },
+        { name: "📝 Placeholders", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false }
+      );
+
+    const adminConfigEmbed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("⚙️ CONFIGURATION (2 commands)")
+      .addFields(
+        { name: "🔤 //set-prefix [prefix]", value: "Change command prefix", inline: true },
+        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
+      );
+
+    const adminSocialEmbed = new EmbedBuilder()
+      .setColor(0xFF1493)
+      .setTitle("📱 SOCIAL MEDIA (8 commands + API)")
+      .addFields(
+        { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
+        { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
+        { name: "📋 //list-twitch-users", value: "View monitored Twitch creators", inline: true },
+        { name: "📢 //config-twitch-channel #ch", value: "Set Twitch alert channel", inline: true },
+        { name: "🎵 //add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
+        { name: "➖ //remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
+        { name: "📋 //list-tiktok-users", value: "View monitored TikTok creators", inline: true },
+        { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
+        { name: "🌐 WEB API", value: "Admin dashboard at `/admin` • 3 REST endpoints", inline: false }
+      );
+
+    const adminModEmbed = new EmbedBuilder()
+      .setColor(0xFF6B6B)
+      .setTitle("🛡️ MODERATION (6 commands)")
+      .addFields(
+        { name: "👢 //kick @user [reason]", value: "Remove member from server", inline: true },
+        { name: "🔨 //ban @user [reason]", value: "Permanently ban member", inline: true },
+        { name: "⚠️ //warn @user [reason]", value: "Warn member (tracked!)", inline: true },
+        { name: "🔇 //mute @user", value: "Timeout for 1 hour", inline: true },
+        { name: "🔊 //unmute @user", value: "Remove timeout", inline: true },
+        { name: "📋 //warnings @user", value: "View member's warning history", inline: true }
+      )
+      .setFooter({ text: "💡 All actions are auto-logged to your modlog channel" });
+
+    return msg.reply({ 
+      embeds: [adminMainEmbed, adminRoleEmbed, adminWelcomeEmbed, adminConfigEmbed, adminSocialEmbed, adminModEmbed],
+      content: "** **"
+    });
+  }
+
   // ============== CONFIG COMMANDS ==============
   if (msg.content.startsWith("//config-welcome-channel ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
