@@ -378,10 +378,16 @@ client.on("messageCreate", async (msg) => {
 
     const configEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("⚙️ CONFIGURATION (10 commands)")
+      .setTitle("⚙️ CONFIGURATION (2 commands)")
       .addFields(
         { name: "🔤 //set-prefix [prefix]", value: "Change command prefix", inline: true },
-        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true },
+        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
+      );
+
+    const serverMasterEmbed = new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle("👑 SERVER MASTER (8 commands)")
+      .addFields(
         { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
         { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
         { name: "📋 //list-twitch-users", value: "View monitored Twitch creators", inline: true },
@@ -402,7 +408,7 @@ client.on("messageCreate", async (msg) => {
       .setFooter({ text: "💡 Tip: All admin commands require Administrator permission • Moderation actions are auto-logged" });
 
     return msg.reply({ 
-      embeds: [mainEmbed, roleEmbed, welcomeEmbed, musicEmbed, modEmbed, configEmbed, utilityEmbed],
+      embeds: [mainEmbed, roleEmbed, welcomeEmbed, musicEmbed, modEmbed, configEmbed, serverMasterEmbed, utilityEmbed],
       content: "** **"
     });
   }
