@@ -1194,6 +1194,16 @@ client.on("interactionCreate", async (interaction) => {
 const app = express();
 app.use(express.json());
 
+// Admin authentication middleware
+function verifyAdmin(req, res, next) {
+  const adminToken = process.env.ADMIN_TOKEN || "spidey123";
+  const token = req.query.token || req.headers["x-admin-token"];
+  if (token !== adminToken) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  next();
+}
+
 app.get("/", (req, res) => {
   const uptime = Math.floor(process.uptime());
   const hours = Math.floor(uptime / 3600);
@@ -1208,6 +1218,7 @@ app.get("/", (req, res) => {
           .container { text-align: center; }
           h1 { font-size: 3em; }
           p { font-size: 1.2em; }
+          a { color: #FFD700; text-decoration: none; margin-top: 20px; display: inline-block; }
         </style>
       </head>
       <body>
@@ -1215,10 +1226,138 @@ app.get("/", (req, res) => {
           <h1>🤖 SPIDEY BOT</h1>
           <p>✅ BOT IS ALIVE AND RUNNING</p>
           <p>⏱️ Uptime: ${hours}h ${minutes}m ${seconds}s</p>
+          <a href="/admin?token=spidey123">📊 Admin Dashboard</a>
         </div>
       </body>
     </html>
   `);
+});
+
+// Admin Dashboard
+app.get("/admin", (req, res) => {
+  const adminToken = process.env.ADMIN_TOKEN || "spidey123";
+  const token = req.query.token;
+  if (token !== adminToken) {
+    return res.send(`
+      <html>
+        <head>
+          <title>Admin Login</title>
+          <style>
+            body { background: #5865F2; color: white; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .container { text-align: center; background: #4752C4; padding: 40px; border-radius: 10px; }
+            input { padding: 10px; width: 200px; border: none; border-radius: 5px; }
+            button { padding: 10px 20px; background: #FFD700; color: black; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>🔐 Admin Login</h1>
+            <form>
+              <input type="password" id="token" placeholder="Enter Admin Token" required>
+              <button type="button" onclick="login()">Login</button>
+            </form>
+            <script>
+              function login() {
+                const token = document.getElementById('token').value;
+                window.location.href = '/admin?token=' + token;
+              }
+            </script>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+
+  const config = loadConfig();
+  const guilds = config.guilds || {};
+  
+  let guildRows = "";
+  for (const [guildId, guildConfig] of Object.entries(guilds)) {
+    const twitchUsers = (guildConfig.twitchUsers || []).join(", ") || "None";
+    const tiktokUsers = (guildConfig.tiktokUsers || []).join(", ") || "None";
+    guildRows += `
+      <tr style="border-bottom: 1px solid #ccc;">
+        <td style="padding: 10px;"><code>${guildId}</code></td>
+        <td style="padding: 10px;">${guildConfig.prefix || "//"}</td>
+        <td style="padding: 10px;">${twitchUsers}</td>
+        <td style="padding: 10px;">${tiktokUsers}</td>
+        <td style="padding: 10px;"><button onclick="editGuild('${guildId}')">Edit</button></td>
+      </tr>
+    `;
+  }
+
+  res.send(`
+    <html>
+      <head>
+        <title>SPIDEY BOT Admin Dashboard</title>
+        <style>
+          body { background: #5865F2; color: white; font-family: Arial; margin: 0; padding: 20px; }
+          .container { max-width: 1200px; margin: 0 auto; }
+          h1 { text-align: center; }
+          table { width: 100%; border-collapse: collapse; background: #4752C4; border-radius: 5px; overflow: hidden; }
+          th { background: #36393F; padding: 10px; text-align: left; }
+          td { padding: 10px; }
+          button { background: #7289DA; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+          button:hover { background: #5B7FBD; }
+          .logout { float: right; background: #FF6B6B; }
+          .logout:hover { background: #EE5A52; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🤖 SPIDEY BOT Admin Dashboard</h1>
+          <button class="logout" onclick="logout()">Logout</button>
+          <br><br>
+          <table>
+            <tr style="background: #36393F;">
+              <th>Server ID</th>
+              <th>Prefix</th>
+              <th>Twitch Users</th>
+              <th>TikTok Users</th>
+              <th>Action</th>
+            </tr>
+            ${guildRows || "<tr><td colspan='5' style='text-align: center; padding: 20px;'>No servers configured yet</td></tr>"}
+          </table>
+        </div>
+        <script>
+          function logout() {
+            window.location.href = '/';
+          }
+          function editGuild(guildId) {
+            window.location.href = '/admin/edit?guildId=' + guildId + '&token=spidey123';
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+// API: Get guild config
+app.get("/api/guild/:guildId", verifyAdmin, (req, res) => {
+  const config = loadConfig();
+  const guildConfig = config.guilds[req.params.guildId];
+  if (!guildConfig) {
+    return res.status(404).json({ error: "Guild not found" });
+  }
+  res.json(guildConfig);
+});
+
+// API: Update guild config
+app.post("/api/guild/:guildId", verifyAdmin, express.json(), (req, res) => {
+  const config = loadConfig();
+  const guildId = req.params.guildId;
+  if (!config.guilds[guildId]) {
+    config.guilds[guildId] = {};
+  }
+  config.guilds[guildId] = { ...config.guilds[guildId], ...req.body };
+  saveConfig(config);
+  res.json({ success: true, config: config.guilds[guildId] });
+});
+
+// API: List all guilds
+app.get("/api/guilds", verifyAdmin, (req, res) => {
+  const config = loadConfig();
+  res.json(config.guilds || {});
 });
 
 // Twitch webhook
