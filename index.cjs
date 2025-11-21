@@ -1976,12 +1976,6 @@ client.on("interactionCreate", async (interaction) => {
 const app = express();
 app.use(express.static('public'));
 app.use(express.json());
-app.use(session({
-  secret: process.env.SESSION_SECRET || "spidey-secret-key-2025",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false, httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }
-}));
 
 // Admin authentication middleware
 function verifyAdmin(req, res, next) {
