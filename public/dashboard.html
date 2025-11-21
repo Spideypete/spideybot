@@ -2022,29 +2022,232 @@
                 <!-- SERVER MESSAGES -->
                 <div id="server-messages" class="content">
                     <div class="page-title">💬 Server Messages</div>
-                    <div class="page-description">Customize welcome and goodbye messages</div>
+                    <div class="page-description">Customize welcome messages, goodbye messages, and automatic role instructions for new members</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Message Templates</div>
-                                    <div class="card-subtitle">Greetings & farewells</div>
+                                    <div class="card-title">👋 Welcome Messages Overview</div>
+                                    <div class="card-subtitle">Enhance member onboarding</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎯 Purpose:</strong><br/>
+                                    Automatically send personalized messages to new members when they join. Can be public in a welcome channel or private direct message (DM).
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">✨ Benefits:</strong><br/>
+                                    Enhance onboarding, provide server rules, guide users to relevant channels, encourage role selection, and create a warm community atmosphere.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">💬 Placeholder Variables:</strong><br/>
+                                    {user} = Member mention | {server} = Server name | {count} = Total members | {rules} = Server rules
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Welcome Message Configuration</div>
+                                    <div class="card-subtitle">Set up automatic member greetings</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Welcome Channel</label>
+                                    <input type="text" id="server-messages_channel" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Public channel for welcome messages (leave blank for DM)</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Send Method</label>
+                                    <select id="server-messages_method">
+                                        <option value="public">📢 Public Channel</option>
+                                        <option value="dm">📧 Direct Message</option>
+                                        <option value="both">🔄 Both</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Welcome Channel</label>
-                                <input type="text" id="server-messages_channel" placeholder="Channel ID">
-                            </div>
-                            <div class="form-group">
                                 <label>Welcome Message</label>
-                                <textarea id="server-messages_welcome" placeholder="Welcome {user} to {server}!"></textarea>
+                                <textarea id="server-messages_welcome" placeholder="Welcome {user} to {server}! 👋 Please check out #rules and select your roles in #role-selection!" style="min-height: 100px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Custom message sent to new members with instructions on roles and channels</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🚪 Member Exit Messages</div>
+                                    <div class="card-subtitle">Farewell messages for departing members</div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Goodbye Message</label>
-                                <textarea id="server-messages_goodbye" placeholder="{user} has left {server}"></textarea>
+                                <textarea id="server-messages_goodbye" placeholder="{user} has left {server}. We'll miss you! 👋" style="min-height: 80px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Message sent when a member leaves the server</div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('server-messages')">💾 Save</button>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch">
+                                    <span>Goodbye Messages Enabled</span>
+                                    <div class="toggle active" id="server-messages_goodbyeEnabled"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎮 Command Panels - Reaction Roles</div>
+                                    <div class="card-subtitle">Bot setup and role assignment system</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🔧 Bot Setup Process:</strong><br/>
+                                    1. Bot is added to server | 2. Bot's role moved to top of role hierarchy | 3. Panel creation initiated | 4. Users react to emojis to get roles
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">✨ Panel Features:</strong><br/>
+                                    Embedded messages with title and emoji-to-role mapping | Automatic role assignment on reaction | Real-time role removal on reaction removal
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Panel Enabled</label>
+                                    <div class="switch" style="margin-top: 0.5rem;">
+                                        <div class="toggle active" id="server-messages_panelEnabled"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Panel Style</label>
+                                    <select id="server-messages_panelStyle">
+                                        <option value="classic">📋 Classic Emoji Reactions</option>
+                                        <option value="modern">✨ Modern Components</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎛️ UI Components - Modern Role Selection</div>
+                                    <div class="card-subtitle">Buttons and dropdown menus for cleaner UX</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+                                <strong style="color: rgba(var(--theme-color), 1);">🚀 What Are Components?</strong><br/>
+                                Modern Discord UI elements (buttons and dropdown menus) that provide a cleaner, more intuitive user experience compared to traditional emoji reactions.
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Enable Button Components</span>
+                                    <div class="toggle active" id="server-messages_buttons"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Enable Dropdown Menus</span>
+                                    <div class="toggle active" id="server-messages_dropdowns"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Keep Classic Emojis as Fallback</span>
+                                    <div class="toggle active" id="server-messages_fallback"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">📈 XP Levels & Leveling System</div>
+                                    <div class="card-subtitle">Gamify member engagement with experience points</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎮 How It Works:</strong><br/>
+                                    Members earn XP by sending messages in text channels and participating in voice chat. Auto-level ups, role assignments, and leaderboard standings incentivize engagement.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">🏆 Benefits:</strong><br/>
+                                    Badges of honor, exclusive perks, automatic role rewards, and community recognition on server leaderboards.
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>XP Per Message</label>
+                                    <input type="number" id="server-messages_xpMessage" placeholder="10" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">XP gained for each message</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>XP Per Voice Minute</label>
+                                    <input type="number" id="server-messages_xpVoice" placeholder="5" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">XP gained per minute in voice</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>XP Leveling Enabled</label>
+                                <div class="switch">
+                                    <div class="toggle active" id="server-messages_xpEnabled"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎛️ Admin Control Panel (Web Dashboard)</div>
+                                    <div class="card-subtitle">Centralized bot management without commands</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📊 What Is It?</strong><br/>
+                                    A web-based interface where server admins manage all bot settings without needing Discord commands or complex configuration.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">🎯 Features Available:</strong><br/>
+                                    Setup reaction roles, customize welcome messages, adjust XP gain rates, manage moderation settings, and view server analytics in real-time.
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Dashboard Access</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Dashboard Enabled</span>
+                                    <div class="toggle active" id="server-messages_dashEnabled"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Analytics Visible</span>
+                                    <div class="toggle active" id="server-messages_analytics"></div>
+                                </div>
+                                <div class="switch">
+                                    <span>Audit Logs Enabled</span>
+                                    <div class="toggle active" id="server-messages_auditLogs"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('server-messages')">💾 Save Server Messages Configuration</button>
                             </div>
                         </div>
                     </div>
