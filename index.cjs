@@ -2252,6 +2252,13 @@ function verifyAdmin(req, res, next) {
 // Get invite link
 const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
 
+// ============== HOMEPAGE ==============
+app.get("/", (req, res) => {
+  res.sendFile(path.join(publicDir, 'index.html'), (err) => {
+    if (err) res.status(404).send('Index page not found');
+  });
+});
+
 // ============== DISCORD OAUTH LOGIN ==============
 // Redirect login page to Discord OAuth
 app.get("/login", (req, res) => {
