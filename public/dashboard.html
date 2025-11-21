@@ -3620,16 +3620,27 @@
         });
 
         document.querySelectorAll('.sidebar-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const section = item.getAttribute('data-section');
-                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-                item.classList.add('active');
-                document.getElementById(section).classList.add('active');
-                if (section === 'dashboard') {
-                    loadDashboard();
-                } else {
-                    loadConfig(section);
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const section = this.getAttribute('data-section');
+                if (!section) return;
+                
+                try {
+                    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const contentEl = document.getElementById(section);
+                    if (contentEl) {
+                        contentEl.classList.add('active');
+                        if (section === 'dashboard') {
+                            loadDashboard();
+                        } else {
+                            loadConfig(section);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Click handler error:', err);
                 }
             });
         });
