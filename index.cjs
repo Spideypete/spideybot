@@ -122,15 +122,20 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ No role categories created yet! Use `//create-category [name]` to get started.");
     }
     
-    const fields = Object.entries(categories).map(([catName, roles]) => ({
-      name: catName,
-      value: roles.length > 0 ? roles.map(r => `• ${r.name}`).join("\n") : "No roles",
-      inline: false
-    }));
+    const fields = Object.entries(categories).map(([catName, catData]) => {
+      const roles = Array.isArray(catData) ? catData : (catData.roles || []);
+      const banner = !Array.isArray(catData) && catData.banner ? " 🎬" : "";
+      return {
+        name: catName + banner,
+        value: roles.length > 0 ? roles.map(r => `• ${r.name}`).join("\n") : "No roles",
+        inline: false
+      };
+    });
 
     const rolesEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle("📋 Active Role Categories")
+      .setDescription("🎬 = Has a banner image")
       .addFields(...fields)
       .setFooter({ text: "SPIDEY BOT" });
     return msg.reply({ embeds: [rolesEmbed] });
@@ -145,9 +150,9 @@ client.on("messageCreate", async (msg) => {
     if (!categoryName) return msg.reply("Usage: //create-category [name]");
     const categories = guildConfig.roleCategories || {};
     if (categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" already exists!`);
-    categories[categoryName] = [];
+    categories[categoryName] = { roles: [], banner: null };
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
-    return msg.reply(`✅ Created category: **${categoryName}**`);
+    return msg.reply(`✅ Created category: **${categoryName}**\n\n*Tip: Use \`//set-category-banner ${categoryName} [gif-url]\` to add a banner!*`);
   }
 
   // Add a role to a category
@@ -164,10 +169,12 @@ client.on("messageCreate", async (msg) => {
     }
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" doesn't exist! Use //create-category first.`);
-    if (categories[categoryName].some(r => r.name === roleName)) {
+    const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
+    if (catData.roles.some(r => r.name === roleName)) {
       return msg.reply(`❌ Role "${roleName}" already in this category!`);
     }
-    categories[categoryName].push({ name: roleName, id: roleId });
+    catData.roles.push({ name: roleName, id: roleId });
+    categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
     return msg.reply(`✅ Added **${roleName}** to category **${categoryName}**`);
   }
@@ -185,11 +192,33 @@ client.on("messageCreate", async (msg) => {
     }
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
-    const index = categories[categoryName].findIndex(r => r.name === roleName);
+    const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
+    const index = catData.roles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply(`❌ Role "${roleName}" not found in this category!`);
-    categories[categoryName].splice(index, 1);
+    catData.roles.splice(index, 1);
+    categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
     return msg.reply(`✅ Removed **${roleName}** from **${categoryName}**`);
+  }
+
+  // Set category banner
+  if (msg.content.startsWith("//set-category-banner ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can set banners!");
+    }
+    const args = msg.content.slice(22).trim().split(" ");
+    const categoryName = args[0];
+    const bannerUrl = args.slice(1).join(" ");
+    if (!categoryName || !bannerUrl) {
+      return msg.reply("Usage: //set-category-banner [category] [gif-url]\n\nExample: //set-category-banner Gaming https://example.com/gaming.gif");
+    }
+    const categories = guildConfig.roleCategories || {};
+    if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
+    const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
+    catData.banner = bannerUrl;
+    categories[categoryName] = catData;
+    updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    return msg.reply(`✅ Banner set for **${categoryName}**!\n\n*Use \`//setup-category ${categoryName}\` to see it in action!*`);
   }
 
   // Delete a category
@@ -215,9 +244,10 @@ client.on("messageCreate", async (msg) => {
         { name: "📌 //create-category [name]", value: "✨ Create a new role category", inline: true },
         { name: "➕ //add-role [cat] [name] [ID]", value: "✨ Add role to category", inline: true },
         { name: "➖ //remove-role [cat] [name]", value: "✨ Remove role from category", inline: true },
+        { name: "🎬 //set-category-banner [cat] [url]", value: "✨ Add GIF banner to category", inline: true },
         { name: "🗑️ //delete-category [name]", value: "✨ Delete entire category", inline: true },
         { name: "📋 //list-roles", value: "✨ View all role categories", inline: true },
-        { name: "🔘 //setup-category [name]", value: "✨ Post role selector", inline: true }
+        { name: "🔘 //setup-category [name]", value: "✨ Post role selector with banner", inline: true }
       );
 
     const welcomeEmbed = new EmbedBuilder()
@@ -375,10 +405,13 @@ client.on("messageCreate", async (msg) => {
     if (!categories[categoryName]) {
       return msg.reply(`❌ Category "${categoryName}" does not exist!`);
     }
-    if (categories[categoryName].length === 0) {
+    
+    const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
+    if (catData.roles.length === 0) {
       return msg.reply(`❌ Add roles with //add-role first!`);
     }
-    const roleOptions = categories[categoryName].map(r => ({ label: `✨ ${r.name}`, value: r.id }));
+    
+    const roleOptions = catData.roles.map(r => ({ label: `✨ ${r.name}`, value: r.id }));
     const colorMap = { gaming: 0xFF6B6B, streaming: 0x4ECDC4, platform: 0x45B7D1, community: 0x96CEB4, events: 0xFFBD39, other: 0x9B59B6 };
     const categoryLower = categoryName.toLowerCase();
     let embedColor = colorMap[categoryLower] || 0x5865F2;
@@ -388,6 +421,10 @@ client.on("messageCreate", async (msg) => {
       .setTitle(`🎯 ${categoryName.toUpperCase()} ROLES`)
       .setDescription(`✨ Click below to select your ${categoryName.toLowerCase()} roles!\n\n*Choose multiple roles to add yourself to communities*`)
       .setFooter({ text: "SPIDEY BOT • Select roles to join communities" });
+    
+    if (catData.banner) {
+      embed.setImage(catData.banner);
+    }
 
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
