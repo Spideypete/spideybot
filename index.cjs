@@ -2079,48 +2079,66 @@ app.get("/", (req, res) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>SPIDEY BOT - Advanced Discord Bot</title>
+        <title>SPIDEY BOT - Complete Discord Bot for Communities</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="SPIDEY BOT is the ultimate multi-server Discord bot featuring advanced music playback with YouTube search, comprehensive moderation tools, role management with GIF banners, unlimited social media monitoring, economy system, leveling with leaderboards, link filtering, ticket support, custom commands, and 40+ total commands. Perfect for community servers.">
-        <meta name="keywords" content="Discord Bot, Music Bot, Moderation, Community, Leveling">
-        <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
+        <meta name="description" content="SPIDEY BOT: Music player, moderation, economy, leveling, role management, social media monitoring, and 40+ commands. All-in-one Discord bot trusted by servers worldwide.">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Fredoka', sans-serif; background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #0d0015 50%, #3d1573 75%, #1a0033 100%); background-attachment: fixed; color: white; line-height: 1.6; position: relative; }
-          body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(145, 70, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: -1; }
-          body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 127, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(138, 43, 226, 0.05) 0%, transparent 50%); pointer-events: none; z-index: -1; }
-          nav { background: rgba(17, 17, 17, 0.9); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9146FF; backdrop-filter: blur(10px); position: relative; z-index: 10; }
-          nav a { color: #9146FF; text-decoration: none; margin: 0 1rem; font-weight: 600; transition: all 0.3s; }
-          nav a:hover { color: #FF1493; text-shadow: 0 0 10px #FF1493; }
-          .hero { position: relative; background: linear-gradient(135deg, rgba(26, 0, 51, 0.9) 0%, rgba(45, 0, 82, 0.9) 25%, rgba(13, 0, 21, 0.9) 50%, rgba(61, 21, 115, 0.9) 75%, rgba(26, 0, 51, 0.9) 100%), url('/assets/spidey-banner.png'); background-size: cover; background-position: center; text-align: center; padding: 4rem 2rem; }
-          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); }
-          .hero p { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.95; color: white; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8); }
-          .btn { display: inline-block; padding: 1rem 2rem; background: #9146FF; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; font-size: 1rem; }
-          .btn:hover { background: #7C3AED; transform: scale(1.05); }
-          .btn-secondary { background: transparent; color: #9146FF; border: 2px solid #9146FF; }
-          .btn-secondary:hover { background: #9146FF; color: #000; }
-          .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
-          .feature { background: #1a1a1a; padding: 2rem; border-radius: 10px; border: 1px solid #333; }
-          .feature h3 { font-size: 1.5rem; margin-bottom: 1rem; color: white; font-family: 'Fredoka One', sans-serif; }
-          .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-          .stats { background: #111111; padding: 2rem; text-align: center; }
-          .stat { display: inline-block; margin: 1rem 2rem; }
-          .stat h2 { font-size: 2rem; color: #9146FF; }
-          .commands { max-width: 1200px; margin: 3rem auto; padding: 2rem; }
-          .command-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-          .command-card { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF; }
-          .command-card h4 { margin-bottom: 0.5rem; color: white; font-family: 'Fredoka One', sans-serif; }
-          .command-card p { opacity: 0.8; font-size: 0.9rem; color: white; }
-          footer { background: #111111; text-align: center; padding: 2rem; margin-top: 3rem; border-top: 1px solid #333; }
-          .description { max-width: 900px; margin: 2rem auto; padding: 2rem; background: rgba(26, 26, 26, 0.8); border-radius: 10px; border: 2px solid #9146FF; text-align: center; font-size: 1.1rem; line-height: 1.8; color: #ddd; }
-          .tags { max-width: 900px; margin: 2rem auto; text-align: center; }
-          .tag { display: inline-block; background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%); color: white; padding: 0.7rem 1.5rem; margin: 0.5rem; border-radius: 25px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(145, 70, 255, 0.3); }
+          html { scroll-behavior: smooth; }
+          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; line-height: 1.6; }
+          nav { background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid #222; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+          nav img { height: 40px; }
+          nav a { color: #999; text-decoration: none; margin: 0 1.5rem; transition: color 0.3s; font-weight: 500; }
+          nav a:hover { color: #9146FF; }
+          .hero { background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%); padding: 6rem 2rem; text-align: center; position: relative; overflow: hidden; }
+          .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.15) 0%, transparent 50%); }
+          .hero > * { position: relative; z-index: 2; }
+          .hero h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem; background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+          .hero p { font-size: 1.25rem; color: #ccc; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+          .btn-group { margin: 2rem 0; }
+          .btn { display: inline-block; padding: 0.9rem 2rem; background: #9146FF; color: #000; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 0.5rem; transition: all 0.3s; border: 2px solid #9146FF; cursor: pointer; }
+          .btn:hover { background: #7C3AED; border-color: #7C3AED; transform: translateY(-2px); }
+          .btn-outline { background: transparent; color: #9146FF; }
+          .btn-outline:hover { background: #9146FF; color: #000; }
+          .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+          .plugins { padding: 5rem 2rem; background: #1a1a1a; }
+          .section-title { text-align: center; font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+          .section-subtitle { text-align: center; color: #999; font-size: 1.1rem; margin-bottom: 3rem; }
+          .plugin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+          .plugin-card { background: #222; padding: 2rem; border-radius: 12px; border: 1px solid #333; transition: all 0.3s; }
+          .plugin-card:hover { border-color: #9146FF; transform: translateY(-5px); }
+          .plugin-icon { font-size: 3rem; margin-bottom: 1rem; }
+          .plugin-card h3 { font-size: 1.3rem; margin-bottom: 0.8rem; font-weight: 600; }
+          .plugin-card p { color: #bbb; font-size: 0.95rem; }
+          .features-showcase { padding: 5rem 2rem; }
+          .showcase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+          .showcase-item { background: #1a1a1a; padding: 2rem; border-radius: 12px; border-left: 4px solid #9146FF; }
+          .showcase-item h3 { margin-bottom: 1rem; font-size: 1.2rem; }
+          .showcase-item p { color: #aaa; line-height: 1.8; }
+          .stats { padding: 3rem 2rem; background: #1a1a1a; text-align: center; }
+          .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 2rem; max-width: 800px; margin: 2rem auto 0; }
+          .stat-item h2 { font-size: 2.5rem; color: #9146FF; margin-bottom: 0.5rem; }
+          .stat-item p { color: #999; }
+          .cta { padding: 4rem 2rem; background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%); text-align: center; }
+          .cta h2 { font-size: 2.2rem; margin-bottom: 1rem; }
+          .cta p { color: #ccc; margin-bottom: 2rem; font-size: 1.1rem; }
+          footer { background: #0a0a0a; padding: 3rem 2rem; text-align: center; border-top: 1px solid #222; }
+          footer a { color: #9146FF; text-decoration: none; margin: 0 1rem; }
+          footer a:hover { text-decoration: underline; }
+          @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            nav { flex-direction: column; gap: 1rem; }
+            .section-title { font-size: 2rem; }
+          }
         </style>
       </head>
       <body>
         <nav>
-          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 50px; margin-right: 1rem;">
-          <div style="font-size: 1.5rem; font-weight: bold; flex: 1;">SPIDEY BOT</div>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
+            <span style="font-weight: 700; font-size: 1.2rem;">SPIDEY BOT</span>
+          </div>
           <div>
             <a href="/">Home</a>
             <a href="/features">Features</a>
@@ -2130,126 +2148,132 @@ app.get("/", (req, res) => {
         </nav>
 
         <div class="hero">
-          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 120px; margin-bottom: 1.5rem; filter: drop-shadow(0 4px 15px rgba(145, 70, 255, 0.5));">
-          <h1>SPIDEY BOT</h1>
-          <p>The Ultimate Discord Bot for Music, Moderation & Community Management</p>
-          <div style="margin-top: 2rem;">
-            <a href="${botInviteURL}" target="_blank" class="btn">➕ Add to Discord</a>
-            <a href="/features" class="btn btn-secondary">⭐ Explore Features</a>
-            <a href="/commands" class="btn btn-secondary">📚 View Commands</a>
+          <h1>The best all-in-one bot for Discord</h1>
+          <p>SPIDEY BOT is a complete Discord bot trusted by servers worldwide. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
+          <div class="btn-group">
+            <a href="${botInviteURL}" target="_blank" class="btn">Add to Discord</a>
+            <a href="/features" class="btn btn-outline">See Features</a>
           </div>
         </div>
 
-        <div class="description">
-          🕷️ SPIDEY BOT is the ultimate multi-server Discord bot featuring advanced music playback with YouTube search, comprehensive moderation tools, role management with GIF banners, unlimited social media monitoring, economy system, leveling with leaderboards, link filtering, ticket support, custom commands, and 40+ total commands. Perfect for community servers with complete per-server configuration!
+        <div class="plugins">
+          <div class="container">
+            <h2 class="section-title">Plugins & Features</h2>
+            <p class="section-subtitle">Everything you need to manage, protect, and grow your Discord community</p>
+            <div class="plugin-grid">
+              <div class="plugin-card">
+                <div class="plugin-icon">🎵</div>
+                <h3>Music & Entertainment</h3>
+                <p>Advanced music player with YouTube search, queue management, loop, shuffle, volume control, and interactive buttons</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">🛡️</div>
+                <h3>Moderation & Management</h3>
+                <p>Kick, ban, warn, mute with automatic logging. Link filtering, profanity filter, and warning tracking</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">🎭</div>
+                <h3>Role Management</h3>
+                <p>Create custom role categories with GIF banners. Interactive role selectors for easy member management</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">📱</div>
+                <h3>Social Media Monitoring</h3>
+                <p>Monitor unlimited Twitch, TikTok, and Kick streamers. Auto-announce live streams and new posts to your server</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">💰</div>
+                <h3>Economy System</h3>
+                <p>Currency system with daily rewards, work commands, transfers, and leaderboards. Admin controls for money management</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">📈</div>
+                <h3>Leveling & XP</h3>
+                <p>Passive XP gains from chatting. Auto-assigned level roles with emoji badges (1-100) and leaderboards</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">👋</div>
+                <h3>Welcome Messages</h3>
+                <p>Custom welcome messages with placeholders. Personalize greetings for every new member</p>
+              </div>
+              <div class="plugin-card">
+                <div class="plugin-icon">🎫</div>
+                <h3>Ticket Support</h3>
+                <p>Support ticket system for member assistance. Easy ticket creation and management</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="tags">
-          <span class="tag">🎵 Music Bot</span>
-          <span class="tag">🛡️ Moderation</span>
-          <span class="tag">👥 Community</span>
-          <span class="tag">📈 Leveling</span>
-          <span class="tag">⚙️ Utility</span>
+        <div class="features-showcase">
+          <div class="container">
+            <h2 class="section-title">Why Choose SPIDEY BOT?</h2>
+            <div class="showcase-grid">
+              <div class="showcase-item">
+                <h3>✨ All-in-One Solution</h3>
+                <p>40+ commands covering music, moderation, economy, leveling, social media, and more. Everything in one bot.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>🔧 Per-Server Configuration</h3>
+                <p>Each server has independent settings, custom prefix, role categories, and configurations. Total control.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>⚡ Easy to Use</h3>
+                <p>Simple commands, intuitive interface, and helpful documentation. Get started in minutes, not hours.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>🌐 Unlimited Creators</h3>
+                <p>Monitor unlimited Twitch, TikTok, and Kick streamers per server. No limits on social media monitoring.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>🎖️ Gamification</h3>
+                <p>Level roles with gradient colors, economy system, and leaderboards to keep members engaged.</p>
+              </div>
+              <div class="showcase-item">
+                <h3>24/7 Uptime</h3>
+                <p>Deployed on Render for reliable 24/7 operation. Your community always has the tools it needs.</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="stats">
-          <div class="stat">
-            <h2>35+</h2>
-            <p>Commands</p>
-          </div>
-          <div class="stat">
-            <h2>∞</h2>
-            <p>Servers</p>
-          </div>
-          <div class="stat">
-            <h2>5</h2>
-            <p>Feature Categories</p>
-          </div>
-        </div>
-
-        <div class="features">
-          <div class="feature">
-            <div class="feature-icon">🎵</div>
-            <h3>Advanced Music</h3>
-            <p>Search YouTube, create playlists, loop/shuffle, volume control with button controls</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">🎭</div>
-            <h3>Role Management</h3>
-            <p>Custom role categories with GIF banners, interactive role selectors</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">🛡️</div>
-            <h3>Moderation</h3>
-            <p>Kick, ban, warn with automatic logging. Track member warnings</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">📱</div>
-            <h3>Social Media</h3>
-            <p>Monitor unlimited Twitch streamers and TikTok creators with auto-alerts</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">👋</div>
-            <h3>Welcome System</h3>
-            <p>Custom welcome messages with placeholders for user info and server details</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">⚙️</div>
-            <h3>Per-Server Config</h3>
-            <p>Each server gets independent settings, prefix, and customization</p>
-          </div>
-        </div>
-
-        <div class="commands">
-          <h2 style="text-align: center; margin-bottom: 2rem;">🎯 Core Features</h2>
-          <div class="command-row">
-            <div class="command-card">
-              <h4>🎵 Music Player</h4>
-              <p>//play [song] • //queue • //loop • //shuffle • //volume [0-200]</p>
-            </div>
-            <div class="command-card">
-              <h4>🎭 Role Categories</h4>
-              <p>//create-category • //add-role • //setup-category • //list-roles</p>
-            </div>
-            <div class="command-card">
-              <h4>🛡️ Moderation</h4>
-              <p>//kick • //ban • //warn • //mute • //unmute • //warnings</p>
-            </div>
-            <div class="command-card">
-              <h4>📱 Social Media</h4>
-              <p>//add-twitch-user • //add-tiktok-user • //config-twitch-channel</p>
-            </div>
-            <div class="command-card">
-              <h4>👋 Welcome</h4>
-              <p>//config-welcome-channel • //config-welcome-message</p>
-            </div>
-            <div class="command-card">
-              <h4>⚙️ Configuration</h4>
-              <p>//set-prefix • //config-modlog • Unlimited per-server customization</p>
+          <div class="container">
+            <h2 class="section-title">Trusted by Communities</h2>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <h2>40+</h2>
+                <p>Commands</p>
+              </div>
+              <div class="stat-item">
+                <h2>∞</h2>
+                <p>Servers</p>
+              </div>
+              <div class="stat-item">
+                <h2>8</h2>
+                <p>Feature Categories</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div id="invite" style="text-align: center; padding: 3rem 2rem; background: rgba(0,0,0,0.3);">
-          <h2>Ready to Add SPIDEY BOT?</h2>
-          <p style="margin: 1rem 0;">Get your server powered up with music, moderation & more!</p>
-          <a href="${botInviteURL}" target="_blank" class="btn">➕ Invite SPIDEY BOT Now</a>
-        </div>
-
-        <div style="text-align: center; padding: 3rem 2rem; background: #1a1a1a; border-top: 2px solid #9146FF;">
-          <h2 style="color: #9146FF; margin-bottom: 1rem;">☕ Support SPIDEY BOT</h2>
-          <p style="margin-bottom: 1.5rem; opacity: 0.8;">Love SPIDEY BOT? Consider supporting development!</p>
-          <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=peterburke122000@gmail.com&item_name=Support+SPIDEY+BOT&amount=10.00&currency_code=USD" target="_blank" class="btn" style="background: #9146FF; font-size: 1.1rem;">💜 Donate via PayPal</a>
-          <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.6;">All donations help us keep the bot running & add new features!</p>
+        <div class="cta" id="invite">
+          <div class="container">
+            <h2>Ready to add SPIDEY BOT to your server?</h2>
+            <p>Join thousands of communities already using SPIDEY BOT</p>
+            <a href="${botInviteURL}" target="_blank" class="btn">Add SPIDEY BOT Now</a>
+          </div>
         </div>
 
         <footer>
-          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 40px; margin-bottom: 0.5rem;">
-          <p>SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
-          <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">Use //help in Discord to see all commands • Admins use //adminhelp</p>
-          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #333;">
-            <a href="/tos" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">⚖️ Terms of Service</a>
-            <a href="/privacy" style="color: white; text-decoration: none; margin: 0 1rem; font-size: 0.9rem;">📋 Privacy Policy</a>
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 40px; margin-bottom: 1rem;">
+          <p>SPIDEY BOT © 2025 • The complete Discord bot for your community</p>
+          <p style="margin: 1rem 0; color: #666; font-size: 0.9rem;">Use <strong>//help</strong> in Discord for commands • <strong>//adminhelp</strong> for admin features</p>
+          <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #222;">
+            <a href="/tos">Terms of Service</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/features">Features</a>
+            <a href="/commands">Commands</a>
           </div>
         </footer>
         ${supportWidget}
