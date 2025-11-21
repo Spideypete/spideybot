@@ -1260,7 +1260,7 @@ const supportWidget = `
     <div class="support-option"><a href="https://discord.gg/DISCORD_SERVER_ID" target="_blank">🔗 Join Discord Support Server</a></div>
     <div class="support-option"><a href="/commands">📚 View Commands</a></div>
     <div class="support-option"><a href="https://github.com/YOUR_GITHUB/SPIDEY-BOT" target="_blank">🐛 Report Issue</a></div>
-    <div class="support-option"><a href="https://https://www.paypal.com/donate/?business=peterburke122000%40gmail.com&no_recurring=0&currency_code=USD" target="_blank">💜 Support Us</a></div>
+    <div class="support-option"><a href="https://www.paypal.com/donate/?business=peterburke122000%40gmail.com&no_recurring=0&currency_code=USD" target="_blank">💜 Support Us</a></div>
   </div>
 </div>
 <button class="support-btn" onclick="toggleSupportModal()">💬</button>
@@ -1412,7 +1412,7 @@ app.get("/", (req, res) => {
         <div style="text-align: center; padding: 3rem 2rem; background: #1a1a1a; border-top: 2px solid #9146FF;">
           <h2 style="color: #9146FF; margin-bottom: 1rem;">☕ Support SPIDEY BOT</h2>
           <p style="margin-bottom: 1.5rem; opacity: 0.8;">Love SPIDEY BOT? Consider supporting development!</p>
-          <a href="https://https://www.paypal.com/donate/?business=peterburke122000%40gmail.com&no_recurring=0&currency_code=USD" target="_blank" class="btn" style="background: #9146FF; font-size: 1.1rem;">💜 Donate via PayPal</a>
+          <a href="https://www.paypal.com/donate/?business=peterburke122000%40gmail.com&no_recurring=0&currency_code=USD" target="_blank" class="btn" style="background: #9146FF; font-size: 1.1rem;">💜 Donate via PayPal</a>
           <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.6;">All donations help us keep the bot running & add new features!</p>
         </div>
 
@@ -1549,7 +1549,7 @@ app.get("/features", (req, res) => {
           <div style="text-align: center; padding: 2rem; background: #1a1a1a; border-top: 2px solid #9146FF; margin-top: 3rem;">
             <h2 style="color: #9146FF; margin-bottom: 1rem;">☕ Support SPIDEY BOT</h2>
             <p style="margin-bottom: 1.5rem; opacity: 0.8;">Enjoy SPIDEY BOT? Support development!</p>
-            <a href="https://https://www.paypal.com/donate/?business=peterburke122000%40gmail.com&no_recurring=0&currency_code=USD" target="_blank" class="btn" style="background: #9146FF;">💜 Donate via PayPal</a>
+            <a href="https://www.paypal.com/donate/?business=peterburke122000%40gmail.com&no_recurring=0&currency_code=USD" target="_blank" class="btn" style="background: #9146FF;">💜 Donate via PayPal</a>
           </div>
         </div>
         ${supportWidget}
