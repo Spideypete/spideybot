@@ -315,6 +315,40 @@
       opacity: 1;
     }
 
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .emoji-animate {
+      display: inline-block;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .emoji-spin {
+      display: inline-block;
+      animation: spin 3s linear infinite;
+    }
+
+    .emoji-pulse {
+      display: inline-block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .section-title {
+      animation: float 4s ease-in-out infinite;
+    }
+
     .activity-feed {
       background: rgba(145, 70, 255, 0.03);
       border: 1px solid rgba(145, 70, 255, 0.15);
@@ -1190,19 +1224,278 @@
 
       <!-- Moderation -->
       <div id="moderation" class="page">
-        <div class="section-title">Moderation Tools</div>
+        <div class="section-title">🛡️ Moderation Tools</div>
         <div class="features">
           <div class="feature" style="grid-column: 1 / -1; max-width: 400px;">
             <input class="config-input" type="text" placeholder="User ID">
             <input class="config-input" type="text" placeholder="Reason for action">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
-              <button class="config-btn" style="background: #ff6b6b;">🦶 Kick</button>
-              <button class="config-btn" style="background: #ff6b6b;">🔨 Ban</button>
+              <button class="config-btn" style="background: rgba(255, 107, 107, 0.3); border-color: rgba(255, 107, 107, 0.5); color: #2D1B4E;">🦶 Kick</button>
+              <button class="config-btn" style="background: rgba(255, 107, 107, 0.3); border-color: rgba(255, 107, 107, 0.5); color: #2D1B4E;">🔨 Ban</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.6rem;">
               <button class="config-btn">⚠️ Warn</button>
               <button class="config-btn">🔇 Mute</button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subscriptions -->
+      <div id="subscriptions" class="page">
+        <div class="section-title">💳 Subscriptions & Premium</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <h3 style="color: #2D1B4E; margin-bottom: 1rem;">💎 Manage Premium Tiers</h3>
+            <input class="config-input" type="text" placeholder="Tier Name" value="Gold">
+            <input class="config-input" type="number" placeholder="Monthly Price ($)" value="9.99">
+            <input class="config-input" type="text" placeholder="Features (comma-separated)" value="Custom commands, Priority support">
+            <button class="config-btn" onclick="saveConfig('subscriptions')">💰 Save Tier</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logging -->
+      <div id="logging" class="page">
+        <div class="section-title">📝 Logging Configuration</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <label style="color: #2D1B4E; font-weight: 600; display: block; margin-bottom: 0.5rem;">📋 Log Channel ID</label>
+            <input class="config-input" type="text" placeholder="Channel ID for logs">
+            <label style="color: #2D1B4E; font-weight: 600; display: block; margin-top: 1rem; margin-bottom: 0.5rem;">✅ Log Types (Toggle)</label>
+            <div style="display: grid; gap: 0.5rem;">
+              <label style="color: #6B21A8;"><input type="checkbox" checked> 🗑️ Message Deletes</label>
+              <label style="color: #6B21A8;"><input type="checkbox" checked> ✏️ Message Edits</label>
+              <label style="color: #6B21A8;"><input type="checkbox" checked> 👤 Member Joins/Leaves</label>
+              <label style="color: #6B21A8;"><input type="checkbox" checked> 🎯 Bans/Kicks</label>
+            </div>
+            <button class="config-btn" onclick="saveConfig('logging')" style="margin-top: 1rem;">📝 Save Logs</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Server Guard -->
+      <div id="server-guard" class="page">
+        <div class="section-title">🛡️ Server Guard Protection</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <label style="color: #2D1B4E; font-weight: 600; display: block; margin-bottom: 1rem;">⚙️ Security Settings</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> 🚨 Anti-Spam</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> ⚠️ Raid Protection</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> 🔒 Auto-Moderation</label>
+            <input class="config-input" type="number" placeholder="Member Age Requirement (days)" value="7" style="margin-top: 1rem;">
+            <button class="config-btn" onclick="saveConfig('server-guard')">🔐 Save Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- React Roles -->
+      <div id="react-roles" class="page">
+        <div class="section-title">🎭 React Roles Setup</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <input class="config-input" type="text" placeholder="Message ID">
+            <input class="config-input" type="text" placeholder="Emoji" value="🎮">
+            <input class="config-input" type="text" placeholder="Role Name">
+            <input class="config-input" type="text" placeholder="Description">
+            <button class="config-btn" onclick="saveConfig('react-roles')">➕ Add Reaction Role</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Role Categories -->
+      <div id="role-categories" class="page">
+        <div class="section-title">📂 Role Categories</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <input class="config-input" type="text" placeholder="Category Name">
+            <input class="config-input" type="text" placeholder="Roles (comma-separated)" placeholder="Dev, Designer, Manager">
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Allow Multiple Roles</label>
+            <button class="config-btn" onclick="saveConfig('role-categories')">✨ Create Category</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Server Messages -->
+      <div id="server-messages" class="page">
+        <div class="section-title">💬 Server Messages</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <label style="color: #2D1B4E; font-weight: 600;">📬 Welcome Message</label>
+            <textarea class="config-input" placeholder="Welcome message text" style="min-height: 100px; resize: none;">Welcome to our server! 🎉</textarea>
+            <label style="color: #2D1B4E; font-weight: 600; margin-top: 1rem;">👋 Goodbye Message</label>
+            <textarea class="config-input" placeholder="Goodbye message text" style="min-height: 100px; resize: none;">Thanks for being here!</textarea>
+            <button class="config-btn" onclick="saveConfig('server-messages')" style="margin-top: 1rem;">💾 Save Messages</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Components -->
+      <div id="components" class="page">
+        <div class="section-title">🧩 Components</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <input class="config-input" type="text" placeholder="Component Name">
+            <input class="config-input" type="text" placeholder="Channel ID">
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Button Menu</label>
+            <label style="color: #6B21A8;"><input type="checkbox"> Dropdown Menu</label>
+            <button class="config-btn" onclick="saveConfig('components')">⚙️ Create Component</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Commands -->
+      <div id="custom-commands" class="page">
+        <div class="section-title">⌨️ Custom Commands</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <input class="config-input" type="text" placeholder="Command Name" value="welcome">
+            <textarea class="config-input" placeholder="Response message" style="min-height: 80px; resize: none;">Welcome to the server!</textarea>
+            <input class="config-input" type="text" placeholder="Required Role (optional)">
+            <button class="config-btn" onclick="saveConfig('custom-commands')">➕ Add Command</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recordings -->
+      <div id="recordings" class="page">
+        <div class="section-title">🎥 Voice Recordings</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <label style="color: #2D1B4E; font-weight: 600;">🎙️ Recording Settings</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Auto-Record Voice Channels</label>
+            <label style="color: #6B21A8;"><input type="checkbox"> Save to Cloud</label>
+            <input class="config-input" type="text" placeholder="Storage Channel ID" style="margin-top: 1rem;">
+            <button class="config-btn" onclick="saveConfig('recordings')">💾 Save Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reminders -->
+      <div id="reminders" class="page">
+        <div class="section-title">🔔 Reminders & Notifications</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <input class="config-input" type="text" placeholder="Reminder Title">
+            <input class="config-input" type="text" placeholder="Channel to notify">
+            <input class="config-input" type="text" placeholder="Time (e.g., daily, weekly)">
+            <textarea class="config-input" placeholder="Reminder message" style="min-height: 80px; resize: none;"></textarea>
+            <button class="config-btn" onclick="saveConfig('reminders')">⏰ Add Reminder</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboards -->
+      <div id="leaderboards" class="page">
+        <div class="section-title">🏆 Leaderboards</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1;">
+            <div style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+              <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; padding: 0.8rem; background: rgba(255, 255, 255, 0.15); border-radius: 8px; margin-bottom: 0.5rem;">
+                <div style="color: #6B21A8; font-weight: 600;">🥇</div>
+                <div style="color: #2D1B4E; font-weight: 600;">User#1234</div>
+                <div style="color: #6B21A8; font-weight: 600;">45.2K XP</div>
+              </div>
+              <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; padding: 0.8rem; background: rgba(255, 255, 255, 0.15); border-radius: 8px; margin-bottom: 0.5rem;">
+                <div style="color: #6B21A8; font-weight: 600;">🥈</div>
+                <div style="color: #2D1B4E; font-weight: 600;">User#5678</div>
+                <div style="color: #6B21A8; font-weight: 600;">41.8K XP</div>
+              </div>
+              <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; padding: 0.8rem; background: rgba(255, 255, 255, 0.15); border-radius: 8px;">
+                <div style="color: #6B21A8; font-weight: 600;">🥉</div>
+                <div style="color: #2D1B4E; font-weight: 600;">User#9999</div>
+                <div style="color: #6B21A8; font-weight: 600;">38.5K XP</div>
+              </div>
+            </div>
+            <input class="config-input" type="text" placeholder="Leaderboard Channel ID">
+            <button class="config-btn" onclick="saveConfig('leaderboards')">🏅 Update Leaderboard</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invite Tracking -->
+      <div id="invite-tracking" class="page">
+        <div class="section-title">🔗 Invite Tracking</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Track Invites</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Track Joins</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Reward Top Inviters</label>
+            <input class="config-input" type="number" placeholder="Reward Points per Invite" value="10" style="margin-top: 1rem;">
+            <button class="config-btn" onclick="saveConfig('invite-tracking')">🎯 Enable Tracking</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Counting -->
+      <div id="message-counting" class="page">
+        <div class="section-title">📊 Message Counting</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Count Messages</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Award XP per Message</label>
+            <input class="config-input" type="number" placeholder="XP per Message" value="1" style="margin-top: 1rem;">
+            <input class="config-input" type="number" placeholder="Max XP per Hour" value="100">
+            <button class="config-btn" onclick="saveConfig('message-counting')">📈 Save Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Channels -->
+      <div id="statistics-channels" class="page">
+        <div class="section-title">📉 Statistics Channels</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <label style="color: #2D1B4E; font-weight: 600;">📊 Auto-Update Channels</label>
+            <input class="config-input" type="text" placeholder="Members Count Channel ID">
+            <input class="config-input" type="text" placeholder="Online Count Channel ID">
+            <input class="config-input" type="text" placeholder="Roles Count Channel ID">
+            <label style="color: #6B21A8; margin-top: 1rem;"><input type="checkbox" checked> Auto-Update Every 5min</label>
+            <button class="config-btn" onclick="saveConfig('statistics-channels')" style="margin-top: 1rem;">🔄 Enable Stats</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- XP & Levels -->
+      <div id="xp-levels" class="page">
+        <div class="section-title">📈 XP & Levels</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <input class="config-input" type="number" placeholder="XP per Message" value="10">
+            <input class="config-input" type="number" placeholder="XP for Boost" value="500">
+            <input class="config-input" type="number" placeholder="XP per Level (multiplier)" value="500">
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Role Rewards</label>
+            <input class="config-input" type="text" placeholder="Reward Role at Level (e.g., 10)">
+            <button class="config-btn" onclick="saveConfig('xp-levels')">⭐ Save XP Config</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Giveaways -->
+      <div id="giveaways" class="page">
+        <div class="section-title">🎁 Giveaways</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <input class="config-input" type="text" placeholder="Prize Name">
+            <input class="config-input" type="number" placeholder="Duration (minutes)" value="60">
+            <input class="config-input" type="number" placeholder="Number of Winners" value="1">
+            <textarea class="config-input" placeholder="Prize Description" style="min-height: 80px; resize: none;"></textarea>
+            <button class="config-btn" onclick="saveConfig('giveaways')">🎉 Start Giveaway</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Social Notifications -->
+      <div id="social-notifs" class="page">
+        <div class="section-title">📣 Social Notifications</div>
+        <div class="features">
+          <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
+            <label style="color: #2D1B4E; font-weight: 600;">🎬 Platform Notifications</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Twitch Alerts</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> TikTok Alerts</label>
+            <label style="color: #6B21A8;"><input type="checkbox" checked> Kick Alerts</label>
+            <input class="config-input" type="text" placeholder="Channel to notify" style="margin-top: 1rem;">
+            <button class="config-btn" onclick="saveConfig('social-notifs')">📱 Save Alerts</button>
           </div>
         </div>
       </div>
@@ -1434,6 +1727,42 @@
       btn.classList.toggle('active');
       const config = btn.closest('.feature').querySelector('.feature-config');
       if (config) config.classList.toggle('show');
+    }
+
+    async function saveConfig(page) {
+      try {
+        const inputs = document.querySelector(`#${page}`)?.querySelectorAll('.config-input');
+        const data = {};
+        inputs?.forEach((input, i) => {
+          data[`field_${i}`] = input.value;
+        });
+        
+        const res = await fetch(`/api/config/${page}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (res.ok) {
+          showNotification(`✅ ${page} saved!`);
+        }
+      } catch (e) {
+        showNotification(`❌ Error saving ${page}`);
+        console.error(e);
+      }
+    }
+
+    function showNotification(msg) {
+      const notif = document.createElement('div');
+      notif.textContent = msg;
+      notif.style.cssText = `
+        position: fixed; top: 20px; right: 20px; 
+        background: rgba(255,255,255,0.2); color: #2D1B4E; 
+        padding: 1rem 1.5rem; border-radius: 12px; 
+        z-index: 9999; font-weight: 600;
+      `;
+      document.body.appendChild(notif);
+      setTimeout(() => notif.remove(), 2000);
     }
   </script>
 </body>
