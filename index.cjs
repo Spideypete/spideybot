@@ -768,9 +768,34 @@ client.on("interactionCreate", async (interaction) => {
 
 // ============== WEB SERVER FOR UPTIME ==============
 const app = express();
-app.get("/", (req, res) => res.send("🤖 SPIDEY BOT is alive!"));
+app.get("/", (req, res) => {
+  const uptime = Math.floor(process.uptime());
+  const hours = Math.floor(uptime / 3600);
+  const minutes = Math.floor((uptime % 3600) / 60);
+  const seconds = uptime % 60;
+  res.send(`
+    <html>
+      <head>
+        <title>SPIDEY BOT Status</title>
+        <style>
+          body { background: #5865F2; color: white; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+          .container { text-align: center; }
+          h1 { font-size: 3em; }
+          p { font-size: 1.2em; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🤖 SPIDEY BOT</h1>
+          <p>✅ BOT IS ALIVE AND RUNNING</p>
+          <p>⏱️ Uptime: ${hours}h ${minutes}m ${seconds}s</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
 
-const PORT = process.env.PORT || 8000;
+const PORT = 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Web server running on port ${PORT}`);
 });
