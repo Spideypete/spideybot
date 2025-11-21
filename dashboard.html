@@ -210,9 +210,36 @@
             color: rgba(255, 255, 255, 0.7);
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 0.75rem;
             font-size: 0.855rem;
             border: 1px solid transparent;
+        }
+
+        .sidebar-item-text {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .sidebar-item-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(var(--theme-color), 0.3);
+            border: 2px solid rgba(var(--theme-color), 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.576rem;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item:hover .sidebar-item-badge {
+            background: rgba(var(--theme-color), 0.6);
+            box-shadow: 0 0 8px rgba(var(--theme-color), 0.8);
         }
 
         .sidebar-item:hover {
@@ -227,6 +254,11 @@
             color: rgba(255, 255, 255, 1);
             border: 1px solid rgba(var(--theme-color), 0.6);
             box-shadow: 0 0 15px rgba(var(--theme-color), 0.4);
+        }
+
+        .sidebar-item.active .sidebar-item-badge {
+            background: rgba(var(--theme-color), 0.8);
+            box-shadow: 0 0 12px rgba(var(--theme-color), 1);
         }
 
         .upgrade-box {
@@ -914,7 +946,7 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">MAIN <div class="category-toggle active" data-section="main-menu"></div></div>
                 <ul class="sidebar-menu" id="main-menu">
-                    <li class="sidebar-item" data-section="dashboard">📊 Dashboard</li>
+                    <li class="sidebar-item" data-section="dashboard"><div class="sidebar-item-text">📊 Dashboard</div><div class="sidebar-item-badge" data-badge-for="dashboard">✓</div></li>
                 </ul>
             </div>
 
@@ -922,46 +954,46 @@
                 <div class="sidebar-section-title">CORE <div class="category-toggle active" data-section="core-menu"></div></div>
                 <ul class="sidebar-menu" id="core-menu">
                     <li class="sidebar-item active" data-section="settings">⚙️ Settings</li>
-                    <li class="sidebar-item" data-section="logging">📝 Logging</li>
-                    <li class="sidebar-item" data-section="server-guard">🛡️ Server Guard</li>
+                    <li class="sidebar-item" data-section="logging"><div class="sidebar-item-text">📝 Logging</div><div class="sidebar-item-badge" data-badge-for="logging">✓</div></li>
+                    <li class="sidebar-item" data-section="server-guard"><div class="sidebar-item-text">🛡️ Server Guard</div><div class="sidebar-item-badge" data-badge-for="server-guard">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">FEATURES <div class="category-toggle active" data-section="features-menu"></div></div>
                 <ul class="sidebar-menu" id="features-menu">
-                    <li class="sidebar-item" data-section="react-roles">🎭 React Roles</li>
-                    <li class="sidebar-item" data-section="role-categories">📂 Role Categories</li>
-                    <li class="sidebar-item" data-section="server-messages">💬 Server Messages</li>
-                    <li class="sidebar-item" data-section="custom-commands">💬 Commands</li>
-                    <li class="sidebar-item" data-section="components">🎨 Components</li>
+                    <li class="sidebar-item" data-section="react-roles"><div class="sidebar-item-text">🎭 React Roles</div><div class="sidebar-item-badge" data-badge-for="react-roles">✓</div></li>
+                    <li class="sidebar-item" data-section="role-categories"><div class="sidebar-item-text">📂 Role Categories</div><div class="sidebar-item-badge" data-badge-for="role-categories">✓</div></li>
+                    <li class="sidebar-item" data-section="server-messages"><div class="sidebar-item-text">💬 Server Messages</div><div class="sidebar-item-badge" data-badge-for="server-messages">✓</div></li>
+                    <li class="sidebar-item" data-section="custom-commands"><div class="sidebar-item-text">💬 Commands</div><div class="sidebar-item-badge" data-badge-for="custom-commands">✓</div></li>
+                    <li class="sidebar-item" data-section="components"><div class="sidebar-item-text">🎨 Components</div><div class="sidebar-item-badge" data-badge-for="components">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">SYSTEMS <div class="category-toggle active" data-section="systems-menu"></div></div>
                 <ul class="sidebar-menu" id="systems-menu">
-                    <li class="sidebar-item" data-section="xp-levels">⭐ XP Levels</li>
-                    <li class="sidebar-item" data-section="leaderboards">🏆 Leaderboards</li>
-                    <li class="sidebar-item" data-section="subscriptions">💳 Subscriptions</li>
+                    <li class="sidebar-item" data-section="xp-levels"><div class="sidebar-item-text">⭐ XP Levels</div><div class="sidebar-item-badge" data-badge-for="xp-levels">✓</div></li>
+                    <li class="sidebar-item" data-section="leaderboards"><div class="sidebar-item-text">🏆 Leaderboards</div><div class="sidebar-item-badge" data-badge-for="leaderboards">✓</div></li>
+                    <li class="sidebar-item" data-section="subscriptions"><div class="sidebar-item-text">💳 Subscriptions</div><div class="sidebar-item-badge" data-badge-for="subscriptions">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">MONITORING <div class="category-toggle active" data-section="monitoring-menu"></div></div>
                 <ul class="sidebar-menu" id="monitoring-menu">
-                    <li class="sidebar-item" data-section="invite-tracking">📊 Invites</li>
-                    <li class="sidebar-item" data-section="message-counting">📈 Messages</li>
-                    <li class="sidebar-item" data-section="statistics-channels">📉 Stats</li>
-                    <li class="sidebar-item" data-section="social-notifs">📱 Social</li>
+                    <li class="sidebar-item" data-section="invite-tracking"><div class="sidebar-item-text">📊 Invites</div><div class="sidebar-item-badge" data-badge-for="invite-tracking">✓</div></li>
+                    <li class="sidebar-item" data-section="message-counting"><div class="sidebar-item-text">📈 Messages</div><div class="sidebar-item-badge" data-badge-for="message-counting">✓</div></li>
+                    <li class="sidebar-item" data-section="statistics-channels"><div class="sidebar-item-text">📉 Stats</div><div class="sidebar-item-badge" data-badge-for="statistics-channels">✓</div></li>
+                    <li class="sidebar-item" data-section="social-notifs"><div class="sidebar-item-text">📱 Social</div><div class="sidebar-item-badge" data-badge-for="social-notifs">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">TOOLS <div class="category-toggle active" data-section="tools-menu"></div></div>
                 <ul class="sidebar-menu" id="tools-menu">
-                    <li class="sidebar-item" data-section="tickets">🎫 Tickets</li>
-                    <li class="sidebar-item" data-section="giveaways">🎁 Giveaways</li>
+                    <li class="sidebar-item" data-section="tickets"><div class="sidebar-item-text">🎫 Tickets</div><div class="sidebar-item-badge" data-badge-for="tickets">✓</div></li>
+                    <li class="sidebar-item" data-section="giveaways"><div class="sidebar-item-text">🎁 Giveaways</div><div class="sidebar-item-badge" data-badge-for="giveaways">✓</div></li>
                     <li style="padding: 0.75rem 1rem; margin-top: 0.75rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
                         <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">🎨 UI Colour</div>
                         <select id="themeColor" onchange="changeThemeColor(this.value)" class="color-dropdown" style="width: 100%;">
@@ -977,10 +1009,18 @@
                 </ul>
             </div>
 
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">FUN <div class="category-toggle active" data-section="fun-menu"></div></div>
+                <ul class="sidebar-menu" id="fun-menu">
+                    <li class="sidebar-item" data-section="music"><div class="sidebar-item-text">🎵 Music</div><div class="sidebar-item-badge" data-badge-for="music">✓</div></li>
+                    <li class="sidebar-item" data-section="birthdays"><div class="sidebar-item-text">🎂 Birthdays</div><div class="sidebar-item-badge" data-badge-for="birthdays">✓</div></li>
+                </ul>
+            </div>
+
             <div class="sidebar-section" id="creator-section" style="display: none;">
                 <div class="sidebar-section-title">CREATOR <div class="category-toggle active" data-section="creator-menu"></div></div>
                 <ul class="sidebar-menu" id="creator-menu">
-                    <li class="sidebar-item" data-section="creator">👑 Creator Panel</li>
+                    <li class="sidebar-item" data-section="creator"><div class="sidebar-item-text">👑 Creator Panel</div><div class="sidebar-item-badge" data-badge-for="creator">✓</div></li>
                 </ul>
             </div>
 
