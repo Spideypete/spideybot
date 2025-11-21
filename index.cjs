@@ -2250,12 +2250,7 @@ app.get("/", (req, res) => {
 
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  const indexPath = path.join(__dirname, 'dashboard-template', 'dist', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.redirect("/dashboard-app/");
-  }
+  res.redirect("/dashboard-app/");
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
