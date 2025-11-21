@@ -1247,11 +1247,19 @@
         <div class="section-title">Server Settings</div>
         <div class="features">
           <div class="feature" style="grid-column: 1 / -1; max-width: 400px;">
-            <input class="config-input" type="text" placeholder="Command Prefix" value="//">
-            <input class="config-input" type="text" placeholder="Default Language" value="English">
-            <input class="config-input" type="text" placeholder="Modlog Channel ID">
-            <input class="config-input" type="text" placeholder="Welcome Channel ID">
-            <button class="config-btn" onclick="saveConfig('settings')">Save All Settings</button>
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem;">Command Prefix</label>
+            <input class="config-input" id="settings-prefix" type="text" placeholder="//" value="//">
+            
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">Default Language</label>
+            <input class="config-input" id="settings-language" type="text" placeholder="English" value="English">
+            
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">Modlog Channel ID</label>
+            <input class="config-input" id="settings-modlog" type="text" placeholder="Channel ID">
+            
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">Welcome Channel ID</label>
+            <input class="config-input" id="settings-welcome" type="text" placeholder="Channel ID">
+            
+            <button class="config-btn" onclick="saveSettings()" style="margin-top: 1rem;">Save All Settings</button>
           </div>
         </div>
       </div>
@@ -1757,7 +1765,7 @@
       refreshAllData();
       loadActivity();
       loadMembers();
-      loadConfig('settings');
+      loadSettings();
       setInterval(refreshAllData, 5000);
     });
 
@@ -1771,9 +1779,10 @@
         if (page === 'members') loadMembers();
         if (page === 'dashboard') loadStats();
         if (page === 'activity') loadActivity();
+        if (page === 'settings') loadSettings();
         
         // Load config for all config pages
-        const configPages = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
+        const configPages = ['subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
         if (configPages.includes(page)) {
           if (page === 'role-categories') {
             loadRoleCategories();
@@ -1894,6 +1903,45 @@
         showNotification('❌ Error saving role category');
         console.error(e);
       });
+    }
+
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/config/settings');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.prefix) document.getElementById('settings-prefix').value = data.prefix;
+        if (data.language) document.getElementById('settings-language').value = data.language;
+        if (data.modLogChannelId) document.getElementById('settings-modlog').value = data.modLogChannelId;
+        if (data.welcomeChannelId) document.getElementById('settings-welcome').value = data.welcomeChannelId;
+      } catch (e) {
+        console.error('Error loading settings:', e);
+      }
+    }
+
+    async function saveSettings() {
+      try {
+        const data = {
+          prefix: document.getElementById('settings-prefix').value,
+          language: document.getElementById('settings-language').value,
+          modLogChannelId: document.getElementById('settings-modlog').value,
+          welcomeChannelId: document.getElementById('settings-welcome').value
+        };
+        
+        const res = await fetch('/api/config/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (res.ok) {
+          showNotification('✅ Settings saved!');
+          loadSettings();
+        }
+      } catch (e) {
+        showNotification('❌ Error saving settings');
+        console.error(e);
+      }
     }
 
     async function loadConfig(page) {
