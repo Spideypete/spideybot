@@ -21,7 +21,6 @@ const axios = require("axios");
 
 // ============== SETUP EXPRESS APP ==============
 const app = express();
-const publicDir = path.join(__dirname, 'public');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
@@ -32,11 +31,11 @@ app.use(session({
 }));
 
 // Serve static files from public
-app.use(express.static(publicDir));
+// REMOVED: static public folder
 
 // Home page route
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.send('Bot is running');
 });
 
 // ============== DISCORD OAUTH CONFIG ==============
@@ -58,7 +57,7 @@ function logModAction(guild, action, mod, target, reason) {
   const config = loadConfig();
   const guildConfig = config.guilds[guild.id];
   if (!guildConfig?.modLogChannelId) return;
-  
+
   const modLogChannel = guild.channels.cache.get(guildConfig.modLogChannelId);
   if (modLogChannel) {
     const embed = new EmbedBuilder()
@@ -138,7 +137,7 @@ function updateGuildConfig(guildId, updates) {
 function autoMigrateRoles(guildId, guild, guildConfig) {
   const categories = guildConfig.roleCategories || {};
   let hasChanges = false;
-  
+
   Object.keys(categories).forEach(catName => {
     const catData = categories[catName];
     if (Array.isArray(catData)) {
@@ -146,7 +145,7 @@ function autoMigrateRoles(guildId, guild, guildConfig) {
       hasChanges = true;
     }
   });
-  
+
   if (hasChanges) {
     updateGuildConfig(guildId, { roleCategories: categories });
   }
@@ -199,14 +198,14 @@ function addActivity(guildId, icon, text, action, time = null) {
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
   if (!config.guilds[guildId].activities) config.guilds[guildId].activities = [];
-  
+
   const activity = {
     icon,
     text: text.substring(0, 50),
     action,
     time: time || new Date().toLocaleTimeString()
   };
-  
+
   config.guilds[guildId].activities.unshift(activity);
   config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 20);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
@@ -216,7 +215,7 @@ function addActivity(guildId, icon, text, action, time = null) {
 client.on("guildMemberAdd", async (member) => {
   console.log(`New member joined: ${member.user.tag} in ${member.guild.name}`);
   addActivity(member.guild.id, "👤", member.user.username, "joined the server");
-  
+
   const guildConfig = getGuildConfig(member.guild.id);
   if (!guildConfig.welcomeChannelId) return;
 
@@ -230,7 +229,7 @@ client.on("guildMemberAdd", async (member) => {
         .replace(/{displayname}/g, member.displayName)
         .replace(/{server}/g, member.guild.name)
         .replace(/{membercount}/g, member.guild.memberCount);
-      
+
       await welcomeChannel.send(message);
       console.log(`Welcome message sent to ${member.user.tag}`);
     } catch (error) {
@@ -274,22 +273,22 @@ client.on("messageCreate", async (msg) => {
     const userId = msg.author.id;
     const lastXpTime = levels[`${userId}_xp_time`] || 0;
     const now = Date.now();
-    
+
     if (now - lastXpTime > 60000) {
       const xpGain = Math.floor(Math.random() * 20) + 10;
       levels[userId] = (levels[userId] || 0) + xpGain;
       levels[`${userId}_xp_time`] = now;
-      
+
       const currentXp = levels[userId];
       const nextLevelXp = (Math.floor(currentXp / 500) + 1) * 500;
       if (currentXp >= nextLevelXp) {
         const level = Math.floor(currentXp / 500) + 1;
         msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
         addActivity(msg.guild.id, "⬆️", msg.author.username, `leveled up to Level ${level}`);
-        
+
         const levelRoles = guildConfig.levelRoles || {};
         const newRoleId = levelRoles[`level_${level}`];
-        
+
         try {
           // Remove all old level roles (1-99)
           for (let oldLevel = 1; oldLevel < level; oldLevel++) {
@@ -301,7 +300,7 @@ client.on("messageCreate", async (msg) => {
               }
             }
           }
-          
+
           // Add new level role
           if (newRoleId) {
             const newRole = msg.guild.roles.cache.get(newRoleId);
@@ -311,7 +310,7 @@ client.on("messageCreate", async (msg) => {
           console.error(`Failed to manage level roles: ${err.message}`);
         }
       }
-      
+
       updateGuildConfig(msg.guild.id, { levels });
     }
   }
@@ -340,7 +339,7 @@ client.on("messageCreate", async (msg) => {
       )
       .setFooter({ text: "SPIDEY BOT • Message Counter" })
       .setTimestamp();
-    
+
     return msg.reply({ embeds: [statsEmbed] });
   }
 
@@ -353,7 +352,7 @@ client.on("messageCreate", async (msg) => {
     const memory = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
     const guilds = client.guilds.cache.size;
     const activeQueues = player.queues.size;
-    
+
     const statusEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("🤖 SPIDEY BOT - Status")
@@ -368,7 +367,7 @@ client.on("messageCreate", async (msg) => {
       )
       .setFooter({ text: "SPIDEY BOT • Always ready to serve" })
       .setTimestamp();
-    
+
     return msg.reply({ embeds: [statusEmbed] });
   }
 
@@ -378,7 +377,7 @@ client.on("messageCreate", async (msg) => {
     if (Object.keys(categories).length === 0) {
       return msg.reply("❌ No role categories created yet! Use `//create-category [name]` to get started.");
     }
-    
+
     const fields = Object.entries(categories).map(([catName, catData]) => {
       const roles = Array.isArray(catData) ? catData : (catData.roles || []);
       const banner = !Array.isArray(catData) && catData.banner ? " 🎬" : "";
@@ -569,7 +568,7 @@ client.on("messageCreate", async (msg) => {
       .map(([userId, level]) => ({ userId, level }))
       .sort((a, b) => b.level - a.level)
       .slice(0, 10);
-    
+
     const leaderboardEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("🏆 Server Leaderboard")
@@ -637,7 +636,7 @@ client.on("messageCreate", async (msg) => {
     if (!guildConfig.ticketsEnabled) return msg.reply("❌ Ticket system is not enabled! Admin use: `//ticket-setup #channel`");
     const userId = msg.author.id;
     const ticketChannelName = `ticket-${msg.author.username.slice(0, 10)}`;
-    
+
     try {
       const ticketChannel = await msg.guild.channels.create({
         name: ticketChannelName,
@@ -647,13 +646,13 @@ client.on("messageCreate", async (msg) => {
           { id: userId, allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"] }
         ]
       });
-      
+
       const ticketEmbed = new EmbedBuilder()
         .setColor(0x00D4FF)
         .setTitle("🎫 Support Ticket Created")
         .setDescription(`Support team will be with you shortly!`)
         .addFields({ name: "User", value: msg.author.toString(), inline: true });
-      
+
       ticketChannel.send({ embeds: [ticketEmbed] });
       return msg.reply(`✅ Ticket created: ${ticketChannel.toString()}`);
     } catch (error) {
@@ -686,7 +685,7 @@ client.on("messageCreate", async (msg) => {
     const cmdName = args[0]?.trim();
     const cmdResponse = args[1]?.trim();
     if (!cmdName || !cmdResponse) return msg.reply("Usage: //addcmd [command] | [response]\nExample: //addcmd hello | Hey there!");
-    
+
     const customCmds = guildConfig.customCommands || {};
     customCmds[cmdName] = cmdResponse;
     updateGuildConfig(msg.guild.id, { customCommands: customCmds });
@@ -699,7 +698,7 @@ client.on("messageCreate", async (msg) => {
     }
     const cmdName = msg.content.slice(9).trim();
     if (!cmdName) return msg.reply("Usage: //delcmd [command]");
-    
+
     const customCmds = guildConfig.customCommands || {};
     if (!customCmds[cmdName]) return msg.reply(`❌ Custom command **${cmdName}** not found!`);
     delete customCmds[cmdName];
@@ -726,14 +725,14 @@ client.on("messageCreate", async (msg) => {
     if (!suggestion) return msg.reply("Usage: //suggest [your suggestion]");
     const suggestionsChannel = guildConfig.suggestionsChannelId ? msg.guild.channels.cache.get(guildConfig.suggestionsChannelId) : null;
     if (!suggestionsChannel) return msg.reply("❌ Suggestions channel not configured! Admin needs to set it with `//config-suggestions #channel`");
-    
+
     const suggestionEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("📝 New Suggestion")
       .setDescription(suggestion)
       .setAuthor({ name: msg.author.username, iconURL: msg.author.displayAvatarURL() })
       .setFooter({ text: "React with 👍 or 👎 to vote" });
-    
+
     const suggestionMsg = await suggestionsChannel.send({ embeds: [suggestionEmbed] });
     await suggestionMsg.react("👍");
     await suggestionMsg.react("👎");
@@ -758,16 +757,16 @@ client.on("messageCreate", async (msg) => {
     const prize = args[0];
     const duration = parseInt(args[1]) || 60;
     if (!prize) return msg.reply("Usage: //giveaway [prize] [duration in seconds]");
-    
+
     const giveawayEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("🎁 GIVEAWAY!")
       .setDescription(`**Prize:** ${prize}\n**Duration:** ${duration} seconds\n\nReact with 🎉 to enter!`)
       .setFooter({ text: "SPIDEY BOT Giveaway" });
-    
+
     const giveawayMsg = await msg.channel.send({ embeds: [giveawayEmbed] });
     await giveawayMsg.react("🎉");
-    
+
     setTimeout(async () => {
       const reactions = giveawayMsg.reactions.cache.get("🎉");
       if (!reactions) return;
@@ -777,7 +776,7 @@ client.on("messageCreate", async (msg) => {
       if (!winner) return msg.channel.send("❌ No valid entries!");
       msg.channel.send(`🎉 Winner: <@${winner}> won **${prize}**!`);
     }, duration * 1000);
-    
+
     return msg.reply("✅ Giveaway started!");
   }
 
@@ -1151,23 +1150,23 @@ client.on("messageCreate", async (msg) => {
     if (!categories[categoryName]) {
       return msg.reply(`❌ Category "${categoryName}" does not exist!`);
     }
-    
+
     const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
     if (catData.roles.length === 0) {
       return msg.reply(`❌ Add roles with //add-role first!`);
     }
-    
+
     const roleOptions = catData.roles.map(r => ({ label: `✨ ${r.name}`, value: r.id }));
     const colorMap = { gaming: 0xFF6B6B, streaming: 0x4ECDC4, platform: 0x45B7D1, community: 0x96CEB4, events: 0xFFBD39, other: 0x9B59B6 };
     const categoryLower = categoryName.toLowerCase();
     let embedColor = colorMap[categoryLower] || 0x5865F2;
-    
+
     const embed = new EmbedBuilder()
       .setColor(embedColor)
       .setTitle(`🎯 ${categoryName.toUpperCase()} ROLES`)
       .setDescription(`✨ Click below to select your ${categoryName.toLowerCase()} roles!\n\n*Choose multiple roles to add yourself to communities*`)
       .setFooter({ text: "SPIDEY BOT • Select roles to join communities" });
-    
+
     if (catData.banner) {
       embed.setImage(catData.banner);
     }
@@ -1289,10 +1288,10 @@ client.on("messageCreate", async (msg) => {
 
     try {
       await msg.reply(`🎵 Searching for: ${query}`);
-      
+
       const searchOptions = { requestedBy: msg.author };
       const result = await player.search(query, searchOptions);
-      
+
       if (!result.tracks.length) {
         return msg.reply("❌ No results found!");
       }
@@ -1311,7 +1310,7 @@ client.on("messageCreate", async (msg) => {
 
       const track = result.tracks[0];
       queue.addTrack(track);
-      
+
       if (!queue.isPlaying()) {
         await queue.node.play();
       }
@@ -1430,12 +1429,12 @@ client.on("messageCreate", async (msg) => {
     const user = msg.mentions.members.first();
     if (!user) return msg.reply("Usage: //warn @user [reason]");
     const reason = msg.content.slice(6).split(" ").slice(1).join(" ") || "No reason";
-    
+
     const warnings = guildConfig.warnings || {};
     if (!warnings[user.id]) warnings[user.id] = [];
     warnings[user.id].push({ reason, warnedBy: msg.author.tag, timestamp: new Date() });
     updateGuildConfig(msg.guild.id, { warnings });
-    
+
     msg.reply(`⚠️ Warned ${user.user.tag} (${warnings[user.id].length} warnings) - ${reason}`);
     logModAction(msg.guild, "WARN", msg.author, user.user.tag, reason);
   }
@@ -1669,20 +1668,20 @@ client.on("messageCreate", async (msg) => {
     const target = msg.mentions.members.first();
     const amountStr = msg.content.split(" ").pop();
     const amount = parseInt(amountStr);
-    
+
     if (!target) return msg.reply("Usage: //transfer @user [amount]");
     if (isNaN(amount) || amount <= 0) return msg.reply("Usage: //transfer @user [amount]\nAmount must be a positive number!");
     if (target.id === msg.author.id) return msg.reply("❌ You can't transfer to yourself!");
-    
+
     const economy = guildConfig.economy || {};
     const senderBalance = economy[msg.author.id] || 0;
-    
+
     if (senderBalance < amount) return msg.reply(`❌ You only have **${senderBalance}** coins! Need **${amount}**`);
-    
+
     economy[msg.author.id] = senderBalance - amount;
     economy[target.id] = (economy[target.id] || 0) + amount;
     updateGuildConfig(msg.guild.id, { economy });
-    
+
     return msg.reply(`✅ Transferred **${amount}** coins to ${target.user.tag}!\nYour new balance: **${economy[msg.author.id]}** 💰`);
   }
 
@@ -1693,14 +1692,14 @@ client.on("messageCreate", async (msg) => {
     const target = msg.mentions.members.first();
     const amountStr = msg.content.split(" ").pop();
     const amount = parseInt(amountStr);
-    
+
     if (!target) return msg.reply("Usage: //addmoney @user [amount]");
     if (isNaN(amount) || amount <= 0) return msg.reply("Amount must be a positive number!");
-    
+
     const economy = guildConfig.economy || {};
     economy[target.id] = (economy[target.id] || 0) + amount;
     updateGuildConfig(msg.guild.id, { economy });
-    
+
     return msg.reply(`✅ Added **${amount}** coins to ${target.user.tag}!\nNew balance: **${economy[target.id]}** 💰`);
   }
 
@@ -1711,15 +1710,15 @@ client.on("messageCreate", async (msg) => {
     const target = msg.mentions.members.first();
     const amountStr = msg.content.split(" ").pop();
     const amount = parseInt(amountStr);
-    
+
     if (!target) return msg.reply("Usage: //removemoney @user [amount]");
     if (isNaN(amount) || amount <= 0) return msg.reply("Amount must be a positive number!");
-    
+
     const economy = guildConfig.economy || {};
     const currentBalance = economy[target.id] || 0;
     economy[target.id] = Math.max(0, currentBalance - amount);
     updateGuildConfig(msg.guild.id, { economy });
-    
+
     return msg.reply(`✅ Removed **${amount}** coins from ${target.user.tag}!\nNew balance: **${economy[target.id]}** 💰`);
   }
 
@@ -1730,15 +1729,15 @@ client.on("messageCreate", async (msg) => {
       .map(([userId, balance]) => ({ userId, balance }))
       .sort((a, b) => b.balance - a.balance)
       .slice(0, 10);
-    
+
     if (members.length === 0) return msg.reply("📊 No economy data yet! Use //daily or //work to start earning!");
-    
+
     const leaderboard = members.map((m, i) => {
       const user = msg.guild.members.cache.get(m.userId)?.user;
       const name = user?.username || "Unknown";
       return `**${i+1}.** ${name} - **${m.balance}** 💰`;
     }).join("\n");
-    
+
     return msg.reply(`🏆 **Top 10 Richest Members:**\n${leaderboard}`);
   }
 
@@ -1749,7 +1748,7 @@ client.on("messageCreate", async (msg) => {
     const level = Math.floor(userXp / 500) + 1;
     const xpInLevel = userXp % 500;
     const nextLevelXp = 500;
-    
+
     const levelEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle(`📊 ${msg.author.username}'s Level`)
@@ -1759,7 +1758,7 @@ client.on("messageCreate", async (msg) => {
         { name: "Progress", value: `${xpInLevel}/${nextLevelXp} XP`, inline: false }
       )
       .setThumbnail(msg.author.displayAvatarURL());
-    
+
     return msg.reply({ embeds: [levelEmbed] });
   }
 
@@ -1770,16 +1769,16 @@ client.on("messageCreate", async (msg) => {
       .map(([userId, xp]) => ({ userId, xp }))
       .sort((a, b) => b.xp - a.xp)
       .slice(0, 10);
-    
+
     if (members.length === 0) return msg.reply("📊 No leveling data yet! Send messages to gain XP!");
-    
+
     const leaderboard = members.map((m, i) => {
       const user = msg.guild.members.cache.get(m.userId)?.user;
       const name = user?.username || "Unknown";
       const level = Math.floor(m.xp / 500) + 1;
       return `**${i+1}.** ${name} - **Level ${level}** (${m.xp} XP)`;
     }).join("\n");
-    
+
     return msg.reply(`🏆 **Top 10 Members by Level:**\n${leaderboard}`);
   }
 
@@ -1788,12 +1787,12 @@ client.on("messageCreate", async (msg) => {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can setup level roles!");
     }
-    
+
     await msg.reply("⏳ Creating 100 level roles... This may take a moment!");
-    
+
     const levelRoles = {};
     let created = 0;
-    
+
     const botRole = msg.guild.members.me?.roles.highest;
     const colorGradient = (level) => {
       const hue = (level / 100) * 360;
@@ -1809,21 +1808,21 @@ client.on("messageCreate", async (msg) => {
       else [r, g, b] = [c, 0, x];
       return (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b);
     };
-    
+
     for (let level = 1; level <= 100; level++) {
       try {
         const emoji = getNumberedEmoji(level);
         const roleName = `${emoji} Level ${level}`;
-        
+
         const role = await msg.guild.roles.create({
           name: roleName,
           color: colorGradient(level),
           position: botRole ? botRole.position - 1 : 1
         });
-        
+
         levelRoles[`level_${level}`] = role.id;
         created++;
-        
+
         if (created % 20 === 0) {
           console.log(`✅ Created ${created}/100 level roles`);
         }
@@ -1831,7 +1830,7 @@ client.on("messageCreate", async (msg) => {
         console.error(`Failed to create level ${level} role: ${err.message}`);
       }
     }
-    
+
     updateGuildConfig(msg.guild.id, { levelRoles });
     return msg.reply(`✅ Created **${created}/100** level roles with gradient colors! Members will display their level badge next to their name as they level up.`);
   }
@@ -1868,12 +1867,12 @@ client.on("messageCreate", async (msg) => {
     const prize = parts[0]?.slice(17).trim() || "Mystery Prize";
     const duration = parseInt(parts[1]?.split(" ")[0]) || 60;
     const winners = parseInt(parts[2]?.split(" ")[0]) || 1;
-    
+
     const giveaway = { prize, duration, winners, startTime: Date.now(), endTime: Date.now() + (duration * 60000), entries: [] };
     const giveaways = guildConfig.giveaways || [];
     giveaways.push(giveaway);
     updateGuildConfig(msg.guild.id, { giveaways });
-    
+
     msg.reply(`🎁 **GIVEAWAY STARTED!**\n**Prize:** ${prize}\n**Duration:** ${duration} minutes\n**Winners:** ${winners}\n\nReact with 🎉 to enter!`);
   }
 
@@ -1924,7 +1923,7 @@ client.on("messageCreate", async (msg) => {
     const cmdName = msg.content.split(" ")[1];
     const cmdResponse = msg.content.split(" ").slice(2).join(" ");
     if (!cmdName || !cmdResponse) return msg.reply("Usage: //add-custom-command [name] [response]");
-    
+
     const customCmds = guildConfig.customCommands || {};
     customCmds[cmdName] = cmdResponse;
     updateGuildConfig(msg.guild.id, { customCommands: customCmds });
@@ -2025,11 +2024,11 @@ client.on("interactionCreate", async (interaction) => {
       .sort((a, b) => b.position - a.position)
       .slice(0, 25)
       .map(r => ({ label: r.name, value: r.id }));
-    
+
     if (allRoles.length === 0) {
       return interaction.reply({ content: "❌ No roles available!", ephemeral: true });
     }
-    
+
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("game_roles")
@@ -2072,11 +2071,11 @@ client.on("interactionCreate", async (interaction) => {
       .sort((a, b) => b.position - a.position)
       .slice(0, 25)
       .map(r => ({ label: r.name, value: r.id }));
-    
+
     if (allRoles.length === 0) {
       return interaction.reply({ content: "❌ No roles available!", ephemeral: true });
     }
-    
+
     const selectMenu = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("watchparty_roles")
@@ -2274,7 +2273,7 @@ app.get("/auth/discord", (req, res) => {
 app.get("/auth/discord/callback", async (req, res) => {
   const code = req.query.code;
   if (!code) return res.status(400).send("No code provided");
-  
+
   try {
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
@@ -2291,21 +2290,21 @@ app.get("/auth/discord/callback", async (req, res) => {
         }
       }
     );
-    
+
     const { access_token } = tokenRes.data;
     const userRes = await axios.get("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${access_token}` }
     });
-    
+
     const guildsRes = await axios.get("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${access_token}` }
     });
-    
+
     req.session.authenticated = true;
     req.session.user = userRes.data;
     req.session.guilds = guildsRes.data;
     req.session.accessToken = access_token;
-    
+
     console.log(`✅ User logged in via Discord: ${userRes.data.username}`);
     res.redirect("/dashboard");
   } catch (err) {
@@ -2328,7 +2327,7 @@ app.get("/api/user", (req, res) => {
   if (!req.session.authenticated) {
     return res.status(401).json({ error: "Not authenticated" });
   }
-  
+
   res.json({
     user: req.session.user,
     guilds: req.session.guilds
@@ -2338,7 +2337,7 @@ app.get("/api/user", (req, res) => {
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.sendFile(__dirname + "/public/dashboard.html");
+  res.send('Bot is running');
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
@@ -2350,11 +2349,11 @@ app.get("/dashboard/server/:guildId", (req, res) => {
 // ============== API ENDPOINTS ==============
 app.post("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
-  
+
   const guildId = req.params.guildId;
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
-  
+
   Object.assign(config.guilds[guildId], req.body);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   res.json({ success: true });
@@ -2362,7 +2361,7 @@ app.post("/api/config/:guildId", (req, res) => {
 
 app.post("/api/moderation/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
-  
+
   const { action, userId, reason } = req.body;
   console.log(`⚠️ Moderation: ${action} on user ${userId} - Reason: ${reason}`);
   res.json({ success: true, message: `${action} executed on user ${userId}` });
@@ -2370,7 +2369,7 @@ app.post("/api/moderation/:guildId", (req, res) => {
 
 app.post("/api/economy/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
-  
+
   const { action, userId, amount } = req.body;
   console.log(`💰 Economy: ${action} ${amount} coins to user ${userId}`);
   res.json({ success: true, message: `Updated economy for user ${userId}` });
@@ -2378,13 +2377,13 @@ app.post("/api/economy/:guildId", (req, res) => {
 
 app.post("/api/commands/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
-  
+
   const guildId = req.params.guildId;
   const { name, response } = req.body;
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
   if (!config.guilds[guildId].customCommands) config.guilds[guildId].customCommands = {};
-  
+
   config.guilds[guildId].customCommands[name] = response;
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   console.log(`✨ Custom command created: ${name}`);
@@ -2399,11 +2398,11 @@ adminConfigs.forEach(configName => {
   // GET endpoint to load config
   app.get(`/api/config/${configName}`, (req, res) => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-    
+
     const config = loadConfig();
     const firstGuild = client.guilds.cache.first();
     if (!firstGuild) return res.json({});
-    
+
     const guildId = firstGuild.id;
     const data = config.guilds[guildId]?.[configName] || {};
     res.json(data);
@@ -2412,15 +2411,15 @@ adminConfigs.forEach(configName => {
   // POST endpoint to save config
   app.post(`/api/config/${configName}`, express.json(), (req, res) => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-    
+
     const config = loadConfig();
     const firstGuild = client.guilds.cache.first();
     if (!firstGuild) return res.json({ success: false, error: "No guild found" });
-    
+
     const guildId = firstGuild.id;
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId][configName]) config.guilds[guildId][configName] = {};
-    
+
     Object.assign(config.guilds[guildId][configName], req.body);
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
     console.log(`✅ Config saved: ${configName}`);
@@ -2431,11 +2430,11 @@ adminConfigs.forEach(configName => {
 // ============== API: GET ROLE CATEGORIES ==============
 app.get("/api/config/role-categories", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const config = loadConfig();
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({});
-  
+
   const guildId = firstGuild.id;
   const data = config.guilds[guildId]?.roleCategories || {};
   res.json(data);
@@ -2444,17 +2443,17 @@ app.get("/api/config/role-categories", (req, res) => {
 // ============== API: SAVE ROLE CATEGORIES ==============
 app.post("/api/config/role-categories", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const config = loadConfig();
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ success: false, error: "No guild found" });
-  
+
   const guildId = firstGuild.id;
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
-  
+
   const { categoryName, roles, channel } = req.body;
   if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
-  
+
   config.guilds[guildId].roleCategories[categoryName] = { roles, channel };
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   console.log(`✅ Role category saved: ${categoryName}`);
@@ -2468,7 +2467,7 @@ app.post("/api/config/:guildId", express.json(), (req, res) => {
   const guildId = req.params.guildId;
   const userGuilds = req.session.guilds || [];
   const hasAccess = userGuilds.some(g => g.id === guildId);
-  
+
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   updateGuildConfig(guildId, req.body);
@@ -2478,22 +2477,22 @@ app.post("/api/config/:guildId", express.json(), (req, res) => {
 // ============== REAL-TIME DASHBOARD API ==============
 app.get("/api/dashboard/stats", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const guilds = client.guilds.cache;
   const firstGuild = guilds.first();
-  
+
   if (!firstGuild) {
     return res.json({ status: "offline", members: 0, commands: 44, activity: 0 });
   }
-  
+
   const config = getGuildConfig(firstGuild.id);
   const levels = config.levels || {};
-  
+
   let totalMessages = 0;
   Object.keys(levels).forEach(key => {
     if (!key.includes("_")) totalMessages++;
   });
-  
+
   res.json({
     status: "online",
     members: firstGuild.memberCount,
@@ -2505,21 +2504,21 @@ app.get("/api/dashboard/stats", (req, res) => {
 
 app.get("/api/dashboard/analytics", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ growth: [], topCommands: [] });
-  
+
   const config = getGuildConfig(firstGuild.id);
   const levels = config.levels || {};
   const economy = config.economy || {};
-  
+
   const activeUsers = Object.keys(levels).filter(k => !k.includes("_")).length;
   const retention = {
     veryActive: Math.floor(activeUsers * 0.45),
     active: Math.floor(activeUsers * 0.35),
     inactive: Math.floor(activeUsers * 0.20)
   };
-  
+
   res.json({
     avgOnline: firstGuild.memberCount,
     dailyMessages: Math.floor(Math.random() * 5000) + 5000,
@@ -2538,13 +2537,13 @@ app.get("/api/dashboard/analytics", (req, res) => {
 
 app.get("/api/dashboard/members", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ members: [] });
-  
+
   const config = getGuildConfig(firstGuild.id);
   const levels = config.levels || {};
-  
+
   const memberXP = Object.keys(levels)
     .filter(k => !k.includes("_"))
     .map(userId => {
@@ -2554,37 +2553,37 @@ app.get("/api/dashboard/members", (req, res) => {
     })
     .sort((a, b) => b.xp - a.xp)
     .slice(0, 5);
-  
+
   const members = memberXP.map((m, i) => ({
     rank: i + 1,
     userId: m.userId,
     level: m.level,
     xp: m.xp
   }));
-  
+
   res.json({ members });
 });
 
 app.get("/api/dashboard/activity", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ activities: [] });
-  
+
   const config = getGuildConfig(firstGuild.id);
   const activities = config.activities || [];
-  
+
   res.json({ activities });
 });
 
 app.get("/api/dashboard/growth", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ growth: [] });
-  
+
   const growth = [150, 185, 245, 310, 385, 480, 620, 785, 950, 1120, 1350, 1620, 1890, 2150];
-  
+
   res.json({ 
     growth,
     labels: ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "Week 7", "Week 8", "Week 9", "Week 10", "Week 11", "Week 12", "Week 13", "Week 14"]
@@ -2593,14 +2592,14 @@ app.get("/api/dashboard/growth", (req, res) => {
 
 app.get("/api/dashboard/active-members", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ active: [] });
-  
+
   const config = getGuildConfig(firstGuild.id);
   const levels = config.levels || {};
   const userIds = Object.keys(levels).filter(k => !k.includes("_"));
-  
+
   const activeCount = Math.floor(userIds.length * 0.65);
   const active = [
     Math.floor(activeCount * 0.45),
@@ -2611,7 +2610,7 @@ app.get("/api/dashboard/active-members", (req, res) => {
     Math.floor(activeCount * 0.72),
     Math.floor(activeCount * 0.68)
   ];
-  
+
   res.json({ 
     active,
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -2620,18 +2619,18 @@ app.get("/api/dashboard/active-members", (req, res) => {
 
 app.get("/api/dashboard/statistics", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ memberCount: 0, activeMembers: 0, verifiedMembers: 0 });
-  
+
   const config = getGuildConfig(firstGuild.id);
   const levels = config.levels || {};
   const userIds = Object.keys(levels).filter(k => !k.includes("_"));
-  
+
   const memberCount = firstGuild.memberCount;
   const activeMembers = Math.floor(userIds.length * 0.65);
   const verifiedMembers = Math.floor(memberCount * 0.85);
-  
+
   res.json({
     memberCount,
     activeMembers,
@@ -2642,13 +2641,13 @@ app.get("/api/dashboard/statistics", (req, res) => {
 
 app.get("/api/dashboard/top-members", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ members: [] });
-  
+
   const config = getGuildConfig(firstGuild.id);
   const levels = config.levels || {};
-  
+
   const memberXP = Object.keys(levels)
     .filter(k => !k.includes("_"))
     .map(userId => {
@@ -2658,7 +2657,7 @@ app.get("/api/dashboard/top-members", (req, res) => {
     })
     .sort((a, b) => b.xp - a.xp)
     .slice(0, 10);
-  
+
   const members = memberXP.map((m, i) => ({
     rank: i + 1,
     userId: m.userId,
@@ -2666,7 +2665,7 @@ app.get("/api/dashboard/top-members", (req, res) => {
     xp: m.xp,
     username: `User#${m.userId.slice(0, 4)}`
   }));
-  
+
   res.json({ members });
 });
 
@@ -2675,13 +2674,13 @@ app.get("/api/dashboard/top-members", (req, res) => {
 // Get all servers the bot is in (filtered to only admin-accessible servers)
 app.get("/api/creator/servers", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   // Get user's guilds from Discord OAuth (includes permission info)
   const userGuilds = req.session.guilds || [];
-  
+
   // Discord admin permission flag is 8
   const ADMIN_PERMISSION = 8;
-  
+
   // Filter to only guilds where user is admin
   const adminGuildIds = userGuilds
     .filter(guild => {
@@ -2689,7 +2688,7 @@ app.get("/api/creator/servers", (req, res) => {
       return (permissions & BigInt(ADMIN_PERMISSION)) === BigInt(ADMIN_PERMISSION);
     })
     .map(guild => guild.id);
-  
+
   // Get bot's servers that user can admin
   const servers = client.guilds.cache
     .filter(guild => adminGuildIds.includes(guild.id))
@@ -2699,32 +2698,32 @@ app.get("/api/creator/servers", (req, res) => {
       icon: guild.iconURL(),
       memberCount: guild.memberCount
     }));
-  
+
   res.json({ servers });
 });
 
 // Get creator settings (bot nickname, timezone)
 app.get("/api/creator/settings", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const config = loadConfig();
   const creatorSettings = config.creator || {
     botNickname: "SPIDEY BOT",
     timezone: "GMT"
   };
-  
+
   res.json(creatorSettings);
 });
 
 // Save creator settings
 app.post("/api/creator/settings", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-  
+
   const config = loadConfig();
   config.creator = config.creator || {};
   config.creator.botNickname = req.body.botNickname || "SPIDEY BOT";
   config.creator.timezone = req.body.timezone || "GMT";
-  
+
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
   res.json({ success: true, settings: config.creator });
 });
