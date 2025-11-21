@@ -831,9 +831,9 @@
             </div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">ADMIN <div class="category-toggle active" data-section="admin-menu"></div></div>
-                <ul class="sidebar-menu" id="admin-menu">
-                    <li class="sidebar-item" data-section="category">⚙️ Category</li>
+                <div class="sidebar-section-title">CREATOR <div class="category-toggle active" data-section="creator-menu"></div></div>
+                <ul class="sidebar-menu" id="creator-menu">
+                    <li class="sidebar-item" data-section="creator">👑 Creator Panel</li>
                 </ul>
             </div>
 
@@ -3336,10 +3336,10 @@
                     </div>
                 </div>
 
-                <!-- ADMIN CATEGORY -->
-                <div id="category" class="content">
-                    <div class="page-title">⚙️ Admin Category</div>
-                    <div class="page-description">Unrestricted admin panel to configure all bot settings globally</div>
+                <!-- CREATOR PANEL -->
+                <div id="creator" class="content">
+                    <div class="page-title">👑 Creator Panel</div>
+                    <div class="page-description">Creator-only access to configure all bot settings globally</div>
                     
                     <div class="cards-container">
                         <div class="card">
@@ -3352,23 +3352,23 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Command Prefix</label>
-                                    <input type="text" id="category_prefix" placeholder="//" maxlength="5">
+                                    <input type="text" id="creator_prefix" placeholder="//" maxlength="5">
                                     <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Symbol that triggers bot commands (default: //)</div>
                                 </div>
                                 <div class="form-group">
                                     <label>Bot Name</label>
-                                    <input type="text" id="category_botName" placeholder="SPIDEY BOT">
+                                    <input type="text" id="creator_botName" placeholder="SPIDEY BOT">
                                     <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Display name for the bot</div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Bot Status Message</label>
-                                <input type="text" id="category_statusMessage" placeholder="Protecting Discord Servers">
+                                <input type="text" id="creator_statusMessage" placeholder="Protecting Discord Servers">
                                 <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Status shown under bot name</div>
                             </div>
                             <div class="form-group">
                                 <label>Support Server URL</label>
-                                <input type="text" id="category_supportUrl" placeholder="https://discord.gg/...">
+                                <input type="text" id="creator_supportUrl" placeholder="https://discord.gg/...">
                                 <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Link to your Discord support server</div>
                             </div>
                         </div>
@@ -3384,17 +3384,17 @@
                             </div>
                             <div class="form-group">
                                 <label>Members Role ID (required for commands)</label>
-                                <input type="text" id="category_membersRoleId" placeholder="Role ID">
+                                <input type="text" id="creator_membersRoleId" placeholder="Role ID">
                                 <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Only users with this role can use bot commands</div>
                             </div>
                             <div class="form-group">
                                 <label>Admin Role IDs (comma-separated)</label>
-                                <input type="text" id="category_adminRoles" placeholder="Admin,Moderator,Owner">
+                                <input type="text" id="creator_adminRoles" placeholder="Admin,Moderator,Owner">
                                 <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Users with these roles bypass restrictions</div>
                             </div>
                             <div class="form-group">
                                 <label>Blocked Users (comma-separated IDs)</label>
-                                <textarea id="category_blockedUsers" placeholder="123456789,987654321" style="height: 4rem;"></textarea>
+                                <textarea id="creator_blockedUsers" placeholder="123456789,987654321" style="height: 4rem;"></textarea>
                                 <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Users who cannot use bot commands</div>
                             </div>
                         </div>
@@ -3412,23 +3412,23 @@
                                 <label>Core Features</label>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>🎵 Music Player</span>
-                                    <div class="toggle active" id="category_musicEnabled"></div>
+                                    <div class="toggle active" id="creator_musicEnabled"></div>
                                 </div>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>🛡️ Moderation</span>
-                                    <div class="toggle active" id="category_modEnabled"></div>
+                                    <div class="toggle active" id="creator_modEnabled"></div>
                                 </div>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>💰 Economy System</span>
-                                    <div class="toggle active" id="category_economyEnabled"></div>
+                                    <div class="toggle active" id="creator_economyEnabled"></div>
                                 </div>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>📈 Leveling/XP</span>
-                                    <div class="toggle active" id="category_levelingEnabled"></div>
+                                    <div class="toggle active" id="creator_levelingEnabled"></div>
                                 </div>
                                 <div class="switch">
                                     <span>📱 Social Media Monitoring</span>
-                                    <div class="toggle active" id="category_socialEnabled"></div>
+                                    <div class="toggle active" id="creator_socialEnabled"></div>
                                 </div>
                             </div>
                         </div>
@@ -3445,12 +3445,12 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Dashboard Title</label>
-                                    <input type="text" id="category_dashboardTitle" placeholder="SPIDEY BOT Admin Dashboard">
+                                    <input type="text" id="creator_dashboardTitle" placeholder="SPIDEY BOT Admin Dashboard">
                                     <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Title displayed in browser tab</div>
                                 </div>
                                 <div class="form-group">
                                     <label>Primary Theme Color</label>
-                                    <input type="text" id="category_themeColor" placeholder="#00D4FF">
+                                    <input type="text" id="creator_themeColor" placeholder="#00D4FF">
                                     <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Hex color for highlights</div>
                                 </div>
                             </div>
@@ -3458,11 +3458,11 @@
                                 <label>Settings</label>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>Dark Mode (default)</span>
-                                    <div class="toggle active" id="category_darkMode"></div>
+                                    <div class="toggle active" id="creator_darkMode"></div>
                                 </div>
                                 <div class="switch">
                                     <span>Use Cyberpunk Aesthetic</span>
-                                    <div class="toggle active" id="category_cyberpunk"></div>
+                                    <div class="toggle active" id="creator_cyberpunk"></div>
                                 </div>
                             </div>
                         </div>
@@ -3480,19 +3480,19 @@
                                 <label>Settings</label>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>Log All Messages</span>
-                                    <div class="toggle" id="category_logMessages"></div>
+                                    <div class="toggle" id="creator_logMessages"></div>
                                 </div>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>Track User Activity</span>
-                                    <div class="toggle active" id="category_trackActivity"></div>
+                                    <div class="toggle active" id="creator_trackActivity"></div>
                                 </div>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>Enable Analytics</span>
-                                    <div class="toggle active" id="category_analytics"></div>
+                                    <div class="toggle active" id="creator_analytics"></div>
                                 </div>
                                 <div class="switch">
                                     <span>Debug Mode</span>
-                                    <div class="toggle" id="category_debugMode"></div>
+                                    <div class="toggle" id="creator_debugMode"></div>
                                 </div>
                             </div>
                         </div>
@@ -3508,22 +3508,22 @@
                             </div>
                             <div class="form-group">
                                 <label>Admin Alert Channel ID</label>
-                                <input type="text" id="category_alertChannelId" placeholder="Channel ID">
+                                <input type="text" id="creator_alertChannelId" placeholder="Channel ID">
                                 <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Where admin alerts are sent</div>
                             </div>
                             <div class="form-group">
                                 <label>Settings</label>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>Send Join/Leave Notifications</span>
-                                    <div class="toggle active" id="category_memberNotif"></div>
+                                    <div class="toggle active" id="creator_memberNotif"></div>
                                 </div>
                                 <div class="switch" style="margin-bottom: 0.75rem;">
                                     <span>Alert on Suspicious Activity</span>
-                                    <div class="toggle active" id="category_suspiciousAlert"></div>
+                                    <div class="toggle active" id="creator_suspiciousAlert"></div>
                                 </div>
                                 <div class="switch">
                                     <span>Notify on Command Errors</span>
-                                    <div class="toggle" id="category_errorNotif"></div>
+                                    <div class="toggle" id="creator_errorNotif"></div>
                                 </div>
                             </div>
                         </div>
@@ -3540,12 +3540,12 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Warn Threshold (bans at N warns)</label>
-                                    <input type="number" id="category_warnThreshold" placeholder="3" min="1">
+                                    <input type="number" id="creator_warnThreshold" placeholder="3" min="1">
                                     <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Auto-ban after this many warnings</div>
                                 </div>
                                 <div class="form-group">
                                     <label>Raid Detection Threshold</label>
-                                    <input type="number" id="category_raidThreshold" placeholder="5" min="1">
+                                    <input type="number" id="creator_raidThreshold" placeholder="5" min="1">
                                     <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Join count to trigger raid alert</div>
                                 </div>
                             </div>
@@ -3555,7 +3555,7 @@
                     <div class="cards-container">
                         <div class="card">
                             <div class="button-group" style="margin-top: 0;">
-                                <button class="btn btn-primary" onclick="saveConfig('category')">💾 Save Admin Configuration</button>
+                                <button class="btn btn-primary" onclick="saveConfig('creator')">💾 Save Admin Configuration</button>
                             </div>
                         </div>
                     </div>
@@ -3584,7 +3584,7 @@
             'xp-levels': '⭐ XP Levels',
             'giveaways': '🎁 Giveaways',
             'social-notifs': '📱 Social Notifications',
-            'category': '⚙️ Admin Category'
+            'creator': '👑 Creator Panel'
         };
 
         const descriptions = {
@@ -3606,7 +3606,7 @@
             'xp-levels': 'Configure the leveling system',
             'giveaways': 'Manage server giveaways',
             'social-notifs': 'Monitor social media streams',
-            'category': 'Unrestricted admin access to all bot settings'
+            'creator': 'Creator-only access to all bot configuration settings'
         };
 
         document.querySelectorAll('.category-toggle').forEach(toggle => {
@@ -3621,6 +3621,19 @@
 
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.addEventListener('click', () => {
+                const section = item.getAttribute('data-section');
+                
+                // Creator panel access control - only allow bot owner
+                if (section === 'creator') {
+                    // Check if user is the bot creator (enforce on backend)
+                    // Frontend check: show warning if not authorized
+                    const userDisplay = document.querySelector('.user-profile div:first-child')?.textContent || '';
+                    if (userDisplay && userDisplay !== 'DARKIE') {
+                        showAlert('❌ Creator Panel is restricted to bot owner only!', 'error');
+                        return;
+                    }
+                }
+                
                 document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
                 document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
                 item.classList.add('active');
