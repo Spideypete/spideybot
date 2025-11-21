@@ -1245,30 +1245,30 @@ app.get("/", (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #5865F2 0%, #2c3e50 100%); color: white; line-height: 1.6; }
-          nav { background: rgba(0,0,0,0.3); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000000; color: white; line-height: 1.6; }
+          nav { background: #111111; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
           nav a:hover { color: #FFD700; }
           .hero { text-align: center; padding: 6rem 2rem; }
-          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; }
-          .hero p { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9; }
+          .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: white; }
+          .hero p { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9; color: white; }
           .btn { display: inline-block; padding: 1rem 2rem; background: #FFD700; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; font-size: 1rem; }
           .btn:hover { background: #FFC700; transform: scale(1.05); }
           .btn-secondary { background: transparent; color: #FFD700; border: 2px solid #FFD700; }
           .btn-secondary:hover { background: #FFD700; color: #000; }
           .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
-          .feature { background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-          .feature h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+          .feature { background: #1a1a1a; padding: 2rem; border-radius: 10px; border: 1px solid #333; }
+          .feature h3 { font-size: 1.5rem; margin-bottom: 1rem; color: white; }
           .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-          .stats { background: rgba(0,0,0,0.2); padding: 2rem; text-align: center; }
+          .stats { background: #111111; padding: 2rem; text-align: center; }
           .stat { display: inline-block; margin: 1rem 2rem; }
           .stat h2 { font-size: 2rem; color: #FFD700; }
           .commands { max-width: 1200px; margin: 3rem auto; padding: 2rem; }
           .command-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-          .command-card { background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #FFD700; }
-          .command-card h4 { margin-bottom: 0.5rem; }
-          .command-card p { opacity: 0.8; font-size: 0.9rem; }
-          footer { background: rgba(0,0,0,0.5); text-align: center; padding: 2rem; margin-top: 3rem; }
+          .command-card { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #FFD700; }
+          .command-card h4 { margin-bottom: 0.5rem; color: white; }
+          .command-card p { opacity: 0.8; font-size: 0.9rem; color: white; }
+          footer { background: #111111; text-align: center; padding: 2rem; margin-top: 3rem; border-top: 1px solid #333; }
         </style>
       </head>
       <body>
@@ -1392,16 +1392,16 @@ app.get("/features", (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #5865F2 0%, #2c3e50 100%); color: white; }
-          nav { background: rgba(0,0,0,0.3); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000000; color: white; }
+          nav { background: #111111; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
           nav a:hover { color: #FFD700; }
           .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; }
-          .feature-section { background: rgba(255,255,255,0.1); padding: 2rem; margin: 2rem 0; border-radius: 10px; border-left: 4px solid #FFD700; }
+          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: white; }
+          .feature-section { background: #1a1a1a; padding: 2rem; margin: 2rem 0; border-radius: 10px; border-left: 4px solid #FFD700; }
           .feature-section h2 { color: #FFD700; margin-bottom: 1rem; }
           .feature-section ul { margin-left: 2rem; }
-          .feature-section li { margin: 0.5rem 0; }
+          .feature-section li { margin: 0.5rem 0; color: white; }
           .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #FFD700; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 1rem 0; }
           .btn:hover { background: #FFC700; }
         </style>
@@ -1517,20 +1517,20 @@ app.get("/commands", (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #5865F2 0%, #2c3e50 100%); color: white; }
-          nav { background: rgba(0,0,0,0.3); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000000; color: white; }
+          nav { background: #111111; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
           nav a { color: white; text-decoration: none; margin: 0 1rem; }
           nav a:hover { color: #FFD700; }
           .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; }
+          h1 { text-align: center; font-size: 2.5rem; margin: 2rem 0; color: white; }
           h2 { color: #FFD700; margin: 2rem 0 1rem 0; border-bottom: 2px solid #FFD700; padding-bottom: 0.5rem; }
           .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-          .cmd-card { background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 5px; border-left: 3px solid #FFD700; }
-          .cmd-card code { background: rgba(0,0,0,0.3); padding: 0.2rem 0.5rem; border-radius: 3px; }
-          .cmd-card p { opacity: 0.8; margin-top: 0.5rem; font-size: 0.9rem; }
+          .cmd-card { background: #1a1a1a; padding: 1rem; border-radius: 5px; border-left: 3px solid #FFD700; }
+          .cmd-card code { background: #333; padding: 0.2rem 0.5rem; border-radius: 3px; color: #FFD700; }
+          .cmd-card p { opacity: 0.8; margin-top: 0.5rem; font-size: 0.9rem; color: white; }
           .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #FFD700; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 1rem 0; }
           .btn:hover { background: #FFC700; }
-          .note { background: rgba(255, 215, 0, 0.2); padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+          .note { background: #1a1a1a; border-left: 3px solid #FFD700; padding: 1rem; border-radius: 5px; margin: 1rem 0; color: white; }
         </style>
       </head>
       <body>
