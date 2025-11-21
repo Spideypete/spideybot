@@ -3267,7 +3267,7 @@ app.get("/dashboard/server/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   
   const fs = require('fs');
-  const panelHTML = fs.readFileSync('/tmp/server_panel.html', 'utf8');
+  const panelHTML = fs.readFileSync('/home/runner/workspace/public/admin-panel.html', 'utf8');
   res.send(panelHTML);
 });
 
