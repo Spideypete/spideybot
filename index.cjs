@@ -1494,6 +1494,7 @@ client.on("interactionCreate", async (interaction) => {
 
 // ============== WEB SERVER FOR UPTIME & WEBHOOKS ==============
 const app = express();
+app.use(express.static('public'));
 app.use(express.json());
 
 // Admin authentication middleware
@@ -1583,7 +1584,8 @@ app.get("/", (req, res) => {
       </head>
       <body>
         <nav>
-          <div style="font-size: 1.5rem; font-weight: bold;">🤖 SPIDEY BOT</div>
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 50px; margin-right: 1rem;">
+          <div style="font-size: 1.5rem; font-weight: bold; flex: 1;">SPIDEY BOT</div>
           <div>
             <a href="/">Home</a>
             <a href="/features">Features</a>
@@ -1593,7 +1595,8 @@ app.get("/", (req, res) => {
         </nav>
 
         <div class="hero">
-          <h1>🤖 SPIDEY BOT</h1>
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 150px; margin-bottom: 1rem;">
+          <h1>SPIDEY BOT</h1>
           <p>The Ultimate Discord Bot for Music, Moderation & Community Management</p>
           <a href="${botInviteURL}" target="_blank" class="btn">➕ Add to Discord</a>
           <a href="/commands" class="btn btn-secondary">📚 View Commands</a>
@@ -1691,7 +1694,8 @@ app.get("/", (req, res) => {
         </div>
 
         <footer>
-          <p>🤖 SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 40px; margin-bottom: 0.5rem;">
+          <p>SPIDEY BOT © 2025 • Multi-Server Discord Bot</p>
           <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">Use //help in Discord to see all commands • Admins use //adminhelp</p>
         </footer>
         ${supportWidget}
@@ -1726,7 +1730,8 @@ app.get("/features", (req, res) => {
       </head>
       <body>
         <nav>
-          <div style="font-size: 1.5rem; font-weight: bold;">🤖 SPIDEY BOT</div>
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 50px; margin-right: 1rem;">
+          <div style="font-size: 1.5rem; font-weight: bold; flex: 1;">SPIDEY BOT</div>
           <div>
             <a href="/">Home</a>
             <a href="/features">Features</a>
@@ -1735,6 +1740,7 @@ app.get("/features", (req, res) => {
         </nav>
 
         <div class="container">
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 80px; display: block; margin: 1rem auto;">
           <h1>✨ Features</h1>
 
           <div class="feature-section">
@@ -1860,7 +1866,8 @@ app.get("/commands", (req, res) => {
       </head>
       <body>
         <nav>
-          <div style="font-size: 1.5rem; font-weight: bold;">🤖 SPIDEY BOT</div>
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 50px; margin-right: 1rem;">
+          <div style="font-size: 1.5rem; font-weight: bold; flex: 1;">SPIDEY BOT</div>
           <div>
             <a href="/">Home</a>
             <a href="/features">Features</a>
@@ -1869,6 +1876,7 @@ app.get("/commands", (req, res) => {
         </nav>
 
         <div class="container">
+          <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 80px; display: block; margin: 1rem auto;">
           <h1>📚 Commands</h1>
           
           <div class="note">
