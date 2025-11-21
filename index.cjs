@@ -1649,39 +1649,60 @@ function verifyAdmin(req, res, next) {
 // Get invite link
 const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
 
-// Support Chat Widget HTML
+// Support Chat Widget HTML with AI
 const supportWidget = `
 <style>
   .support-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #9146FF; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(145, 70, 255, 0.4); z-index: 999; transition: all 0.3s; }
   .support-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(145, 70, 255, 0.6); }
-  .support-modal { display: none; position: fixed; bottom: 100px; right: 20px; width: 350px; max-width: 90vw; background: #1a1a1a; border: 2px solid #9146FF; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999; max-height: 500px; overflow-y: auto; }
-  .support-modal.active { display: block; animation: slideUp 0.3s ease; }
+  .support-modal { display: none; position: fixed; bottom: 100px; right: 20px; width: 380px; max-width: 90vw; background: #1a1a1a; border: 2px solid #9146FF; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999; max-height: 600px; overflow: hidden; display: flex; flex-direction: column; }
+  .support-modal.active { display: flex !important; animation: slideUp 0.3s ease; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   .support-header { background: #9146FF; padding: 15px; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
   .support-header button { background: none; border: none; color: white; cursor: pointer; font-size: 20px; }
-  .support-content { padding: 15px; }
-  .support-option { background: #111; padding: 12px; margin: 8px 0; border-radius: 5px; border-left: 3px solid #9146FF; cursor: pointer; transition: all 0.2s; }
-  .support-option:hover { background: #222; transform: translateX(5px); }
-  .support-option a { color: white; text-decoration: none; display: block; }
+  .support-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+  .support-message { padding: 10px 12px; border-radius: 8px; max-width: 85%; word-wrap: break-word; }
+  .support-message.user { background: #9146FF; color: white; align-self: flex-end; }
+  .support-message.bot { background: #333; color: #ddd; align-self: flex-start; }
+  .support-input-area { padding: 12px; border-top: 1px solid #333; display: flex; gap: 8px; }
+  .support-input-area input { flex: 1; background: #222; color: white; border: 1px solid #9146FF; border-radius: 5px; padding: 8px 12px; font-size: 0.9rem; }
+  .support-input-area button { background: #9146FF; color: white; border: none; border-radius: 5px; padding: 8px 15px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+  .support-input-area button:hover { background: #7C3AED; }
 </style>
 <div class="support-modal" id="supportModal">
   <div class="support-header">
-    <span>💬 Live Support</span>
+    <span>🤖 SPIDEY Support AI</span>
     <button onclick="closeSupportModal()">✕</button>
   </div>
-  <div class="support-content">
-    <p style="color: white; margin-bottom: 15px;">Need help? Choose an option:</p>
-    <div class="support-option"><a href="https://discord.gg/DISCORD_SERVER_ID" target="_blank">🔗 Join Discord Support Server</a></div>
-    <div class="support-option"><a href="/commands">📚 View Commands</a></div>
-    <div class="support-option"><a href="https://github.com/YOUR_GITHUB/SPIDEY-BOT" target="_blank">🐛 Report Issue</a></div>
-    <div class="support-option"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=peterburke122000@gmail.com&item_name=Support+SPIDEY+BOT&amount=10.00&currency_code=USD" target="_blank">💜 Support Us</a></div>
+  <div class="support-messages" id="supportMessages">
+    <div class="support-message bot">👋 Hey! I'm SPIDEY's AI assistant. Ask me anything about the bot!</div>
+  </div>
+  <div class="support-input-area">
+    <input type="text" id="supportInput" placeholder="Ask me about SPIDEY BOT..." onkeypress="if(event.key==='Enter') sendSupportMessage()">
+    <button onclick="sendSupportMessage()">Send</button>
   </div>
 </div>
 <button class="support-btn" onclick="toggleSupportModal()">💬</button>
 <script>
 function toggleSupportModal() { document.getElementById('supportModal').classList.toggle('active'); }
 function closeSupportModal() { document.getElementById('supportModal').classList.remove('active'); }
-document.addEventListener('click', function(e) { if (!e.target.closest('.support-modal') && !e.target.closest('.support-btn')) closeSupportModal(); });
+async function sendSupportMessage() {
+  const input = document.getElementById('supportInput');
+  const message = input.value.trim();
+  if (!message) return;
+  const messagesDiv = document.getElementById('supportMessages');
+  messagesDiv.innerHTML += '<div class="support-message user">' + escapeHtml(message) + '</div>';
+  input.value = '';
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  try {
+    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message }) });
+    const data = await res.json();
+    messagesDiv.innerHTML += '<div class="support-message bot">' + escapeHtml(data.reply) + '</div>';
+  } catch (e) {
+    messagesDiv.innerHTML += '<div class="support-message bot">Sorry, I had an issue. Try again!</div>';
+  }
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+function escapeHtml(text) { const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }; return text.replace(/[&<>"']/g, m => map[m]); }
 </script>
 `;
 
@@ -2312,6 +2333,33 @@ app.post("/webhooks/tiktok", (req, res) => {
     }
   }
   res.status(200).json({ status: "ok" });
+});
+
+// AI Chat Endpoint
+app.post("/api/chat", async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.json({ reply: "Please ask me something!" });
+  
+  try {
+    const { Configuration, OpenAIApi } = await import("openai");
+    const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = new OpenAIApi(configuration);
+    
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "You are SPIDEY BOT's helpful AI assistant. Answer questions about SPIDEY BOT's features: music player, moderation, role management, leveling system, economy, social media monitoring (Twitch/TikTok), link filtering, profanity filter, ticket support, custom commands. Be friendly and concise. Use emojis. If asked about something unrelated, politely redirect to SPIDEY BOT topics." },
+        { role: "user", content: message }
+      ],
+      max_tokens: 150,
+      temperature: 0.7
+    });
+    
+    res.json({ reply: completion.data.choices[0].message.content });
+  } catch (e) {
+    console.error("Chat error:", e);
+    res.json({ reply: "🕷️ I'm having trouble right now. Try asking about our features!" });
+  }
 });
 
 // Interactions Endpoint (Discord Interactions)
