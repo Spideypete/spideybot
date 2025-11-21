@@ -317,75 +317,80 @@ client.on("messageCreate", async (msg) => {
 
   // Help - List all commands
   if (msg.content === "//help") {
+    const mainEmbed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle("🤖 SPIDEY BOT v2.0 - Complete Command Guide")
+      .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✨ **Multi-Server Discord Bot with Roles • Music • Moderation** ✨\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+      .addFields(
+        { name: "📊 Total Commands", value: "**35+ Commands** organized in 7 categories", inline: false },
+        { name: "🎯 Features", value: "✅ Custom role categories with GIF banners\n✅ Advanced music player with loop/shuffle\n✅ Full moderation with logging\n✅ Per-server configuration", inline: false }
+      );
+
     const roleEmbed = new EmbedBuilder()
       .setColor(0x9B59B6)
-      .setTitle("🎭 ROLE CATEGORIES")
+      .setTitle("🎭 ROLE CATEGORIES (7 commands)")
       .addFields(
-        { name: "📌 //create-category [name]", value: "✨ Create a new role category", inline: true },
-        { name: "➕ //add-role [cat] [name] [ID]", value: "✨ Add role to category", inline: true },
-        { name: "➖ //remove-role [cat] [name]", value: "✨ Remove role from category", inline: true },
-        { name: "🎬 //set-category-banner [cat] [url]", value: "✨ Add GIF banner to category", inline: true },
-        { name: "🗑️ //delete-category [name]", value: "✨ Delete entire category", inline: true },
-        { name: "📋 //list-roles", value: "✨ View all role categories", inline: true },
-        { name: "🔘 //setup-category [name]", value: "✨ Post role selector with banner", inline: true }
+        { name: "📌 //create-category [name]", value: "Create a custom role category", inline: true },
+        { name: "➕ //add-role [cat] [name] [ID]", value: "Add role to category", inline: true },
+        { name: "➖ //remove-role [cat] [name]", value: "Remove role from category", inline: true },
+        { name: "🎬 //set-category-banner [cat] [url]", value: "Add GIF banner (makes it pretty!)", inline: true },
+        { name: "🔘 //setup-category [name]", value: "Post selector button with banner", inline: true },
+        { name: "📋 //list-roles", value: "View all categories & roles", inline: true },
+        { name: "🗑️ //delete-category [name]", value: "Delete entire category", inline: true }
       );
 
     const welcomeEmbed = new EmbedBuilder()
       .setColor(0xE91E63)
-      .setTitle("👋 WELCOME MESSAGES")
+      .setTitle("👋 WELCOME MESSAGES (2 commands)")
       .addFields(
-        { name: "💬 //config-welcome-channel", value: "Set welcome channel", inline: true },
-        { name: "✍️ //config-welcome-message [text]", value: "Set welcome message", inline: true },
-        { name: "📝 Placeholders", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false }
+        { name: "💬 //config-welcome-channel #channel", value: "Set where welcome messages go", inline: true },
+        { name: "✍️ //config-welcome-message [text]", value: "Create custom welcome message", inline: true },
+        { name: "📝 Available Placeholders", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false }
       );
 
     const musicEmbed = new EmbedBuilder()
       .setColor(0x00D084)
-      .setTitle("🎵 MUSIC PLAYER")
+      .setTitle("🎵 MUSIC PLAYER (8 commands)")
       .addFields(
-        { name: "🎶 //play [song/url]", value: "Play from YouTube", inline: true },
-        { name: "📊 //queue", value: "Show next 10 tracks", inline: true },
-        { name: "🔄 //loop", value: "Enable/disable loop", inline: true },
-        { name: "🔀 //shuffle", value: "Shuffle the queue", inline: true },
-        { name: "🔊 //volume [0-200]", value: "Set volume", inline: true },
-        { name: "🎛️ Controls", value: "⏮ | ⏸ | ▶ | ⏭ | ⏹", inline: false }
+        { name: "🎶 //play [song/url]", value: "Search & play from YouTube", inline: true },
+        { name: "📊 //queue", value: "Show next 10 songs", inline: true },
+        { name: "🔄 //loop", value: "Toggle queue repeat", inline: true },
+        { name: "🔀 //shuffle", value: "Randomize the queue", inline: true },
+        { name: "🔊 //volume [0-200]", value: "Adjust volume level", inline: true },
+        { name: "🎛️ Button Controls", value: "⏮ Back | ⏸ Pause | ▶ Resume | ⏭ Skip | ⏹ Stop", inline: false }
       );
 
     const modEmbed = new EmbedBuilder()
       .setColor(0xFF6B6B)
-      .setTitle("🛡️ MODERATION")
+      .setTitle("🛡️ MODERATION (6 commands - with auto-logging!)")
       .addFields(
-        { name: "👢 //kick @user [reason]", value: "Kick a member", inline: true },
-        { name: "🔨 //ban @user [reason]", value: "Ban a member", inline: true },
-        { name: "⚠️ //warn @user [reason]", value: "Warn a member", inline: true },
-        { name: "🔇 //mute @user", value: "Mute member 1h", inline: true },
-        { name: "🔊 //unmute @user", value: "Unmute member", inline: true },
-        { name: "📋 //warnings @user", value: "Check member warnings", inline: true }
+        { name: "👢 //kick @user [reason]", value: "Remove member from server", inline: true },
+        { name: "🔨 //ban @user [reason]", value: "Permanently ban member", inline: true },
+        { name: "⚠️ //warn @user [reason]", value: "Warn member (tracked!)", inline: true },
+        { name: "🔇 //mute @user", value: "Timeout for 1 hour", inline: true },
+        { name: "🔊 //unmute @user", value: "Remove timeout", inline: true },
+        { name: "📋 //warnings @user", value: "View member's warning history", inline: true }
       );
 
     const configEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("⚙️ CONFIGURATION")
+      .setTitle("⚙️ CONFIGURATION (2 commands)")
       .addFields(
-        { name: "🔤 //set-prefix [prefix]", value: "Set command prefix", inline: true },
+        { name: "🔤 //set-prefix [prefix]", value: "Change command prefix (e.g., ! or $)", inline: true },
         { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
       );
 
     const utilityEmbed = new EmbedBuilder()
       .setColor(0x3498DB)
-      .setTitle("⚙️ UTILITIES")
+      .setTitle("📞 UTILITIES (2 commands)")
       .addFields(
-        { name: "✅ //remove-roles", value: "Remove your roles", inline: true },
-        { name: "🏓 //ping", value: "Check bot status", inline: true }
-      );
-
-    const helpEmbed = new EmbedBuilder()
-      .setColor(0x5865F2)
-      .setTitle("🤖 SPIDEY BOT - Complete Command Guide")
-      .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━\n✨ Interactive role management • 🎵 Music streaming • 💬 Custom welcomes ✨\n━━━━━━━━━━━━━━━━━━━━━━━━");
+        { name: "✅ //remove-roles", value: "Remove any roles you have", inline: true },
+        { name: "🏓 //ping", value: "Check bot status & stats", inline: true }
+      )
+      .setFooter({ text: "💡 Tip: All admin commands require Administrator permission • Moderation actions are auto-logged" });
 
     return msg.reply({ 
-      embeds: [helpEmbed, roleEmbed, welcomeEmbed, musicEmbed, modEmbed, configEmbed, utilityEmbed],
+      embeds: [mainEmbed, roleEmbed, welcomeEmbed, musicEmbed, modEmbed, configEmbed, utilityEmbed],
       content: "** **"
     });
   }
