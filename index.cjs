@@ -2151,6 +2151,7 @@ app.get("/", (req, res) => {
             <a href="/features">Features</a>
             <a href="/commands">Commands</a>
             <a href="#invite">Invite</a>
+            <a href="/auth/discord" class="btn" style="padding: 0.6rem 1.2rem; margin: 0; font-size: 0.9rem;">🔐 Login with Discord</a>
           </div>
         </nav>
 
@@ -2962,6 +2963,305 @@ app.get("/privacy", (req, res) => {
       </body>
     </html>
   `);
+});
+
+// ============== DISCORD OAUTH ROUTES ==============
+app.get("/auth/discord", (req, res) => {
+  const scopes = ["identify", "guilds"];
+  const discordAuthURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
+  res.redirect(discordAuthURL);
+});
+
+app.get("/auth/discord/callback", async (req, res) => {
+  const code = req.query.code;
+  if (!code) return res.redirect("/");
+  
+  try {
+    const tokenResponse = await axios.post("https://discord.com/api/oauth2/token", {
+      client_id: DISCORD_CLIENT_ID,
+      client_secret: DISCORD_CLIENT_SECRET,
+      code: code,
+      grant_type: "authorization_code",
+      redirect_uri: REDIRECT_URI,
+      scope: "identify guilds"
+    });
+
+    const userResponse = await axios.get("https://discord.com/api/users/@me", {
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
+    });
+
+    const guildsResponse = await axios.get("https://discord.com/api/users/@me/guilds", {
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
+    });
+
+    req.session.user = userResponse.data;
+    req.session.accessToken = tokenResponse.data.access_token;
+    req.session.guilds = guildsResponse.data;
+    res.redirect("/dashboard");
+  } catch (error) {
+    console.error("OAuth error:", error.message);
+    res.redirect("/?error=oauth_failed");
+  }
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/");
+});
+
+// ============== ADMIN DASHBOARD ==============
+app.get("/dashboard", (req, res) => {
+  if (!req.session.user) return res.redirect("/auth/discord");
+
+  const config = loadConfig();
+  const userGuilds = req.session.guilds || [];
+  
+  let guildRows = "";
+  userGuilds.forEach(guild => {
+    const guildConfig = config.guilds[guild.id] || {};
+    guildRows += `
+      <tr style="border-bottom: 1px solid #333;">
+        <td style="padding: 12px;"><strong>${guild.name}</strong></td>
+        <td style="padding: 12px;">${guildConfig.prefix || "//"}</td>
+        <td style="padding: 12px;"><a href="/dashboard/server/${guild.id}" style="color: #9146FF; text-decoration: none;">⚙️ Configure</a></td>
+      </tr>
+    `;
+  });
+
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>SPIDEY BOT - Admin Dashboard</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; }
+          nav { background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid #222; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          nav a { color: #9146FF; text-decoration: none; margin: 0 1rem; }
+          .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+          h1 { color: #9146FF; margin-bottom: 2rem; }
+          h2 { color: #9146FF; margin: 2rem 0 1rem 0; }
+          .user-info { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF; margin-bottom: 2rem; }
+          table { width: 100%; background: #1a1a1a; border-radius: 8px; overflow: hidden; border: 1px solid #333; }
+          th { background: #222; padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+          .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #9146FF; color: #fff; text-decoration: none; border-radius: 6px; margin-top: 1rem; border: none; cursor: pointer; }
+          .btn:hover { background: #a855ff; }
+          .btn-danger { background: #ff4444; }
+          .btn-danger:hover { background: #ff2222; }
+        </style>
+      </head>
+      <body>
+        <nav>
+          <div style="font-weight: 700;">🕷️ SPIDEY BOT Admin</div>
+          <div>
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </nav>
+
+        <div class="container">
+          <h1>👑 Admin Dashboard</h1>
+          
+          <div class="user-info">
+            <h3>${req.session.user.username}#${req.session.user.discriminator}</h3>
+            <p style="color: #999; margin-top: 0.5rem;">Manage your server settings and configurations below</p>
+          </div>
+
+          <h2>🖥️ Your Servers</h2>
+          <table>
+            <thead>
+              <tr style="background: #222;">
+                <th>Server Name</th>
+                <th>Prefix</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${guildRows || "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #999;'>No servers found. Add SPIDEY BOT to your server first!</td></tr>"}
+            </tbody>
+          </table>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+// ============== SERVER CONFIGURATION PAGE ==============
+app.get("/dashboard/server/:guildId", (req, res) => {
+  if (!req.session.user) return res.redirect("/auth/discord");
+
+  const guildId = req.params.guildId;
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  
+  if (!hasAccess) return res.status(403).send("❌ You don't have access to this server");
+
+  const config = loadConfig();
+  const guildConfig = config.guilds[guildId] || {};
+
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>SPIDEY BOT - Server Config</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; }
+          nav { background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid #222; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+          nav a { color: #9146FF; text-decoration: none; margin: 0 1rem; }
+          .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+          h1 { color: #9146FF; margin-bottom: 2rem; }
+          .section { background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF; margin-bottom: 2rem; }
+          .section h2 { color: #9146FF; margin-bottom: 1rem; font-size: 1.2rem; }
+          .form-group { margin-bottom: 1rem; }
+          label { display: block; margin-bottom: 0.5rem; color: #ddd; font-weight: 500; }
+          input, textarea { width: 100%; padding: 0.8rem; background: #222; border: 1px solid #333; border-radius: 6px; color: #fff; font-family: Inter, sans-serif; }
+          input:focus, textarea:focus { outline: none; border-color: #9146FF; }
+          .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #9146FF; color: #fff; text-decoration: none; border-radius: 6px; margin-top: 1rem; border: none; cursor: pointer; }
+          .btn:hover { background: #a855ff; }
+          .info { background: #222; padding: 1rem; border-radius: 6px; color: #aaa; font-size: 0.9rem; margin-top: 0.5rem; }
+        </style>
+      </head>
+      <body>
+        <nav>
+          <div style="font-weight: 700;">🕷️ SPIDEY BOT Admin</div>
+          <div>
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </nav>
+
+        <div class="container">
+          <h1>⚙️ Server Configuration</h1>
+
+          <div class="section">
+            <h2>🔤 Prefix Settings</h2>
+            <form onsubmit="savePrefix(event)">
+              <div class="form-group">
+                <label>Command Prefix</label>
+                <input type="text" id="prefix" value="${guildConfig.prefix || "//"}" maxlength="5">
+                <div class="info">Default: //</div>
+              </div>
+              <button type="submit" class="btn">💾 Save Prefix</button>
+            </form>
+          </div>
+
+          <div class="section">
+            <h2>👋 Welcome Message</h2>
+            <form onsubmit="saveWelcome(event)">
+              <div class="form-group">
+                <label>Welcome Message Text</label>
+                <textarea id="welcomeMsg" rows="4">${guildConfig.welcomeMessage || "Welcome to our server! 🎉"}</textarea>
+                <div class="info">Available: {user} {username} {displayname} {server} {membercount}</div>
+              </div>
+              <div class="form-group">
+                <label>Welcome Channel ID</label>
+                <input type="text" id="welcomeChannel" value="${guildConfig.welcomeChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <button type="submit" class="btn">💾 Save Welcome</button>
+            </form>
+          </div>
+
+          <div class="section">
+            <h2>📱 Social Media Monitoring</h2>
+            <form onsubmit="saveSocial(event)">
+              <div class="form-group">
+                <label>Twitch Channel ID (for alerts)</label>
+                <input type="text" id="twitchChannel" value="${guildConfig.twitchChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <div class="form-group">
+                <label>TikTok Channel ID (for alerts)</label>
+                <input type="text" id="tiktokChannel" value="${guildConfig.tiktokChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <div class="form-group">
+                <label>Kick Channel ID (for alerts)</label>
+                <input type="text" id="kickChannel" value="${guildConfig.kickChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <button type="submit" class="btn">💾 Save Channels</button>
+            </form>
+          </div>
+
+          <div class="section">
+            <h2>🛡️ Moderation</h2>
+            <form onsubmit="saveMod(event)">
+              <div class="form-group">
+                <label>Modlog Channel ID</label>
+                <input type="text" id="modlogChannel" value="${guildConfig.modLogChannelId || ""}" placeholder="Leave empty to disable">
+              </div>
+              <button type="submit" class="btn">💾 Save Moderation</button>
+            </form>
+          </div>
+        </div>
+
+        <script>
+          async function savePrefix(e) {
+            e.preventDefault();
+            const prefix = document.getElementById('prefix').value;
+            await saveSetting({ prefix });
+          }
+
+          async function saveWelcome(e) {
+            e.preventDefault();
+            const welcomeMessage = document.getElementById('welcomeMsg').value;
+            const welcomeChannelId = document.getElementById('welcomeChannel').value;
+            await saveSetting({ welcomeMessage, welcomeChannelId });
+          }
+
+          async function saveSocial(e) {
+            e.preventDefault();
+            const twitchChannelId = document.getElementById('twitchChannel').value;
+            const tiktokChannelId = document.getElementById('tiktokChannel').value;
+            const kickChannelId = document.getElementById('kickChannel').value;
+            await saveSetting({ twitchChannelId, tiktokChannelId, kickChannelId });
+          }
+
+          async function saveMod(e) {
+            e.preventDefault();
+            const modLogChannelId = document.getElementById('modlogChannel').value;
+            await saveSetting({ modLogChannelId });
+          }
+
+          async function saveSetting(data) {
+            try {
+              const res = await fetch('/api/config/${guildId}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+              });
+              const result = await res.json();
+              if (result.success) {
+                alert('✅ Settings saved successfully!');
+              } else {
+                alert('❌ Failed to save settings');
+              }
+            } catch (error) {
+              alert('❌ Error: ' + error.message);
+            }
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+// ============== API: UPDATE CONFIG ==============
+app.post("/api/config/:guildId", express.json(), (req, res) => {
+  if (!req.session.user) return res.status(401).json({ success: false, error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
+  updateGuildConfig(guildId, req.body);
+  res.json({ success: true, config: getGuildConfig(guildId) });
 });
 
 const PORT = process.env.PORT || 5000;
