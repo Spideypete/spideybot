@@ -1,0 +1,95 @@
+╔════════════════════════════════════════════════════════════════════╗
+║     SPIDEY BOT - RENDER DISCORD OAUTH FOR spideybot-90sr          ║
+╚════════════════════════════════════════════════════════════════════╝
+
+✅ YOUR RENDER DOMAIN: https://spideybot-90sr.onrender.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 STEP 1: ADD DISCORD OAUTH REDIRECT URIs
+
+Go to: https://discord.com/developers/applications
+1. Select your SPIDEY BOT application
+2. Click on "OAuth2" in the left menu
+3. Go to "General" tab
+4. Find "Redirect URLs" section
+5. Click "Add Redirect"
+6. Add BOTH of these URLs:
+
+   https://spideybot-90sr.onrender.com/auth/discord/callback
+   https://spideybot-90sr.onrender.com/login
+
+7. Click "Save Changes"
+
+⚠️  IMPORTANT: Copy these URLs EXACTLY as shown above
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 STEP 2: SET RENDER ENVIRONMENT VARIABLES
+
+Go to: https://dashboard.render.com
+1. Find your "spideybot-90sr" Web Service
+2. Click on it to open settings
+3. Go to "Environment" tab on the left
+4. Add these environment variables:
+
+   TOKEN = [your Discord bot token]
+   CLIENT_ID = [your Discord app Client ID]
+   DISCORD_CLIENT_SECRET = [your Discord app Client Secret]
+   SESSION_SECRET = [generate with command below]
+   OPENAI_API_KEY = [your OpenAI key - optional]
+
+📚 To generate SESSION_SECRET, run this once locally:
+   
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+   Then copy the output and paste it as SESSION_SECRET value
+
+5. Click "Save Changes"
+6. Render will automatically redeploy with new variables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 STEP 3: TEST YOUR SETUP
+
+1. Go to: https://spideybot-90sr.onrender.com/login
+2. You should be redirected to Discord authorization page
+3. Click "Authorize"
+4. You should be redirected back to the dashboard with your username
+
+If successful: ✅ You're done! Your Discord OAuth is working on Render!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚨 IF YOU GET ERRORS:
+
+Error: "Redirect URI mismatch"
+→ Check that the redirect URLs in Discord Developer Portal match exactly
+→ Make sure you copied them with https:// at the start
+
+Error: "invalid_client" or "invalid request"
+→ Verify CLIENT_ID and DISCORD_CLIENT_SECRET are correct
+→ Check that they're set in Render Environment variables
+
+Error: "Bot offline"
+→ Check Render deployment logs for errors
+→ Verify TOKEN is set correctly
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 VERIFY YOUR BOT IS RUNNING:
+
+1. In Discord: Use command //ping
+2. Web: Visit https://spideybot-90sr.onrender.com
+3. Logs: Check Render dashboard → Logs tab for errors
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 IMPORTANT LINKS:
+
+Render Dashboard: https://dashboard.render.com
+Discord Developer Portal: https://discord.com/developers/applications
+Your Render App: https://spideybot-90sr.onrender.com
+Your Login Page: https://spideybot-90sr.onrender.com/login
+
+════════════════════════════════════════════════════════════════════
