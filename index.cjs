@@ -38,9 +38,11 @@ const dashboardPath = path.join(__dirname, 'dashboard-template', 'dist');
 app.use('/dashboard-app', express.static(dashboardPath));
 
 // SPA fallback for React router - serve index.html for all dashboard-app routes
-app.get('/dashboard-app*', (req, res) => {
+app.get(/^\/dashboard-app\/.*/, (req, res) => {
   const indexPath = path.join(dashboardPath, 'index.html');
-  res.sendFile(indexPath);
+  res.sendFile(indexPath, (err) => {
+    if (err) res.status(500).send('Error loading dashboard');
+  });
 });
 
 // ============== DISCORD OAUTH CONFIG ==============
