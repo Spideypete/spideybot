@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
+  <title>SPIDEY BOT - Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      background: linear-gradient(135deg, #0a0e27 0%, #1a0f3d 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .container { display: flex; height: 100vh; }
+    
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: rgba(10, 14, 39, 0.95);
+      border-right: 1px solid rgba(145, 70, 255, 0.2);
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar-logo img {
+      height: 40px;
+    }
+
+    .sidebar-logo h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #9146FF, #00D4FF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+    }
+
+    .nav-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #666;
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+      padding: 0 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 8px;
+      color: #aaa;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      color: #fff;
+      background: rgba(145, 70, 255, 0.1);
+    }
+
+    .nav-item.active {
+      color: #9146FF;
+      background: rgba(145, 70, 255, 0.2);
+    }
+
+    .nav-item-icon {
+      font-size: 1.2rem;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(145, 70, 255, 0.2);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .user-profile:hover {
+      background: rgba(145, 70, 255, 0.1);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #9146FF, #7C3AED);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .user-status {
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: rgba(10, 14, 39, 0.5);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(145, 70, 255, 0.2);
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .header-subtitle {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-top: 0.3rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      width: 200px;
+    }
+
+    .search-box input::placeholder {
+      color: #666;
+    }
+
+    .search-box input:focus {
+      outline: none;
+    }
+
+    .logout-btn {
+      background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%);
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .logout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(145, 70, 255, 0.4);
+    }
+
+    /* Content Area */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid rgba(145, 70, 255, 0.2);
+    }
+
+    .tab-btn {
+      padding: 0.8rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab-btn:hover {
+      color: #9146FF;
+    }
+
+    .tab-btn.active {
+      color: #9146FF;
+      border-bottom-color: #9146FF;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Cards */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
+      border: 1px solid rgba(145, 70, 255, 0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: #9146FF;
+      box-shadow: 0 10px 30px rgba(145, 70, 255, 0.2);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .card-icon {
+      font-size: 1.8rem;
+    }
+
+    .card-toggle {
+      width: 50px;
+      height: 28px;
+      background: #333;
+      border-radius: 14px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+      border: none;
+    }
+
+    .card-toggle.active {
+      background: #9146FF;
+    }
+
+    .card-toggle::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s;
+    }
+
+    .card-toggle.active::after {
+      left: 24px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-desc {
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 1rem;
+    }
+
+    .card-form {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(145, 70, 255, 0.2);
+    }
+
+    .card-form.show {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 0.8rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: #ddd;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.6rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.85rem;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #9146FF;
+      box-shadow: 0 0 10px rgba(145, 70, 255, 0.3);
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      background: linear-gradient(135deg, #9146FF 0%, #7C3AED 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s;
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(145, 70, 255, 0.4);
+    }
+
+    /* Stat Cards */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: rgba(145, 70, 255, 0.1);
+      border: 1px solid rgba(145, 70, 255, 0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .stat-label {
+      color: #9146FF;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(145, 70, 255, 0.5);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(145, 70, 255, 0.8);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: 240px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(145, 70, 255, 0.2);
+        padding: 1rem;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .sidebar-nav {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+      }
+
+      .nav-section {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0;
+      }
+
+      .sidebar-footer {
+        margin-left: auto;
+        margin-top: 0;
+        border-top: none;
+        border-left: 1px solid rgba(145, 70, 255, 0.2);
+        padding-left: 1rem;
+      }
+
+      .header-title {
+        font-size: 1.4rem;
+      }
+
+      .search-box input {
+        width: 150px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .content {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
+        <h2>SPIDEY</h2>
+      </div>
+
+      <div class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-label">Menu</div>
+          <a class="nav-item active" onclick="switchPage('overview')">
+            <span class="nav-item-icon">🏠</span>
+            <span>Overview</span>
+          </a>
+          <a class="nav-item" onclick="switchPage('features')">
+            <span class="nav-item-icon">✨</span>
+            <span>Features</span>
+          </a>
+          <a class="nav-item" onclick="switchPage('settings')">
+            <span class="nav-item-icon">⚙️</span>
+            <span>Settings</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-label">Server</div>
+          <a class="nav-item" onclick="switchPage('members')">
+            <span class="nav-item-icon">👥</span>
+            <span>Members</span>
+          </a>
+          <a class="nav-item" onclick="switchPage('moderation')">
+            <span class="nav-item-icon">🛡️</span>
+            <span>Moderation</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-profile" onclick="logoutUser()">
+          <div class="user-avatar">👤</div>
+          <div class="user-info">
+            <div class="user-name">Admin</div>
+            <div class="user-status">Logout</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <div class="header-title">Server Dashboard</div>
+          <div class="header-subtitle">Manage your SPIDEY BOT settings</div>
+        </div>
+        <div class="header-actions">
+          <div class="search-box">
+            <input type="text" placeholder="Search...">
+          </div>
+          <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        
+        <!-- OVERVIEW TAB -->
+        <div class="tab-content active" id="overview">
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">Status</div>
+              <div class="stat-value" style="color: #4caf50;">✓ Ready</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Prefix</div>
+              <div class="stat-value">//</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Commands</div>
+              <div class="stat-value">44+</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Members</div>
+              <div class="stat-value">2,547</div>
+            </div>
+          </div>
+
+          <h3 style="margin: 2rem 0 1.5rem 0; font-size: 1.3rem; font-weight: 700;">Quick Actions</h3>
+          <div class="grid">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">🎵</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Music Player</div>
+              <div class="card-desc">Play songs from YouTube</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">💬</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Welcome Message</div>
+              <div class="card-desc">Greet new members</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">💰</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Economy</div>
+              <div class="card-desc">User coins & rewards</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">📈</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Leveling</div>
+              <div class="card-desc">XP & role rewards</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEATURES TAB -->
+        <div class="tab-content" id="features">
+          <h3 style="margin: 0 0 1.5rem 0; font-size: 1.3rem; font-weight: 700;">All Features</h3>
+          <div class="grid">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">🎭</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Role Management</div>
+              <div class="card-desc">Assign roles using buttons</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">📱</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Social Media Alerts</div>
+              <div class="card-desc">Monitor Twitch/TikTok</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">🛡️</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Moderation</div>
+              <div class="card-desc">Kick, ban, warn members</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">🎟️</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Tickets</div>
+              <div class="card-desc">Support ticket system</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">🔒</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Server Protection</div>
+              <div class="card-desc">Anti-raid, anti-spam</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-icon">⚡</span>
+                <button class="card-toggle" onclick="toggleFeature(event)"></button>
+              </div>
+              <div class="card-title">Custom Commands</div>
+              <div class="card-desc">Create custom commands</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div class="tab-content" id="settings">
+          <h3 style="margin: 0 0 1.5rem 0; font-size: 1.3rem; font-weight: 700;">Server Settings</h3>
+          <div style="max-width: 600px;">
+            <div class="card">
+              <div class="card-title" style="margin-bottom: 1.5rem;">General Settings</div>
+              
+              <div class="form-group">
+                <label>Command Prefix</label>
+                <input type="text" value="//" placeholder="Command prefix">
+              </div>
+
+              <div class="form-group">
+                <label>Default Language</label>
+                <select>
+                  <option>English</option>
+                  <option>Spanish</option>
+                  <option>French</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Log Channel (ID)</label>
+                <input type="text" placeholder="Channel ID">
+              </div>
+
+              <div class="form-group">
+                <label>Link Filter</label>
+                <select>
+                  <option>Disabled</option>
+                  <option>Enabled</option>
+                </select>
+              </div>
+
+              <button class="btn">💾 Save Settings</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MEMBERS TAB -->
+        <div class="tab-content" id="members">
+          <h3 style="margin: 0 0 1.5rem 0; font-size: 1.3rem; font-weight: 700;">Server Members</h3>
+          <div style="background: rgba(145, 70, 255, 0.1); border: 1px solid rgba(145, 70, 255, 0.3); border-radius: 12px; padding: 2rem; text-align: center; color: #aaa;">
+            <p>👥 Total Members: 2,547</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Use //members command in Discord to view member list</p>
+          </div>
+        </div>
+
+        <!-- MODERATION TAB -->
+        <div class="tab-content" id="moderation">
+          <h3 style="margin: 0 0 1.5rem 0; font-size: 1.3rem; font-weight: 700;">Moderation Tools</h3>
+          <div style="max-width: 600px;">
+            <div class="card">
+              <div class="card-title" style="margin-bottom: 1.5rem;">Take Action</div>
+              
+              <div class="form-group">
+                <label>User ID</label>
+                <input type="text" placeholder="Enter user ID">
+              </div>
+
+              <div class="form-group">
+                <label>Reason</label>
+                <textarea rows="3" placeholder="Reason for action"></textarea>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                <button class="btn" style="background: linear-gradient(135deg, #ff6b6b, #ff3232);">🦶 Kick</button>
+                <button class="btn" style="background: linear-gradient(135deg, #ff6b6b, #ff3232);">🔨 Ban</button>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 0.8rem;">
+                <button class="btn">⚠️ Warn</button>
+                <button class="btn">🔇 Mute</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchPage(page) {
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      event.target.closest('.nav-item').classList.add('active');
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(page).classList.add('active');
+    }
+
+    function toggleFeature(e) {
+      e.stopPropagation();
+      const btn = e.target;
+      btn.classList.toggle('active');
+    }
+
+    function logoutUser() {
+      if (confirm('Are you sure you want to logout?')) {
+        window.location.href = '/logout';
+      }
+    }
+  </script>
+</body>
+</html>
