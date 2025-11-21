@@ -107,20 +107,36 @@
 
       <div class="grid">
         <div class="stat-box">
-          <h3>Status</h3>
-          <div class="value" style="color: #4caf50;">✓ Ready</div>
+          <h3>Bot Status</h3>
+          <div class="value" style="color: #4caf50;">✓ Online</div>
         </div>
         <div class="stat-box">
-          <h3>Prefix</h3>
-          <div class="value">//</div>
+          <h3>Server Members</h3>
+          <div class="value" id="member-count">0</div>
         </div>
         <div class="stat-box">
           <h3>Commands</h3>
           <div class="value">44+</div>
         </div>
         <div class="stat-box">
-          <h3>Features</h3>
-          <div class="value">7</div>
+          <h3>Active Features</h3>
+          <div class="value">8</div>
+        </div>
+        <div class="stat-box">
+          <h3>Prefix</h3>
+          <div class="value" id="prefix-display">//</div>
+        </div>
+        <div class="stat-box">
+          <h3>Last Updated</h3>
+          <div class="value" id="last-update">Now</div>
+        </div>
+        <div class="stat-box">
+          <h3>Modlog Channel</h3>
+          <div class="value" id="modlog-display">Set</div>
+        </div>
+        <div class="stat-box">
+          <h3>Welcome Channel</h3>
+          <div class="value" id="welcome-display">Set</div>
         </div>
       </div>
 
@@ -310,6 +326,56 @@
   </div>
 
   <script>
+    // Load server stats on page load
+    async function loadServerStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        document.getElementById('member-count').textContent = (data.members / 1000).toFixed(1) + 'K';
+        document.getElementById('prefix-display').textContent = data.prefix || '//';
+        
+        const now = new Date();
+        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('last-update').textContent = time;
+      } catch (e) {
+        console.error('Error loading stats:', e);
+      }
+    }
+
+    // Load config data
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/config/settings');
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        if (data.modLogChannelId) {
+          document.getElementById('modlog-display').textContent = data.modLogChannelId;
+        } else {
+          document.getElementById('modlog-display').textContent = '❌ Not Set';
+          document.getElementById('modlog-display').style.color = '#ff6b6b';
+        }
+        
+        if (data.welcomeChannelId) {
+          document.getElementById('welcome-display').textContent = data.welcomeChannelId;
+        } else {
+          document.getElementById('welcome-display').textContent = '❌ Not Set';
+          document.getElementById('welcome-display').style.color = '#ff6b6b';
+        }
+      } catch (e) {
+        console.error('Error loading config:', e);
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadServerStats();
+      loadConfig();
+      setInterval(loadServerStats, 30000); // Update every 30 seconds
+    });
+
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));

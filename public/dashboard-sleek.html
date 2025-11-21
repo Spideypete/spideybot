@@ -2189,10 +2189,10 @@
     async function saveSettings() {
       try {
         const data = {
-          prefix: document.getElementById('settings-prefix').value,
-          language: document.getElementById('settings-language').value,
-          modLogChannelId: document.getElementById('settings-modlog').value,
-          welcomeChannelId: document.getElementById('settings-welcome').value
+          prefix: document.getElementById('settings-prefix').value || '//',
+          language: document.getElementById('settings-language').value || 'English',
+          modLogChannelId: document.getElementById('settings-modlog').value || '',
+          welcomeChannelId: document.getElementById('settings-welcome').value || ''
         };
         
         const res = await fetch('/api/config/settings', {
@@ -2202,8 +2202,10 @@
         });
         
         if (res.ok) {
-          showNotification('✅ Settings saved!');
-          loadSettings();
+          showNotification('✅ Settings saved successfully!');
+          setTimeout(() => loadSettings(), 500);
+        } else {
+          showNotification('❌ Failed to save settings');
         }
       } catch (e) {
         showNotification('❌ Error saving settings');
