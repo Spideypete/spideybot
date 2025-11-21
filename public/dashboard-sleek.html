@@ -1343,16 +1343,22 @@
         <div class="features">
           <div class="feature" style="grid-column: 1 / -1; max-width: 500px;">
             <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem;">📦 Category Name</label>
-            <input class="config-input" type="text" placeholder="e.g., Gaming Roles">
+            <input class="config-input" type="text" id="cat-name" placeholder="e.g., Gaming Roles">
             
-            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">🎯 Roles (comma-separated)</label>
-            <input class="config-input" type="text" placeholder="Dev, Designer, Manager, Artist">
+            <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">🎯 Roles</label>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <input class="config-input" type="text" id="role-input" placeholder="Add a role" style="flex: 1;">
+              <button class="config-btn" onclick="addRoleToList()" style="width: auto; padding: 0.7rem 1.2rem;">➕</button>
+            </div>
+            <div id="roles-list" style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 6px; padding: 0.8rem; min-height: 40px; max-height: 150px; overflow-y: auto;">
+              <div style="color: #666; font-size: 0.9rem; text-align: center;">No roles added yet</div>
+            </div>
             
             <label style="color: #00d4ff; font-weight: 600; display: block; margin-bottom: 0.5rem; margin-top: 1rem;">💬 Channel</label>
-            <input class="config-input" type="text" placeholder="Channel ID or #channel-name">
+            <input class="config-input" type="text" id="cat-channel" placeholder="Channel ID or #channel-name">
             
             <label style="color: #ccc; margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked> Allow Multiple Roles</label>
-            <button class="config-btn" onclick="saveConfig('role-categories')" style="margin-top: 1.5rem;">✨ Create Category</button>
+            <button class="config-btn" onclick="saveRoleCategories()" style="margin-top: 1.5rem;">✨ Create Category</button>
           </div>
         </div>
       </div>
@@ -1768,6 +1774,70 @@
       btn.classList.toggle('active');
       const config = btn.closest('.feature').querySelector('.feature-config');
       if (config) config.classList.toggle('show');
+    }
+
+    let rolesArray = [];
+
+    function addRoleToList() {
+      const input = document.getElementById('role-input');
+      const role = input.value.trim();
+      if (!role) return;
+      
+      rolesArray.push(role);
+      input.value = '';
+      updateRolesList();
+    }
+
+    function removeRole(index) {
+      rolesArray.splice(index, 1);
+      updateRolesList();
+    }
+
+    function updateRolesList() {
+      const list = document.getElementById('roles-list');
+      if (rolesArray.length === 0) {
+        list.innerHTML = '<div style="color: #666; font-size: 0.9rem; text-align: center;">No roles added yet</div>';
+      } else {
+        list.innerHTML = rolesArray.map((role, i) => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem; background: rgba(0, 212, 255, 0.1); border-radius: 4px; margin-bottom: 0.4rem; color: #e0e0e0;">
+            <span>🎯 ${role}</span>
+            <button onclick="removeRole(${i})" style="background: rgba(255, 100, 100, 0.3); color: #ff6464; border: 1px solid rgba(255, 100, 100, 0.5); border-radius: 4px; padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">✕</button>
+          </div>
+        `).join('');
+      }
+    }
+
+    function saveRoleCategories() {
+      const catName = document.getElementById('cat-name').value.trim();
+      const catChannel = document.getElementById('cat-channel').value.trim();
+      
+      if (!catName || !catChannel || rolesArray.length === 0) {
+        showNotification('❌ Please fill all fields and add at least one role');
+        return;
+      }
+
+      const data = {
+        categoryName: catName,
+        roles: rolesArray,
+        channel: catChannel
+      };
+
+      fetch('/api/config/role-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => {
+        if (res.ok) {
+          showNotification('✅ Role category saved!');
+          document.getElementById('cat-name').value = '';
+          document.getElementById('cat-channel').value = '';
+          rolesArray = [];
+          updateRolesList();
+        }
+      }).catch(e => {
+        showNotification('❌ Error saving role category');
+        console.error(e);
+      });
     }
 
     async function saveConfig(page) {
