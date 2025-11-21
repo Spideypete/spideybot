@@ -847,6 +847,7 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">TOOLS <div class="category-toggle active" data-section="tools-menu"></div></div>
                 <ul class="sidebar-menu" id="tools-menu">
+                    <li class="sidebar-item" data-section="tickets">🎫 Tickets</li>
                     <li class="sidebar-item" data-section="giveaways">🎁 Giveaways</li>
                     <li style="padding: 0.75rem 1rem; margin-top: 0.75rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
                         <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">🎨 UI Colour</div>
@@ -3108,6 +3109,91 @@
                 </div>
 
 
+                <!-- TICKETS -->
+                <div id="tickets" class="content">
+                    <div class="page-title">🎫 Tickets</div>
+                    <div class="page-description">Manage support tickets with channel assignment and role-based access</div>
+                    
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎫 Ticket Overview</div>
+                                    <div class="card-subtitle">How tickets work</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.648rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📝 Support System:</strong><br/>
+                                    Members can create support tickets to get help. Each ticket is a private channel where staff can assist.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🔐 Role-Based Access:</strong><br/>
+                                    Configure which roles can see and manage tickets. Only assigned support staff can view private ticket channels.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">💾 Saved Tickets:</strong><br/>
+                                    View all tickets history, closed tickets, and support interactions in one place.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Ticket Configuration</div>
+                                    <div class="card-subtitle">Set up ticket system</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ticket Category Channel</label>
+                                <input type="text" id="tickets_channel" placeholder="Channel ID">
+                                <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Parent category where all ticket channels are created</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔐 Access Control</div>
+                                    <div class="card-subtitle">Control who can manage tickets</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Support Staff Roles (comma-separated)</label>
+                                <input type="text" id="tickets_supportRoles" placeholder="Moderator,Admin,Support">
+                                <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Roles that can view and manage all tickets</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">💾 Saved Tickets</div>
+                                    <div class="card-subtitle">View ticket history</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.648rem; padding: 1rem; background: rgba(var(--theme-color), 0.1); border-radius: 8px; border: 1px solid rgba(var(--theme-color), 0.2);">
+                                <div id="tickets-saved-list" style="color: rgba(255, 255, 255, 0.6);">No tickets saved yet</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('tickets')">💾 Save Ticket Configuration</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- GIVEAWAYS -->
                 <div id="giveaways" class="content">
                     <div class="page-title">🎁 Giveaways</div>
@@ -3548,6 +3634,7 @@
             'message-counting': '📈 Message Counting',
             'statistics-channels': '📉 Statistics Channels',
             'xp-levels': '⭐ XP Levels',
+            'tickets': '🎫 Tickets',
             'giveaways': '🎁 Giveaways',
             'social-notifs': '📱 Social Notifications',
             'creator': '👑 Creator Panel'
@@ -3570,6 +3657,7 @@
             'message-counting': 'Track message activity',
             'statistics-channels': 'Display real-time stats',
             'xp-levels': 'Configure the leveling system',
+            'tickets': 'Manage support tickets with role-based access',
             'giveaways': 'Manage server giveaways',
             'social-notifs': 'Monitor social media streams',
             'creator': 'Creator-only access to all bot configuration settings'
