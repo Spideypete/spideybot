@@ -2331,7 +2331,7 @@ app.post("/webhooks/twitch", (req, res) => {
           const embed = new EmbedBuilder()
             .setColor(0x9146FF)
             .setTitle("🎮 TWITCH LIVE!")
-            .setDescription(`**${body.event?.broadcaster_user_login}** is now live on Twitch!`)
+            .setDescription(`**${body.event?.broadcaster_user_login}** is live! Please support and follow thanks!`)
             .setURL(`https://twitch.tv/${body.event?.broadcaster_user_login}`)
             .addFields(
               { name: "Title", value: body.event?.title || "No title", inline: false }
