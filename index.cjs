@@ -3050,8 +3050,13 @@ app.get("/register", (req, res) => {
               <label for="confirm">Confirm Password</label>
               <input type="password" id="confirm" name="confirm" required minlength="6">
             </div>
+            <div class="form-group" style="margin-bottom: 2rem;">
+              <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+            </div>
             <button type="submit">🚀 Create Account</button>
           </form>
+        </div>
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
           <div class="link">
             <p>Already have an account? <a href="/login">Login here</a></p>
             <p><a href="/" style="color: #999;">← Back to Home</a></p>
@@ -3124,8 +3129,13 @@ app.get("/login", (req, res) => {
               <label for="password">Password</label>
               <input type="password" id="password" name="password" required>
             </div>
+            <div class="form-group" style="margin-bottom: 2rem;">
+              <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+            </div>
             <button type="submit">🔐 Login</button>
           </form>
+        </div>
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
           <div class="link">
             <p>Don't have an account? <a href="/register">Sign up here</a></p>
             <p><a href="/" style="color: #999;">← Back to Home</a></p>
