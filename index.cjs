@@ -33,14 +33,28 @@ app.use(session({
 
 // Serve static files from public (automatically serves index.html for /)
 app.use(express.static(publicDir));
+app.set('trust proxy', true);
 
 // ============== DISCORD OAUTH CONFIG ==============
-// Render URL: https://spideybot-90sr.onrender.com/auth/discord/callback
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
-const RENDER_URL = process.env.RENDER_EXTERNAL_URL || process.env.RENDER_DEPLOY_URL;
+const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
 const REPLIT_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : null;
-const REDIRECT_URI = RENDER_URL ? `${RENDER_URL}/auth/discord/callback` : (REPLIT_URL ? `${REPLIT_URL}/auth/discord/callback` : "http://localhost:5000/auth/discord/callback");
+
+// Build proper redirect URI
+let BASE_REDIRECT_URI;
+if (RENDER_EXTERNAL_URL) {
+  BASE_REDIRECT_URI = RENDER_EXTERNAL_URL.endsWith('/') ? RENDER_EXTERNAL_URL.slice(0, -1) : RENDER_EXTERNAL_URL;
+} else if (REPLIT_URL) {
+  BASE_REDIRECT_URI = REPLIT_URL;
+} else {
+  BASE_REDIRECT_URI = "http://localhost:5000";
+}
+
+// Hardcode Render URL as fallback if detection fails
+const REDIRECT_URI = BASE_REDIRECT_URI === "http://localhost:5000" && process.env.NODE_ENV === 'production' 
+  ? "https://spideybot-90sr.onrender.com/auth/discord/callback"
+  : `${BASE_REDIRECT_URI}/auth/discord/callback`;
 
 console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
 
