@@ -2157,7 +2157,7 @@ app.get("/", (req, res) => {
             <a href="/features">Features</a>
             <a href="/commands">Commands</a>
             <a href="#invite">Invite</a>
-            <a href="/auth/discord" class="btn" style="padding: 0.6rem 1.2rem; margin: 0; font-size: 0.9rem;">🔐 Login with Discord</a>
+            <a href="/login" class="btn" style="padding: 0.6rem 1.2rem; margin: 0; font-size: 0.9rem;">🔐 Admin Login</a>
           </div>
         </nav>
 
@@ -2975,76 +2975,68 @@ app.get("/privacy", (req, res) => {
   `);
 });
 
-// ============== DISCORD OAUTH ROUTES ==============
-app.get("/auth/discord", (req, res) => {
-  const scopes = ["identify", "guilds"];
-  const discordAuthURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
-  res.redirect(discordAuthURL);
+// ============== SIMPLE PASSWORD LOGIN ==============
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "spidey123";
+
+app.get("/login", (req, res) => {
+  if (req.session.authenticated) return res.redirect("/dashboard");
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <link rel="icon" type="image/png" href="/assets/spidey-logo.png">
+        <title>SPIDEY BOT - Admin Login</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+          .login-box { background: #1a1a1a; padding: 2.5rem; border-radius: 12px; border: 1px solid #333; max-width: 400px; width: 100%; box-shadow: 0 0 30px rgba(145, 70, 255, 0.2); }
+          .logo { text-align: center; margin-bottom: 2rem; }
+          .logo img { height: 60px; }
+          h1 { text-align: center; margin-bottom: 1.5rem; color: #9146FF; font-size: 1.8rem; }
+          .form-group { margin-bottom: 1.5rem; }
+          label { display: block; margin-bottom: 0.5rem; color: #ddd; font-weight: 500; }
+          input { width: 100%; padding: 0.9rem; background: #222; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 1rem; }
+          input:focus { outline: none; border-color: #9146FF; box-shadow: 0 0 10px rgba(145, 70, 255, 0.3); }
+          button { width: 100%; padding: 0.9rem; background: #9146FF; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
+          button:hover { background: #a855ff; box-shadow: 0 0 15px rgba(145, 70, 255, 0.4); }
+          .error { color: #ff4444; text-align: center; margin-bottom: 1rem; }
+          .info { text-align: center; color: #999; font-size: 0.9rem; margin-top: 1.5rem; }
+        </style>
+      </head>
+      <body>
+        <div class="login-box">
+          <div class="logo">
+            <img src="/assets/spidey-logo.png" alt="SPIDEY BOT">
+          </div>
+          <h1>🔐 Admin Panel</h1>
+          ${req.query.error ? '<div class="error">❌ Incorrect password</div>' : ''}
+          <form method="POST" action="/login">
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" required autofocus>
+            </div>
+            <button type="submit">Login</button>
+          </form>
+          <div class="info">
+            <p>🕷️ SPIDEY BOT Admin Panel</p>
+            <p><a href="/" style="color: #9146FF; text-decoration: none;">← Back to Home</a></p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
-app.get("/auth/discord/callback", async (req, res) => {
-  const code = req.query.code;
-  if (!code) return res.redirect("/");
-  
-  try {
-    if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET || DISCORD_CLIENT_SECRET === "default_secret") {
-      console.error("❌ Missing DISCORD_CLIENT_SECRET! Add it to secrets in Replit.");
-      return res.send(`
-        <html>
-          <head><title>Missing Configuration</title></head>
-          <body style="background: #0f0f0f; color: #fff; font-family: Arial; text-align: center; padding: 50px;">
-            <h1>❌ Configuration Error</h1>
-            <p>DISCORD_CLIENT_SECRET is not set!</p>
-            <p>You need to add your Discord Client Secret to make OAuth work.</p>
-            <p>Go to Discord Developer Portal → Your Bot → OAuth2 → General → Copy Client Secret</p>
-            <p>Then add it to Replit Secrets</p>
-            <a href="/" style="color: #9146FF;">← Go Back Home</a>
-          </body>
-        </html>
-      `);
-    }
-
-    console.log(`🔍 OAuth attempt with CLIENT_ID: ${DISCORD_CLIENT_ID ? "✓ Set" : "✗ Missing"}`);
-    console.log(`🔍 Redirect URI: ${REDIRECT_URI}`);
-    console.log(`🔍 Code received: ${code ? "✓ Yes" : "✗ No"}`);
-    
-    const tokenResponse = await axios.post("https://discord.com/api/oauth2/token", {
-      client_id: DISCORD_CLIENT_ID,
-      client_secret: DISCORD_CLIENT_SECRET,
-      code: code,
-      grant_type: "authorization_code",
-      redirect_uri: REDIRECT_URI,
-      scope: "identify guilds"
-    });
-
-    const userResponse = await axios.get("https://discord.com/api/users/@me", {
-      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
-    });
-
-    const guildsResponse = await axios.get("https://discord.com/api/users/@me/guilds", {
-      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
-    });
-
-    req.session.user = userResponse.data;
-    req.session.accessToken = tokenResponse.data.access_token;
-    req.session.guilds = guildsResponse.data;
-    console.log(`✅ User logged in: ${userResponse.data.username}#${userResponse.data.discriminator}`);
-    res.redirect("/dashboard");
-  } catch (error) {
-    console.error("❌ OAuth error:", error.response?.data || error.message);
-    console.error("❌ Full error details:", error);
-    res.send(`
-      <html>
-        <head><title>OAuth Error</title></head>
-        <body style="background: #0f0f0f; color: #fff; font-family: Arial; text-align: center; padding: 50px;">
-          <h1>❌ Login Failed</h1>
-          <p>Error: ${error.response?.data?.error_description || error.message}</p>
-          <p>Make sure you added the redirect URL to Discord Developer Portal</p>
-          <a href="/" style="color: #9146FF;">← Go Back Home</a>
-        </body>
-      </html>
-    `);
+app.post("/login", (req, res) => {
+  const password = req.body.password || req.query.password || "";
+  if (password === ADMIN_PASSWORD) {
+    req.session.authenticated = true;
+    console.log(`✅ Admin logged in`);
+    return res.redirect("/dashboard");
   }
+  console.log(`❌ Failed login attempt`);
+  res.redirect("/login?error=1");
 });
 
 app.get("/logout", (req, res) => {
@@ -3054,19 +3046,20 @@ app.get("/logout", (req, res) => {
 
 // ============== ADMIN DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
-  if (!req.session.user) return res.redirect("/auth/discord");
+  if (!req.session.authenticated) return res.redirect("/login");
 
   const config = loadConfig();
-  const userGuilds = req.session.guilds || [];
+  const guildIds = Object.keys(config.guilds || {});
   
   let guildRows = "";
-  userGuilds.forEach(guild => {
-    const guildConfig = config.guilds[guild.id] || {};
+  guildIds.forEach(guildId => {
+    const guildConfig = config.guilds[guildId] || {};
+    const guildName = guildConfig.guildName || `Server: ${guildId}`;
     guildRows += `
       <tr style="border-bottom: 1px solid #333;">
-        <td style="padding: 12px;"><strong>${guild.name}</strong></td>
+        <td style="padding: 12px;"><strong>${guildName}</strong></td>
         <td style="padding: 12px;">${guildConfig.prefix || "//"}</td>
-        <td style="padding: 12px;"><a href="/dashboard/server/${guild.id}" style="color: #9146FF; text-decoration: none;">⚙️ Configure</a></td>
+        <td style="padding: 12px;"><a href="/dashboard/server/${guildId}" style="color: #9146FF; text-decoration: none;">⚙️ Configure</a></td>
       </tr>
     `;
   });
@@ -3109,7 +3102,7 @@ app.get("/dashboard", (req, res) => {
           <h1>👑 Admin Dashboard</h1>
           
           <div class="user-info">
-            <h3>${req.session.user.username}#${req.session.user.discriminator}</h3>
+            <h3>🕷️ SPIDEY BOT Manager</h3>
             <p style="color: #999; margin-top: 0.5rem;">Manage your server settings and configurations below</p>
           </div>
 
@@ -3123,7 +3116,7 @@ app.get("/dashboard", (req, res) => {
               </tr>
             </thead>
             <tbody>
-              ${guildRows || "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #999;'>No servers found. Add SPIDEY BOT to your server first!</td></tr>"}
+              ${guildRows || "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #999;'>No servers configured yet. Use //setup-level-roles or any command in your server to register it.</td></tr>"}
             </tbody>
           </table>
         </div>
@@ -3134,13 +3127,9 @@ app.get("/dashboard", (req, res) => {
 
 // ============== SERVER CONFIGURATION PAGE ==============
 app.get("/dashboard/server/:guildId", (req, res) => {
-  if (!req.session.user) return res.redirect("/auth/discord");
+  if (!req.session.authenticated) return res.redirect("/login");
 
   const guildId = req.params.guildId;
-  const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => g.id === guildId);
-  
-  if (!hasAccess) return res.status(403).send("❌ You don't have access to this server");
 
   const config = loadConfig();
   const guildConfig = config.guilds[guildId] || {};
