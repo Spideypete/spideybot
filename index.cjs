@@ -73,7 +73,11 @@ function getGuildConfig(guildId) {
       profanityFilterEnabled: true,
       suggestionsChannelId: null,
       giveaways: {},
-      badWords: ["badword1", "badword2"]
+      badWords: ["badword1", "badword2"],
+      linkFilterEnabled: true,
+      ticketsEnabled: false,
+      ticketChannelId: null,
+      customCommands: {}
     };
     saveConfig(config);
   }
@@ -446,6 +450,109 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
+  // ============== LINK FILTERING ==============
+  if (msg.content.startsWith("//link-filter ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can toggle link filter!");
+    }
+    const newState = !guildConfig.linkFilterEnabled;
+    updateGuildConfig(msg.guild.id, { linkFilterEnabled: newState });
+    return msg.reply(`✅ Link filter is now **${newState ? "ON" : "OFF"}**`);
+  }
+
+  // Auto-delete messages with links/invites
+  if (guildConfig.linkFilterEnabled && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    const linkRegex = /(https?:\/\/[^\s]+|discord\.(gg|io|me)\/[^\s]+)/gi;
+    if (linkRegex.test(msg.content)) {
+      msg.delete().catch(() => {});
+      return msg.author.send("🔗 Links are not allowed in this server!").catch(() => {});
+    }
+  }
+
+  // ============== TICKET SYSTEM ==============
+  if (msg.content === "//ticket") {
+    if (!guildConfig.ticketsEnabled) return msg.reply("❌ Ticket system is not enabled! Admin use: `//ticket-setup #channel`");
+    const userId = msg.author.id;
+    const ticketChannelName = `ticket-${msg.author.username.slice(0, 10)}`;
+    
+    try {
+      const ticketChannel = await msg.guild.channels.create({
+        name: ticketChannelName,
+        type: 0,
+        permissionOverwrites: [
+          { id: msg.guild.id, deny: ["ViewChannel"] },
+          { id: userId, allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"] }
+        ]
+      });
+      
+      const ticketEmbed = new EmbedBuilder()
+        .setColor(0x9146FF)
+        .setTitle("🎫 Support Ticket Created")
+        .setDescription(`Support team will be with you shortly!`)
+        .addFields({ name: "User", value: msg.author.toString(), inline: true });
+      
+      ticketChannel.send({ embeds: [ticketEmbed] });
+      return msg.reply(`✅ Ticket created: ${ticketChannel.toString()}`);
+    } catch (error) {
+      return msg.reply("❌ Failed to create ticket!");
+    }
+  }
+
+  if (msg.content === "//close-ticket") {
+    if (!msg.channel.name.startsWith("ticket-")) return msg.reply("❌ This is not a ticket channel!");
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can close tickets!");
+    msg.channel.delete().catch(() => {});
+  }
+
+  if (msg.content.startsWith("//ticket-setup ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can setup tickets!");
+    }
+    const channel = msg.mentions.channels.first();
+    if (!channel) return msg.reply("Usage: //ticket-setup #channel");
+    updateGuildConfig(msg.guild.id, { ticketsEnabled: true, ticketChannelId: channel.id });
+    return msg.reply(`✅ Ticket system enabled! Users can create tickets with \`//ticket\``);
+  }
+
+  // ============== CUSTOM COMMANDS ==============
+  if (msg.content.startsWith("//addcmd ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can create custom commands!");
+    }
+    const args = msg.content.slice(9).trim().split("|");
+    const cmdName = args[0]?.trim();
+    const cmdResponse = args[1]?.trim();
+    if (!cmdName || !cmdResponse) return msg.reply("Usage: //addcmd [command] | [response]\nExample: //addcmd hello | Hey there!");
+    
+    const customCmds = guildConfig.customCommands || {};
+    customCmds[cmdName] = cmdResponse;
+    updateGuildConfig(msg.guild.id, { customCommands: customCmds });
+    return msg.reply(`✅ Custom command **${cmdName}** created! Use \`//${cmdName}\` to trigger it.`);
+  }
+
+  if (msg.content.startsWith("//delcmd ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can delete custom commands!");
+    }
+    const cmdName = msg.content.slice(9).trim();
+    if (!cmdName) return msg.reply("Usage: //delcmd [command]");
+    
+    const customCmds = guildConfig.customCommands || {};
+    if (!customCmds[cmdName]) return msg.reply(`❌ Custom command **${cmdName}** not found!`);
+    delete customCmds[cmdName];
+    updateGuildConfig(msg.guild.id, { customCommands: customCmds });
+    return msg.reply(`✅ Custom command **${cmdName}** deleted!`);
+  }
+
+  // Trigger custom commands
+  const customCmds = guildConfig.customCommands || {};
+  if (msg.content.startsWith("//") && msg.content.length > 2) {
+    const cmdName = msg.content.slice(2).split(" ")[0];
+    if (customCmds[cmdName]) {
+      return msg.reply(customCmds[cmdName]);
+    }
+  }
+
   // ============== COMMUNITY TOOLS ==============
   if (msg.content === "//suggest") {
     return msg.reply("Usage: //suggest [your suggestion]");
@@ -605,12 +712,13 @@ client.on("messageCreate", async (msg) => {
 
     const utilityEmbed = new EmbedBuilder()
       .setColor(0x3498DB)
-      .setTitle("📞 UTILITIES (4 commands)")
+      .setTitle("📞 UTILITIES (5 commands)")
       .addFields(
         { name: "✅ //remove-roles", value: "Remove any roles you have", inline: true },
         { name: "🏓 //ping", value: "Check bot status & stats", inline: true },
         { name: "👑 //adminhelp", value: "View all admin commands (admins only)", inline: true },
-        { name: "👨‍💻 //developers", value: "Meet the dev team & join Discord", inline: true }
+        { name: "👨‍💻 //developers", value: "Meet the dev team & join Discord", inline: true },
+        { name: "🎫 //ticket", value: "Create a support ticket", inline: true }
       );
 
     const economyEmbed = new EmbedBuilder()
@@ -708,6 +816,19 @@ client.on("messageCreate", async (msg) => {
         { name: "🌐 WEB API", value: "Admin dashboard at `/admin` • 3 REST endpoints", inline: false }
       );
 
+    const adminProtectionEmbed = new EmbedBuilder()
+      .setColor(0xFF6B6B)
+      .setTitle("🛡️ PROTECTION & TOOLS (7 commands)")
+      .addFields(
+        { name: "🔗 //link-filter [on/off]", value: "Toggle link filtering", inline: true },
+        { name: "🎫 //ticket-setup #channel", value: "Enable ticket system", inline: true },
+        { name: "🎫 //ticket", value: "Create support ticket", inline: true },
+        { name: "🔒 //close-ticket", value: "Close ticket channel", inline: true },
+        { name: "➕ //addcmd [cmd] | [response]", value: "Create custom command", inline: true },
+        { name: "➖ //delcmd [command]", value: "Delete custom command", inline: true },
+        { name: "📂 Custom Commands", value: "Use //[yourcommand] to trigger", inline: true }
+      );
+
     const adminModEmbed = new EmbedBuilder()
       .setColor(0xFF6B6B)
       .setTitle("🛡️ MODERATION (6 commands)")
@@ -722,7 +843,7 @@ client.on("messageCreate", async (msg) => {
       .setFooter({ text: "💡 All actions are auto-logged to your modlog channel" });
 
     return msg.reply({ 
-      embeds: [adminMainEmbed, adminRoleEmbed, adminWelcomeEmbed, adminConfigEmbed, adminSocialEmbed, adminModEmbed],
+      embeds: [adminMainEmbed, adminRoleEmbed, adminWelcomeEmbed, adminConfigEmbed, adminSocialEmbed, adminModEmbed, adminProtectionEmbed],
       content: "** **"
     });
   }
