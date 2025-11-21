@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: spideybot-90sr
+    runtime: node
+    buildCommand: npm install
+    startCommand: node index.cjs
+    envVars:
+      - key: TOKEN
+        scope: run
+      - key: CLIENT_ID
+        scope: run
+      - key: DISCORD_CLIENT_SECRET
+        scope: run
+      - key: SESSION_SECRET
+        scope: run
