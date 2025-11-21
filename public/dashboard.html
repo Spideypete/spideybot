@@ -639,6 +639,7 @@
                 <div id="settings" class="content active">
                     <div class="page-title">⚙️ Settings</div>
                     <div class="page-description">Manage your server's core settings and preferences</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
@@ -694,8 +695,253 @@
                                 <input type="text" id="settings_adminRoles" placeholder="123456789,987654321" style="font-size: 0.85rem;">
                                 <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Enter Discord role IDs that have access to this dashboard</div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('settings')">💾 Save Settings</button>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Auto Moderation Rules</div>
+                                    <div class="card-subtitle">Configure automatic moderation</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Prohibited Words (comma-separated)</label>
+                                <textarea id="settings_prohibited" placeholder="word1, word2, word3" style="min-height: 80px;"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Spam Trigger (messages/min)</label>
+                                    <input type="number" id="settings_spamTrigger" value="5" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mention Spam Limit</label>
+                                    <input type="number" id="settings_mentionLimit" value="3" min="1">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Default Punishment</label>
+                                <select id="settings_punishment">
+                                    <option value="warn">Warn</option>
+                                    <option value="mute">Mute (5 min)</option>
+                                    <option value="kick">Kick</option>
+                                    <option value="ban">Ban</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Detection Options</label>
+                                <div class="switch">
+                                    <span>Block Bad Links</span>
+                                    <div class="toggle active" id="settings_blockLinks"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Filter Spam</span>
+                                    <div class="toggle active" id="settings_filterSpam"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Logging Channels</div>
+                                    <div class="card-subtitle">Specify where to post logs</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Moderation Log Channel</label>
+                                <input type="text" id="settings_modLog" placeholder="Channel ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Message Events Channel</label>
+                                <input type="text" id="settings_messageLog" placeholder="Channel ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Member Events Channel</label>
+                                <input type="text" id="settings_memberLog" placeholder="Channel ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Role Changes Channel</label>
+                                <input type="text" id="settings_roleLog" placeholder="Channel ID">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Ignored Channels/Roles</div>
+                                    <div class="card-subtitle">Whitelist/Blacklist</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ignored Channels (comma-separated IDs)</label>
+                                <textarea id="settings_ignoredChannels" placeholder="Channel IDs where bot won't track" style="min-height: 80px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Bot won't log activity or apply moderation in these channels</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ignored Roles (comma-separated IDs)</label>
+                                <textarea id="settings_ignoredRoles" placeholder="Role IDs exempt from moderation" style="min-height: 80px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Members with these roles won't be affected by auto-moderation</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Toggleable Features</div>
+                                    <div class="card-subtitle">Enable/disable modules</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Feature Modules</label>
+                                <div class="switch">
+                                    <span>Music Player</span>
+                                    <div class="toggle active" id="settings_musicFeature"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Reaction Roles</span>
+                                    <div class="toggle active" id="settings_reactRoles"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Suggestions System</span>
+                                    <div class="toggle active" id="settings_suggestions"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Post Tracking</span>
+                                    <div class="toggle active" id="settings_postTracking"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Leveling System</span>
+                                    <div class="toggle active" id="settings_levelingSystem"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Command Access Levels</div>
+                                    <div class="card-subtitle">Control who can use commands</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Roles with Command Access (comma-separated IDs)</label>
+                                <input type="text" id="settings_commandRoles" placeholder="Role IDs" style="font-size: 0.85rem;">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Leave empty to allow all members</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Admin Command Roles (comma-separated IDs)</label>
+                                <input type="text" id="settings_adminCommandRoles" placeholder="Role IDs" style="font-size: 0.85rem;">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Roles for restricted admin commands</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Moderator Roles (comma-separated IDs)</label>
+                                <input type="text" id="settings_modRoles" placeholder="Role IDs" style="font-size: 0.85rem;">
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Dashboard Access</div>
+                                    <div class="card-subtitle">Control dashboard permissions</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Dashboard Viewer Roles (comma-separated IDs)</label>
+                                <input type="text" id="settings_dashboardViewers" placeholder="Role IDs" style="font-size: 0.85rem;">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Can view dashboard analytics</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Dashboard Editor Roles (comma-separated IDs)</label>
+                                <input type="text" id="settings_dashboardEditors" placeholder="Role IDs" style="font-size: 0.85rem;">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Can modify settings</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Dashboard Access Type</label>
+                                <select id="settings_dashboardAccess">
+                                    <option value="admin">Admin Only</option>
+                                    <option value="roles">Specific Roles</option>
+                                    <option value="everyone">Everyone</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Statistics & Analytics</div>
+                                    <div class="card-subtitle">Configure data tracking</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Activity Filters</label>
+                                <div class="switch">
+                                    <span>Track Messages</span>
+                                    <div class="toggle active" id="settings_trackMessages"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Track Reactions</span>
+                                    <div class="toggle active" id="settings_trackReactions"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Track Voice Activity</span>
+                                    <div class="toggle active" id="settings_trackVoice"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Track Member Joins/Leaves</label>
+                                <div class="switch">
+                                    <span>Enabled</span>
+                                    <div class="toggle active" id="settings_trackMembers"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Analytics Lookback Period</div>
+                                    <div class="card-subtitle">Data retention & display range</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Default Lookback Period</label>
+                                <select id="settings_lookbackPeriod">
+                                    <option value="7">Last 7 Days</option>
+                                    <option value="14">Last 14 Days</option>
+                                    <option value="30">Last 30 Days</option>
+                                    <option value="90">Last 90 Days</option>
+                                    <option value="365">Last Year</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Member Filter (optional)</label>
+                                <input type="text" id="settings_memberFilter" placeholder="Role IDs to include (optional)" style="font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group">
+                                <label>Channel Filter (optional)</label>
+                                <input type="text" id="settings_channelFilter" placeholder="Channel IDs to include (optional)" style="font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group">
+                                <label>Data Retention (days)</label>
+                                <input type="number" id="settings_retention" value="90" min="7">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">How long to keep historical data</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('settings')">💾 Save All Settings</button>
                             </div>
                         </div>
                     </div>
