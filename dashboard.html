@@ -799,7 +799,8 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-logo">
-                <div class="logo-text" id="userDisplayName">🕷️ Loading...</div>
+                <img id="serverIcon" src="" alt="Server" style="width: 40px; height: 40px; border-radius: 50%; margin-bottom: 0.5rem; border: 2px solid rgba(var(--theme-color), 0.6);">
+                <div class="logo-text" id="serverDisplayName" style="font-size: 0.95rem;">Loading...</div>
             </div>
 
             <div class="sidebar-section">
@@ -3858,22 +3859,30 @@
             }
         }
 
-        // Load and display user's Discord username
-        async function loadUserInfo() {
+        // Load and display server info
+        async function loadServerInfo() {
             try {
-                const res = await fetch('/api/user');
+                const serverId = localStorage.getItem('selectedServerId');
+                if (!serverId) return;
+                
+                const res = await fetch(`/api/creator/servers`);
                 const data = await res.json();
-                if (data.user && data.user.username) {
-                    document.getElementById('userDisplayName').textContent = `👤 ${data.user.username}`;
+                const server = data.servers.find(s => s.id === serverId);
+                
+                if (server) {
+                    document.getElementById('serverDisplayName').textContent = server.name;
+                    if (server.icon) {
+                        document.getElementById('serverIcon').src = server.icon;
+                    }
                 }
             } catch (err) {
-                console.error('Failed to load user info:', err);
+                console.error('Failed to load server info:', err);
             }
         }
 
         window.addEventListener('load', () => {
-            loadUserInfo();
             checkServerSelection();
+            loadServerInfo();
             initCreatorAccess();
             const isDarkMode = localStorage.getItem('darkMode') !== 'false';
             if (!isDarkMode) {
