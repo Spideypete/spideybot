@@ -1733,6 +1733,7 @@ app.get("/", (req, res) => {
           </div>
         </nav>
 
+        <img src="/assets/spidey-banner.png" alt="SPIDEY BOT Banner" style="width: 100%; max-height: 300px; object-fit: cover; display: block;">
         <div class="hero">
           <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 150px; margin-bottom: 1rem;">
           <h1>SPIDEY BOT</h1>
@@ -1878,6 +1879,7 @@ app.get("/features", (req, res) => {
           </div>
         </nav>
 
+        <img src="/assets/spidey-banner.png" alt="SPIDEY BOT Banner" style="width: 100%; max-height: 250px; object-fit: cover; display: block;">
         <div class="container">
           <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 80px; display: block; margin: 1rem auto;">
           <h1>✨ Features</h1>
@@ -2014,6 +2016,7 @@ app.get("/commands", (req, res) => {
           </div>
         </nav>
 
+        <img src="/assets/spidey-banner.png" alt="SPIDEY BOT Banner" style="width: 100%; max-height: 250px; object-fit: cover; display: block;">
         <div class="container">
           <img src="/assets/spidey-logo.png" alt="SPIDEY BOT" style="height: 80px; display: block; margin: 1rem auto;">
           <h1>📚 Commands</h1>
