@@ -60,6 +60,10 @@ function getGuildConfig(guildId) {
       roleCategories: {},
       prefix: "//",
       modLogChannelId: null,
+      twitchChannelId: null,
+      twitchUsername: null,
+      tiktokChannelId: null,
+      tiktokUsername: null,
       musicLoopMode: false,
       musicShuffle: false,
       musicVolume: 100,
@@ -374,10 +378,14 @@ client.on("messageCreate", async (msg) => {
 
     const configEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("⚙️ CONFIGURATION (2 commands)")
+      .setTitle("⚙️ CONFIGURATION (6 commands)")
       .addFields(
-        { name: "🔤 //set-prefix [prefix]", value: "Change command prefix (e.g., ! or $)", inline: true },
-        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
+        { name: "🔤 //set-prefix [prefix]", value: "Change command prefix", inline: true },
+        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true },
+        { name: "🎮 //set-twitch-user [username]", value: "Set Twitch username to monitor", inline: true },
+        { name: "📢 //config-twitch-channel #channel", value: "Set Twitch live notification channel", inline: true },
+        { name: "🎵 //set-tiktok-user [username]", value: "Set TikTok username to monitor", inline: true },
+        { name: "📢 //config-tiktok-channel #channel", value: "Set TikTok post notification channel", inline: true }
       );
 
     const utilityEmbed = new EmbedBuilder()
@@ -860,6 +868,47 @@ client.on("messageCreate", async (msg) => {
     updateGuildConfig(msg.guild.id, { modLogChannelId: channel.id });
     return msg.reply(`✅ Modlog channel set to ${channel}`);
   }
+
+  // Twitch & TikTok config
+  if (msg.content.startsWith("//config-twitch-channel ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const channel = msg.mentions.channels.first();
+    if (!channel) return msg.reply("Usage: //config-twitch-channel #channel");
+    updateGuildConfig(msg.guild.id, { twitchChannelId: channel.id });
+    return msg.reply(`✅ Twitch live notifications will post to ${channel}\n\n💡 *Note: Configure your Twitch webhook at: https://dev.twitch.tv/console*`);
+  }
+
+  if (msg.content.startsWith("//config-tiktok-channel ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const channel = msg.mentions.channels.first();
+    if (!channel) return msg.reply("Usage: //config-tiktok-channel #channel");
+    updateGuildConfig(msg.guild.id, { tiktokChannelId: channel.id });
+    return msg.reply(`✅ TikTok post notifications will post to ${channel}\n\n💡 *Note: Configure your TikTok webhook at: https://developer.tiktok.com*`);
+  }
+
+  if (msg.content.startsWith("//set-twitch-user ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const twitchUser = msg.content.slice(18).trim();
+    if (!twitchUser) return msg.reply("Usage: //set-twitch-user [username]\nExample: //set-twitch-user xqc");
+    updateGuildConfig(msg.guild.id, { twitchUsername: twitchUser });
+    return msg.reply(`✅ Twitch user set to: **${twitchUser}**`);
+  }
+
+  if (msg.content.startsWith("//set-tiktok-user ")) {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can configure!");
+    }
+    const tiktokUser = msg.content.slice(18).trim();
+    if (!tiktokUser) return msg.reply("Usage: //set-tiktok-user [username]\nExample: //set-tiktok-user charlidamelio");
+    updateGuildConfig(msg.guild.id, { tiktokUsername: tiktokUser });
+    return msg.reply(`✅ TikTok user set to: **${tiktokUser}**`);
+  }
 });
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
@@ -1091,8 +1140,10 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
-// ============== WEB SERVER FOR UPTIME ==============
+// ============== WEB SERVER FOR UPTIME & WEBHOOKS ==============
 const app = express();
+app.use(express.json());
+
 app.get("/", (req, res) => {
   const uptime = Math.floor(process.uptime());
   const hours = Math.floor(uptime / 3600);
@@ -1118,6 +1169,61 @@ app.get("/", (req, res) => {
       </body>
     </html>
   `);
+});
+
+// Twitch webhook
+app.post("/webhooks/twitch", (req, res) => {
+  const body = req.body;
+  if (body.subscription?.type === "stream.online") {
+    const config = loadConfig();
+    const broadcasterName = body.event?.broadcaster_user_login;
+    
+    for (const [guildId, guildConfig] of Object.entries(config.guilds || {})) {
+      if (guildConfig.twitchUsername?.toLowerCase() === broadcasterName?.toLowerCase() && guildConfig.twitchChannelId) {
+        const channel = client.channels.cache.get(guildConfig.twitchChannelId);
+        if (channel) {
+          const embed = new EmbedBuilder()
+            .setColor(0x9146FF)
+            .setTitle("🎮 TWITCH LIVE!")
+            .setDescription(`**${broadcasterName}** is now live on Twitch!`)
+            .setURL(`https://twitch.tv/${broadcasterName}`)
+            .addFields(
+              { name: "Title", value: body.event?.title || "No title", inline: false }
+            )
+            .setThumbnail(`https://static-cdn.jtvnw.net/jtv_user_pictures/${body.event?.broadcaster_user_id}.png`);
+          channel.send({ embeds: [embed] }).catch(() => {});
+        }
+      }
+    }
+  }
+  res.status(200).json({ status: "ok" });
+});
+
+// TikTok webhook
+app.post("/webhooks/tiktok", (req, res) => {
+  const body = req.body;
+  if (body.event === "post.publish" || body.type === "video") {
+    const config = loadConfig();
+    const tiktokUser = body.data?.author_username || body.creator;
+    
+    for (const [guildId, guildConfig] of Object.entries(config.guilds || {})) {
+      if (guildConfig.tiktokUsername?.toLowerCase() === tiktokUser?.toLowerCase() && guildConfig.tiktokChannelId) {
+        const channel = client.channels.cache.get(guildConfig.tiktokChannelId);
+        if (channel) {
+          const embed = new EmbedBuilder()
+            .setColor(0x000000)
+            .setTitle("📱 NEW TIKTOK POST!")
+            .setDescription(`**${tiktokUser}** just posted on TikTok!`)
+            .setURL(`https://www.tiktok.com/@${tiktokUser}`)
+            .addFields(
+              { name: "Caption", value: body.data?.caption || "No caption", inline: false }
+            );
+          channel.send({ embeds: [embed] }).catch(() => {});
+        }
+      }
+    }
+  }
+  res.status(200).json({ status: "ok" });
 });
 
 const PORT = 5000;
