@@ -3204,7 +3204,7 @@ app.get("/logout", (req, res) => {
 // ============== ADMIN DASHBOARD ==============
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.redirect("/dashboard-app");
+  res.sendFile(__dirname + "/public/mee6-dashboard.html");
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
