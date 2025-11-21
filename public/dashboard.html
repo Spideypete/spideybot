@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SPIDEY BOT - Admin Dashboard</title>
     <style>
+        :root {
+            --theme-color: 128, 0, 255;
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; border-radius: 15px; }
         
         body {
@@ -23,20 +27,20 @@
         .sidebar {
             width: 250px;
             background: #000000;
-            border-right: 2px solid rgba(128, 0, 255, 0.4);
+            border-right: 2px solid rgba(var(--theme-color), 0.4);
             padding: 2rem 0;
             overflow-y: auto;
             position: fixed;
             height: 100vh;
             left: 0;
             top: 0;
-            box-shadow: 0 0 20px rgba(128, 0, 255, 0.2);
+            box-shadow: 0 0 20px rgba(var(--theme-color), 0.2);
         }
 
         .sidebar-logo {
             padding: 0 1.5rem 2rem;
             text-align: center;
-            border-bottom: 1px solid rgba(128, 0, 255, 0.3);
+            border-bottom: 1px solid rgba(var(--theme-color), 0.3);
             margin-bottom: 1.5rem;
         }
 
@@ -44,7 +48,7 @@
             font-size: 1.3rem;
             font-weight: 700;
             color: rgba(255, 255, 255, 0.95);
-            text-shadow: 0 0 15px rgba(128, 0, 255, 0.6);
+            text-shadow: 0 0 15px rgba(var(--theme-color), 0.6);
         }
 
         .sidebar-section {
@@ -67,15 +71,15 @@
         .category-toggle {
             width: 40px;
             height: 20px;
-            background: rgba(128, 0, 255, 0.2);
-            border: 1px solid rgba(128, 0, 255, 0.5);
+            background: rgba(var(--theme-color), 0.2);
+            border: 1px solid rgba(var(--theme-color), 0.5);
             cursor: pointer;
             position: relative;
             transition: all 0.3s;
         }
 
         .category-toggle.active {
-            background: rgba(128, 0, 255, 0.5);
+            background: rgba(var(--theme-color), 0.5);
         }
 
         .category-toggle::after {
@@ -83,7 +87,7 @@
             position: absolute;
             width: 16px;
             height: 16px;
-            background: rgba(128, 0, 255, 0.8);
+            background: rgba(var(--theme-color), 0.8);
             top: 2px;
             left: 2px;
             transition: all 0.3s;
@@ -91,7 +95,7 @@
 
         .category-toggle.active::after {
             left: 22px;
-            background: rgba(128, 0, 255, 1);
+            background: rgba(var(--theme-color), 1);
             border-radius: 50%;
         }
 
@@ -120,32 +124,32 @@
         }
 
         .sidebar-item:hover {
-            background: rgba(128, 0, 255, 0.15);
+            background: rgba(var(--theme-color), 0.15);
             color: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(128, 0, 255, 0.4);
-            box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
+            border: 1px solid rgba(var(--theme-color), 0.4);
+            box-shadow: 0 0 10px rgba(var(--theme-color), 0.3);
         }
 
         .sidebar-item.active {
-            background: rgba(128, 0, 255, 0.25);
+            background: rgba(var(--theme-color), 0.25);
             color: rgba(255, 255, 255, 1);
-            border: 1px solid rgba(128, 0, 255, 0.6);
-            box-shadow: 0 0 15px rgba(128, 0, 255, 0.4);
+            border: 1px solid rgba(var(--theme-color), 0.6);
+            box-shadow: 0 0 15px rgba(var(--theme-color), 0.4);
         }
 
         .upgrade-box {
             margin: 2rem 1rem;
             padding: 1rem;
-            background: rgba(128, 0, 255, 0.2);
-            border: 2px solid rgba(128, 0, 255, 0.6);
+            background: rgba(var(--theme-color), 0.2);
+            border: 2px solid rgba(var(--theme-color), 0.6);
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .upgrade-box:hover {
-            background: rgba(128, 0, 255, 0.35);
-            box-shadow: 0 0 20px rgba(128, 0, 255, 0.5);
+            background: rgba(var(--theme-color), 0.35);
+            box-shadow: 0 0 20px rgba(var(--theme-color), 0.5);
             transform: scale(1.05);
         }
 
@@ -166,12 +170,12 @@
 
         .header {
             background: rgba(0, 0, 0, 0.8);
-            border-bottom: 2px solid rgba(128, 0, 255, 0.3);
+            border-bottom: 2px solid rgba(var(--theme-color), 0.3);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 0 15px rgba(128, 0, 255, 0.2);
+            box-shadow: 0 0 15px rgba(var(--theme-color), 0.2);
         }
 
         .header-left {
@@ -189,21 +193,21 @@
         .mode-toggle {
             width: 50px;
             height: 24px;
-            background: rgba(128, 0, 255, 0.2);
-            border: 1px solid rgba(128, 0, 255, 0.4);
+            background: rgba(var(--theme-color), 0.2);
+            border: 1px solid rgba(var(--theme-color), 0.4);
             cursor: pointer;
             position: relative;
             transition: all 0.3s;
         }
 
         .mode-toggle:hover {
-            background: rgba(128, 0, 255, 0.3);
-            box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
+            background: rgba(var(--theme-color), 0.3);
+            box-shadow: 0 0 10px rgba(var(--theme-color), 0.3);
         }
 
         .mode-toggle.active {
-            background: rgba(128, 0, 255, 0.4);
-            border-color: rgba(128, 0, 255, 0.7);
+            background: rgba(var(--theme-color), 0.4);
+            border-color: rgba(var(--theme-color), 0.7);
         }
 
         .mode-toggle::after {
@@ -211,17 +215,17 @@
             position: absolute;
             width: 20px;
             height: 20px;
-            background: rgba(128, 0, 255, 0.8);
+            background: rgba(var(--theme-color), 0.8);
             top: 2px;
             left: 2px;
             transition: all 0.3s;
-            box-shadow: 0 0 8px rgba(128, 0, 255, 0.4);
+            box-shadow: 0 0 8px rgba(var(--theme-color), 0.4);
         }
 
         .mode-toggle.active::after {
             left: 28px;
-            background: rgba(128, 0, 255, 1);
-            box-shadow: 0 0 12px rgba(128, 0, 255, 0.6);
+            background: rgba(var(--theme-color), 1);
+            box-shadow: 0 0 12px rgba(var(--theme-color), 0.6);
         }
 
         body.light-mode {
@@ -231,13 +235,13 @@
 
         body.light-mode .sidebar {
             background: #ffffff;
-            border-right: 2px solid rgba(128, 0, 255, 0.3);
+            border-right: 2px solid rgba(var(--theme-color), 0.3);
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
 
         body.light-mode .sidebar-item:hover {
-            background: rgba(128, 0, 255, 0.1);
-            border: 1px solid rgba(128, 0, 255, 0.3);
+            background: rgba(var(--theme-color), 0.1);
+            border: 1px solid rgba(var(--theme-color), 0.3);
         }
 
         body.light-mode .main {
@@ -246,7 +250,7 @@
 
         body.light-mode .header {
             background: rgba(255, 255, 255, 0.95);
-            border-bottom: 2px solid rgba(128, 0, 255, 0.2);
+            border-bottom: 2px solid rgba(var(--theme-color), 0.2);
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
         }
 
@@ -256,23 +260,23 @@
 
         body.light-mode .card {
             background: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(128, 0, 255, 0.2);
+            border: 2px solid rgba(var(--theme-color), 0.2);
         }
 
         body.light-mode .card:hover {
             background: rgba(255, 255, 255, 1);
-            border-color: rgba(128, 0, 255, 0.5);
-            box-shadow: 0 0 25px rgba(128, 0, 255, 0.2);
+            border-color: rgba(var(--theme-color), 0.5);
+            box-shadow: 0 0 25px rgba(var(--theme-color), 0.2);
         }
 
         body.light-mode input, body.light-mode textarea, body.light-mode select {
             background: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(128, 0, 255, 0.3);
+            border: 1px solid rgba(var(--theme-color), 0.3);
             color: rgba(0, 0, 0, 0.9);
         }
 
         body.light-mode label {
-            color: rgba(128, 0, 255, 0.8);
+            color: rgba(var(--theme-color), 0.8);
         }
 
         body.light-mode .page-title {
@@ -295,38 +299,38 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(128, 0, 255, 0.15);
+            background: rgba(var(--theme-color), 0.15);
             padding: 0.5rem 1rem;
             cursor: pointer;
             color: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(128, 0, 255, 0.4);
+            border: 1px solid rgba(var(--theme-color), 0.4);
             transition: all 0.3s;
             position: relative;
         }
 
         .server-selector:hover {
-            background: rgba(128, 0, 255, 0.25);
-            box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
+            background: rgba(var(--theme-color), 0.25);
+            box-shadow: 0 0 10px rgba(var(--theme-color), 0.3);
         }
 
         .server-selector select {
             background: rgba(0, 0, 0, 0.8) !important;
             color: rgba(255, 255, 255, 0.9) !important;
-            border: 1px solid rgba(128, 0, 255, 0.4) !important;
+            border: 1px solid rgba(var(--theme-color), 0.4) !important;
             padding: 0.5rem !important;
             cursor: pointer !important;
             transition: all 0.3s !important;
         }
 
         .server-selector select:hover {
-            background: rgba(128, 0, 255, 0.15) !important;
-            border-color: rgba(128, 0, 255, 0.6) !important;
+            background: rgba(var(--theme-color), 0.15) !important;
+            border-color: rgba(var(--theme-color), 0.6) !important;
         }
 
         .server-selector select:focus {
             outline: none !important;
-            background: rgba(128, 0, 255, 0.2) !important;
-            box-shadow: 0 0 10px rgba(128, 0, 255, 0.4) !important;
+            background: rgba(var(--theme-color), 0.2) !important;
+            box-shadow: 0 0 10px rgba(var(--theme-color), 0.4) !important;
         }
 
         .server-selector select option {
@@ -350,8 +354,8 @@
         .user-avatar {
             width: 36px;
             height: 36px;
-            background: rgba(128, 0, 255, 0.3);
-            border: 2px solid rgba(128, 0, 255, 0.6);
+            background: rgba(var(--theme-color), 0.3);
+            border: 2px solid rgba(var(--theme-color), 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -361,8 +365,8 @@
 
         .logout-btn {
             padding: 0.5rem 1rem;
-            background: rgba(128, 0, 255, 0.15);
-            border: 1px solid rgba(128, 0, 255, 0.4);
+            background: rgba(var(--theme-color), 0.15);
+            border: 1px solid rgba(var(--theme-color), 0.4);
             color: rgba(255, 255, 255, 0.9);
             cursor: pointer;
             transition: all 0.3s;
@@ -370,8 +374,8 @@
         }
 
         .logout-btn:hover {
-            background: rgba(128, 0, 255, 0.3);
-            box-shadow: 0 0 15px rgba(128, 0, 255, 0.4);
+            background: rgba(var(--theme-color), 0.3);
+            box-shadow: 0 0 15px rgba(var(--theme-color), 0.4);
         }
 
         .content-area {
@@ -416,15 +420,15 @@
 
         .card {
             background: rgba(0, 0, 0, 0.6);
-            border: 2px solid rgba(128, 0, 255, 0.3);
+            border: 2px solid rgba(var(--theme-color), 0.3);
             padding: 1.5rem;
             transition: all 0.3s ease;
         }
 
         .card:hover {
-            background: rgba(128, 0, 255, 0.08);
-            border-color: rgba(128, 0, 255, 0.6);
-            box-shadow: 0 0 25px rgba(128, 0, 255, 0.4);
+            background: rgba(var(--theme-color), 0.08);
+            border-color: rgba(var(--theme-color), 0.6);
+            box-shadow: 0 0 25px rgba(var(--theme-color), 0.4);
         }
 
         .card-header {
@@ -433,7 +437,7 @@
             align-items: center;
             margin-bottom: 1rem;
             padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(128, 0, 255, 0.2);
+            border-bottom: 1px solid rgba(var(--theme-color), 0.2);
         }
 
         .card-title {
@@ -466,7 +470,7 @@
             width: 100%;
             padding: 0.75rem;
             background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(128, 0, 255, 0.3);
+            border: 1px solid rgba(var(--theme-color), 0.3);
             color: rgba(255, 255, 255, 0.9);
             font-family: inherit;
             font-size: 0.95rem;
@@ -475,14 +479,14 @@
 
         input:focus, textarea:focus, select:focus {
             outline: none;
-            background: rgba(128, 0, 255, 0.1);
-            border-color: rgba(128, 0, 255, 0.6);
-            box-shadow: 0 0 15px rgba(128, 0, 255, 0.3), inset 0 0 10px rgba(128, 0, 255, 0.1);
+            background: rgba(var(--theme-color), 0.1);
+            border-color: rgba(var(--theme-color), 0.6);
+            box-shadow: 0 0 15px rgba(var(--theme-color), 0.3), inset 0 0 10px rgba(var(--theme-color), 0.1);
         }
 
         input:hover, textarea:hover, select:hover {
-            background: rgba(128, 0, 255, 0.05);
-            border-color: rgba(128, 0, 255, 0.4);
+            background: rgba(var(--theme-color), 0.05);
+            border-color: rgba(var(--theme-color), 0.4);
         }
 
         textarea {
@@ -501,12 +505,12 @@
             gap: 0.75rem;
             margin-top: 1.5rem;
             padding-top: 1rem;
-            border-top: 1px solid rgba(128, 0, 255, 0.2);
+            border-top: 1px solid rgba(var(--theme-color), 0.2);
         }
 
         .btn {
             padding: 0.75rem 1.5rem;
-            border: 1px solid rgba(128, 0, 255, 0.5);
+            border: 1px solid rgba(var(--theme-color), 0.5);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -514,29 +518,29 @@
             font-size: 0.75rem;
             letter-spacing: 1px;
             flex: 1;
-            background: rgba(128, 0, 255, 0.2);
+            background: rgba(var(--theme-color), 0.2);
             color: rgba(255, 255, 255, 0.95);
         }
 
         .btn-primary {
-            background: rgba(128, 0, 255, 0.2);
-            border: 1px solid rgba(128, 0, 255, 0.6);
+            background: rgba(var(--theme-color), 0.2);
+            border: 1px solid rgba(var(--theme-color), 0.6);
         }
 
         .btn-primary:hover {
-            background: rgba(128, 0, 255, 0.4);
-            box-shadow: 0 0 20px rgba(128, 0, 255, 0.5);
+            background: rgba(var(--theme-color), 0.4);
+            box-shadow: 0 0 20px rgba(var(--theme-color), 0.5);
         }
 
         .btn-secondary:hover {
-            background: rgba(128, 0, 255, 0.25);
+            background: rgba(var(--theme-color), 0.25);
         }
 
         .alert {
             padding: 1rem 1.5rem;
             margin-bottom: 1.5rem;
             animation: slideDown 0.3s ease;
-            border: 1px solid rgba(128, 0, 255, 0.4);
+            border: 1px solid rgba(var(--theme-color), 0.4);
         }
 
         @keyframes slideDown {
@@ -566,21 +570,21 @@
         .toggle {
             width: 50px;
             height: 24px;
-            background: rgba(128, 0, 255, 0.2);
-            border: 1px solid rgba(128, 0, 255, 0.4);
+            background: rgba(var(--theme-color), 0.2);
+            border: 1px solid rgba(var(--theme-color), 0.4);
             cursor: pointer;
             position: relative;
             transition: all 0.3s;
         }
 
         .toggle:hover {
-            background: rgba(128, 0, 255, 0.3);
-            box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
+            background: rgba(var(--theme-color), 0.3);
+            box-shadow: 0 0 10px rgba(var(--theme-color), 0.3);
         }
 
         .toggle.active {
-            background: rgba(128, 0, 255, 0.4);
-            border-color: rgba(128, 0, 255, 0.7);
+            background: rgba(var(--theme-color), 0.4);
+            border-color: rgba(var(--theme-color), 0.7);
         }
 
         .toggle::after {
@@ -588,21 +592,21 @@
             position: absolute;
             width: 20px;
             height: 20px;
-            background: rgba(128, 0, 255, 0.8);
+            background: rgba(var(--theme-color), 0.8);
             top: 2px;
             left: 2px;
             transition: all 0.3s;
-            box-shadow: 0 0 8px rgba(128, 0, 255, 0.4);
+            box-shadow: 0 0 8px rgba(var(--theme-color), 0.4);
         }
 
         .toggle.active::after {
             left: 28px;
-            background: rgba(128, 0, 255, 1);
-            box-shadow: 0 0 12px rgba(128, 0, 255, 0.6);
+            background: rgba(var(--theme-color), 1);
+            box-shadow: 0 0 12px rgba(var(--theme-color), 0.6);
         }
 
         @media (max-width: 768px) {
-            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 2px solid rgba(128, 0, 255, 0.3); }
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 2px solid rgba(var(--theme-color), 0.3); }
             .main { margin-left: 0; }
             .content-area { padding: 1rem; }
             .cards-container { grid-template-columns: 1fr; }
@@ -610,9 +614,9 @@
         }
 
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(128, 0, 255, 0.05); }
-        ::-webkit-scrollbar-thumb { background: rgba(128, 0, 255, 0.3); }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(128, 0, 255, 0.5); }
+        ::-webkit-scrollbar-track { background: rgba(var(--theme-color), 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(var(--theme-color), 0.3); }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(var(--theme-color), 0.5); }
     </style>
 </head>
 <body>
@@ -2286,8 +2290,25 @@
         }
 
         function changeThemeColor(color) {
+            const colorMap = {
+                'purple': '128, 0, 255',
+                'pink': '255, 105, 180',
+                'blue': '30, 144, 255',
+                'cyan': '0, 255, 255',
+                'green': '34, 197, 94',
+                'black': '64, 64, 64',
+                'grey': '128, 128, 128',
+                'violet': '139, 0, 139',
+                'baby-blue': '173, 216, 230',
+                'baby-pink': '255, 192, 203',
+                'red': '255, 67, 67',
+                'yellow': '255, 223, 0',
+                'orange': '255, 140, 0'
+            };
+            
+            const rgbValue = colorMap[color];
+            document.documentElement.style.setProperty('--theme-color', rgbValue);
             localStorage.setItem('selectedColor', color);
-            alert(`Theme color changed to ${color}!`);
         }
 
         function toggleMode() {
@@ -2306,13 +2327,32 @@
             }
         }
 
-        // Initialize mode on page load
+        // Initialize mode and color on page load
         window.addEventListener('load', () => {
             const isDarkMode = localStorage.getItem('darkMode') !== 'false';
             if (!isDarkMode) {
                 document.body.classList.add('light-mode');
                 document.getElementById('modeToggle').classList.remove('active');
             }
+            
+            const savedColor = localStorage.getItem('selectedColor') || 'purple';
+            const colorMap = {
+                'purple': '128, 0, 255',
+                'pink': '255, 105, 180',
+                'blue': '30, 144, 255',
+                'cyan': '0, 255, 255',
+                'green': '34, 197, 94',
+                'black': '64, 64, 64',
+                'grey': '128, 128, 128',
+                'violet': '139, 0, 139',
+                'baby-blue': '173, 216, 230',
+                'baby-pink': '255, 192, 203',
+                'red': '255, 67, 67',
+                'yellow': '255, 223, 0',
+                'orange': '255, 140, 0'
+            };
+            document.documentElement.style.setProperty('--theme-color', colorMap[savedColor]);
+            document.getElementById('themeColor').value = savedColor;
         });
 
         loadConfig('settings');
