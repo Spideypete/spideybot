@@ -38,10 +38,10 @@
         }
 
         .sidebar-logo {
-            padding: 0 1.5rem 2rem;
+            padding: 0 1.5rem 1rem;
             text-align: center;
             border-bottom: 1px solid rgba(var(--theme-color), 0.3);
-            margin-bottom: 1.5rem;
+            margin-bottom: 0;
         }
 
         .logo-text {
@@ -49,6 +49,105 @@
             font-weight: 700;
             color: rgba(255, 255, 255, 0.95);
             text-shadow: 0 0 15px rgba(var(--theme-color), 0.6);
+        }
+
+        .server-selector-dropdown {
+            position: relative;
+            margin-top: 1rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .server-dropdown-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(var(--theme-color), 0.1);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.768rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .server-dropdown-btn:hover {
+            background: rgba(var(--theme-color), 0.15);
+            border-color: rgba(var(--theme-color), 0.5);
+        }
+
+        .server-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(10, 14, 39, 0.95);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-radius: 10px;
+            margin-top: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .server-dropdown-menu.active {
+            display: block;
+        }
+
+        .server-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(var(--theme-color), 0.1);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.768rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .server-item:hover {
+            background: rgba(var(--theme-color), 0.15);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .server-item.active {
+            background: rgba(var(--theme-color), 0.25);
+            color: rgba(var(--theme-color), 1);
+            font-weight: 600;
+        }
+
+        .server-item-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(var(--theme-color), 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.576rem;
+            flex-shrink: 0;
+        }
+
+        .add-server-item {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid rgba(var(--theme-color), 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.768rem;
+            color: rgba(var(--theme-color), 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .add-server-item:hover {
+            background: rgba(var(--theme-color), 0.1);
+            color: rgba(var(--theme-color), 1);
         }
 
         .sidebar-section {
@@ -69,34 +168,27 @@
         }
 
         .category-toggle {
-            width: 40px;
+            width: 20px;
             height: 20px;
-            background: rgba(var(--theme-color), 0.2);
-            border: 1px solid rgba(var(--theme-color), 0.5);
             cursor: pointer;
             position: relative;
-            transition: all 0.3s;
-        }
-
-        .category-toggle.active {
-            background: rgba(var(--theme-color), 0.5);
+            transition: transform 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(var(--theme-color), 0.7);
+            font-size: 1rem;
         }
 
         .category-toggle::after {
-            content: '';
+            content: '▶';
             position: absolute;
-            width: 16px;
-            height: 16px;
-            background: rgba(var(--theme-color), 0.8);
-            top: 2px;
-            left: 2px;
-            transition: all 0.3s;
+            transition: transform 0.3s ease;
+            transform: rotate(0deg);
         }
 
         .category-toggle.active::after {
-            left: 22px;
-            background: rgba(var(--theme-color), 1);
-            border-radius: 50%;
+            transform: rotate(90deg);
         }
 
         .sidebar-menu {
@@ -118,9 +210,36 @@
             color: rgba(255, 255, 255, 0.7);
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 0.75rem;
             font-size: 0.855rem;
             border: 1px solid transparent;
+        }
+
+        .sidebar-item-text {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .sidebar-item-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(var(--theme-color), 0.3);
+            border: 2px solid rgba(var(--theme-color), 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.576rem;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item:hover .sidebar-item-badge {
+            background: rgba(var(--theme-color), 0.6);
+            box-shadow: 0 0 8px rgba(var(--theme-color), 0.8);
         }
 
         .sidebar-item:hover {
@@ -135,6 +254,11 @@
             color: rgba(255, 255, 255, 1);
             border: 1px solid rgba(var(--theme-color), 0.6);
             box-shadow: 0 0 15px rgba(var(--theme-color), 0.4);
+        }
+
+        .sidebar-item.active .sidebar-item-badge {
+            background: rgba(var(--theme-color), 0.8);
+            box-shadow: 0 0 12px rgba(var(--theme-color), 1);
         }
 
         .upgrade-box {
@@ -717,42 +841,69 @@
             margin-top: 0.5rem;
         }
 
+        /* Save Popup Styles */
+        .save-popup {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid rgba(76, 175, 80, 0.6);
+            border-radius: 15px;
+            padding: 1.5rem 2rem;
+            color: rgba(144, 238, 144, 0.95);
+            font-weight: 600;
+            font-size: 0.95rem;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -8px 30px rgba(76, 175, 80, 0.3);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .save-popup.show {
+            bottom: 20px;
+        }
+
         .toggle {
-            width: 50px;
-            height: 24px;
-            background: rgba(var(--theme-color), 0.2);
-            border: 1px solid rgba(var(--theme-color), 0.4);
+            width: 60px;
+            height: 32px;
+            background: linear-gradient(135deg, rgba(var(--theme-color), 0.6) 0%, rgba(var(--theme-color), 1) 100%);
+            border: none;
+            border-radius: 50px;
             cursor: pointer;
             position: relative;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 15px rgba(var(--theme-color), 0.4);
         }
 
         .toggle:hover {
-            background: rgba(var(--theme-color), 0.3);
-            box-shadow: 0 0 10px rgba(var(--theme-color), 0.3);
+            box-shadow: 0 6px 20px rgba(var(--theme-color), 0.6);
+            transform: scale(1.05);
         }
 
         .toggle.active {
-            background: rgba(var(--theme-color), 0.4);
-            border-color: rgba(var(--theme-color), 0.7);
+            background: linear-gradient(135deg, rgba(var(--theme-color), 0.6) 0%, rgba(var(--theme-color), 1) 100%);
+            box-shadow: 0 6px 20px rgba(var(--theme-color), 0.6);
         }
 
         .toggle::after {
             content: '';
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: rgba(var(--theme-color), 0.8);
-            top: 2px;
-            left: 2px;
-            transition: all 0.3s;
-            box-shadow: 0 0 8px rgba(var(--theme-color), 0.4);
+            width: 26px;
+            height: 26px;
+            background: #ffffff;
+            top: 3px;
+            left: 3px;
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .toggle.active::after {
-            left: 28px;
-            background: rgba(var(--theme-color), 1);
-            box-shadow: 0 0 12px rgba(var(--theme-color), 0.6);
+            left: 31px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         @media (max-width: 768px) {
@@ -774,13 +925,28 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-logo">
-                <div class="logo-text">🕷️ SPIDEY BOT</div>
+                <img id="serverIcon" src="" alt="Server" style="width: 40px; height: 40px; border-radius: 50%; margin-bottom: 0.5rem; border: 2px solid rgba(var(--theme-color), 0.6);">
+                <div class="logo-text" id="serverDisplayName" style="font-size: 0.95rem;">Loading...</div>
+                
+                <div class="server-selector-dropdown">
+                    <button class="server-dropdown-btn" onclick="toggleServerDropdown()">
+                        <span id="currentServerName">Select Server</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="server-dropdown-menu" id="serverDropdownMenu">
+                        <div id="serversList"></div>
+                        <div class="add-server-item" onclick="addNewServer()">
+                            <span>⊕</span>
+                            <span>Add new server</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">MAIN <div class="category-toggle active" data-section="main-menu"></div></div>
                 <ul class="sidebar-menu" id="main-menu">
-                    <li class="sidebar-item" data-section="dashboard">📊 Dashboard</li>
+                    <li class="sidebar-item" data-section="dashboard"><div class="sidebar-item-text">📊 Dashboard</div><div class="sidebar-item-badge" data-badge-for="dashboard">✓</div></li>
                 </ul>
             </div>
 
@@ -788,58 +954,79 @@
                 <div class="sidebar-section-title">CORE <div class="category-toggle active" data-section="core-menu"></div></div>
                 <ul class="sidebar-menu" id="core-menu">
                     <li class="sidebar-item active" data-section="settings">⚙️ Settings</li>
-                    <li class="sidebar-item" data-section="logging">📝 Logging</li>
-                    <li class="sidebar-item" data-section="server-guard">🛡️ Server Guard</li>
+                    <li class="sidebar-item" data-section="logging"><div class="sidebar-item-text">📝 Logging</div><div class="sidebar-item-badge" data-badge-for="logging">✓</div></li>
+                    <li class="sidebar-item" data-section="server-guard"><div class="sidebar-item-text">🛡️ Server Guard</div><div class="sidebar-item-badge" data-badge-for="server-guard">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">FEATURES <div class="category-toggle active" data-section="features-menu"></div></div>
                 <ul class="sidebar-menu" id="features-menu">
-                    <li class="sidebar-item" data-section="react-roles">🎭 React Roles</li>
-                    <li class="sidebar-item" data-section="role-categories">📂 Role Categories</li>
-                    <li class="sidebar-item" data-section="server-messages">💬 Server Messages</li>
-                    <li class="sidebar-item" data-section="custom-commands">💬 Commands</li>
-                    <li class="sidebar-item" data-section="components">🎨 Components</li>
+                    <li class="sidebar-item" data-section="react-roles"><div class="sidebar-item-text">🎭 React Roles</div><div class="sidebar-item-badge" data-badge-for="react-roles">✓</div></li>
+                    <li class="sidebar-item" data-section="role-categories"><div class="sidebar-item-text">📂 Role Categories</div><div class="sidebar-item-badge" data-badge-for="role-categories">✓</div></li>
+                    <li class="sidebar-item" data-section="server-messages"><div class="sidebar-item-text">💬 Server Messages</div><div class="sidebar-item-badge" data-badge-for="server-messages">✓</div></li>
+                    <li class="sidebar-item" data-section="custom-commands"><div class="sidebar-item-text">💬 Commands</div><div class="sidebar-item-badge" data-badge-for="custom-commands">✓</div></li>
+                    <li class="sidebar-item" data-section="components"><div class="sidebar-item-text">🎨 Components</div><div class="sidebar-item-badge" data-badge-for="components">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">SYSTEMS <div class="category-toggle active" data-section="systems-menu"></div></div>
                 <ul class="sidebar-menu" id="systems-menu">
-                    <li class="sidebar-item" data-section="xp-levels">⭐ XP Levels</li>
-                    <li class="sidebar-item" data-section="leaderboards">🏆 Leaderboards</li>
-                    <li class="sidebar-item" data-section="subscriptions">💳 Subscriptions</li>
+                    <li class="sidebar-item" data-section="xp-levels"><div class="sidebar-item-text">⭐ XP Levels</div><div class="sidebar-item-badge" data-badge-for="xp-levels">✓</div></li>
+                    <li class="sidebar-item" data-section="leaderboards"><div class="sidebar-item-text">🏆 Leaderboards</div><div class="sidebar-item-badge" data-badge-for="leaderboards">✓</div></li>
+                    <li class="sidebar-item" data-section="subscriptions"><div class="sidebar-item-text">💳 Subscriptions</div><div class="sidebar-item-badge" data-badge-for="subscriptions">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">MONITORING <div class="category-toggle active" data-section="monitoring-menu"></div></div>
                 <ul class="sidebar-menu" id="monitoring-menu">
-                    <li class="sidebar-item" data-section="invite-tracking">📊 Invites</li>
-                    <li class="sidebar-item" data-section="message-counting">📈 Messages</li>
-                    <li class="sidebar-item" data-section="statistics-channels">📉 Stats</li>
-                    <li class="sidebar-item" data-section="social-notifs">📱 Social</li>
+                    <li class="sidebar-item" data-section="invite-tracking"><div class="sidebar-item-text">📊 Invites</div><div class="sidebar-item-badge" data-badge-for="invite-tracking">✓</div></li>
+                    <li class="sidebar-item" data-section="message-counting"><div class="sidebar-item-text">📈 Messages</div><div class="sidebar-item-badge" data-badge-for="message-counting">✓</div></li>
+                    <li class="sidebar-item" data-section="statistics-channels"><div class="sidebar-item-text">📉 Stats</div><div class="sidebar-item-badge" data-badge-for="statistics-channels">✓</div></li>
+                    <li class="sidebar-item" data-section="social-notifs"><div class="sidebar-item-text">📱 Social</div><div class="sidebar-item-badge" data-badge-for="social-notifs">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">TOOLS <div class="category-toggle active" data-section="tools-menu"></div></div>
                 <ul class="sidebar-menu" id="tools-menu">
-                    <li class="sidebar-item" data-section="giveaways">🎁 Giveaways</li>
+                    <li class="sidebar-item" data-section="tickets"><div class="sidebar-item-text">🎫 Tickets</div><div class="sidebar-item-badge" data-badge-for="tickets">✓</div></li>
+                    <li class="sidebar-item" data-section="giveaways"><div class="sidebar-item-text">🎁 Giveaways</div><div class="sidebar-item-badge" data-badge-for="giveaways">✓</div></li>
+                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">🎨 UI Colour</div>
+                        <select id="themeColor" onchange="changeThemeColor(this.value)" class="color-dropdown" style="width: 100%;">
+                            <option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
+                        </select>
+                    </li>
+                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem;">
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">📝 Text Colour</div>
+                        <select id="textColor" onchange="changeTextColor(this.value)" class="color-dropdown" style="width: 100%;">
+                            <option value="white">⚪ White</option><option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
+                        </select>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">FUN <div class="category-toggle active" data-section="fun-menu"></div></div>
+                <ul class="sidebar-menu" id="fun-menu">
+                    <li class="sidebar-item" data-section="music"><div class="sidebar-item-text">🎵 Music</div><div class="sidebar-item-badge" data-badge-for="music">✓</div></li>
+                    <li class="sidebar-item" data-section="birthdays"><div class="sidebar-item-text">🎂 Birthdays</div><div class="sidebar-item-badge" data-badge-for="birthdays">✓</div></li>
                 </ul>
             </div>
 
             <div class="sidebar-section" id="creator-section" style="display: none;">
                 <div class="sidebar-section-title">CREATOR <div class="category-toggle active" data-section="creator-menu"></div></div>
                 <ul class="sidebar-menu" id="creator-menu">
-                    <li class="sidebar-item" data-section="creator">👑 Creator Panel</li>
+                    <li class="sidebar-item" data-section="creator"><div class="sidebar-item-text">👑 Creator Panel</div><div class="sidebar-item-badge" data-badge-for="creator">✓</div></li>
                 </ul>
             </div>
 
-            <div class="upgrade-box">
-                <div class="upgrade-box-text">⭐ Upgrade Now</div>
-            </div>
+            <a href="https://www.paypal.com/donate?business=peterburke122000@gmail.com" target="_blank" class="upgrade-box" style="text-decoration: none;">
+                <div class="upgrade-box-text">💝 Donation</div>
+            </a>
         </div>
 
         <!-- Server Selector Modal -->
@@ -859,21 +1046,6 @@
             <!-- Header -->
             <div class="header">
                 <div class="header-left">
-                    <select id="themeColor" onchange="changeThemeColor(this.value)" class="color-dropdown">
-                        <option value="purple" style="background: #000; color: #fff;">🟣 Purple</option>
-                        <option value="pink" style="background: #000; color: #fff;">🩷 Pink</option>
-                        <option value="blue" style="background: #000; color: #fff;">🔵 Blue</option>
-                        <option value="cyan" style="background: #000; color: #fff;">🔷 Cyan</option>
-                        <option value="green" style="background: #000; color: #fff;">🟢 Green</option>
-                        <option value="black" style="background: #000; color: #fff;">⚫ Black</option>
-                        <option value="grey" style="background: #000; color: #fff;">⚪ Grey</option>
-                        <option value="violet" style="background: #000; color: #fff;">💜 Violet</option>
-                        <option value="baby-blue" style="background: #000; color: #fff;">👶 Baby Blue</option>
-                        <option value="baby-pink" style="background: #000; color: #fff;">👶 Baby Pink</option>
-                        <option value="red" style="background: #000; color: #fff;">🔴 Red</option>
-                        <option value="yellow" style="background: #000; color: #fff;">🟡 Yellow</option>
-                        <option value="orange" style="background: #000; color: #fff;">🟠 Orange</option>
-                    </select>
                     <div class="mode-toggle-container">
                         <span style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; margin-right: 0.75rem;">🌙</span>
                         <div class="mode-toggle active" id="modeToggle" onclick="toggleMode()"></div>
@@ -1006,33 +1178,6 @@
                                 <div class="form-group">
                                     <label>Command Prefix</label>
                                     <input type="text" id="settings_prefix" placeholder="//" maxlength="2" value="//">
-                                </div>
-                                <div class="form-group">
-                                    <label>Bot Nickname</label>
-                                    <input type="text" id="settings_nickname" placeholder="SPIDEY BOT">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Timezone</label>
-                                    <select id="settings_timezone">
-                                        <option value="UTC">UTC</option>
-                                        <option value="America/New_York">Eastern (ET)</option>
-                                        <option value="America/Chicago">Central (CT)</option>
-                                        <option value="America/Denver">Mountain (MT)</option>
-                                        <option value="America/Los_Angeles">Pacific (PT)</option>
-                                        <option value="America/Anchorage">Alaska (AKT)</option>
-                                        <option value="Pacific/Honolulu">Hawaii (HST)</option>
-                                        <option value="Europe/London">London (GMT)</option>
-                                        <option value="Europe/Paris">Central Europe (CET)</option>
-                                        <option value="Europe/Moscow">Moscow (MSK)</option>
-                                        <option value="Asia/Dubai">Dubai (GST)</option>
-                                        <option value="Asia/Kolkata">India (IST)</option>
-                                        <option value="Asia/Bangkok">Bangkok (ICT)</option>
-                                        <option value="Asia/Shanghai">China (CST)</option>
-                                        <option value="Asia/Tokyo">Tokyo (JST)</option>
-                                        <option value="Australia/Sydney">Sydney (AEDT)</option>
-                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label>Language</label>
@@ -3117,6 +3262,91 @@
                 </div>
 
 
+                <!-- TICKETS -->
+                <div id="tickets" class="content">
+                    <div class="page-title">🎫 Tickets</div>
+                    <div class="page-description">Manage support tickets with channel assignment and role-based access</div>
+                    
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🎫 Ticket Overview</div>
+                                    <div class="card-subtitle">How tickets work</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.648rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">📝 Support System:</strong><br/>
+                                    Members can create support tickets to get help. Each ticket is a private channel where staff can assist.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🔐 Role-Based Access:</strong><br/>
+                                    Configure which roles can see and manage tickets. Only assigned support staff can view private ticket channels.
+                                </div>
+                                <div>
+                                    <strong style="color: rgba(var(--theme-color), 1);">💾 Saved Tickets:</strong><br/>
+                                    View all tickets history, closed tickets, and support interactions in one place.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Ticket Configuration</div>
+                                    <div class="card-subtitle">Set up ticket system</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ticket Category Channel</label>
+                                <input type="text" id="tickets_channel" placeholder="Channel ID">
+                                <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Parent category where all ticket channels are created</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔐 Access Control</div>
+                                    <div class="card-subtitle">Control who can manage tickets</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Support Staff Roles (comma-separated)</label>
+                                <input type="text" id="tickets_supportRoles" placeholder="Moderator,Admin,Support">
+                                <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Roles that can view and manage all tickets</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">💾 Saved Tickets</div>
+                                    <div class="card-subtitle">View ticket history</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.648rem; padding: 1rem; background: rgba(var(--theme-color), 0.1); border-radius: 8px; border: 1px solid rgba(var(--theme-color), 0.2);">
+                                <div id="tickets-saved-list" style="color: rgba(255, 255, 255, 0.6);">No tickets saved yet</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('tickets')">💾 Save Ticket Configuration</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- GIVEAWAYS -->
                 <div id="giveaways" class="content">
                     <div class="page-title">🎁 Giveaways</div>
@@ -3337,26 +3567,13 @@
                                     <div class="card-subtitle">Creator-only bot configuration</div>
                                 </div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Bot Nickname</label>
-                                    <input type="text" id="creator_botNickname" placeholder="SPIDEY BOT">
-                                    <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Display name for the bot globally</div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Timezone</label>
-                                    <select id="creator_timezone">
-                                        <option value="GMT">GMT</option>
-                                        <option value="UTC">UTC</option>
-                                        <option value="EST">EST</option>
-                                        <option value="CST">CST</option>
-                                        <option value="MST">MST</option>
-                                        <option value="PST">PST</option>
-                                        <option value="IST">IST</option>
-                                        <option value="JST">JST</option>
-                                        <option value="AEST">AEST</option>
-                                    </select>
-                                    <div style="color: #888; font-size: 0.576rem; margin-top: 0.5rem;">Default timezone for the bot (currently: GMT)</div>
+                            <div class="form-group">
+                                <div style="padding: 1rem; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px;">
+                                    <div style="color: #00d4ff; font-weight: 600; margin-bottom: 0.5rem;">🔒 Protected Settings</div>
+                                    <div style="color: #aaa; font-size: 0.684rem; line-height: 1.5;">
+                                        • Bot Nickname: Fixed to SPIDEY BOT<br/>
+                                        • Timezone: Fixed to GMT (cannot be changed)
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3570,6 +3787,7 @@
             'message-counting': '📈 Message Counting',
             'statistics-channels': '📉 Statistics Channels',
             'xp-levels': '⭐ XP Levels',
+            'tickets': '🎫 Tickets',
             'giveaways': '🎁 Giveaways',
             'social-notifs': '📱 Social Notifications',
             'creator': '👑 Creator Panel'
@@ -3592,6 +3810,7 @@
             'message-counting': 'Track message activity',
             'statistics-channels': 'Display real-time stats',
             'xp-levels': 'Configure the leveling system',
+            'tickets': 'Manage support tickets with role-based access',
             'giveaways': 'Manage server giveaways',
             'social-notifs': 'Monitor social media streams',
             'creator': 'Creator-only access to all bot configuration settings'
@@ -3689,6 +3908,24 @@
             });
         });
 
+        function showSavePopup(success = true) {
+            let popup = document.getElementById('savePopup');
+            if (!popup) {
+                popup = document.createElement('div');
+                popup.id = 'savePopup';
+                popup.className = 'save-popup';
+                document.body.appendChild(popup);
+            }
+            
+            popup.textContent = success ? '✅ Configuration Saved Successfully!' : '❌ Error Saving Configuration';
+            popup.style.borderColor = success ? 'rgba(76, 175, 80, 0.6)' : 'rgba(220, 20, 60, 0.6)';
+            popup.style.background = success ? 'rgba(76, 175, 80, 0.2)' : 'rgba(220, 20, 60, 0.2)';
+            popup.style.color = success ? 'rgba(144, 238, 144, 0.95)' : 'rgba(255, 127, 127, 0.95)';
+            
+            popup.classList.add('show');
+            setTimeout(() => popup.classList.remove('show'), 3000);
+        }
+
         async function saveConfig(section) {
             const data = {};
             document.querySelectorAll(`#${section} input, #${section} textarea, #${section} select`).forEach(input => {
@@ -3712,9 +3949,9 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                showAlert('✅ Configuration saved successfully!', 'success');
+                showSavePopup(true);
             } catch (error) {
-                showAlert(`❌ Error: ${error.message}`, 'error');
+                showSavePopup(false);
             }
         }
 
@@ -3770,12 +4007,59 @@
                 'baby-pink': '255, 192, 203',
                 'red': '255, 67, 67',
                 'yellow': '255, 223, 0',
-                'orange': '255, 140, 0'
+                'orange': '255, 140, 0',
+                'teal': '0, 128, 128',
+                'lime': '50, 205, 50',
+                'turquoise': '64, 224, 208',
+                'coral': '255, 127, 80',
+                'indigo': '75, 0, 130',
+                'maroon': '128, 0, 0',
+                'navy': '0, 0, 128',
+                'olive': '128, 128, 0',
+                'salmon': '250, 128, 114',
+                'gold': '255, 215, 0',
+                'mint': '62, 180, 137',
+                'rose': '255, 102, 178'
             };
             
             const rgbValue = colorMap[color];
             document.documentElement.style.setProperty('--theme-color', rgbValue);
             localStorage.setItem('selectedColor', color);
+        }
+
+        function changeTextColor(color) {
+            const textColorMap = {
+                'white': '#ffffff',
+                'purple': '#8000ff',
+                'pink': '#ff69b4',
+                'blue': '#1e90ff',
+                'cyan': '#00ffff',
+                'green': '#22c55e',
+                'black': '#000000',
+                'grey': '#808080',
+                'violet': '#8b008b',
+                'baby-blue': '#add8e6',
+                'baby-pink': '#ffc0cb',
+                'red': '#ff4343',
+                'yellow': '#ffdf00',
+                'orange': '#ff8c00',
+                'teal': '#008080',
+                'lime': '#32cd32',
+                'turquoise': '#40e0d0',
+                'coral': '#ff7f50',
+                'indigo': '#4b0082',
+                'maroon': '#800000',
+                'navy': '#000080',
+                'olive': '#808000',
+                'salmon': '#fa8072',
+                'gold': '#ffd700',
+                'mint': '#3eb489',
+                'rose': '#ff66b2'
+            };
+            
+            const hexValue = textColorMap[color];
+            document.documentElement.style.setProperty('--text-color', hexValue);
+            localStorage.setItem('selectedTextColor', color);
         }
 
         function toggleMode() {
@@ -3855,8 +4139,73 @@
             }
         }
 
+        // Server dropdown functions
+        function toggleServerDropdown() {
+            const menu = document.getElementById('serverDropdownMenu');
+            menu.classList.toggle('active');
+            if (menu.classList.contains('active')) {
+                loadServerDropdown();
+            }
+        }
+
+        async function loadServerDropdown() {
+            try {
+                const res = await fetch(`/api/creator/servers`);
+                const data = await res.json();
+                const serversList = document.getElementById('serversList');
+                const currentServerId = localStorage.getItem('selectedServerId');
+                
+                serversList.innerHTML = '';
+                data.servers.forEach(server => {
+                    const item = document.createElement('div');
+                    item.className = `server-item ${server.id === currentServerId ? 'active' : ''}`;
+                    item.onclick = () => switchServer(server.id);
+                    item.innerHTML = `
+                        <div class="server-item-icon">${server.icon ? '✓' : '🏢'}</div>
+                        <span>${server.name}</span>
+                    `;
+                    serversList.appendChild(item);
+                });
+            } catch (err) {
+                console.error('Failed to load server dropdown:', err);
+            }
+        }
+
+        function switchServer(serverId) {
+            localStorage.setItem('selectedServerId', serverId);
+            document.getElementById('serverDropdownMenu').classList.remove('active');
+            location.reload();
+        }
+
+        function addNewServer() {
+            window.open('https://discord.com/api/oauth2/authorize?client_id=' + (window.CLIENT_ID || ''), '_blank');
+        }
+
+        // Load and display server info
+        async function loadServerInfo() {
+            try {
+                const serverId = localStorage.getItem('selectedServerId');
+                if (!serverId) return;
+                
+                const res = await fetch(`/api/creator/servers`);
+                const data = await res.json();
+                const server = data.servers.find(s => s.id === serverId);
+                
+                if (server) {
+                    document.getElementById('serverDisplayName').textContent = server.name;
+                    document.getElementById('currentServerName').textContent = server.name;
+                    if (server.icon) {
+                        document.getElementById('serverIcon').src = server.icon;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load server info:', err);
+            }
+        }
+
         window.addEventListener('load', () => {
             checkServerSelection();
+            loadServerInfo();
             initCreatorAccess();
             const isDarkMode = localStorage.getItem('darkMode') !== 'false';
             if (!isDarkMode) {
