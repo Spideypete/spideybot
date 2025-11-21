@@ -2310,8 +2310,10 @@ app.get("/auth/discord/callback", async (req, res) => {
     console.log(`✅ User logged in via Discord: ${userRes.data.username}`);
     res.redirect("/dashboard");
   } catch (err) {
-    console.error("OAuth error:", err.message);
-    res.status(500).send("Authentication failed");
+    console.error("❌ OAuth error:", err.response?.data || err.message);
+    console.error("Expected Redirect URI:", REDIRECT_URI);
+    const errorMessage = err.response?.data?.error_description || err.message || "Unknown error";
+    res.status(500).send(`<h2>Authentication Failed</h2><p>Error: ${errorMessage}</p><p><strong>Expected Redirect URI:</strong><br/>${REDIRECT_URI}</p><p>Make sure this URI is added to your Discord app's OAuth2 redirect URIs in the <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a>.</p>`);
   }
 });
 
