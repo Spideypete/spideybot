@@ -319,42 +319,19 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Deleted category: **${categoryName}**`);
   }
 
-  // Help - List all commands
+  // Help - List general user commands
   if (msg.content === "//help") {
     const mainEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle("🤖 SPIDEY BOT v2.0 - Complete Command Guide")
-      .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✨ **Multi-Server Discord Bot with Roles • Music • Moderation** ✨\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+      .setTitle("🤖 SPIDEY BOT - User Commands")
+      .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✨ **General User Commands** ✨\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
       .addFields(
-        { name: "📊 Total Commands", value: "**35+ Commands** organized in 7 categories", inline: false },
-        { name: "🎯 Features", value: "✅ Custom role categories with GIF banners\n✅ Advanced music player with loop/shuffle\n✅ Full moderation with logging\n✅ Per-server configuration", inline: false }
-      );
-
-    const roleEmbed = new EmbedBuilder()
-      .setColor(0x9B59B6)
-      .setTitle("🎭 ROLE CATEGORIES (7 commands)")
-      .addFields(
-        { name: "📌 //create-category [name]", value: "Create a custom role category", inline: true },
-        { name: "➕ //add-role [cat] [name] [ID]", value: "Add role to category", inline: true },
-        { name: "➖ //remove-role [cat] [name]", value: "Remove role from category", inline: true },
-        { name: "🎬 //set-category-banner [cat] [url]", value: "Add GIF banner (makes it pretty!)", inline: true },
-        { name: "🔘 //setup-category [name]", value: "Post selector button with banner", inline: true },
-        { name: "📋 //list-roles", value: "View all categories & roles", inline: true },
-        { name: "🗑️ //delete-category [name]", value: "Delete entire category", inline: true }
-      );
-
-    const welcomeEmbed = new EmbedBuilder()
-      .setColor(0xE91E63)
-      .setTitle("👋 WELCOME MESSAGES (2 commands)")
-      .addFields(
-        { name: "💬 //config-welcome-channel #channel", value: "Set where welcome messages go", inline: true },
-        { name: "✍️ //config-welcome-message [text]", value: "Create custom welcome message", inline: true },
-        { name: "📝 Available Placeholders", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false }
+        { name: "🎯 Admin?", value: "Use `//adminhelp` to see all administrator commands", inline: false }
       );
 
     const musicEmbed = new EmbedBuilder()
       .setColor(0x00D084)
-      .setTitle("🎵 MUSIC PLAYER (8 commands)")
+      .setTitle("🎵 MUSIC PLAYER (5 commands)")
       .addFields(
         { name: "🎶 //play [song/url]", value: "Search & play from YouTube", inline: true },
         { name: "📊 //queue", value: "Show next 10 songs", inline: true },
@@ -364,55 +341,18 @@ client.on("messageCreate", async (msg) => {
         { name: "🎛️ Button Controls", value: "⏮ Back | ⏸ Pause | ▶ Resume | ⏭ Skip | ⏹ Stop", inline: false }
       );
 
-    const modEmbed = new EmbedBuilder()
-      .setColor(0xFF6B6B)
-      .setTitle("🛡️ MODERATION (6 commands - with auto-logging!)")
-      .addFields(
-        { name: "👢 //kick @user [reason]", value: "Remove member from server", inline: true },
-        { name: "🔨 //ban @user [reason]", value: "Permanently ban member", inline: true },
-        { name: "⚠️ //warn @user [reason]", value: "Warn member (tracked!)", inline: true },
-        { name: "🔇 //mute @user", value: "Timeout for 1 hour", inline: true },
-        { name: "🔊 //unmute @user", value: "Remove timeout", inline: true },
-        { name: "📋 //warnings @user", value: "View member's warning history", inline: true }
-      );
-
-    const configEmbed = new EmbedBuilder()
-      .setColor(0x5865F2)
-      .setTitle("⚙️ CONFIGURATION (2 commands)")
-      .addFields(
-        { name: "🔤 //set-prefix [prefix]", value: "Change command prefix", inline: true },
-        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
-      );
-
-    const socialMediaEmbed = new EmbedBuilder()
-      .setColor(0xFF1493)
-      .setTitle("📱 SOCIAL MEDIA (8 Discord + 3 API)")
-      .addFields(
-        { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
-        { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
-        { name: "📋 //list-twitch-users", value: "View monitored Twitch creators", inline: true },
-        { name: "📢 //config-twitch-channel #ch", value: "Set Twitch alert channel", inline: true },
-        { name: "🎵 //add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
-        { name: "➖ //remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
-        { name: "📋 //list-tiktok-users", value: "View monitored TikTok creators", inline: true },
-        { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
-        { name: "🌐 WEB API Endpoints", value: "Admin dashboard at `/admin` • Manage all servers from web interface", inline: false },
-        { name: "📡 GET /api/guilds", value: "List all server configs (requires token)", inline: true },
-        { name: "📡 GET /api/guild/:id", value: "Get specific server config (requires token)", inline: true },
-        { name: "📡 POST /api/guild/:id", value: "Update server config (requires token)", inline: true }
-      );
-
     const utilityEmbed = new EmbedBuilder()
       .setColor(0x3498DB)
-      .setTitle("📞 UTILITIES (2 commands)")
+      .setTitle("📞 UTILITIES (3 commands)")
       .addFields(
         { name: "✅ //remove-roles", value: "Remove any roles you have", inline: true },
-        { name: "🏓 //ping", value: "Check bot status & stats", inline: true }
+        { name: "🏓 //ping", value: "Check bot status & stats", inline: true },
+        { name: "👑 //adminhelp", value: "View all admin commands (admins only)", inline: true }
       )
-      .setFooter({ text: "💡 Tip: All admin commands require Administrator permission • Moderation actions are auto-logged" });
+      .setFooter({ text: "💡 Admins: Use //adminhelp for full command list" });
 
     return msg.reply({ 
-      embeds: [mainEmbed, roleEmbed, welcomeEmbed, musicEmbed, modEmbed, configEmbed, socialMediaEmbed, utilityEmbed],
+      embeds: [mainEmbed, musicEmbed, utilityEmbed],
       content: "** **"
     });
   }
