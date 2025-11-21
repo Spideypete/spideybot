@@ -80,10 +80,13 @@ document/              - Documentation and guides
 ### Render Deployment ✅
 - **Live URL**: https://spideybot-90sr.onrender.com
 - **Redirect URI**: https://spideybot-90sr.onrender.com/auth/discord/callback
+- **Discord OAuth Setup**: See RENDER_DEPLOYMENT.md for complete instructions
 - **How to deploy**: 
-  1. Push code to Render git repo
-  2. Render auto-deploys on git push
-  3. Set environment variables in Render dashboard
+  1. Create Web Service on Render (connect GitHub repo)
+  2. Add environment variables: TOKEN, CLIENT_ID, DISCORD_CLIENT_SECRET, SESSION_SECRET
+  3. Register Discord redirect URI: https://your-app-name.onrender.com/auth/discord/callback
+  4. Push code to GitHub - Render auto-deploys
+  5. Visit your Render URL and login with Discord
 
 ### Local Development (Replit)
 - **Testing URL**: https://[replit-domain]/
@@ -165,12 +168,22 @@ All settings auto-save to config.json and load per-server from dashboard.
 3. **After Login**: Access `/dashboard` - complete admin panel with all 18 categories
 4. **Configuration**: All settings auto-save via API endpoints to config.json
 
-## Next Steps
-1. Deploy to Render via git push
-2. Test admin panel with real server settings
-3. Customize credentials (change admin/admin password)
-4. Monitor bot performance in production
-5. Collect user feedback on dashboard UX
+## Next Steps for Production
+1. Follow RENDER_DEPLOYMENT.md for complete setup
+2. Register Discord OAuth redirect URI for Render domain
+3. Deploy to Render via git push (or GitHub integration)
+4. Add environment variables in Render dashboard
+5. Test login on Render URL with Discord account
+6. Monitor bot performance in production
+7. Collect user feedback on dashboard UX
+
+## Quick Render Setup Checklist
+- [ ] Create Render account
+- [ ] Connect GitHub repo to Render
+- [ ] Add environment variables in Render dashboard
+- [ ] Register Discord OAuth redirect URI for Render domain
+- [ ] Deploy and test login on Render URL
+- [ ] Verify bot is running 24/7
 
 ## Support
 For issues or feature requests, use //help or contact via Discord support
