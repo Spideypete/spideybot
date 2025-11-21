@@ -979,35 +979,217 @@
                 <div id="logging" class="content">
                     <div class="page-title">📝 Logging</div>
                     <div class="page-description">Configure logging for moderation and server events</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Log Settings</div>
-                                    <div class="card-subtitle">Track server activity</div>
+                                    <div class="card-title">Primary Log Channel</div>
+                                    <div class="card-subtitle">Default destination for logs</div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Log Channel ID</label>
+                                <label>Main Log Channel ID</label>
                                 <input type="text" id="logging_channel" placeholder="Channel ID">
+                                <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; margin-top: 0.5rem;">Primary channel for all logs (override specific channels if needed)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Message Activity Logging</div>
+                                    <div class="card-subtitle">Track deleted & edited messages</div>
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label>Logging Options</label>
+                                <label>Message Activity Channel</label>
+                                <input type="text" id="logging_messageActivityChannel" placeholder="Channel ID (optional)">
+                            </div>
+                            <div class="form-group">
+                                <label>Message Activity Events</label>
                                 <div class="switch">
-                                    <span>Moderation Logs</span>
-                                    <div class="toggle active" id="logging_moderation"></div>
+                                    <span>Log Deleted Messages</span>
+                                    <div class="toggle active" id="logging_deletedMessages"></div>
                                 </div>
                                 <div class="switch" style="margin-top: 0.75rem;">
-                                    <span>Message Logs</span>
-                                    <div class="toggle" id="logging_messages"></div>
+                                    <span>Log Edited Messages</span>
+                                    <div class="toggle active" id="logging_editedMessages"></div>
                                 </div>
                                 <div class="switch" style="margin-top: 0.75rem;">
-                                    <span>Server Changes</span>
-                                    <div class="toggle active" id="logging_server"></div>
+                                    <span>Keep Message Content</span>
+                                    <div class="toggle active" id="logging_messageContent"></div>
                                 </div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('logging')">💾 Save</button>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Member Actions Logging</div>
+                                    <div class="card-subtitle">Track joins, leaves, bans, kicks, mutes</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Member Actions Channel</label>
+                                <input type="text" id="logging_memberChannel" placeholder="Channel ID (optional)">
+                            </div>
+                            <div class="form-group">
+                                <label>Member Events</label>
+                                <div class="switch">
+                                    <span>Log Member Joins</span>
+                                    <div class="toggle active" id="logging_memberJoin"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Member Leaves</span>
+                                    <div class="toggle active" id="logging_memberLeave"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Member Bans</span>
+                                    <div class="toggle active" id="logging_memberBan"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Member Kicks</span>
+                                    <div class="toggle active" id="logging_memberKick"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Member Mutes</span>
+                                    <div class="toggle active" id="logging_memberMute"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Moderation Logs</div>
+                                    <div class="card-subtitle">Records moderator actions</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Moderation Log Channel</label>
+                                <input type="text" id="logging_modChannel" placeholder="Channel ID (optional)">
+                            </div>
+                            <div class="form-group">
+                                <label>Moderation Events</label>
+                                <div class="switch">
+                                    <span>Log Bans</span>
+                                    <div class="toggle active" id="logging_modBan"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Mutes</span>
+                                    <div class="toggle active" id="logging_modMute"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Warns</span>
+                                    <div class="toggle active" id="logging_modWarn"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Message Purges</span>
+                                    <div class="toggle active" id="logging_modPurge"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Server Changes Logging</div>
+                                    <div class="card-subtitle">Track settings, roles, channels, emojis</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Server Changes Channel</label>
+                                <input type="text" id="logging_serverChannel" placeholder="Channel ID (optional)">
+                            </div>
+                            <div class="form-group">
+                                <label>Server Changes</label>
+                                <div class="switch">
+                                    <span>Log Role Changes</span>
+                                    <div class="toggle active" id="logging_roleChanges"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Channel Changes</span>
+                                    <div class="toggle active" id="logging_channelChanges"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Settings Updates</span>
+                                    <div class="toggle active" id="logging_settingsChanges"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Emoji Changes</span>
+                                    <div class="toggle active" id="logging_emojiChanges"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Voice Channel Activity</div>
+                                    <div class="card-subtitle">Track voice joins and leaves</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Voice Activity Channel</label>
+                                <input type="text" id="logging_voiceChannel" placeholder="Channel ID (optional)">
+                            </div>
+                            <div class="form-group">
+                                <label>Voice Events</label>
+                                <div class="switch">
+                                    <span>Log Voice Joins</span>
+                                    <div class="toggle active" id="logging_voiceJoin"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Voice Leaves</span>
+                                    <div class="toggle active" id="logging_voiceLeave"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Voice Mutes</span>
+                                    <div class="toggle active" id="logging_voiceMute"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">Dashboard Activity</div>
+                                    <div class="card-subtitle">Records settings changes via dashboard</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Dashboard Activity Channel</label>
+                                <input type="text" id="logging_dashboardChannel" placeholder="Channel ID (optional)">
+                            </div>
+                            <div class="form-group">
+                                <label>Dashboard Events</label>
+                                <div class="switch">
+                                    <span>Log Configuration Changes</span>
+                                    <div class="toggle active" id="logging_dashConfig"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Log Admin Access</span>
+                                    <div class="toggle active" id="logging_dashAdmin"></div>
+                                </div>
+                                <div class="switch" style="margin-top: 0.75rem;">
+                                    <span>Keep Change History</span>
+                                    <div class="toggle active" id="logging_changeHistory"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('logging')">💾 Save All Logging Settings</button>
                             </div>
                         </div>
                     </div>
