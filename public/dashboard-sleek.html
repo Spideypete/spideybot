@@ -1251,7 +1251,7 @@
             <input class="config-input" type="text" placeholder="Default Language" value="English">
             <input class="config-input" type="text" placeholder="Modlog Channel ID">
             <input class="config-input" type="text" placeholder="Welcome Channel ID">
-            <button class="config-btn">Save All Settings</button>
+            <button class="config-btn" onclick="saveConfig('settings')">Save All Settings</button>
           </div>
         </div>
       </div>
@@ -1755,6 +1755,9 @@
     // Refresh on page load
     document.addEventListener('DOMContentLoaded', () => {
       refreshAllData();
+      loadActivity();
+      loadMembers();
+      loadConfig('settings');
       setInterval(refreshAllData, 5000);
     });
 
@@ -1767,6 +1770,7 @@
         if (page === 'analytics') loadAnalytics();
         if (page === 'members') loadMembers();
         if (page === 'dashboard') loadStats();
+        if (page === 'activity') loadActivity();
         
         // Load config for all config pages
         const configPages = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
