@@ -192,11 +192,38 @@
             color: rgba(255, 255, 255, 0.9);
             border: 1px solid rgba(128, 0, 255, 0.4);
             transition: all 0.3s;
+            position: relative;
         }
 
         .server-selector:hover {
             background: rgba(128, 0, 255, 0.25);
             box-shadow: 0 0 10px rgba(128, 0, 255, 0.3);
+        }
+
+        .server-selector select {
+            background: rgba(0, 0, 0, 0.8) !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            border: 1px solid rgba(128, 0, 255, 0.4) !important;
+            padding: 0.5rem !important;
+            cursor: pointer !important;
+            transition: all 0.3s !important;
+        }
+
+        .server-selector select:hover {
+            background: rgba(128, 0, 255, 0.15) !important;
+            border-color: rgba(128, 0, 255, 0.6) !important;
+        }
+
+        .server-selector select:focus {
+            outline: none !important;
+            background: rgba(128, 0, 255, 0.2) !important;
+            box-shadow: 0 0 10px rgba(128, 0, 255, 0.4) !important;
+        }
+
+        .server-selector select option {
+            background: #000 !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            padding: 0.5rem !important;
         }
 
         .header-right {
@@ -555,8 +582,21 @@
             <div class="header">
                 <div class="header-left">
                     <div class="server-selector">
-                        <span>Blue Shark</span>
-                        <span>▼</span>
+                        <select id="themeColor" onchange="changeThemeColor(this.value)" style="background: transparent; border: none; color: rgba(255, 255, 255, 0.9); font-weight: 600; cursor: pointer; font-size: 0.95rem; padding: 0.5rem; border-radius: 50%; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                            <option value="purple" style="background: #000; color: #fff;">🟣 Purple</option>
+                            <option value="pink" style="background: #000; color: #fff;">🩷 Pink</option>
+                            <option value="blue" style="background: #000; color: #fff;">🔵 Blue</option>
+                            <option value="cyan" style="background: #000; color: #fff;">🔷 Cyan</option>
+                            <option value="green" style="background: #000; color: #fff;">🟢 Green</option>
+                            <option value="black" style="background: #000; color: #fff;">⚫ Black</option>
+                            <option value="grey" style="background: #000; color: #fff;">⚪ Grey</option>
+                            <option value="violet" style="background: #000; color: #fff;">💜 Violet</option>
+                            <option value="baby-blue" style="background: #000; color: #fff;">👶 Baby Blue</option>
+                            <option value="baby-pink" style="background: #000; color: #fff;">👶 Baby Pink</option>
+                            <option value="red" style="background: #000; color: #fff;">🔴 Red</option>
+                            <option value="yellow" style="background: #000; color: #fff;">🟡 Yellow</option>
+                            <option value="orange" style="background: #000; color: #fff;">🟠 Orange</option>
+                        </select>
                     </div>
                 </div>
                 <div class="header-right">
@@ -2131,6 +2171,11 @@
 
         function logout() {
             window.location.href = '/logout';
+        }
+
+        function changeThemeColor(color) {
+            localStorage.setItem('selectedColor', color);
+            alert(`Theme color changed to ${color}!`);
         }
 
         loadConfig('settings');
