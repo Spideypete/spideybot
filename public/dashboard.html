@@ -1705,32 +1705,131 @@
                 <!-- REACT ROLES -->
                 <div id="react-roles" class="content">
                     <div class="page-title">🎭 React Roles</div>
-                    <div class="page-description">Assign roles through emoji reactions</div>
+                    <div class="page-description">Members assign roles through emoji reactions - Self-Assignment, Automation & Advanced Configuration</div>
+                    
                     <div class="cards-container">
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <div class="card-title">Reaction Roles</div>
-                                    <div class="card-subtitle">Configure role reactions</div>
+                                    <div class="card-title">💡 Self-Assignment & Automation</div>
+                                    <div class="card-subtitle">How members get roles</div>
                                 </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">✨ Self-Assignment:</strong><br/>
+                                    Members easily choose their own roles (color roles, notification roles, pronoun roles, or channel access) without needing admin intervention.
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: rgba(var(--theme-color), 1);">🤖 Automation:</strong><br/>
+                                    The bot automatically adds or removes roles when users react to, or remove their reaction from, a specific message.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">⚙️ Setup & Configuration</div>
+                                    <div class="card-subtitle">Create your reaction role system</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Channel</label>
+                                <input type="text" id="react-roles_channel" placeholder="Channel ID where users react">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">The channel where the message with emoji reactions will be posted</div>
                             </div>
                             <div class="form-group">
                                 <label>Message ID</label>
                                 <input type="text" id="react-roles_messageId" placeholder="Message ID">
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">ID of the message that users will react to</div>
                             </div>
                             <div class="form-group">
-                                <label>Roles Mapping (JSON)</label>
-                                <textarea id="react-roles_mapping" placeholder='{"🎮": "gamer-role"}'></textarea>
+                                <label>Custom Message</label>
+                                <textarea id="react-roles_customMessage" placeholder="React to choose your role! 🎮 = Gamer, 🎨 = Artist..." style="min-height: 60px;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Instructions and descriptions for members</div>
                             </div>
                             <div class="form-group">
-                                <label>Status</label>
+                                <label>Emoji to Role Mapping (JSON)</label>
+                                <textarea id="react-roles_mapping" placeholder='{"🎮": "gamer-role", "🎨": "artist-role", "😈": "pronouns-he", "👩": "pronouns-she"}' style="min-height: 80px; font-size: 0.85rem;"></textarea>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Map emojis to Discord role names (as JSON)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔧 Advanced Settings</div>
+                                    <div class="card-subtitle">Fine-tune role assignment behavior</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Grouped Roles (Mutually Exclusive)</label>
+                                    <input type="text" id="react-roles_grouped" placeholder="role1,role2,role3">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Users can only select ONE from this group</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Require Role</label>
+                                    <input type="text" id="react-roles_requireRole" placeholder="Member role ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Users must have this role to access reactions</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Timed Roles (Duration in hours)</label>
+                                    <input type="number" id="react-roles_timedDuration" placeholder="24" min="1">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Roles automatically removed after set time</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Logging Channel</label>
+                                    <input type="text" id="react-roles_logChannel" placeholder="Channel ID">
+                                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.5rem;">Track all role assignments for audit trail</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Settings</label>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Role Logging Enabled</span>
+                                    <div class="toggle active" id="react-roles_logging"></div>
+                                </div>
+                                <div class="switch" style="margin-bottom: 0.75rem;">
+                                    <span>Allow Multiple Reactions</span>
+                                    <div class="toggle active" id="react-roles_multiple"></div>
+                                </div>
                                 <div class="switch">
-                                    <span>Enabled</span>
+                                    <span>System Enabled</span>
                                     <div class="toggle active" id="react-roles_enabled"></div>
                                 </div>
                             </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="saveConfig('react-roles')">💾 Save</button>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">🔐 Permissions & Requirements</div>
+                                    <div class="card-subtitle">Important setup information</div>
+                                </div>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.8; font-size: 0.9rem;">
+                                <div style="padding: 1rem; background: rgba(var(--theme-color), 0.1); border-left: 3px solid rgba(var(--theme-color), 0.8);">
+                                    <strong style="color: rgba(var(--theme-color), 1);">⚠️ Role Hierarchy:</strong><br/>
+                                    The bot's role must be positioned HIGHER than the roles it assigns in the Discord server's role hierarchy.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-container">
+                        <div class="card">
+                            <div class="button-group" style="margin-top: 0;">
+                                <button class="btn btn-primary" onclick="saveConfig('react-roles')">💾 Save React Roles Configuration</button>
                             </div>
                         </div>
                     </div>
