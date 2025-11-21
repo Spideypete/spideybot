@@ -67,9 +67,22 @@ const token = process.env.TOKEN;
 // ============== MUSIC PLAYER ==============
 const player = new Player(client, {
   skipFFmpeg: false,
-  enableLavalink: false
+  enableLavalink: false,
+  deafenOnJoin: true
 });
 player.extractors.loadMulti(DefaultExtractors);
+
+player.on("trackStart", (queue, track) => {
+  console.log(`🎵 Now playing: ${track.title}`);
+});
+
+player.on("error", (queue, error) => {
+  console.error("Music player error:", error);
+});
+
+player.on("connectionError", (queue, error) => {
+  console.error("Connection error:", error);
+});
 
 // ============== READY EVENT ==============
 client.once("ready", () => {
