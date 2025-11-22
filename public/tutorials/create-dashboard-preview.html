@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Create Dashboard Preview - SPIDEY BOT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      line-height: 1.6;
+    }
+    nav {
+      background: rgba(20, 20, 20, 0.95);
+      border-bottom: 1px solid #222;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1.5rem;
+      transition: color 0.3s;
+    }
+    nav a:hover { color: #9146FF; }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .intro {
+      color: #ccc;
+      font-size: 1.1rem;
+      margin-bottom: 3rem;
+    }
+    .step {
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .step h2 {
+      color: #00d4ff;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .step-number {
+      background: #9146FF;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step p {
+      color: #ccc;
+      margin-bottom: 1rem;
+    }
+    .step ul {
+      color: #ccc;
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .step li {
+      margin-bottom: 0.5rem;
+    }
+    .code-block {
+      background: #1a1a2e;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      color: #00d4ff;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+    .note {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 4px solid #00d4ff;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 4px;
+      color: #ccc;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 2.5rem;
+      margin-top: 2rem;
+      border-radius: 15px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: rgba(0, 212, 255, 0.2);
+      color: #00d4ff;
+      border: 2px solid rgba(0, 212, 255, 0.5);
+    }
+    .btn-primary:hover {
+      background: rgba(0, 212, 255, 0.3);
+      border-color: rgba(0, 212, 255, 0.8);
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(0, 212, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">SPIDEY BOT</div>
+    <div>
+      <a href="/">Home</a>
+      <a href="/commands">Features</a>
+      <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>📊 How to Create a Dashboard Preview</h1>
+    <p class="intro">Learn how to create a professional preview image showcasing your admin dashboard features.</p>
+
+    <div class="step">
+      <h2><div class="step-number">1</div> Prepare Your Dashboard</h2>
+      <p>Set up your dashboard to look its best:</p>
+      <ul>
+        <li>Log into the admin dashboard with a populated server</li>
+        <li>Make sure you have real data (members, activity, etc.)</li>
+        <li>Navigate to a visually interesting section like:</li>
+        <ul style="margin-left: 1rem;">
+          <li>Dashboard home with graphs and stats</li>
+          <li>Analytics or member leaderboard</li>
+          <li>A configuration panel with color customization</li>
+        </ul>
+      </ul>
+      <div class="note">💡 Real data makes the dashboard look more impressive and useful</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">2</div> Optimize the View</h2>
+      <p>Prepare your screen for a professional screenshot:</p>
+      <ul>
+        <li>Close all browser tabs except the dashboard</li>
+        <li>Hide bookmarks bar and address bar if possible</li>
+        <li>Scroll to show the most important section</li>
+        <li>Set zoom to 100% (Ctrl/Cmd + 0)</li>
+        <li>Make sure colors are vibrant and clear</li>
+      </ul>
+      <div class="note">💡 A clean interface shows professionalism and attention to detail</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">3</div> Select the Best Section</h2>
+      <p>Choose which part of the dashboard to showcase:</p>
+      <ul>
+        <li><strong>Home Page:</strong> Shows stats, graphs, live data</li>
+        <li><strong>Settings Panel:</strong> Shows customization options</li>
+        <li><strong>Analytics:</strong> Shows member activity and trends</li>
+        <li><strong>Configuration Forms:</strong> Shows how easy it is to manage</li>
+      </ul>
+      <p>Best choice: <strong>Home Page with stats</strong> - it shows the most impressive data</p>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">4</div> Take a Full Screenshot</h2>
+      <p>Capture your dashboard:</p>
+      <ul>
+        <li><strong>Windows:</strong> Snipping Tool or Win+Shift+S</li>
+        <li><strong>Mac:</strong> Cmd+Shift+4 or Screenshot app</li>
+        <li><strong>Linux:</strong> Flameshot or Gnome Screenshot</li>
+      </ul>
+      <p>Make sure to capture:</p>
+      <ul>
+        <li>The header with server name and user info</li>
+        <li>Sidebar with section menu</li>
+        <li>Main content area with stats/graphs</li>
+        <li>Any colorful elements or charts</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">5</div> Crop to Card Size</h2>
+      <p>Edit your screenshot to fit the preview card dimensions:</p>
+      <ul>
+        <li>Target size: <strong>600x400px</strong> (landscape)</li>
+        <li>Focus on the central dashboard content</li>
+        <li>Crop out empty margins and whitespace</li>
+        <li>Keep all the important UI elements visible</li>
+      </ul>
+      <p>Use an editor like:</p>
+      <ul>
+        <li>Photoshop or GIMP (professional)</li>
+        <li>Canva (online, user-friendly)</li>
+        <li>Paint.NET (simple and fast)</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">6</div> Enhance Visual Appeal</h2>
+      <p>Make your preview stand out:</p>
+      <ul>
+        <li><strong>Adjust brightness:</strong> Make cyan/purple colors more vibrant</li>
+        <li><strong>Increase saturation:</strong> Colors pop more on the website</li>
+        <li><strong>Add subtle glow:</strong> Optional purple border effect</li>
+        <li><strong>Add overlay text:</strong> "Admin Dashboard" label in corner</li>
+      </ul>
+      <div class="note">💡 Visual enhancements help users immediately understand what they're looking at</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">7</div> Optimize File Size</h2>
+      <p>Compress the image for web use:</p>
+      <div class="code-block">Recommended tools:<br>- TinyPNG.com<br>- Compressor.io<br>- ImageOptim (Mac)</div>
+      <p>Target: Keep under 500KB for fast loading times</p>
+      <ul>
+        <li>Quality should remain sharp and clear</li>
+        <li>Colors should not become washed out</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">8</div> Save & Upload to Site</h2>
+      <p>Add the preview to your website:</p>
+      <div class="code-block">/public/assets/dashboard-preview.png</div>
+      <p>Update your HTML card:</p>
+      <div class="code-block">&lt;img src="/assets/dashboard-preview.png" alt="Admin Dashboard"&gt;</div>
+      <p>Add styling to ensure proper sizing:</p>
+      <div class="code-block">style="width: 100%; height: 180px; object-fit: cover; border-radius: 8px;"</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">9</div> Test & Verify</h2>
+      <p>Check your preview on the actual website:</p>
+      <ul>
+        <li>View on desktop (looks good at full size)</li>
+        <li>View on mobile (maintains aspect ratio)</li>
+        <li>Check load time (should be instant)</li>
+        <li>Verify hover effects (card lifts up)</li>
+      </ul>
+      <p>If anything looks off, go back to step 5 and refine the crop.</p>
+    </div>
+
+    <a href="/" class="btn btn-primary">← Back to Home</a>
+  </div>
+</body>
+</html>

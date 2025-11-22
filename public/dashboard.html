@@ -592,13 +592,35 @@
         /* Grid Layout */
         .content-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 2rem;
             margin-top: 1.5rem;
+            position: relative;
+            z-index: 1;
         }
 
         .content-grid.wide {
             grid-template-columns: 2fr 1fr;
+        }
+
+        #settings-section .content-grid,
+        #logging-section .content-grid,
+        #server-guard-section .content-grid,
+        #react-roles-section .content-grid,
+        #role-categories-section .content-grid,
+        #server-messages-section .content-grid,
+        #custom-commands-section .content-grid,
+        #components-section .content-grid,
+        #xp-levels-section .content-grid,
+        #leaderboards-section .content-grid,
+        #invite-tracking-section .content-grid,
+        #message-counting-section .content-grid,
+        #statistics-channels-section .content-grid,
+        #giveaways-section .content-grid,
+        #social-notifs-section .content-grid,
+        #reminders-section .content-grid,
+        #recordings-section .content-grid {
+            grid-template-columns: 1fr;
         }
 
         /* Panels */
@@ -606,10 +628,33 @@
             background: rgba(20, 30, 60, 0.25);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(var(--theme-color), 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 10px;
+            padding: 1rem;
             transition: all 0.3s ease;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        #settings-section .panel,
+        #logging-section .panel,
+        #server-guard-section .panel,
+        #react-roles-section .panel,
+        #role-categories-section .panel,
+        #server-messages-section .panel,
+        #custom-commands-section .panel,
+        #components-section .panel,
+        #xp-levels-section .panel,
+        #leaderboards-section .panel,
+        #invite-tracking-section .panel,
+        #message-counting-section .panel,
+        #statistics-channels-section .panel,
+        #giveaways-section .panel,
+        #social-notifs-section .panel,
+        #reminders-section .panel,
+        #recordings-section .panel {
+            padding: 0.9rem;
         }
 
         .panel:hover {
@@ -622,15 +667,35 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.6rem;
             border-bottom: 1px solid rgba(var(--theme-color), 0.15);
         }
 
         .panel-title {
-            font-size: 1.1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.95);
+        }
+
+        #settings-section .panel-title,
+        #logging-section .panel-title,
+        #server-guard-section .panel-title,
+        #react-roles-section .panel-title,
+        #role-categories-section .panel-title,
+        #server-messages-section .panel-title,
+        #custom-commands-section .panel-title,
+        #components-section .panel-title,
+        #xp-levels-section .panel-title,
+        #leaderboards-section .panel-title,
+        #invite-tracking-section .panel-title,
+        #message-counting-section .panel-title,
+        #statistics-channels-section .panel-title,
+        #giveaways-section .panel-title,
+        #social-notifs-section .panel-title,
+        #reminders-section .panel-title,
+        #recordings-section .panel-title {
+            font-size: 0.85rem;
         }
 
         .panel-icon {
@@ -654,30 +719,74 @@
         .panel-content {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.6rem;
+        }
+
+        #settings-section .panel-content,
+        #logging-section .panel-content,
+        #server-guard-section .panel-content,
+        #react-roles-section .panel-content,
+        #role-categories-section .panel-content,
+        #server-messages-section .panel-content,
+        #custom-commands-section .panel-content,
+        #components-section .panel-content,
+        #xp-levels-section .panel-content,
+        #leaderboards-section .panel-content,
+        #invite-tracking-section .panel-content,
+        #message-counting-section .panel-content,
+        #statistics-channels-section .panel-content,
+        #giveaways-section .panel-content,
+        #social-notifs-section .panel-content,
+        #reminders-section .panel-content,
+        #recordings-section .panel-content {
+            gap: 0.5rem;
         }
 
         /* Form Elements */
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.3rem;
         }
 
         .form-label {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.65);
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        #settings-section .form-label,
+        #logging-section .form-label,
+        #server-guard-section .form-label,
+        #react-roles-section .form-label,
+        #role-categories-section .form-label,
+        #server-messages-section .form-label,
+        #custom-commands-section .form-label,
+        #components-section .form-label,
+        #xp-levels-section .form-label,
+        #leaderboards-section .form-label,
+        #invite-tracking-section .form-label,
+        #message-counting-section .form-label,
+        #statistics-channels-section .form-label,
+        #giveaways-section .form-label,
+        #social-notifs-section .form-label,
+        #reminders-section .form-label,
+        #recordings-section .form-label {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.6);
         }
 
         .form-input {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(var(--theme-color), 0.2);
-            padding: 0.75rem;
-            border-radius: 8px;
+            padding: 0.4rem 0.5rem;
+            border-radius: 5px;
             color: rgba(255, 255, 255, 0.9);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             transition: all 0.2s ease;
+            height: 28px;
         }
 
         .form-input:focus {
@@ -706,20 +815,91 @@
             background-position: right 0.5rem center;
             background-size: 1.5em 1.5em;
             padding-right: 2.5rem;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        select option {
+            background: #0f1623;
+            color: #fff;
+            padding: 0.6rem 0.8rem;
+            border: none;
+        }
+
+        select option:checked {
+            background: rgba(0, 212, 255, 0.3);
+            color: #fff;
+        }
+
+        .form-input {
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .glass-select {
+            background: rgba(20, 30, 60, 0.4) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.3) !important;
+            color: #fff !important;
+        }
+
+        .glass-select:hover {
+            background: rgba(20, 30, 60, 0.5) !important;
+            border-color: rgba(0, 212, 255, 0.5) !important;
+        }
+
+        .glass-select:focus {
+            background: rgba(20, 30, 60, 0.6) !important;
+            border-color: rgba(0, 212, 255, 0.6) !important;
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.2) !important;
+        }
+
+        .panel-content {
+            max-height: 100%;
+            overflow: visible;
+            position: relative;
+            z-index: auto;
         }
 
         /* Buttons */
         .btn {
-            padding: 0.6rem 1.2rem;
+            padding: 0.4rem 0.8rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             font-weight: 500;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
+            height: 28px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        #settings-section .btn,
+        #logging-section .btn,
+        #server-guard-section .btn,
+        #react-roles-section .btn,
+        #role-categories-section .btn,
+        #server-messages-section .btn,
+        #custom-commands-section .btn,
+        #components-section .btn,
+        #xp-levels-section .btn,
+        #leaderboards-section .btn,
+        #invite-tracking-section .btn,
+        #message-counting-section .btn,
+        #statistics-channels-section .btn,
+        #giveaways-section .btn,
+        #social-notifs-section .btn,
+        #reminders-section .btn,
+        #recordings-section .btn {
+            font-size: 0.65rem;
+            height: 26px;
+            padding: 0.3rem 0.6rem;
         }
 
         .btn-primary {
@@ -741,6 +921,119 @@
         .btn-secondary:hover {
             background: rgba(var(--theme-color), 0.25);
             border-color: rgba(var(--theme-color), 0.5);
+        }
+
+        /* Unsaved Changes Notification */
+        #unsavedNotification {
+            display: none;
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 30, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 165, 0, 0.4);
+            border-radius: 20px;
+            padding: 0.75rem 1.5rem;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            gap: 1.5rem;
+            animation: slideUp 0.4s ease-out;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 165, 0, 0.1);
+            max-width: calc(100% - 2rem);
+        }
+
+        #unsavedNotification.hide {
+            animation: slideDown 0.4s ease-in;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-50%) translateY(100%);
+                opacity: 0;
+            }
+        }
+
+        .unsaved-message {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .unsaved-icon {
+            font-size: 1rem;
+            color: #ff9500;
+            flex-shrink: 0;
+        }
+
+        .unsaved-text {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .unsaved-buttons {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-save-changes {
+            background: rgba(34, 197, 94, 0.8);
+            color: #fff;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+        }
+
+        .btn-save-changes:hover {
+            background: rgba(34, 197, 94, 1);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
         }
 
         .content-section {
@@ -783,78 +1076,6 @@
 
         .graph-container canvas {
             max-height: 300px;
-        }
-
-        /* Save Modal */
-        .save-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(5px);
-        }
-
-        .save-modal.show {
-            display: flex;
-        }
-
-        .save-modal-content {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(145, 70, 255, 0.1) 100%);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            border-radius: 20px;
-            padding: 3rem 2.5rem;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 212, 255, 0.1);
-            max-width: 400px;
-            animation: popupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes popupSlideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .save-modal-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: popupBounce 0.6s ease-out;
-        }
-
-        @keyframes popupBounce {
-            0% {
-                transform: scale(0);
-            }
-            50% {
-                transform: scale(1.2);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .save-modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #00d4ff;
-            margin-bottom: 0.5rem;
-        }
-
-        .save-modal-message {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.8);
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1025,7 +1246,7 @@
                                 <div class="panel-content">
                                     <div class="form-group">
                                         <div class="form-label">Select Role</div>
-                                        <select id="customRoleSelect" style="width: 100%; padding: 0.7rem; background: rgba(var(--theme-color), 0.1); border: 1px solid rgba(var(--theme-color), 0.3); color: #fff; border-radius: 6px; margin-bottom: 1rem;" onchange="updateCustomGraph()">
+                                        <select id="customRoleSelect" class="form-input glass-select" onchange="updateCustomGraph()">
                                             <option value="">Choose a role...</option>
                                         </select>
                                     </div>
@@ -1081,7 +1302,6 @@
                                     <div class="form-label">Timezone (GMT)</div>
                                     <input type="text" class="form-input" placeholder="GMT" value="GMT" disabled style="opacity: 0.6; cursor: not-allowed;"/>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -1123,7 +1343,6 @@
                                         <option>Restricted</option>
                                     </select>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveRoles()">Save Roles</button>
                             </div>
                         </div>
                     </div>
@@ -1157,7 +1376,6 @@
                                         <option>#intro</option>
                                     </select>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveChannels()">Update Channels</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -1181,7 +1399,6 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Social Notifications</span></label>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveFeatures()">Save Features</button>
                             </div>
                         </div>
                     </div>
@@ -1298,7 +1515,6 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Require confirmation for dangerous actions</span></label>
                                 </div>
-                                <button class="btn btn-primary" onclick="savePermissions()">Save Permissions</button>
                             </div>
                         </div>
                     </div>
@@ -1416,7 +1632,6 @@
                                     <textarea class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
                                 </div>
                                 <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username, {count} for member number</small>
-                                <button class="btn btn-primary" onclick="saveWelcome()">Save Welcome</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -1430,7 +1645,6 @@
                                     <textarea class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
                                 </div>
                                 <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username</small>
-                                <button class="btn btn-primary" onclick="saveGoodbye()">Save Goodbye</button>
                             </div>
                         </div>
                     </div>
@@ -1502,7 +1716,6 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Leveling/XP</label>
                                 </div>
-                                <button class="btn btn-primary">Save Components</button>
                             </div>
                         </div>
                     </div>
@@ -1568,7 +1781,6 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Auto-assign level roles</span></label>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveLeveling()">Save Leveling</button>
                             </div>
                         </div>
                     </div>
@@ -2023,7 +2235,6 @@
                                         <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">This shows how your selected color looks</div>
                                     </div>
                                     <button class="btn btn-primary" onclick="resetColors()">Reset to Default</button>
-                                    <button class="btn btn-secondary" onclick="saveColorPreferences()">Save Preferences</button>
                                 </div>
                             </div>
                         </div>
@@ -2129,7 +2340,57 @@
                 .then(() => window.location.href = '/login');
         }
 
+        // Load Colors from LocalStorage
+        function loadSavedColors() {
+            // Load SAVED colors (persisted from last save)
+            const themeColor = localStorage.getItem('savedThemeColor') || localStorage.getItem('themeColor') || '#00d4ff';
+            const cyanAccent = localStorage.getItem('savedAccentCyan') || localStorage.getItem('accentCyan') || '#00d4ff';
+            const purpleAccent = localStorage.getItem('savedAccentPurple') || localStorage.getItem('accentPurple') || '#9146ff';
+            const pinkAccent = localStorage.getItem('savedAccentPink') || localStorage.getItem('accentPink') || '#ff69b4';
+            const textColor = localStorage.getItem('savedTextColor') || localStorage.getItem('textColor') || '#ffffff';
+
+            // Apply colors to CSS
+            const themeRgb = hexToRgb(themeColor);
+            document.documentElement.style.setProperty('--theme-color', themeRgb);
+            document.documentElement.style.setProperty('--accent-cyan', cyanAccent);
+            document.documentElement.style.setProperty('--accent-purple', purpleAccent);
+            document.documentElement.style.setProperty('--accent-pink', pinkAccent);
+            document.documentElement.style.setProperty('--text-color', textColor);
+
+            // Update input values and labels
+            if (document.getElementById('themeColorPicker')) {
+                document.getElementById('themeColorPicker').value = themeColor;
+                document.getElementById('themeColorLabel').textContent = `${themeColor.toUpperCase()} (Custom)`;
+            }
+            if (document.getElementById('cyanColorPicker')) {
+                document.getElementById('cyanColorPicker').value = cyanAccent;
+                document.getElementById('cyanColorLabel').textContent = cyanAccent.toUpperCase();
+            }
+            if (document.getElementById('purpleColorPicker')) {
+                document.getElementById('purpleColorPicker').value = purpleAccent;
+                document.getElementById('purpleColorLabel').textContent = purpleAccent.toUpperCase();
+            }
+            if (document.getElementById('pinkColorPicker')) {
+                document.getElementById('pinkColorPicker').value = pinkAccent;
+                document.getElementById('pinkColorLabel').textContent = pinkAccent.toUpperCase();
+            }
+            if (document.getElementById('textColorPicker')) {
+                document.getElementById('textColorPicker').value = textColor;
+                document.getElementById('textColorLabel').textContent = textColor.toUpperCase();
+            }
+
+            // Store as originalValues for unsaved changes detection
+            originalValues['themeColorPicker'] = themeColor;
+            originalValues['cyanColorPicker'] = cyanAccent;
+            originalValues['purpleColorPicker'] = purpleAccent;
+            originalValues['pinkColorPicker'] = pinkAccent;
+            originalValues['textColorPicker'] = textColor;
+        }
+
         window.addEventListener('load', async () => {
+            // Load saved colors
+            loadSavedColors();
+
             // Load saved theme preference
             const savedTheme = localStorage.getItem('theme') || 'dark';
             if (savedTheme === 'light') {
@@ -2201,6 +2462,8 @@
             document.getElementById('themeColorPicker').value = color;
             document.getElementById('themeColorLabel').textContent = `${color.toUpperCase()} (Custom)`;
             localStorage.setItem('themeColor', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
         }
 
         function changeCyanAccent(color) {
@@ -2208,6 +2471,8 @@
             document.getElementById('cyanColorPicker').value = color;
             document.getElementById('cyanColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('accentCyan', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
         }
 
         function changePurpleAccent(color) {
@@ -2215,6 +2480,8 @@
             document.getElementById('purpleColorPicker').value = color;
             document.getElementById('purpleColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('accentPurple', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
         }
 
         function changePinkAccent(color) {
@@ -2222,6 +2489,8 @@
             document.getElementById('pinkColorPicker').value = color;
             document.getElementById('pinkColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('accentPink', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
         }
 
         function changeTextColor(color) {
@@ -2229,6 +2498,52 @@
             document.getElementById('textColorPicker').value = color;
             document.getElementById('textColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('textColor', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
+        }
+
+        function resetColors() {
+            // Reset only unsaved color changes - revert to last SAVED state
+            const savedThemeColor = localStorage.getItem('savedThemeColor') || '#00d4ff';
+            const savedCyanAccent = localStorage.getItem('savedAccentCyan') || '#00d4ff';
+            const savedPurpleAccent = localStorage.getItem('savedAccentPurple') || '#9146ff';
+            const savedPinkAccent = localStorage.getItem('savedAccentPink') || '#ff69b4';
+            const savedTextColor = localStorage.getItem('savedTextColor') || '#ffffff';
+
+            // Clear UNSAVED changes
+            localStorage.removeItem('themeColor');
+            localStorage.removeItem('accentCyan');
+            localStorage.removeItem('accentPurple');
+            localStorage.removeItem('accentPink');
+            localStorage.removeItem('textColor');
+
+            // Restore inputs and CSS to last saved state
+            const themeRgb = hexToRgb(savedThemeColor);
+            document.documentElement.style.setProperty('--theme-color', themeRgb);
+            document.documentElement.style.setProperty('--accent-cyan', savedCyanAccent);
+            document.documentElement.style.setProperty('--accent-purple', savedPurpleAccent);
+            document.documentElement.style.setProperty('--accent-pink', savedPinkAccent);
+            document.documentElement.style.setProperty('--text-color', savedTextColor);
+
+            document.getElementById('themeColorPicker').value = savedThemeColor;
+            document.getElementById('themeColorLabel').textContent = `${savedThemeColor.toUpperCase()} (Custom)`;
+            document.getElementById('cyanColorPicker').value = savedCyanAccent;
+            document.getElementById('cyanColorLabel').textContent = savedCyanAccent.toUpperCase();
+            document.getElementById('purpleColorPicker').value = savedPurpleAccent;
+            document.getElementById('purpleColorLabel').textContent = savedPurpleAccent.toUpperCase();
+            document.getElementById('pinkColorPicker').value = savedPinkAccent;
+            document.getElementById('pinkColorLabel').textContent = savedPinkAccent.toUpperCase();
+            document.getElementById('textColorPicker').value = savedTextColor;
+            document.getElementById('textColorLabel').textContent = savedTextColor.toUpperCase();
+
+            // Update original values to match saved state
+            originalValues['themeColorPicker'] = savedThemeColor;
+            originalValues['cyanColorPicker'] = savedCyanAccent;
+            originalValues['purpleColorPicker'] = savedPurpleAccent;
+            originalValues['pinkColorPicker'] = savedPinkAccent;
+            originalValues['textColorPicker'] = savedTextColor;
+
+            hideUnsavedNotification();
         }
 
         // Member Graph Functions
@@ -2355,104 +2670,197 @@
             localStorage.removeItem('accentPink');
         }
 
-        function saveColorPreferences() {
-            alert('Color preferences saved! They will persist when you revisit the dashboard.');
-        }
 
-        // Settings Panel Save Functions
-        // Modal Functions
-        function showSaveModal(message = '✅ Saved Successfully!') {
-            const modal = document.getElementById('saveModal');
-            document.getElementById('modalMessage').textContent = message;
-            modal.classList.add('show');
-            setTimeout(() => {
-                modal.classList.remove('show');
-            }, 2500);
-        }
+        // ========== UNSAVED CHANGES DETECTION ==========
+        let hasUnsavedChanges = false;
+        let originalValues = {};
 
-        function saveSettings() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
+        function showUnsavedNotification() {
+            if (!hasUnsavedChanges) {
+                hasUnsavedChanges = true;
+                const notification = document.getElementById('unsavedNotification');
+                if (notification) {
+                    notification.style.display = 'flex';
+                }
             }
-            const prefix = document.querySelector('[placeholder="//"]').value;
-            const activity = document.querySelector('[placeholder="e.g., with commands // help"]').value;
-            const language = document.querySelector('select').value;
+        }
+
+        function checkIfChangesReverted() {
+            // Check if all current values match original values
+            const inputs = document.querySelectorAll('input, select, textarea');
+            let allReverted = true;
             
-            fetch(`/api/config/settings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    guildId: selectedServerId,
-                    prefix: prefix || '//',
-                    botActivity: activity,
-                    language: language || 'English'
-                })
-            }).then(r => r.ok ? showSaveModal('✅ Configuration Saved!') : showSaveModal('❌ Error saving settings'));
+            inputs.forEach(input => {
+                const key = input.id || input.name || input.className;
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    if (originalValues[key] !== undefined && originalValues[key] !== input.checked) {
+                        allReverted = false;
+                    }
+                } else {
+                    if (originalValues[key] !== undefined && originalValues[key] !== input.value) {
+                        allReverted = false;
+                    }
+                }
+            });
+            
+            if (allReverted && hasUnsavedChanges) {
+                hideUnsavedNotification();
+            }
         }
 
-        function saveRoles() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
+        function hideUnsavedNotification() {
+            hasUnsavedChanges = false;
+            const notification = document.getElementById('unsavedNotification');
+            if (notification) {
+                notification.classList.add('hide');
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                    notification.classList.remove('hide');
+                }, 400);
             }
-            showSaveModal('✅ Roles Saved!');
         }
 
-        function saveChannels() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Channels Saved!');
+        function resetChanges() {
+            // Reset only changed inputs back to original values
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const key = input.id || input.name || input.className;
+                if (originalValues[key] !== undefined) {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = originalValues[key];
+                    } else {
+                        input.value = originalValues[key];
+                    }
+                }
+            });
+            hideUnsavedNotification();
         }
 
-        function saveFeatures() {
+        function saveAllChanges() {
             const selectedServerId = localStorage.getItem('selectedServerId');
             if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
+                alert('Please select a server first');
                 return;
             }
-            showSaveModal('✅ Features Saved!');
+
+            // Save colors as "saved" (mark them as persisted)
+            const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#00d4ff';
+            const cyanAccent = localStorage.getItem('accentCyan') || localStorage.getItem('savedAccentCyan') || '#00d4ff';
+            const purpleAccent = localStorage.getItem('accentPurple') || localStorage.getItem('savedAccentPurple') || '#9146ff';
+            const pinkAccent = localStorage.getItem('accentPink') || localStorage.getItem('savedAccentPink') || '#ff69b4';
+            const textColor = localStorage.getItem('textColor') || localStorage.getItem('savedTextColor') || '#ffffff';
+
+            localStorage.setItem('savedThemeColor', themeColor);
+            localStorage.setItem('savedAccentCyan', cyanAccent);
+            localStorage.setItem('savedAccentPurple', purpleAccent);
+            localStorage.setItem('savedAccentPink', pinkAccent);
+            localStorage.setItem('savedTextColor', textColor);
+
+            // Clear unsaved color changes
+            localStorage.removeItem('themeColor');
+            localStorage.removeItem('accentCyan');
+            localStorage.removeItem('accentPurple');
+            localStorage.removeItem('accentPink');
+            localStorage.removeItem('textColor');
+
+            // Map sections to their IDs
+            const sectionMap = {
+                'settings-section': 'settings',
+                'logging-section': 'logging',
+                'server-guard-section': 'server-guard',
+                'react-roles-section': 'react-roles',
+                'role-categories-section': 'role-categories',
+                'server-messages-section': 'server-messages',
+                'custom-commands-section': 'custom-commands',
+                'components-section': 'components',
+                'xp-levels-section': 'xp-levels',
+                'leaderboards-section': 'leaderboards',
+                'invite-tracking-section': 'invite-tracking',
+                'message-counting-section': 'message-counting',
+                'statistics-channels-section': 'statistics-channels',
+                'giveaways-section': 'giveaways',
+                'social-notifs-section': 'social-notifs',
+                'reminders-section': 'reminders',
+                'recordings-section': 'recordings'
+            };
+
+            // Collect data from all sections
+            Object.keys(sectionMap).forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section && section.classList.contains('active')) {
+                    const sectionName = sectionMap[sectionId];
+                    const inputs = section.querySelectorAll('input[type="text"], input[type="number"], input[type="checkbox"], input[type="color"], select, textarea');
+                    const data = {};
+
+                    inputs.forEach(input => {
+                        const key = input.id || input.name || input.placeholder || input.className;
+                        if (input.type === 'checkbox') {
+                            data[key] = input.checked;
+                            // Update originalValues to mark as saved
+                            originalValues[key] = input.checked;
+                        } else if (input.type === 'color') {
+                            data[key] = input.value;
+                            // Update originalValues to mark as saved
+                            originalValues[key] = input.value;
+                        } else {
+                            data[key] = input.value;
+                            // Update originalValues to mark as saved
+                            originalValues[key] = input.value;
+                        }
+                    });
+
+                    // Save this section via API
+                    fetch(`/api/config/${sectionName}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    })
+                    .then(r => r.json())
+                    .then(res => console.log(`✅ Saved ${sectionName}:`, res))
+                    .catch(err => console.error(`❌ Error saving ${sectionName}:`, err));
+                }
+            });
+
+            hideUnsavedNotification();
         }
 
-        function saveWelcome() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Welcome Message Saved!');
-        }
+        function setupUnsavedDetection() {
+            // Store original values on load
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const key = input.id || input.name || input.className;
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    originalValues[key] = input.checked;
+                } else {
+                    originalValues[key] = input.value;
+                }
+                
+                // Listen for changes and check if reverted
+                input.addEventListener('change', () => {
+                    showUnsavedNotification();
+                    checkIfChangesReverted();
+                });
+                input.addEventListener('input', () => {
+                    showUnsavedNotification();
+                    checkIfChangesReverted();
+                });
+            });
 
-        function saveGoodbye() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Goodbye Message Saved!');
-        }
-
-        function savePermissions() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Permissions Saved!');
-        }
-
-        function saveLeveling() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Leveling Settings Saved!');
+            // Also listen for color picker changes
+            const colorPickers = document.querySelectorAll('input[type="color"]');
+            colorPickers.forEach(picker => {
+                const key = picker.id || picker.className;
+                originalValues[key] = picker.value;
+                
+                picker.addEventListener('change', () => {
+                    showUnsavedNotification();
+                    checkIfChangesReverted();
+                });
+                picker.addEventListener('input', () => {
+                    showUnsavedNotification();
+                    checkIfChangesReverted();
+                });
+            });
         }
 
         // Load saved colors on startup
@@ -2471,15 +2879,21 @@
 
             const savedTextColor = localStorage.getItem('textColor');
             if (savedTextColor) changeTextColor(savedTextColor);
+
+            // Setup unsaved changes detection
+            setupUnsavedDetection();
         });
     </script>
 
-    <!-- Save Modal Popup -->
-    <div id="saveModal" class="save-modal">
-        <div class="save-modal-content">
-            <div class="save-modal-icon">✅</div>
-            <div class="save-modal-title">Success</div>
-            <div class="save-modal-message" id="modalMessage">Saved Successfully!</div>
+    <!-- Unsaved Changes Notification -->
+    <div id="unsavedNotification">
+        <div class="unsaved-message">
+            <div class="unsaved-icon">⚠️</div>
+            <div class="unsaved-text">Careful — you have unsaved changes!</div>
+        </div>
+        <div class="unsaved-buttons">
+            <button class="btn-reset" onclick="resetChanges()">Reset</button>
+            <button class="btn-save-changes" onclick="saveAllChanges()">Save Changes</button>
         </div>
     </div>
 </body>
