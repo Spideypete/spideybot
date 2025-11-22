@@ -25,7 +25,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
-  secret: 'spidey-bot-secret',
+  secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
   resave: false,
   saveUninitialized: true,
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
@@ -2283,6 +2283,21 @@ app.get("/", (req, res) => {
       background: #0f0f0f;
       color: #fff;
       line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main {
+      flex: 1;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
     }
     nav {
       background: rgba(20, 20, 20, 0.95);
@@ -2375,61 +2390,180 @@ app.get("/", (req, res) => {
     footer {
       background: #000;
       border-top: 1px solid #222;
-      padding: 2rem;
+      padding: 3rem 2rem;
+      margin-top: 4rem;
+    }
+    footer .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    footer .footer-section h3 {
+      color: #9146FF;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    footer .footer-section ul {
+      list-style: none;
+    }
+    footer .footer-section ul li {
+      margin-bottom: 0.75rem;
+    }
+    footer .footer-section a {
+      color: #999;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+    footer .footer-section a:hover {
+      color: #9146FF;
+    }
+    footer .footer-bottom {
       text-align: center;
       color: #666;
-      margin-top: 4rem;
+      font-size: 0.85rem;
+      padding-top: 2rem;
+      border-top: 1px solid #222;
+      max-width: 1200px;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
   <nav>
-    <div style="font-weight: 700; font-size: 1.5rem; color: #fff;">🕷️ SPIDEY BOT</div>
+    <div class="logo">SPIDEY BOT</div>
     <div>
-      <a href="#home">Home</a>
-      <a href="#features">Features</a>
+      <a href="/">Home</a>
+      <a href="/commands">Features</a>
       <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
     </div>
   </nav>
+
+  <main>
   <div class="hero">
-    <h1>The best all-in-one bot for Discord</h1>
-    <p>SPIDEY BOT is a complete Discord bot trusted by servers worldwide. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
+    <h1>Meet SPIDEY BOT – Your Server's Ultimate Tech Guardian</h1>
+    <p>SPIDEY BOT blends powerful intelligence with mystical powers to bring order, fun, and automation to your Discord server. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
     <div class="btn-group">
-      <a id="addToDiscord" class="btn btn-primary">Add to Discord</a>
-      <a href="#features" class="btn btn-secondary">See Features</a>
+      <a id="addToDiscord" class="btn btn-primary">Invite To Guild →</a>
+      <a href="/commands" class="btn btn-secondary">Documentation →</a>
     </div>
   </div>
+
   <div class="container">
-    <h2 style="margin-top: 3rem; margin-bottom: 2rem; font-size: 2rem;">✨ Features</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>🎵 Music Player</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">YouTube search, queue management, loop, shuffle, and volume control</p>
+    <h2 style="margin-top: 4rem; margin-bottom: 3rem; font-size: 2.2rem; text-align: center; color: #fff;">✨ Core Features</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎵 Music Playback</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Plays high-quality music in voice channels from YouTube with queue management, looping, and shuffle</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>🛡️ Moderation</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Kick, ban, warn, mute with automatic logging</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🛡️ Auto Moderation</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Detects and removes spam, bad words, and raids automatically with intelligent filtering</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>📈 Leveling/XP</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Passive XP gains, auto-assigned level roles with emoji badges</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">👋 Welcome Messages</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Greets new members with customizable messages and automatically assigns welcome roles</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>💰 Economy</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Daily rewards, work commands, transfers, and leaderboards</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎭 Reaction Roles</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Assigns roles to users when they click reaction emojis on messages</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>📱 Social Media</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Monitor Twitch, TikTok, Kick streamers with auto-alerts</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">📈 Leveling System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Tracks user activity and rewards XP with level-based roles and emoji badges</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>⚙️ Admin Dashboard</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Configure all bot settings with an intuitive web dashboard</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎫 Ticket Support</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Creates private support channels for members to ask questions and get help</p>
+        </div>
       </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">📝 Logging System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Logs server events like joins, bans, edits, and deletes for audit trails</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">💰 Economy System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Daily rewards, work commands, transfers, and leaderboards for competitive fun</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- And So Much More Section -->
+    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.2) 0%, rgba(145, 70, 255, 0.1) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
+      <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 2rem;">💎 And So Much More! 💎</h2>
+      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">From seamless integrations to advanced settings, we've got everything you need and more! Need help or have questions? Join our community Discord and connect with us!</p>
+      <a href="https://discord.com/invite/spideybot" target="_blank" class="btn btn-primary">Join Our Discord →</a>
+    </div>
+
+    <!-- Support Section -->
+    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem 2rem; text-align: center; margin-bottom: 4rem;">
+      <h2 style="color: #fff; margin-bottom: 1rem; font-size: 2rem;">🚀 We Are Here For You!</h2>
+      <p style="color: #ccc; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;">Whether you're just getting started or managing a massive community, we're here to offer real support and powerful features that scale with you. Need a hand? Reach out through our support hub or connect with others in our Discord server anytime!</p>
+      <a href="/login" class="btn btn-primary">Access Dashboard →</a>
     </div>
   </div>
   <footer>
-    <p>&copy; 2025 SPIDEY BOT. All rights reserved. | Developed by spidey</p>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/commands">Features</a></li>
+          <li><a href="/login">Admin</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <ul>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Community</h3>
+        <ul>
+          <li><a href="#" onclick="return false;">Discord Server</a></li>
+          <li><a href="#" onclick="return false;">Twitter</a></li>
+          <li><a href="#" onclick="return false;">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>About</h3>
+        <ul>
+          <li style="color: #999; font-size: 0.9rem;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
+    </div>
   </footer>
   <script>
     document.getElementById('addToDiscord').addEventListener('click', function() {
@@ -2517,6 +2651,265 @@ app.get("/login", (req, res) => {
   res.send(loginHtml);
 });
 
+// ============== STATIC PAGES ==============
+app.get("/terms", (req, res) => {
+  const termsPath = path.join(publicDir, 'terms.html');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(termsPath);
+});
+
+app.get("/privacy", (req, res) => {
+  const privacyPath = path.join(publicDir, 'privacy.html');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(privacyPath);
+});
+
+app.get("/commands", (req, res) => {
+  const commandsHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commands - SPIDEY BOT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main { flex: 1; }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
+    }
+    nav {
+      background: rgba(20, 20, 20, 0.95);
+      border-bottom: 1px solid #222;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1.5rem;
+      transition: color 0.3s;
+      font-weight: 500;
+    }
+    nav a:hover { color: #9146FF; }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    h1 {
+      color: #9146FF;
+      margin: 3rem 0 2rem 0;
+      font-size: 2.5rem;
+      text-align: center;
+    }
+    .commands-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+    .command-card {
+      background: rgba(145, 70, 255, 0.1);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+    .command-card:hover {
+      background: rgba(145, 70, 255, 0.15);
+      border-color: rgba(145, 70, 255, 0.4);
+    }
+    .command-card h3 {
+      color: #9146FF;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+    .command-card code {
+      background: rgba(0, 0, 0, 0.5);
+      color: #00d4ff;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      display: block;
+      margin: 0.5rem 0;
+    }
+    .command-card p {
+      color: #aaa;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    footer {
+      background: #000;
+      border-top: 1px solid #222;
+      padding: 3rem 2rem;
+      margin-top: 4rem;
+    }
+    footer .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    footer .footer-section h3 {
+      color: #9146FF;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    footer .footer-section a {
+      color: #999;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+    footer .footer-section a:hover { color: #9146FF; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">SPIDEY BOT</div>
+    <div>
+      <a href="/">Home</a>
+      <a href="/commands">Commands</a>
+      <a href="/login" style="color: #00d4ff;">Admin</a>
+    </div>
+  </nav>
+
+  <main>
+  <div class="container">
+    <h1>🕸️ SPIDEY BOT Commands</h1>
+    <p style="text-align: center; color: #aaa; margin-bottom: 2rem;">All commands start with <code style="background: rgba(0, 0, 0, 0.5); color: #00d4ff; padding: 0.2rem 0.5rem; border-radius: 4px;">//</code></p>
+
+    <div class="commands-grid">
+      <div class="command-card">
+        <h3>🎵 Music Commands</h3>
+        <code>//play [song]</code>
+        <p>Play a song from YouTube</p>
+        <code>//queue</code>
+        <p>Show current queue</p>
+        <code>//skip</code>
+        <p>Skip to next track</p>
+        <code>//stop</code>
+        <p>Stop playing music</p>
+      </div>
+
+      <div class="command-card">
+        <h3>🛡️ Moderation Commands</h3>
+        <code>//kick [user]</code>
+        <p>Kick a user from server</p>
+        <code>//ban [user]</code>
+        <p>Ban a user from server</p>
+        <code>//warn [user]</code>
+        <p>Warn a user</p>
+        <code>//mute [user]</code>
+        <p>Mute a user temporarily</p>
+      </div>
+
+      <div class="command-card">
+        <h3>💰 Economy Commands</h3>
+        <code>//balance</code>
+        <p>Check your coin balance</p>
+        <code>//daily</code>
+        <p>Claim daily reward</p>
+        <code>//work</code>
+        <p>Work to earn coins</p>
+        <code>//pay [user] [amount]</code>
+        <p>Transfer coins to another user</p>
+      </div>
+
+      <div class="command-card">
+        <h3>📊 Info Commands</h3>
+        <code>//stats</code>
+        <p>View your statistics</p>
+        <code>//leaderboard</code>
+        <p>View server leaderboard</p>
+        <code>//level</code>
+        <p>Check your level and XP</p>
+        <code>//help</code>
+        <p>View all available commands</p>
+      </div>
+
+      <div class="command-card">
+        <h3>⚙️ Admin Commands</h3>
+        <code>//config</code>
+        <p>Access configuration panel</p>
+        <code>//setup</code>
+        <p>Initial bot setup</p>
+        <code>//prefix [new prefix]</code>
+        <p>Change command prefix</p>
+        <code>//logging</code>
+        <p>Configure logging channels</p>
+      </div>
+
+      <div class="command-card">
+        <h3>🎫 Tickets</h3>
+        <code>//ticket</code>
+        <p>Create a support ticket</p>
+        <code>//close</code>
+        <p>Close a ticket</p>
+        <code>//add [user]</code>
+        <p>Add user to ticket</p>
+        <code>//remove [user]</code>
+        <p>Remove user from ticket</p>
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul style="list-style: none;">
+          <li><a href="/">Home</a></li>
+          <li><a href="/commands">Commands</a></li>
+          <li><a href="/login">Admin</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <ul style="list-style: none;">
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div style="text-align: center; color: #666; font-size: 0.85rem; padding-top: 2rem; border-top: 1px solid #222;">
+      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(commandsHtml);
+});
+
 app.get("/auth/discord", (req, res) => {
   const scopes = ["identify", "guilds"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
@@ -2572,6 +2965,15 @@ app.get("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) console.error("Logout error:", err);
     res.redirect("/");
+  });
+});
+
+// ============== PUBLIC API ==============
+app.get("/api/config", (req, res) => {
+  // Serve basic config needed for frontend (like client ID)
+  res.json({
+    clientId: DISCORD_CLIENT_ID,
+    botName: "SPIDEY BOT"
   });
 });
 
@@ -2997,6 +3399,30 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
 
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
   res.json({ success: true, settings: config.creator });
+});
+
+// Get member statistics by role for graphs
+app.get("/api/member-stats/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  guild.members.fetch().then(members => {
+    const stats = {
+      total: members.size,
+      members: members.filter(m => !m.user.bot).size,
+      verified: members.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
+      bots: members.filter(m => m.user.bot).size,
+      admins: members.filter(m => m.permissions.has('Administrator')).size,
+      mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+      roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
+    };
+    res.json(stats);
+  }).catch(err => {
+    console.error('Failed to fetch members:', err);
+    res.status(500).json({ error: 'Failed to fetch member data' });
+  });
 });
 
 const PORT = process.env.PORT || 5000;
