@@ -3457,6 +3457,196 @@ app.get("/api/member-stats/:guildId", (req, res) => {
   });
 });
 
+// ============== QUICK SETUP ENDPOINTS ==============
+app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const setupType = req.params.setupType;
+  const guildId = req.query.guildId || req.body.guildId;
+  const guild = client.guilds.cache.get(guildId);
+  
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  // Get the default text channel to post messages
+  const channel = guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(guild.members.me).has('SendMessages'));
+  if (!channel) return res.status(400).json({ error: "No suitable channel found to post message" });
+
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
+  try {
+    switch(setupType) {
+      case 'gaming':
+        const gamingEmbed = new EmbedBuilder()
+          .setColor(0x00D4FF)
+          .setTitle("🎮 GAMING ROLE SELECTION")
+          .setDescription("✨ Choose the games you play and join gaming communities!\n\n*Click the button below to see available gaming roles*")
+          .addFields({ name: "What's this?", value: "Get roles for your favorite games and find other players!" })
+          .setFooter({ text: "SPIDEY BOT • Gaming Community" });
+
+        const gamingButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("claim_roles")
+            .setLabel("🎮 SELECT GAMING ROLES")
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji("🎯")
+        );
+        channel.send({ embeds: [gamingEmbed], components: [gamingButton] });
+        return res.json({ success: true, message: "Gaming roles selector posted to #" + channel.name });
+
+      case 'watchparty':
+        const watchEmbed = new EmbedBuilder()
+          .setColor(0x4ECDC4)
+          .setTitle("🎬 WATCH PARTY ROLE SELECTION")
+          .setDescription("✨ Join watch parties and stream together!\n\n*Click the button below to see available watch party roles*")
+          .addFields({ name: "What's this?", value: "Get notified about watch parties and join streams with your community!" })
+          .setFooter({ text: "SPIDEY BOT • Watch Party Community" });
+
+        const watchButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("claim_watchparty")
+            .setLabel("🎬 SELECT WATCH PARTY ROLES")
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji("📺")
+        );
+        channel.send({ embeds: [watchEmbed], components: [watchButton] });
+        return res.json({ success: true, message: "Watch party selector posted to #" + channel.name });
+
+      case 'platform':
+        const platformEmbed = new EmbedBuilder()
+          .setColor(0x45B7D1)
+          .setTitle("💻 PLATFORM ROLE SELECTION")
+          .setDescription("✨ Select your gaming platforms!\n\n*Click the button below to see available platform roles*")
+          .addFields({ name: "What's this?", value: "Tell everyone what platforms you game on and find crossplay buddies!" })
+          .setFooter({ text: "SPIDEY BOT • Platform Community" });
+
+        const platformButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("claim_platform")
+            .setLabel("💻 SELECT PLATFORM ROLES")
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji("🖥️")
+        );
+        channel.send({ embeds: [platformEmbed], components: [platformButton] });
+        return res.json({ success: true, message: "Platform selector posted to #" + channel.name });
+
+      case 'removeRoles':
+        const removeEmbed = new EmbedBuilder()
+          .setColor(0xED4245)
+          .setTitle("🗑️ REMOVE ROLES")
+          .setDescription("❌ Remove roles you no longer want!\n\n*Click the button below to manage your roles*")
+          .addFields({ name: "What's this?", value: "Deselect roles and remove yourself from communities!" })
+          .setFooter({ text: "SPIDEY BOT • Role Management" });
+
+        const removeButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("remove_all_roles")
+            .setLabel("🗑️ REMOVE ROLES")
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji("❌")
+        );
+        channel.send({ embeds: [removeEmbed], components: [removeButton] });
+        return res.json({ success: true, message: "Remove roles message posted to #" + channel.name });
+
+      case 'levelRoles':
+        // Create 100 level roles with gradient colors
+        const guildConfig = loadConfig().guilds[guildId] || {};
+        const levelRoles = {};
+        let created = 0;
+
+        const botRole = guild.members.me?.roles.highest;
+        
+        // Color gradient function
+        const colorGradient = (level) => {
+          const hue = (level / 100) * 360;
+          const h = hue / 60;
+          const c = 255;
+          const x = c * (1 - Math.abs((h % 2) - 1));
+          let r = 0, g = 0, b = 0;
+          if (h >= 0 && h < 1) [r, g, b] = [c, x, 0];
+          else if (h >= 1 && h < 2) [r, g, b] = [x, c, 0];
+          else if (h >= 2 && h < 3) [r, g, b] = [0, c, x];
+          else if (h >= 3 && h < 4) [r, g, b] = [0, x, c];
+          else if (h >= 4 && h < 5) [r, g, b] = [x, 0, c];
+          else [r, g, b] = [c, 0, x];
+          return (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b);
+        };
+
+        // Numbered emoji function
+        const getNumberedEmoji = (num) => {
+          const numbers = ['0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣'];
+          if (num < 10) return numbers[num];
+          const tens = Math.floor(num / 10);
+          const ones = num % 10;
+          return numbers[tens] + numbers[ones];
+        };
+
+        // Post initial status message
+        const levelStatusEmbed = new EmbedBuilder()
+          .setColor(0x00D4FF)
+          .setTitle("🎖️ Creating Level Roles (1-100)")
+          .setDescription("⏳ This may take a few moments...\n\nCreating roles with gradient colors...");
+        
+        channel.send({ embeds: [levelStatusEmbed] }).catch(() => {});
+
+        // Create roles asynchronously
+        (async () => {
+          try {
+            for (let level = 1; level <= 100; level++) {
+              try {
+                const emoji = getNumberedEmoji(level);
+                const roleName = `${emoji} Level ${level}`;
+
+                const role = await guild.roles.create({
+                  name: roleName,
+                  color: colorGradient(level),
+                  position: botRole ? botRole.position - 1 : 1
+                });
+
+                levelRoles[`level_${level}`] = role.id;
+                created++;
+
+                if (created % 20 === 0) {
+                  console.log(`✅ Created ${created}/100 level roles`);
+                }
+              } catch (err) {
+                console.error(`Failed to create level ${level} role: ${err.message}`);
+              }
+            }
+
+            // Save to config
+            const config = loadConfig();
+            if (!config.guilds[guildId]) config.guilds[guildId] = {};
+            config.guilds[guildId].levelRoles = levelRoles;
+            fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+
+            // Post completion message
+            const completedEmbed = new EmbedBuilder()
+              .setColor(0x00D4FF)
+              .setTitle("✅ Level Roles Created")
+              .setDescription(`Successfully created **${created}/100** level roles with gradient colors!\n\nMembers will display their level badge next to their name as they level up.`);
+            
+            channel.send({ embeds: [completedEmbed] }).catch(() => {});
+          } catch (err) {
+            console.error('Error creating level roles:', err);
+            const errorEmbed = new EmbedBuilder()
+              .setColor(0xED4245)
+              .setTitle("❌ Error Creating Roles")
+              .setDescription(`Failed to create all roles. Created: ${created}/100`);
+            channel.send({ embeds: [errorEmbed] }).catch(() => {});
+          }
+        })();
+
+        return res.json({ success: true, message: `Starting to create 100 level roles... (will create ${created} roles)` });
+
+      default:
+        return res.status(400).json({ error: "Unknown setup type" });
+    }
+  } catch (err) {
+    console.error('Quick setup error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Web server running on port ${PORT}`);

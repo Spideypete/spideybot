@@ -18,6 +18,7 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot offering music playback, 
 - **Responsive Design**: Dashboard works on desktop and mobile.
 - **Font**: Inter for website and dashboard.
 - **Dashboard**: Professional Tron-inspired admin dashboard with 18 configuration pages, real-time analytics, member management, and auto-load/save functionality.
+- **Quick Setup**: One-click admin buttons for Gaming Roles, Watch Party, Platform Roles, Remove Roles, and auto-creating 100 level roles.
 - **Sleek Interface**: Clean glassmorphic style for feature cards.
 
 ### Technical Implementations
@@ -33,6 +34,12 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot offering music playback, 
 - **Music Player**: YouTube search, queue, loop, shuffle, volume control.
 - **Moderation**: Kick, ban, warn, mute with auto-logging.
 - **Role Management**: Custom categories with GIF banners & interactive selectors.
+- **Quick Setup Commands**: One-click admin panel buttons to:
+  - Post Gaming Roles selector (//setup-roles)
+  - Post Watch Party selector (//setup-watchparty)
+  - Post Platform Roles selector (//setup-platform)
+  - Post Remove Roles button (//remove-roles)
+  - Auto-create 100 level roles with emoji badges & gradient colors (//setup-level-roles)
 - **Social Media Monitoring**: Monitor unlimited Twitch, TikTok, Kick streamers with auto-alerts.
 - **Economy System**: Daily rewards, work commands, transfers, leaderboard.
 - **Leveling/XP**: Passive XP gains, auto-assigned level roles (1-100) with emoji badges.
@@ -58,3 +65,17 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot offering music playback, 
 - **YouTube**: Via `youtube-sr` for music playback.
 - **Twitch, TikTok, Kick**: Webhook integrations for social media monitoring.
 - **OpenAI**: `OPENAI_API_KEY` for AI chatbot support (if enabled).
+
+## Development Notes (Scratchpad)
+- **CRITICAL WORKFLOW**: Always sync both dashboard files (public/dashboard.html AND dashboard.html) BEFORE deployment. Command: `cp /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html`
+- **Mascot Status**: Allosaurus removed - awaiting new user-created mascot design
+- **COMPLETED**: Implemented original "day one" role creation commands into admin panel UI
+  - Gaming Roles button (//setup-roles) - Posts gaming role selector with button
+  - Watch Party button (//setup-watchparty) - Posts watch party selector with button
+  - Platform Roles button (//setup-platform) - Posts platform selector with button
+  - Remove Roles button (//remove-roles) - Posts role removal message
+  - Auto Level Roles button (//setup-level-roles) - Creates 100 roles with emoji badges & gradient colors
+- **Quick Setup Endpoint**: `/api/quick-setup/:setupType` handles all quick setup actions via dashboard UI
+- **Role Categories**: Display format is "@RoleName - RoleName" matching Discord display, supports add/edit/remove roles with live list display
+- **API Structure**: All config endpoints support ?guildId parameter to load specific server data
+- **Color Scheme**: Neon cyan (#00D4FF) primary, red/orange accents in buttons, Spider-Verse grid/glow aesthetic

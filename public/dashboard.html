@@ -1703,6 +1703,51 @@
                     </div>
                 </div>
 
+                <!-- Quick Setup Section -->
+                <div id="quick-setup-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">⚡ Quick Setup Commands</div>
+                        <div class="content-subtitle">One-click setup for popular role features</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
+                            <div class="panel-content">
+                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send gaming role selector message with button interaction</p>
+                                <button class="btn btn-primary" onclick="quickSetup('gaming')" style="width: 100%;">Post Gaming Roles Selector</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎬 Watch Party</div></div>
+                            <div class="panel-content">
+                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send watch party role selector message</p>
+                                <button class="btn btn-primary" onclick="quickSetup('watchparty')" style="width: 100%;">Post Watch Party Selector</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
+                            <div class="panel-content">
+                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send platform role selector message</p>
+                                <button class="btn btn-primary" onclick="quickSetup('platform')" style="width: 100%;">Post Platform Selector</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🗑️ Remove Roles</div></div>
+                            <div class="panel-content">
+                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send role removal message for members</p>
+                                <button class="btn btn-primary" onclick="quickSetup('removeRoles')" style="width: 100%;">Post Remove Roles</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎖️ Auto Level Roles</div></div>
+                            <div class="panel-content">
+                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Create 100 level roles with emoji badges (takes a moment)</p>
+                                <button class="btn btn-primary" onclick="quickSetup('levelRoles')" style="width: 100%;">Create Level Roles 1-100</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Role Categories Section -->
                 <div id="role-categories-section" class="content-section">
                     <div class="content-header">
@@ -2610,6 +2655,38 @@
         function removeRoleFromCategory(index) {
             currentEditingRoles.splice(index, 1);
             displayRolesList();
+        }
+
+        async function quickSetup(setupType) {
+            const setupNames = {
+                'gaming': 'Gaming Roles',
+                'watchparty': 'Watch Party',
+                'platform': 'Platform Roles',
+                'removeRoles': 'Remove Roles',
+                'levelRoles': 'Level Roles (1-100)'
+            };
+
+            const loadingMsg = `⏳ Setting up ${setupNames[setupType]}...`;
+            alert(loadingMsg);
+
+            try {
+                const res = await fetch(`/api/quick-setup/${setupType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ guildId: currentGuildId })
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert(`✅ ${setupNames[setupType]} setup complete!\n\n${data.message || ''}`);
+                } else {
+                    alert(`❌ Setup failed: ${data.error || 'Unknown error'}`);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert(`❌ Failed to setup ${setupNames[setupType]}`);
+            }
         }
 
         let creatingCategoryRoles = [];
