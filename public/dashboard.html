@@ -68,6 +68,84 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
+        .server-selector {
+            position: relative;
+        }
+
+        .server-dropdown-btn {
+            background: rgba(var(--theme-color), 0.12);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            color: rgba(255, 255, 255, 0.85);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .server-dropdown-btn:hover {
+            background: rgba(var(--theme-color), 0.18);
+            border-color: rgba(var(--theme-color), 0.5);
+        }
+
+        .server-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            min-width: 220px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            display: none;
+        }
+
+        .server-dropdown-menu.active {
+            display: block;
+        }
+
+        .server-menu-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: rgba(255, 255, 255, 0.7);
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .server-menu-item:hover {
+            background: rgba(var(--theme-color), 0.15);
+            border-left-color: rgba(var(--theme-color), 0.6);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .server-menu-item.active {
+            background: rgba(var(--theme-color), 0.2);
+            border-left-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .server-menu-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(var(--theme-color), 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
         .header-right {
             display: flex;
             align-items: center;
@@ -459,6 +537,16 @@
             <div class="header-left">
                 <div class="header-logo">🕷️</div>
                 <div class="header-title">SPIDEY BOT</div>
+                
+                <div class="server-selector">
+                    <button class="server-dropdown-btn" onclick="toggleServerDropdown()">
+                        <span id="serverDisplayName">Select Server</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="server-dropdown-menu" id="serverDropdownMenu">
+                        <div id="serversList"></div>
+                    </div>
+                </div>
             </div>
             
             <div class="header-right">
@@ -929,11 +1017,57 @@
             menu.classList.toggle('active');
         }
 
+        function toggleServerDropdown() {
+            const menu = document.getElementById('serverDropdownMenu');
+            menu.classList.toggle('active');
+            if (menu.classList.contains('active')) {
+                loadServerList();
+            }
+        }
+
+        async function loadServerList() {
+            try {
+                const res = await fetch('/api/creator/servers');
+                if (!res.ok) return;
+                
+                const data = await res.json();
+                const serversList = document.getElementById('serversList');
+                const currentServerId = localStorage.getItem('selectedServerId');
+                
+                serversList.innerHTML = '';
+                data.servers.forEach(server => {
+                    const item = document.createElement('div');
+                    item.className = `server-menu-item ${server.id === currentServerId ? 'active' : ''}`;
+                    item.onclick = () => selectServer(server.id, server.name);
+                    item.innerHTML = `
+                        <div class="server-menu-icon">${server.name.charAt(0).toUpperCase()}</div>
+                        <span>${server.name}</span>
+                    `;
+                    serversList.appendChild(item);
+                });
+            } catch (err) {
+                console.error('Failed to load servers:', err);
+            }
+        }
+
+        function selectServer(serverId, serverName) {
+            localStorage.setItem('selectedServerId', serverId);
+            document.getElementById('serverDisplayName').textContent = serverName;
+            document.getElementById('serverDropdownMenu').classList.remove('active');
+            location.reload();
+        }
+
         document.addEventListener('click', function(event) {
-            const menu = document.getElementById('profileMenu');
+            const profileMenu = document.getElementById('profileMenu');
             const profile = document.querySelector('.user-profile');
             if (!profile.contains(event.target)) {
-                menu.classList.remove('active');
+                profileMenu.classList.remove('active');
+            }
+
+            const serverDropdown = document.getElementById('serverDropdownMenu');
+            const serverSelector = document.querySelector('.server-selector');
+            if (!serverSelector.contains(event.target)) {
+                serverDropdown.classList.remove('active');
             }
         });
 
@@ -966,6 +1100,23 @@
                     document.getElementById('userName').textContent = user.username || 'User';
                 } else {
                     window.location.href = '/login';
+                }
+
+                // Load server name if selected
+                const selectedServerId = localStorage.getItem('selectedServerId');
+                if (selectedServerId) {
+                    try {
+                        const serverRes = await fetch('/api/creator/servers');
+                        if (serverRes.ok) {
+                            const serverData = await serverRes.json();
+                            const server = serverData.servers.find(s => s.id === selectedServerId);
+                            if (server) {
+                                document.getElementById('serverDisplayName').textContent = server.name;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Failed to load server name:', err);
+                    }
                 }
             } catch (err) {
                 console.error('Failed to load user:', err);
