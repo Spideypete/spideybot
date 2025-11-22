@@ -3401,6 +3401,30 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
   res.json({ success: true, settings: config.creator });
 });
 
+// Get member statistics by role for graphs
+app.get("/api/member-stats/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  guild.members.fetch().then(members => {
+    const stats = {
+      total: members.size,
+      members: members.filter(m => !m.user.bot).size,
+      verified: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('verified'))).size,
+      bots: members.filter(m => m.user.bot).size,
+      admins: members.filter(m => m.permissions.has('Administrator')).size,
+      mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+      roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
+    };
+    res.json(stats);
+  }).catch(err => {
+    console.error('Failed to fetch members:', err);
+    res.status(500).json({ error: 'Failed to fetch member data' });
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Web server running on port ${PORT}`);

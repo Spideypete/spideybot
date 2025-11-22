@@ -721,7 +721,18 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .graph-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .graph-container canvas {
+            max-height: 300px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard-wrapper">
@@ -805,6 +816,13 @@
                         <li class="sidebar-item" data-section="xp-levels"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span>XP Levels</span></li>
                         <li class="sidebar-item" data-section="leaderboards"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6-7 6 7M3 12h18v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z"/></svg></span><span>Leaderboards</span></li>
                         <li class="sidebar-item" data-section="giveaways"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span>Giveaways</span></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">ANALYTICS</div>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item" data-section="member-graphs"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="3" height="14"/><rect x="10" y="3" width="3" height="18"/><rect x="17" y="10" width="3" height="11"/></svg></span><span>Member Graphs</span></li>
                     </ul>
                 </div>
 
@@ -1620,6 +1638,58 @@
                     </div>
                 </div>
 
+                <!-- Member Graphs Section -->
+                <div id="member-graphs-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Member Analytics</div>
+                        <div class="content-subtitle">Role-based member statistics and graphs</div>
+                    </div>
+                    <div class="content-grid wide">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">👥 Members</div></div>
+                            <div class="panel-content">
+                                <div class="graph-container"><canvas id="membersChart"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">✅ Verified Users</div></div>
+                            <div class="panel-content">
+                                <div class="graph-container"><canvas id="verifiedChart"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🤖 Bots</div></div>
+                            <div class="panel-content">
+                                <div class="graph-container"><canvas id="botsChart"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">👑 Admins</div></div>
+                            <div class="panel-content">
+                                <div class="graph-container"><canvas id="adminsChart"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🛡️ Moderators</div></div>
+                            <div class="panel-content">
+                                <div class="graph-container"><canvas id="modsChart"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎯 Custom Role</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Select Role</div>
+                                    <select id="customRoleSelect" style="width: 100%; padding: 0.7rem; background: rgba(var(--theme-color), 0.1); border: 1px solid rgba(var(--theme-color), 0.3); color: #fff; border-radius: 6px; margin-bottom: 1rem;" onchange="updateCustomGraph()">
+                                        <option value="">Choose a role...</option>
+                                    </select>
+                                </div>
+                                <div class="graph-container"><canvas id="customChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Colors Section -->
                 <div id="colors-section" class="content-section">
                     <div class="content-header">
@@ -1903,6 +1973,201 @@
             document.getElementById('pinkColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('accentPink', color);
         }
+
+        // Member Graph Functions
+        let charts = {};
+
+        async function loadMemberGraphs() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) return;
+
+            try {
+                const res = await fetch(`/api/member-stats/${selectedServerId}`);
+                if (!res.ok) return;
+                const stats = await res.json();
+
+                const ctx = document.getElementById('membersChart');
+                if (ctx && stats.members > 0) {
+                    if (charts.members) charts.members.destroy();
+                    charts.members = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Members', 'Bots'],
+                            datasets: [{
+                                data: [stats.members, stats.bots],
+                                backgroundColor: ['#00d4ff', '#9146ff'],
+                                borderColor: ['rgba(0,212,255,0.2)', 'rgba(145,70,255,0.2)'],
+                                borderWidth: 2
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } } }
+                    });
+                }
+
+                if (stats.verified > 0) {
+                    const verifiedCtx = document.getElementById('verifiedChart');
+                    if (verifiedCtx) {
+                        if (charts.verified) charts.verified.destroy();
+                        charts.verified = new Chart(verifiedCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Verified'],
+                                datasets: [{
+                                    label: 'Count',
+                                    data: [stats.verified],
+                                    backgroundColor: '#00ff88',
+                                    borderColor: 'rgba(0,255,136,0.3)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false,
+                                plugins: { legend: { labels: { color: '#fff' } } },
+                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
+                            }
+                        });
+                    }
+                }
+
+                if (stats.bots > 0) {
+                    const botsCtx = document.getElementById('botsChart');
+                    if (botsCtx) {
+                        if (charts.bots) charts.bots.destroy();
+                        charts.bots = new Chart(botsCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Bots'],
+                                datasets: [{
+                                    label: 'Count',
+                                    data: [stats.bots],
+                                    backgroundColor: '#9146ff',
+                                    borderColor: 'rgba(145,70,255,0.3)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false,
+                                plugins: { legend: { labels: { color: '#fff' } } },
+                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
+                            }
+                        });
+                    }
+                }
+
+                if (stats.admins > 0) {
+                    const adminsCtx = document.getElementById('adminsChart');
+                    if (adminsCtx) {
+                        if (charts.admins) charts.admins.destroy();
+                        charts.admins = new Chart(adminsCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Admins'],
+                                datasets: [{
+                                    label: 'Count',
+                                    data: [stats.admins],
+                                    backgroundColor: '#ff69b4',
+                                    borderColor: 'rgba(255,105,180,0.3)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false,
+                                plugins: { legend: { labels: { color: '#fff' } } },
+                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
+                            }
+                        });
+                    }
+                }
+
+                if (stats.mods > 0) {
+                    const modsCtx = document.getElementById('modsChart');
+                    if (modsCtx) {
+                        if (charts.mods) charts.mods.destroy();
+                        charts.mods = new Chart(modsCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Moderators'],
+                                datasets: [{
+                                    label: 'Count',
+                                    data: [stats.mods],
+                                    backgroundColor: '#ff6b35',
+                                    borderColor: 'rgba(255,107,53,0.3)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false,
+                                plugins: { legend: { labels: { color: '#fff' } } },
+                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
+                            }
+                        });
+                    }
+                }
+
+                // Populate role dropdown
+                const roleSelect = document.getElementById('customRoleSelect');
+                roleSelect.innerHTML = '<option value="">Choose a role...</option>';
+                stats.roles.filter(r => r.name !== '@everyone' && r.count > 0).forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role.id;
+                    option.textContent = `${role.name} (${role.count})`;
+                    roleSelect.appendChild(option);
+                });
+
+            } catch (err) {
+                console.error('Failed to load member graphs:', err);
+            }
+        }
+
+        function updateCustomGraph() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            const roleId = document.getElementById('customRoleSelect').value;
+            if (!selectedServerId || !roleId) return;
+
+            fetch(`/api/member-stats/${selectedServerId}`).then(r => r.json()).then(stats => {
+                const role = stats.roles.find(r => r.id === roleId);
+                if (role) {
+                    const customCtx = document.getElementById('customChart');
+                    if (customCtx) {
+                        if (charts.custom) charts.custom.destroy();
+                        charts.custom = new Chart(customCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: [role.name],
+                                datasets: [{
+                                    label: 'Members',
+                                    data: [role.count],
+                                    backgroundColor: '#00ffff',
+                                    borderColor: 'rgba(0,255,255,0.3)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false,
+                                plugins: { legend: { labels: { color: '#fff' } } },
+                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        // Load graphs when navigating to member-graphs section
+        const originalSidebarListener = document.querySelectorAll('.sidebar-item').forEach;
+        const memberGraphsObserver = () => {
+            const memberGraphsItem = document.querySelector('[data-section="member-graphs"]');
+            if (memberGraphsItem) {
+                memberGraphsItem.addEventListener('click', () => {
+                    setTimeout(loadMemberGraphs, 100);
+                });
+            }
+        };
 
         function resetColors() {
             changeThemeColor('#00d4ff');
