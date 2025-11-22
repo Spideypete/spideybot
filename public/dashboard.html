@@ -2622,6 +2622,62 @@
             showSaveModal('✅ Leveling Settings Saved!');
         }
 
+        // ========== AUTO-SAVE ON ANY CHANGE ==========
+        function setupAutoSave() {
+            const sectionMap = {
+                'settings-section': saveSettings,
+                'logging-section': saveChannels,
+                'server-guard-section': saveChannels,
+                'react-roles-section': saveChannels,
+                'role-categories-section': saveChannels,
+                'server-messages-section': saveWelcome,
+                'custom-commands-section': saveChannels,
+                'components-section': saveFeatures,
+                'xp-levels-section': saveLeveling,
+                'leaderboards-section': saveChannels,
+                'invite-tracking-section': saveChannels,
+                'message-counting-section': saveChannels,
+                'statistics-channels-section': saveChannels,
+                'giveaways-section': saveChannels,
+                'social-notifs-section': saveChannels,
+                'reminders-section': saveChannels,
+                'recordings-section': saveChannels
+            };
+
+            // For each section, add auto-save listeners
+            Object.keys(sectionMap).forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    // Listen for changes on all inputs, selects, textareas
+                    const inputs = section.querySelectorAll('input, select, textarea');
+                    inputs.forEach(input => {
+                        input.addEventListener('change', () => sectionMap[sectionId]());
+                        input.addEventListener('input', debounce(() => sectionMap[sectionId](), 500));
+                    });
+                }
+            });
+
+            // Also listen for color picker changes
+            const colorPickers = document.querySelectorAll('input[type="color"]');
+            colorPickers.forEach(picker => {
+                picker.addEventListener('change', () => {
+                    showSaveModal('✅ Colors Updated!');
+                });
+                picker.addEventListener('input', debounce(() => {
+                    showSaveModal('✅ Colors Updated!');
+                }, 500));
+            });
+        }
+
+        // Debounce function to avoid too many save calls
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), delay);
+            };
+        }
+
         // Load saved colors on startup
         window.addEventListener('load', function() {
             const savedThemeColor = localStorage.getItem('themeColor');
@@ -2638,6 +2694,9 @@
 
             const savedTextColor = localStorage.getItem('textColor');
             if (savedTextColor) changeTextColor(savedTextColor);
+
+            // Setup auto-save functionality
+            setupAutoSave();
         });
     </script>
 
