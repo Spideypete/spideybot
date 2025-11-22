@@ -93,12 +93,12 @@
       "message": "s",
       "channel": "s",
       "roles": [
-        "ss"
+        "s"
       ],
       "categoryMessage": "",
       "categoryChannel": "",
       "creatingRoleInput": "",
-      "editCategorySelect": "-- Select Category --",
+      "editCategorySelect": "",
       "editCategoryName": "",
       "editCategoryMessage": "",
       "editCategoryChannel": "",
