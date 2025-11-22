@@ -3355,7 +3355,7 @@
         });
 
         function logout() {
-            fetch('/logout', { method: 'POST' })
+            fetch('/logout', { method: 'POST', credentials: 'include' })
                 .then(() => window.location.href = '/login');
         }
 
@@ -3746,7 +3746,7 @@
                 return;
             }
 
-            fetch(`/api/member-stats/${selectedServerId}`).then(r => r.json()).then(stats => {
+            fetch(`/api/member-stats/${selectedServerId}`, { credentials: 'include' }).then(r => r.json()).then(stats => {
                 const role = stats.roles.find(r => r.id === roleId);
                 console.log('🔵 Found role:', role);
                 if (role) {
@@ -4008,7 +4008,8 @@
                     fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
+                        body: JSON.stringify(data),
+                        credentials: 'include'
                     })
                     .then(r => r.json())
                     .then(res => console.log(`✅ Saved ${sectionName}:`, res))
