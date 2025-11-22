@@ -860,24 +860,28 @@
                         <div class="content-title">Dashboard</div>
                         <div class="content-subtitle">Real-time server analytics</div>
                     </div>
-                    <div class="content-grid wide">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <div class="panel-title">📊 Server Stats</div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Total Members</div>
+                                <div id="totalMembersLive" style="font-size: 2rem; font-weight: 700; color: #00d4ff;">0</div>
                             </div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Members Online</div>
-                                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-cyan);">1,243</div>
-                                </div>
+                            <div style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Verified Users</div>
+                                <div id="verifiedMembersLive" style="font-size: 2rem; font-weight: 700; color: #00ff88;">0</div>
                             </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <div class="panel-title">⚡ Quick Actions</div>
+                            <div style="background: rgba(145,70,255,0.1); border: 1px solid rgba(145,70,255,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Bots</div>
+                                <div id="botsLive" style="font-size: 2rem; font-weight: 700; color: #9146ff;">0</div>
                             </div>
-                            <div class="panel-content">
-                                <button class="btn btn-primary">Invite Bot</button>
+                            <div style="background: rgba(255,105,180,0.1); border: 1px solid rgba(255,105,180,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Admins</div>
+                                <div id="adminsLive" style="font-size: 2rem; font-weight: 700; color: #ff69b4;">0</div>
+                            </div>
+                            <div style="background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Moderators</div>
+                                <div id="modsLive" style="font-size: 2rem; font-weight: 700; color: #ff6b35;">0</div>
                             </div>
                         </div>
                     </div>
@@ -1953,6 +1957,13 @@
                 const res = await fetch(`/api/member-stats/${selectedServerId}`);
                 if (!res.ok) return;
                 const stats = await res.json();
+
+                // UPDATE LIVE STATS AT TOP
+                document.getElementById('totalMembersLive').textContent = stats.members.toLocaleString();
+                document.getElementById('verifiedMembersLive').textContent = stats.verified.toLocaleString();
+                document.getElementById('botsLive').textContent = stats.bots.toLocaleString();
+                document.getElementById('adminsLive').textContent = stats.admins.toLocaleString();
+                document.getElementById('modsLive').textContent = stats.mods.toLocaleString();
 
                 // ONE COMBINED BAR CHART with all member types
                 const ctx = document.getElementById('allMembersChart');
