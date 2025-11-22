@@ -2450,7 +2450,7 @@ app.get("/", (req, res) => {
     <p>SPIDEY BOT blends powerful intelligence with mystical powers to bring order, fun, and automation to your Discord server. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
     <div class="btn-group">
       <a id="addToDiscord" class="btn btn-primary">Invite To Guild →</a>
-      <a href="#features" class="btn btn-secondary">Documentation →</a>
+      <a href="/commands" class="btn btn-secondary">Documentation →</a>
     </div>
   </div>
 
@@ -2662,6 +2662,252 @@ app.get("/privacy", (req, res) => {
   const privacyPath = path.join(publicDir, 'privacy.html');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.sendFile(privacyPath);
+});
+
+app.get("/commands", (req, res) => {
+  const commandsHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commands - SPIDEY BOT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main { flex: 1; }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
+    }
+    nav {
+      background: rgba(20, 20, 20, 0.95);
+      border-bottom: 1px solid #222;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1.5rem;
+      transition: color 0.3s;
+      font-weight: 500;
+    }
+    nav a:hover { color: #9146FF; }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    h1 {
+      color: #9146FF;
+      margin: 3rem 0 2rem 0;
+      font-size: 2.5rem;
+      text-align: center;
+    }
+    .commands-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+    .command-card {
+      background: rgba(145, 70, 255, 0.1);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+    .command-card:hover {
+      background: rgba(145, 70, 255, 0.15);
+      border-color: rgba(145, 70, 255, 0.4);
+    }
+    .command-card h3 {
+      color: #9146FF;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+    .command-card code {
+      background: rgba(0, 0, 0, 0.5);
+      color: #00d4ff;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      display: block;
+      margin: 0.5rem 0;
+    }
+    .command-card p {
+      color: #aaa;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    footer {
+      background: #000;
+      border-top: 1px solid #222;
+      padding: 3rem 2rem;
+      margin-top: 4rem;
+    }
+    footer .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    footer .footer-section h3 {
+      color: #9146FF;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    footer .footer-section a {
+      color: #999;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+    footer .footer-section a:hover { color: #9146FF; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">SPIDEY BOT</div>
+    <div>
+      <a href="/">Home</a>
+      <a href="/commands">Commands</a>
+      <a href="/login" style="color: #00d4ff;">Admin</a>
+    </div>
+  </nav>
+
+  <main>
+  <div class="container">
+    <h1>🕸️ SPIDEY BOT Commands</h1>
+    <p style="text-align: center; color: #aaa; margin-bottom: 2rem;">All commands start with <code style="background: rgba(0, 0, 0, 0.5); color: #00d4ff; padding: 0.2rem 0.5rem; border-radius: 4px;">//</code></p>
+
+    <div class="commands-grid">
+      <div class="command-card">
+        <h3>🎵 Music Commands</h3>
+        <code>//play [song]</code>
+        <p>Play a song from YouTube</p>
+        <code>//queue</code>
+        <p>Show current queue</p>
+        <code>//skip</code>
+        <p>Skip to next track</p>
+        <code>//stop</code>
+        <p>Stop playing music</p>
+      </div>
+
+      <div class="command-card">
+        <h3>🛡️ Moderation Commands</h3>
+        <code>//kick [user]</code>
+        <p>Kick a user from server</p>
+        <code>//ban [user]</code>
+        <p>Ban a user from server</p>
+        <code>//warn [user]</code>
+        <p>Warn a user</p>
+        <code>//mute [user]</code>
+        <p>Mute a user temporarily</p>
+      </div>
+
+      <div class="command-card">
+        <h3>💰 Economy Commands</h3>
+        <code>//balance</code>
+        <p>Check your coin balance</p>
+        <code>//daily</code>
+        <p>Claim daily reward</p>
+        <code>//work</code>
+        <p>Work to earn coins</p>
+        <code>//pay [user] [amount]</code>
+        <p>Transfer coins to another user</p>
+      </div>
+
+      <div class="command-card">
+        <h3>📊 Info Commands</h3>
+        <code>//stats</code>
+        <p>View your statistics</p>
+        <code>//leaderboard</code>
+        <p>View server leaderboard</p>
+        <code>//level</code>
+        <p>Check your level and XP</p>
+        <code>//help</code>
+        <p>View all available commands</p>
+      </div>
+
+      <div class="command-card">
+        <h3>⚙️ Admin Commands</h3>
+        <code>//config</code>
+        <p>Access configuration panel</p>
+        <code>//setup</code>
+        <p>Initial bot setup</p>
+        <code>//prefix [new prefix]</code>
+        <p>Change command prefix</p>
+        <code>//logging</code>
+        <p>Configure logging channels</p>
+      </div>
+
+      <div class="command-card">
+        <h3>🎫 Tickets</h3>
+        <code>//ticket</code>
+        <p>Create a support ticket</p>
+        <code>//close</code>
+        <p>Close a ticket</p>
+        <code>//add [user]</code>
+        <p>Add user to ticket</p>
+        <code>//remove [user]</code>
+        <p>Remove user from ticket</p>
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul style="list-style: none;">
+          <li><a href="/">Home</a></li>
+          <li><a href="/commands">Commands</a></li>
+          <li><a href="/login">Admin</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <ul style="list-style: none;">
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div style="text-align: center; color: #666; font-size: 0.85rem; padding-top: 2rem; border-top: 1px solid #222;">
+      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(commandsHtml);
 });
 
 app.get("/auth/discord", (req, res) => {
