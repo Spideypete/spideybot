@@ -4136,7 +4136,8 @@
                 clearTimeout(timeoutId);
                 
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const user = await res.json();
+                const data = await res.json();
+                const user = data.user;
                 
                 // Try username, then global_name, then tag
                 const displayName = user.username || user.global_name || user.tag || 'User';
