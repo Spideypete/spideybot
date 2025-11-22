@@ -144,6 +144,12 @@ All settings auto-save to config.json and load per-server from dashboard.
 - Font: Inter (website & dashboard)
 - Aesthetic: Cyberpunk with subtle grid patterns & glowing effects
 
+## Critical Synchronization Rule
+⚠️ **IMPORTANT**: `public/dashboard.html` and `dashboard.html` (root) MUST be kept in sync at ALL times!
+- Always copy: `cp /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html`
+- After ANY dashboard update, sync both files before pushing to GitHub
+- Verify sync: `md5sum /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html` (should match)
+
 ## Recent Changes (November 21, 2025)
 - ✅ Renamed creator from "DARKIE" to "spidey"
 - ✅ Added server selector modal (must choose server before accessing panels)
@@ -158,6 +164,9 @@ All settings auto-save to config.json and load per-server from dashboard.
 - ✅ Per-server configuration system complete
 - ✅ **RENDER DEPLOYMENT FIXED** - Using absolute paths for static files
 - ✅ Bot running cleanly on Replit with all features operational
+- ✅ **25 color themes** (UI Color + Text Color dropdowns in TOOLS section)
+- ✅ **Colored badge icons** on all sidebar menu items
+- ✅ **Tickets & FUN sections** added to sidebar
 
 ## How to Access Admin Panel
 1. **Login with Discord**: Visit `/login` to authenticate with Discord OAuth
