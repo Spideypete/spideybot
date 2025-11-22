@@ -868,26 +868,29 @@
         /* Save Popup Styles */
         .save-popup {
             position: fixed;
-            bottom: -100px;
+            bottom: -150px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(76, 175, 80, 0.2);
-            border: 2px solid rgba(76, 175, 80, 0.6);
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid rgba(76, 175, 80, 0.8);
             border-radius: 15px;
-            padding: 1.5rem 2rem;
-            color: rgba(144, 238, 144, 0.95);
-            font-weight: 600;
-            font-size: 0.95rem;
-            z-index: 10000;
+            padding: 1.5rem 2.5rem;
+            color: rgba(144, 238, 144, 1);
+            font-weight: 700;
+            font-size: 1rem;
+            z-index: 10001;
             backdrop-filter: blur(10px);
-            box-shadow: 0 -8px 30px rgba(76, 175, 80, 0.3);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            max-width: 400px;
+            box-shadow: 0 -8px 40px rgba(76, 175, 80, 0.5), 0 0 20px rgba(76, 175, 80, 0.3);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 450px;
             text-align: center;
+            pointer-events: auto;
         }
 
         .save-popup.show {
-            bottom: 20px;
+            bottom: 30px;
+            visibility: visible;
+            opacity: 1;
         }
 
         .toggle {
