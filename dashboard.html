@@ -184,23 +184,27 @@
             height: 20px;
             cursor: pointer;
             position: relative;
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: rgba(var(--theme-color), 0.7);
             font-size: 1rem;
+            font-weight: 600;
         }
 
         .category-toggle::after {
-            content: '▶';
+            content: '>';
             position: absolute;
-            transition: transform 0.3s ease;
-            transform: rotate(0deg);
+            transition: all 0.3s ease;
         }
 
         .category-toggle.active::after {
-            transform: rotate(90deg);
+            content: '<';
+        }
+
+        .category-toggle:hover {
+            color: rgba(var(--theme-color), 1);
         }
 
         .sidebar-menu {
