@@ -3098,10 +3098,9 @@ adminConfigs.forEach(configName => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
     const config = loadConfig();
-    const firstGuild = client.guilds.cache.first();
-    if (!firstGuild) return res.json({});
+    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    if (!guildId) return res.json({});
 
-    const guildId = firstGuild.id;
     const data = config.guilds[guildId]?.[configName] || {};
     res.json(data);
   });
@@ -3111,10 +3110,9 @@ adminConfigs.forEach(configName => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
     const config = loadConfig();
-    const firstGuild = client.guilds.cache.first();
-    if (!firstGuild) return res.json({ success: false, error: "No guild found" });
+    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    if (!guildId) return res.json({ success: false, error: "No guild found" });
 
-    const guildId = firstGuild.id;
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId][configName]) config.guilds[guildId][configName] = {};
 
@@ -3130,10 +3128,9 @@ app.get("/api/config/role-categories", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
-  const firstGuild = client.guilds.cache.first();
-  if (!firstGuild) return res.json({});
+  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+  if (!guildId) return res.json({});
 
-  const guildId = firstGuild.id;
   const data = config.guilds[guildId]?.roleCategories || {};
   res.json(data);
 });
@@ -3143,10 +3140,9 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
-  const firstGuild = client.guilds.cache.first();
-  if (!firstGuild) return res.json({ success: false, error: "No guild found" });
+  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+  if (!guildId) return res.json({ success: false, error: "No guild found" });
 
-  const guildId = firstGuild.id;
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
 
   const { categoryName, roles, channel } = req.body;

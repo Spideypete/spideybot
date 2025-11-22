@@ -2456,7 +2456,38 @@
             localStorage.setItem('selectedServerId', serverId);
             document.getElementById('serverDisplayName').textContent = serverName;
             document.getElementById('serverDropdownMenu').classList.remove('active');
-            location.reload();
+            
+            // Load role categories for the selected server
+            loadRoleCategories(serverId);
+        }
+
+        async function loadRoleCategories(guildId) {
+            try {
+                const res = await fetch(`/api/config/role-categories?guildId=${guildId}`);
+                if (res.ok) {
+                    const categories = await res.json();
+                    const categoryOptions = Object.keys(categories);
+                    
+                    // Update all category dropdowns
+                    document.querySelectorAll('select[name="category"]').forEach(select => {
+                        const currentValue = select.value;
+                        select.innerHTML = '<option>-- Select Category --</option>';
+                        categoryOptions.forEach(catName => {
+                            const opt = document.createElement('option');
+                            opt.value = catName;
+                            opt.textContent = catName;
+                            select.appendChild(opt);
+                        });
+                        if (currentValue && categoryOptions.includes(currentValue)) {
+                            select.value = currentValue;
+                        }
+                    });
+                    
+                    console.log('Loaded categories for server:', categoryOptions);
+                }
+            } catch (err) {
+                console.error('Failed to load categories:', err);
+            }
         }
 
         document.addEventListener('click', function(event) {
@@ -2595,9 +2626,10 @@
                         console.error('Failed to pre-load servers:', err);
                     }
 
-                    // Load member graphs on dashboard
+                    // Load data for selected server
                     const selectedServerId = localStorage.getItem('selectedServerId');
                     if (selectedServerId) {
+                        loadRoleCategories(selectedServerId);
                         setTimeout(loadMemberGraphs, 200);
                     }
                 } else {
@@ -2968,8 +3000,10 @@
                         }
                     });
 
-                    // Save this section via API
-                    fetch(`/api/config/${sectionName}`, {
+                    // Save this section via API with selected guild ID
+                    const guildId = localStorage.getItem('selectedServerId');
+                    const url = `/api/config/${sectionName}${guildId ? `?guildId=${guildId}` : ''}`;
+                    fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
