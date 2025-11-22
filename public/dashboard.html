@@ -1058,14 +1058,16 @@
 
         .content-section {
             display: none !important;
+            visibility: hidden !important;
             min-height: 100vh;
             position: relative;
-            z-index: 1;
+            z-index: 0 !important;
         }
 
         .content-section.active {
             display: block !important;
-            z-index: 10;
+            visibility: visible !important;
+            z-index: 100 !important;
         }
 
         ::-webkit-scrollbar {
@@ -2977,33 +2979,49 @@
         });
 
         function switchSection(sectionName) {
-            console.log('🔵 switchSection called:', sectionName);
-            
-            // Hide all sections and remove active class
-            document.querySelectorAll('.content-section').forEach(s => {
-                s.style.display = 'none';
-                s.classList.remove('active');
-            });
-            
-            // Remove active from all sidebar items
-            document.querySelectorAll('.sidebar-item').forEach(i => {
-                i.classList.remove('active');
-            });
-            
-            // Mark this sidebar item as active
-            const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
-            if (activeItem) {
-                activeItem.classList.add('active');
-            }
-            
-            // Show the target section
-            const section = document.getElementById(sectionName + '-section');
-            if (section) {
-                section.style.display = 'block';
-                section.classList.add('active');
-                console.log('✅ Section displayed:', sectionName);
-            } else {
-                console.error('❌ Section not found:', sectionName + '-section');
+            console.log('🔵 switchSection:', sectionName);
+            try {
+                // 1. HIDE ALL - force display none on EVERY section
+                const allSections = document.querySelectorAll('.content-section');
+                console.log('   Found', allSections.length, 'sections to hide');
+                allSections.forEach(s => {
+                    s.style.display = 'none';
+                    s.style.visibility = 'hidden';
+                    s.style.zIndex = '0';
+                    s.classList.remove('active');
+                });
+                
+                // 2. DEACTIVATE all sidebar items
+                document.querySelectorAll('.sidebar-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                
+                // 3. ACTIVATE the clicked sidebar item
+                const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                    console.log('   ✅ Sidebar marked active');
+                }
+                
+                // 4. SHOW target section - FORCE IT
+                const sectionId = sectionName + '-section';
+                const section = document.getElementById(sectionId);
+                console.log('   Looking for:', sectionId, '- Found:', !!section);
+                
+                if (section) {
+                    section.style.display = 'block';
+                    section.style.visibility = 'visible';
+                    section.style.zIndex = '100';
+                    section.classList.add('active');
+                    console.log('   ✅ Section shown:', sectionName);
+                    
+                    // Scroll to top
+                    section.scrollIntoView({ behavior: 'auto', block: 'start' });
+                } else {
+                    console.error('   ❌ Section NOT found:', sectionId);
+                }
+            } catch (err) {
+                console.error('   ❌ ERROR:', err.message);
             }
         }
         
