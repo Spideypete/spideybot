@@ -14,7 +14,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             background: #000000;
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--text-color, rgba(255, 255, 255, 0.9));
             overflow-x: hidden;
         }
 
@@ -1003,18 +1003,6 @@
                 <ul class="sidebar-menu" id="tools-menu">
                     <li class="sidebar-item" data-section="tickets"><div class="sidebar-item-text">🎫 Tickets</div><div class="sidebar-item-badge" data-badge-for="tickets">✓</div></li>
                     <li class="sidebar-item" data-section="giveaways"><div class="sidebar-item-text">🎁 Giveaways</div><div class="sidebar-item-badge" data-badge-for="giveaways">✓</div></li>
-                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
-                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">🎨 UI Colour</div>
-                        <select id="themeColor" onchange="changeThemeColor(this.value)" class="color-dropdown" style="width: 100%;">
-                            <option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
-                        </select>
-                    </li>
-                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem;">
-                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">📝 Text Colour</div>
-                        <select id="textColor" onchange="changeTextColor(this.value)" class="color-dropdown" style="width: 100%;">
-                            <option value="white">⚪ White</option><option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
-                        </select>
-                    </li>
                 </ul>
             </div>
 
@@ -1023,6 +1011,18 @@
                 <ul class="sidebar-menu" id="fun-menu">
                     <li class="sidebar-item" data-section="music"><div class="sidebar-item-text">🎵 Music</div><div class="sidebar-item-badge" data-badge-for="music">✓</div></li>
                     <li class="sidebar-item" data-section="birthdays"><div class="sidebar-item-text">🎂 Birthdays</div><div class="sidebar-item-badge" data-badge-for="birthdays">✓</div></li>
+                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">🎨 UI Colour</div>
+                        <select id="funThemeColor" onchange="changeFunThemeColor(this.value)" class="color-dropdown" style="width: 100%;">
+                            <option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
+                        </select>
+                    </li>
+                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem;">
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">📝 Text Colour</div>
+                        <select id="funTextColor" onchange="changeFunTextColor(this.value)" class="color-dropdown" style="width: 100%;">
+                            <option value="white">⚪ White</option><option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
+                        </select>
+                    </li>
                 </ul>
             </div>
 
@@ -4069,6 +4069,14 @@
             const hexValue = textColorMap[color];
             document.documentElement.style.setProperty('--text-color', hexValue);
             localStorage.setItem('selectedTextColor', color);
+        }
+
+        function changeFunThemeColor(color) {
+            changeThemeColor(color);
+        }
+
+        function changeFunTextColor(color) {
+            changeTextColor(color);
         }
 
         function toggleMode() {
