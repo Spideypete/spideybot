@@ -1,5 +1,14 @@
 # SPIDEY BOT - Complete Discord Bot
 
+## ⚠️ CRITICAL WORKFLOW RULE
+**BEFORE EVERY GIT PUSH:**
+1. **SYNC BOTH DASHBOARD FILES FIRST**: `cp /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html`
+2. **VERIFY SYNC**: `md5sum /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html` (must match)
+3. **THEN PUSH**: `git add -A && git commit -m "message" && git push origin main`
+- **NEVER** push without syncing first
+- **ALWAYS** sync immediately after ANY dashboard.html edit
+- This ensures Render gets the correct version
+
 ## Overview
 SPIDEY BOT is a feature-rich, multi-server Discord bot with music playback, moderation, economy system, leveling, social media monitoring, and 40+ commands. Built with Node.js and discord.js, deployed on Render for 24/7 uptime. Includes a professional Tron-inspired admin dashboard with neon cyan aesthetics.
 

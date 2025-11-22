@@ -319,41 +319,46 @@
         }
 
         .mode-toggle {
-            width: 50px;
-            height: 24px;
-            background: rgba(var(--theme-color), 0.2);
-            border: 1px solid rgba(var(--theme-color), 0.4);
+            width: 60px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(var(--theme-color), 0.3);
+            border-radius: 16px;
             cursor: pointer;
             position: relative;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .mode-toggle:hover {
-            background: rgba(var(--theme-color), 0.3);
-            box-shadow: 0 0 10px rgba(var(--theme-color), 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(var(--theme-color), 0.6);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px rgba(var(--theme-color), 0.2);
         }
 
         .mode-toggle.active {
-            background: rgba(var(--theme-color), 0.4);
+            background: rgba(var(--theme-color), 0.3);
             border-color: rgba(var(--theme-color), 0.7);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 12px rgba(var(--theme-color), 0.4);
         }
 
         .mode-toggle::after {
             content: '';
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: rgba(var(--theme-color), 0.8);
+            width: 26px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
             top: 2px;
             left: 2px;
-            transition: all 0.3s;
-            box-shadow: 0 0 8px rgba(var(--theme-color), 0.4);
+            transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         }
 
         .mode-toggle.active::after {
-            left: 28px;
-            background: rgba(var(--theme-color), 1);
-            box-shadow: 0 0 12px rgba(var(--theme-color), 0.6);
+            left: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 8px rgba(var(--theme-color), 0.4);
         }
 
         body.light-mode {
@@ -4124,7 +4129,13 @@
         // Fetch and display logged-in user info
         async function loadUserInfo() {
             try {
-                const res = await fetch('/api/user');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const res = await fetch('/api/user', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const user = await res.json();
                 
                 if (user && user.username) {
@@ -4139,9 +4150,16 @@
                     } else {
                         if (creatorSection) creatorSection.style.display = 'none';
                     }
+                } else {
+                    // Fallback if no username
+                    document.getElementById('userName').textContent = 'User';
+                    document.getElementById('userAvatar').textContent = 'U';
                 }
             } catch (err) {
                 console.error('Error loading user info:', err);
+                // Fallback display
+                document.getElementById('userName').textContent = 'User';
+                document.getElementById('userAvatar').textContent = 'U';
             }
         }
         
