@@ -30,8 +30,8 @@
       letter-spacing: 1px;
     }
     nav {
-      background: rgba(20, 20, 20, 0.95);
-      border-bottom: 1px solid #222;
+      background: rgba(15, 15, 15, 0.7);
+      border-bottom: 1px solid rgba(0, 212, 255, 0.1);
       padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
@@ -39,7 +39,8 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
     nav img { height: 40px; }
     nav a {
@@ -51,11 +52,13 @@
     }
     nav a:hover { color: #9146FF; }
     .hero {
-      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      background: linear-gradient(135deg, rgba(26, 26, 46, 0.6) 0%, rgba(15, 52, 96, 0.6) 100%);
       padding: 6rem 2rem;
       text-align: center;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .hero::before {
       content: '';
@@ -64,7 +67,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.15) 0%, transparent 50%);
+      background: radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
     }
     .hero > * { position: relative; z-index: 2; }
     .hero h1 {
@@ -100,26 +103,34 @@
       font-size: 0.9rem;
     }
     .btn-primary {
-      background: rgba(0, 212, 255, 0.2);
+      background: rgba(0, 212, 255, 0.15);
       color: #00d4ff;
-      border: 2px solid rgba(0, 212, 255, 0.5);
+      border: 2px solid rgba(0, 212, 255, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .btn-primary:hover {
-      background: rgba(0, 212, 255, 0.3);
-      border-color: rgba(0, 212, 255, 0.8);
+      background: rgba(0, 212, 255, 0.25);
+      border-color: rgba(0, 212, 255, 0.7);
       transform: translateY(-2px);
-      box-shadow: 0 0 25px rgba(0, 212, 255, 0.5), inset 0 0 20px rgba(0, 212, 255, 0.1);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.6), inset 0 0 20px rgba(0, 212, 255, 0.15);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
     }
     .btn-secondary {
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(15, 15, 15, 0.4);
       color: #fff;
       border: 2px solid rgba(0, 212, 255, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .btn-secondary:hover {
-      background: rgba(0, 212, 255, 0.1);
+      background: rgba(0, 212, 255, 0.15);
       border-color: rgba(0, 212, 255, 0.6);
       transform: translateY(-2px);
-      box-shadow: 0 0 25px rgba(0, 212, 255, 0.4), inset 0 0 15px rgba(0, 212, 255, 0.05);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.5), inset 0 0 15px rgba(0, 212, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
     }
     .container {
       max-width: 1200px;
@@ -127,10 +138,12 @@
       padding: 2rem;
     }
     footer {
-      background: #000;
-      border-top: 1px solid #222;
+      background: rgba(0, 0, 0, 0.5);
+      border-top: 1px solid rgba(0, 212, 255, 0.1);
       padding: 3rem 2rem;
       margin-top: 4rem;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
     }
     footer .footer-content {
       max-width: 1200px;
@@ -197,7 +210,7 @@
   <div class="container">
     <h2 style="margin-top: 4rem; margin-bottom: 3rem; font-size: 2.2rem; text-align: center; color: #fff;">✨ Core Features</h2>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(145, 70, 255, 0.03) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.15); display: flex; gap: 1rem; transition: all 0.3s;">
         <div style="font-size: 2rem;">✓</div>
         <div>
           <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎵 Music Playback</h3>
@@ -256,7 +269,7 @@
     </div>
 
     <!-- And So Much More Section -->
-    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.2) 0%, rgba(145, 70, 255, 0.1) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
+    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.12) 0%, rgba(145, 70, 255, 0.05) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 2px solid rgba(145, 70, 255, 0.2); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
       <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 2rem;">💎 And So Much More! 💎</h2>
       <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">From seamless integrations to advanced settings, we've got everything you need and more! Need help or have questions? Explore our full command documentation!</p>
     </div>
@@ -266,8 +279,8 @@
       <h2 style="margin-bottom: 3rem; font-size: 2.2rem; text-align: center; color: #fff;">📚 Tutorials & Guides</h2>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
         <!-- Card 1 -->
-        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(145, 70, 255, 0.05) 100%); border: 1px solid rgba(145, 70, 255, 0.2); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.5)'; this.style.boxShadow='0 10px 30px rgba(145, 70, 255, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.2)'; this.style.boxShadow='none'">
-          <div style="background: #1a1a2e; height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem;">🎭 Reaction Roles Preview</div>
+        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
+          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">🎭 Reaction Roles Preview</div>
           <div style="padding: 2rem;">
             <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">Allow Users to Self Assign Roles in Discord with Reaction Roles</h3>
             <a href="/tutorials/create-reaction-roles-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
@@ -275,8 +288,8 @@
         </div>
 
         <!-- Card 2 -->
-        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(145, 70, 255, 0.05) 100%); border: 1px solid rgba(145, 70, 255, 0.2); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.5)'; this.style.boxShadow='0 10px 30px rgba(145, 70, 255, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.2)'; this.style.boxShadow='none'">
-          <div style="background: #1a1a2e; height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem;">🛡️ Moderation Setup Preview</div>
+        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
+          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">🛡️ Moderation Setup Preview</div>
           <div style="padding: 2rem;">
             <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">How to Configure Auto-Moderation for Your Discord Server</h3>
             <a href="/tutorials/create-moderation-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
@@ -284,8 +297,8 @@
         </div>
 
         <!-- Card 3 -->
-        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(145, 70, 255, 0.05) 100%); border: 1px solid rgba(145, 70, 255, 0.2); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.5)'; this.style.boxShadow='0 10px 30px rgba(145, 70, 255, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.2)'; this.style.boxShadow='none'">
-          <div style="background: #1a1a2e; height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem;">📊 Dashboard Guide Preview</div>
+        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
+          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">📊 Dashboard Guide Preview</div>
           <div style="padding: 2rem;">
             <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">How to Use the Admin Dashboard and Manage Your Server</h3>
             <a href="/tutorials/create-dashboard-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
@@ -298,7 +311,7 @@
     </div>
 
     <!-- Support Section -->
-    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem 2rem; text-align: center; margin-bottom: 4rem;">
+    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.12) 0%, rgba(145, 70, 255, 0.05) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 2px solid rgba(145, 70, 255, 0.2); border-radius: 15px; padding: 3rem 2rem; text-align: center; margin-bottom: 4rem;">
       <h2 style="color: #fff; margin-bottom: 1rem; font-size: 2rem;">🚀 We Are Here For You!</h2>
       <p style="color: #ccc; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;">Whether you're just getting started or managing a massive community, we're here to offer real support and powerful features that scale with you. Need a hand? Reach out through our support hub or connect with others in our Discord server anytime!</p>
       <a href="/login" class="btn btn-primary">Access Dashboard →</a>
