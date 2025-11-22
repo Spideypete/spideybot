@@ -67,6 +67,22 @@
       "trackReactions": true,
       "trackVoice": true,
       "trackMembers": true
+    },
+    "role-categories": {
+      "categoryName": "",
+      "message": "s",
+      "channel": "s",
+      "roles": [
+        "s"
+      ],
+      "categoryMessage": "",
+      "categoryChannel": "",
+      "creatingRoleInput": "",
+      "editCategorySelect": "-- Select Category --",
+      "editCategoryName": "",
+      "editCategoryMessage": "",
+      "editCategoryChannel": "",
+      "newRoleInput": ""
     }
   }
 }

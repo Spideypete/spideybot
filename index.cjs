@@ -3191,6 +3191,70 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
   }
 });
 
+// ============== API: POST CATEGORY TO DISCORD CHANNEL ==============
+app.post("/api/post-category", express.json(), async (req, res) => {
+  try {
+    if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+
+    const guildId = req.query.guildId;
+    const { categoryName, channelId } = req.body;
+
+    console.log('🔵 POST /api/post-category:', { categoryName, channelId, guildId });
+
+    if (!guildId || !categoryName || !channelId) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
+    }
+
+    const config = loadConfig();
+    const category = config.guilds[guildId]?.roleCategories?.[categoryName];
+
+    if (!category) {
+      return res.status(404).json({ success: false, error: "Category not found" });
+    }
+
+    // Get Discord guild and channel
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) {
+      return res.status(400).json({ success: false, error: "Guild not found" });
+    }
+
+    const channel = await guild.channels.fetch(channelId);
+    if (!channel || !channel.isSendable?.()) {
+      return res.status(400).json({ success: false, error: "Channel not found or not sendable" });
+    }
+
+    // Create embed with role selection buttons
+    const embed = new EmbedBuilder()
+      .setColor("#00d4ff")
+      .setTitle(`${categoryName}`)
+      .setDescription(category.message || "Select roles below:")
+      .setFooter({ text: "React with the button below to claim a role" });
+
+    const buttons = new ActionRowBuilder();
+    category.roles.forEach((role, index) => {
+      const cleanRole = role.replace('@', '');
+      buttons.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`role_${categoryName}_${index}`)
+          .setLabel(cleanRole)
+          .setStyle(ButtonStyle.Primary)
+      );
+    });
+
+    // Send message with buttons
+    const message = await channel.send({
+      embeds: [embed],
+      components: buttons.components.length > 0 ? [buttons] : []
+    });
+
+    console.log(`✅ Category posted to channel ${channelId}: ${message.id}`);
+    res.json({ success: true, messageId: message.id, categoryName });
+  } catch (err) {
+    console.error('❌ Error posting category:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ============== API: UPDATE CONFIG ==============
 app.post("/api/config/:guildId", express.json(), (req, res) => {
   if (!req.session.user) return res.status(401).json({ success: false, error: "Not authenticated" });

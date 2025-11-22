@@ -1776,11 +1776,6 @@
                                     <div class="form-label">Message to Send</div>
                                     <textarea class="form-input" id="categoryMessage" placeholder="Message to send when assigning roles" style="height: 50px;"></textarea>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Send Message in Channel</div>
-                                    <input type="text" class="form-input" id="categoryChannel" placeholder="Select channel (or leave empty)"/>
-                                </div>
-                                
                                 <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.15);">
                                     <div class="form-label" style="margin-bottom: 0.5rem;">Add Roles to This Category</div>
                                     <div id="creatingRolesList" style="background: rgba(0, 0, 0, 0.2); border-radius: 5px; padding: 0.75rem; margin-bottom: 1rem; min-height: 50px; max-height: 180px; overflow-y: auto;">
@@ -1793,7 +1788,7 @@
                                     </div>
                                 </div>
                                 
-                                <button class="btn btn-primary" onclick="createRoleCategory()" style="width: 100%; margin-top: 0.75rem;">Create Category</button>
+                                <button class="btn btn-primary" onclick="createRoleCategory()" style="width: 100%; margin-top: 0.75rem;">✅ Create Category</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -1814,11 +1809,6 @@
                                         <div class="form-label">Message to Send</div>
                                         <textarea class="form-input" id="editCategoryMessage" placeholder="Message to send when assigning roles" style="height: 60px;"></textarea>
                                     </div>
-                                    <div class="form-group">
-                                        <div class="form-label">Send Message in Channel</div>
-                                        <input type="text" class="form-input" id="editCategoryChannel" placeholder="Select channel (or leave empty)"/>
-                                    </div>
-                                    
                                     <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.15);">
                                         <div class="form-label" style="margin-bottom: 0.5rem;">Roles in This Category</div>
                                         <div id="rolesList" style="background: rgba(0, 0, 0, 0.2); border-radius: 5px; padding: 0.75rem; margin-bottom: 1rem; min-height: 60px; max-height: 200px; overflow-y: auto;">
@@ -1834,7 +1824,10 @@
                                         </div>
                                     </div>
                                     
-                                    <button class="btn btn-primary" onclick="saveCategoryChanges()" style="margin-top: 1rem; width: 100%;">Save All Changes</button>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                                        <button class="btn btn-primary" onclick="saveCategoryChanges()" style="flex: 1;">💾 Save Changes</button>
+                                        <button class="btn btn-primary" onclick="postCategoryToChannel()" style="flex: 1; background: rgba(0, 212, 255, 0.2); border-color: rgba(0, 212, 255, 0.5);">📤 Post to Channel</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2875,6 +2868,47 @@
                 }
             } catch (err) {
                 console.error('🔴 Error updating category:', err);
+                alert(`❌ Error: ${err.message}`);
+            }
+        }
+
+        async function postCategoryToChannel() {
+            const guildId = localStorage.getItem('selectedServerId') || currentGuildId;
+            
+            if (!guildId) {
+                alert('❌ Please select a server first');
+                return;
+            }
+            
+            const categoryName = document.getElementById('editCategorySelect').value;
+            if (categoryName === '-- Select Category --' || !categoryName) {
+                alert('❌ Please select a category first');
+                return;
+            }
+            
+            const channelId = prompt('📤 Enter the Channel ID to post this category selector to:\n(You can get it by right-clicking the channel in Discord)');
+            if (!channelId) return;
+            
+            try {
+                console.log('🔵 Posting category to channel:', { categoryName, channelId, guildId });
+                
+                const res = await fetch(`/api/post-category?guildId=${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoryName, channelId })
+                });
+                
+                const data = await res.json();
+                console.log('🔵 Post response:', { status: res.status, data });
+                
+                if (res.ok && data.success) {
+                    alert(`✅ Category posted to channel!\n\nMessage ID: ${data.messageId}`);
+                } else {
+                    alert(`❌ Error: ${data.error || 'Failed to post'}`);
+                    console.error('🔴 Post Error:', data);
+                }
+            } catch (err) {
+                console.error('🔴 Error posting category:', err);
                 alert(`❌ Error: ${err.message}`);
             }
         }
