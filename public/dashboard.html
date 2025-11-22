@@ -2569,6 +2569,7 @@
 
         // ========== UNSAVED CHANGES DETECTION ==========
         let hasUnsavedChanges = false;
+        let originalValues = {};
 
         function showUnsavedNotification() {
             if (!hasUnsavedChanges) {
@@ -2577,6 +2578,29 @@
                 if (notification) {
                     notification.style.display = 'flex';
                 }
+            }
+        }
+
+        function checkIfChangesReverted() {
+            // Check if all current values match original values
+            const inputs = document.querySelectorAll('input, select, textarea');
+            let allReverted = true;
+            
+            inputs.forEach(input => {
+                const key = input.id || input.name || input.className;
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    if (originalValues[key] !== undefined && originalValues[key] !== input.checked) {
+                        allReverted = false;
+                    }
+                } else {
+                    if (originalValues[key] !== undefined && originalValues[key] !== input.value) {
+                        allReverted = false;
+                    }
+                }
+            });
+            
+            if (allReverted && hasUnsavedChanges) {
+                hideUnsavedNotification();
             }
         }
 
@@ -2593,7 +2617,19 @@
         }
 
         function resetChanges() {
-            location.reload();
+            // Reset only changed inputs back to original values
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const key = input.id || input.name || input.className;
+                if (originalValues[key] !== undefined) {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = originalValues[key];
+                    } else {
+                        input.value = originalValues[key];
+                    }
+                }
+            });
+            hideUnsavedNotification();
         }
 
         function saveAllChanges() {
@@ -2606,18 +2642,41 @@
         }
 
         function setupUnsavedDetection() {
-            // Listen for changes on all inputs, selects, textareas
+            // Store original values on load
             const inputs = document.querySelectorAll('input, select, textarea');
             inputs.forEach(input => {
-                input.addEventListener('change', showUnsavedNotification);
-                input.addEventListener('input', showUnsavedNotification);
+                const key = input.id || input.name || input.className;
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    originalValues[key] = input.checked;
+                } else {
+                    originalValues[key] = input.value;
+                }
+                
+                // Listen for changes and check if reverted
+                input.addEventListener('change', () => {
+                    showUnsavedNotification();
+                    checkIfChangesReverted();
+                });
+                input.addEventListener('input', () => {
+                    showUnsavedNotification();
+                    checkIfChangesReverted();
+                });
             });
 
             // Also listen for color picker changes
             const colorPickers = document.querySelectorAll('input[type="color"]');
             colorPickers.forEach(picker => {
-                picker.addEventListener('change', showUnsavedNotification);
-                picker.addEventListener('input', showUnsavedNotification);
+                const key = picker.id || picker.className;
+                originalValues[key] = picker.value;
+                
+                picker.addEventListener('change', () => {
+                    showUnsavedNotification();
+                    checkIfChangesReverted();
+                });
+                picker.addEventListener('input', () => {
+                    showUnsavedNotification();
+                    checkIfChangesReverted();
+                });
             });
         }
 
