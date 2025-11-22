@@ -1707,7 +1707,7 @@
                 <div id="role-categories-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title">Role Categories</div>
-                        <div class="content-subtitle">Organize roles with custom banners</div>
+                        <div class="content-subtitle">Organize roles with custom banners and messages</div>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
@@ -1715,39 +1715,51 @@
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Category Name</div>
-                                    <input type="text" class="form-input" placeholder="e.g., Gaming Roles"/>
+                                    <input type="text" class="form-input" id="categoryName" placeholder="e.g., Gaming Roles"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Description</div>
-                                    <textarea class="form-input" placeholder="Category description" style="height: 80px;"></textarea>
+                                    <textarea class="form-input" id="categoryDesc" placeholder="Category description" style="height: 60px;"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Banner Image URL</div>
-                                    <input type="text" class="form-input" placeholder="https://..."/>
+                                    <div class="form-label">Message to Send</div>
+                                    <textarea class="form-input" id="categoryMessage" placeholder="Message to send when assigning roles" style="height: 60px;"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Color</div>
-                                    <input type="color" class="form-input" style="height: 40px; padding: 2px;"/>
+                                    <div class="form-label">Send Message in Channel</div>
+                                    <input type="text" class="form-input" id="categoryChannel" placeholder="Select channel (or leave empty)"/>
                                 </div>
-                                <button class="btn btn-primary">Create Category</button>
+                                <button class="btn btn-primary" onclick="createRoleCategory()">Create Category</button>
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📋 Manage Roles</div></div>
+                            <div class="panel-header"><div class="panel-title">🔧 Edit Category</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Select Category</div>
-                                    <select class="form-input">
+                                    <select class="form-input" id="editCategorySelect" name="category" onchange="loadCategoryDetails()">
                                         <option>-- Select Category --</option>
-                                        <option>Gaming Roles</option>
-                                        <option>Notification Roles</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Add Role to Category</div>
-                                    <input type="text" class="form-input" placeholder="Select role"/>
+                                <div id="categoryDetails" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
+                                    <div class="form-group">
+                                        <div class="form-label">Category Name</div>
+                                        <input type="text" class="form-input" id="editCategoryName" placeholder="Category name"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="form-label">Message to Send</div>
+                                        <textarea class="form-input" id="editCategoryMessage" placeholder="Message to send when assigning roles" style="height: 60px;"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="form-label">Send Message in Channel</div>
+                                        <input type="text" class="form-input" id="editCategoryChannel" placeholder="Select channel (or leave empty)"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="form-label">Discord Role</div>
+                                        <input type="text" class="form-input" id="editCategoryRole" placeholder="Select or enter role name"/>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="saveCategoryChanges()" style="margin-top: 0.5rem;">Save Changes</button>
                                 </div>
-                                <button class="btn btn-primary">Add Role</button>
                             </div>
                         </div>
                     </div>
@@ -2461,11 +2473,17 @@
             loadRoleCategories(serverId);
         }
 
+        // Store current guild for category management
+        let currentGuildId = localStorage.getItem('selectedServerId');
+        let currentCategories = {};
+
         async function loadRoleCategories(guildId) {
+            currentGuildId = guildId;
             try {
                 const res = await fetch(`/api/config/role-categories?guildId=${guildId}`);
                 if (res.ok) {
                     const categories = await res.json();
+                    currentCategories = categories;
                     const categoryOptions = Object.keys(categories);
                     
                     // Update all category dropdowns
@@ -2487,6 +2505,94 @@
                 }
             } catch (err) {
                 console.error('Failed to load categories:', err);
+            }
+        }
+
+        function loadCategoryDetails() {
+            const categoryName = document.getElementById('editCategorySelect').value;
+            const detailsDiv = document.getElementById('categoryDetails');
+            
+            if (categoryName === '-- Select Category --' || !currentCategories[categoryName]) {
+                detailsDiv.style.display = 'none';
+                return;
+            }
+            
+            const categoryData = currentCategories[categoryName];
+            document.getElementById('editCategoryName').value = categoryName || '';
+            document.getElementById('editCategoryMessage').value = categoryData.message || '';
+            document.getElementById('editCategoryChannel').value = categoryData.channel || '';
+            document.getElementById('editCategoryRole').value = categoryData.roles?.[0] || '';
+            
+            detailsDiv.style.display = 'block';
+        }
+
+        async function createRoleCategory() {
+            const name = document.getElementById('categoryName').value;
+            const message = document.getElementById('categoryMessage').value;
+            const channel = document.getElementById('categoryChannel').value;
+            
+            if (!name) {
+                alert('Please enter a category name');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/config/role-categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        categoryName: name,
+                        message,
+                        channel,
+                        roles: []
+                    })
+                });
+                
+                if (res.ok) {
+                    alert('✅ Category created!');
+                    document.getElementById('categoryName').value = '';
+                    document.getElementById('categoryMessage').value = '';
+                    document.getElementById('categoryChannel').value = '';
+                    loadRoleCategories(currentGuildId);
+                }
+            } catch (err) {
+                console.error('Error creating category:', err);
+                alert('❌ Failed to create category');
+            }
+        }
+
+        async function saveCategoryChanges() {
+            const oldName = document.getElementById('editCategorySelect').value;
+            const newName = document.getElementById('editCategoryName').value;
+            const message = document.getElementById('editCategoryMessage').value;
+            const channel = document.getElementById('editCategoryChannel').value;
+            const role = document.getElementById('editCategoryRole').value;
+            
+            if (!newName) {
+                alert('Please enter a category name');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/config/role-categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        oldCategoryName: oldName,
+                        categoryName: newName,
+                        message,
+                        channel,
+                        roles: role ? [role] : []
+                    })
+                });
+                
+                if (res.ok) {
+                    alert('✅ Category updated!');
+                    loadRoleCategories(currentGuildId);
+                }
+            } catch (err) {
+                console.error('Error updating category:', err);
+                alert('❌ Failed to update category');
             }
         }
 

@@ -3144,11 +3144,22 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
   if (!guildId) return res.json({ success: false, error: "No guild found" });
 
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
-
-  const { categoryName, roles, channel } = req.body;
   if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
 
-  config.guilds[guildId].roleCategories[categoryName] = { roles, channel };
+  const { categoryName, oldCategoryName, roles, channel, message } = req.body;
+  
+  // If renaming, delete old category first
+  if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
+    delete config.guilds[guildId].roleCategories[oldCategoryName];
+  }
+
+  // Save or update category with message and channel
+  config.guilds[guildId].roleCategories[categoryName] = {
+    roles: roles || [],
+    channel: channel || '',
+    message: message || ''
+  };
+  
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   console.log(`✅ Role category saved: ${categoryName}`);
   res.json({ success: true, message: "Role category saved successfully" });
