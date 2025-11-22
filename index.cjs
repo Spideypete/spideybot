@@ -2283,6 +2283,21 @@ app.get("/", (req, res) => {
       background: #0f0f0f;
       color: #fff;
       line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main {
+      flex: 1;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
     }
     nav {
       background: rgba(20, 20, 20, 0.95);
@@ -2421,15 +2436,17 @@ app.get("/", (req, res) => {
 </head>
 <body>
   <nav>
-    <div style="font-weight: 700; font-size: 1.5rem; color: #fff;">🕷️ SPIDEY BOT</div>
+    <div class="logo">SPIDEY BOT</div>
     <div>
       <a href="#home">Home</a>
       <a href="#features">Features</a>
       <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
     </div>
   </nav>
+
+  <main>
   <div class="hero">
-    <h1>Meet 🕷️ SPIDEY BOT – Your Server's Ultimate Tech Guardian</h1>
+    <h1>Meet SPIDEY BOT – Your Server's Ultimate Tech Guardian</h1>
     <p>SPIDEY BOT blends powerful intelligence with mystical powers to bring order, fun, and automation to your Discord server. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
     <div class="btn-group">
       <a id="addToDiscord" class="btn btn-primary">Invite To Guild →</a>
