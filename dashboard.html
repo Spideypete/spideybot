@@ -2572,14 +2572,20 @@
         async function loadRoleCategories(guildId) {
             currentGuildId = guildId;
             try {
+                console.log('🔵 Fetching categories for guildId:', guildId);
                 const res = await fetch(`/api/config/role-categories?guildId=${guildId}`);
+                console.log('🔵 Categories API response status:', res.status);
+                
                 if (res.ok) {
                     const categories = await res.json();
+                    console.log('🔵 Categories fetched:', categories);
                     currentCategories = categories;
                     const categoryOptions = Object.keys(categories);
+                    console.log('🔵 Category names:', categoryOptions);
                     
                     // Update all category dropdowns
                     document.querySelectorAll('select[name="category"]').forEach(select => {
+                        console.log('🔵 Updating dropdown with id:', select.id);
                         const currentValue = select.value;
                         select.innerHTML = '<option>-- Select Category --</option>';
                         categoryOptions.forEach(catName => {
@@ -2587,16 +2593,19 @@
                             opt.value = catName;
                             opt.textContent = catName;
                             select.appendChild(opt);
+                            console.log('🔵 Added option:', catName);
                         });
                         if (currentValue && categoryOptions.includes(currentValue)) {
                             select.value = currentValue;
                         }
                     });
                     
-                    console.log('Loaded categories for server:', categoryOptions);
+                    console.log('✅ Loaded categories for server:', categoryOptions);
+                } else {
+                    console.error('🔴 API returned status:', res.status);
                 }
             } catch (err) {
-                console.error('Failed to load categories:', err);
+                console.error('🔴 Failed to load categories:', err);
             }
         }
 
@@ -2824,8 +2833,24 @@
                     document.getElementById('creatingRoleInput').value = '';
                     creatingCategoryRoles = [];
                     displayCreatingRolesList();
-                    // Reload categories
+                    
+                    // Force reload categories with proper wait
+                    console.log('🔵 Loading categories after creation...');
+                    await new Promise(resolve => setTimeout(resolve, 100));
                     await loadRoleCategories(guildId);
+                    
+                    // Force select the newly created category
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    const select = document.getElementById('editCategorySelect');
+                    if (select) {
+                        const opts = Array.from(select.options).map(o => o.value);
+                        console.log('🔵 Available options:', opts);
+                        select.value = name;
+                        if (select.value === name) {
+                            console.log('✅ Category selected:', name);
+                            loadCategoryDetails();
+                        }
+                    }
                 } else {
                     alert(`❌ Error: ${data.error || 'Failed to create category'}`);
                     console.error('🔴 API Error:', data);
