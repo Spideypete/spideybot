@@ -3387,32 +3387,37 @@
                 console.warn('Canvas not found or Chart.js not available');
             }
 
-            // Populate role dropdown
-            const roleSelect = document.getElementById('customRoleSelect');
-            console.log('🔵 Role dropdown element found:', !!roleSelect);
-            console.log('🔵 Stats.roles:', stats?.roles?.length, 'roles');
+            // Populate role dropdown - with retry if DOM not ready
+            let roleSelect = document.getElementById('customRoleSelect');
             
-            if (roleSelect && stats.roles && stats.roles.length > 0) {
-                roleSelect.innerHTML = '<option value="">Choose a role...</option>';
-                const filteredRoles = stats.roles.filter(r => r.name !== '@everyone');
-                console.log('🔵 Filtered roles (not @everyone):', filteredRoles.length);
-                
-                filteredRoles.forEach(role => {
-                    const option = document.createElement('option');
-                    option.value = role.id;
-                    option.textContent = `${role.name} (${role.count} members)`;
-                    roleSelect.appendChild(option);
-                    console.log('✅ Added role:', role.name, 'with', role.count, 'members');
-                });
-                console.log('✅ Role dropdown populated: ' + filteredRoles.length + ' roles');
-            } else {
-                console.warn('❌ Dropdown issue:', { 
-                    element: !!roleSelect, 
-                    roles: stats?.roles,
-                    rolesLength: stats?.roles?.length,
-                    statsObj: stats
-                });
+            // If element doesn't exist yet, wait for it
+            if (!roleSelect) {
+                console.warn('⚠️ customRoleSelect not found, waiting for DOM...');
+                setTimeout(async () => {
+                    roleSelect = document.getElementById('customRoleSelect');
+                    if (roleSelect && stats.roles) populateRoleDropdown(roleSelect, stats.roles);
+                }, 100);
+            } else if (stats.roles) {
+                populateRoleDropdown(roleSelect, stats.roles);
             }
+        }
+        
+        // Helper function to populate the role dropdown
+        function populateRoleDropdown(roleSelect, roles) {
+            if (!roleSelect) {
+                console.error('❌ Role select element is null');
+                return;
+            }
+            roleSelect.innerHTML = '<option value="">Choose a role...</option>';
+            const filteredRoles = (roles || []).filter(r => r.name !== '@everyone');
+            console.log('✅ Role dropdown populated with ' + filteredRoles.length + ' roles');
+            
+            filteredRoles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role.id;
+                option.textContent = `${role.name} (${role.count} members)`;
+                roleSelect.appendChild(option);
+            });
         }
 
         function updateCustomGraph() {
