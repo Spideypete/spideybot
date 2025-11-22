@@ -3137,32 +3137,52 @@ app.get("/api/config/role-categories", (req, res) => {
 
 // ============== API: SAVE ROLE CATEGORIES ==============
 app.post("/api/config/role-categories", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
 
-  const config = loadConfig();
-  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
-  if (!guildId) return res.json({ success: false, error: "No guild found" });
+    const config = loadConfig();
+    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    
+    if (!guildId) {
+      console.error('❌ Role category save failed: No guild ID provided');
+      return res.status(400).json({ success: false, error: "No guild found" });
+    }
 
-  if (!config.guilds[guildId]) config.guilds[guildId] = {};
-  if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
 
-  const { categoryName, oldCategoryName, roles, channel, message } = req.body;
-  
-  // If renaming, delete old category first
-  if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
-    delete config.guilds[guildId].roleCategories[oldCategoryName];
+    const { categoryName, oldCategoryName, roles, channel, message } = req.body;
+    
+    if (!categoryName) {
+      console.error('❌ Role category save failed: No category name provided');
+      return res.status(400).json({ success: false, error: "Category name is required" });
+    }
+
+    if (!roles || !Array.isArray(roles) || roles.length === 0) {
+      console.error('❌ Role category save failed: No roles provided');
+      return res.status(400).json({ success: false, error: "At least one role is required" });
+    }
+    
+    // If renaming, delete old category first
+    if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
+      delete config.guilds[guildId].roleCategories[oldCategoryName];
+      console.log(`🔄 Renamed category: ${oldCategoryName} → ${categoryName}`);
+    }
+
+    // Save or update category with message and channel
+    config.guilds[guildId].roleCategories[categoryName] = {
+      roles: roles || [],
+      channel: channel || '',
+      message: message || ''
+    };
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ Role category saved: ${categoryName} (Guild: ${guildId})`);
+    res.json({ success: true, message: "Role category saved successfully", categoryName, guildId });
+  } catch (err) {
+    console.error('❌ Error saving role category:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
-
-  // Save or update category with message and channel
-  config.guilds[guildId].roleCategories[categoryName] = {
-    roles: roles || [],
-    channel: channel || '',
-    message: message || ''
-  };
-  
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-  console.log(`✅ Role category saved: ${categoryName}`);
-  res.json({ success: true, message: "Role category saved successfully" });
 });
 
 // ============== API: UPDATE CONFIG ==============

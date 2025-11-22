@@ -2774,7 +2774,7 @@
             }
             
             try {
-                const res = await fetch('/api/config/role-categories', {
+                const res = await fetch(`/api/config/role-categories?guildId=${currentGuildId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2785,7 +2785,9 @@
                     })
                 });
                 
-                if (res.ok) {
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
                     alert('✅ Category created!');
                     document.getElementById('categoryName').value = '';
                     document.getElementById('categoryMessage').value = '';
@@ -2794,10 +2796,13 @@
                     creatingCategoryRoles = [];
                     displayCreatingRolesList();
                     loadRoleCategories(currentGuildId);
+                } else {
+                    alert(`❌ Failed to create category: ${data.error || 'Unknown error'}`);
+                    console.error('API Error:', data);
                 }
             } catch (err) {
                 console.error('Error creating category:', err);
-                alert('❌ Failed to create category');
+                alert(`❌ Failed to create category: ${err.message}`);
             }
         }
 
@@ -2818,7 +2823,7 @@
             }
             
             try {
-                const res = await fetch('/api/config/role-categories', {
+                const res = await fetch(`/api/config/role-categories?guildId=${currentGuildId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2830,13 +2835,18 @@
                     })
                 });
                 
-                if (res.ok) {
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
                     alert('✅ Category updated!');
                     loadRoleCategories(currentGuildId);
+                } else {
+                    alert(`❌ Failed to update category: ${data.error || 'Unknown error'}`);
+                    console.error('API Error:', data);
                 }
             } catch (err) {
                 console.error('Error updating category:', err);
-                alert('❌ Failed to update category');
+                alert(`❌ Failed to update category: ${err.message}`);
             }
         }
 
