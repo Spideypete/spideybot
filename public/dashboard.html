@@ -2638,6 +2638,52 @@
                 alert('Please select a server first');
                 return;
             }
+
+            // Collect all form data from all sections
+            const formData = {};
+            const sections = {
+                'settings': ['Language', 'Prefix'], // From visible inputs
+                'server-guard': ['Users per 10s', 'Ban Raid Users'],
+                'react-roles': [],
+                'role-categories': [],
+                'server-messages': ['Welcome Message', 'Goodbye Message'],
+                'custom-commands': [],
+                'components': ['Music Player', 'Moderation', 'Economy System', 'Leveling/XP'],
+                'xp-levels': ['XP per Message', 'XP to Level Up', 'Max Level'],
+                'leaderboards': [],
+                'invite-tracking': [],
+                'message-counting': [],
+                'statistics-channels': [],
+                'giveaways': [],
+                'social-notifs': [],
+                'reminders': [],
+                'recordings': [],
+                'logging': []
+            };
+
+            // Collect all inputs, selects, and textareas
+            const allInputs = document.querySelectorAll('input[type="text"], input[type="number"], input[type="checkbox"], input[type="color"], select, textarea');
+            const data = {};
+
+            allInputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    data[input.id || input.name || input.className] = input.checked;
+                } else if (input.type === 'color') {
+                    data[input.id || input.name || input.className] = input.value;
+                } else {
+                    data[input.id || input.name || input.className] = input.value;
+                }
+            });
+
+            // Save to each section via API
+            Object.keys(sections).forEach(section => {
+                fetch(`/api/config/${section}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).catch(err => console.error(`Error saving ${section}:`, err));
+            });
+
             hideUnsavedNotification();
         }
 
