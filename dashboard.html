@@ -820,13 +820,6 @@
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">ANALYTICS</div>
-                    <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="member-graphs"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="3" height="14"/><rect x="10" y="3" width="3" height="18"/><rect x="17" y="10" width="3" height="11"/></svg></span><span>Member Graphs</span></li>
-                    </ul>
-                </div>
-
-                <div class="sidebar-section">
                     <div class="sidebar-section-title">MONITORING</div>
                     <ul class="sidebar-menu">
                         <li class="sidebar-item" data-section="social-notifs"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6l3-6z"/></svg></span><span>Social Notifs</span></li>
@@ -885,6 +878,54 @@
                             </div>
                             <div class="panel-content">
                                 <button class="btn btn-primary">Invite Bot</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; color: rgba(255,255,255,0.9);">Member Analytics</div>
+                        <div class="content-grid wide">
+                            <div class="panel">
+                                <div class="panel-header"><div class="panel-title">👥 Members</div></div>
+                                <div class="panel-content">
+                                    <div class="graph-container"><canvas id="membersChart"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-header"><div class="panel-title">✅ Verified Users</div></div>
+                                <div class="panel-content">
+                                    <div class="graph-container"><canvas id="verifiedChart"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-header"><div class="panel-title">🤖 Bots</div></div>
+                                <div class="panel-content">
+                                    <div class="graph-container"><canvas id="botsChart"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-header"><div class="panel-title">👑 Admins</div></div>
+                                <div class="panel-content">
+                                    <div class="graph-container"><canvas id="adminsChart"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-header"><div class="panel-title">🛡️ Moderators</div></div>
+                                <div class="panel-content">
+                                    <div class="graph-container"><canvas id="modsChart"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-header"><div class="panel-title">🎯 Custom Role</div></div>
+                                <div class="panel-content">
+                                    <div class="form-group">
+                                        <div class="form-label">Select Role</div>
+                                        <select id="customRoleSelect" style="width: 100%; padding: 0.7rem; background: rgba(var(--theme-color), 0.1); border: 1px solid rgba(var(--theme-color), 0.3); color: #fff; border-radius: 6px; margin-bottom: 1rem;" onchange="updateCustomGraph()">
+                                            <option value="">Choose a role...</option>
+                                        </select>
+                                    </div>
+                                    <div class="graph-container"><canvas id="customChart"></canvas></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1638,58 +1679,6 @@
                     </div>
                 </div>
 
-                <!-- Member Graphs Section -->
-                <div id="member-graphs-section" class="content-section">
-                    <div class="content-header">
-                        <div class="content-title">Member Analytics</div>
-                        <div class="content-subtitle">Role-based member statistics and graphs</div>
-                    </div>
-                    <div class="content-grid wide">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👥 Members</div></div>
-                            <div class="panel-content">
-                                <div class="graph-container"><canvas id="membersChart"></canvas></div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">✅ Verified Users</div></div>
-                            <div class="panel-content">
-                                <div class="graph-container"><canvas id="verifiedChart"></canvas></div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🤖 Bots</div></div>
-                            <div class="panel-content">
-                                <div class="graph-container"><canvas id="botsChart"></canvas></div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👑 Admins</div></div>
-                            <div class="panel-content">
-                                <div class="graph-container"><canvas id="adminsChart"></canvas></div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🛡️ Moderators</div></div>
-                            <div class="panel-content">
-                                <div class="graph-container"><canvas id="modsChart"></canvas></div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎯 Custom Role</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Select Role</div>
-                                    <select id="customRoleSelect" style="width: 100%; padding: 0.7rem; background: rgba(var(--theme-color), 0.1); border: 1px solid rgba(var(--theme-color), 0.3); color: #fff; border-radius: 6px; margin-bottom: 1rem;" onchange="updateCustomGraph()">
-                                        <option value="">Choose a role...</option>
-                                    </select>
-                                </div>
-                                <div class="graph-container"><canvas id="customChart"></canvas></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Colors Section -->
                 <div id="colors-section" class="content-section">
                     <div class="content-header">
@@ -1873,11 +1862,6 @@
                 const sectionEl = document.getElementById(section + '-section');
                 if (sectionEl) {
                     sectionEl.classList.add('active');
-                    
-                    // Load member graphs when switching to that section
-                    if (section === 'member-graphs') {
-                        setTimeout(loadMemberGraphs, 100);
-                    }
                 }
             });
         });
@@ -1937,6 +1921,9 @@
                     } catch (err) {
                         console.error('Failed to load server name:', err);
                     }
+
+                    // Load member graphs on dashboard
+                    setTimeout(loadMemberGraphs, 200);
                 }
             } catch (err) {
                 console.error('Failed to load user:', err);
