@@ -1040,78 +1040,6 @@
         .graph-container canvas {
             max-height: 300px;
         }
-
-        /* Save Modal */
-        .save-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(5px);
-        }
-
-        .save-modal.show {
-            display: flex;
-        }
-
-        .save-modal-content {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(145, 70, 255, 0.1) 100%);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            border-radius: 20px;
-            padding: 3rem 2.5rem;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 212, 255, 0.1);
-            max-width: 400px;
-            animation: popupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes popupSlideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .save-modal-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: popupBounce 0.6s ease-out;
-        }
-
-        @keyframes popupBounce {
-            0% {
-                transform: scale(0);
-            }
-            50% {
-                transform: scale(1.2);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .save-modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #00d4ff;
-            margin-bottom: 0.5rem;
-        }
-
-        .save-modal-message {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -2611,92 +2539,6 @@
             localStorage.removeItem('accentPink');
         }
 
-        function saveColorPreferences() {
-            alert('Color preferences saved! They will persist when you revisit the dashboard.');
-        }
-
-        // Settings Panel Save Functions
-        // Modal Functions
-        function showSaveModal(message = '✅ Saved Successfully!') {
-            const modal = document.getElementById('saveModal');
-            document.getElementById('modalMessage').textContent = message;
-            modal.classList.add('show');
-            setTimeout(() => {
-                modal.classList.remove('show');
-            }, 2500);
-        }
-
-        function saveSettings() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Configuration Saved!');
-        }
-
-        function saveRoles() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Roles Saved!');
-        }
-
-        function saveChannels() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Channels Saved!');
-        }
-
-        function saveFeatures() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Features Saved!');
-        }
-
-        function saveWelcome() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Welcome Message Saved!');
-        }
-
-        function saveGoodbye() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Goodbye Message Saved!');
-        }
-
-        function savePermissions() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Permissions Saved!');
-        }
-
-        function saveLeveling() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
-                return;
-            }
-            showSaveModal('✅ Leveling Settings Saved!');
-        }
 
         // ========== UNSAVED CHANGES DETECTION ==========
         let hasUnsavedChanges = false;
@@ -2726,11 +2568,10 @@
         function saveAllChanges() {
             const selectedServerId = localStorage.getItem('selectedServerId');
             if (!selectedServerId) {
-                showSaveModal('⚠️ Please select a server first');
+                alert('Please select a server first');
                 return;
             }
             hideUnsavedNotification();
-            showSaveModal('✅ All Changes Saved!');
         }
 
         function setupUnsavedDetection() {
@@ -2780,15 +2621,6 @@
         <div class="unsaved-buttons">
             <button class="btn-reset" onclick="resetChanges()">Reset</button>
             <button class="btn-save-changes" onclick="saveAllChanges()">Save Changes</button>
-        </div>
-    </div>
-
-    <!-- Save Modal Popup -->
-    <div id="saveModal" class="save-modal">
-        <div class="save-modal-content">
-            <div class="save-modal-icon">✅</div>
-            <div class="save-modal-title">Success</div>
-            <div class="save-modal-message" id="modalMessage">Saved Successfully!</div>
         </div>
     </div>
 </body>
