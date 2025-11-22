@@ -65,7 +65,36 @@
         }
 
         .server-selector-dropdown {
-            display: none;
+            position: sticky;
+            top: 1rem;
+            z-index: 50;
+        }
+        
+        .server-dropdown {
+            background: rgba(var(--theme-color), 0.15);
+            border: 1px solid rgba(var(--theme-color), 0.4);
+            color: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.855rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .server-dropdown:hover {
+            background: rgba(var(--theme-color), 0.25);
+            border-color: rgba(var(--theme-color), 0.6);
+        }
+        
+        body.light-mode .server-dropdown {
+            background: rgba(var(--theme-color), 0.08);
+            border: 1px solid rgba(var(--theme-color), 0.2);
+            color: rgba(0, 0, 0, 0.9);
+        }
+        
+        body.light-mode .server-dropdown:hover {
+            background: rgba(var(--theme-color), 0.15);
+            border-color: rgba(var(--theme-color), 0.4);
         }
 
         .sidebar-section {
@@ -283,11 +312,11 @@
         }
 
         .mode-toggle.dark-mode {
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.95);
         }
 
         .mode-toggle.light-mode {
-            color: rgba(64, 64, 64, 0.8);
+            color: rgba(0, 0, 0, 0.85);
         }
 
         body.light-mode {
@@ -1096,8 +1125,7 @@
                     </select>
                 </div>
                 <div class="header-right">
-                    <button class="header-icon-btn" id="modeToggle" onclick="toggleMode()" title="Toggle dark/light mode">🕷️</button>
-                    <a href="https://discord.com/download" target="_blank" class="header-icon-btn" title="Discord Server">💎</a>
+                    <button class="header-icon-btn" id="modeToggle" onclick="toggleMode()" title="Toggle dark/light mode">🌙</button>
                     <button class="logout-btn" onclick="logout()">Log Out</button>
                 </div>
             </div>
