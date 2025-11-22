@@ -25,7 +25,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
-  secret: 'spidey-bot-secret',
+  secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
   resave: false,
   saveUninitialized: true,
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
