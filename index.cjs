@@ -3412,7 +3412,7 @@ app.get("/api/member-stats/:guildId", (req, res) => {
     const stats = {
       total: members.size,
       members: members.filter(m => !m.user.bot).size,
-      verified: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('verified'))).size,
+      verified: members.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
       bots: members.filter(m => m.user.bot).size,
       admins: members.filter(m => m.permissions.has('Administrator')).size,
       mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
