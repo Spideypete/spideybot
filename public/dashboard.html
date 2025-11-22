@@ -799,17 +799,49 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⚙️ Bot Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">⚙️ Bot Configuration</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Command Prefix</div>
-                                    <input type="text" class="form-input" placeholder="//"/>
+                                    <input type="text" class="form-input" placeholder="//" value="//"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Default Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                    <div class="form-label">Default Language</div>
+                                    <select class="form-input">
+                                        <option>English</option>
+                                        <option>Spanish</option>
+                                        <option>French</option>
+                                        <option>German</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Bot Status</div>
+                                    <select class="form-input">
+                                        <option>Online</option>
+                                        <option>Idle</option>
+                                        <option>Do Not Disturb</option>
+                                        <option>Invisible</option>
+                                    </select>
                                 </div>
                                 <button class="btn btn-primary">Save Settings</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📝 Channels</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Default Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select default channel"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Announcement Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select announcement channel"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Moderation Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select moderation channel"/>
+                                </div>
+                                <button class="btn btn-primary">Update Channels</button>
                             </div>
                         </div>
                     </div>
@@ -823,13 +855,42 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📝 Logging Config</div></div>
+                            <div class="panel-header"><div class="panel-title">📝 Message Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Log Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Deleted Messages</label>
                                 </div>
-                                <button class="btn btn-primary">Update</button>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Edited Messages</label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Log Bulk Deletes</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Log Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select log channel"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">👤 Moderation Logging</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Bans</label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Kicks</label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Mutes</label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Warns</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Moderation Log Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select mod log channel"/>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -843,13 +904,39 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🛡️ Protection Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">🛡️ Anti-Spam</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Anti-Spam Enabled</div>
-                                    <input type="checkbox" style="width: 20px; height: 20px;"/>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Anti-Spam</label>
                                 </div>
-                                <button class="btn btn-primary">Save</button>
+                                <div class="form-group">
+                                    <div class="form-label">Messages per 5s</div>
+                                    <input type="number" class="form-input" placeholder="5" value="5"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Action</div>
+                                    <select class="form-input">
+                                        <option>Warn</option>
+                                        <option>Mute</option>
+                                        <option>Kick</option>
+                                        <option>Ban</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">⚠️ Raid Protection</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Raid Detection</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Users per 10s</div>
+                                    <input type="number" class="form-input" placeholder="10" value="10"/>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Ban Raid Users</label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -863,13 +950,37 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">◇ Reaction Roles</div></div>
+                            <div class="panel-header"><div class="panel-title">💎 Create Reaction Role</div></div>
                             <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
                                 <div class="form-group">
                                     <div class="form-label">Message ID</div>
                                     <input type="text" class="form-input" placeholder="Enter message ID"/>
                                 </div>
-                                <button class="btn btn-primary">Configure</button>
+                                <div class="form-group">
+                                    <div class="form-label">Emoji</div>
+                                    <input type="text" class="form-input" placeholder="Enter emoji"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Role</div>
+                                    <input type="text" class="form-input" placeholder="Select role"/>
+                                </div>
+                                <button class="btn btn-primary">Add Reaction Role</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">⚙️ Settings</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Allow Multiple Roles</label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Require Message Reaction</label>
+                                </div>
+                                <button class="btn btn-primary">Save Settings</button>
                             </div>
                         </div>
                     </div>
@@ -883,13 +994,43 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">▣ Categories</div></div>
+                            <div class="panel-header"><div class="panel-title">📂 Create Category</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Category Name</div>
-                                    <input type="text" class="form-input" placeholder="Enter category name"/>
+                                    <input type="text" class="form-input" placeholder="e.g., Gaming Roles"/>
                                 </div>
-                                <button class="btn btn-primary">Add Category</button>
+                                <div class="form-group">
+                                    <div class="form-label">Description</div>
+                                    <textarea class="form-input" placeholder="Category description" style="height: 80px;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Banner Image URL</div>
+                                    <input type="text" class="form-input" placeholder="https://..."/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Color</div>
+                                    <input type="color" class="form-input" style="height: 40px; padding: 2px;"/>
+                                </div>
+                                <button class="btn btn-primary">Create Category</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📋 Manage Roles</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Select Category</div>
+                                    <select class="form-input">
+                                        <option>-- Select Category --</option>
+                                        <option>Gaming Roles</option>
+                                        <option>Notification Roles</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Add Role to Category</div>
+                                    <input type="text" class="form-input" placeholder="Select role"/>
+                                </div>
+                                <button class="btn btn-primary">Add Role</button>
                             </div>
                         </div>
                     </div>
@@ -903,11 +1044,35 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">◈ Messages</div></div>
+                            <div class="panel-header"><div class="panel-title">👋 Welcome Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Welcome Message</div>
-                                    <input type="text" class="form-input" placeholder="Enter welcome message"/>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Welcome Message</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Message</div>
+                                    <textarea class="form-input" placeholder="Welcome {user} to {server}!" style="height: 80px;"></textarea>
+                                </div>
+                                <button class="btn btn-primary">Save</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Enable Goodbye Message</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Message</div>
+                                    <textarea class="form-input" placeholder="{user} has left the server" style="height: 80px;"></textarea>
                                 </div>
                                 <button class="btn btn-primary">Save</button>
                             </div>
@@ -923,13 +1088,37 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⊙ Commands</div></div>
+                            <div class="panel-header"><div class="panel-title">⚡ Create Command</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Command Name</div>
-                                    <input type="text" class="form-input" placeholder="Enter command name"/>
+                                    <input type="text" class="form-input" placeholder="e.g., rules"/>
                                 </div>
-                                <button class="btn btn-primary">Add Command</button>
+                                <div class="form-group">
+                                    <div class="form-label">Response</div>
+                                    <textarea class="form-input" placeholder="Command response" style="height: 80px;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Require Role</div>
+                                    <input type="text" class="form-input" placeholder="Leave empty for all"/>
+                                </div>
+                                <button class="btn btn-primary">Create Command</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📝 Aliases</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Command</div>
+                                    <select class="form-input">
+                                        <option>-- Select Command --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Alias</div>
+                                    <input type="text" class="form-input" placeholder="e.g., r (for rules)"/>
+                                </div>
+                                <button class="btn btn-primary">Add Alias</button>
                             </div>
                         </div>
                     </div>
@@ -939,13 +1128,25 @@
                 <div id="components-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title">Components</div>
-                        <div class="content-subtitle">Manage bot components</div>
+                        <div class="content-subtitle">Manage bot components and features</div>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">▪ Components</div></div>
+                            <div class="panel-header"><div class="panel-title">🧩 Available Components</div></div>
                             <div class="panel-content">
-                                <button class="btn btn-primary">Add Component</button>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Music Player</label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Moderation</label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Economy System</label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Leveling/XP</label>
+                                </div>
+                                <button class="btn btn-primary">Save Components</button>
                             </div>
                         </div>
                     </div>
@@ -959,13 +1160,35 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📈 Leveling</div></div>
+                            <div class="panel-header"><div class="panel-title">⭐ XP Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">XP per Message</div>
-                                    <input type="number" class="form-input" placeholder="10-30"/>
+                                    <input type="number" class="form-input" placeholder="10-30" value="15"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">XP for Voice (per minute)</div>
+                                    <input type="number" class="form-input" placeholder="1-5" value="2"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">XP per Level</div>
+                                    <input type="number" class="form-input" placeholder="500" value="500"/>
                                 </div>
                                 <button class="btn btn-primary">Update</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎯 Level Roles</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Level</div>
+                                    <input type="number" class="form-input" placeholder="e.g., 10"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Role</div>
+                                    <input type="text" class="form-input" placeholder="Select role"/>
+                                </div>
+                                <button class="btn btn-primary">Add Level Role</button>
                             </div>
                         </div>
                     </div>
@@ -979,9 +1202,28 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🏆 Leaderboard</div></div>
+                            <div class="panel-header"><div class="panel-title">🏆 Leaderboard Settings</div></div>
                             <div class="panel-content">
-                                <button class="btn btn-primary">View Leaderboard</button>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Leaderboard</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Display Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Update Frequency</div>
+                                    <select class="form-input">
+                                        <option>Every Hour</option>
+                                        <option>Every 6 Hours</option>
+                                        <option>Daily</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Top Users to Show</div>
+                                    <input type="number" class="form-input" placeholder="10" value="10"/>
+                                </div>
+                                <button class="btn btn-primary">Save Settings</button>
                             </div>
                         </div>
                     </div>
@@ -995,9 +1237,31 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎁 Giveaways</div></div>
+                            <div class="panel-header"><div class="panel-title">🎁 Start New Giveaway</div></div>
                             <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Prize</div>
+                                    <input type="text" class="form-input" placeholder="e.g., Discord Nitro"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Duration (minutes)</div>
+                                    <input type="number" class="form-input" placeholder="60"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Winners</div>
+                                    <input type="number" class="form-input" placeholder="1" value="1"/>
+                                </div>
                                 <button class="btn btn-primary">Start Giveaway</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📊 Active Giveaways</div></div>
+                            <div class="panel-content">
+                                <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No active giveaways</div>
                             </div>
                         </div>
                     </div>
@@ -1011,13 +1275,32 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📱 Monitoring</div></div>
+                            <div class="panel-header"><div class="panel-title">📡 Add Streamer</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Add Streamer</div>
+                                    <div class="form-label">Platform</div>
+                                    <select class="form-input">
+                                        <option>Twitch</option>
+                                        <option>TikTok</option>
+                                        <option>Kick</option>
+                                        <option>YouTube</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Username</div>
                                     <input type="text" class="form-input" placeholder="Enter username"/>
                                 </div>
-                                <button class="btn btn-primary">Add</button>
+                                <div class="form-group">
+                                    <div class="form-label">Notification Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
+                                <button class="btn btn-primary">Add Streamer</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📋 Monitored Accounts</div></div>
+                            <div class="panel-content">
+                                <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No monitored accounts yet</div>
                             </div>
                         </div>
                     </div>
@@ -1031,9 +1314,25 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🔗 Invites</div></div>
+                            <div class="panel-header"><div class="panel-title">🔗 Settings</div></div>
                             <div class="panel-content">
-                                <button class="btn btn-primary">View Invites</button>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Invite Tracking</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Log Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Track Invite Links</label>
+                                </div>
+                                <button class="btn btn-primary">Save Settings</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📊 Invite Leaderboard</div></div>
+                            <div class="panel-content">
+                                <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">Top inviters will appear here</div>
                             </div>
                         </div>
                     </div>
@@ -1047,9 +1346,25 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💬 Statistics</div></div>
+                            <div class="panel-header"><div class="panel-title">💭 Settings</div></div>
                             <div class="panel-content">
-                                <button class="btn btn-primary">View Statistics</button>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Message Counting</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Ignore Channels</div>
+                                    <input type="text" class="form-input" placeholder="Channel list (comma separated)"/>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Count Bot Messages</label>
+                                </div>
+                                <button class="btn btn-primary">Save Settings</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📈 Message Stats</div></div>
+                            <div class="panel-content">
+                                <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">Message statistics will appear here</div>
                             </div>
                         </div>
                     </div>
@@ -1063,9 +1378,26 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎙️ Recordings</div></div>
+                            <div class="panel-header"><div class="panel-title">🎚️ Recording Settings</div></div>
                             <div class="panel-content">
-                                <button class="btn btn-primary">View Recordings</button>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Enable Voice Recording</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Storage Location</div>
+                                    <input type="text" class="form-input" placeholder="Select storage path"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Max Recording Duration (minutes)</div>
+                                    <input type="number" class="form-input" placeholder="60" value="60"/>
+                                </div>
+                                <button class="btn btn-primary">Save Settings</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📁 Recording Library</div></div>
+                            <div class="panel-content">
+                                <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No recordings yet</div>
                             </div>
                         </div>
                     </div>
@@ -1079,13 +1411,40 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⏰ Reminders</div></div>
+                            <div class="panel-header"><div class="panel-title">⏱️ Create Reminder</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Reminder Message</div>
-                                    <input type="text" class="form-input" placeholder="Enter reminder"/>
+                                    <div class="form-label">Reminder Title</div>
+                                    <input type="text" class="form-input" placeholder="e.g., Daily Standup"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Message</div>
+                                    <textarea class="form-input" placeholder="Reminder message" style="height: 80px;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Time</div>
+                                    <input type="time" class="form-input"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Repeat</div>
+                                    <select class="form-input">
+                                        <option>Once</option>
+                                        <option>Daily</option>
+                                        <option>Weekly</option>
+                                        <option>Monthly</option>
+                                    </select>
                                 </div>
                                 <button class="btn btn-primary">Create Reminder</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📅 Scheduled Reminders</div></div>
+                            <div class="panel-content">
+                                <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No scheduled reminders</div>
                             </div>
                         </div>
                     </div>
@@ -1099,13 +1458,35 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📊 Stats</div></div>
+                            <div class="panel-header"><div class="panel-title">📈 Channel Statistics</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Stat Channel</div>
+                                    <div class="form-label">Statistic Type</div>
+                                    <select class="form-input">
+                                        <option>Member Count</option>
+                                        <option>Bot Count</option>
+                                        <option>Server Level</option>
+                                        <option>Total Messages</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Channel</div>
                                     <input type="text" class="form-input" placeholder="Select channel"/>
                                 </div>
-                                <button class="btn btn-primary">Update</button>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Auto-Update</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Update Frequency (minutes)</div>
+                                    <input type="number" class="form-input" placeholder="5" value="5"/>
+                                </div>
+                                <button class="btn btn-primary">Add Stat Channel</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📊 Active Stats</div></div>
+                            <div class="panel-content">
+                                <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No stat channels configured</div>
                             </div>
                         </div>
                     </div>
@@ -1119,11 +1500,39 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💳 Premium Tiers</div></div>
+                            <div class="panel-header"><div class="panel-title">💳 Current Plan</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Subscription Status</div>
-                                    <div style="color: var(--accent-green);">✓ Active</div>
+                                    <div class="form-label">Status</div>
+                                    <div style="color: rgba(0, 212, 255, 1); font-weight: 600;">✓ Premium Active</div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Plan Type</div>
+                                    <div style="font-size: 1.1rem; font-weight: 500;">Pro Tier</div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Renewal Date</div>
+                                    <div>January 15, 2025</div>
+                                </div>
+                                <button class="btn btn-primary">Manage Subscription</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎯 Features Included</div></div>
+                            <div class="panel-content">
+                                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="color: rgba(0, 212, 255, 1);">✓</span> <span>Unlimited Custom Commands</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="color: rgba(0, 212, 255, 1);">✓</span> <span>Advanced Analytics</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="color: rgba(0, 212, 255, 1);">✓</span> <span>Priority Support</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="color: rgba(0, 212, 255, 1);">✓</span> <span>Custom Branding</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
