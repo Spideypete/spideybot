@@ -1194,7 +1194,7 @@
                 <div id="alert-container"></div>
 
                 <!-- SERVERS -->
-                <div id="servers" class="content active">
+                <div id="servers" class="content">
                     <div class="page-title">⚙️ Servers</div>
                     <div class="page-description">Select a server to manage</div>
                     <div id="servers-grid-container" class="servers-grid"></div>
@@ -4375,6 +4375,32 @@
             selectedServerId = localStorage.getItem('selectedServerId');
             // Always hide the modal - use servers grid instead
             document.getElementById('serverSelectorModal').style.display = 'none';
+            
+            // If a server is selected, show dashboard; otherwise show servers grid
+            if (selectedServerId) {
+                // Show dashboard and load it
+                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                
+                const dashboardEl = document.getElementById('dashboard');
+                if (dashboardEl) {
+                    dashboardEl.classList.add('active');
+                    loadDashboard();
+                }
+                
+                // Mark first sidebar item as active
+                const firstItem = document.querySelector('.sidebar-item');
+                if (firstItem) {
+                    firstItem.classList.add('active');
+                }
+            } else {
+                // Show servers grid
+                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                const serversEl = document.getElementById('servers');
+                if (serversEl) {
+                    serversEl.classList.add('active');
+                }
+            }
         }
 
         // Server dropdown functions
