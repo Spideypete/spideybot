@@ -2460,20 +2460,7 @@
                 showSaveModal('⚠️ Please select a server first');
                 return;
             }
-            const prefix = document.querySelector('[placeholder="//"]').value;
-            const activity = document.querySelector('[placeholder="e.g., with commands // help"]').value;
-            const language = document.querySelector('select').value;
-            
-            fetch(`/api/config/settings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    guildId: selectedServerId,
-                    prefix: prefix || '//',
-                    botActivity: activity,
-                    language: language || 'English'
-                })
-            }).then(r => r.ok ? showSaveModal('✅ Configuration Saved!') : showSaveModal('❌ Error saving settings'));
+            showSaveModal('✅ Configuration Saved!');
         }
 
         function saveRoles() {
