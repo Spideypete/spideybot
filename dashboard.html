@@ -262,25 +262,29 @@
         }
 
         .upgrade-box {
-            margin: 2rem 1rem;
-            padding: 1rem;
+            margin: 2rem 1rem 1rem 1rem;
+            padding: 1.25rem;
             background: rgba(var(--theme-color), 0.2);
             border: 2px solid rgba(var(--theme-color), 0.6);
+            border-radius: 15px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            display: block;
+            overflow: visible;
         }
 
         .upgrade-box:hover {
             background: rgba(var(--theme-color), 0.35);
             box-shadow: 0 0 20px rgba(var(--theme-color), 0.5);
-            transform: scale(1.05);
+            transform: translateY(-2px);
         }
 
         .upgrade-box-text {
             color: rgba(255, 255, 255, 0.95);
             font-weight: 600;
-            font-size: 0.81rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
         }
 
         /* Main Content */
@@ -1054,10 +1058,10 @@
                 </div>
                 <div class="header-right">
                     <div class="user-profile">
-                        <div class="user-avatar">A</div>
+                        <div class="user-avatar" id="userAvatar">A</div>
                         <div>
-                            <div style="color: #fff; font-weight: 500;">spidey</div>
-                            <div style="color: #888; font-size: 0.576rem;">Bling</div>
+                            <div style="color: #fff; font-weight: 500;" id="userName">Loading...</div>
+                            <div style="color: #888; font-size: 0.576rem;" id="userStatus">Discord</div>
                         </div>
                     </div>
                     <button class="logout-btn" onclick="logout()">Log Out</button>
@@ -4117,16 +4121,33 @@
             document.getElementById('serverSelectorModal').style.display = 'none';
         }
 
-        // Check if user is creator and show/hide creator panel
-        function initCreatorAccess() {
-            const userDisplay = document.querySelector('.user-profile div:first-child')?.textContent?.trim() || '';
-            const creatorSection = document.getElementById('creator-section');
-            
-            if (userDisplay === 'spidey') {
-                if (creatorSection) creatorSection.style.display = 'block';
-            } else {
-                if (creatorSection) creatorSection.style.display = 'none';
+        // Fetch and display logged-in user info
+        async function loadUserInfo() {
+            try {
+                const res = await fetch('/api/user');
+                const user = await res.json();
+                
+                if (user && user.username) {
+                    // Update user profile display
+                    document.getElementById('userName').textContent = user.username;
+                    document.getElementById('userAvatar').textContent = user.username.charAt(0).toUpperCase();
+                    
+                    // Update creator access based on actual username
+                    const creatorSection = document.getElementById('creator-section');
+                    if (user.username === 'spidey') {
+                        if (creatorSection) creatorSection.style.display = 'block';
+                    } else {
+                        if (creatorSection) creatorSection.style.display = 'none';
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading user info:', err);
             }
+        }
+        
+        // Check if user is creator and show/hide creator panel (legacy fallback)
+        function initCreatorAccess() {
+            loadUserInfo();
         }
 
         function checkServerSelection() {
@@ -4194,8 +4215,36 @@
                 if (server) {
                     document.getElementById('serverDisplayName').textContent = server.name;
                     document.getElementById('currentServerName').textContent = server.name;
-                    if (server.icon) {
-                        document.getElementById('serverIcon').src = server.icon;
+                    
+                    const serverIcon = document.getElementById('serverIcon');
+                    if (server.icon && server.icon.includes('http')) {
+                        serverIcon.src = server.icon;
+                        serverIcon.style.display = 'block';
+                    } else {
+                        // Fallback: show server initials
+                        serverIcon.style.display = 'none';
+                        const initials = server.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                        const serverInitials = document.createElement('div');
+                        serverInitials.id = 'serverInitials';
+                        serverInitials.style.cssText = `
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            background: rgba(var(--theme-color), 0.3);
+                            border: 2px solid rgba(var(--theme-color), 0.6);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: rgba(255, 255, 255, 0.95);
+                            font-weight: 600;
+                            margin-bottom: 0.5rem;
+                            font-size: 0.9rem;
+                        `;
+                        serverInitials.textContent = initials;
+                        const iconParent = serverIcon.parentElement;
+                        const oldInitials = iconParent.querySelector('#serverInitials');
+                        if (oldInitials) oldInitials.remove();
+                        iconParent.insertBefore(serverInitials, serverIcon);
                     }
                 }
             } catch (err) {
