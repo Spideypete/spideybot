@@ -106,6 +106,38 @@
             border-color: rgba(var(--theme-color), 0.4);
         }
 
+        body.light-mode .color-label {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        body.light-mode .color-preset {
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-mode .server-dropdown-btn {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        body.light-mode .server-menu-item {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        body.light-mode .server-menu-item:hover {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        body.light-mode .server-menu-item.active {
+            color: var(--accent-cyan);
+        }
+
+        body.light-mode .panel-header {
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .color-picker-wrapper {
+            background: transparent;
+        }
+
         .dashboard-wrapper {
             display: flex;
             height: 100vh;
@@ -1998,6 +2030,24 @@
                             </div>
                         </div>
                         <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🔤 Text Color</div></div>
+                            <div class="panel-content">
+                                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                                    <div class="form-group">
+                                        <div class="form-label">Text Color</div>
+                                        <div class="color-picker-wrapper">
+                                            <input type="color" id="textColorPicker" class="color-picker" value="#ffffff" onchange="changeTextColor(this.value)"/>
+                                            <span class="color-label" id="textColorLabel">#ffffff</span>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 1rem; background: rgba(var(--theme-color), 0.1); border: 1px solid rgba(var(--theme-color), 0.3); border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 0.9rem;">Preview Text Color</div>
+                                    </div>
+                                    <small style="color: rgba(255, 255, 255, 0.5);">Note: Text color changes based on light/dark mode</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
                             <div class="panel-header"><div class="panel-title">👁️ Preview</div></div>
                             <div class="panel-content">
                                 <div style="display: flex; flex-direction: column; gap: 1rem;">
@@ -2205,6 +2255,13 @@
             document.getElementById('pinkColorPicker').value = color;
             document.getElementById('pinkColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('accentPink', color);
+        }
+
+        function changeTextColor(color) {
+            document.documentElement.style.setProperty('--text-color', color);
+            document.getElementById('textColorPicker').value = color;
+            document.getElementById('textColorLabel').textContent = color.toUpperCase();
+            localStorage.setItem('textColor', color);
         }
 
         // Member Graph Functions
@@ -2444,6 +2501,9 @@
             
             const savedPink = localStorage.getItem('accentPink');
             if (savedPink) changePinkAccent(savedPink);
+
+            const savedTextColor = localStorage.getItem('textColor');
+            if (savedTextColor) changeTextColor(savedTextColor);
         });
     </script>
 
