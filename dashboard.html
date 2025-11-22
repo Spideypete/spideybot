@@ -883,36 +883,12 @@
                     </div>
 
                     <div style="margin-top: 2rem;">
-                        <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; color: rgba(255,255,255,0.9);">Member Analytics</div>
+                        <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; color: rgba(255,255,255,0.9);">Member Overview</div>
                         <div class="content-grid wide">
                             <div class="panel">
-                                <div class="panel-header"><div class="panel-title">👥 Members</div></div>
+                                <div class="panel-header"><div class="panel-title">📊 All Member Types</div></div>
                                 <div class="panel-content">
-                                    <div class="graph-container"><canvas id="membersChart"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="panel">
-                                <div class="panel-header"><div class="panel-title">✅ Verified Users</div></div>
-                                <div class="panel-content">
-                                    <div class="graph-container"><canvas id="verifiedChart"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="panel">
-                                <div class="panel-header"><div class="panel-title">🤖 Bots</div></div>
-                                <div class="panel-content">
-                                    <div class="graph-container"><canvas id="botsChart"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="panel">
-                                <div class="panel-header"><div class="panel-title">👑 Admins</div></div>
-                                <div class="panel-content">
-                                    <div class="graph-container"><canvas id="adminsChart"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="panel">
-                                <div class="panel-header"><div class="panel-title">🛡️ Moderators</div></div>
-                                <div class="panel-content">
-                                    <div class="graph-container"><canvas id="modsChart"></canvas></div>
+                                    <div class="graph-container"><canvas id="allMembersChart"></canvas></div>
                                 </div>
                             </div>
                             <div class="panel">
@@ -1978,126 +1954,47 @@
                 if (!res.ok) return;
                 const stats = await res.json();
 
-                const ctx = document.getElementById('membersChart');
-                if (ctx && stats.members > 0) {
-                    if (charts.members) charts.members.destroy();
-                    charts.members = new Chart(ctx, {
-                        type: 'doughnut',
+                // ONE COMBINED BAR CHART with all member types
+                const ctx = document.getElementById('allMembersChart');
+                if (ctx) {
+                    if (charts.allMembers) charts.allMembers.destroy();
+                    charts.allMembers = new Chart(ctx, {
+                        type: 'bar',
                         data: {
-                            labels: ['Members', 'Bots'],
+                            labels: ['Members', 'Verified', 'Bots', 'Admins', 'Moderators'],
                             datasets: [{
-                                data: [stats.members, stats.bots],
-                                backgroundColor: ['#00d4ff', '#9146ff'],
-                                borderColor: ['rgba(0,212,255,0.2)', 'rgba(145,70,255,0.2)'],
-                                borderWidth: 2
+                                label: 'Count',
+                                data: [stats.members, stats.verified, stats.bots, stats.admins, stats.mods],
+                                backgroundColor: ['#00d4ff', '#00ff88', '#9146ff', '#ff69b4', '#ff6b35'],
+                                borderColor: ['rgba(0,212,255,0.3)', 'rgba(0,255,136,0.3)', 'rgba(145,70,255,0.3)', 'rgba(255,105,180,0.3)', 'rgba(255,107,53,0.3)'],
+                                borderWidth: 1
                             }]
                         },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } } }
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { labels: { color: '#fff' } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.label + ': ' + context.parsed.y;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: { 
+                                y: { 
+                                    ticks: { color: '#fff' }, 
+                                    grid: { color: 'rgba(255,255,255,0.1)' },
+                                    beginAtZero: true
+                                }, 
+                                x: { 
+                                    ticks: { color: '#fff' } 
+                                } 
+                            }
+                        }
                     });
-                }
-
-                if (stats.verified > 0) {
-                    const verifiedCtx = document.getElementById('verifiedChart');
-                    if (verifiedCtx) {
-                        if (charts.verified) charts.verified.destroy();
-                        charts.verified = new Chart(verifiedCtx, {
-                            type: 'bar',
-                            data: {
-                                labels: ['Verified'],
-                                datasets: [{
-                                    label: 'Count',
-                                    data: [stats.verified],
-                                    backgroundColor: '#00ff88',
-                                    borderColor: 'rgba(0,255,136,0.3)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: { 
-                                responsive: true, 
-                                maintainAspectRatio: false,
-                                plugins: { legend: { labels: { color: '#fff' } } },
-                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
-                            }
-                        });
-                    }
-                }
-
-                if (stats.bots > 0) {
-                    const botsCtx = document.getElementById('botsChart');
-                    if (botsCtx) {
-                        if (charts.bots) charts.bots.destroy();
-                        charts.bots = new Chart(botsCtx, {
-                            type: 'bar',
-                            data: {
-                                labels: ['Bots'],
-                                datasets: [{
-                                    label: 'Count',
-                                    data: [stats.bots],
-                                    backgroundColor: '#9146ff',
-                                    borderColor: 'rgba(145,70,255,0.3)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: { 
-                                responsive: true, 
-                                maintainAspectRatio: false,
-                                plugins: { legend: { labels: { color: '#fff' } } },
-                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
-                            }
-                        });
-                    }
-                }
-
-                if (stats.admins > 0) {
-                    const adminsCtx = document.getElementById('adminsChart');
-                    if (adminsCtx) {
-                        if (charts.admins) charts.admins.destroy();
-                        charts.admins = new Chart(adminsCtx, {
-                            type: 'bar',
-                            data: {
-                                labels: ['Admins'],
-                                datasets: [{
-                                    label: 'Count',
-                                    data: [stats.admins],
-                                    backgroundColor: '#ff69b4',
-                                    borderColor: 'rgba(255,105,180,0.3)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: { 
-                                responsive: true, 
-                                maintainAspectRatio: false,
-                                plugins: { legend: { labels: { color: '#fff' } } },
-                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
-                            }
-                        });
-                    }
-                }
-
-                if (stats.mods > 0) {
-                    const modsCtx = document.getElementById('modsChart');
-                    if (modsCtx) {
-                        if (charts.mods) charts.mods.destroy();
-                        charts.mods = new Chart(modsCtx, {
-                            type: 'bar',
-                            data: {
-                                labels: ['Moderators'],
-                                datasets: [{
-                                    label: 'Count',
-                                    data: [stats.mods],
-                                    backgroundColor: '#ff6b35',
-                                    borderColor: 'rgba(255,107,53,0.3)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: { 
-                                responsive: true, 
-                                maintainAspectRatio: false,
-                                plugins: { legend: { labels: { color: '#fff' } } },
-                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
-                            }
-                        });
-                    }
                 }
 
                 // Populate role dropdown
