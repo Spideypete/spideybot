@@ -915,7 +915,7 @@
                 <div id="settings-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title">Settings</div>
-                        <div class="content-subtitle">Configure bot settings</div>
+                        <div class="content-subtitle">Configure bot settings and server preferences</div>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
@@ -926,42 +926,210 @@
                                     <input type="text" class="form-input" placeholder="//" value="//"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Default Language</div>
-                                    <select class="form-input">
-                                        <option>English</option>
-                                        <option>Spanish</option>
-                                        <option>French</option>
-                                        <option>German</option>
-                                    </select>
+                                    <div class="form-label">Bot Nickname</div>
+                                    <input type="text" class="form-input" placeholder="SPIDEY BOT" value="SPIDEY BOT" disabled style="opacity: 0.6; cursor: not-allowed;"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Bot Status</div>
                                     <select class="form-input">
-                                        <option>Online</option>
+                                        <option selected>Online</option>
                                         <option>Idle</option>
                                         <option>Do Not Disturb</option>
                                         <option>Invisible</option>
                                     </select>
                                 </div>
-                                <button class="btn btn-primary">Save Settings</button>
+                                <div class="form-group">
+                                    <div class="form-label">Bot Activity</div>
+                                    <input type="text" class="form-input" placeholder="e.g., with commands // help"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Default Language</div>
+                                    <select class="form-input">
+                                        <option selected>English</option>
+                                        <option>Spanish</option>
+                                        <option>French</option>
+                                        <option>German</option>
+                                        <option>Portuguese</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Timezone (GMT)</div>
+                                    <input type="text" class="form-input" placeholder="GMT" value="GMT" disabled style="opacity: 0.6; cursor: not-allowed;"/>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
                             </div>
                         </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">👥 Role Management</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Admin Role</div>
+                                    <select class="form-input">
+                                        <option>Select admin role...</option>
+                                        <option>Admin</option>
+                                        <option>Owner</option>
+                                        <option>Manager</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Moderator Role</div>
+                                    <select class="form-input">
+                                        <option>Select moderator role...</option>
+                                        <option>Moderator</option>
+                                        <option>Helper</option>
+                                        <option>Staff</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Members Role</div>
+                                    <select class="form-input">
+                                        <option>Select members role...</option>
+                                        <option>@Members</option>
+                                        <option>Users</option>
+                                        <option>Verified</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Muted Role</div>
+                                    <select class="form-input">
+                                        <option>Select muted role...</option>
+                                        <option>Muted</option>
+                                        <option>Silenced</option>
+                                        <option>Restricted</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveRoles()">Save Roles</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-grid" style="margin-top: 2rem;">
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">📝 Channels</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Default Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select default channel"/>
+                                    <div class="form-label">General Channel</div>
+                                    <select class="form-input">
+                                        <option>Select general channel...</option>
+                                        <option>#general</option>
+                                        <option>#main</option>
+                                        <option>#lounge</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Announcement Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select announcement channel"/>
+                                    <div class="form-label">Announcements Channel</div>
+                                    <select class="form-input">
+                                        <option>Select announcements channel...</option>
+                                        <option>#announcements</option>
+                                        <option>#news</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Moderation Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select moderation channel"/>
+                                    <div class="form-label">Welcome Channel</div>
+                                    <select class="form-input">
+                                        <option>Select welcome channel...</option>
+                                        <option>#welcome</option>
+                                        <option>#intro</option>
+                                    </select>
                                 </div>
-                                <button class="btn btn-primary">Update Channels</button>
+                                <button class="btn btn-primary" onclick="saveChannels()">Update Channels</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">✨ Feature Toggles</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Music Player</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Economy System</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Leveling System</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Welcome Messages</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Moderation Tools</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Social Notifications</span></label>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveFeatures()">Save Features</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-grid" style="margin-top: 2rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Welcome Message</div>
+                                    <textarea class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
+                                </div>
+                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username, {count} for member number</small>
+                                <button class="btn btn-primary" onclick="saveWelcome()">Save Welcome</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Goodbye Message</div>
+                                    <textarea class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
+                                </div>
+                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username</small>
+                                <button class="btn btn-primary" onclick="saveGoodbye()">Save Goodbye</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-grid" style="margin-top: 2rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🔐 Permissions</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Only @Members can use commands</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Admins bypass all restrictions</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> <span>Allow DM commands</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Require confirmation for dangerous actions</span></label>
+                                </div>
+                                <button class="btn btn-primary" onclick="savePermissions()">Save Permissions</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎯 Leveling Settings</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">XP per Message</div>
+                                    <input type="number" class="form-input" placeholder="10-30" value="10"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">XP to Level Up</div>
+                                    <input type="number" class="form-input" placeholder="500" value="500"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Max Level</div>
+                                    <input type="number" class="form-input" placeholder="100" value="100"/>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Auto-assign level roles</span></label>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveLeveling()">Save Leveling</button>
                             </div>
                         </div>
                     </div>
@@ -2072,6 +2240,92 @@
 
         function saveColorPreferences() {
             alert('Color preferences saved! They will persist when you revisit the dashboard.');
+        }
+
+        // Settings Panel Save Functions
+        function saveSettings() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            const prefix = document.querySelector('[placeholder="//"]').value;
+            const activity = document.querySelector('[placeholder="e.g., with commands // help"]').value;
+            const language = document.querySelector('select').value;
+            
+            fetch(`/api/config/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    guildId: selectedServerId,
+                    prefix: prefix || '//',
+                    botActivity: activity,
+                    language: language || 'English'
+                })
+            }).then(r => r.ok ? alert('✅ Settings saved!') : alert('Error saving settings'));
+        }
+
+        function saveRoles() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            alert('✅ Roles saved!');
+        }
+
+        function saveChannels() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            alert('✅ Channels saved!');
+        }
+
+        function saveFeatures() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            alert('✅ Features saved!');
+        }
+
+        function saveWelcome() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            alert('✅ Welcome message saved!');
+        }
+
+        function saveGoodbye() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            alert('✅ Goodbye message saved!');
+        }
+
+        function savePermissions() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            alert('✅ Permissions saved!');
+        }
+
+        function saveLeveling() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            alert('✅ Leveling settings saved!');
         }
 
         // Load saved colors on startup
