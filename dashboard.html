@@ -761,6 +761,63 @@
             gap: 1.5rem;
         }
 
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .server-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(var(--theme-color), 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 180px;
+            justify-content: center;
+        }
+
+        .server-card:hover {
+            background: rgba(var(--theme-color), 0.15);
+            border-color: rgba(var(--theme-color), 0.6);
+            box-shadow: 0 0 25px rgba(var(--theme-color), 0.5);
+            transform: translateY(-5px);
+        }
+
+        .server-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(var(--theme-color), 0.2);
+            border: 2px solid rgba(var(--theme-color), 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+            object-fit: cover;
+        }
+
+        .server-icon img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .server-name {
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 600;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+
         .card {
             background: rgba(0, 0, 0, 0.6);
             border: 2px solid rgba(var(--theme-color), 0.3);
@@ -1135,6 +1192,13 @@
             <!-- Content Area -->
             <div class="content-area">
                 <div id="alert-container"></div>
+
+                <!-- SERVERS -->
+                <div id="servers" class="content active">
+                    <div class="page-title">⚙️ Servers</div>
+                    <div class="page-description">Select a server to manage</div>
+                    <div id="servers-grid-container" class="servers-grid"></div>
+                </div>
 
                 <!-- DASHBOARD -->
                 <div id="dashboard" class="content">
@@ -4247,15 +4311,17 @@
             }
         }
 
-        // Load servers into header dropdown
+        // Load servers into header dropdown AND grid
         async function loadServersList() {
             try {
                 const response = await fetch('/api/creator/servers');
                 const data = await response.json();
                 const serverSelect = document.getElementById('serverSelect');
+                const gridContainer = document.getElementById('servers-grid-container');
                 const currentServerId = localStorage.getItem('selectedServerId');
                 
                 if (data.servers && data.servers.length > 0) {
+                    // Populate dropdown
                     serverSelect.innerHTML = '';
                     data.servers.forEach(server => {
                         const option = document.createElement('option');
@@ -4267,10 +4333,37 @@
                         serverSelect.appendChild(option);
                     });
                     serverSelect.innerHTML = '<option value="">Select Server...</option>' + serverSelect.innerHTML;
+                    
+                    // Populate grid
+                    gridContainer.innerHTML = '';
+                    data.servers.forEach(server => {
+                        const card = document.createElement('div');
+                        card.className = 'server-card';
+                        card.onclick = () => selectServerFromGrid(server.id);
+                        
+                        let iconHTML = '';
+                        if (server.icon && server.icon.startsWith('http')) {
+                            iconHTML = `<img src="${server.icon}" alt="${server.name}">`;
+                        } else {
+                            const initials = server.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                            iconHTML = initials;
+                        }
+                        
+                        card.innerHTML = `
+                            <div class="server-icon">${iconHTML}</div>
+                            <div class="server-name">${server.name}</div>
+                        `;
+                        gridContainer.appendChild(card);
+                    });
                 }
             } catch (err) {
                 console.error('Error loading servers for dropdown:', err);
             }
+        }
+
+        function selectServerFromGrid(serverId) {
+            localStorage.setItem('selectedServerId', serverId);
+            location.reload();
         }
         
         // Check if user is creator and show/hide creator panel (legacy fallback)
@@ -4280,12 +4373,8 @@
 
         function checkServerSelection() {
             selectedServerId = localStorage.getItem('selectedServerId');
-            if (!selectedServerId) {
-                document.getElementById('serverSelectorModal').style.display = 'flex';
-                loadServers();
-            } else {
-                document.getElementById('serverSelectorModal').style.display = 'none';
-            }
+            // Always hide the modal - use servers grid instead
+            document.getElementById('serverSelectorModal').style.display = 'none';
         }
 
         // Server dropdown functions
