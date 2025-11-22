@@ -10,15 +10,34 @@
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', sans-serif;
-      background: #0f0f0f;
+      background: #0a0a0f;
       color: #fff;
       line-height: 1.6;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        repeating-linear-gradient(0deg, rgba(0, 212, 255, 0.03) 0px, rgba(0, 212, 255, 0.03) 1px, transparent 1px, transparent 2px),
+        repeating-linear-gradient(90deg, rgba(0, 212, 255, 0.03) 0px, rgba(0, 212, 255, 0.03) 1px, transparent 1px, transparent 2px),
+        repeating-linear-gradient(45deg, rgba(145, 70, 255, 0.05) 0px, rgba(145, 70, 255, 0.05) 2px, transparent 2px, transparent 4px),
+        radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.15) 0%, transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 25%),
+        radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.08) 0%, transparent 28%);
+      pointer-events: none;
+      z-index: 1;
+    }
     main {
       flex: 1;
+      position: relative;
+      z-index: 2;
     }
     .logo {
       font-weight: 700;
@@ -52,32 +71,56 @@
     }
     nav a:hover { color: #9146FF; }
     .hero {
-      background: linear-gradient(135deg, rgba(26, 26, 46, 0.6) 0%, rgba(15, 52, 96, 0.6) 100%);
+      background: linear-gradient(135deg, rgba(26, 26, 46, 0.5) 0%, rgba(15, 52, 96, 0.5) 50%, rgba(46, 15, 52, 0.5) 100%);
       padding: 6rem 2rem;
       text-align: center;
       position: relative;
       overflow: hidden;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+      border-bottom: 2px solid rgba(0, 212, 255, 0.1);
     }
     .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      right: -50%;
+      bottom: -50%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.25) 0%, transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.2) 0%, transparent 35%),
+        radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.15) 0%, transparent 40%),
+        conic-gradient(from 0deg at 50% 50%, rgba(145, 70, 255, 0.05) 0deg, rgba(0, 212, 255, 0.05) 120deg, rgba(145, 70, 255, 0.05) 240deg, rgba(145, 70, 255, 0.05) 360deg);
+      animation: spiderBg 20s ease-in-out infinite;
+    }
+    @keyframes spiderBg {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-10px, 10px) scale(1.05); }
+    }
+    .hero::after {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+      background: 
+        repeating-linear-gradient(0deg, transparent 0px, transparent 20px, rgba(0, 212, 255, 0.02) 20px, rgba(0, 212, 255, 0.02) 21px),
+        repeating-linear-gradient(90deg, transparent 0px, transparent 20px, rgba(145, 70, 255, 0.02) 20px, rgba(145, 70, 255, 0.02) 21px);
+      pointer-events: none;
     }
-    .hero > * { position: relative; z-index: 2; }
+    .hero > * { position: relative; z-index: 3; }
     .hero h1 {
       font-size: 3.5rem;
       font-weight: 700;
       margin-bottom: 1rem;
-      background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%);
+      background: linear-gradient(135deg, #00ffff 0%, #9146FF 35%, #FF1493 70%, #FFD700 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      text-shadow: 0 0 40px rgba(145, 70, 255, 0.5), 0 0 80px rgba(0, 212, 255, 0.3);
+      filter: drop-shadow(0 0 20px rgba(145, 70, 255, 0.4));
     }
     .hero p {
       font-size: 1.25rem;
