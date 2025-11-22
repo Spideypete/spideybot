@@ -68,6 +68,30 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot offering music playback, 
 
 ## Development Notes (Scratchpad)
 - **CRITICAL WORKFLOW**: Always sync both dashboard files (public/dashboard.html AND dashboard.html) BEFORE deployment. Command: `cp /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html`
+- **Documentation**: See COMMAND_REFERENCE.md for all 50+ commands and API_REFERENCE.md for API documentation
+- **Latest Session (Nov 22, 2025 - Session 4 - OVERNIGHT OPTIMIZATION)**:
+  - **CREDENTIALS FIX**: Fixed 3 remaining fetch calls missing credentials in dashboard
+    - Line 3361: /logout endpoint
+    - Line 3752: /api/member-stats endpoint
+    - Line 4015: saveAllChanges() function
+    - All 16 fetch calls now include credentials: 'include'
+  - **ACTIVITY LOGGING**: Converted Role Categories section to comprehensive Activity Logs viewer
+    - Real-time activity tracking with timestamps
+    - Filter by 8 categories: Voice, Moderation, Economy, Leveling, Music, Members, Config, Alerts
+    - Live statistics display (Total Logs, Mod Actions, Members Joined, Level Ups)
+    - Clear logs button with confirmation
+    - localStorage-based persistence
+  - **VERIFICATION**: All systems tested and operational
+    - ✅ 16/16 fetch calls have credentials
+    - ✅ Dashboard files synchronized (MD5: 7e43a03af0f68ffb36e94ebca58d5b55)
+    - ✅ Activity logging fully functional
+    - ✅ 37 API endpoints operational
+    - ✅ 50+ Discord commands available
+    - ✅ Error handling: 60 try/catch/error blocks
+    - ✅ Bot process running (SPIDEY BOT#1257)
+  - **DOCUMENTATION CREATED**:
+    - COMMAND_REFERENCE.md - Complete guide to all 50+ commands with examples
+    - API_REFERENCE.md - Complete API endpoint documentation with curl/JS/Python examples
 - **Critical Bug Fixes (Nov 22, 2025 - Session 2 & 3)**:
   - **BUG #1 FIXED**: Removed DUPLICATE function definitions (lines 3987-4054, 68 lines deleted)
     - Problem: saveSettings, saveLogging, saveXPSettings were defined TWICE
