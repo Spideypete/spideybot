@@ -1718,18 +1718,27 @@
                                     <input type="text" class="form-input" id="categoryName" placeholder="e.g., Gaming Roles"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Description</div>
-                                    <textarea class="form-input" id="categoryDesc" placeholder="Category description" style="height: 60px;"></textarea>
-                                </div>
-                                <div class="form-group">
                                     <div class="form-label">Message to Send</div>
-                                    <textarea class="form-input" id="categoryMessage" placeholder="Message to send when assigning roles" style="height: 60px;"></textarea>
+                                    <textarea class="form-input" id="categoryMessage" placeholder="Message to send when assigning roles" style="height: 50px;"></textarea>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Send Message in Channel</div>
                                     <input type="text" class="form-input" id="categoryChannel" placeholder="Select channel (or leave empty)"/>
                                 </div>
-                                <button class="btn btn-primary" onclick="createRoleCategory()">Create Category</button>
+                                
+                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.15);">
+                                    <div class="form-label" style="margin-bottom: 0.5rem;">Add Roles to This Category</div>
+                                    <div id="creatingRolesList" style="background: rgba(0, 0, 0, 0.2); border-radius: 5px; padding: 0.75rem; margin-bottom: 1rem; min-height: 50px; max-height: 180px; overflow-y: auto;">
+                                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; padding: 0.5rem;">Add roles below</div>
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                        <input type="text" class="form-input" id="creatingRoleInput" placeholder="e.g., Gaming or @Gaming" style="flex: 1;"/>
+                                        <button class="btn btn-primary" onclick="addRoleWhileCreating()" style="width: auto; padding: 0.4rem 0.8rem; white-space: nowrap;">Add Role</button>
+                                    </div>
+                                </div>
+                                
+                                <button class="btn btn-primary" onclick="createRoleCategory()" style="width: 100%; margin-top: 0.75rem;">Create Category</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -1754,11 +1763,23 @@
                                         <div class="form-label">Send Message in Channel</div>
                                         <input type="text" class="form-input" id="editCategoryChannel" placeholder="Select channel (or leave empty)"/>
                                     </div>
-                                    <div class="form-group">
-                                        <div class="form-label">Discord Role</div>
-                                        <input type="text" class="form-input" id="editCategoryRole" placeholder="Select or enter role name"/>
+                                    
+                                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.15);">
+                                        <div class="form-label" style="margin-bottom: 0.5rem;">Roles in This Category</div>
+                                        <div id="rolesList" style="background: rgba(0, 0, 0, 0.2); border-radius: 5px; padding: 0.75rem; margin-bottom: 1rem; min-height: 60px; max-height: 200px; overflow-y: auto;">
+                                            <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; padding: 0.5rem;">No roles yet</div>
+                                        </div>
                                     </div>
-                                    <button class="btn btn-primary" onclick="saveCategoryChanges()" style="margin-top: 0.5rem;">Save Changes</button>
+                                    
+                                    <div class="form-group">
+                                        <div class="form-label">Add New Role (format: Name or @RoleName)</div>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <input type="text" class="form-input" id="newRoleInput" placeholder="e.g., Gaming or @Gaming" style="flex: 1;"/>
+                                            <button class="btn btn-primary" onclick="addRoleToCategory()" style="width: auto; padding: 0.4rem 0.8rem; white-space: nowrap;">Add Role</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="btn btn-primary" onclick="saveCategoryChanges()" style="margin-top: 1rem; width: 100%;">Save All Changes</button>
                                 </div>
                             </div>
                         </div>
@@ -2508,6 +2529,8 @@
             }
         }
 
+        let currentEditingRoles = [];
+
         function loadCategoryDetails() {
             const categoryName = document.getElementById('editCategorySelect').value;
             const detailsDiv = document.getElementById('categoryDetails');
@@ -2521,9 +2544,131 @@
             document.getElementById('editCategoryName').value = categoryName || '';
             document.getElementById('editCategoryMessage').value = categoryData.message || '';
             document.getElementById('editCategoryChannel').value = categoryData.channel || '';
-            document.getElementById('editCategoryRole').value = categoryData.roles?.[0] || '';
+            document.getElementById('newRoleInput').value = '';
+            
+            // Store and display roles
+            currentEditingRoles = categoryData.roles || [];
+            displayRolesList();
             
             detailsDiv.style.display = 'block';
+        }
+
+        function displayRolesList() {
+            const rolesList = document.getElementById('rolesList');
+            
+            if (currentEditingRoles.length === 0) {
+                rolesList.innerHTML = '<div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; padding: 0.5rem;">No roles yet</div>';
+                return;
+            }
+            
+            rolesList.innerHTML = '';
+            currentEditingRoles.forEach((role, index) => {
+                const roleEl = document.createElement('div');
+                roleEl.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.5rem;
+                    background: rgba(var(--theme-color), 0.1);
+                    border-radius: 4px;
+                    margin-bottom: 0.5rem;
+                    font-size: 0.85rem;
+                `;
+                
+                const roleFormat = role.startsWith('@') ? role : `@${role}`;
+                roleEl.innerHTML = `
+                    <span>${roleFormat} - ${role.replace('@', '')}</span>
+                    <button onclick="removeRoleFromCategory(${index})" style="background: rgba(255, 107, 107, 0.3); border: none; color: #ff6b6b; padding: 0.25rem 0.5rem; border-radius: 3px; cursor: pointer; font-size: 0.75rem;">Remove</button>
+                `;
+                rolesList.appendChild(roleEl);
+            });
+        }
+
+        function addRoleToCategory() {
+            const input = document.getElementById('newRoleInput');
+            let roleName = input.value.trim();
+            
+            if (!roleName) {
+                alert('Please enter a role name');
+                return;
+            }
+            
+            // Remove @ if user included it
+            roleName = roleName.replace(/^@/, '');
+            
+            // Check for duplicates
+            if (currentEditingRoles.some(r => r.toLowerCase() === roleName.toLowerCase())) {
+                alert('This role is already added');
+                return;
+            }
+            
+            currentEditingRoles.push(roleName);
+            input.value = '';
+            displayRolesList();
+        }
+
+        function removeRoleFromCategory(index) {
+            currentEditingRoles.splice(index, 1);
+            displayRolesList();
+        }
+
+        let creatingCategoryRoles = [];
+
+        function addRoleWhileCreating() {
+            const input = document.getElementById('creatingRoleInput');
+            let roleName = input.value.trim();
+            
+            if (!roleName) {
+                alert('Please enter a role name');
+                return;
+            }
+            
+            roleName = roleName.replace(/^@/, '');
+            
+            if (creatingCategoryRoles.some(r => r.toLowerCase() === roleName.toLowerCase())) {
+                alert('This role is already added');
+                return;
+            }
+            
+            creatingCategoryRoles.push(roleName);
+            input.value = '';
+            displayCreatingRolesList();
+        }
+
+        function removeRoleWhileCreating(index) {
+            creatingCategoryRoles.splice(index, 1);
+            displayCreatingRolesList();
+        }
+
+        function displayCreatingRolesList() {
+            const rolesList = document.getElementById('creatingRolesList');
+            
+            if (creatingCategoryRoles.length === 0) {
+                rolesList.innerHTML = '<div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; padding: 0.5rem;">Add roles below</div>';
+                return;
+            }
+            
+            rolesList.innerHTML = '';
+            creatingCategoryRoles.forEach((role, index) => {
+                const roleEl = document.createElement('div');
+                roleEl.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.5rem;
+                    background: rgba(var(--theme-color), 0.1);
+                    border-radius: 4px;
+                    margin-bottom: 0.5rem;
+                    font-size: 0.85rem;
+                `;
+                
+                const roleFormat = role.startsWith('@') ? role : `@${role}`;
+                roleEl.innerHTML = `
+                    <span>${roleFormat} - ${role.replace('@', '')}</span>
+                    <button onclick="removeRoleWhileCreating(${index})" style="background: rgba(255, 107, 107, 0.3); border: none; color: #ff6b6b; padding: 0.25rem 0.5rem; border-radius: 3px; cursor: pointer; font-size: 0.75rem;">Remove</button>
+                `;
+                rolesList.appendChild(roleEl);
+            });
         }
 
         async function createRoleCategory() {
@@ -2536,6 +2681,11 @@
                 return;
             }
             
+            if (creatingCategoryRoles.length === 0) {
+                alert('Please add at least one role to this category');
+                return;
+            }
+            
             try {
                 const res = await fetch('/api/config/role-categories', {
                     method: 'POST',
@@ -2544,7 +2694,7 @@
                         categoryName: name,
                         message,
                         channel,
-                        roles: []
+                        roles: creatingCategoryRoles
                     })
                 });
                 
@@ -2553,6 +2703,9 @@
                     document.getElementById('categoryName').value = '';
                     document.getElementById('categoryMessage').value = '';
                     document.getElementById('categoryChannel').value = '';
+                    document.getElementById('creatingRoleInput').value = '';
+                    creatingCategoryRoles = [];
+                    displayCreatingRolesList();
                     loadRoleCategories(currentGuildId);
                 }
             } catch (err) {
@@ -2566,10 +2719,14 @@
             const newName = document.getElementById('editCategoryName').value;
             const message = document.getElementById('editCategoryMessage').value;
             const channel = document.getElementById('editCategoryChannel').value;
-            const role = document.getElementById('editCategoryRole').value;
             
             if (!newName) {
                 alert('Please enter a category name');
+                return;
+            }
+            
+            if (currentEditingRoles.length === 0) {
+                alert('Please add at least one role to this category');
                 return;
             }
             
@@ -2582,7 +2739,7 @@
                         categoryName: newName,
                         message,
                         channel,
-                        roles: role ? [role] : []
+                        roles: currentEditingRoles
                     })
                 });
                 
