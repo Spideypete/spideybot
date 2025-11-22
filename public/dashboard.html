@@ -324,7 +324,34 @@
         .header-left {
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 1rem;
+        }
+
+        .user-profile-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(var(--theme-color), 0.3);
+            border: 2px solid rgba(var(--theme-color), 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            object-fit: cover;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
         }
 
         .mode-toggle-container {
@@ -334,46 +361,23 @@
         }
 
         .mode-toggle {
-            width: 48px;
-            height: 26px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(var(--theme-color), 0.3);
-            border-radius: 13px;
             cursor: pointer;
-            position: relative;
+            font-size: 1.2rem;
             transition: all 0.3s ease;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.8);
+            user-select: none;
         }
 
         .mode-toggle:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(var(--theme-color), 0.6);
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px rgba(var(--theme-color), 0.2);
+            transform: scale(1.2);
         }
 
-        .mode-toggle.active {
-            background: rgba(var(--theme-color), 0.3);
-            border-color: rgba(var(--theme-color), 0.7);
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 12px rgba(var(--theme-color), 0.4);
+        .mode-toggle.dark-mode {
+            color: rgba(255, 255, 255, 0.9);
         }
 
-        .mode-toggle::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .mode-toggle.active::after {
-            left: 24px;
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 2px 8px rgba(var(--theme-color), 0.4);
+        .mode-toggle.light-mode {
+            color: rgba(64, 64, 64, 0.8);
         }
 
         body.light-mode {
@@ -478,6 +482,25 @@
             color: rgba(0, 0, 0, 0.9);
             background: rgba(var(--theme-color), 0.15);
             border-color: rgba(var(--theme-color), 0.5);
+        }
+
+        body.light-mode .header-icon-btn {
+            color: rgba(64, 64, 64, 0.8);
+        }
+
+        body.light-mode .header-icon-btn:hover {
+            color: rgba(64, 64, 64, 0.95);
+        }
+
+        body.light-mode .server-dropdown {
+            background: rgba(var(--theme-color), 0.05);
+            border: 1px solid rgba(var(--theme-color), 0.2);
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        body.light-mode .server-dropdown:hover {
+            background: rgba(var(--theme-color), 0.1);
+            border-color: rgba(var(--theme-color), 0.3);
         }
 
         body.light-mode .color-dropdown {
@@ -643,22 +666,39 @@
             gap: 1.5rem;
         }
 
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+        .server-dropdown {
+            padding: 0.5rem 1rem;
+            background: rgba(var(--theme-color), 0.1);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-radius: 6px;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            font-size: 0.768rem;
+            font-weight: 500;
+            transition: all 0.3s;
         }
 
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: rgba(var(--theme-color), 0.3);
-            border: 2px solid rgba(var(--theme-color), 0.6);
+        .server-dropdown:hover {
+            background: rgba(var(--theme-color), 0.2);
+            border-color: rgba(var(--theme-color), 0.5);
+        }
+
+        .header-icon-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .header-icon-btn:hover {
+            color: rgba(255, 255, 255, 0.95);
+            transform: scale(1.15);
         }
 
         .logout-btn {
@@ -669,6 +709,7 @@
             cursor: pointer;
             transition: all 0.3s;
             font-weight: 500;
+            border-radius: 6px;
         }
 
         .logout-btn:hover {
@@ -1073,20 +1114,16 @@
             <!-- Header -->
             <div class="header">
                 <div class="header-left">
-                    <div class="mode-toggle-container">
-                        <span style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; margin-right: 0.75rem;">●</span>
-                        <div class="mode-toggle active" id="modeToggle" onclick="toggleMode()"></div>
-                        <span style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; margin-left: 0.75rem;">○</span>
+                    <div class="user-profile-left">
+                        <div class="user-avatar" id="userAvatar">A</div>
                     </div>
                 </div>
                 <div class="header-right">
-                    <div class="user-profile">
-                        <div class="user-avatar" id="userAvatar">A</div>
-                        <div>
-                            <div style="color: #fff; font-weight: 500;" id="userName">Loading...</div>
-                            <div style="color: #888; font-size: 0.576rem;" id="userStatus">Discord</div>
-                        </div>
-                    </div>
+                    <select id="serverSelect" class="server-dropdown" onchange="changeServer()">
+                        <option value="">Select Server...</option>
+                    </select>
+                    <button class="header-icon-btn" id="modeToggle" onclick="toggleMode()" title="Toggle dark/light mode">🌙</button>
+                    <a href="https://discord.com/terms" target="_blank" class="header-icon-btn" title="Discord Terms of Service">💬</a>
                     <button class="logout-btn" onclick="logout()">Log Out</button>
                 </div>
             </div>
@@ -4104,12 +4141,24 @@
             
             if (isLightMode) {
                 body.classList.remove('light-mode');
-                toggle.classList.add('active');
+                toggle.textContent = '🌙';
+                toggle.classList.remove('light-mode');
+                toggle.classList.add('dark-mode');
                 localStorage.setItem('darkMode', 'true');
             } else {
                 body.classList.add('light-mode');
-                toggle.classList.remove('active');
+                toggle.textContent = '🌙';
+                toggle.classList.remove('dark-mode');
+                toggle.classList.add('light-mode');
                 localStorage.setItem('darkMode', 'false');
+            }
+        }
+
+        function changeServer() {
+            const serverId = document.getElementById('serverSelect').value;
+            if (serverId) {
+                localStorage.setItem('selectedServerId', serverId);
+                location.reload();
             }
         }
 
@@ -4168,29 +4217,55 @@
                 // Try username, then global_name, then tag
                 const displayName = user.username || user.global_name || user.tag || 'User';
                 const avatarLetter = displayName.charAt(0).toUpperCase();
+                const userAvatar = document.getElementById('userAvatar');
                 
-                if (displayName && displayName !== 'User') {
-                    // Update user profile display
-                    document.getElementById('userName').textContent = displayName;
-                    document.getElementById('userAvatar').textContent = avatarLetter;
-                    
-                    // Update creator access based on actual username
-                    const creatorSection = document.getElementById('creator-section');
-                    if (displayName === 'spidey') {
-                        if (creatorSection) creatorSection.style.display = 'block';
-                    } else {
-                        if (creatorSection) creatorSection.style.display = 'none';
-                    }
+                if (user.avatar) {
+                    // Discord CDN avatar URL: https://cdn.discordapp.com/avatars/{user_id}/{avatar_hash}.png
+                    const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+                    userAvatar.innerHTML = `<img src="${avatarUrl}" alt="${displayName}">`;
                 } else {
-                    // Fallback if no valid name
-                    document.getElementById('userName').textContent = 'User';
-                    document.getElementById('userAvatar').textContent = 'U';
+                    // Fallback to initials if no avatar
+                    userAvatar.textContent = avatarLetter;
+                }
+                
+                // Update creator access based on actual username
+                const creatorSection = document.getElementById('creator-section');
+                if (displayName === 'spidey') {
+                    if (creatorSection) creatorSection.style.display = 'block';
+                } else {
+                    if (creatorSection) creatorSection.style.display = 'none';
                 }
             } catch (err) {
                 console.error('Error loading user info:', err);
-                // Fallback display
-                document.getElementById('userName').textContent = 'User';
-                document.getElementById('userAvatar').textContent = 'U';
+                // Fallback display with initials
+                const userAvatar = document.getElementById('userAvatar');
+                userAvatar.textContent = 'U';
+            }
+        }
+
+        // Load servers into header dropdown
+        async function loadServersList() {
+            try {
+                const response = await fetch('/api/creator/servers');
+                const data = await response.json();
+                const serverSelect = document.getElementById('serverSelect');
+                const currentServerId = localStorage.getItem('selectedServerId');
+                
+                if (data.servers && data.servers.length > 0) {
+                    serverSelect.innerHTML = '';
+                    data.servers.forEach(server => {
+                        const option = document.createElement('option');
+                        option.value = server.id;
+                        option.textContent = server.name;
+                        if (server.id === currentServerId) {
+                            option.selected = true;
+                        }
+                        serverSelect.appendChild(option);
+                    });
+                    serverSelect.innerHTML = '<option value="">Select Server...</option>' + serverSelect.innerHTML;
+                }
+            } catch (err) {
+                console.error('Error loading servers for dropdown:', err);
             }
         }
         
@@ -4305,10 +4380,16 @@
             checkServerSelection();
             loadServerInfo();
             initCreatorAccess();
+            loadServersList();
             const isDarkMode = localStorage.getItem('darkMode') !== 'false';
+            const modeToggle = document.getElementById('modeToggle');
             if (!isDarkMode) {
                 document.body.classList.add('light-mode');
-                document.getElementById('modeToggle').classList.remove('active');
+                modeToggle.classList.add('light-mode');
+                modeToggle.classList.remove('dark-mode');
+            } else {
+                modeToggle.classList.add('dark-mode');
+                modeToggle.classList.remove('light-mode');
             }
             
             const savedColor = localStorage.getItem('selectedColor') || 'purple';
