@@ -2340,7 +2340,49 @@
                 .then(() => window.location.href = '/login');
         }
 
+        // Load Colors from LocalStorage
+        function loadSavedColors() {
+            const themeColor = localStorage.getItem('themeColor') || '#00d4ff';
+            const cyanAccent = localStorage.getItem('accentCyan') || '#00d4ff';
+            const purpleAccent = localStorage.getItem('accentPurple') || '#9146ff';
+            const pinkAccent = localStorage.getItem('accentPink') || '#ff69b4';
+            const textColor = localStorage.getItem('textColor') || '#ffffff';
+
+            // Apply colors to CSS
+            const themeRgb = hexToRgb(themeColor);
+            document.documentElement.style.setProperty('--theme-color', themeRgb);
+            document.documentElement.style.setProperty('--accent-cyan', cyanAccent);
+            document.documentElement.style.setProperty('--accent-purple', purpleAccent);
+            document.documentElement.style.setProperty('--accent-pink', pinkAccent);
+            document.documentElement.style.setProperty('--text-color', textColor);
+
+            // Update input values and labels
+            if (document.getElementById('themeColorPicker')) {
+                document.getElementById('themeColorPicker').value = themeColor;
+                document.getElementById('themeColorLabel').textContent = `${themeColor.toUpperCase()} (Custom)`;
+            }
+            if (document.getElementById('cyanColorPicker')) {
+                document.getElementById('cyanColorPicker').value = cyanAccent;
+                document.getElementById('cyanColorLabel').textContent = cyanAccent.toUpperCase();
+            }
+            if (document.getElementById('purpleColorPicker')) {
+                document.getElementById('purpleColorPicker').value = purpleAccent;
+                document.getElementById('purpleColorLabel').textContent = purpleAccent.toUpperCase();
+            }
+            if (document.getElementById('pinkColorPicker')) {
+                document.getElementById('pinkColorPicker').value = pinkAccent;
+                document.getElementById('pinkColorLabel').textContent = pinkAccent.toUpperCase();
+            }
+            if (document.getElementById('textColorPicker')) {
+                document.getElementById('textColorPicker').value = textColor;
+                document.getElementById('textColorLabel').textContent = textColor.toUpperCase();
+            }
+        }
+
         window.addEventListener('load', async () => {
+            // Load saved colors
+            loadSavedColors();
+
             // Load saved theme preference
             const savedTheme = localStorage.getItem('theme') || 'dark';
             if (savedTheme === 'light') {
@@ -2412,6 +2454,8 @@
             document.getElementById('themeColorPicker').value = color;
             document.getElementById('themeColorLabel').textContent = `${color.toUpperCase()} (Custom)`;
             localStorage.setItem('themeColor', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
         }
 
         function changeCyanAccent(color) {
@@ -2419,6 +2463,8 @@
             document.getElementById('cyanColorPicker').value = color;
             document.getElementById('cyanColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('accentCyan', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
         }
 
         function changePurpleAccent(color) {
@@ -2426,6 +2472,8 @@
             document.getElementById('purpleColorPicker').value = color;
             document.getElementById('purpleColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('accentPurple', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
         }
 
         function changePinkAccent(color) {
@@ -2433,6 +2481,8 @@
             document.getElementById('pinkColorPicker').value = color;
             document.getElementById('pinkColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('accentPink', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
         }
 
         function changeTextColor(color) {
@@ -2440,6 +2490,18 @@
             document.getElementById('textColorPicker').value = color;
             document.getElementById('textColorLabel').textContent = color.toUpperCase();
             localStorage.setItem('textColor', color);
+            showUnsavedNotification();
+            checkIfChangesReverted();
+        }
+
+        function resetColors() {
+            localStorage.removeItem('themeColor');
+            localStorage.removeItem('accentCyan');
+            localStorage.removeItem('accentPurple');
+            localStorage.removeItem('accentPink');
+            localStorage.removeItem('textColor');
+            loadSavedColors();
+            hideUnsavedNotification();
         }
 
         // Member Graph Functions
