@@ -255,6 +255,16 @@
             align-items: center;
             gap: 0.5rem;
             transition: all 0.3s ease;
+            max-width: 280px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        
+        .server-dropdown-btn span:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
         }
 
         .server-dropdown-btn:hover {
