@@ -1057,12 +1057,15 @@
         }
 
         .content-section {
-            display: none;
+            display: none !important;
             min-height: 100vh;
+            position: relative;
+            z-index: 1;
         }
 
         .content-section.active {
             display: block !important;
+            z-index: 10;
         }
 
         ::-webkit-scrollbar {
@@ -1284,7 +1287,7 @@
                 </div>
 
                 <!-- Member Events Section -->
-                <div id="events-section" class="content-section" style="display: none;">
+                <div id="events-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title">Member Activity</div>
                         <div class="content-subtitle">Live member events: joins, leaves, invites, and boosts</div>
@@ -2976,15 +2979,27 @@
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.addEventListener('click', function() {
                 const section = this.dataset.section;
+                console.log('🔵 Sidebar clicked:', section);
                 
                 document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
                 this.classList.add('active');
+                console.log('✅ Sidebar item marked active');
                 
-                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(s => {
+                    s.classList.remove('active');
+                    s.style.display = 'none';
+                });
+                console.log('✅ All sections hidden');
                 
                 const sectionEl = document.getElementById(section + '-section');
+                console.log('🔵 Looking for section element:', section + '-section', 'Found:', !!sectionEl);
+                
                 if (sectionEl) {
                     sectionEl.classList.add('active');
+                    sectionEl.style.display = 'block';
+                    console.log('✅ Section shown:', section);
+                } else {
+                    console.error('❌ Section not found:', section + '-section');
                 }
             });
         });
