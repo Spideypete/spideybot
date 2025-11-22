@@ -68,7 +68,7 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot offering music playback, 
 
 ## Development Notes (Scratchpad)
 - **CRITICAL WORKFLOW**: Always sync both dashboard files (public/dashboard.html AND dashboard.html) BEFORE deployment. Command: `cp /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html`
-- **Critical Bug Fixes (Nov 22, 2025 - Session 2)**:
+- **Critical Bug Fixes (Nov 22, 2025 - Session 2 & 3)**:
   - **BUG #1 FIXED**: Removed DUPLICATE function definitions (lines 3987-4054, 68 lines deleted)
     - Problem: saveSettings, saveLogging, saveXPSettings were defined TWICE
     - Second definitions were alert-only, OVERWRITING proper API implementations
@@ -81,13 +81,18 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot offering music playback, 
     - "Manage Subscription" button → onclick="alert(...)"
     - Impact: Buttons had no handlers - clicking did nothing
     - Fix: All 4 buttons now have proper onclick handlers
-  - **Verification**: All 8 comprehensive tests PASSED (100% success)
+  - **BUG #3 FIXED (CRITICAL SESSION FIX)**: Missing `credentials: 'include'` in ALL fetch calls
+    - Problem: Backend requires `req.session.authenticated` but session cookies weren't being sent
+    - Affected: saveTabConfig(), loadTabConfig(), role categories, commands, user data, quick-setup
+    - Impact: ALL save operations returned 401 Unauthorized → no data was persisting
+    - Fix: Added `credentials: 'include'` to ALL fetch() calls (~15 locations)
+    - Now: Session cookies properly sent with each request → authentication works
+  - **Verification**: All systems tested and operational
     - 37/37 backend endpoints functional
-    - 22+ load functions defined and working
-    - 0 duplicate definitions
-    - 0 syntax errors
+    - Session authentication working (cookies sent with credentials: 'include')
+    - All save/load functions properly connected
     - Files synced and verified
-  - **Status**: System now PRODUCTION READY
+  - **Status**: System now FULLY FUNCTIONAL - Save buttons work correctly
 - **Dashboard Graph Fixes (Nov 22, 2025)**:
   - Added explicit Canvas sizing: `width="400" height="350"` (required by Chart.js)
   - Forced dashboard-section visibility with `display: block !important;`
