@@ -260,6 +260,123 @@
             z-index: 100;
         }
 
+        .server-selector-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .server-selector-content {
+            background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
+            border: 2px solid rgba(var(--theme-color), 0.4);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 550px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(var(--theme-color), 0.3), inset 0 0 20px rgba(var(--theme-color), 0.1);
+        }
+
+        .server-selector-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #9146FF 0%, #00D4FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .server-selector-subtitle {
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .server-selector-content select {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: rgba(var(--theme-color), 0.12);
+            border: 1.5px solid rgba(var(--theme-color), 0.3);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .server-selector-content select:hover {
+            background: rgba(var(--theme-color), 0.18);
+            border-color: rgba(var(--theme-color), 0.5);
+            box-shadow: 0 0 15px rgba(var(--theme-color), 0.2);
+        }
+
+        .server-selector-content select:focus {
+            outline: none;
+            background: rgba(var(--theme-color), 0.2);
+            border-color: rgba(var(--theme-color), 0.6);
+            box-shadow: 0 0 20px rgba(var(--theme-color), 0.3);
+        }
+
+        .server-selector-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .server-selector-btn {
+            flex: 1;
+            padding: 0.9rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .server-selector-btn.continue {
+            background: linear-gradient(135deg, rgba(145, 70, 255, 0.9) 0%, rgba(0, 212, 255, 0.9) 100%);
+            color: #000;
+            box-shadow: 0 0 15px rgba(var(--theme-color), 0.4);
+        }
+
+        .server-selector-btn.continue:hover {
+            box-shadow: 0 0 25px rgba(var(--theme-color), 0.6);
+            transform: translateY(-2px);
+        }
+
+        .server-selector-btn.invite {
+            background: rgba(var(--theme-color), 0.15);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1.5px solid rgba(var(--theme-color), 0.4);
+        }
+
+        .server-selector-btn.invite:hover {
+            background: rgba(var(--theme-color), 0.25);
+            border-color: rgba(var(--theme-color), 0.6);
+            box-shadow: 0 0 15px rgba(var(--theme-color), 0.2);
+        }
+
         .header-left {
             display: flex;
             align-items: center;
@@ -1101,14 +1218,17 @@
         </div>
 
         <!-- Server Selector Modal -->
-        <div id="serverSelectorModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center; z-index: 9999;">
-            <div style="background: #0a0e27; border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 15px; padding: 2rem; width: 90%; max-width: 500px; text-align: center;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Select a Server</div>
-                <div style="color: #888; font-size: 0.768rem; margin-bottom: 1.5rem;">Choose a server to manage with the admin panel</div>
-                <select id="serverSelect" style="width: 100%; padding: 0.75rem; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px; color: #fff; font-size: 0.768rem; margin-bottom: 1rem;">
+        <div id="serverSelectorModal" class="server-selector-modal">
+            <div class="server-selector-content">
+                <div class="server-selector-title">🕷️ Select a Server</div>
+                <div class="server-selector-subtitle">Choose a server to manage with the admin panel</div>
+                <select id="serverSelect">
                     <option value="">Loading servers...</option>
                 </select>
-                <button onclick="selectServer()" style="width: 100%; padding: 0.75rem; background: rgba(0, 212, 255, 0.8); color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.768rem;">Continue</button>
+                <div class="server-selector-buttons">
+                    <button onclick="selectServer()" class="server-selector-btn continue">Continue</button>
+                    <button onclick="inviteServer()" class="server-selector-btn invite">+ Invite Bot</button>
+                </div>
             </div>
         </div>
 
@@ -4205,6 +4325,26 @@
             selectedServerId = serverId;
             localStorage.setItem('selectedServerId', serverId);
             document.getElementById('serverSelectorModal').style.display = 'none';
+        }
+
+        function inviteServer() {
+            const clientId = '1234567890'; // Replace with actual CLIENT_ID
+            const permissions = 8; // Administrator
+            const scopes = 'bot';
+            const redirectUri = window.location.origin + '/auth/discord/callback';
+            const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&scope=${scopes}&permissions=${permissions}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+            
+            // Fetch client ID from backend
+            fetch('/api/config')
+                .then(res => res.json())
+                .then(data => {
+                    const finalInviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${data.clientId}&scope=bot&permissions=8&redirect_uri=${encodeURIComponent(redirectUri)}`;
+                    window.open(finalInviteUrl, '_blank');
+                })
+                .catch(err => {
+                    console.error('Error fetching CLIENT_ID:', err);
+                    window.open(inviteUrl, '_blank');
+                });
         }
 
         // Fetch and display logged-in user info
