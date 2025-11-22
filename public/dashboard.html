@@ -4129,7 +4129,13 @@
         // Fetch and display logged-in user info
         async function loadUserInfo() {
             try {
-                const res = await fetch('/api/user');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const res = await fetch('/api/user', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const user = await res.json();
                 
                 if (user && user.username) {
@@ -4144,9 +4150,16 @@
                     } else {
                         if (creatorSection) creatorSection.style.display = 'none';
                     }
+                } else {
+                    // Fallback if no username
+                    document.getElementById('userName').textContent = 'User';
+                    document.getElementById('userAvatar').textContent = 'U';
                 }
             } catch (err) {
                 console.error('Error loading user info:', err);
+                // Fallback display
+                document.getElementById('userName').textContent = 'User';
+                document.getElementById('userAvatar').textContent = 'U';
             }
         }
         
