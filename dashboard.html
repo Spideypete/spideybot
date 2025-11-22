@@ -1186,78 +1186,6 @@
                         </div>
                     </div>
 
-                    <div class="content-grid" style="margin-top: 2rem;">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Welcome Message</div>
-                                    <textarea class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
-                                </div>
-                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username, {count} for member number</small>
-                                <button class="btn btn-primary" onclick="saveWelcome()">Save Welcome</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Goodbye Message</div>
-                                    <textarea class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
-                                </div>
-                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username</small>
-                                <button class="btn btn-primary" onclick="saveGoodbye()">Save Goodbye</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="content-grid" style="margin-top: 2rem;">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🔐 Permissions</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Only @Members can use commands</span></label>
-                                </div>
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Admins bypass all restrictions</span></label>
-                                </div>
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> <span>Allow DM commands</span></label>
-                                </div>
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Require confirmation for dangerous actions</span></label>
-                                </div>
-                                <button class="btn btn-primary" onclick="savePermissions()">Save Permissions</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎯 Leveling Settings</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">XP per Message</div>
-                                    <input type="number" class="form-input" placeholder="10-30" value="10"/>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">XP to Level Up</div>
-                                    <input type="number" class="form-input" placeholder="500" value="500"/>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Max Level</div>
-                                    <input type="number" class="form-input" placeholder="100" value="100"/>
-                                </div>
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Auto-assign level roles</span></label>
-                                </div>
-                                <button class="btn btn-primary" onclick="saveLeveling()">Save Leveling</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Logging Section -->
@@ -1350,6 +1278,27 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Ban Raid Users</label>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-grid" style="margin-top: 2rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🔐 Permissions</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Only @Members can use commands</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Admins bypass all restrictions</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> <span>Allow DM commands</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Require confirmation for dangerous actions</span></label>
+                                </div>
+                                <button class="btn btn-primary" onclick="savePermissions()">Save Permissions</button>
                             </div>
                         </div>
                     </div>
@@ -1457,37 +1406,31 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👋 Welcome Message</div></div>
+                            <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Welcome Message</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                    <div class="form-label">Welcome Message</div>
+                                    <textarea class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Message</div>
-                                    <textarea class="form-input" placeholder="Welcome {user} to {server}!" style="height: 80px;"></textarea>
-                                </div>
-                                <button class="btn btn-primary">Save</button>
+                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username, {count} for member number</small>
+                                <button class="btn btn-primary" onclick="saveWelcome()">Save Welcome</button>
                             </div>
                         </div>
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Enable Goodbye Message</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                    <div class="form-label">Goodbye Message</div>
+                                    <textarea class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Message</div>
-                                    <textarea class="form-input" placeholder="{user} has left the server" style="height: 80px;"></textarea>
-                                </div>
-                                <button class="btn btn-primary">Save</button>
+                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username</small>
+                                <button class="btn btn-primary" onclick="saveGoodbye()">Save Goodbye</button>
                             </div>
                         </div>
                     </div>
@@ -1602,6 +1545,30 @@
                                     <input type="text" class="form-input" placeholder="Select role"/>
                                 </div>
                                 <button class="btn btn-primary">Add Level Role</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-grid" style="margin-top: 2rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎯 Leveling Settings</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">XP per Message</div>
+                                    <input type="number" class="form-input" placeholder="10-30" value="10"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">XP to Level Up</div>
+                                    <input type="number" class="form-input" placeholder="500" value="500"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Max Level</div>
+                                    <input type="number" class="form-input" placeholder="100" value="100"/>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Auto-assign level roles</span></label>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveLeveling()">Save Leveling</button>
                             </div>
                         </div>
                     </div>
