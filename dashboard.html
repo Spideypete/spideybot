@@ -2562,13 +2562,17 @@
             }
         }
 
-        function selectServer(serverId, serverName) {
+        async function selectServer(serverId, serverName) {
             localStorage.setItem('selectedServerId', serverId);
             document.getElementById('serverDisplayName').textContent = serverName;
             document.getElementById('serverDropdownMenu').classList.remove('active');
             
-            // Load role categories for the selected server
-            loadRoleCategories(serverId);
+            console.log('🔄 Server switched to:', serverName, '(' + serverId + ')');
+            
+            // Load ALL data for the selected server
+            await loadRoleCategories(serverId);
+            await loadMemberGraphs();
+            await loadMemberEvents();
         }
 
         // Store current guild for category management
@@ -3120,34 +3124,44 @@
                     // Set user role/status
                     document.getElementById('userRole').textContent = 'Authenticated';
                     
-                    // Pre-load servers in background so dropdown is ready
+                    // Pre-load and auto-select first server if none selected
                     try {
                         const serverRes = await fetch('/api/creator/servers');
                         if (serverRes.ok) {
                             const serverData = await serverRes.json();
+                            console.log('📡 Servers loaded:', serverData.servers?.length || 0);
                             
-                            // Update server dropdown display name if one is selected
-                            const selectedServerId = localStorage.getItem('selectedServerId');
+                            let selectedServerId = localStorage.getItem('selectedServerId');
+                            
+                            // If no server selected and servers available, auto-select first one
+                            if (!selectedServerId && serverData.servers && serverData.servers.length > 0) {
+                                selectedServerId = serverData.servers[0].id;
+                                localStorage.setItem('selectedServerId', selectedServerId);
+                                console.log('✅ Auto-selected first server:', selectedServerId);
+                            }
+                            
+                            // Update server dropdown display name
                             if (selectedServerId && serverData.servers) {
                                 const server = serverData.servers.find(s => s.id === selectedServerId);
                                 if (server) {
                                     document.getElementById('serverDisplayName').textContent = server.name;
+                                    console.log('📝 Server display updated:', server.name);
                                 }
+                            }
+                            
+                            // NOW load all data for the selected server
+                            if (selectedServerId) {
+                                console.log('🔄 Loading data for server:', selectedServerId);
+                                await loadRoleCategories(selectedServerId);
+                                await loadMemberGraphs();
+                                await loadMemberEvents();
+                                
+                                // Refresh member events every 3 seconds
+                                setInterval(loadMemberEvents, 3000);
                             }
                         }
                     } catch (err) {
-                        console.error('Failed to pre-load servers:', err);
-                    }
-
-                    // Load data for selected server
-                    const selectedServerId = localStorage.getItem('selectedServerId');
-                    if (selectedServerId) {
-                        loadRoleCategories(selectedServerId);
-                        setTimeout(loadMemberGraphs, 200);
-                        setTimeout(loadMemberEvents, 300);
-                        
-                        // Load member events every 3 seconds for live updates
-                        setInterval(loadMemberEvents, 3000);
+                        console.error('Failed to load servers:', err);
                     }
                 } else {
                     window.location.href = '/login';
