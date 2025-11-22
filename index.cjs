@@ -2429,40 +2429,87 @@ app.get("/", (req, res) => {
     </div>
   </nav>
   <div class="hero">
-    <h1>The best all-in-one bot for Discord</h1>
-    <p>SPIDEY BOT is a complete Discord bot trusted by servers worldwide. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
+    <h1>Meet 🕷️ SPIDEY BOT – Your Server's Ultimate Tech Guardian</h1>
+    <p>SPIDEY BOT blends powerful intelligence with mystical powers to bring order, fun, and automation to your Discord server. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
     <div class="btn-group">
-      <a id="addToDiscord" class="btn btn-primary">Add to Discord</a>
-      <a href="#features" class="btn btn-secondary">See Features</a>
+      <a id="addToDiscord" class="btn btn-primary">Invite To Guild →</a>
+      <a href="#features" class="btn btn-secondary">Documentation →</a>
     </div>
   </div>
+
   <div class="container">
-    <h2 style="margin-top: 3rem; margin-bottom: 2rem; font-size: 2rem;">✨ Features</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>🎵 Music Player</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">YouTube search, queue management, loop, shuffle, and volume control</p>
+    <h2 style="margin-top: 4rem; margin-bottom: 3rem; font-size: 2.2rem; text-align: center; color: #fff;">✨ Core Features</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎵 Music Playback</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Plays high-quality music in voice channels from YouTube with queue management, looping, and shuffle</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>🛡️ Moderation</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Kick, ban, warn, mute with automatic logging</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🛡️ Auto Moderation</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Detects and removes spam, bad words, and raids automatically with intelligent filtering</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>📈 Leveling/XP</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Passive XP gains, auto-assigned level roles with emoji badges</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">👋 Welcome Messages</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Greets new members with customizable messages and automatically assigns welcome roles</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>💰 Economy</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Daily rewards, work commands, transfers, and leaderboards</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎭 Reaction Roles</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Assigns roles to users when they click reaction emojis on messages</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>📱 Social Media</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Monitor Twitch, TikTok, Kick streamers with auto-alerts</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">📈 Leveling System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Tracks user activity and rewards XP with level-based roles and emoji badges</p>
+        </div>
       </div>
-      <div style="background: rgba(145, 70, 255, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #9146FF;">
-        <h3>⚙️ Admin Dashboard</h3>
-        <p style="color: #aaa; font-size: 0.9rem;">Configure all bot settings with an intuitive web dashboard</p>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎫 Ticket Support</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Creates private support channels for members to ask questions and get help</p>
+        </div>
       </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">📝 Logging System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Logs server events like joins, bans, edits, and deletes for audit trails</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">💰 Economy System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Daily rewards, work commands, transfers, and leaderboards for competitive fun</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- And So Much More Section -->
+    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.2) 0%, rgba(145, 70, 255, 0.1) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
+      <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 2rem;">💎 And So Much More! 💎</h2>
+      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">From seamless integrations to advanced settings, we've got everything you need and more! Need help or have questions? Join our community Discord and connect with us!</p>
+      <a href="https://discord.com/invite/spideybot" target="_blank" class="btn btn-primary">Join Our Discord →</a>
+    </div>
+
+    <!-- Support Section -->
+    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem 2rem; text-align: center; margin-bottom: 4rem;">
+      <h2 style="color: #fff; margin-bottom: 1rem; font-size: 2rem;">🚀 We Are Here For You!</h2>
+      <p style="color: #ccc; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;">Whether you're just getting started or managing a massive community, we're here to offer real support and powerful features that scale with you. Need a hand? Reach out through our support hub or connect with others in our Discord server anytime!</p>
+      <a href="/login" class="btn btn-primary">Access Dashboard →</a>
     </div>
   </div>
   <footer>
