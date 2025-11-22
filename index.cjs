@@ -242,8 +242,21 @@ function addActivity(guildId, icon, text, action, time = null) {
 
 // ============== WELCOME NEW MEMBERS ==============
 client.on("guildMemberAdd", async (member) => {
-  console.log(`New member joined: ${member.user.tag} in ${member.guild.name}`);
   addActivity(member.guild.id, "👤", member.user.username, "joined the server");
+  
+  // Track new member joins
+  const config = loadConfig();
+  if (!config.guilds[member.guild.id]) config.guilds[member.guild.id] = {};
+  if (!config.guilds[member.guild.id].memberEvents) config.guilds[member.guild.id].memberEvents = [];
+  
+  config.guilds[member.guild.id].memberEvents.unshift({
+    type: "join",
+    user: member.user.username,
+    userId: member.user.id,
+    timestamp: new Date().toLocaleString()
+  });
+  config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
   const guildConfig = getGuildConfig(member.guild.id);
   if (!guildConfig.welcomeChannelId) return;
@@ -264,6 +277,50 @@ client.on("guildMemberAdd", async (member) => {
     } catch (error) {
       console.error(`Failed to send welcome: ${error.message}`);
     }
+  }
+});
+
+// ============== MEMBER LEAVES ==============
+client.on("guildMemberRemove", async (member) => {
+  addActivity(member.guild.id, "👋", member.user.username, "left the server");
+  
+  // Track member leaves
+  const config = loadConfig();
+  if (!config.guilds[member.guild.id]) config.guilds[member.guild.id] = {};
+  if (!config.guilds[member.guild.id].memberEvents) config.guilds[member.guild.id].memberEvents = [];
+  
+  config.guilds[member.guild.id].memberEvents.unshift({
+    type: "leave",
+    user: member.user.username,
+    userId: member.user.id,
+    timestamp: new Date().toLocaleString()
+  });
+  config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+});
+
+// ============== MEMBER UPDATES (BOOSTS, ROLES) ==============
+client.on("guildMemberUpdate", async (oldMember, newMember) => {
+  // Check if member got a boost role
+  const oldBoostRole = oldMember.roles.cache.some(r => r.name === "Server Booster" || r.name === "Nitro Booster");
+  const newBoostRole = newMember.roles.cache.some(r => r.name === "Server Booster" || r.name === "Nitro Booster");
+  
+  if (!oldBoostRole && newBoostRole) {
+    addActivity(newMember.guild.id, "💎", newMember.user.username, "boosted the server");
+    
+    // Track boosts
+    const config = loadConfig();
+    if (!config.guilds[newMember.guild.id]) config.guilds[newMember.guild.id] = {};
+    if (!config.guilds[newMember.guild.id].memberEvents) config.guilds[newMember.guild.id].memberEvents = [];
+    
+    config.guilds[newMember.guild.id].memberEvents.unshift({
+      type: "boost",
+      user: newMember.user.username,
+      userId: newMember.user.id,
+      timestamp: new Date().toLocaleString()
+    });
+    config.guilds[newMember.guild.id].memberEvents = config.guilds[newMember.guild.id].memberEvents.slice(0, 50);
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   }
 });
 
@@ -3545,6 +3602,17 @@ app.get("/api/member-stats/:guildId", (req, res) => {
     console.error('Failed to fetch members:', err);
     res.status(500).json({ error: 'Failed to fetch member data' });
   });
+});
+
+// Get member events (joins, leaves, boosts)
+app.get("/api/member-events/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const config = loadConfig();
+  const guildId = req.params.guildId;
+  const events = config.guilds[guildId]?.memberEvents || [];
+  
+  res.json({ events });
 });
 
 // ============== QUICK SETUP ENDPOINTS ==============

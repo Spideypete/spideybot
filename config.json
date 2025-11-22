@@ -70,10 +70,10 @@
     },
     "role-categories": {
       "categoryName": "",
-      "message": "s",
+      "message": "S",
       "channel": "s",
       "roles": [
-        "s"
+        "S"
       ],
       "categoryMessage": "",
       "categoryChannel": "",

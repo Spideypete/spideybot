@@ -1192,6 +1192,7 @@
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">MONITORING</div>
                     <ul class="sidebar-menu">
+                        <li class="sidebar-item" data-section="events"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span>Member Activity</span></li>
                         <li class="sidebar-item" data-section="social-notifs"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6l3-6z"/></svg></span><span>Social Notifs</span></li>
                         <li class="sidebar-item" data-section="invite-tracking"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><span>Invites</span></li>
                         <li class="sidebar-item" data-section="message-counting"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>Messages</span></li>
@@ -1275,6 +1276,24 @@
                                         </select>
                                     </div>
                                     <div class="graph-container"><canvas id="customChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member Events Section -->
+                <div id="events-section" class="content-section" style="display: none;">
+                    <div class="content-header">
+                        <div class="content-title">Member Activity</div>
+                        <div class="content-subtitle">Live member events: joins, leaves, invites, and boosts</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel" style="grid-column: 1 / -1;">
+                            <div class="panel-header"><div class="panel-title">📜 Recent Member Events</div></div>
+                            <div class="panel-content">
+                                <div id="memberEventsList" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 400px; overflow-y: auto;">
+                                    <div style="color: rgba(255, 255, 255, 0.5); padding: 1rem; text-align: center;">Loading events...</div>
                                 </div>
                             </div>
                         </div>
@@ -3055,6 +3074,10 @@
                     if (selectedServerId) {
                         loadRoleCategories(selectedServerId);
                         setTimeout(loadMemberGraphs, 200);
+                        setTimeout(loadMemberEvents, 300);
+                        
+                        // Load member events every 3 seconds for live updates
+                        setInterval(loadMemberEvents, 3000);
                     }
                 } else {
                     window.location.href = '/login';
@@ -3273,6 +3296,75 @@
             });
         }
 
+        // Load and display member events
+        async function loadMemberEvents() {
+            const selectedServerId = localStorage.getItem('selectedServerId');
+            if (!selectedServerId) return;
+
+            try {
+                const res = await fetch(`/api/member-events/${selectedServerId}`);
+                if (!res.ok) return;
+                const data = await res.json();
+
+                const eventsList = document.getElementById('memberEventsList');
+                if (!eventsList) return;
+
+                if (!data.events || data.events.length === 0) {
+                    eventsList.innerHTML = '<div style="color: rgba(255, 255, 255, 0.5); padding: 1rem; text-align: center;">No member events yet</div>';
+                    return;
+                }
+
+                eventsList.innerHTML = '';
+                data.events.forEach(event => {
+                    const eventEl = document.createElement('div');
+                    let icon = '👤';
+                    let actionText = '';
+                    let bgColor = 'rgba(0, 212, 255, 0.1)';
+                    let borderColor = 'rgba(0, 212, 255, 0.3)';
+
+                    if (event.type === 'join') {
+                        icon = '👤';
+                        actionText = 'joined the server';
+                        bgColor = 'rgba(0, 212, 255, 0.1)';
+                        borderColor = 'rgba(0, 212, 255, 0.3)';
+                    } else if (event.type === 'leave') {
+                        icon = '👋';
+                        actionText = 'left the server';
+                        bgColor = 'rgba(255, 107, 107, 0.1)';
+                        borderColor = 'rgba(255, 107, 107, 0.3)';
+                    } else if (event.type === 'boost') {
+                        icon = '💎';
+                        actionText = 'boosted the server';
+                        bgColor = 'rgba(255, 192, 61, 0.1)';
+                        borderColor = 'rgba(255, 192, 61, 0.3)';
+                    }
+
+                    eventEl.style.cssText = `
+                        background: ${bgColor};
+                        border: 1px solid ${borderColor};
+                        border-radius: 6px;
+                        padding: 0.75rem;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    `;
+
+                    eventEl.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.2rem;">${icon}</span>
+                            <div>
+                                <div style="font-weight: 600; color: #fff;">${event.user}</div>
+                                <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">${actionText}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.5);">${event.timestamp}</div>
+                    `;
+                    eventsList.appendChild(eventEl);
+                });
+            } catch (err) {
+                console.error('Failed to load member events:', err);
+            }
+        }
 
         function resetColors() {
             changeThemeColor('#00d4ff');
