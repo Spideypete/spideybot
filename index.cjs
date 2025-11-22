@@ -2438,8 +2438,8 @@ app.get("/", (req, res) => {
   <nav>
     <div class="logo">SPIDEY BOT</div>
     <div>
-      <a href="#home">Home</a>
-      <a href="#features">Features</a>
+      <a href="/">Home</a>
+      <a href="/commands">Features</a>
       <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
     </div>
   </nav>
@@ -2534,8 +2534,8 @@ app.get("/", (req, res) => {
       <div class="footer-section">
         <h3>Quick Links</h3>
         <ul>
-          <li><a href="#home">Home</a></li>
-          <li><a href="#features">Features</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="/commands">Features</a></li>
           <li><a href="/login">Admin</a></li>
         </ul>
       </div>
@@ -2549,9 +2549,9 @@ app.get("/", (req, res) => {
       <div class="footer-section">
         <h3>Community</h3>
         <ul>
-          <li><a href="https://discord.com/invite/spideybot" target="_blank">Discord Server</a></li>
-          <li><a href="https://twitter.com" target="_blank">Twitter</a></li>
-          <li><a href="https://github.com" target="_blank">GitHub</a></li>
+          <li><a href="#" onclick="return false;">Discord Server</a></li>
+          <li><a href="#" onclick="return false;">Twitter</a></li>
+          <li><a href="#" onclick="return false;">GitHub</a></li>
         </ul>
       </div>
       <div class="footer-section">
