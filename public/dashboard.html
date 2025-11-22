@@ -3323,57 +3323,54 @@
 
             // ONE COMBINED BAR CHART with all member types
             const ctx = document.getElementById('allMembersChart');
-            console.log('🔵 Canvas element found:', !!ctx);
             if (ctx && typeof Chart !== 'undefined') {
-                console.log('🔵 Creating bar chart...');
                 try {
                     if (charts.allMembers) {
-                        console.log('🔵 Destroying old chart');
                         charts.allMembers.destroy();
                     }
-                } catch (e) {
-                    console.log('ℹ️ No old chart to destroy');
-                }
-                charts.allMembers = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Members', 'Verified', 'Bots', 'Admins', 'Moderators'],
-                        datasets: [{
-                            label: 'Count',
-                            data: [stats.members, stats.verified, stats.bots, stats.admins, stats.mods],
-                            backgroundColor: ['#00d4ff', '#00ff88', '#9146ff', '#ff69b4', '#ff6b35'],
-                            borderColor: ['rgba(0,212,255,0.3)', 'rgba(0,255,136,0.3)', 'rgba(145,70,255,0.3)', 'rgba(255,105,180,0.3)', 'rgba(255,107,53,0.3)'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { labels: { color: '#fff' } },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.label + ': ' + context.parsed.y;
+                    charts.allMembers = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Members', 'Verified', 'Bots', 'Admins', 'Moderators'],
+                            datasets: [{
+                                label: 'Count',
+                                data: [stats.members, stats.verified, stats.bots, stats.admins, stats.mods],
+                                backgroundColor: ['#00d4ff', '#00ff88', '#9146ff', '#ff69b4', '#ff6b35'],
+                                borderColor: ['rgba(0,212,255,0.3)', 'rgba(0,255,136,0.3)', 'rgba(145,70,255,0.3)', 'rgba(255,105,180,0.3)', 'rgba(255,107,53,0.3)'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { labels: { color: '#fff' } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.label + ': ' + context.parsed.y;
+                                        }
                                     }
                                 }
+                            },
+                            scales: { 
+                                y: { 
+                                    ticks: { color: '#fff' }, 
+                                    grid: { color: 'rgba(255,255,255,0.1)' },
+                                    beginAtZero: true
+                                }, 
+                                x: { 
+                                    ticks: { color: '#fff' } 
+                                } 
                             }
-                        },
-                        scales: { 
-                            y: { 
-                                ticks: { color: '#fff' }, 
-                                grid: { color: 'rgba(255,255,255,0.1)' },
-                                beginAtZero: true
-                            }, 
-                            x: { 
-                                ticks: { color: '#fff' } 
-                            } 
                         }
-                    }
-                });
-                console.log('✅ Bar chart created successfully');
+                    });
+                    console.log('✅ Bar chart rendered');
+                } catch (e) {
+                    console.error('Chart creation error:', e);
+                }
             } else {
-                console.error('❌ Canvas not found or Chart.js not loaded:', { ctx: !!ctx, Chart: typeof Chart });
+                console.warn('Canvas not found or Chart.js not available');
             }
 
             // Populate role dropdown
