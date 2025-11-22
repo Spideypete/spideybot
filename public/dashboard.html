@@ -115,13 +115,15 @@
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(0, 212, 255, 0.1) 100%);
+            background: rgba(10, 20, 40, 0.25);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(var(--theme-color), 0.2);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             height: 70px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .header-left {
@@ -460,10 +462,12 @@
         /* Sidebar */
         .sidebar {
             width: 220px;
-            background: var(--bg-primary);
+            background: rgba(10, 20, 40, 0.2);
+            backdrop-filter: blur(10px);
             border-right: 1px solid rgba(var(--theme-color), 0.2);
             overflow-y: auto;
             padding: 1.5rem 0;
+            box-shadow: 8px 0 32px rgba(0, 0, 0, 0.2);
         }
 
         .sidebar-section {
@@ -534,7 +538,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 2rem;
-            background: var(--bg-primary);
+            background: transparent;
         }
 
         .content-header {
@@ -567,16 +571,19 @@
 
         /* Panels */
         .panel {
-            background: var(--bg-secondary);
+            background: rgba(20, 30, 60, 0.25);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(var(--theme-color), 0.2);
             border-radius: 12px;
             padding: 1.5rem;
             transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
 
         .panel:hover {
+            background: rgba(20, 30, 60, 0.35);
             border-color: rgba(var(--theme-color), 0.4);
-            box-shadow: 0 0 20px rgba(var(--theme-color), 0.1);
+            box-shadow: 0 8px 32px rgba(var(--theme-color), 0.15);
         }
 
         .panel-header {
