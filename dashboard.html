@@ -4215,8 +4215,36 @@
                 if (server) {
                     document.getElementById('serverDisplayName').textContent = server.name;
                     document.getElementById('currentServerName').textContent = server.name;
-                    if (server.icon) {
-                        document.getElementById('serverIcon').src = server.icon;
+                    
+                    const serverIcon = document.getElementById('serverIcon');
+                    if (server.icon && server.icon.includes('http')) {
+                        serverIcon.src = server.icon;
+                        serverIcon.style.display = 'block';
+                    } else {
+                        // Fallback: show server initials
+                        serverIcon.style.display = 'none';
+                        const initials = server.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                        const serverInitials = document.createElement('div');
+                        serverInitials.id = 'serverInitials';
+                        serverInitials.style.cssText = `
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            background: rgba(var(--theme-color), 0.3);
+                            border: 2px solid rgba(var(--theme-color), 0.6);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: rgba(255, 255, 255, 0.95);
+                            font-weight: 600;
+                            margin-bottom: 0.5rem;
+                            font-size: 0.9rem;
+                        `;
+                        serverInitials.textContent = initials;
+                        const iconParent = serverIcon.parentElement;
+                        const oldInitials = iconParent.querySelector('#serverInitials');
+                        if (oldInitials) oldInitials.remove();
+                        iconParent.insertBefore(serverInitials, serverIcon);
                     }
                 }
             } catch (err) {
