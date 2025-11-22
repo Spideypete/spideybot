@@ -2639,49 +2639,55 @@
                 return;
             }
 
-            // Collect all form data from all sections
-            const formData = {};
-            const sections = {
-                'settings': ['Language', 'Prefix'], // From visible inputs
-                'server-guard': ['Users per 10s', 'Ban Raid Users'],
-                'react-roles': [],
-                'role-categories': [],
-                'server-messages': ['Welcome Message', 'Goodbye Message'],
-                'custom-commands': [],
-                'components': ['Music Player', 'Moderation', 'Economy System', 'Leveling/XP'],
-                'xp-levels': ['XP per Message', 'XP to Level Up', 'Max Level'],
-                'leaderboards': [],
-                'invite-tracking': [],
-                'message-counting': [],
-                'statistics-channels': [],
-                'giveaways': [],
-                'social-notifs': [],
-                'reminders': [],
-                'recordings': [],
-                'logging': []
+            // Map sections to their IDs
+            const sectionMap = {
+                'settings-section': 'settings',
+                'logging-section': 'logging',
+                'server-guard-section': 'server-guard',
+                'react-roles-section': 'react-roles',
+                'role-categories-section': 'role-categories',
+                'server-messages-section': 'server-messages',
+                'custom-commands-section': 'custom-commands',
+                'components-section': 'components',
+                'xp-levels-section': 'xp-levels',
+                'leaderboards-section': 'leaderboards',
+                'invite-tracking-section': 'invite-tracking',
+                'message-counting-section': 'message-counting',
+                'statistics-channels-section': 'statistics-channels',
+                'giveaways-section': 'giveaways',
+                'social-notifs-section': 'social-notifs',
+                'reminders-section': 'reminders',
+                'recordings-section': 'recordings'
             };
 
-            // Collect all inputs, selects, and textareas
-            const allInputs = document.querySelectorAll('input[type="text"], input[type="number"], input[type="checkbox"], input[type="color"], select, textarea');
-            const data = {};
+            // Collect data from all sections
+            Object.keys(sectionMap).forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section && section.classList.contains('active')) {
+                    const sectionName = sectionMap[sectionId];
+                    const inputs = section.querySelectorAll('input[type="text"], input[type="number"], input[type="checkbox"], input[type="color"], select, textarea');
+                    const data = {};
 
-            allInputs.forEach(input => {
-                if (input.type === 'checkbox') {
-                    data[input.id || input.name || input.className] = input.checked;
-                } else if (input.type === 'color') {
-                    data[input.id || input.name || input.className] = input.value;
-                } else {
-                    data[input.id || input.name || input.className] = input.value;
+                    inputs.forEach(input => {
+                        if (input.type === 'checkbox') {
+                            data[input.id || input.name || input.placeholder || 'checkbox_' + Math.random()] = input.checked;
+                        } else if (input.type === 'color') {
+                            data[input.id || input.name || input.className] = input.value;
+                        } else {
+                            data[input.id || input.name || input.placeholder || 'input_' + Math.random()] = input.value;
+                        }
+                    });
+
+                    // Save this section via API
+                    fetch(`/api/config/${sectionName}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    })
+                    .then(r => r.json())
+                    .then(res => console.log(`✅ Saved ${sectionName}:`, res))
+                    .catch(err => console.error(`❌ Error saving ${sectionName}:`, err));
                 }
-            });
-
-            // Save to each section via API
-            Object.keys(sections).forEach(section => {
-                fetch(`/api/config/${section}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                }).catch(err => console.error(`Error saving ${section}:`, err));
             });
 
             hideUnsavedNotification();
