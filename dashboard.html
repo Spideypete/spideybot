@@ -1873,6 +1873,11 @@
                 const sectionEl = document.getElementById(section + '-section');
                 if (sectionEl) {
                     sectionEl.classList.add('active');
+                    
+                    // Load member graphs when switching to that section
+                    if (section === 'member-graphs') {
+                        setTimeout(loadMemberGraphs, 100);
+                    }
                 }
             });
         });
@@ -2158,16 +2163,6 @@
             });
         }
 
-        // Load graphs when navigating to member-graphs section
-        const originalSidebarListener = document.querySelectorAll('.sidebar-item').forEach;
-        const memberGraphsObserver = () => {
-            const memberGraphsItem = document.querySelector('[data-section="member-graphs"]');
-            if (memberGraphsItem) {
-                memberGraphsItem.addEventListener('click', () => {
-                    setTimeout(loadMemberGraphs, 100);
-                });
-            }
-        };
 
         function resetColors() {
             changeThemeColor('#00d4ff');
