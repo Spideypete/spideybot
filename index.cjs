@@ -2641,7 +2641,7 @@ app.get("/login", (req, res) => {
 </head>
 <body>
   <div class="login-container">
-    <h1>🕷️ SPIDEY BOT</h1>
+    <h1>SPIDEY BOT</h1>
     <p>Admin Dashboard - Login with Discord</p>
     <a href="/auth/discord" class="btn-discord">Login with Discord</a>
   </div>
