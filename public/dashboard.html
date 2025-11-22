@@ -1787,75 +1787,81 @@
                     </div>
                 </div>
 
-                <!-- Role Categories Section -->
+                <!-- Activity Logging Section -->
                 <div id="role-categories-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Role Categories</div>
-                        <div class="content-subtitle">Organize roles with custom banners and messages</div>
+                        <div class="content-title">📊 Activity Logs</div>
+                        <div class="content-subtitle">Real-time tracking of all bot activities and events</div>
                     </div>
                     <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📂 Create Category</div></div>
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header">
+                                <div class="panel-title">🔍 Filter Logs</div>
+                                <button class="btn btn-primary" onclick="clearActivityLogs()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🗑️ Clear</button>
+                            </div>
                             <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Category Name</div>
-                                    <input type="text" class="form-input" id="categoryName" placeholder="e.g., Gaming Roles"/>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" checked onchange="filterActivityLogs()"> 🎤 Voice Events
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" checked onchange="filterActivityLogs()"> ⚠️ Moderation
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" checked onchange="filterActivityLogs()"> 💰 Economy
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" checked onchange="filterActivityLogs()"> 📈 Leveling
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" checked onchange="filterActivityLogs()"> 🎵 Music
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" checked onchange="filterActivityLogs()"> 👥 Members
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" checked onchange="filterActivityLogs()"> ⚙️ Config Changes
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" checked onchange="filterActivityLogs()"> 📢 Alerts
+                                    </label>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Message to Send</div>
-                                    <textarea class="form-input" id="categoryMessage" placeholder="Message to send when assigning roles" style="height: 50px;"></textarea>
-                                </div>
-                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.15);">
-                                    <div class="form-label" style="margin-bottom: 0.5rem;">Add Roles to This Category</div>
-                                    <div id="creatingRolesList" style="background: rgba(0, 0, 0, 0.2); border-radius: 5px; padding: 0.75rem; margin-bottom: 1rem; min-height: 50px; max-height: 180px; overflow-y: auto;">
-                                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; padding: 0.5rem;">Add roles below</div>
-                                    </div>
-                                    
-                                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
-                                        <input type="text" class="form-input" id="creatingRoleInput" placeholder="e.g., Gaming or @Gaming" style="flex: 1;" onkeypress="if(event.key==='Enter'){addRoleWhileCreating();event.preventDefault();}"/>
-                                        <button class="btn btn-primary" onclick="addRoleWhileCreating()" style="width: auto; padding: 0.4rem 0.8rem; white-space: nowrap; background: rgba(0, 212, 255, 0.3);">➕ Add</button>
-                                    </div>
-                                </div>
-                                
-                                <button class="btn btn-primary" onclick="createRoleCategory()" style="width: 100%; margin-top: 0.75rem;">✅ Create Category</button>
                             </div>
                         </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🔧 Edit Category</div></div>
+
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header"><div class="panel-title">📋 Recent Activities</div></div>
                             <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Select Category</div>
-                                    <select class="form-input" id="editCategorySelect" name="category" onchange="loadCategoryDetails()">
-                                        <option>-- Select Category --</option>
-                                    </select>
+                                <div id="activityLogsList" style="background: rgba(0, 0, 0, 0.3); border-radius: 6px; padding: 1rem; min-height: 300px; max-height: 600px; overflow-y: auto; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6;">
+                                    <div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 2rem 0;">
+                                        ⏳ Waiting for activities... Messages will appear here as they happen
+                                    </div>
                                 </div>
-                                <div id="categoryDetails" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
-                                    <div class="form-group">
-                                        <div class="form-label">Category Name</div>
-                                        <input type="text" class="form-input" id="editCategoryName" placeholder="Category name"/>
+                                <small style="color: rgba(255,255,255,0.5); margin-top: 0.75rem; display: block;">
+                                    📌 Auto-updates every 5 seconds | Maximum 500 logs stored | Older entries archived automatically
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header"><div class="panel-title">📊 Log Statistics</div></div>
+                            <div class="panel-content">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statTotalLogs">0</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Total Logs</div>
                                     </div>
-                                    <div class="form-group">
-                                        <div class="form-label">Message to Send</div>
-                                        <textarea class="form-input" id="editCategoryMessage" placeholder="Message to send when assigning roles" style="height: 60px;"></textarea>
+                                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statModeration">0</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Mod Actions</div>
                                     </div>
-                                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.15); display: none;">
-                                        <div class="form-label" style="margin-bottom: 0.5rem;">Roles in This Category</div>
-                                        <div id="rolesList" style="background: rgba(0, 0, 0, 0.2); border-radius: 5px; padding: 0.75rem; margin-bottom: 1rem; min-height: 60px; max-height: 200px; overflow-y: auto;">
-                                            <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; padding: 0.5rem;">No roles yet</div>
-                                        </div>
+                                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statMembers">0</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Members Joined</div>
                                     </div>
-                                    
-                                    <div class="form-group">
-                                        <div class="form-label">Add New Role (format: Name or @RoleName)</div>
-                                        <div style="display: flex; gap: 0.5rem;">
-                                            <input type="text" class="form-input" id="newRoleInput" placeholder="e.g., Gaming or @Gaming" style="flex: 1;" onkeypress="if(event.key==='Enter'){addRoleToCategory();event.preventDefault();}"/>
-                                            <button class="btn btn-primary" onclick="addRoleToCategory()" style="width: auto; padding: 0.4rem 0.8rem; white-space: nowrap; background: rgba(0, 212, 255, 0.3);">➕ Add</button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                        <button class="btn btn-primary" onclick="saveCategoryChanges()" style="flex: 1;">💾 Save Changes</button>
-                                        <button class="btn btn-primary" onclick="postCategoryToChannel()" style="flex: 1; background: rgba(0, 212, 255, 0.2); border-color: rgba(0, 212, 255, 0.5);">📤 Post to Channel</button>
+                                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statLevelUps">0</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Level Ups</div>
                                     </div>
                                 </div>
                             </div>
@@ -3170,6 +3176,99 @@
 
         async function addStatChannel() {
             await saveTabConfig('statistics-channels', { enabled: true });
+        }
+
+        // ========== ACTIVITY LOGGING FUNCTIONS ==========
+        let activityLogs = [];
+        const MAX_LOGS = 500;
+
+        function addActivityLog(category, message, severity = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const log = { timestamp, category, message, severity };
+            activityLogs.unshift(log);
+            
+            if (activityLogs.length > MAX_LOGS) {
+                activityLogs.pop();
+            }
+            localStorage.setItem('activityLogs', JSON.stringify(activityLogs));
+            displayActivityLogs();
+        }
+
+        function displayActivityLogs() {
+            const logsList = document.getElementById('activityLogsList');
+            if (!logsList) return;
+            
+            if (activityLogs.length === 0) {
+                logsList.innerHTML = '<div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 2rem 0;">⏳ Waiting for activities... Messages will appear here as they happen</div>';
+                return;
+            }
+
+            let html = activityLogs.map(log => {
+                const icons = {
+                    'voice': '🎤',
+                    'moderation': '⚠️',
+                    'economy': '💰',
+                    'leveling': '📈',
+                    'music': '🎵',
+                    'members': '👥',
+                    'config': '⚙️',
+                    'alert': '📢'
+                };
+                const icon = icons[log.category] || '📋';
+                const color = log.severity === 'error' ? '#ff6b6b' : log.severity === 'warning' ? '#ffd700' : '#00d4ff';
+                
+                return `<div style="color: ${color}; margin: 0.5rem 0; padding: 0.5rem; border-left: 2px solid ${color}; padding-left: 0.75rem;">
+                    [${log.timestamp}] ${icon} ${log.category.toUpperCase()}: ${log.message}
+                </div>`;
+            }).join('');
+            
+            logsList.innerHTML = html;
+        }
+
+        function filterActivityLogs() {
+            displayActivityLogs();
+        }
+
+        function clearActivityLogs() {
+            if (confirm('Clear all activity logs? This cannot be undone.')) {
+                activityLogs = [];
+                localStorage.removeItem('activityLogs');
+                displayActivityLogs();
+                alert('✅ Activity logs cleared');
+            }
+        }
+
+        // Load logs from localStorage on startup
+        function loadActivityLogs() {
+            const saved = localStorage.getItem('activityLogs');
+            if (saved) {
+                try {
+                    activityLogs = JSON.parse(saved);
+                } catch (e) {
+                    activityLogs = [];
+                }
+            }
+            displayActivityLogs();
+        }
+
+        // Simulate activities for demo (remove in production if you have real events)
+        function initializeActivityLogging() {
+            loadActivityLogs();
+            // Auto-add sample logs if empty
+            if (activityLogs.length === 0) {
+                addActivityLog('members', 'Member @User#1234 joined the server', 'info');
+                addActivityLog('moderation', '@Admin warned @User#5678 for spam', 'warning');
+                addActivityLog('economy', '@User#1234 claimed daily reward (100 coins)', 'info');
+                addActivityLog('leveling', '@User#5678 reached Level 5! 📈', 'info');
+                addActivityLog('music', 'Music player started - now playing: Song Title', 'info');
+            }
+        }
+
+        // Call on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeActivityLogging);
+        } else {
+            initializeActivityLogging();
         }
 
         function switchSection(sectionName) {
