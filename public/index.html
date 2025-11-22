@@ -10,12 +10,14 @@
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', sans-serif;
-      background: #0a0a0f;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 50%, #0f0a1f 100%);
       color: #fff;
       line-height: 1.6;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
     }
     body::before {
       content: '';
@@ -25,14 +27,21 @@
       right: 0;
       bottom: 0;
       background: 
-        repeating-linear-gradient(0deg, rgba(0, 212, 255, 0.03) 0px, rgba(0, 212, 255, 0.03) 1px, transparent 1px, transparent 2px),
-        repeating-linear-gradient(90deg, rgba(0, 212, 255, 0.03) 0px, rgba(0, 212, 255, 0.03) 1px, transparent 1px, transparent 2px),
-        repeating-linear-gradient(45deg, rgba(145, 70, 255, 0.05) 0px, rgba(145, 70, 255, 0.05) 2px, transparent 2px, transparent 4px),
-        radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.15) 0%, transparent 30%),
-        radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 25%),
-        radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.08) 0%, transparent 28%);
+        repeating-linear-gradient(0deg, rgba(0, 212, 255, 0.08) 0px, rgba(0, 212, 255, 0.08) 2px, transparent 2px, transparent 4px),
+        repeating-linear-gradient(90deg, rgba(0, 212, 255, 0.08) 0px, rgba(0, 212, 255, 0.08) 2px, transparent 2px, transparent 4px),
+        repeating-linear-gradient(45deg, transparent 0px, transparent 15px, rgba(145, 70, 255, 0.1) 15px, rgba(145, 70, 255, 0.1) 17px),
+        repeating-linear-gradient(-45deg, transparent 0px, transparent 15px, rgba(255, 20, 147, 0.08) 15px, rgba(255, 20, 147, 0.08) 17px),
+        radial-gradient(circle at 10% 20%, rgba(0, 212, 255, 0.35) 0%, transparent 35%),
+        radial-gradient(circle at 90% 30%, rgba(145, 70, 255, 0.3) 0%, transparent 30%),
+        radial-gradient(circle at 60% 90%, rgba(255, 20, 147, 0.25) 0%, transparent 35%),
+        radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
       pointer-events: none;
       z-index: 1;
+      animation: spiderVersePulse 8s ease-in-out infinite;
+    }
+    @keyframes spiderVersePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 1.2; }
     }
     main {
       flex: 1;
@@ -71,32 +80,33 @@
     }
     nav a:hover { color: #9146FF; }
     .hero {
-      background: linear-gradient(135deg, rgba(26, 26, 46, 0.5) 0%, rgba(15, 52, 96, 0.5) 50%, rgba(46, 15, 52, 0.5) 100%);
+      background: linear-gradient(135deg, rgba(15, 5, 35, 0.7) 0%, rgba(20, 40, 80, 0.7) 50%, rgba(35, 10, 50, 0.7) 100%);
       padding: 6rem 2rem;
       text-align: center;
       position: relative;
       overflow: hidden;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border-bottom: 2px solid rgba(0, 212, 255, 0.1);
+      border-bottom: 3px solid rgba(0, 212, 255, 0.3);
+      box-shadow: inset 0 0 60px rgba(145, 70, 255, 0.2), inset 0 0 120px rgba(0, 212, 255, 0.1);
     }
     .hero::before {
       content: '';
       position: absolute;
-      top: -50%;
-      left: -50%;
-      right: -50%;
-      bottom: -50%;
+      top: -30%;
+      left: -30%;
+      right: -30%;
+      bottom: -30%;
       background: 
-        radial-gradient(circle at 20% 50%, rgba(145, 70, 255, 0.25) 0%, transparent 40%),
-        radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.2) 0%, transparent 35%),
-        radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.15) 0%, transparent 40%),
-        conic-gradient(from 0deg at 50% 50%, rgba(145, 70, 255, 0.05) 0deg, rgba(0, 212, 255, 0.05) 120deg, rgba(145, 70, 255, 0.05) 240deg, rgba(145, 70, 255, 0.05) 360deg);
-      animation: spiderBg 20s ease-in-out infinite;
+        radial-gradient(circle at 15% 30%, rgba(0, 212, 255, 0.4) 0%, transparent 35%),
+        radial-gradient(circle at 85% 25%, rgba(145, 70, 255, 0.35) 0%, transparent 32%),
+        radial-gradient(circle at 60% 85%, rgba(255, 20, 147, 0.3) 0%, transparent 38%);
+      animation: spiderBg 15s ease-in-out infinite;
+      filter: blur(60px);
     }
     @keyframes spiderBg {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-10px, 10px) scale(1.05); }
+      50% { transform: translate(-15px, 15px) scale(1.08); }
     }
     .hero::after {
       content: '';
@@ -106,8 +116,8 @@
       right: 0;
       bottom: 0;
       background: 
-        repeating-linear-gradient(0deg, transparent 0px, transparent 20px, rgba(0, 212, 255, 0.02) 20px, rgba(0, 212, 255, 0.02) 21px),
-        repeating-linear-gradient(90deg, transparent 0px, transparent 20px, rgba(145, 70, 255, 0.02) 20px, rgba(145, 70, 255, 0.02) 21px);
+        repeating-linear-gradient(0deg, transparent 0px, transparent 15px, rgba(0, 212, 255, 0.06) 15px, rgba(0, 212, 255, 0.06) 16px),
+        repeating-linear-gradient(90deg, transparent 0px, transparent 15px, rgba(145, 70, 255, 0.06) 15px, rgba(145, 70, 255, 0.06) 16px);
       pointer-events: none;
     }
     .hero > * { position: relative; z-index: 3; }
