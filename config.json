@@ -89,11 +89,11 @@
       "": true
     },
     "role-categories": {
-      "categoryName": "s",
+      "categoryName": "",
       "message": "s",
       "channel": "s",
       "roles": [
-        "s"
+        "ss"
       ],
       "categoryMessage": "",
       "categoryChannel": "",

@@ -3391,13 +3391,16 @@
             const roleSelect = document.getElementById('customRoleSelect');
             if (roleSelect && stats.roles) {
                 roleSelect.innerHTML = '<option value="">Choose a role...</option>';
-                stats.roles.filter(r => r.name !== '@everyone' && r.count > 0).forEach(role => {
+                const filteredRoles = stats.roles.filter(r => r.name !== '@everyone');
+                filteredRoles.forEach(role => {
                     const option = document.createElement('option');
                     option.value = role.id;
-                    option.textContent = `${role.name} (${role.count})`;
+                    option.textContent = `${role.name} (${role.count} members)`;
                     roleSelect.appendChild(option);
                 });
-                console.log('✅ Role dropdown populated:', stats.roles.length, 'roles');
+                console.log('✅ Role dropdown populated:', filteredRoles.length, 'roles found');
+            } else {
+                console.warn('❌ roleSelect not found or no roles in stats:', { roleSelect: !!roleSelect, hasRoles: stats?.roles?.length });
             }
         }
 
