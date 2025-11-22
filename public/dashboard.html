@@ -205,7 +205,7 @@
 
         /* Sidebar */
         .sidebar {
-            width: 200px;
+            width: 220px;
             background: var(--bg-primary);
             border-right: 1px solid rgba(var(--theme-color), 0.2);
             overflow-y: auto;
@@ -218,12 +218,12 @@
         }
 
         .sidebar-section-title {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.3);
             letter-spacing: 1px;
             padding: 0 1rem 0.75rem;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .sidebar-menu {
@@ -231,16 +231,16 @@
         }
 
         .sidebar-item {
-            padding: 0.75rem 1rem;
+            padding: 0.6rem 0.75rem;
             cursor: pointer;
             transition: all 0.2s ease;
             color: rgba(255, 255, 255, 0.6);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            margin: 0.25rem 0.5rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            gap: 0.65rem;
+            margin: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
             position: relative;
         }
 
@@ -253,28 +253,16 @@
             background: linear-gradient(135deg, rgba(145, 70, 255, 0.3) 0%, rgba(0, 212, 255, 0.2) 100%);
             color: var(--accent-cyan);
             border-left: 3px solid var(--accent-cyan);
-            padding-left: calc(1rem - 3px);
+            padding-left: calc(0.75rem - 3px);
         }
 
         .sidebar-item-icon {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-        }
-
-        .sidebar-item.active .sidebar-item-icon {
-            color: var(--accent-cyan);
-        }
-
-        .sidebar-item-badge {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-green);
-            border-radius: 50%;
-            margin-left: auto;
+            font-size: 0.9rem;
         }
 
         /* Content Area */
@@ -397,12 +385,6 @@
         }
 
         /* Buttons */
-        .button-group {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
         .btn {
             padding: 0.6rem 1.2rem;
             border: none;
@@ -437,73 +419,14 @@
             border-color: rgba(var(--theme-color), 0.5);
         }
 
-        .btn-color {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .content-section {
+            display: none;
         }
 
-        .btn-color:hover {
-            transform: scale(1.1);
-            border-color: rgba(255, 255, 255, 0.6);
+        .content-section.active {
+            display: block;
         }
 
-        .btn-color.active {
-            border-color: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 12px currentColor;
-        }
-
-        /* Color Palette */
-        .color-palette {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        /* User Card */
-        .user-card {
-            background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
-            border: 1px solid rgba(var(--theme-color), 0.2);
-            border-radius: 10px;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .user-card-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ff69b4, #ff1493);
-            border: 2px solid var(--accent-pink);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .user-card-info {
-            flex: 1;
-        }
-
-        .user-card-name {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.95);
-        }
-
-        .user-card-role {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -522,36 +445,9 @@
             background: rgba(var(--theme-color), 0.4);
         }
 
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .content-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .content-grid.wide {
-                grid-template-columns: 1fr;
-            }
-        }
-
         @media (max-width: 768px) {
-            .sidebar {
-                position: absolute;
-                left: -200px;
-                height: 100%;
-                z-index: 100;
-                transition: left 0.3s ease;
-            }
-
-            .sidebar.active {
-                left: 0;
-            }
-
             .content-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .header {
-                padding: 1rem;
             }
         }
     </style>
@@ -566,10 +462,7 @@
             </div>
             
             <div class="header-right">
-                <div class="notification-icon">
-                    🔔
-                    <div class="notification-badge">3</div>
-                </div>
+                <div class="notification-icon">🔔</div>
                 
                 <div class="user-profile" onclick="toggleProfileMenu()">
                     <div class="user-avatar">D</div>
@@ -593,58 +486,66 @@
             <!-- Sidebar -->
             <div class="sidebar">
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">NAVIGATION</div>
+                    <div class="sidebar-section-title">MAIN</div>
                     <ul class="sidebar-menu">
                         <li class="sidebar-item active" data-section="dashboard">
                             <span class="sidebar-item-icon">⊞</span>
                             <span>Dashboard</span>
                         </li>
-                        <li class="sidebar-item" data-section="servers">
-                            <span class="sidebar-item-icon">🖥️</span>
-                            <span>Servers</span>
-                        </li>
-                        <li class="sidebar-item" data-section="support">
-                            <span class="sidebar-item-icon">💬</span>
-                            <span>Support</span>
-                        </li>
-                        <li class="sidebar-item" data-section="features">
-                            <span class="sidebar-item-icon">✨</span>
-                            <span>Features</span>
-                        </li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">CONFIGURATION</div>
+                    <div class="sidebar-section-title">CORE</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="settings">
-                            <span class="sidebar-item-icon">⚙️</span>
-                            <span>Bot Settings</span>
-                        </li>
-                        <li class="sidebar-item" data-section="button-roles">
-                            <span class="sidebar-item-icon">🎛️</span>
-                            <span>Button Roles</span>
-                            <div class="sidebar-item-badge"></div>
-                        </li>
-                        <li class="sidebar-item" data-section="verification">
-                            <span class="sidebar-item-icon">✓</span>
-                            <span>Verification</span>
-                            <div class="sidebar-item-badge"></div>
-                        </li>
+                        <li class="sidebar-item" data-section="settings"><span class="sidebar-item-icon">⚙️</span><span>Settings</span></li>
+                        <li class="sidebar-item" data-section="logging"><span class="sidebar-item-icon">📝</span><span>Logging</span></li>
+                        <li class="sidebar-item" data-section="server-guard"><span class="sidebar-item-icon">🛡️</span><span>Server Guard</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">MANAGEMENT</div>
+                    <div class="sidebar-section-title">FEATURES</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="logging">
-                            <span class="sidebar-item-icon">📝</span>
-                            <span>Logging</span>
-                        </li>
-                        <li class="sidebar-item" data-section="audit">
-                            <span class="sidebar-item-icon">🔍</span>
-                            <span>Audit Logging</span>
-                        </li>
+                        <li class="sidebar-item" data-section="react-roles"><span class="sidebar-item-icon">◇</span><span>React Roles</span></li>
+                        <li class="sidebar-item" data-section="role-categories"><span class="sidebar-item-icon">▣</span><span>Role Categories</span></li>
+                        <li class="sidebar-item" data-section="server-messages"><span class="sidebar-item-icon">◈</span><span>Server Messages</span></li>
+                        <li class="sidebar-item" data-section="custom-commands"><span class="sidebar-item-icon">⊙</span><span>Commands</span></li>
+                        <li class="sidebar-item" data-section="components"><span class="sidebar-item-icon">▪</span><span>Components</span></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">SYSTEMS</div>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item" data-section="xp-levels"><span class="sidebar-item-icon">📈</span><span>XP Levels</span></li>
+                        <li class="sidebar-item" data-section="leaderboards"><span class="sidebar-item-icon">🏆</span><span>Leaderboards</span></li>
+                        <li class="sidebar-item" data-section="giveaways"><span class="sidebar-item-icon">🎁</span><span>Giveaways</span></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">MONITORING</div>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item" data-section="social-notifs"><span class="sidebar-item-icon">📱</span><span>Social Notifs</span></li>
+                        <li class="sidebar-item" data-section="invite-tracking"><span class="sidebar-item-icon">🔗</span><span>Invites</span></li>
+                        <li class="sidebar-item" data-section="message-counting"><span class="sidebar-item-icon">💬</span><span>Messages</span></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">ADVANCED</div>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item" data-section="recordings"><span class="sidebar-item-icon">🎙️</span><span>Recordings</span></li>
+                        <li class="sidebar-item" data-section="reminders"><span class="sidebar-item-icon">⏰</span><span>Reminders</span></li>
+                        <li class="sidebar-item" data-section="statistics-channels"><span class="sidebar-item-icon">📊</span><span>Stats</span></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">SUBSCRIPTIONS</div>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item" data-section="subscriptions"><span class="sidebar-item-icon">💳</span><span>Premium</span></li>
                     </ul>
                 </div>
             </div>
@@ -652,196 +553,367 @@
             <!-- Content Area -->
             <div class="content-area">
                 <!-- Dashboard Section -->
-                <div id="dashboard-section" class="content-section">
+                <div id="dashboard-section" class="content-section active">
                     <div class="content-header">
                         <div class="content-title">Dashboard</div>
-                        <div class="content-subtitle">Real-time server analytics and statistics</div>
+                        <div class="content-subtitle">Real-time server analytics</div>
                     </div>
-                    
                     <div class="content-grid wide">
                         <div class="panel">
                             <div class="panel-header">
                                 <div class="panel-title">📊 Server Stats</div>
-                                <div class="panel-icon">⚙️</div>
                             </div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Members Online</div>
                                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-cyan);">1,243</div>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Total Messages</div>
-                                    <div style="font-size: 1.5rem; font-weight: 600; color: rgba(255, 255, 255, 0.8);">12,456</div>
-                                </div>
                             </div>
                         </div>
-
                         <div class="panel">
                             <div class="panel-header">
-                                <div class="panel-title">🎯 Quick Actions</div>
+                                <div class="panel-title">⚡ Quick Actions</div>
                             </div>
                             <div class="panel-content">
                                 <button class="btn btn-primary">Invite Bot</button>
-                                <button class="btn btn-secondary">Settings</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Button Roles Section -->
-                <div id="button-roles-section" class="content-section" style="display: none;">
+                <!-- Settings Section -->
+                <div id="settings-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Button Roles</div>
-                        <div class="content-subtitle">Distribute roles using awesome interactive buttons</div>
+                        <div class="content-title">Settings</div>
+                        <div class="content-subtitle">Configure bot settings</div>
                     </div>
-
                     <div class="content-grid">
-                        <!-- Settings Panel -->
                         <div class="panel">
-                            <div class="panel-header">
-                                <div class="panel-title">⚙️ Settings</div>
-                            </div>
+                            <div class="panel-header"><div class="panel-title">⚙️ Bot Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Message name</div>
-                                    <input type="text" class="form-input" placeholder="Enter message name">
+                                    <div class="form-label">Command Prefix</div>
+                                    <input type="text" class="form-input" placeholder="//"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Channel</div>
-                                    <select class="form-input">
-                                        <option>Select channel</option>
-                                    </select>
+                                    <div class="form-label">Default Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Allowed roles</div>
-                                    <input type="text" class="form-input" placeholder="Lorem Ipsum">
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Blocked roles</div>
-                                    <input type="text" class="form-input" placeholder="Lorem Ipsum">
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Banned roles</div>
-                                    <input type="text" class="form-input" placeholder="Lorem Ipsum">
-                                </div>
+                                <button class="btn btn-primary">Save Settings</button>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Embed Builder Panel -->
+                <!-- Logging Section -->
+                <div id="logging-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Logging</div>
+                        <div class="content-subtitle">Configure logging channels</div>
+                    </div>
+                    <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header">
-                                <div class="panel-title">🎨 Embed Builder</div>
-                                <div class="panel-icon">⋯</div>
-                            </div>
+                            <div class="panel-header"><div class="panel-title">📝 Logging Config</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Message contents</div>
-                                    <input type="text" class="form-input" placeholder="Lorem Ipsum">
+                                    <div class="form-label">Log Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Embed</div>
-                                    <input type="text" class="form-input" placeholder="Enable the embedded built that is needed">
-                                </div>
+                                <button class="btn btn-primary">Update</button>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Illustration Panel -->
+                <!-- Server Guard Section -->
+                <div id="server-guard-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Server Guard</div>
+                        <div class="content-subtitle">Anti-spam and raid protection</div>
+                    </div>
+                    <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header">
-                                <div class="panel-title">🖼️ Illustration</div>
-                            </div>
-                            <div class="panel-content">
-                                <div class="user-card">
-                                    <div class="user-card-avatar">D</div>
-                                    <div class="user-card-info">
-                                        <div class="user-card-name">DARKE_</div>
-                                        <div class="user-card-role">You can apply this</div>
-                                    </div>
-                                </div>
-                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.1); font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">
-                                    Table: 9.39em
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Button Builder -->
-                        <div class="panel" style="grid-column: 1 / 2;">
-                            <div class="panel-header">
-                                <div class="panel-title">🎛️ Button Builder</div>
-                                <div class="button-group">
-                                    <button class="btn btn-secondary">Edit</button>
-                                    <button class="btn btn-primary">Add</button>
-                                </div>
-                            </div>
+                            <div class="panel-header"><div class="panel-title">🛡️ Protection Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Button #1</div>
-                                    <div class="color-palette">
-                                        <button class="btn-color" style="background: #9146ff;"></button>
-                                        <button class="btn-color" style="background: #00d4ff;"></button>
-                                        <button class="btn-color" style="background: #ff69b4;"></button>
-                                        <button class="btn-color" style="background: #00ff88;"></button>
-                                        <button class="btn-color" style="background: #ffaa00;"></button>
-                                        <button class="btn-color" style="background: #ff4444;"></button>
-                                    </div>
+                                    <div class="form-label">Anti-Spam Enabled</div>
+                                    <input type="checkbox" style="width: 20px; height: 20px;"/>
                                 </div>
-                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.1);">
-                                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.5rem;">Button text</div>
-                                    <input type="text" class="form-input" placeholder="Button label">
-                                </div>
+                                <button class="btn btn-primary">Save</button>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Field Panel -->
-                        <div class="panel" style="grid-column: 2 / 3;">
-                            <div class="panel-header">
-                                <div class="panel-title">📋 Field</div>
-                                <div class="panel-icon">⊕</div>
-                            </div>
+                <!-- React Roles Section -->
+                <div id="react-roles-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">React Roles</div>
+                        <div class="content-subtitle">Reaction-based role assignment</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">◇ Reaction Roles</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Field #1</div>
-                                    <input type="text" class="form-input" placeholder="Field value">
+                                    <div class="form-label">Message ID</div>
+                                    <input type="text" class="form-input" placeholder="Enter message ID"/>
                                 </div>
-                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.1);">
-                                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.5rem;">Value</div>
-                                    <input type="text" class="form-input" placeholder="Enter field value">
-                                </div>
+                                <button class="btn btn-primary">Configure</button>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Image Panel -->
-                        <div class="panel" style="grid-column: 3 / 4;">
-                            <div class="panel-header">
-                                <div class="panel-title">🖼️ Image</div>
-                            </div>
+                <!-- Role Categories Section -->
+                <div id="role-categories-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Role Categories</div>
+                        <div class="content-subtitle">Organize roles with custom banners</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">▣ Categories</div></div>
                             <div class="panel-content">
-                                <div style="background: rgba(var(--theme-color), 0.1); border: 2px dashed rgba(var(--theme-color), 0.3); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer;">
-                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📸</div>
-                                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Upload Image</div>
+                                <div class="form-group">
+                                    <div class="form-label">Category Name</div>
+                                    <input type="text" class="form-input" placeholder="Enter category name"/>
                                 </div>
+                                <button class="btn btn-primary">Add Category</button>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Author & Thumbnail -->
-                        <div class="panel" style="grid-column: 1 / 2;">
-                            <div class="panel-header">
-                                <div class="panel-title">👤 Author & Thumbnail</div>
-                            </div>
+                <!-- Server Messages Section -->
+                <div id="server-messages-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Server Messages</div>
+                        <div class="content-subtitle">Welcome and goodbye messages</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">◈ Messages</div></div>
                             <div class="panel-content">
-                                <div class="user-card">
-                                    <div class="user-card-avatar">D</div>
-                                    <div class="user-card-info">
-                                        <div class="user-card-name">DARKE_</div>
-                                        <div class="user-card-role">author profile</div>
-                                    </div>
+                                <div class="form-group">
+                                    <div class="form-label">Welcome Message</div>
+                                    <input type="text" class="form-input" placeholder="Enter welcome message"/>
                                 </div>
-                                <div class="form-group" style="margin-top: 1rem;">
-                                    <div class="form-label">http://</div>
-                                    <input type="text" class="form-input" placeholder="Enter profile url">
+                                <button class="btn btn-primary">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Commands Section -->
+                <div id="custom-commands-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Custom Commands</div>
+                        <div class="content-subtitle">Create custom bot commands</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">⊙ Commands</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Command Name</div>
+                                    <input type="text" class="form-input" placeholder="Enter command name"/>
                                 </div>
-                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.1); font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">
-                                    Value
+                                <button class="btn btn-primary">Add Command</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Components Section -->
+                <div id="components-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Components</div>
+                        <div class="content-subtitle">Manage bot components</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">▪ Components</div></div>
+                            <div class="panel-content">
+                                <button class="btn btn-primary">Add Component</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- XP Levels Section -->
+                <div id="xp-levels-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">XP Levels</div>
+                        <div class="content-subtitle">Configure leveling system</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📈 Leveling</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">XP per Message</div>
+                                    <input type="number" class="form-input" placeholder="10-30"/>
+                                </div>
+                                <button class="btn btn-primary">Update</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaderboards Section -->
+                <div id="leaderboards-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Leaderboards</div>
+                        <div class="content-subtitle">Configure leaderboard display</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🏆 Leaderboard</div></div>
+                            <div class="panel-content">
+                                <button class="btn btn-primary">View Leaderboard</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Giveaways Section -->
+                <div id="giveaways-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Giveaways</div>
+                        <div class="content-subtitle">Manage giveaways</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎁 Giveaways</div></div>
+                            <div class="panel-content">
+                                <button class="btn btn-primary">Start Giveaway</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Notifs Section -->
+                <div id="social-notifs-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Social Notifications</div>
+                        <div class="content-subtitle">Monitor Twitch, TikTok, Kick</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📱 Monitoring</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Add Streamer</div>
+                                    <input type="text" class="form-input" placeholder="Enter username"/>
+                                </div>
+                                <button class="btn btn-primary">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invite Tracking Section -->
+                <div id="invite-tracking-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Invite Tracking</div>
+                        <div class="content-subtitle">Track member invites</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🔗 Invites</div></div>
+                            <div class="panel-content">
+                                <button class="btn btn-primary">View Invites</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Counting Section -->
+                <div id="message-counting-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Message Counting</div>
+                        <div class="content-subtitle">Track message statistics</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">💬 Statistics</div></div>
+                            <div class="panel-content">
+                                <button class="btn btn-primary">View Statistics</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recordings Section -->
+                <div id="recordings-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Recordings</div>
+                        <div class="content-subtitle">Manage voice recordings</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎙️ Recordings</div></div>
+                            <div class="panel-content">
+                                <button class="btn btn-primary">View Recordings</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reminders Section -->
+                <div id="reminders-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Reminders</div>
+                        <div class="content-subtitle">Configure reminders</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">⏰ Reminders</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Reminder Message</div>
+                                    <input type="text" class="form-input" placeholder="Enter reminder"/>
+                                </div>
+                                <button class="btn btn-primary">Create Reminder</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Channels Section -->
+                <div id="statistics-channels-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Statistics Channels</div>
+                        <div class="content-subtitle">Display server statistics</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📊 Stats</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Stat Channel</div>
+                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                </div>
+                                <button class="btn btn-primary">Update</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscriptions Section -->
+                <div id="subscriptions-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Premium Subscriptions</div>
+                        <div class="content-subtitle">Manage premium features</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">💳 Premium Tiers</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Subscription Status</div>
+                                    <div style="color: var(--accent-green);">✓ Active</div>
                                 </div>
                             </div>
                         </div>
@@ -852,13 +924,11 @@
     </div>
 
     <script>
-        // Profile Menu Toggle
         function toggleProfileMenu() {
             const menu = document.getElementById('profileMenu');
             menu.classList.toggle('active');
         }
 
-        // Close menu when clicking outside
         document.addEventListener('click', function(event) {
             const menu = document.getElementById('profileMenu');
             const profile = document.querySelector('.user-profile');
@@ -867,35 +937,27 @@
             }
         });
 
-        // Sidebar Navigation
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.addEventListener('click', function() {
                 const section = this.dataset.section;
                 
-                // Remove active from all items
                 document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-                
-                // Add active to clicked item
                 this.classList.add('active');
                 
-                // Hide all sections
-                document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
                 
-                // Show selected section
                 const sectionEl = document.getElementById(section + '-section');
                 if (sectionEl) {
-                    sectionEl.style.display = 'block';
+                    sectionEl.classList.add('active');
                 }
             });
         });
 
-        // Logout
         function logout() {
             fetch('/logout', { method: 'POST' })
                 .then(() => window.location.href = '/login');
         }
 
-        // Load user info on page load
         window.addEventListener('load', async () => {
             try {
                 const res = await fetch('/api/user');
