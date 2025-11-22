@@ -20,14 +20,6 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
-    "youtube-sr": "^4.3.12",
-    "@chakra-ui/react": "^2.4.0",
-    "@emotion/react": "^11.8.1",
-    "@emotion/styled": "^11.3.0",
-    "framer-motion": "^6.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.0.0",
-    "react-icons": "^4.3.1",
-    "zustand": "^4.4.6"
+    "youtube-sr": "^4.3.12"
   }
 }
