@@ -2342,11 +2342,12 @@
 
         // Load Colors from LocalStorage
         function loadSavedColors() {
-            const themeColor = localStorage.getItem('themeColor') || '#00d4ff';
-            const cyanAccent = localStorage.getItem('accentCyan') || '#00d4ff';
-            const purpleAccent = localStorage.getItem('accentPurple') || '#9146ff';
-            const pinkAccent = localStorage.getItem('accentPink') || '#ff69b4';
-            const textColor = localStorage.getItem('textColor') || '#ffffff';
+            // Load SAVED colors (persisted from last save)
+            const themeColor = localStorage.getItem('savedThemeColor') || localStorage.getItem('themeColor') || '#00d4ff';
+            const cyanAccent = localStorage.getItem('savedAccentCyan') || localStorage.getItem('accentCyan') || '#00d4ff';
+            const purpleAccent = localStorage.getItem('savedAccentPurple') || localStorage.getItem('accentPurple') || '#9146ff';
+            const pinkAccent = localStorage.getItem('savedAccentPink') || localStorage.getItem('accentPink') || '#ff69b4';
+            const textColor = localStorage.getItem('savedTextColor') || localStorage.getItem('textColor') || '#ffffff';
 
             // Apply colors to CSS
             const themeRgb = hexToRgb(themeColor);
@@ -2377,6 +2378,13 @@
                 document.getElementById('textColorPicker').value = textColor;
                 document.getElementById('textColorLabel').textContent = textColor.toUpperCase();
             }
+
+            // Store as originalValues for unsaved changes detection
+            originalValues['themeColorPicker'] = themeColor;
+            originalValues['cyanColorPicker'] = cyanAccent;
+            originalValues['purpleColorPicker'] = purpleAccent;
+            originalValues['pinkColorPicker'] = pinkAccent;
+            originalValues['textColorPicker'] = textColor;
         }
 
         window.addEventListener('load', async () => {
@@ -2495,12 +2503,46 @@
         }
 
         function resetColors() {
+            // Reset only unsaved color changes - revert to last SAVED state
+            const savedThemeColor = localStorage.getItem('savedThemeColor') || '#00d4ff';
+            const savedCyanAccent = localStorage.getItem('savedAccentCyan') || '#00d4ff';
+            const savedPurpleAccent = localStorage.getItem('savedAccentPurple') || '#9146ff';
+            const savedPinkAccent = localStorage.getItem('savedAccentPink') || '#ff69b4';
+            const savedTextColor = localStorage.getItem('savedTextColor') || '#ffffff';
+
+            // Clear UNSAVED changes
             localStorage.removeItem('themeColor');
             localStorage.removeItem('accentCyan');
             localStorage.removeItem('accentPurple');
             localStorage.removeItem('accentPink');
             localStorage.removeItem('textColor');
-            loadSavedColors();
+
+            // Restore inputs and CSS to last saved state
+            const themeRgb = hexToRgb(savedThemeColor);
+            document.documentElement.style.setProperty('--theme-color', themeRgb);
+            document.documentElement.style.setProperty('--accent-cyan', savedCyanAccent);
+            document.documentElement.style.setProperty('--accent-purple', savedPurpleAccent);
+            document.documentElement.style.setProperty('--accent-pink', savedPinkAccent);
+            document.documentElement.style.setProperty('--text-color', savedTextColor);
+
+            document.getElementById('themeColorPicker').value = savedThemeColor;
+            document.getElementById('themeColorLabel').textContent = `${savedThemeColor.toUpperCase()} (Custom)`;
+            document.getElementById('cyanColorPicker').value = savedCyanAccent;
+            document.getElementById('cyanColorLabel').textContent = savedCyanAccent.toUpperCase();
+            document.getElementById('purpleColorPicker').value = savedPurpleAccent;
+            document.getElementById('purpleColorLabel').textContent = savedPurpleAccent.toUpperCase();
+            document.getElementById('pinkColorPicker').value = savedPinkAccent;
+            document.getElementById('pinkColorLabel').textContent = savedPinkAccent.toUpperCase();
+            document.getElementById('textColorPicker').value = savedTextColor;
+            document.getElementById('textColorLabel').textContent = savedTextColor.toUpperCase();
+
+            // Update original values to match saved state
+            originalValues['themeColorPicker'] = savedThemeColor;
+            originalValues['cyanColorPicker'] = savedCyanAccent;
+            originalValues['purpleColorPicker'] = savedPurpleAccent;
+            originalValues['pinkColorPicker'] = savedPinkAccent;
+            originalValues['textColorPicker'] = savedTextColor;
+
             hideUnsavedNotification();
         }
 
@@ -2700,6 +2742,26 @@
                 alert('Please select a server first');
                 return;
             }
+
+            // Save colors as "saved" (mark them as persisted)
+            const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#00d4ff';
+            const cyanAccent = localStorage.getItem('accentCyan') || localStorage.getItem('savedAccentCyan') || '#00d4ff';
+            const purpleAccent = localStorage.getItem('accentPurple') || localStorage.getItem('savedAccentPurple') || '#9146ff';
+            const pinkAccent = localStorage.getItem('accentPink') || localStorage.getItem('savedAccentPink') || '#ff69b4';
+            const textColor = localStorage.getItem('textColor') || localStorage.getItem('savedTextColor') || '#ffffff';
+
+            localStorage.setItem('savedThemeColor', themeColor);
+            localStorage.setItem('savedAccentCyan', cyanAccent);
+            localStorage.setItem('savedAccentPurple', purpleAccent);
+            localStorage.setItem('savedAccentPink', pinkAccent);
+            localStorage.setItem('savedTextColor', textColor);
+
+            // Clear unsaved color changes
+            localStorage.removeItem('themeColor');
+            localStorage.removeItem('accentCyan');
+            localStorage.removeItem('accentPurple');
+            localStorage.removeItem('accentPink');
+            localStorage.removeItem('textColor');
 
             // Map sections to their IDs
             const sectionMap = {
