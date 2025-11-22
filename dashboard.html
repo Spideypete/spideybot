@@ -1058,10 +1058,15 @@
 
         .content-section {
             display: none;
+            min-height: 100vh;
         }
 
         .content-section.active {
             display: block;
+        }
+        
+        #dashboard-section {
+            display: block !important;
         }
 
         ::-webkit-scrollbar {
@@ -3685,6 +3690,15 @@
 
             // Setup unsaved changes detection
             setupUnsavedDetection();
+        });
+        
+        // Global error handler - ensure page doesn't break
+        window.addEventListener('error', (event) => {
+            console.error('🔴 Global error caught:', event.error || event.message);
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('🔴 Unhandled promise rejection:', event.reason);
         });
     </script>
 

@@ -68,6 +68,12 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot offering music playback, 
 
 ## Development Notes (Scratchpad)
 - **CRITICAL WORKFLOW**: Always sync both dashboard files (public/dashboard.html AND dashboard.html) BEFORE deployment. Command: `cp /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html`
+- **Dashboard Graph Fixes (Nov 22, 2025)**:
+  - Added explicit Canvas sizing: `width="400" height="350"` (required by Chart.js)
+  - Forced dashboard-section visibility with `display: block !important;`
+  - Implemented fallback mock data for graphs if API fails
+  - Added global error handlers to prevent JavaScript errors from breaking page
+  - Graphs now always display: either real server data OR fallback sample data
 - **Mascot Status**: Allosaurus removed - awaiting new user-created mascot design
 - **COMPLETED**: Implemented original "day one" role creation commands into admin panel UI
   - Gaming Roles button (//setup-roles) - Posts gaming role selector with button
@@ -76,6 +82,6 @@ SPIDEY BOT is a feature-rich, multi-server Discord bot offering music playback, 
   - Remove Roles button (//remove-roles) - Posts role removal message
   - Auto Level Roles button (//setup-level-roles) - Creates 100 roles with emoji badges & gradient colors
 - **Quick Setup Endpoint**: `/api/quick-setup/:setupType` handles all quick setup actions via dashboard UI
-- **Role Categories**: Display format is "@RoleName - RoleName" matching Discord display, supports add/edit/remove roles with live list display
+- **Role Categories**: Display format is "@RoleName - RoleName" matching Discord display, supports add/edit/remove roles with live list display, auto-selects category after creation
 - **API Structure**: All config endpoints support ?guildId parameter to load specific server data
 - **Color Scheme**: Neon cyan (#00D4FF) primary, red/orange accents in buttons, Spider-Verse grid/glow aesthetic
