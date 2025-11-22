@@ -319,11 +319,11 @@
         }
 
         .mode-toggle {
-            width: 60px;
-            height: 32px;
+            width: 48px;
+            height: 26px;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(var(--theme-color), 0.3);
-            border-radius: 16px;
+            border-radius: 13px;
             cursor: pointer;
             position: relative;
             transition: all 0.3s ease;
@@ -345,8 +345,8 @@
         .mode-toggle::after {
             content: '';
             position: absolute;
-            width: 26px;
-            height: 26px;
+            width: 20px;
+            height: 20px;
             background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             top: 2px;
@@ -356,7 +356,7 @@
         }
 
         .mode-toggle.active::after {
-            left: 30px;
+            left: 24px;
             background: rgba(255, 255, 255, 0.95);
             box-shadow: 0 2px 8px rgba(var(--theme-color), 0.4);
         }
@@ -4138,20 +4138,24 @@
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const user = await res.json();
                 
-                if (user && user.username) {
+                // Try username, then global_name, then tag
+                const displayName = user.username || user.global_name || user.tag || 'User';
+                const avatarLetter = displayName.charAt(0).toUpperCase();
+                
+                if (displayName && displayName !== 'User') {
                     // Update user profile display
-                    document.getElementById('userName').textContent = user.username;
-                    document.getElementById('userAvatar').textContent = user.username.charAt(0).toUpperCase();
+                    document.getElementById('userName').textContent = displayName;
+                    document.getElementById('userAvatar').textContent = avatarLetter;
                     
                     // Update creator access based on actual username
                     const creatorSection = document.getElementById('creator-section');
-                    if (user.username === 'spidey') {
+                    if (displayName === 'spidey') {
                         if (creatorSection) creatorSection.style.display = 'block';
                     } else {
                         if (creatorSection) creatorSection.style.display = 'none';
                     }
                 } else {
-                    // Fallback if no username
+                    // Fallback if no valid name
                     document.getElementById('userName').textContent = 'User';
                     document.getElementById('userAvatar').textContent = 'U';
                 }
