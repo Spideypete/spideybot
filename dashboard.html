@@ -2793,12 +2793,19 @@
                     const data = {};
 
                     inputs.forEach(input => {
+                        const key = input.id || input.name || input.placeholder || input.className;
                         if (input.type === 'checkbox') {
-                            data[input.id || input.name || input.placeholder || 'checkbox_' + Math.random()] = input.checked;
+                            data[key] = input.checked;
+                            // Update originalValues to mark as saved
+                            originalValues[key] = input.checked;
                         } else if (input.type === 'color') {
-                            data[input.id || input.name || input.className] = input.value;
+                            data[key] = input.value;
+                            // Update originalValues to mark as saved
+                            originalValues[key] = input.value;
                         } else {
-                            data[input.id || input.name || input.placeholder || 'input_' + Math.random()] = input.value;
+                            data[key] = input.value;
+                            // Update originalValues to mark as saved
+                            originalValues[key] = input.value;
                         }
                     });
 
