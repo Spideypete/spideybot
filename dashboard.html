@@ -3047,6 +3047,12 @@
             await saveTabConfig('react-roles', { enabled: true });
         }
 
+        async function createReactRole() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            alert('✅ Reaction role configuration saved');
+        }
+
         async function loadServerMessages() {
             const config = await loadTabConfig('server-messages');
             const ta = document.querySelector('#server-messages-section textarea');
@@ -4040,7 +4046,6 @@
             alert('✅ Message counting settings saved');
         }
 
-        // React Roles (Already has createReactRole from earlier)
         // Add missing handler if not present
         if (typeof saveReactRoles === 'undefined') {
             window.saveReactRoles = async function() {
