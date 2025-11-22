@@ -3389,18 +3389,29 @@
 
             // Populate role dropdown
             const roleSelect = document.getElementById('customRoleSelect');
-            if (roleSelect && stats.roles) {
+            console.log('🔵 Role dropdown element found:', !!roleSelect);
+            console.log('🔵 Stats.roles:', stats?.roles?.length, 'roles');
+            
+            if (roleSelect && stats.roles && stats.roles.length > 0) {
                 roleSelect.innerHTML = '<option value="">Choose a role...</option>';
                 const filteredRoles = stats.roles.filter(r => r.name !== '@everyone');
+                console.log('🔵 Filtered roles (not @everyone):', filteredRoles.length);
+                
                 filteredRoles.forEach(role => {
                     const option = document.createElement('option');
                     option.value = role.id;
                     option.textContent = `${role.name} (${role.count} members)`;
                     roleSelect.appendChild(option);
+                    console.log('✅ Added role:', role.name, 'with', role.count, 'members');
                 });
-                console.log('✅ Role dropdown populated:', filteredRoles.length, 'roles found');
+                console.log('✅ Role dropdown populated: ' + filteredRoles.length + ' roles');
             } else {
-                console.warn('❌ roleSelect not found or no roles in stats:', { roleSelect: !!roleSelect, hasRoles: stats?.roles?.length });
+                console.warn('❌ Dropdown issue:', { 
+                    element: !!roleSelect, 
+                    roles: stats?.roles,
+                    rolesLength: stats?.roles?.length,
+                    statsObj: stats
+                });
             }
         }
 
