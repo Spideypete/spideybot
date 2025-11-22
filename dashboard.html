@@ -2406,22 +2406,36 @@
 
         function toggleServerDropdown() {
             const menu = document.getElementById('serverDropdownMenu');
-            menu.classList.toggle('active');
-            if (menu.classList.contains('active')) {
+            const isActive = menu.classList.contains('active');
+            
+            if (!isActive) {
                 loadServerList();
             }
+            
+            menu.classList.toggle('active');
         }
 
         async function loadServerList() {
             try {
+                const serversList = document.getElementById('serversList');
+                serversList.innerHTML = '<div style="padding: 1rem; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 0.8rem;">Loading servers...</div>';
+                
                 const res = await fetch('/api/creator/servers');
-                if (!res.ok) return;
+                if (!res.ok) {
+                    serversList.innerHTML = '<div style="padding: 1rem; color: #ff6b6b; font-size: 0.8rem;">Error loading servers</div>';
+                    return;
+                }
                 
                 const data = await res.json();
-                const serversList = document.getElementById('serversList');
-                const currentServerId = localStorage.getItem('selectedServerId');
                 
+                if (!data.servers || data.servers.length === 0) {
+                    serversList.innerHTML = '<div style="padding: 1rem; color: rgba(255, 255, 255, 0.5); font-size: 0.8rem;">No servers found</div>';
+                    return;
+                }
+                
+                const currentServerId = localStorage.getItem('selectedServerId');
                 serversList.innerHTML = '';
+                
                 data.servers.forEach(server => {
                     const item = document.createElement('div');
                     item.className = `server-menu-item ${server.id === currentServerId ? 'active' : ''}`;
@@ -2434,6 +2448,7 @@
                 });
             } catch (err) {
                 console.error('Failed to load servers:', err);
+                document.getElementById('serversList').innerHTML = '<div style="padding: 1rem; color: #ff6b6b; font-size: 0.8rem;">Failed to load servers</div>';
             }
         }
 
@@ -2560,28 +2575,33 @@
                     
                     // Set user role/status
                     document.getElementById('userRole').textContent = 'Authenticated';
-                } else {
-                    window.location.href = '/login';
-                }
-
-                // Load server name if selected
-                const selectedServerId = localStorage.getItem('selectedServerId');
-                if (selectedServerId) {
+                    
+                    // Pre-load servers in background so dropdown is ready
                     try {
                         const serverRes = await fetch('/api/creator/servers');
                         if (serverRes.ok) {
                             const serverData = await serverRes.json();
-                            const server = serverData.servers.find(s => s.id === selectedServerId);
-                            if (server) {
-                                document.getElementById('serverDisplayName').textContent = server.name;
+                            
+                            // Update server dropdown display name if one is selected
+                            const selectedServerId = localStorage.getItem('selectedServerId');
+                            if (selectedServerId && serverData.servers) {
+                                const server = serverData.servers.find(s => s.id === selectedServerId);
+                                if (server) {
+                                    document.getElementById('serverDisplayName').textContent = server.name;
+                                }
                             }
                         }
                     } catch (err) {
-                        console.error('Failed to load server name:', err);
+                        console.error('Failed to pre-load servers:', err);
                     }
 
                     // Load member graphs on dashboard
-                    setTimeout(loadMemberGraphs, 200);
+                    const selectedServerId = localStorage.getItem('selectedServerId');
+                    if (selectedServerId) {
+                        setTimeout(loadMemberGraphs, 200);
+                    }
+                } else {
+                    window.location.href = '/login';
                 }
             } catch (err) {
                 console.error('Failed to load user:', err);
