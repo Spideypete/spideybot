@@ -2575,6 +2575,15 @@ app.get("/logout", (req, res) => {
   });
 });
 
+// ============== PUBLIC API ==============
+app.get("/api/config", (req, res) => {
+  // Serve basic config needed for frontend (like client ID)
+  res.json({
+    clientId: DISCORD_CLIENT_ID,
+    botName: "SPIDEY BOT"
+  });
+});
+
 // ============== USER API ==============
 app.get("/api/user", (req, res) => {
   if (!req.session.authenticated) {
