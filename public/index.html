@@ -237,6 +237,59 @@
       max-width: 1200px;
       margin: 0 auto;
     }
+    .spidey-team {
+      text-align: center;
+      padding: 3rem 2rem;
+      border-bottom: 2px solid rgba(0, 212, 255, 0.2);
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(0, 212, 255, 0.05) 100%);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 15px;
+      margin: 0 2rem 2rem 2rem;
+      max-width: calc(100% - 4rem);
+      margin-left: 2rem;
+      margin-right: 2rem;
+    }
+    .spidey-team-logo {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 0.5rem;
+      border: 2px solid rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 30px rgba(145, 70, 255, 0.4);
+      transition: all 0.3s;
+    }
+    .spidey-team-logo:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 50px rgba(0, 212, 255, 0.6);
+      border-color: rgba(0, 212, 255, 0.6);
+    }
+    .spidey-team-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .spidey-team h2 {
+      color: #fff;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #00d4ff 0%, #9146FF 50%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .spidey-team p {
+      color: #ccc;
+      font-size: 0.95rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body>
@@ -403,6 +456,15 @@
   </main>
 
   <footer>
+    <!-- SPIDEY TEAM Section -->
+    <div class="spidey-team">
+      <div class="spidey-team-logo">
+        <img src="/assets/spidey-team-logo.png" alt="SPIDEY TEAM Logo">
+      </div>
+      <h2>SPIDEY TEAM</h2>
+      <p>Built with passion to bring the ultimate Discord bot experience. Powered by innovation, creativity, and the spirit of Spider-Verse.</p>
+    </div>
+
     <div class="footer-content">
       <div class="footer-section">
         <h3>Quick Links</h3>
@@ -435,7 +497,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
+      <p>&copy; 2025 SPIDEY BOT - All rights reserved | Proudly created by SPIDEY TEAM</p>
     </div>
   </footer>
 
