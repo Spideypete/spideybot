@@ -2759,94 +2759,123 @@
         }
 
         async function createRoleCategory() {
+            // Get guild ID from localStorage (most up-to-date source)
+            const guildId = localStorage.getItem('selectedServerId') || currentGuildId;
+            
+            // Check if server is selected
+            if (!guildId) {
+                alert('❌ Please select a server first from the dropdown');
+                return;
+            }
+
             const name = document.getElementById('categoryName').value;
             const message = document.getElementById('categoryMessage').value;
             const channel = document.getElementById('categoryChannel').value;
             
             if (!name) {
-                alert('Please enter a category name');
+                alert('❌ Please enter a category name');
                 return;
             }
             
             if (creatingCategoryRoles.length === 0) {
-                alert('Please add at least one role to this category');
+                alert('❌ Please add at least one role to this category');
                 return;
             }
             
             try {
-                const res = await fetch(`/api/config/role-categories?guildId=${currentGuildId}`, {
+                const url = `/api/config/role-categories?guildId=${guildId}`;
+                const payload = {
+                    categoryName: name,
+                    message,
+                    channel,
+                    roles: creatingCategoryRoles
+                };
+                
+                console.log('🔵 Creating category:', { url, payload, guildId });
+                
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        categoryName: name,
-                        message,
-                        channel,
-                        roles: creatingCategoryRoles
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 const data = await res.json();
+                console.log('🔵 API Response:', { status: res.status, data });
                 
                 if (res.ok && data.success) {
-                    alert('✅ Category created!');
+                    alert('✅ Category created successfully!');
                     document.getElementById('categoryName').value = '';
                     document.getElementById('categoryMessage').value = '';
                     document.getElementById('categoryChannel').value = '';
                     document.getElementById('creatingRoleInput').value = '';
                     creatingCategoryRoles = [];
                     displayCreatingRolesList();
-                    loadRoleCategories(currentGuildId);
+                    loadRoleCategories(guildId);
                 } else {
-                    alert(`❌ Failed to create category: ${data.error || 'Unknown error'}`);
-                    console.error('API Error:', data);
+                    alert(`❌ Error: ${data.error || 'Unknown error'}`);
+                    console.error('🔴 API Error:', data);
                 }
             } catch (err) {
-                console.error('Error creating category:', err);
-                alert(`❌ Failed to create category: ${err.message}`);
+                console.error('🔴 Error creating category:', err);
+                alert(`❌ Error: ${err.message}`);
             }
         }
 
         async function saveCategoryChanges() {
+            // Get guild ID from localStorage (most up-to-date source)
+            const guildId = localStorage.getItem('selectedServerId') || currentGuildId;
+            
+            if (!guildId) {
+                alert('❌ Please select a server first from the dropdown');
+                return;
+            }
+
             const oldName = document.getElementById('editCategorySelect').value;
             const newName = document.getElementById('editCategoryName').value;
             const message = document.getElementById('editCategoryMessage').value;
             const channel = document.getElementById('editCategoryChannel').value;
             
             if (!newName) {
-                alert('Please enter a category name');
+                alert('❌ Please enter a category name');
                 return;
             }
             
             if (currentEditingRoles.length === 0) {
-                alert('Please add at least one role to this category');
+                alert('❌ Please add at least one role to this category');
                 return;
             }
             
             try {
-                const res = await fetch(`/api/config/role-categories?guildId=${currentGuildId}`, {
+                const url = `/api/config/role-categories?guildId=${guildId}`;
+                const payload = {
+                    oldCategoryName: oldName,
+                    categoryName: newName,
+                    message,
+                    channel,
+                    roles: currentEditingRoles
+                };
+
+                console.log('🔵 Updating category:', { url, payload, guildId });
+                
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        oldCategoryName: oldName,
-                        categoryName: newName,
-                        message,
-                        channel,
-                        roles: currentEditingRoles
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 const data = await res.json();
+                console.log('🔵 API Response:', { status: res.status, data });
                 
                 if (res.ok && data.success) {
-                    alert('✅ Category updated!');
-                    loadRoleCategories(currentGuildId);
+                    alert('✅ Category updated successfully!');
+                    loadRoleCategories(guildId);
                 } else {
-                    alert(`❌ Failed to update category: ${data.error || 'Unknown error'}`);
-                    console.error('API Error:', data);
+                    alert(`❌ Error: ${data.error || 'Unknown error'}`);
+                    console.error('🔴 API Error:', data);
                 }
             } catch (err) {
-                console.error('Error updating category:', err);
-                alert(`❌ Failed to update category: ${err.message}`);
+                console.error('🔴 Error updating category:', err);
+                alert(`❌ Error: ${err.message}`);
             }
         }
 

@@ -3140,8 +3140,14 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
   try {
     if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
 
+    console.log('📝 POST /api/config/role-categories received');
+    console.log('   Query:', req.query);
+    console.log('   Body:', req.body);
+
     const config = loadConfig();
     const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    
+    console.log('   Using guildId:', guildId);
     
     if (!guildId) {
       console.error('❌ Role category save failed: No guild ID provided');
