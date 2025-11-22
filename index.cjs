@@ -18,6 +18,16 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const axios = require("axios");
+const {
+  RateLimiter,
+  SecurityValidator,
+  securityHeadersMiddleware,
+  WebhookSignatureVerifier,
+  SecurityAuditLogger,
+  AntiSpamEngine,
+  JoinGateSystem,
+  BackupSystem
+} = require("./security");
 
 // ============== SETUP EXPRESS APP ==============
 const publicDir = path.join(__dirname, 'public');
@@ -34,6 +44,15 @@ app.use(session({
 // Serve static files from public (automatically serves index.html for /)
 app.use(express.static(publicDir));
 app.set('trust proxy', true);
+
+// ============== SECURITY MIDDLEWARE ==============
+app.use(securityHeadersMiddleware);
+const rateLimiter = new RateLimiter(100, 60000); // 100 requests per minute
+app.use(rateLimiter.middleware());
+const auditLogger = new SecurityAuditLogger();
+const antiSpam = new AntiSpamEngine();
+const joinGate = new JoinGateSystem();
+const backupSystem = new BackupSystem();
 
 // ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
@@ -2662,6 +2681,12 @@ app.get("/privacy", (req, res) => {
   const privacyPath = path.join(publicDir, 'privacy.html');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.sendFile(privacyPath);
+});
+
+app.get("/security", (req, res) => {
+  const securityPath = path.join(publicDir, 'security.html');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(securityPath);
 });
 
 app.get("/commands", (req, res) => {
