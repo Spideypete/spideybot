@@ -14,7 +14,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             background: #000000;
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--text-color, rgba(255, 255, 255, 0.9));
             overflow-x: hidden;
         }
 
@@ -1003,18 +1003,6 @@
                 <ul class="sidebar-menu" id="tools-menu">
                     <li class="sidebar-item" data-section="tickets"><div class="sidebar-item-text">🎫 Tickets</div><div class="sidebar-item-badge" data-badge-for="tickets">✓</div></li>
                     <li class="sidebar-item" data-section="giveaways"><div class="sidebar-item-text">🎁 Giveaways</div><div class="sidebar-item-badge" data-badge-for="giveaways">✓</div></li>
-                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
-                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">🎨 UI Colour</div>
-                        <select id="themeColor" onchange="changeThemeColor(this.value)" class="color-dropdown" style="width: 100%;">
-                            <option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
-                        </select>
-                    </li>
-                    <li style="padding: 0.75rem 1rem; margin-top: 0.75rem;">
-                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.648rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">📝 Text Colour</div>
-                        <select id="textColor" onchange="changeTextColor(this.value)" class="color-dropdown" style="width: 100%;">
-                            <option value="white">⚪ White</option><option value="purple">🟣 Purple</option><option value="pink">🩷 Pink</option><option value="blue">🔵 Blue</option><option value="cyan">🔷 Cyan</option><option value="green">🟢 Green</option><option value="black">⚫ Black</option><option value="grey">⚪ Grey</option><option value="violet">💜 Violet</option><option value="baby-blue">👶 Baby Blue</option><option value="baby-pink">👶 Baby Pink</option><option value="red">🔴 Red</option><option value="yellow">🟡 Yellow</option><option value="orange">🟠 Orange</option><option value="teal">🧿 Teal</option><option value="lime">💚 Lime</option><option value="turquoise">💎 Turquoise</option><option value="coral">🪸 Coral</option><option value="indigo">🟦 Indigo</option><option value="maroon">🟫 Maroon</option><option value="navy">⬛ Navy</option><option value="olive">🟩 Olive</option><option value="salmon">🐟 Salmon</option><option value="gold">✨ Gold</option><option value="mint">🌿 Mint</option><option value="rose">🌹 Rose</option>
-                        </select>
-                    </li>
                 </ul>
             </div>
 
@@ -4084,72 +4072,11 @@
         }
 
         function changeFunThemeColor(color) {
-            const colorMap = {
-                'purple': '128, 0, 255',
-                'pink': '255, 105, 180',
-                'blue': '30, 144, 255',
-                'cyan': '0, 255, 255',
-                'green': '34, 197, 94',
-                'black': '64, 64, 64',
-                'grey': '128, 128, 128',
-                'violet': '139, 0, 139',
-                'baby-blue': '173, 216, 230',
-                'baby-pink': '255, 192, 203',
-                'red': '255, 67, 67',
-                'yellow': '255, 223, 0',
-                'orange': '255, 140, 0',
-                'teal': '0, 128, 128',
-                'lime': '50, 205, 50',
-                'turquoise': '64, 224, 208',
-                'coral': '255, 127, 80',
-                'indigo': '75, 0, 130',
-                'maroon': '128, 0, 0',
-                'navy': '0, 0, 128',
-                'olive': '128, 128, 0',
-                'salmon': '250, 128, 114',
-                'gold': '255, 215, 0',
-                'mint': '62, 180, 137',
-                'rose': '255, 102, 178'
-            };
-            
-            const rgbValue = colorMap[color];
-            document.documentElement.style.setProperty('--theme-color', rgbValue);
-            localStorage.setItem('selectedColor', color);
+            changeThemeColor(color);
         }
 
         function changeFunTextColor(color) {
-            const textColorMap = {
-                'white': '#ffffff',
-                'purple': '#8000ff',
-                'pink': '#ff69b4',
-                'blue': '#1e90ff',
-                'cyan': '#00ffff',
-                'green': '#22c55e',
-                'black': '#000000',
-                'grey': '#808080',
-                'violet': '#8b008b',
-                'baby-blue': '#add8e6',
-                'baby-pink': '#ffc0cb',
-                'red': '#ff4343',
-                'yellow': '#ffdf00',
-                'orange': '#ff8c00',
-                'teal': '#008080',
-                'lime': '#32cd32',
-                'turquoise': '#40e0d0',
-                'coral': '#ff7f50',
-                'indigo': '#4b0082',
-                'maroon': '#800000',
-                'navy': '#000080',
-                'olive': '#808000',
-                'salmon': '#fa8072',
-                'gold': '#ffd700',
-                'mint': '#3eb489',
-                'rose': '#ff66b2'
-            };
-            
-            const hexValue = textColorMap[color];
-            document.documentElement.style.setProperty('--text-color', hexValue);
-            localStorage.setItem('selectedTextColor', color);
+            changeTextColor(color);
         }
 
         function toggleMode() {
