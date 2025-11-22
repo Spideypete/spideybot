@@ -129,17 +129,20 @@
         }
 
         .category-toggle::after {
-            content: '>';
+            content: '▾';
             position: absolute;
             transition: all 0.3s ease;
+            font-size: 0.7rem;
         }
 
         .category-toggle.active::after {
-            content: '<';
+            content: '▴';
+            transform: translateY(1px);
         }
 
         .category-toggle:hover {
             color: rgba(var(--theme-color), 1);
+            transform: scale(1.15);
         }
 
         .sidebar-menu {
