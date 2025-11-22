@@ -2517,6 +2517,19 @@ app.get("/login", (req, res) => {
   res.send(loginHtml);
 });
 
+// ============== STATIC PAGES ==============
+app.get("/terms", (req, res) => {
+  const termsPath = path.join(publicDir, 'terms.html');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(termsPath);
+});
+
+app.get("/privacy", (req, res) => {
+  const privacyPath = path.join(publicDir, 'privacy.html');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(privacyPath);
+});
+
 app.get("/auth/discord", (req, res) => {
   const scopes = ["identify", "guilds"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
