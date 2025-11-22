@@ -262,25 +262,29 @@
         }
 
         .upgrade-box {
-            margin: 2rem 1rem;
-            padding: 1rem;
+            margin: 2rem 1rem 1rem 1rem;
+            padding: 1.25rem;
             background: rgba(var(--theme-color), 0.2);
             border: 2px solid rgba(var(--theme-color), 0.6);
+            border-radius: 15px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            display: block;
+            overflow: visible;
         }
 
         .upgrade-box:hover {
             background: rgba(var(--theme-color), 0.35);
             box-shadow: 0 0 20px rgba(var(--theme-color), 0.5);
-            transform: scale(1.05);
+            transform: translateY(-2px);
         }
 
         .upgrade-box-text {
             color: rgba(255, 255, 255, 0.95);
             font-weight: 600;
-            font-size: 0.81rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
         }
 
         /* Main Content */
