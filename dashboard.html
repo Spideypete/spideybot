@@ -1736,7 +1736,7 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Require Message Reaction</label>
                                 </div>
-                                <button class="btn btn-primary">Save Settings</button>
+                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                     </div>
@@ -1921,7 +1921,7 @@
                                     <div class="form-label">Require Role</div>
                                     <input type="text" class="form-input" placeholder="Leave empty for all"/>
                                 </div>
-                                <button class="btn btn-primary">Create Command</button>
+                                <button class="btn btn-primary" onclick="saveCustomCommands()">Create Command</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -1937,7 +1937,7 @@
                                     <div class="form-label">Alias</div>
                                     <input type="text" class="form-input" placeholder="e.g., r (for rules)"/>
                                 </div>
-                                <button class="btn btn-primary">Add Alias</button>
+                                <button class="btn btn-primary" onclick="saveCustomCommands()">Add Alias</button>
                             </div>
                         </div>
                     </div>
@@ -2006,7 +2006,7 @@
                                     <div class="form-label">Role</div>
                                     <input type="text" class="form-input" placeholder="Select role"/>
                                 </div>
-                                <button class="btn btn-primary">Add Level Role</button>
+                                <button class="btn btn-primary" onclick="saveXPLevels()">Add Level Role</button>
                             </div>
                         </div>
                     </div>
@@ -2064,7 +2064,7 @@
                                     <div class="form-label">Top Users to Show</div>
                                     <input type="number" class="form-input" placeholder="10" value="10"/>
                                 </div>
-                                <button class="btn btn-primary">Save Settings</button>
+                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                     </div>
@@ -2096,7 +2096,7 @@
                                     <div class="form-label">Winners</div>
                                     <input type="number" class="form-input" placeholder="1" value="1"/>
                                 </div>
-                                <button class="btn btn-primary">Start Giveaway</button>
+                                <button class="btn btn-primary" onclick="createGiveaway()">Start Giveaway</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -2135,7 +2135,7 @@
                                     <div class="form-label">Notification Channel</div>
                                     <input type="text" class="form-input" placeholder="Select channel"/>
                                 </div>
-                                <button class="btn btn-primary">Add Streamer</button>
+                                <button class="btn btn-primary" onclick="addStreamer()">Add Streamer</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -2167,7 +2167,7 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Track Invite Links</label>
                                 </div>
-                                <button class="btn btn-primary">Save Settings</button>
+                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -2199,7 +2199,7 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Count Bot Messages</label>
                                 </div>
-                                <button class="btn btn-primary">Save Settings</button>
+                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -2232,7 +2232,7 @@
                                     <div class="form-label">Max Recording Duration (minutes)</div>
                                     <input type="number" class="form-input" placeholder="60" value="60"/>
                                 </div>
-                                <button class="btn btn-primary">Save Settings</button>
+                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -2982,12 +2982,189 @@
             }
         });
 
+        // ==================== MASTER HANDLERS FOR ALL TABS ====================
+        async function loadTabConfig(configName) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return null;
+            try {
+                const res = await fetch(`/api/config/${configName}?guildId=${guildId}`);
+                if (res.ok) return await res.json();
+            } catch (e) { console.error('Error loading ' + configName + ':', e); }
+            return {};
+        }
+
+        async function saveTabConfig(configName, data) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            try {
+                const res = await fetch(`/api/config/${configName}?guildId=${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) return alert(`✅ ${configName} saved`);
+                else alert(`❌ Failed to save ${configName}`);
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function loadSettings() {
+            const config = await loadTabConfig('settings');
+            if (config) document.querySelector('[placeholder="//"]').value = config.prefix || '//';
+        }
+
+        async function saveSettings() {
+            const prefix = document.querySelector('[placeholder="//"]')?.value || '//';
+            await saveTabConfig('settings', { prefix });
+        }
+
+        async function loadLogging() {
+            const config = await loadTabConfig('logging');
+            const chk = document.querySelector('#logging-section input[type="checkbox"]');
+            if (chk && config.enabled) chk.checked = true;
+        }
+
+        async function saveLogging() {
+            const enabled = document.querySelector('#logging-section input[type="checkbox"]')?.checked;
+            await saveTabConfig('logging', { enabled });
+        }
+
+        async function loadServerGuard() {
+            const config = await loadTabConfig('server-guard');
+            const chk = document.querySelector('#server-guard-section input[type="checkbox"]');
+            if (chk && config.enabled) chk.checked = true;
+        }
+
+        async function saveServerGuard() {
+            const enabled = document.querySelector('#server-guard-section input[type="checkbox"]')?.checked;
+            await saveTabConfig('server-guard', { enabled });
+        }
+
+        async function loadReactRoles() {
+            await loadTabConfig('react-roles');
+        }
+
+        async function saveReactRoles() {
+            await saveTabConfig('react-roles', { enabled: true });
+        }
+
+        async function loadServerMessages() {
+            const config = await loadTabConfig('server-messages');
+            const ta = document.querySelector('#server-messages-section textarea');
+            if (ta && config.welcomeMessage) ta.value = config.welcomeMessage;
+        }
+
+        async function saveServerMessages() {
+            const welcomeMsg = document.querySelector('#server-messages-section textarea')?.value || '';
+            await saveTabConfig('server-messages', { welcomeMessage: welcomeMsg });
+        }
+
+        async function loadCustomCommands() {
+            await loadTabConfig('custom-commands');
+        }
+
+        async function saveCustomCommands() {
+            const name = document.querySelector('#custom-commands-section input')?.value || '';
+            const response = document.querySelector('#custom-commands-section textarea')?.value || '';
+            if (!name || !response) return alert('Fill in all fields');
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            try {
+                const res = await fetch(`/api/commands/${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, response })
+                });
+                if (res.ok) {
+                    alert('✅ Command created');
+                    document.querySelector('#custom-commands-section input').value = '';
+                    document.querySelector('#custom-commands-section textarea').value = '';
+                } else {
+                    alert('❌ Failed to create command');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function loadXPLevels() {
+            await loadTabConfig('xp-levels');
+        }
+
+        async function saveXPLevels() {
+            const xpPerLevel = document.querySelector('#xp-levels-section input[placeholder="500"]')?.value || '500';
+            await saveTabConfig('xp-levels', { xpPerLevel: parseInt(xpPerLevel) });
+        }
+
+        async function loadLeaderboards() {
+            await loadTabConfig('leaderboards');
+        }
+
+        async function saveLeaderboards() {
+            await saveTabConfig('leaderboards', { enabled: true });
+        }
+
+        async function loadGiveaways() {
+            await loadTabConfig('giveaways');
+        }
+
+        async function createGiveaway() {
+            const prize = document.querySelector('#giveaways-section input[placeholder*="Discord"]')?.value || '';
+            const duration = document.querySelector('#giveaways-section input[placeholder*="minutes"]')?.value || '60';
+            if (!prize) return alert('Enter a prize');
+            await saveTabConfig('giveaways', { prize, duration: parseInt(duration), active: true });
+        }
+
+        async function loadSocialNotifs() {
+            await loadTabConfig('social-notifs');
+        }
+
+        async function addStreamer() {
+            await saveTabConfig('social-notifs', { enabled: true });
+        }
+
+        async function loadInviteTracking() {
+            await loadTabConfig('invite-tracking');
+        }
+
+        async function saveInviteTracking() {
+            await saveTabConfig('invite-tracking', { enabled: true });
+        }
+
+        async function loadMessageCounting() {
+            await loadTabConfig('message-counting');
+        }
+
+        async function saveMessageCounting() {
+            await saveTabConfig('message-counting', { enabled: true });
+        }
+
+        async function loadRecordings() {
+            await loadTabConfig('recordings');
+        }
+
+        async function saveRecordings() {
+            await saveTabConfig('recordings', { enabled: true });
+        }
+
+        async function loadReminders() {
+            await loadTabConfig('reminders');
+        }
+
+        async function createReminder() {
+            await saveTabConfig('reminders', { enabled: true });
+        }
+
+        async function loadStatisticChannels() {
+            await loadTabConfig('statistics-channels');
+        }
+
+        async function addStatChannel() {
+            await saveTabConfig('statistics-channels', { enabled: true });
+        }
+
         function switchSection(sectionName) {
             console.log('🔵 switchSection:', sectionName);
             try {
                 // 1. HIDE ALL - force display none on EVERY section
                 const allSections = document.querySelectorAll('.content-section');
-                console.log('   Found', allSections.length, 'sections to hide');
                 allSections.forEach(s => {
                     s.style.display = 'none';
                     s.style.visibility = 'hidden';
@@ -3004,13 +3181,11 @@
                 const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
                 if (activeItem) {
                     activeItem.classList.add('active');
-                    console.log('   ✅ Sidebar marked active');
                 }
                 
                 // 4. SHOW target section - FORCE IT
                 const sectionId = sectionName + '-section';
                 const section = document.getElementById(sectionId);
-                console.log('   Looking for:', sectionId, '- Found:', !!section);
                 
                 if (section) {
                     section.style.display = 'block';
@@ -3021,6 +3196,37 @@
                     
                     // Scroll to top
                     section.scrollIntoView({ behavior: 'auto', block: 'start' });
+                    
+                    // Load tab-specific data
+                    const loadMap = {
+                        'dashboard': loadMemberGraphs,
+                        'events': loadMemberEvents,
+                        'settings': loadSettings,
+                        'logging': loadLogging,
+                        'server-guard': loadServerGuard,
+                        'react-roles': loadReactRoles,
+                        'server-messages': loadServerMessages,
+                        'custom-commands': loadCustomCommands,
+                        'xp-levels': loadXPLevels,
+                        'leaderboards': loadLeaderboards,
+                        'giveaways': loadGiveaways,
+                        'social-notifs': loadSocialNotifs,
+                        'invite-tracking': loadInviteTracking,
+                        'message-counting': loadMessageCounting,
+                        'recordings': loadRecordings,
+                        'reminders': loadReminders,
+                        'statistics-channels': loadStatisticChannels,
+                        'role-categories': () => loadRoleCategories(localStorage.getItem('selectedServerId'))
+                    };
+                    
+                    if (loadMap[sectionName]) {
+                        try {
+                            const loadFn = loadMap[sectionName];
+                            if (typeof loadFn === 'function') loadFn();
+                        } catch (e) {
+                            console.error('Error loading ' + sectionName + ':', e);
+                        }
+                    }
                 } else {
                     console.error('   ❌ Section NOT found:', sectionId);
                 }
