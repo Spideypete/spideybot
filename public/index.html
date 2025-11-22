@@ -114,10 +114,47 @@
     footer {
       background: #000;
       border-top: 1px solid #222;
-      padding: 2rem;
+      padding: 3rem 2rem;
+      margin-top: 4rem;
+    }
+    footer .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    footer .footer-section h3 {
+      color: #00d4ff;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    footer .footer-section ul {
+      list-style: none;
+    }
+    footer .footer-section ul li {
+      margin-bottom: 0.75rem;
+    }
+    footer .footer-section a {
+      color: #999;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+    footer .footer-section a:hover {
+      color: #00d4ff;
+    }
+    footer .footer-bottom {
       text-align: center;
       color: #666;
-      margin-top: 4rem;
+      font-size: 0.85rem;
+      padding-top: 2rem;
+      border-top: 1px solid #222;
+      max-width: 1200px;
+      margin: 0 auto;
     }
   </style>
 </head>
@@ -142,6 +179,43 @@
       <a href="/login" class="btn btn-primary">Login with Discord</a>
     </div>
   </div>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="/login">Admin</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <ul>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Community</h3>
+        <ul>
+          <li><a href="https://discord.com/invite/spideybot" target="_blank">Discord Server</a></li>
+          <li><a href="https://twitter.com" target="_blank">Twitter</a></li>
+          <li><a href="https://github.com" target="_blank">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>About</h3>
+        <ul>
+          <li style="color: #999; font-size: 0.9rem;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 SPIDEY BOT - All rights reserved</p>
+    </div>
+  </footer>
 
   <script>
     let clientId = null;
