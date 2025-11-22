@@ -741,16 +741,39 @@
         }
 
         select option {
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 0.5rem;
+            background: #0f1623;
+            color: #fff;
+            padding: 0.6rem 0.8rem;
+            border: none;
+        }
+
+        select option:checked {
+            background: rgba(0, 212, 255, 0.3);
+            color: #fff;
         }
 
         .form-input {
             max-width: 100%;
             width: 100%;
             box-sizing: border-box;
+        }
+
+        .glass-select {
+            background: rgba(20, 30, 60, 0.4) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.3) !important;
+            color: #fff !important;
+        }
+
+        .glass-select:hover {
+            background: rgba(20, 30, 60, 0.5) !important;
+            border-color: rgba(0, 212, 255, 0.5) !important;
+        }
+
+        .glass-select:focus {
+            background: rgba(20, 30, 60, 0.6) !important;
+            border-color: rgba(0, 212, 255, 0.6) !important;
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.2) !important;
         }
 
         .panel-content {
@@ -1086,7 +1109,7 @@
                                 <div class="panel-content">
                                     <div class="form-group">
                                         <div class="form-label">Select Role</div>
-                                        <select id="customRoleSelect" style="width: 100%; padding: 0.7rem; background: rgba(var(--theme-color), 0.1); border: 1px solid rgba(var(--theme-color), 0.3); color: #fff; border-radius: 6px; margin-bottom: 1rem;" onchange="updateCustomGraph()">
+                                        <select id="customRoleSelect" class="form-input glass-select" onchange="updateCustomGraph()">
                                             <option value="">Choose a role...</option>
                                         </select>
                                     </div>
