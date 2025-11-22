@@ -65,9 +65,127 @@
         }
 
         .server-selector-dropdown {
-            position: sticky;
-            top: 1rem;
+            position: relative;
             z-index: 50;
+            margin-top: 1rem;
+        }
+
+        .server-dropdown-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(var(--theme-color), 0.12);
+            border: 1.5px solid rgba(var(--theme-color), 0.3);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .server-dropdown-btn:hover {
+            background: rgba(var(--theme-color), 0.18);
+            border-color: rgba(var(--theme-color), 0.5);
+            box-shadow: 0 0 15px rgba(var(--theme-color), 0.2);
+            transform: translateY(-1px);
+        }
+
+        .server-dropdown-btn:active {
+            transform: translateY(0);
+        }
+
+        .server-dropdown-btn span:last-child {
+            font-size: 0.7rem;
+            margin-left: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .server-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            background: rgba(10, 14, 39, 0.95);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-radius: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            display: none;
+        }
+
+        .server-dropdown-menu.active {
+            display: block;
+        }
+
+        .server-dropdown-menu .server-item {
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.75);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .server-dropdown-menu .server-item:hover {
+            background: rgba(var(--theme-color), 0.15);
+            border-left-color: rgba(var(--theme-color), 0.6);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .add-server-item {
+            padding: 0.75rem 1rem;
+            color: rgba(var(--theme-color), 0.8);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-top: 1px solid rgba(var(--theme-color), 0.2);
+        }
+
+        .add-server-item:hover {
+            background: rgba(var(--theme-color), 0.12);
+            color: rgba(var(--theme-color), 1);
+        }
+
+        body.light-mode .server-dropdown-btn {
+            background: rgba(var(--theme-color), 0.05);
+            border-color: rgba(var(--theme-color), 0.2);
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        body.light-mode .server-dropdown-btn:hover {
+            background: rgba(var(--theme-color), 0.1);
+            border-color: rgba(var(--theme-color), 0.4);
+        }
+
+        body.light-mode .server-dropdown-menu {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(var(--theme-color), 0.3);
+        }
+
+        body.light-mode .server-dropdown-menu .server-item {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        body.light-mode .server-dropdown-menu .server-item:hover {
+            background: rgba(var(--theme-color), 0.1);
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        body.light-mode .add-server-item {
+            color: rgba(var(--theme-color), 0.7);
+            border-top-color: rgba(var(--theme-color), 0.2);
+        }
+
+        body.light-mode .add-server-item:hover {
+            background: rgba(var(--theme-color), 0.08);
+            color: rgba(var(--theme-color), 0.9);
         }
         
         .server-dropdown {
