@@ -135,10 +135,21 @@
     <h1>The best all-in-one bot for Discord</h1>
     <p>SPIDEY BOT is a complete Discord bot trusted by servers worldwide. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
     <div class="btn-group">
-      <a id="addToDiscord" class="btn btn-secondary">Add To Server</a>
+      <button id="addToDiscord" class="btn btn-secondary" onclick="redirectToDiscordOAuth()">Add To Server</button>
       <a href="/login" class="btn btn-primary">Login with Discord</a>
     </div>
   </div>
+
+  <script>
+    function redirectToDiscordOAuth() {
+      const clientId = '1283411929529360404';
+      const redirectUri = encodeURIComponent(window.location.origin + '/auth/discord/callback');
+      const scopes = 'bot';
+      const permissions = 8;
+      const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&permissions=${permissions}`;
+      window.location.href = authUrl;
+    }
+  </script>
 
   <div class="container">
     <h2 style="margin-top: 3rem; margin-bottom: 2rem; font-size: 2rem;">✨ Features</h2>
