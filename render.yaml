@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: spidey-bot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.cjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_ID
+        fromDatabase:
+          name: spidey_db
+          property: client_id
+      - key: DISCORD_CLIENT_SECRET
+        fromDatabase:
+          name: spidey_db
+          property: discord_client_secret
+      - key: TOKEN
+        fromDatabase:
+          name: spidey_db
+          property: bot_token
+      - key: OPENAI_API_KEY
+        fromDatabase:
+          name: spidey_db
+          property: openai_api_key
+      - key: SESSION_SECRET
+        generateValue: true
