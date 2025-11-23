@@ -3178,8 +3178,9 @@
             await saveTabConfig('statistics-channels', { enabled: true });
         }
 
-        // ========== ACTIVITY LOGGING FUNCTIONS ==========
+        // ========== ACTIVITY LOGGING FUNCTIONS - LIVE FROM SERVER ==========
         let activityLogs = [];
+        let activityRefreshInterval = null;
         const MAX_LOGS = 500;
 
         function addActivityLog(category, message, severity = 'info') {
@@ -3191,7 +3192,53 @@
                 activityLogs.pop();
             }
             localStorage.setItem('activityLogs', JSON.stringify(activityLogs));
-            displayActivityLogs();
+        }
+
+        async function fetchLiveActivities() {
+            try {
+                const response = await fetch('/api/dashboard/activity', { credentials: 'include' });
+                if (!response.ok) throw new Error('Failed to fetch activities');
+                
+                const data = await response.json();
+                if (data.activities && data.activities.length > 0) {
+                    // Map server activities to display format
+                    activityLogs = data.activities.map(activity => ({
+                        timestamp: activity.time || new Date().toLocaleTimeString(),
+                        category: getCategoryFromIcon(activity.icon),
+                        message: `${activity.text} - ${activity.action}`,
+                        severity: getSeverityFromIcon(activity.icon),
+                        icon: activity.icon
+                    }));
+                    displayActivityLogs();
+                } else {
+                    displayActivityLogs();
+                }
+            } catch (e) {
+                console.log('Activity fetch error (normal if not logged in):', e.message);
+                displayActivityLogs();
+            }
+        }
+
+        function getCategoryFromIcon(icon) {
+            const categoryMap = {
+                '🎤': 'voice',
+                '⚠️': 'moderation',
+                '💰': 'economy',
+                '📈': 'leveling',
+                '🎵': 'music',
+                '👤': 'members',
+                '👥': 'members',
+                '⚙️': 'config',
+                '📢': 'alert',
+                '🛡️': 'moderation'
+            };
+            return categoryMap[icon] || 'alert';
+        }
+
+        function getSeverityFromIcon(icon) {
+            if (icon === '⚠️' || icon === '🛡️') return 'warning';
+            if (icon === '❌' || icon === '🔴') return 'error';
+            return 'info';
         }
 
         function displayActivityLogs() {
@@ -3214,7 +3261,7 @@
                     'config': '⚙️',
                     'alert': '📢'
                 };
-                const icon = icons[log.category] || '📋';
+                const icon = icons[log.category] || log.icon || '📋';
                 const color = log.severity === 'error' ? '#ff6b6b' : log.severity === 'warning' ? '#ffd700' : '#00d4ff';
                 
                 return `<div style="color: ${color}; margin: 0.5rem 0; padding: 0.5rem; border-left: 2px solid ${color}; padding-left: 0.75rem;">
@@ -3248,20 +3295,19 @@
                     activityLogs = [];
                 }
             }
-            displayActivityLogs();
+            // Fetch latest from server
+            fetchLiveActivities();
         }
 
-        // Simulate activities for demo (remove in production if you have real events)
+        // Initialize activity logging with auto-refresh
         function initializeActivityLogging() {
             loadActivityLogs();
-            // Auto-add sample logs if empty
-            if (activityLogs.length === 0) {
-                addActivityLog('members', 'Member @User#1234 joined the server', 'info');
-                addActivityLog('moderation', '@Admin warned @User#5678 for spam', 'warning');
-                addActivityLog('economy', '@User#1234 claimed daily reward (100 coins)', 'info');
-                addActivityLog('leveling', '@User#5678 reached Level 5! 📈', 'info');
-                addActivityLog('music', 'Music player started - now playing: Song Title', 'info');
-            }
+            
+            // Refresh activities every 3 seconds for live updates
+            if (activityRefreshInterval) clearInterval(activityRefreshInterval);
+            activityRefreshInterval = setInterval(() => {
+                fetchLiveActivities();
+            }, 3000);
         }
 
         // Call on page load
