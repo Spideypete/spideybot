@@ -1,0 +1,21 @@
+⚠️ CRITICAL SYNCHRONIZATION RULE ⚠️
+
+DASHBOARD FILES MUST ALWAYS BE SYNCHRONIZED:
+
+├── public/dashboard.html (SOURCE)
+└── dashboard.html (ROOT - MUST MATCH ALWAYS)
+
+SYNC COMMAND:
+  cp /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html
+
+VERIFY SYNC:
+  md5sum /home/runner/workspace/public/dashboard.html /home/runner/workspace/dashboard.html
+  (Must show identical MD5 hashes)
+
+WHEN TO SYNC:
+  ✓ After ANY dashboard.html changes
+  ✓ Before deployment
+  ✓ Before pushing to GitHub
+  ✓ Before restarting workflows
+
+NEVER DELETE dashboard.html - IT IS CRITICAL FOR DEPLOYMENT
