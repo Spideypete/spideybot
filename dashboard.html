@@ -3534,8 +3534,52 @@
                                 await loadMemberGraphs();
                                 await loadMemberEvents();
                                 
+                                // AUTO-SYNC: Refresh all dashboard data periodically
+                                console.log('✅ Started auto-sync - bot changes will update website in real-time');
+                                
                                 // Refresh member events every 3 seconds
                                 setInterval(loadMemberEvents, 3000);
+                                
+                                // Refresh member graphs every 5 seconds
+                                setInterval(loadMemberGraphs, 5000);
+                                
+                                // Refresh role categories every 5 seconds
+                                setInterval(() => loadRoleCategories(selectedServerId), 5000);
+                                
+                                // Refresh settings every 5 seconds (if in settings tab)
+                                setInterval(() => {
+                                    if (document.getElementById('settings-section')?.style.display !== 'none') {
+                                        loadSettings();
+                                    }
+                                }, 5000);
+                                
+                                // Refresh leaderboards every 5 seconds (if in leaderboards tab)
+                                setInterval(() => {
+                                    if (document.getElementById('leaderboards-section')?.style.display !== 'none') {
+                                        loadLeaderboards();
+                                    }
+                                }, 5000);
+                                
+                                // Refresh XP levels every 5 seconds (if in xp-levels tab)
+                                setInterval(() => {
+                                    if (document.getElementById('xp-levels-section')?.style.display !== 'none') {
+                                        loadXPLevels();
+                                    }
+                                }, 5000);
+                                
+                                // Refresh giveaways every 5 seconds (if in giveaways tab)
+                                setInterval(() => {
+                                    if (document.getElementById('giveaways-section')?.style.display !== 'none') {
+                                        loadGiveaways();
+                                    }
+                                }, 5000);
+                                
+                                // Refresh react roles every 5 seconds (if in react-roles tab)
+                                setInterval(() => {
+                                    if (document.getElementById('react-roles-section')?.style.display !== 'none') {
+                                        loadReactRoles();
+                                    }
+                                }, 5000);
                             }
                         }
                     } catch (err) {
