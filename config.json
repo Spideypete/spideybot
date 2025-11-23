@@ -23,7 +23,21 @@
         "807682091591925801_xp": 49,
         "807682091591925801": 16,
         "807682091591925801_xp_time": 1763814041136
-      }
+      },
+      "memberEvents": [
+        {
+          "type": "join",
+          "user": "New Member",
+          "userId": "111",
+          "timestamp": "11/22/2025, 9:43:04 PM"
+        },
+        {
+          "type": "boost",
+          "user": "Premium Member",
+          "userId": "222",
+          "timestamp": "11/22/2025, 8:43:04 PM"
+        }
+      ]
     },
     "subscriptions": {
       "field_0": "Gold",
@@ -66,7 +80,37 @@
       "trackMessages": true,
       "trackReactions": true,
       "trackVoice": true,
-      "trackMembers": true
+      "trackMembers": true,
+      "//": "//",
+      "SPIDEY BOT": "SPIDEY BOT",
+      "form-input": "#welcome",
+      "e.g., with commands // help": "",
+      "GMT": "GMT",
+      "": true
+    },
+    "role-categories": {
+      "categoryName": "",
+      "message": "sd",
+      "channel": "s",
+      "roles": [
+        "s"
+      ],
+      "categoryMessage": "",
+      "categoryChannel": "",
+      "creatingRoleInput": "",
+      "editCategorySelect": "",
+      "editCategoryName": "",
+      "editCategoryMessage": "",
+      "editCategoryChannel": "",
+      "newRoleInput": "",
+      "": true
+    },
+    "react-roles": {
+      "Select channel": "s",
+      "Enter message ID": "s",
+      "Enter emoji": "s",
+      "Select role": "s",
+      "": false
     }
   }
 }

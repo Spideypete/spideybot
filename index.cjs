@@ -18,6 +18,16 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const axios = require("axios");
+const {
+  RateLimiter,
+  SecurityValidator,
+  securityHeadersMiddleware,
+  WebhookSignatureVerifier,
+  SecurityAuditLogger,
+  AntiSpamEngine,
+  JoinGateSystem,
+  BackupSystem
+} = require("./security");
 
 // ============== SETUP EXPRESS APP ==============
 const publicDir = path.join(__dirname, 'public');
@@ -34,6 +44,15 @@ app.use(session({
 // Serve static files from public (automatically serves index.html for /)
 app.use(express.static(publicDir));
 app.set('trust proxy', true);
+
+// ============== SECURITY MIDDLEWARE ==============
+app.use(securityHeadersMiddleware);
+const rateLimiter = new RateLimiter(100, 60000); // 100 requests per minute
+app.use(rateLimiter.middleware());
+const auditLogger = new SecurityAuditLogger();
+const antiSpam = new AntiSpamEngine();
+const joinGate = new JoinGateSystem();
+const backupSystem = new BackupSystem();
 
 // ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
@@ -223,8 +242,21 @@ function addActivity(guildId, icon, text, action, time = null) {
 
 // ============== WELCOME NEW MEMBERS ==============
 client.on("guildMemberAdd", async (member) => {
-  console.log(`New member joined: ${member.user.tag} in ${member.guild.name}`);
   addActivity(member.guild.id, "👤", member.user.username, "joined the server");
+  
+  // Track new member joins
+  const config = loadConfig();
+  if (!config.guilds[member.guild.id]) config.guilds[member.guild.id] = {};
+  if (!config.guilds[member.guild.id].memberEvents) config.guilds[member.guild.id].memberEvents = [];
+  
+  config.guilds[member.guild.id].memberEvents.unshift({
+    type: "join",
+    user: member.user.username,
+    userId: member.user.id,
+    timestamp: new Date().toLocaleString()
+  });
+  config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
   const guildConfig = getGuildConfig(member.guild.id);
   if (!guildConfig.welcomeChannelId) return;
@@ -245,6 +277,50 @@ client.on("guildMemberAdd", async (member) => {
     } catch (error) {
       console.error(`Failed to send welcome: ${error.message}`);
     }
+  }
+});
+
+// ============== MEMBER LEAVES ==============
+client.on("guildMemberRemove", async (member) => {
+  addActivity(member.guild.id, "👋", member.user.username, "left the server");
+  
+  // Track member leaves
+  const config = loadConfig();
+  if (!config.guilds[member.guild.id]) config.guilds[member.guild.id] = {};
+  if (!config.guilds[member.guild.id].memberEvents) config.guilds[member.guild.id].memberEvents = [];
+  
+  config.guilds[member.guild.id].memberEvents.unshift({
+    type: "leave",
+    user: member.user.username,
+    userId: member.user.id,
+    timestamp: new Date().toLocaleString()
+  });
+  config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+});
+
+// ============== MEMBER UPDATES (BOOSTS, ROLES) ==============
+client.on("guildMemberUpdate", async (oldMember, newMember) => {
+  // Check if member got a boost role
+  const oldBoostRole = oldMember.roles.cache.some(r => r.name === "Server Booster" || r.name === "Nitro Booster");
+  const newBoostRole = newMember.roles.cache.some(r => r.name === "Server Booster" || r.name === "Nitro Booster");
+  
+  if (!oldBoostRole && newBoostRole) {
+    addActivity(newMember.guild.id, "💎", newMember.user.username, "boosted the server");
+    
+    // Track boosts
+    const config = loadConfig();
+    if (!config.guilds[newMember.guild.id]) config.guilds[newMember.guild.id] = {};
+    if (!config.guilds[newMember.guild.id].memberEvents) config.guilds[newMember.guild.id].memberEvents = [];
+    
+    config.guilds[newMember.guild.id].memberEvents.unshift({
+      type: "boost",
+      user: newMember.user.username,
+      userId: newMember.user.id,
+      timestamp: new Date().toLocaleString()
+    });
+    config.guilds[newMember.guild.id].memberEvents = config.guilds[newMember.guild.id].memberEvents.slice(0, 50);
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   }
 });
 
@@ -2664,6 +2740,12 @@ app.get("/privacy", (req, res) => {
   res.sendFile(privacyPath);
 });
 
+app.get("/security", (req, res) => {
+  const securityPath = path.join(publicDir, 'security.html');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(securityPath);
+});
+
 app.get("/commands", (req, res) => {
   const commandsHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -3073,10 +3155,9 @@ adminConfigs.forEach(configName => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
     const config = loadConfig();
-    const firstGuild = client.guilds.cache.first();
-    if (!firstGuild) return res.json({});
+    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    if (!guildId) return res.json({});
 
-    const guildId = firstGuild.id;
     const data = config.guilds[guildId]?.[configName] || {};
     res.json(data);
   });
@@ -3086,10 +3167,9 @@ adminConfigs.forEach(configName => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
     const config = loadConfig();
-    const firstGuild = client.guilds.cache.first();
-    if (!firstGuild) return res.json({ success: false, error: "No guild found" });
+    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    if (!guildId) return res.json({ success: false, error: "No guild found" });
 
-    const guildId = firstGuild.id;
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId][configName]) config.guilds[guildId][configName] = {};
 
@@ -3105,32 +3185,131 @@ app.get("/api/config/role-categories", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
-  const firstGuild = client.guilds.cache.first();
-  if (!firstGuild) return res.json({});
+  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+  if (!guildId) return res.json({});
 
-  const guildId = firstGuild.id;
   const data = config.guilds[guildId]?.roleCategories || {};
   res.json(data);
 });
 
 // ============== API: SAVE ROLE CATEGORIES ==============
 app.post("/api/config/role-categories", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
 
-  const config = loadConfig();
-  const firstGuild = client.guilds.cache.first();
-  if (!firstGuild) return res.json({ success: false, error: "No guild found" });
+    console.log('📝 POST /api/config/role-categories received');
+    console.log('   Query:', req.query);
+    console.log('   Body:', req.body);
 
-  const guildId = firstGuild.id;
-  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    const config = loadConfig();
+    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    
+    console.log('   Using guildId:', guildId);
+    
+    if (!guildId) {
+      console.error('❌ Role category save failed: No guild ID provided');
+      return res.status(400).json({ success: false, error: "No guild found" });
+    }
 
-  const { categoryName, roles, channel } = req.body;
-  if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
 
-  config.guilds[guildId].roleCategories[categoryName] = { roles, channel };
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-  console.log(`✅ Role category saved: ${categoryName}`);
-  res.json({ success: true, message: "Role category saved successfully" });
+    const { categoryName, oldCategoryName, roles, channel, message } = req.body;
+    
+    if (!categoryName) {
+      console.error('❌ Role category save failed: No category name provided');
+      return res.status(400).json({ success: false, error: "Category name is required" });
+    }
+
+    if (!roles || !Array.isArray(roles) || roles.length === 0) {
+      console.error('❌ Role category save failed: No roles provided');
+      return res.status(400).json({ success: false, error: "At least one role is required" });
+    }
+    
+    // If renaming, delete old category first
+    if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
+      delete config.guilds[guildId].roleCategories[oldCategoryName];
+      console.log(`🔄 Renamed category: ${oldCategoryName} → ${categoryName}`);
+    }
+
+    // Save or update category with message and channel
+    config.guilds[guildId].roleCategories[categoryName] = {
+      roles: roles || [],
+      channel: channel || '',
+      message: message || ''
+    };
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ Role category saved: ${categoryName} (Guild: ${guildId})`);
+    res.json({ success: true, message: "Role category saved successfully", categoryName, guildId });
+  } catch (err) {
+    console.error('❌ Error saving role category:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ============== API: POST CATEGORY TO DISCORD CHANNEL ==============
+app.post("/api/post-category", express.json(), async (req, res) => {
+  try {
+    if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+
+    const guildId = req.query.guildId;
+    const { categoryName, channelId } = req.body;
+
+    console.log('🔵 POST /api/post-category:', { categoryName, channelId, guildId });
+
+    if (!guildId || !categoryName || !channelId) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
+    }
+
+    const config = loadConfig();
+    const category = config.guilds[guildId]?.roleCategories?.[categoryName];
+
+    if (!category) {
+      return res.status(404).json({ success: false, error: "Category not found" });
+    }
+
+    // Get Discord guild and channel
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) {
+      return res.status(400).json({ success: false, error: "Guild not found" });
+    }
+
+    const channel = await guild.channels.fetch(channelId);
+    if (!channel || !channel.isSendable?.()) {
+      return res.status(400).json({ success: false, error: "Channel not found or not sendable" });
+    }
+
+    // Create embed with role selection buttons
+    const embed = new EmbedBuilder()
+      .setColor("#00d4ff")
+      .setTitle(`${categoryName}`)
+      .setDescription(category.message || "Select roles below:")
+      .setFooter({ text: "React with the button below to claim a role" });
+
+    const buttons = new ActionRowBuilder();
+    category.roles.forEach((role, index) => {
+      const cleanRole = role.replace('@', '');
+      buttons.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`role_${categoryName}_${index}`)
+          .setLabel(cleanRole)
+          .setStyle(ButtonStyle.Primary)
+      );
+    });
+
+    // Send message with buttons
+    const message = await channel.send({
+      embeds: [embed],
+      components: buttons.components.length > 0 ? [buttons] : []
+    });
+
+    console.log(`✅ Category posted to channel ${channelId}: ${message.id}`);
+    res.json({ success: true, messageId: message.id, categoryName });
+  } catch (err) {
+    console.error('❌ Error posting category:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ============== API: UPDATE CONFIG ==============
@@ -3423,6 +3602,207 @@ app.get("/api/member-stats/:guildId", (req, res) => {
     console.error('Failed to fetch members:', err);
     res.status(500).json({ error: 'Failed to fetch member data' });
   });
+});
+
+// Get member events (joins, leaves, boosts)
+app.get("/api/member-events/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const config = loadConfig();
+  const guildId = req.params.guildId;
+  const events = config.guilds[guildId]?.memberEvents || [];
+  
+  res.json({ events });
+});
+
+// ============== QUICK SETUP ENDPOINTS ==============
+app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const setupType = req.params.setupType;
+  const guildId = req.query.guildId || req.body.guildId;
+  const guild = client.guilds.cache.get(guildId);
+  
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  // Get the default text channel to post messages
+  const channel = guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(guild.members.me).has('SendMessages'));
+  if (!channel) return res.status(400).json({ error: "No suitable channel found to post message" });
+
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
+  try {
+    switch(setupType) {
+      case 'gaming':
+        const gamingEmbed = new EmbedBuilder()
+          .setColor(0x00D4FF)
+          .setTitle("🎮 GAMING ROLE SELECTION")
+          .setDescription("✨ Choose the games you play and join gaming communities!\n\n*Click the button below to see available gaming roles*")
+          .addFields({ name: "What's this?", value: "Get roles for your favorite games and find other players!" })
+          .setFooter({ text: "SPIDEY BOT • Gaming Community" });
+
+        const gamingButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("claim_roles")
+            .setLabel("🎮 SELECT GAMING ROLES")
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji("🎯")
+        );
+        channel.send({ embeds: [gamingEmbed], components: [gamingButton] });
+        return res.json({ success: true, message: "Gaming roles selector posted to #" + channel.name });
+
+      case 'watchparty':
+        const watchEmbed = new EmbedBuilder()
+          .setColor(0x4ECDC4)
+          .setTitle("🎬 WATCH PARTY ROLE SELECTION")
+          .setDescription("✨ Join watch parties and stream together!\n\n*Click the button below to see available watch party roles*")
+          .addFields({ name: "What's this?", value: "Get notified about watch parties and join streams with your community!" })
+          .setFooter({ text: "SPIDEY BOT • Watch Party Community" });
+
+        const watchButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("claim_watchparty")
+            .setLabel("🎬 SELECT WATCH PARTY ROLES")
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji("📺")
+        );
+        channel.send({ embeds: [watchEmbed], components: [watchButton] });
+        return res.json({ success: true, message: "Watch party selector posted to #" + channel.name });
+
+      case 'platform':
+        const platformEmbed = new EmbedBuilder()
+          .setColor(0x45B7D1)
+          .setTitle("💻 PLATFORM ROLE SELECTION")
+          .setDescription("✨ Select your gaming platforms!\n\n*Click the button below to see available platform roles*")
+          .addFields({ name: "What's this?", value: "Tell everyone what platforms you game on and find crossplay buddies!" })
+          .setFooter({ text: "SPIDEY BOT • Platform Community" });
+
+        const platformButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("claim_platform")
+            .setLabel("💻 SELECT PLATFORM ROLES")
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji("🖥️")
+        );
+        channel.send({ embeds: [platformEmbed], components: [platformButton] });
+        return res.json({ success: true, message: "Platform selector posted to #" + channel.name });
+
+      case 'removeRoles':
+        const removeEmbed = new EmbedBuilder()
+          .setColor(0xED4245)
+          .setTitle("🗑️ REMOVE ROLES")
+          .setDescription("❌ Remove roles you no longer want!\n\n*Click the button below to manage your roles*")
+          .addFields({ name: "What's this?", value: "Deselect roles and remove yourself from communities!" })
+          .setFooter({ text: "SPIDEY BOT • Role Management" });
+
+        const removeButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("remove_all_roles")
+            .setLabel("🗑️ REMOVE ROLES")
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji("❌")
+        );
+        channel.send({ embeds: [removeEmbed], components: [removeButton] });
+        return res.json({ success: true, message: "Remove roles message posted to #" + channel.name });
+
+      case 'levelRoles':
+        // Create 100 level roles with gradient colors
+        const guildConfig = loadConfig().guilds[guildId] || {};
+        const levelRoles = {};
+        let created = 0;
+
+        const botRole = guild.members.me?.roles.highest;
+        
+        // Color gradient function
+        const colorGradient = (level) => {
+          const hue = (level / 100) * 360;
+          const h = hue / 60;
+          const c = 255;
+          const x = c * (1 - Math.abs((h % 2) - 1));
+          let r = 0, g = 0, b = 0;
+          if (h >= 0 && h < 1) [r, g, b] = [c, x, 0];
+          else if (h >= 1 && h < 2) [r, g, b] = [x, c, 0];
+          else if (h >= 2 && h < 3) [r, g, b] = [0, c, x];
+          else if (h >= 3 && h < 4) [r, g, b] = [0, x, c];
+          else if (h >= 4 && h < 5) [r, g, b] = [x, 0, c];
+          else [r, g, b] = [c, 0, x];
+          return (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b);
+        };
+
+        // Numbered emoji function
+        const getNumberedEmoji = (num) => {
+          const numbers = ['0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣'];
+          if (num < 10) return numbers[num];
+          const tens = Math.floor(num / 10);
+          const ones = num % 10;
+          return numbers[tens] + numbers[ones];
+        };
+
+        // Post initial status message
+        const levelStatusEmbed = new EmbedBuilder()
+          .setColor(0x00D4FF)
+          .setTitle("🎖️ Creating Level Roles (1-100)")
+          .setDescription("⏳ This may take a few moments...\n\nCreating roles with gradient colors...");
+        
+        channel.send({ embeds: [levelStatusEmbed] }).catch(() => {});
+
+        // Create roles asynchronously
+        (async () => {
+          try {
+            for (let level = 1; level <= 100; level++) {
+              try {
+                const emoji = getNumberedEmoji(level);
+                const roleName = `${emoji} Level ${level}`;
+
+                const role = await guild.roles.create({
+                  name: roleName,
+                  color: colorGradient(level),
+                  position: botRole ? botRole.position - 1 : 1
+                });
+
+                levelRoles[`level_${level}`] = role.id;
+                created++;
+
+                if (created % 20 === 0) {
+                  console.log(`✅ Created ${created}/100 level roles`);
+                }
+              } catch (err) {
+                console.error(`Failed to create level ${level} role: ${err.message}`);
+              }
+            }
+
+            // Save to config
+            const config = loadConfig();
+            if (!config.guilds[guildId]) config.guilds[guildId] = {};
+            config.guilds[guildId].levelRoles = levelRoles;
+            fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+
+            // Post completion message
+            const completedEmbed = new EmbedBuilder()
+              .setColor(0x00D4FF)
+              .setTitle("✅ Level Roles Created")
+              .setDescription(`Successfully created **${created}/100** level roles with gradient colors!\n\nMembers will display their level badge next to their name as they level up.`);
+            
+            channel.send({ embeds: [completedEmbed] }).catch(() => {});
+          } catch (err) {
+            console.error('Error creating level roles:', err);
+            const errorEmbed = new EmbedBuilder()
+              .setColor(0xED4245)
+              .setTitle("❌ Error Creating Roles")
+              .setDescription(`Failed to create all roles. Created: ${created}/100`);
+            channel.send({ embeds: [errorEmbed] }).catch(() => {});
+          }
+        })();
+
+        return res.json({ success: true, message: `Starting to create 100 level roles... (will create ${created} roles)` });
+
+      default:
+        return res.status(400).json({ error: "Unknown setup type" });
+    }
+  } catch (err) {
+    console.error('Quick setup error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 5000;
