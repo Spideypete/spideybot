@@ -3606,7 +3606,7 @@ app.get("/api/creator/servers", (req, res) => {
     .map(guild => ({
       id: guild.id,
       name: guild.name,
-      icon: guild.iconURL(),
+      icon: guild.icon || null,
       memberCount: guild.memberCount
     }));
 
