@@ -46,7 +46,22 @@
           "userId": "222",
           "timestamp": "11/22/2025, 8:43:04 PM"
         }
-      ]
+      ],
+      "logging": {
+        "messageLogging": {
+          "logDeleted": true,
+          "logEdited": true,
+          "logBulkDelete": false,
+          "logChannel": ""
+        },
+        "moderationLogging": {
+          "logBans": true,
+          "logKicks": true,
+          "logMutes": true,
+          "logWarns": true,
+          "modLogChannel": ""
+        }
+      }
     },
     "subscriptions": {
       "field_0": "Gold",
