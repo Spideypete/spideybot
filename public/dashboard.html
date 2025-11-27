@@ -4172,6 +4172,20 @@
             console.error('🔴 Unhandled promise rejection:', event.reason);
         });
 
+        function copyEmail() {
+            const email = 'peterburke122000@gmail.com';
+            navigator.clipboard.writeText(email).then(() => {
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> <span>Copied to clipboard!</span>';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy email. Please try manually: ' + email);
+            });
+        }
+
     </script>
 
     <!-- Unsaved Changes Notification -->

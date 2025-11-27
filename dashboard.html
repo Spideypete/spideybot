@@ -1200,9 +1200,9 @@
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">SUBSCRIPTIONS</div>
+                    <div class="sidebar-section-title">SUPPORT</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="subscriptions" onclick="switchSection('subscriptions')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span>Premium</span></li>
+                        <li class="sidebar-item" data-section="donations" onclick="switchSection('donations')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3-8c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg></span><span>Donate</span></li>
                     </ul>
                 </div>
 
@@ -2329,47 +2329,36 @@
                     </div>
                 </div>
 
-                <!-- Subscriptions Section -->
-                <div id="subscriptions-section" class="content-section">
+                <!-- Donations Section -->
+                <div id="donations-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Premium Subscriptions</div>
-                        <div class="content-subtitle">Manage premium features</div>
+                        <div class="content-title">Support Us</div>
+                        <div class="content-subtitle">Every donation is appreciated 💜</div>
                     </div>
                     <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💳 Current Plan</div></div>
+                        <div class="panel" style="grid-column: 1 / -1;">
+                            <div class="panel-header"><div class="panel-title">❤️ Help Support SPIDEY BOT</div></div>
                             <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Status</div>
-                                    <div style="color: rgba(0, 212, 255, 1); font-weight: 600;">✓ Premium Active</div>
+                                <div style="background: rgba(255, 105, 180, 0.1); border: 1px solid rgba(255, 105, 180, 0.3); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; font-size: 0.95rem;">
+                                        We're passionate about bringing you the best Discord bot experience with powerful features, reliable performance, and continuous improvements. Your donations help us cover hosting costs, fund development, and keep SPIDEY BOT running smoothly for thousands of servers worldwide.
+                                    </p>
+                                    <p style="color: rgba(255, 255, 255, 0.7); line-height: 1.8; font-size: 0.9rem; margin-top: 1rem;">
+                                        Every donation—whether $1 or $100—is deeply appreciated and makes a real difference. Thank you for believing in our mission to create an incredible Discord bot community! 🕷️
+                                    </p>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Plan Type</div>
-                                    <div style="font-size: 1.1rem; font-weight: 500;">Pro Tier</div>
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                    <a href="https://paypal.me/peterburke122000" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                        <span>🅿️</span> <span>Donate via PayPal</span>
+                                    </a>
+                                    <button class="btn btn-secondary" onclick="copyEmail()" style="cursor: pointer;">
+                                        <span>📧</span> <span>Copy Email: peterburke122000@gmail.com</span>
+                                    </button>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Renewal Date</div>
-                                    <div>January 15, 2025</div>
-                                </div>
-                                <button class="btn btn-primary" onclick="alert('✅ Subscription management interface')">Manage Subscription</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎯 Features Included</div></div>
-                            <div class="panel-content">
-                                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="color: rgba(0, 212, 255, 1);">✓</span> <span>Unlimited Custom Commands</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="color: rgba(0, 212, 255, 1);">✓</span> <span>Advanced Analytics</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="color: rgba(0, 212, 255, 1);">✓</span> <span>Priority Support</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="color: rgba(0, 212, 255, 1);">✓</span> <span>Custom Branding</span>
-                                    </div>
+                                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
+                                    <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem;">
+                                        💡 <strong>Tip:</strong> 100% of donations go directly to server maintenance, development, and feature improvements. No hidden fees or redirects—just pure support for your favorite bot.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -4182,6 +4171,20 @@
         window.addEventListener('unhandledrejection', (event) => {
             console.error('🔴 Unhandled promise rejection:', event.reason);
         });
+
+        function copyEmail() {
+            const email = 'peterburke122000@gmail.com';
+            navigator.clipboard.writeText(email).then(() => {
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> <span>Copied to clipboard!</span>';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy email. Please try manually: ' + email);
+            });
+        }
 
     </script>
 
