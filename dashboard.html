@@ -1409,7 +1409,6 @@
                                     <div class="form-label">Log Channel</div>
                                     <input id="messageLogChannelInput" type="text" class="form-input" placeholder="Select log channel"/>
                                 </div>
-                                <button onclick="updateMessageLogging()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem;">Update Message Logging</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -1431,10 +1430,10 @@
                                     <div class="form-label">Moderation Log Channel</div>
                                     <input id="modLogChannelInput" type="text" class="form-input" placeholder="Select mod log channel"/>
                                 </div>
-                                <button onclick="updateModerationLogging()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem;">Update Moderation Logging</button>
                             </div>
                         </div>
                     </div>
+                    <button onclick="updateAllLogging()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem; font-size: 1rem;">Update All Logging Settings</button>
                 </div>
 
                 <!-- Server Guard Section -->
@@ -1463,7 +1462,6 @@
                                         <option>Ban</option>
                                     </select>
                                 </div>
-                                <button onclick="updateAntiSpam()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem;">Update Anti-Spam</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -1479,7 +1477,6 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="banRaidUsersCheck" type="checkbox"/> Ban Raid Users</label>
                                 </div>
-                                <button onclick="updateRaidProtection()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem;">Update Raid Protection</button>
                             </div>
                         </div>
                     </div>
@@ -1500,10 +1497,10 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="confirmDangerousCheck" type="checkbox" checked/> <span>Require confirmation for dangerous actions</span></label>
                                 </div>
-                                <button onclick="updatePermissions()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem;">Update Permissions</button>
                             </div>
                         </div>
                     </div>
+                    <button onclick="updateAllServerGuard()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem; font-size: 1rem;">Update All Server Guard Settings</button>
 
                     <div class="content-grid" style="margin-top: 2rem;">
                         <div class="panel">
@@ -4072,7 +4069,7 @@
             }
         }
 
-        async function updateMessageLogging() {
+        async function updateAllLogging() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) {
                 alert('Please select a server first');
@@ -4084,40 +4081,10 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        type: 'message',
                         logDeleted: document.getElementById('logDeletedCheck').checked,
                         logEdited: document.getElementById('logEditedCheck').checked,
                         logBulkDelete: document.getElementById('logBulkDeleteCheck').checked,
-                        logChannel: document.getElementById('messageLogChannelInput').value || ''
-                    }),
-                    credentials: 'include'
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    alert('✅ Message logging updated!');
-                } else {
-                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
-                }
-            } catch (err) {
-                console.error('Update error:', err);
-                alert('Error updating logging');
-            }
-        }
-
-        async function updateModerationLogging() {
-            const guildId = localStorage.getItem('selectedServerId');
-            if (!guildId) {
-                alert('Please select a server first');
-                return;
-            }
-
-            try {
-                const res = await fetch(`/api/bot-config/logging?guildId=${guildId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'moderation',
+                        logChannel: document.getElementById('messageLogChannelInput').value || '',
                         logBans: document.getElementById('logBansCheck').checked,
                         logKicks: document.getElementById('logKicksCheck').checked,
                         logMutes: document.getElementById('logMutesCheck').checked,
@@ -4129,7 +4096,7 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    alert('✅ Moderation logging updated!');
+                    alert('✅ All logging settings updated!');
                 } else {
                     alert(`❌ Error: ${data.message || 'Failed to update'}`);
                 }
@@ -4139,7 +4106,7 @@
             }
         }
 
-        async function updateAntiSpam() {
+        async function updateAllServerGuard() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) {
                 alert('Please select a server first');
@@ -4147,72 +4114,16 @@
             }
 
             try {
-                const res = await fetch(`/api/bot-config/anti-spam?guildId=${guildId}`, {
+                const res = await fetch(`/api/bot-config/server-guard?guildId=${guildId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        enabled: document.getElementById('antiSpamCheck').checked,
-                        messagesPerLimit: parseInt(document.getElementById('antiSpamLimitInput').value) || 5,
-                        action: document.getElementById('antiSpamActionSelect').value || 'Warn'
-                    }),
-                    credentials: 'include'
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    alert('✅ Anti-spam settings updated!');
-                } else {
-                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
-                }
-            } catch (err) {
-                console.error('Update error:', err);
-                alert('Error updating anti-spam');
-            }
-        }
-
-        async function updateRaidProtection() {
-            const guildId = localStorage.getItem('selectedServerId');
-            if (!guildId) {
-                alert('Please select a server first');
-                return;
-            }
-
-            try {
-                const res = await fetch(`/api/bot-config/raid?guildId=${guildId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        enabled: document.getElementById('raidProtectionCheck').checked,
-                        usersPerLimit: parseInt(document.getElementById('raidLimitInput').value) || 10,
-                        banRaidUsers: document.getElementById('banRaidUsersCheck').checked
-                    }),
-                    credentials: 'include'
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    alert('✅ Raid protection updated!');
-                } else {
-                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
-                }
-            } catch (err) {
-                console.error('Update error:', err);
-                alert('Error updating raid protection');
-            }
-        }
-
-        async function updatePermissions() {
-            const guildId = localStorage.getItem('selectedServerId');
-            if (!guildId) {
-                alert('Please select a server first');
-                return;
-            }
-
-            try {
-                const res = await fetch(`/api/bot-config/permissions?guildId=${guildId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                        antiSpamEnabled: document.getElementById('antiSpamCheck').checked,
+                        antiSpamLimit: parseInt(document.getElementById('antiSpamLimitInput').value) || 5,
+                        antiSpamAction: document.getElementById('antiSpamActionSelect').value || 'Warn',
+                        raidEnabled: document.getElementById('raidProtectionCheck').checked,
+                        raidLimit: parseInt(document.getElementById('raidLimitInput').value) || 10,
+                        banRaidUsers: document.getElementById('banRaidUsersCheck').checked,
                         membersOnly: document.getElementById('membersOnlyCheck').checked,
                         adminsBypass: document.getElementById('adminsBypassCheck').checked,
                         allowDM: document.getElementById('allowDMCheck').checked,
@@ -4223,13 +4134,13 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    alert('✅ Permissions updated!');
+                    alert('✅ All Server Guard settings updated!');
                 } else {
                     alert(`❌ Error: ${data.message || 'Failed to update'}`);
                 }
             } catch (err) {
                 console.error('Update error:', err);
-                alert('Error updating permissions');
+                alert('Error updating server guard');
             }
         }
 

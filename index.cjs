@@ -3473,19 +3473,43 @@ app.post("/api/bot-config/logging", express.json(), (req, res) => {
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId].logging) config.guilds[guildId].logging = {};
 
-    const { type, logDeleted, logEdited, logBulkDelete, logChannel, logBans, logKicks, logMutes, logWarns, modLogChannel } = req.body;
+    const { logDeleted, logEdited, logBulkDelete, logChannel, logBans, logKicks, logMutes, logWarns, modLogChannel } = req.body;
     
-    if (type === 'message') {
-      config.guilds[guildId].logging.messageLogging = { logDeleted, logEdited, logBulkDelete, logChannel };
-    } else if (type === 'moderation') {
-      config.guilds[guildId].logging.moderationLogging = { logBans, logKicks, logMutes, logWarns, modLogChannel };
-    }
+    config.guilds[guildId].logging.messageLogging = { logDeleted, logEdited, logBulkDelete, logChannel };
+    config.guilds[guildId].logging.moderationLogging = { logBans, logKicks, logMutes, logWarns, modLogChannel };
     
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ All logging settings updated (Guild: ${guildId})`);
     res.json({ success: true, message: "Logging updated successfully" });
   } catch (err) {
     console.error('❌ Error updating logging:', err);
     res.json({ success: false, message: "Error updating logging" });
+  }
+});
+
+app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    
+    const { antiSpamEnabled, antiSpamLimit, antiSpamAction, raidEnabled, raidLimit, banRaidUsers, membersOnly, adminsBypass, allowDM, confirmDangerous } = req.body;
+    
+    config.guilds[guildId].antiSpam = { enabled: antiSpamEnabled, messagesPerLimit: antiSpamLimit, action: antiSpamAction };
+    config.guilds[guildId].raidProtection = { enabled: raidEnabled, usersPerLimit: raidLimit, banRaidUsers };
+    config.guilds[guildId].permissions = { membersOnly, adminsBypass, allowDM, confirmDangerous };
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ All Server Guard settings updated (Guild: ${guildId})`);
+    res.json({ success: true, message: "Server Guard updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating server guard:', err);
+    res.json({ success: false, message: "Error updating server guard" });
   }
 });
 

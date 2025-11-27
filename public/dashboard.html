@@ -1397,17 +1397,17 @@
                             <div class="panel-header"><div class="panel-title">📝 Message Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Deleted Messages</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="logDeletedCheck" type="checkbox" checked/> Log Deleted Messages</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Edited Messages</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="logEditedCheck" type="checkbox" checked/> Log Edited Messages</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Log Bulk Deletes</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="logBulkDeleteCheck" type="checkbox"/> Log Bulk Deletes</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Log Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select log channel"/>
+                                    <input id="messageLogChannelInput" type="text" class="form-input" placeholder="Select log channel"/>
                                 </div>
                             </div>
                         </div>
@@ -1415,24 +1415,25 @@
                             <div class="panel-header"><div class="panel-title">👤 Moderation Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Bans</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="logBansCheck" type="checkbox" checked/> Log Bans</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Kicks</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="logKicksCheck" type="checkbox" checked/> Log Kicks</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Mutes</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="logMutesCheck" type="checkbox" checked/> Log Mutes</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Warns</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="logWarnsCheck" type="checkbox" checked/> Log Warns</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Moderation Log Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select mod log channel"/>
+                                    <input id="modLogChannelInput" type="text" class="form-input" placeholder="Select mod log channel"/>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <button onclick="updateAllLogging()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem; font-size: 1rem;">Update All Logging Settings</button>
                 </div>
 
                 <!-- Server Guard Section -->
@@ -1446,15 +1447,15 @@
                             <div class="panel-header"><div class="panel-title">🛡️ Anti-Spam</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Anti-Spam</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="antiSpamCheck" type="checkbox" checked/> Enable Anti-Spam</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Messages per 5s</div>
-                                    <input type="number" class="form-input" placeholder="5" value="5"/>
+                                    <input id="antiSpamLimitInput" type="number" class="form-input" placeholder="5" value="5"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Action</div>
-                                    <select class="form-input">
+                                    <select id="antiSpamActionSelect" class="form-input">
                                         <option>Warn</option>
                                         <option>Mute</option>
                                         <option>Kick</option>
@@ -1467,14 +1468,14 @@
                             <div class="panel-header"><div class="panel-title">⚠️ Raid Protection</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Raid Detection</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="raidProtectionCheck" type="checkbox" checked/> Enable Raid Detection</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Users per 10s</div>
-                                    <input type="number" class="form-input" placeholder="10" value="10"/>
+                                    <input id="raidLimitInput" type="number" class="form-input" placeholder="10" value="10"/>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Ban Raid Users</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="banRaidUsersCheck" type="checkbox"/> Ban Raid Users</label>
                                 </div>
                             </div>
                         </div>
@@ -1485,20 +1486,21 @@
                             <div class="panel-header"><div class="panel-title">🔐 Permissions</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Only @Members can use commands</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="membersOnlyCheck" type="checkbox" checked/> <span>Only @Members can use commands</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Admins bypass all restrictions</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="adminsBypassCheck" type="checkbox" checked/> <span>Admins bypass all restrictions</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> <span>Allow DM commands</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="allowDMCheck" type="checkbox"/> <span>Allow DM commands</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Require confirmation for dangerous actions</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="confirmDangerousCheck" type="checkbox" checked/> <span>Require confirmation for dangerous actions</span></label>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <button onclick="updateAllServerGuard()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem; font-size: 1rem;">Update All Server Guard Settings</button>
 
                     <div class="content-grid" style="margin-top: 2rem;">
                         <div class="panel">
@@ -1804,24 +1806,25 @@
                             <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="enableWelcomeCheck" type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Welcome Message</div>
-                                    <textarea class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
+                                    <textarea id="welcomeMessageInput" class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
                                 </div>
                                 <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username, {count} for member number</small>
+                                <button onclick="updateServerMessages()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem;">Update Messages</button>
                             </div>
                         </div>
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input id="enableGoodbyeCheck" type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Goodbye Message</div>
-                                    <textarea class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
+                                    <textarea id="goodbyeMessageInput" class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
                                 </div>
                                 <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username</small>
                             </div>
@@ -4063,6 +4066,113 @@
             } catch (err) {
                 console.error('Update error:', err);
                 alert('Error updating channels');
+            }
+        }
+
+        async function updateAllLogging() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) {
+                alert('Please select a server first');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/bot-config/logging?guildId=${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        logDeleted: document.getElementById('logDeletedCheck').checked,
+                        logEdited: document.getElementById('logEditedCheck').checked,
+                        logBulkDelete: document.getElementById('logBulkDeleteCheck').checked,
+                        logChannel: document.getElementById('messageLogChannelInput').value || '',
+                        logBans: document.getElementById('logBansCheck').checked,
+                        logKicks: document.getElementById('logKicksCheck').checked,
+                        logMutes: document.getElementById('logMutesCheck').checked,
+                        logWarns: document.getElementById('logWarnsCheck').checked,
+                        modLogChannel: document.getElementById('modLogChannelInput').value || ''
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ All logging settings updated!');
+                } else {
+                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
+                }
+            } catch (err) {
+                console.error('Update error:', err);
+                alert('Error updating logging');
+            }
+        }
+
+        async function updateAllServerGuard() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) {
+                alert('Please select a server first');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/bot-config/server-guard?guildId=${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        antiSpamEnabled: document.getElementById('antiSpamCheck').checked,
+                        antiSpamLimit: parseInt(document.getElementById('antiSpamLimitInput').value) || 5,
+                        antiSpamAction: document.getElementById('antiSpamActionSelect').value || 'Warn',
+                        raidEnabled: document.getElementById('raidProtectionCheck').checked,
+                        raidLimit: parseInt(document.getElementById('raidLimitInput').value) || 10,
+                        banRaidUsers: document.getElementById('banRaidUsersCheck').checked,
+                        membersOnly: document.getElementById('membersOnlyCheck').checked,
+                        adminsBypass: document.getElementById('adminsBypassCheck').checked,
+                        allowDM: document.getElementById('allowDMCheck').checked,
+                        confirmDangerous: document.getElementById('confirmDangerousCheck').checked
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ All Server Guard settings updated!');
+                } else {
+                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
+                }
+            } catch (err) {
+                console.error('Update error:', err);
+                alert('Error updating server guard');
+            }
+        }
+
+        async function updateServerMessages() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) {
+                alert('Please select a server first');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/bot-config/messages?guildId=${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        enableWelcome: document.getElementById('enableWelcomeCheck').checked,
+                        welcomeMessage: document.getElementById('welcomeMessageInput').value || '',
+                        enableGoodbye: document.getElementById('enableGoodbyeCheck').checked,
+                        goodbyeMessage: document.getElementById('goodbyeMessageInput').value || ''
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Server messages updated!');
+                } else {
+                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
+                }
+            } catch (err) {
+                console.error('Update error:', err);
+                alert('Error updating messages');
             }
         }
 
