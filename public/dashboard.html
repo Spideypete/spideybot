@@ -1352,6 +1352,7 @@
                                         <option value="">Select muted role...</option>
                                     </select>
                                 </div>
+                                <button onclick="updateRoles()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem;">Update All Roles</button>
                             </div>
                         </div>
                     </div>
@@ -1378,6 +1379,7 @@
                                         <option value="">Select welcome channel...</option>
                                     </select>
                                 </div>
+                                <button onclick="updateChannels()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, #a855f7, #ff1493); border: none; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 600; margin-top: 1rem;">Update All Channels</button>
                             </div>
                         </div>
                     </div>
@@ -3979,6 +3981,88 @@
             } catch (err) {
                 console.error('Update error:', err);
                 alert('Error updating setting');
+            }
+        }
+
+        async function updateRoles() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) {
+                alert('Please select a server first');
+                return;
+            }
+
+            const adminRole = document.getElementById('adminRoleSelect').value;
+            const moderatorRole = document.getElementById('moderatorRoleSelect').value;
+            const membersRole = document.getElementById('membersRoleSelect').value;
+            const mutedRole = document.getElementById('mutedRoleSelect').value;
+
+            if (!adminRole && !moderatorRole && !membersRole && !mutedRole) {
+                alert('Please select at least one role');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/bot-config/roles?guildId=${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminRole: adminRole || '',
+                        moderatorRole: moderatorRole || '',
+                        membersRole: membersRole || '',
+                        mutedRole: mutedRole || ''
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Roles updated successfully!');
+                } else {
+                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
+                }
+            } catch (err) {
+                console.error('Update error:', err);
+                alert('Error updating roles');
+            }
+        }
+
+        async function updateChannels() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) {
+                alert('Please select a server first');
+                return;
+            }
+
+            const generalChannel = document.getElementById('generalChannelSelect').value;
+            const announcementsChannel = document.getElementById('announcementsChannelSelect').value;
+            const welcomeChannel = document.getElementById('welcomeChannelSelect').value;
+
+            if (!generalChannel && !announcementsChannel && !welcomeChannel) {
+                alert('Please select at least one channel');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/bot-config/channels?guildId=${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        generalChannel: generalChannel || '',
+                        announcementsChannel: announcementsChannel || '',
+                        welcomeChannel: welcomeChannel || ''
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Channels updated successfully!');
+                } else {
+                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
+                }
+            } catch (err) {
+                console.error('Update error:', err);
+                alert('Error updating channels');
             }
         }
 

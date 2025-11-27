@@ -3398,6 +3398,69 @@ app.post("/api/bot-config/language", express.json(), (req, res) => {
   }
 });
 
+app.post("/api/bot-config/roles", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) {
+    return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
+  }
+
+  const { adminRole, moderatorRole, membersRole, mutedRole } = req.body;
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    
+    if (adminRole) config.guilds[guildId].adminRole = adminRole;
+    if (moderatorRole) config.guilds[guildId].moderatorRole = moderatorRole;
+    if (membersRole) config.guilds[guildId].membersRole = membersRole;
+    if (mutedRole) config.guilds[guildId].mutedRole = mutedRole;
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    
+    console.log(`✅ Roles updated (Guild: ${guildId})`, { adminRole, moderatorRole, membersRole, mutedRole });
+    res.json({ success: true, message: "Roles updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating roles:', err);
+    res.json({ success: false, message: "Error updating roles" });
+  }
+});
+
+app.post("/api/bot-config/channels", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) {
+    return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
+  }
+
+  const { generalChannel, announcementsChannel, welcomeChannel } = req.body;
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    
+    if (generalChannel) config.guilds[guildId].generalChannel = generalChannel;
+    if (announcementsChannel) config.guilds[guildId].announcementsChannel = announcementsChannel;
+    if (welcomeChannel) config.guilds[guildId].welcomeChannel = welcomeChannel;
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    
+    console.log(`✅ Channels updated (Guild: ${guildId})`, { generalChannel, announcementsChannel, welcomeChannel });
+    res.json({ success: true, message: "Channels updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating channels:', err);
+    res.json({ success: false, message: "Error updating channels" });
+  }
+});
+
 // ============== API: GET ROLE CATEGORIES ==============
 app.get("/api/config/role-categories", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
