@@ -180,6 +180,22 @@ function autoMigrateRoles(guildId, guild, guildConfig) {
   }
 }
 
+// ============== CACHE SYSTEM ==============
+const memberStatsCache = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function getCachedMemberStats(guildId) {
+  const cached = memberStatsCache[guildId];
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCachedMemberStats(guildId, data) {
+  memberStatsCache[guildId] = { data, timestamp: Date.now() };
+}
+
 // ============== CLIENT SETUP ==============
 const client = new Client({
   intents: [
@@ -3722,15 +3738,39 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
   res.json({ success: true, settings: config.creator });
 });
 
-// Get member statistics by role for graphs
+// Get member statistics by role for graphs (with caching to avoid rate limits)
 app.get("/api/member-stats/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  const guild = client.guilds.cache.get(req.params.guildId);
+  const guildId = req.params.guildId;
+  const guild = client.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
+  // Check cache first
+  const cached = getCachedMemberStats(guildId);
+  if (cached) {
+    console.log(`📊 Using cached member stats for guild ${guildId}`);
+    return res.json(cached);
+  }
+
+  // Use cached member data if available, otherwise fetch
+  const memberCache = guild.members.cache;
+  const stats = {
+    total: memberCache.size,
+    members: memberCache.filter(m => !m.user.bot).size,
+    verified: memberCache.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
+    bots: memberCache.filter(m => m.user.bot).size,
+    admins: memberCache.filter(m => m.permissions.has('Administrator')).size,
+    mods: memberCache.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+    roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
+  };
+
+  // Cache the stats
+  setCachedMemberStats(guildId, stats);
+  
+  // Fetch fresh data in background (don't wait for it)
   guild.members.fetch().then(members => {
-    const stats = {
+    const freshStats = {
       total: members.size,
       members: members.filter(m => !m.user.bot).size,
       verified: members.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
@@ -3739,11 +3779,13 @@ app.get("/api/member-stats/:guildId", (req, res) => {
       mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
       roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
     };
-    res.json(stats);
+    setCachedMemberStats(guildId, freshStats);
+    console.log(`✅ Updated member stats cache for guild ${guildId}`);
   }).catch(err => {
-    console.error('Failed to fetch members:', err);
-    res.status(500).json({ error: 'Failed to fetch member data' });
+    console.warn(`⚠️ Background member fetch failed for guild ${guildId}:`, err.message);
   });
+
+  res.json(stats);
 });
 
 // Get member events (joins, leaves, boosts)
