@@ -3160,22 +3160,46 @@ app.get("/api/user", (req, res) => {
 
   const user = req.session.user;
   let avatarUrl = null;
+  let avatarProxyUrl = null;
   
   // Generate Discord avatar URL (CDN direct)
   if (user.avatar) {
     const isAnimated = user.avatar.startsWith('a_');
     const ext = isAnimated ? 'gif' : 'png';
     avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
+    avatarProxyUrl = `/api/image?url=${encodeURIComponent(avatarUrl)}`;
   }
 
   res.json({
     user: {
       ...user,
       avatarUrl,
+      avatarProxyUrl,
       avatar: user.avatar || null
     },
     guilds: req.session.guilds
   });
+});
+
+// ============== IMAGE PROXY ENDPOINT (fallback for CDN images) ==============
+app.get("/api/image", async (req, res) => {
+  const imageUrl = req.query.url;
+  if (!imageUrl) return res.status(400).json({ error: "No URL provided" });
+
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 5000,
+      headers: { 'User-Agent': 'SpideyBot/1.0' }
+    });
+    
+    res.set('Content-Type', response.headers['content-type'] || 'image/png');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(response.data);
+  } catch (err) {
+    console.warn(`⚠️ Image proxy failed for ${imageUrl}:`, err.message);
+    res.status(502).json({ error: 'Failed to fetch image' });
+  }
 });
 
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
@@ -3678,15 +3702,18 @@ app.get("/api/creator/servers", (req, res) => {
     .filter(guild => adminGuildIds.includes(guild.id))
     .map(guild => {
       let iconUrl = null;
+      let iconProxyUrl = null;
       if (guild.icon) {
         const isAnimated = guild.icon.startsWith('a_');
         const ext = isAnimated ? 'gif' : 'png';
         iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+        iconProxyUrl = `/api/image?url=${encodeURIComponent(iconUrl)}`;
       }
       return {
         id: guild.id,
         name: guild.name,
         icon: iconUrl,
+        iconProxy: iconProxyUrl,
         memberCount: guild.memberCount
       };
     });
