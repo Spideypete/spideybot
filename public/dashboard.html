@@ -2613,26 +2613,13 @@
                     if (server.icon) {
                         btn.innerHTML = '';
                         const img = document.createElement('img');
+                        img.src = server.icon;
                         img.alt = server.name;
                         img.style.width = '100%';
                         img.style.height = '100%';
                         img.style.objectFit = 'cover';
                         img.style.borderRadius = '8px';
-                        
-                        let formatIndex = 0;
-                        const formats = ['png', 'gif', 'webp', 'jpg'];
-                        
-                        const tryNextFormat = () => {
-                            if (formatIndex < formats.length) {
-                                img.src = `https://cdn.discordapp.com/icons/${server.id}/${server.icon}.${formats[formatIndex]}?size=128`;
-                                formatIndex++;
-                            } else {
-                                btn.textContent = server.name.charAt(0).toUpperCase();
-                            }
-                        };
-                        
-                        img.onerror = tryNextFormat;
-                        tryNextFormat();
+                        img.onerror = () => { btn.textContent = server.name.charAt(0).toUpperCase(); };
                         btn.appendChild(img);
                     } else {
                         btn.textContent = server.name.charAt(0).toUpperCase();
@@ -3699,26 +3686,15 @@
                     if (user.avatar) {
                         userAvatar.innerHTML = '';
                         const img = document.createElement('img');
+                        img.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
                         img.alt = displayName;
                         img.style.width = '100%';
                         img.style.height = '100%';
                         img.style.borderRadius = '50%';
                         img.style.objectFit = 'cover';
-                        
-                        let formatIndex = 0;
-                        const formats = ['png', 'gif', 'webp', 'jpg'];
-                        
-                        const tryNextFormat = () => {
-                            if (formatIndex < formats.length) {
-                                img.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${formats[formatIndex]}?size=128`;
-                                formatIndex++;
-                            } else {
-                                userAvatar.innerHTML = displayName.charAt(0).toUpperCase();
-                            }
+                        img.onerror = () => {
+                            userAvatar.innerHTML = displayName.charAt(0).toUpperCase();
                         };
-                        
-                        img.onerror = tryNextFormat;
-                        tryNextFormat();
                         userAvatar.appendChild(img);
                     } else {
                         userAvatar.textContent = displayName.charAt(0).toUpperCase();
