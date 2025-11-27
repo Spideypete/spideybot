@@ -230,13 +230,13 @@ function addActivity(guildId, icon, text, action, time = null) {
 
   const activity = {
     icon,
-    text: text.substring(0, 50),
+    name: text.substring(0, 50),
     action,
-    time: time || new Date().toLocaleTimeString()
+    timestamp: time || new Date().toLocaleTimeString()
   };
 
   config.guilds[guildId].activities.unshift(activity);
-  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 20);
+  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 50);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 }
 
@@ -321,6 +321,49 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
     });
     config.guilds[newMember.guild.id].memberEvents = config.guilds[newMember.guild.id].memberEvents.slice(0, 50);
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  }
+});
+
+// ============== ROLE EVENTS ==============
+client.on("roleCreate", async (role) => {
+  addActivity(role.guild.id, "🏷️", "Role created", `${role.name} - ${role.id}`);
+});
+
+client.on("roleDelete", async (role) => {
+  addActivity(role.guild.id, "🗑️", "Role deleted", `${role.name} - ${role.id}`);
+});
+
+client.on("roleUpdate", async (oldRole, newRole) => {
+  let changes = [];
+  if (oldRole.name !== newRole.name) changes.push(`name: ${oldRole.name} → ${newRole.name}`);
+  if (oldRole.color !== newRole.color) changes.push("color changed");
+  if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) changes.push("permissions changed");
+  
+  if (changes.length > 0) {
+    addActivity(newRole.guild.id, "✏️", "Role updated", `${newRole.name} - ${changes.join(", ")}`);
+  }
+});
+
+// ============== CHANNEL EVENTS ==============
+client.on("channelCreate", async (channel) => {
+  if (channel.isDMBased()) return;
+  addActivity(channel.guild.id, "📝", "Channel created", `#${channel.name} - ${channel.id}`);
+});
+
+client.on("channelDelete", async (channel) => {
+  if (channel.isDMBased()) return;
+  addActivity(channel.guild.id, "🗑️", "Channel deleted", `#${channel.name} - ${channel.id}`);
+});
+
+client.on("channelUpdate", async (oldChannel, newChannel) => {
+  if (oldChannel.isDMBased()) return;
+  let changes = [];
+  if (oldChannel.name !== newChannel.name) changes.push(`name: ${oldChannel.name} → ${newChannel.name}`);
+  if (oldChannel.topic !== newChannel.topic) changes.push("topic changed");
+  if (oldChannel.type !== newChannel.type) changes.push("type changed");
+  
+  if (changes.length > 0) {
+    addActivity(newChannel.guild.id, "✏️", "Channel updated", `#${newChannel.name} - ${changes.join(", ")}`);
   }
 });
 
