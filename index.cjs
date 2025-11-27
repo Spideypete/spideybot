@@ -3633,6 +3633,26 @@ app.get("/api/channels/:guildId", (req, res) => {
   res.json({ channels });
 });
 
+// Get all roles in a guild
+app.get("/api/roles/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const roles = guild.roles.cache
+    .filter(role => role.name !== '@everyone')
+    .map(role => ({
+      id: role.id,
+      name: role.name,
+      color: role.color,
+      position: role.position
+    }))
+    .sort((a, b) => b.position - a.position);
+
+  res.json({ roles });
+});
+
 // Get creator settings (bot nickname, timezone)
 app.get("/api/creator/settings", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });

@@ -1332,38 +1332,26 @@
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Admin Role</div>
-                                    <select class="form-input">
-                                        <option>Select admin role...</option>
-                                        <option>Admin</option>
-                                        <option>Owner</option>
-                                        <option>Manager</option>
+                                    <select id="adminRoleSelect" class="form-input">
+                                        <option value="">Select admin role...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Moderator Role</div>
-                                    <select class="form-input">
-                                        <option>Select moderator role...</option>
-                                        <option>Moderator</option>
-                                        <option>Helper</option>
-                                        <option>Staff</option>
+                                    <select id="moderatorRoleSelect" class="form-input">
+                                        <option value="">Select moderator role...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Members Role</div>
-                                    <select class="form-input">
-                                        <option>Select members role...</option>
-                                        <option>@Members</option>
-                                        <option>Users</option>
-                                        <option>Verified</option>
+                                    <select id="membersRoleSelect" class="form-input">
+                                        <option value="">Select members role...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Muted Role</div>
-                                    <select class="form-input">
-                                        <option>Select muted role...</option>
-                                        <option>Muted</option>
-                                        <option>Silenced</option>
-                                        <option>Restricted</option>
+                                    <select id="mutedRoleSelect" class="form-input">
+                                        <option value="">Select muted role...</option>
                                     </select>
                                 </div>
                             </div>
@@ -2649,6 +2637,46 @@
             await loadMemberGraphs();
             await loadMemberEvents();
             await loadChannels(serverId);
+            await loadRoles(serverId);
+        }
+
+        async function loadRoles(guildId) {
+            try {
+                const res = await fetch(`/api/roles/${guildId}`, { credentials: 'include' });
+                if (!res.ok) throw new Error('Failed to fetch roles');
+                
+                const data = await res.json();
+                const roles = data.roles || [];
+                
+                // Populate all role dropdowns
+                const selects = [
+                    document.getElementById('adminRoleSelect'),
+                    document.getElementById('moderatorRoleSelect'),
+                    document.getElementById('membersRoleSelect'),
+                    document.getElementById('mutedRoleSelect')
+                ];
+                
+                selects.forEach(select => {
+                    if (select) {
+                        // Keep first option, remove others
+                        while (select.options.length > 1) {
+                            select.remove(1);
+                        }
+                        
+                        // Add all roles
+                        roles.forEach(role => {
+                            const option = document.createElement('option');
+                            option.value = role.id;
+                            option.textContent = `@${role.name}`;
+                            select.appendChild(option);
+                        });
+                    }
+                });
+                
+                console.log('✅ Loaded', roles.length, 'roles');
+            } catch (err) {
+                console.error('❌ Failed to load roles:', err);
+            }
         }
 
         async function loadChannels(guildId) {
