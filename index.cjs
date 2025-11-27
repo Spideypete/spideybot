@@ -3330,6 +3330,71 @@ adminConfigs.forEach(configName => {
   });
 });
 
+// ============== API: BOT CONFIG UPDATES ==============
+app.post("/api/bot-config/prefix", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) {
+    return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
+  }
+
+  const { value } = req.body;
+  if (!value || value.trim() === '') {
+    return res.json({ success: false, message: "Prefix cannot be empty" });
+  }
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    
+    config.guilds[guildId].commandPrefix = value.trim();
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    
+    console.log(`✅ Command prefix updated: ${value} (Guild: ${guildId})`);
+    res.json({ success: true, message: "Command prefix updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating prefix:', err);
+    res.json({ success: false, message: "Error updating prefix" });
+  }
+});
+
+app.post("/api/bot-config/language", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) {
+    return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
+  }
+
+  const { value } = req.body;
+  const validLanguages = ['English', 'Spanish', 'French', 'German', 'Portuguese'];
+  
+  if (!value || !validLanguages.includes(value)) {
+    return res.json({ success: false, message: "Invalid language selection" });
+  }
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    
+    config.guilds[guildId].defaultLanguage = value;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    
+    console.log(`✅ Default language updated: ${value} (Guild: ${guildId})`);
+    res.json({ success: true, message: "Default language updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating language:', err);
+    res.json({ success: false, message: "Error updating language" });
+  }
+});
+
 // ============== API: GET ROLE CATEGORIES ==============
 app.get("/api/config/role-categories", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
