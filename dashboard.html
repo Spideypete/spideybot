@@ -431,8 +431,8 @@
             display: flex;
             flex-direction: column;
             gap: 0.15rem;
-            min-width: 0;
-            flex-shrink: 1;
+            min-width: 100px;
+            flex-shrink: 0;
         }
 
         .user-name {
@@ -442,12 +442,14 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            line-height: 1.1;
         }
 
         .user-role {
             font-size: 0.65rem;
             color: rgba(255, 255, 255, 0.5);
             white-space: nowrap;
+            line-height: 1.1;
         }
 
         .profile-dropdown-icon {
