@@ -2597,7 +2597,12 @@
                     btn.className = `server-icon-btn ${server.id === currentServerId ? 'active' : ''}`;
                     btn.onclick = () => selectServer(server.id, server.name);
                     btn.title = server.name;
-                    btn.innerHTML = server.icon ? `<img src="${server.icon}" alt="${server.name}"/>` : server.name.charAt(0).toUpperCase();
+                    if (server.icon) {
+                        const iconUrl = `https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png?size=128`;
+                        btn.innerHTML = `<img src="${iconUrl}" alt="${server.name}" onerror="this.parentElement.textContent='${server.name.charAt(0).toUpperCase()}';"/>`;
+                    } else {
+                        btn.innerHTML = server.name.charAt(0).toUpperCase();
+                    }
                     container.appendChild(btn);
                 });
                 
@@ -3465,12 +3470,24 @@
                     const displayName = user.global_name || user.username || 'User';
                     document.getElementById('userName').textContent = displayName;
                     
-                    // Set user avatar with Discord profile picture - use cleaner approach
+                    // Set user avatar with Discord profile picture
                     const userAvatar = document.getElementById('userAvatar');
                     userAvatar.style.overflow = 'hidden';
                     if (user.avatar) {
-                        const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
-                        userAvatar.innerHTML = `<img src="${avatarUrl}" alt="${displayName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='${displayName.charAt(0).toUpperCase()}';console.warn('Avatar failed');"/>`;
+                        const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp?size=128`;
+                        const img = document.createElement('img');
+                        img.src = avatarUrl;
+                        img.alt = displayName;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.borderRadius = '50%';
+                        img.style.objectFit = 'cover';
+                        img.onerror = () => {
+                            userAvatar.textContent = displayName.charAt(0).toUpperCase();
+                            console.warn('Avatar failed to load');
+                        };
+                        userAvatar.innerHTML = '';
+                        userAvatar.appendChild(img);
                         console.log(`✅ User avatar URL: ${avatarUrl}`);
                     } else {
                         userAvatar.textContent = displayName.charAt(0).toUpperCase();
@@ -3999,12 +4016,14 @@
             hideUnsavedNotification();
         }
 
-        function saveAllChanges() {
+        async function saveAllChanges() {
             const selectedServerId = localStorage.getItem('selectedServerId');
             if (!selectedServerId) {
                 alert('Please select a server first');
                 return;
             }
+
+            console.log('💾 Starting save for server:', selectedServerId);
 
             // Save colors as "saved" (mark them as persisted)
             const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#00d4ff';
@@ -4026,7 +4045,15 @@
             localStorage.removeItem('accentPink');
             localStorage.removeItem('textColor');
 
-            // Map sections to their IDs
+            // Find and save the CURRENTLY VISIBLE section (the active one)
+            const activeSection = document.querySelector('.content-section[style*="display: block"], .content-section.active');
+            if (!activeSection) {
+                console.warn('No active section found');
+                hideUnsavedNotification();
+                return;
+            }
+
+            const sectionId = activeSection.id;
             const sectionMap = {
                 'settings-section': 'settings',
                 'logging-section': 'logging',
@@ -4047,45 +4074,51 @@
                 'recordings-section': 'recordings'
             };
 
-            // Collect data from all sections
-            Object.keys(sectionMap).forEach(sectionId => {
-                const section = document.getElementById(sectionId);
-                if (section && section.classList.contains('active')) {
-                    const sectionName = sectionMap[sectionId];
-                    const inputs = section.querySelectorAll('input[type="text"], input[type="number"], input[type="checkbox"], input[type="color"], select, textarea');
-                    const data = {};
+            const sectionName = sectionMap[sectionId];
+            if (!sectionName) {
+                console.warn('Unknown section:', sectionId);
+                hideUnsavedNotification();
+                return;
+            }
 
-                    inputs.forEach(input => {
-                        const key = input.id || input.name || input.placeholder || input.className;
-                        if (input.type === 'checkbox') {
-                            data[key] = input.checked;
-                            // Update originalValues to mark as saved
-                            originalValues[key] = input.checked;
-                        } else if (input.type === 'color') {
-                            data[key] = input.value;
-                            // Update originalValues to mark as saved
-                            originalValues[key] = input.value;
-                        } else {
-                            data[key] = input.value;
-                            // Update originalValues to mark as saved
-                            originalValues[key] = input.value;
-                        }
-                    });
+            console.log('💾 Saving section:', sectionName);
+            const inputs = activeSection.querySelectorAll('input[type="text"], input[type="number"], input[type="checkbox"], input[type="color"], select, textarea');
+            const data = {};
 
-                    // Save this section via API with selected guild ID
-                    const guildId = localStorage.getItem('selectedServerId');
-                    const url = `/api/config/${sectionName}${guildId ? `?guildId=${guildId}` : ''}`;
-                    fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data),
-                        credentials: 'include'
-                    })
-                    .then(r => r.json())
-                    .then(res => console.log(`✅ Saved ${sectionName}:`, res))
-                    .catch(err => console.error(`❌ Error saving ${sectionName}:`, err));
+            inputs.forEach(input => {
+                const key = input.id || input.name || input.placeholder || input.className;
+                if (input.type === 'checkbox') {
+                    data[key] = input.checked;
+                    originalValues[key] = input.checked;
+                } else if (input.type === 'color') {
+                    data[key] = input.value;
+                    originalValues[key] = input.value;
+                } else {
+                    data[key] = input.value;
+                    originalValues[key] = input.value;
                 }
             });
+
+            console.log('💾 Data to save:', data);
+
+            // Save via API with selected guild ID
+            const guildId = localStorage.getItem('selectedServerId');
+            const url = `/api/config/${sectionName}${guildId ? `?guildId=${guildId}` : ''}`;
+            
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    credentials: 'include'
+                });
+                const result = await res.json();
+                console.log(`✅ Saved ${sectionName}:`, result);
+                alert(`✅ Settings saved successfully!`);
+            } catch (err) {
+                console.error(`❌ Error saving ${sectionName}:`, err);
+                alert(`❌ Error saving settings: ${err.message}`);
+            }
 
             hideUnsavedNotification();
         }
