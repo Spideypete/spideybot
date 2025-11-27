@@ -2661,6 +2661,45 @@
             await loadRoleCategories(serverId);
             await loadMemberGraphs();
             await loadMemberEvents();
+            await loadChannels(serverId);
+        }
+
+        async function loadChannels(guildId) {
+            try {
+                const res = await fetch(`/api/channels/${guildId}`, { credentials: 'include' });
+                if (!res.ok) throw new Error('Failed to fetch channels');
+                
+                const data = await res.json();
+                const channels = data.channels || [];
+                
+                // Clear existing options (keep placeholder)
+                const selects = [
+                    document.getElementById('generalChannelSelect'),
+                    document.getElementById('announcementsChannelSelect'),
+                    document.getElementById('welcomeChannelSelect')
+                ];
+                
+                selects.forEach(select => {
+                    if (select) {
+                        // Keep first option, remove others
+                        while (select.options.length > 1) {
+                            select.remove(1);
+                        }
+                        
+                        // Add all channels
+                        channels.forEach(channel => {
+                            const option = document.createElement('option');
+                            option.value = channel.id;
+                            option.textContent = `#${channel.name}`;
+                            select.appendChild(option);
+                        });
+                    }
+                });
+                
+                console.log('✅ Loaded', channels.length, 'channels');
+            } catch (err) {
+                console.error('❌ Failed to load channels:', err);
+            }
         }
         
         // Load servers on page load - MUST happen immediately
