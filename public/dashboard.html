@@ -3753,6 +3753,8 @@
                         await loadRoleCategories(selectedServerId);
                         await loadMemberGraphs();
                         await loadMemberEvents();
+                        await loadChannels(selectedServerId);
+                        await loadRoles(selectedServerId);
                         
                         // AUTO-SYNC: Refresh all dashboard data periodically
                         console.log('✅ Started auto-sync - bot changes will update website in real-time');
