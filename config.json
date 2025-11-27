@@ -95,7 +95,20 @@
       "form-input": "#welcome",
       "e.g., with commands // help": "",
       "GMT": "GMT",
-      "": true
+      "": true,
+      "adminRoleSelect": "",
+      "moderatorRoleSelect": "",
+      "membersRoleSelect": "",
+      "mutedRoleSelect": "",
+      "generalChannelSelect": "",
+      "announcementsChannelSelect": "",
+      "welcomeChannelSelect": "",
+      "musicPlayerToggle": false,
+      "economyToggle": true,
+      "levelingToggle": true,
+      "welcomeToggle": true,
+      "moderationToggle": true,
+      "socialToggle": true
     },
     "role-categories": {
       "categoryName": "",
