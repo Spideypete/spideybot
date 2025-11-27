@@ -3468,10 +3468,22 @@
                     // Set user avatar with Discord profile picture
                     const userAvatar = document.getElementById('userAvatar');
                     if (user.avatar) {
-                        userAvatar.innerHTML = `<img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128" alt="${displayName}" style="width: 100%; height: 100%; border-radius: 50%;">`;
+                        const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
+                        const img = document.createElement('img');
+                        img.src = avatarUrl;
+                        img.alt = displayName;
+                        img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
+                        img.onerror = () => {
+                            userAvatar.innerHTML = displayName.charAt(0).toUpperCase();
+                            console.warn(`⚠️ User avatar failed to load: ${avatarUrl}`);
+                        };
+                        userAvatar.innerHTML = '';
+                        userAvatar.appendChild(img);
+                        console.log(`✅ User avatar loaded: ${displayName}`);
                     } else {
                         const initial = displayName.charAt(0).toUpperCase();
                         userAvatar.textContent = initial;
+                        console.log(`ℹ️ No avatar hash for user: ${displayName}`);
                     }
                     
                     // Set user role/status
