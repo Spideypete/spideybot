@@ -1205,12 +1205,6 @@
                     </ul>
                 </div>
 
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">TOOLS</div>
-                    <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="colors" onclick="switchSection('colors')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg></span><span>Colors</span></li>
-                    </ul>
-                </div>
             </div>
 
             <!-- Content Area -->
@@ -2335,115 +2329,6 @@
                     </div>
                 </div>
 
-                <!-- Colors Section -->
-                <div id="colors-section" class="content-section">
-                    <div class="content-header">
-                        <div class="content-title">UI Colors</div>
-                        <div class="content-subtitle">Customize dashboard colors</div>
-                    </div>
-                    <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎨 Theme Colors</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Primary Theme Color</div>
-                                    <div class="color-picker-wrapper">
-                                        <input type="color" id="themeColorPicker" class="color-picker" value="#00e6ff" onchange="changeThemeColor(this.value)"/>
-                                        <span class="color-label" id="themeColorLabel">#00e6ff (Cyan)</span>
-                                    </div>
-                                </div>
-                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
-                                    <p style="font-size: 0.9rem; color: rgb(255, 255, 255); margin-bottom: 1rem;">25 Color Themes:</p>
-                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); gap: 0.6rem;">
-                                        <button class="color-preset" style="background: #00d4ff;" onclick="changeThemeColor('#00d4ff')" title="Cyan"></button>
-                                        <button class="color-preset" style="background: #9146ff;" onclick="changeThemeColor('#9146ff')" title="Purple"></button>
-                                        <button class="color-preset" style="background: #ff69b4;" onclick="changeThemeColor('#ff69b4')" title="Pink"></button>
-                                        <button class="color-preset" style="background: #00ff88;" onclick="changeThemeColor('#00ff88')" title="Green"></button>
-                                        <button class="color-preset" style="background: #ff6b35;" onclick="changeThemeColor('#ff6b35')" title="Orange"></button>
-                                        <button class="color-preset" style="background: #00ffff;" onclick="changeThemeColor('#00ffff')" title="Aqua"></button>
-                                        <button class="color-preset" style="background: #ff0055;" onclick="changeThemeColor('#ff0055')" title="Red"></button>
-                                        <button class="color-preset" style="background: #1e90ff;" onclick="changeThemeColor('#1e90ff')" title="Blue"></button>
-                                        <button class="color-preset" style="background: #ffff00;" onclick="changeThemeColor('#ffff00')" title="Yellow"></button>
-                                        <button class="color-preset" style="background: #00ff00;" onclick="changeThemeColor('#00ff00')" title="Lime"></button>
-                                        <button class="color-preset" style="background: #ff00ff;" onclick="changeThemeColor('#ff00ff')" title="Magenta"></button>
-                                        <button class="color-preset" style="background: #20b2aa;" onclick="changeThemeColor('#20b2aa')" title="Teal"></button>
-                                        <button class="color-preset" style="background: #4b0082;" onclick="changeThemeColor('#4b0082')" title="Indigo"></button>
-                                        <button class="color-preset" style="background: #ee82ee;" onclick="changeThemeColor('#ee82ee')" title="Violet"></button>
-                                        <button class="color-preset" style="background: #ff1493;" onclick="changeThemeColor('#ff1493')" title="Deep Pink"></button>
-                                        <button class="color-preset" style="background: #dc143c;" onclick="changeThemeColor('#dc143c')" title="Crimson"></button>
-                                        <button class="color-preset" style="background: #ff7f50;" onclick="changeThemeColor('#ff7f50')" title="Coral"></button>
-                                        <button class="color-preset" style="background: #ffa07a;" onclick="changeThemeColor('#ffa07a')" title="Light Salmon"></button>
-                                        <button class="color-preset" style="background: #ffd700;" onclick="changeThemeColor('#ffd700')" title="Gold"></button>
-                                        <button class="color-preset" style="background: #c0c0c0;" onclick="changeThemeColor('#c0c0c0')" title="Silver"></button>
-                                        <button class="color-preset" style="background: #40e0d0;" onclick="changeThemeColor('#40e0d0')" title="Turquoise"></button>
-                                        <button class="color-preset" style="background: #000080;" onclick="changeThemeColor('#000080')" title="Navy"></button>
-                                        <button class="color-preset" style="background: #800000;" onclick="changeThemeColor('#800000')" title="Maroon"></button>
-                                        <button class="color-preset" style="background: #808000;" onclick="changeThemeColor('#808000')" title="Olive"></button>
-                                        <button class="color-preset" style="background: #87ceeb;" onclick="changeThemeColor('#87ceeb')" title="Sky Blue"></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🌈 Accent Colors</div></div>
-                            <div class="panel-content">
-                                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
-                                    <div class="form-group">
-                                        <div class="form-label">Cyan Accent</div>
-                                        <div class="color-picker-wrapper">
-                                            <input type="color" id="cyanColorPicker" class="color-picker" value="#00e6ff" onchange="changeCyanAccent(this.value)"/>
-                                            <span class="color-label" id="cyanColorLabel">#00e6ff</span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <div class="form-label">Purple Accent</div>
-                                        <div class="color-picker-wrapper">
-                                            <input type="color" id="purpleColorPicker" class="color-picker" value="#a855f7" onchange="changePurpleAccent(this.value)"/>
-                                            <span class="color-label" id="purpleColorLabel">#a855f7</span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <div class="form-label">Pink Accent</div>
-                                        <div class="color-picker-wrapper">
-                                            <input type="color" id="pinkColorPicker" class="color-picker" value="#ff1493" onchange="changePinkAccent(this.value)"/>
-                                            <span class="color-label" id="pinkColorLabel">#ff1493</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🔤 Text Color</div></div>
-                            <div class="panel-content">
-                                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
-                                    <div class="form-group">
-                                        <div class="form-label">Text Color</div>
-                                        <div class="color-picker-wrapper">
-                                            <input type="color" id="textColorPicker" class="color-picker" value="#ffffff" onchange="changeTextColor(this.value)"/>
-                                            <span class="color-label" id="textColorLabel">#ffffff</span>
-                                        </div>
-                                    </div>
-                                    <div style="padding: 1rem; background: rgba(var(--theme-color), 0.1); border: 1px solid rgba(var(--theme-color), 0.3); border-radius: 6px; text-align: center;">
-                                        <div style="font-size: 0.9rem;">Preview Text Color</div>
-                                    </div>
-                                    <small style="color: rgb(255, 255, 255);">Note: Text color changes based on light/dark mode</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👁️ Preview</div></div>
-                            <div class="panel-content">
-                                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                                    <div style="padding: 1rem; background: rgba(var(--theme-color), 0.1); border: 1px solid rgba(var(--theme-color), 0.3); border-radius: 6px;">
-                                        <div style="font-weight: 600; color: rgba(var(--theme-color), 1); margin-bottom: 0.5rem;">Sample Element</div>
-                                        <div style="color: rgb(255, 255, 255); font-size: 0.9rem;">This shows how your selected color looks</div>
-                                    </div>
-                                    <button class="btn btn-primary" onclick="resetColors()">Reset to Default</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
