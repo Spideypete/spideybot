@@ -1101,7 +1101,7 @@
         <div class="header">
             <div class="header-left">
                 <div class="header-logo">
-                    <img src="/assets/spidey-logo.png" alt="SPIDEY BOT Logo" />
+                    <img src="/assets/spidey-logo.png" alt="SPIDEY BOT Logo" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%239146ff%22/%3E%3Ctext x=%2250%22 y=%2250%22 font-size=%2240%22 font-weight=%22bold%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23fff%22%3E🕷️%3C/text%3E%3C/svg%3E'" />
                 </div>
                 
                 <div class="server-selector">
@@ -2536,7 +2536,8 @@
                         'recordings': loadRecordings,
                         'reminders': loadReminders,
                         'statistics-channels': loadStatisticChannels,
-                        'role-categories': () => loadRoleCategories(localStorage.getItem('selectedServerId'))
+                        'role-categories': () => { loadRoleCategories(localStorage.getItem('selectedServerId')); loadRoleActivityLogs(localStorage.getItem('selectedServerId')); },
+                        'colors': loadSavedColors
                     };
                     
                     if (loadMap[sectionName]) {
@@ -3333,6 +3334,51 @@
             return 'info';
         }
 
+        async function loadRoleActivityLogs(guildId) {
+            try {
+                const response = await fetch(`/api/dashboard/activity?guildId=${guildId}`, { credentials: 'include' });
+                if (!response.ok) throw new Error('Failed to fetch role activities');
+                
+                const data = await response.json();
+                const activities = data.activities || [];
+                
+                const logsList = document.getElementById('roleActivityLogsList');
+                if (!logsList) return;
+                
+                if (activities.length === 0) {
+                    logsList.innerHTML = '<div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 2rem 0;">⏳ No role activities yet...</div>';
+                    return;
+                }
+                
+                logsList.innerHTML = '';
+                activities.slice(0, 20).forEach(activity => {
+                    const timestamp = activity.timestamp ? new Date(activity.timestamp).toLocaleTimeString() : 'Unknown';
+                    const logEntry = document.createElement('div');
+                    logEntry.style.cssText = `
+                        padding: 0.5rem 0;
+                        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+                        font-size: 0.85rem;
+                        line-height: 1.4;
+                    `;
+                    logEntry.innerHTML = `
+                        <span style="color: #00d4ff;">[${timestamp}]</span>
+                        <span style="color: #9146ff;">${activity.icon || '📝'}</span>
+                        <span style="color: rgba(255,255,255,0.8);">${activity.name || 'Admin'}</span>
+                        <span style="color: rgba(255,255,255,0.6);">- ${activity.action || 'action'}</span>
+                    `;
+                    logsList.appendChild(logEntry);
+                });
+                
+                console.log('✅ Loaded', activities.length, 'role activities');
+            } catch (err) {
+                console.error('❌ Failed to load role activities:', err);
+                const logsList = document.getElementById('roleActivityLogsList');
+                if (logsList) {
+                    logsList.innerHTML = '<div style="color: #ff6b6b;">Error loading activities</div>';
+                }
+            }
+        }
+
         function displayActivityLogs() {
             const logsList = document.getElementById('activityLogsList');
             if (!logsList) return;
@@ -3522,8 +3568,9 @@
                         img.style.borderRadius = '50%';
                         img.style.objectFit = 'cover';
                         img.onerror = () => {
+                            userAvatar.innerHTML = '';
                             userAvatar.textContent = displayName.charAt(0).toUpperCase();
-                            console.warn('Avatar failed to load');
+                            console.warn('Avatar failed to load, using fallback');
                         };
                         userAvatar.innerHTML = '';
                         userAvatar.appendChild(img);
