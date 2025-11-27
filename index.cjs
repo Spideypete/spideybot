@@ -3461,6 +3461,114 @@ app.post("/api/bot-config/channels", express.json(), (req, res) => {
   }
 });
 
+app.post("/api/bot-config/logging", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].logging) config.guilds[guildId].logging = {};
+
+    const { type, logDeleted, logEdited, logBulkDelete, logChannel, logBans, logKicks, logMutes, logWarns, modLogChannel } = req.body;
+    
+    if (type === 'message') {
+      config.guilds[guildId].logging.messageLogging = { logDeleted, logEdited, logBulkDelete, logChannel };
+    } else if (type === 'moderation') {
+      config.guilds[guildId].logging.moderationLogging = { logBans, logKicks, logMutes, logWarns, modLogChannel };
+    }
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    res.json({ success: true, message: "Logging updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating logging:', err);
+    res.json({ success: false, message: "Error updating logging" });
+  }
+});
+
+app.post("/api/bot-config/anti-spam", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    const { enabled, messagesPerLimit, action } = req.body;
+    config.guilds[guildId].antiSpam = { enabled, messagesPerLimit, action };
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    res.json({ success: true, message: "Anti-spam updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating anti-spam:', err);
+    res.json({ success: false, message: "Error updating anti-spam" });
+  }
+});
+
+app.post("/api/bot-config/raid", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    const { enabled, usersPerLimit, banRaidUsers } = req.body;
+    config.guilds[guildId].raidProtection = { enabled, usersPerLimit, banRaidUsers };
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    res.json({ success: true, message: "Raid protection updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating raid protection:', err);
+    res.json({ success: false, message: "Error updating raid protection" });
+  }
+});
+
+app.post("/api/bot-config/permissions", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    const { membersOnly, adminsBypass, allowDM, confirmDangerous } = req.body;
+    config.guilds[guildId].permissions = { membersOnly, adminsBypass, allowDM, confirmDangerous };
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    res.json({ success: true, message: "Permissions updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating permissions:', err);
+    res.json({ success: false, message: "Error updating permissions" });
+  }
+});
+
+app.post("/api/bot-config/messages", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
+
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    const { enableWelcome, welcomeMessage, enableGoodbye, goodbyeMessage } = req.body;
+    config.guilds[guildId].serverMessages = { enableWelcome, welcomeMessage, enableGoodbye, goodbyeMessage };
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    res.json({ success: true, message: "Server messages updated successfully" });
+  } catch (err) {
+    console.error('❌ Error updating messages:', err);
+    res.json({ success: false, message: "Error updating messages" });
+  }
+});
+
 // ============== API: GET ROLE CATEGORIES ==============
 app.get("/api/config/role-categories", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
