@@ -52,7 +52,7 @@ app.set('trust proxy', true);
 
 // ============== SECURITY MIDDLEWARE ==============
 app.use(securityHeadersMiddleware);
-const rateLimiter = new RateLimiter(100, 60000); // 100 requests per minute
+const rateLimiter = new RateLimiter(500, 60000); // 500 requests per minute
 app.use(rateLimiter.middleware());
 const auditLogger = new SecurityAuditLogger();
 const antiSpam = new AntiSpamEngine();
