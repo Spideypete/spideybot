@@ -3613,6 +3613,26 @@ app.get("/api/creator/servers", (req, res) => {
   res.json({ servers });
 });
 
+// Get all channels in a guild
+app.get("/api/channels/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const channels = guild.channels.cache
+    .filter(channel => channel.isTextBased())
+    .map(channel => ({
+      id: channel.id,
+      name: channel.name,
+      type: channel.type,
+      parentId: channel.parentId
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json({ channels });
+});
+
 // Get creator settings (bot nickname, timezone)
 app.get("/api/creator/settings", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });

@@ -1376,27 +1376,20 @@
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">General Channel</div>
-                                    <select class="form-input">
-                                        <option>Select general channel...</option>
-                                        <option>#general</option>
-                                        <option>#main</option>
-                                        <option>#lounge</option>
+                                    <select id="generalChannelSelect" class="form-input">
+                                        <option value="">Select general channel...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Announcements Channel</div>
-                                    <select class="form-input">
-                                        <option>Select announcements channel...</option>
-                                        <option>#announcements</option>
-                                        <option>#news</option>
+                                    <select id="announcementsChannelSelect" class="form-input">
+                                        <option value="">Select announcements channel...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Welcome Channel</div>
-                                    <select class="form-input">
-                                        <option>Select welcome channel...</option>
-                                        <option>#welcome</option>
-                                        <option>#intro</option>
+                                    <select id="welcomeChannelSelect" class="form-input">
+                                        <option value="">Select welcome channel...</option>
                                     </select>
                                 </div>
                             </div>
@@ -2551,7 +2544,8 @@
                         'statistics-channels': loadStatisticChannels,
                         'role-categories': () => { loadRoleCategories(localStorage.getItem('selectedServerId')); loadRoleActivityLogs(localStorage.getItem('selectedServerId')); },
                         'admin-activity': () => loadAdminActivityLogs(localStorage.getItem('selectedServerId')),
-                        'colors': loadSavedColors
+                        'colors': loadSavedColors,
+                        'general-settings': () => loadChannels(localStorage.getItem('selectedServerId'))
                     };
                     
                     if (loadMap[sectionName]) {
