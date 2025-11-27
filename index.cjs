@@ -494,6 +494,7 @@ client.on("messageCreate", async (msg) => {
     if (categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" already exists!`);
     categories[categoryName] = { roles: [], banner: null };
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "📂", msg.author.username, `created category: ${categoryName}`);
     return msg.reply(`✅ Created category: **${categoryName}**\n\n*Tip: Use \`//set-category-banner ${categoryName} [gif-url]\` to add a banner!*`);
   }
 
@@ -518,6 +519,7 @@ client.on("messageCreate", async (msg) => {
     catData.roles.push({ name: roleName, id: roleId });
     categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "➕", msg.author.username, `added role: ${roleName} to ${categoryName}`);
     return msg.reply(`✅ Added **${roleName}** to category **${categoryName}**`);
   }
 
@@ -540,6 +542,7 @@ client.on("messageCreate", async (msg) => {
     catData.roles.splice(index, 1);
     categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "➖", msg.author.username, `removed role: ${roleName} from ${categoryName}`);
     return msg.reply(`✅ Removed **${roleName}** from **${categoryName}**`);
   }
 
@@ -574,6 +577,7 @@ client.on("messageCreate", async (msg) => {
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
     delete categories[categoryName];
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "🗑️", msg.author.username, `deleted category: ${categoryName}`);
     return msg.reply(`✅ Deleted category: **${categoryName}**`);
   }
 
@@ -2144,6 +2148,10 @@ client.on("interactionCreate", async (interaction) => {
       }
     }
 
+    if (addedRoles.length > 0) {
+      addActivity(interaction.guild.id, "👤", member.user.username, `claimed gaming roles: ${addedRoles.join(", ")}`);
+    }
+
     let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
     if (failedRoles.length > 0) response += `\n⚠️ Failed: ${failedRoles.join(", ")}`;
 
@@ -2189,6 +2197,10 @@ client.on("interactionCreate", async (interaction) => {
           console.error(`Failed to add role ${roleId}: ${error.message}`);
         }
       }
+    }
+
+    if (addedRoles.length > 0) {
+      addActivity(interaction.guild.id, "🎬", member.user.username, `claimed watch party roles: ${addedRoles.join(", ")}`);
     }
 
     let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
@@ -2295,6 +2307,10 @@ client.on("interactionCreate", async (interaction) => {
           console.error(`Failed to remove role ${roleValue}: ${error.message}`);
         }
       }
+    }
+
+    if (removedRoles.length > 0) {
+      addActivity(interaction.guild.id, "🗑️", member.user.username, `removed roles: ${removedRoles.join(", ")}`);
     }
 
     return interaction.update({ content: `✅ Removed: ${removedRoles.join(", ")}`, components: [] });
@@ -3461,7 +3477,8 @@ app.get("/api/dashboard/members", (req, res) => {
 app.get("/api/dashboard/activity", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  const firstGuild = client.guilds.cache.first();
+  const guildId = req.query.guildId;
+  const firstGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
   if (!firstGuild) return res.json({ activities: [] });
 
   const config = getGuildConfig(firstGuild.id);
