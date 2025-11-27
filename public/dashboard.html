@@ -2351,9 +2351,6 @@
                                     <a href="https://paypal.me/peterburke122000" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
                                         <span>🅿️</span> <span>Donate via PayPal</span>
                                     </a>
-                                    <button class="btn btn-secondary" onclick="copyEmail()" style="cursor: pointer;">
-                                        <span>📧</span> <span>Copy Email: peterburke122000@gmail.com</span>
-                                    </button>
                                 </div>
                                 <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(var(--theme-color), 0.2);">
                                     <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem;">
@@ -4171,20 +4168,6 @@
         window.addEventListener('unhandledrejection', (event) => {
             console.error('🔴 Unhandled promise rejection:', event.reason);
         });
-
-        function copyEmail() {
-            const email = 'peterburke122000@gmail.com';
-            navigator.clipboard.writeText(email).then(() => {
-                const btn = event.target.closest('button');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<span>✅</span> <span>Copied to clipboard!</span>';
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                }, 2000);
-            }).catch(err => {
-                alert('Failed to copy email. Please try manually: ' + email);
-            });
-        }
 
     </script>
 
