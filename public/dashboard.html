@@ -1786,10 +1786,70 @@
                     </div>
                 </div>
 
-                <!-- Activity Logging Section -->
+                <!-- Role Categories Section -->
                 <div id="role-categories-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">📊 Activity Logs</div>
+                        <div class="content-title">Role Categories</div>
+                        <div class="content-subtitle">Organize server roles</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📁 Create Category</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Category Name</div>
+                                    <input type="text" class="form-input" placeholder="e.g., Gaming Roles"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Description</div>
+                                    <textarea class="form-input" rows="2" placeholder="What is this category for?"></textarea>
+                                </div>
+                                <button class="btn btn-primary">Create Category</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Server Messages Section -->
+                <div id="server-messages-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">Server Messages</div>
+                        <div class="content-subtitle">Welcome and goodbye messages</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Welcome Message</div>
+                                    <textarea class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
+                                </div>
+                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username, {count} for member number</small>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Goodbye Message</div>
+                                    <textarea class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
+                                </div>
+                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities Section -->
+                <div id="custom-commands-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">📊 Recent Activities</div>
                         <div class="content-subtitle">Real-time tracking of all bot activities and events</div>
                     </div>
                     <div class="content-grid">
@@ -1863,86 +1923,6 @@
                                         <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Level Ups</div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Server Messages Section -->
-                <div id="server-messages-section" class="content-section">
-                    <div class="content-header">
-                        <div class="content-title">Server Messages</div>
-                        <div class="content-subtitle">Welcome and goodbye messages</div>
-                    </div>
-                    <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Welcome Message</div>
-                                    <textarea class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
-                                </div>
-                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username, {count} for member number</small>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Goodbye Message</div>
-                                    <textarea class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
-                                </div>
-                                <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Custom Commands Section -->
-                <div id="custom-commands-section" class="content-section">
-                    <div class="content-header">
-                        <div class="content-title">Custom Commands</div>
-                        <div class="content-subtitle">Create custom bot commands</div>
-                    </div>
-                    <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⚡ Create Command</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Command Name</div>
-                                    <input type="text" class="form-input" placeholder="e.g., rules"/>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Response</div>
-                                    <textarea class="form-input" placeholder="Command response" style="height: 80px;"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Require Role</div>
-                                    <input type="text" class="form-input" placeholder="Leave empty for all"/>
-                                </div>
-                                <button class="btn btn-primary" onclick="saveCustomCommands()">Create Command</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📝 Aliases</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Command</div>
-                                    <select class="form-input">
-                                        <option>-- Select Command --</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Alias</div>
-                                    <input type="text" class="form-input" placeholder="e.g., r (for rules)"/>
-                                </div>
-                                <button class="btn btn-primary" onclick="saveCustomCommands()">Add Alias</button>
                             </div>
                         </div>
                     </div>
