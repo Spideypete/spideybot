@@ -3173,12 +3173,17 @@
             const config = await loadTabConfig('settings');
             if (config) {
                 document.querySelector('[placeholder="//"]').value = config.prefix || '//';
-                document.getElementById('musicPlayerToggle').checked = config.musicPlayer !== false;
-                document.getElementById('economyToggle').checked = config.economy !== false;
-                document.getElementById('levelingToggle').checked = config.leveling !== false;
-                document.getElementById('welcomeToggle').checked = config.welcome !== false;
-                document.getElementById('moderationToggle').checked = config.moderation !== false;
-                document.getElementById('socialToggle').checked = config.social !== false;
+                
+                // Load role selections
+                if (config.adminRole) document.getElementById('adminRoleSelect').value = config.adminRole;
+                if (config.moderatorRole) document.getElementById('moderatorRoleSelect').value = config.moderatorRole;
+                if (config.membersRole) document.getElementById('membersRoleSelect').value = config.membersRole;
+                if (config.mutedRole) document.getElementById('mutedRoleSelect').value = config.mutedRole;
+                
+                // Load channel selections
+                if (config.generalChannel) document.getElementById('generalChannelSelect').value = config.generalChannel;
+                if (config.announcementsChannel) document.getElementById('announcementsChannelSelect').value = config.announcementsChannel;
+                if (config.welcomeChannel) document.getElementById('welcomeChannelSelect').value = config.welcomeChannel;
             }
         }
 
@@ -3186,15 +3191,33 @@
             const prefix = document.querySelector('[placeholder="//"]')?.value || '//';
             const settings = {
                 prefix,
-                musicPlayer: document.getElementById('musicPlayerToggle').checked,
-                economy: document.getElementById('economyToggle').checked,
-                leveling: document.getElementById('levelingToggle').checked,
-                welcome: document.getElementById('welcomeToggle').checked,
-                moderation: document.getElementById('moderationToggle').checked,
-                social: document.getElementById('socialToggle').checked
+                adminRole: document.getElementById('adminRoleSelect').value || '',
+                moderatorRole: document.getElementById('moderatorRoleSelect').value || '',
+                membersRole: document.getElementById('membersRoleSelect').value || '',
+                mutedRole: document.getElementById('mutedRoleSelect').value || '',
+                generalChannel: document.getElementById('generalChannelSelect').value || '',
+                announcementsChannel: document.getElementById('announcementsChannelSelect').value || '',
+                welcomeChannel: document.getElementById('welcomeChannelSelect').value || ''
             };
             await saveTabConfig('settings', settings);
         }
+        
+        // Auto-save when role/channel selections change
+        document.addEventListener('DOMContentLoaded', () => {
+            const selects = [
+                'adminRoleSelect', 'moderatorRoleSelect', 'membersRoleSelect', 'mutedRoleSelect',
+                'generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect'
+            ];
+            selects.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('change', () => {
+                        console.log('💾 Role/Channel changed, saving...');
+                        saveSettings();
+                    });
+                }
+            });
+        });
 
         async function loadLogging() {
             const config = await loadTabConfig('logging');
