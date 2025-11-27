@@ -2652,6 +2652,29 @@
                     const categoryOptions = Object.keys(categories);
                     console.log('🔵 Category names:', categoryOptions);
                     
+                    // Calculate and display role stats
+                    let totalRolesCreated = 0;
+                    let totalCategoriesModified = 0;
+                    
+                    categoryOptions.forEach(catName => {
+                        const category = categories[catName];
+                        if (category.roles && Array.isArray(category.roles)) {
+                            totalRolesCreated += category.roles.length;
+                        }
+                        if (category.createdAt) totalCategoriesModified++;
+                    });
+                    
+                    // Update stats display
+                    const statCreated = document.getElementById('statRolesCreated');
+                    const statDeleted = document.getElementById('statRolesDeleted');
+                    const statModified = document.getElementById('statRolesModified');
+                    
+                    if (statCreated) statCreated.textContent = totalRolesCreated;
+                    if (statDeleted) statDeleted.textContent = '0';
+                    if (statModified) statModified.textContent = totalCategoriesModified;
+                    
+                    console.log('📊 Role Stats - Created:', totalRolesCreated, 'Modified:', totalCategoriesModified);
+                    
                     // Update all category dropdowns
                     document.querySelectorAll('select[name="category"]').forEach(select => {
                         console.log('🔵 Updating dropdown with id:', select.id);
