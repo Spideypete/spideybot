@@ -151,6 +151,9 @@
     },
     "statistics-channels": {
       "enabled": true
+    },
+    "logging": {
+      "enabled": true
     }
   }
 }

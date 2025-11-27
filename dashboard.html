@@ -2829,7 +2829,7 @@
             let roleName = input.value.trim();
             
             if (!roleName) {
-                alert('Please enter a role name');
+                showNotification('Please enter a role name', 'info');
                 return;
             }
             
@@ -2838,7 +2838,7 @@
             
             // Check for duplicates
             if (currentEditingRoles.some(r => r.toLowerCase() === roleName.toLowerCase())) {
-                alert('This role is already added');
+                showNotification('This role is already added', 'info');
                 return;
             }
             
@@ -2875,13 +2875,13 @@
                 const data = await res.json();
                 
                 if (res.ok) {
-                    alert(`✅ ${setupNames[setupType]} setup complete!\n\n${data.message || ''}`);
+                    showNotification(`✅ ${setupNames[setupType]} setup complete!\n\n${data.message || ''}`, 'success');
                 } else {
-                    alert(`❌ Setup failed: ${data.error || 'Unknown error'}`);
+                    showNotification(`❌ Setup failed: ${data.error || 'Unknown error'}`, 'error');
                 }
             } catch (err) {
                 console.error('Error:', err);
-                alert(`❌ Failed to setup ${setupNames[setupType]}`);
+                showNotification(`❌ Failed to setup ${setupNames[setupType]}`, 'error');
             }
         }
 
@@ -2892,14 +2892,14 @@
             let roleName = input.value.trim();
             
             if (!roleName) {
-                alert('Please enter a role name');
+                showNotification('Please enter a role name', 'info');
                 return;
             }
             
             roleName = roleName.replace(/^@/, '');
             
             if (creatingCategoryRoles.some(r => r.toLowerCase() === roleName.toLowerCase())) {
-                alert('This role is already added');
+                showNotification('This role is already added', 'info');
                 return;
             }
             
@@ -2950,7 +2950,7 @@
             
             // Check if server is selected
             if (!guildId) {
-                alert('❌ Please select a server first from the dropdown');
+                showNotification('❌ Please select a server first from the dropdown', 'error');
                 return;
             }
 
@@ -2958,12 +2958,12 @@
             const message = document.getElementById('categoryMessage').value.trim();
             
             if (!name) {
-                alert('❌ Please enter a category name');
+                showNotification('❌ Please enter a category name', 'error');
                 return;
             }
             
             if (creatingCategoryRoles.length === 0) {
-                alert('❌ Please add at least one role to this category');
+                showNotification('❌ Please add at least one role to this category', 'error');
                 return;
             }
             
@@ -2988,7 +2988,7 @@
                 console.log('🔵 API Response:', { status: res.status, data });
                 
                 if (res.ok && data.success) {
-                    alert(`✅ Category "${name}" created with ${creatingCategoryRoles.length} roles!`);
+                    showNotification(`✅ Category "${name}" created with ${creatingCategoryRoles.length} roles!`, 'success');
                     // Clear form
                     document.getElementById('categoryName').value = '';
                     document.getElementById('categoryMessage').value = '';
@@ -3014,12 +3014,12 @@
                         }
                     }
                 } else {
-                    alert(`❌ Error: ${data.error || 'Failed to create category'}`);
+                    showNotification(`❌ Error: ${data.error || 'Failed to create category'}`, 'error');
                     console.error('🔴 API Error:', data);
                 }
             } catch (err) {
                 console.error('🔴 Error creating category:', err);
-                alert(`❌ Error: ${err.message}`);
+                showNotification(`❌ Error: ${err.message}`, 'error');
             }
         }
 
@@ -3028,7 +3028,7 @@
             const guildId = localStorage.getItem('selectedServerId') || currentGuildId;
             
             if (!guildId) {
-                alert('❌ Please select a server first from the dropdown');
+                showNotification('❌ Please select a server first from the dropdown', 'error');
                 return;
             }
 
@@ -3037,12 +3037,12 @@
             const message = document.getElementById('editCategoryMessage').value.trim();
             
             if (!newName) {
-                alert('❌ Please enter a category name');
+                showNotification('❌ Please enter a category name', 'error');
                 return;
             }
             
             if (currentEditingRoles.length === 0) {
-                alert('❌ Please add at least one role to this category');
+                showNotification('❌ Please add at least one role to this category', 'error');
                 return;
             }
             
@@ -3068,15 +3068,15 @@
                 console.log('🔵 API Response:', { status: res.status, data });
                 
                 if (res.ok && data.success) {
-                    alert(`✅ Category "${newName}" updated with ${currentEditingRoles.length} roles!`);
+                    showNotification(`✅ Category "${newName}" updated with ${currentEditingRoles.length} roles!`, 'success');
                     await loadRoleCategories(guildId);
                 } else {
-                    alert(`❌ Error: ${data.error || 'Failed to update category'}`);
+                    showNotification(`❌ Error: ${data.error || 'Failed to update category'}`, 'error');
                     console.error('🔴 API Error:', data);
                 }
             } catch (err) {
                 console.error('🔴 Error updating category:', err);
-                alert(`❌ Error: ${err.message}`);
+                showNotification(`❌ Error: ${err.message}`, 'error');
             }
         }
 
@@ -3084,13 +3084,13 @@
             const guildId = localStorage.getItem('selectedServerId') || currentGuildId;
             
             if (!guildId) {
-                alert('❌ Please select a server first');
+                showNotification('❌ Please select a server first', 'error');
                 return;
             }
             
             const categoryName = document.getElementById('editCategorySelect').value;
             if (categoryName === '-- Select Category --' || !categoryName) {
-                alert('❌ Please select a category first');
+                showNotification('❌ Please select a category first', 'error');
                 return;
             }
             
@@ -3111,14 +3111,14 @@
                 console.log('🔵 Post response:', { status: res.status, data });
                 
                 if (res.ok && data.success) {
-                    alert(`✅ Category posted to channel!\n\nMessage ID: ${data.messageId}`);
+                    showNotification(`✅ Category posted to channel!\n\nMessage ID: ${data.messageId}`, 'success');
                 } else {
-                    alert(`❌ Error: ${data.error || 'Failed to post'}`);
+                    showNotification(`❌ Error: ${data.error || 'Failed to post'}`, 'error');
                     console.error('🔴 Post Error:', data);
                 }
             } catch (err) {
                 console.error('🔴 Error posting category:', err);
-                alert(`❌ Error: ${err.message}`);
+                showNotification(`❌ Error: ${err.message}`, 'error');
             }
         }
 
@@ -3149,7 +3149,7 @@
 
         async function saveTabConfig(configName, data) {
             const guildId = localStorage.getItem('selectedServerId');
-            if (!guildId) return alert('Select a server first');
+            if (!guildId) return showNotification('Select a server first', 'info');
             try {
                 const res = await fetch(`/api/config/${configName}?guildId=${guildId}`, {
                     method: 'POST',
@@ -3157,8 +3157,8 @@
                     body: JSON.stringify(data),
                     credentials: 'include'
                 });
-                if (res.ok) return alert(`✅ ${configName} saved`);
-                else alert(`❌ Failed to save ${configName}`);
+                if (res.ok) return showNotification(`✅ ${configName} saved`, 'success');
+                else showNotification(`❌ Failed to save ${configName}`, 'error');
             } catch (e) { alert('Error: ' + e.message); }
         }
 
@@ -3244,8 +3244,8 @@
 
         async function createReactRole() {
             const guildId = localStorage.getItem('selectedServerId');
-            if (!guildId) return alert('Select a server first');
-            alert('✅ Reaction role configuration saved');
+            if (!guildId) return showNotification('Select a server first', 'info');
+            showNotification('✅ Reaction role configuration saved', 'success');
         }
 
         async function loadServerMessages() {
@@ -3266,7 +3266,7 @@
         async function saveCustomCommands() {
             const name = document.querySelector('#custom-commands-section input')?.value || '';
             const response = document.querySelector('#custom-commands-section textarea')?.value || '';
-            if (!name || !response) return alert('Fill in all fields');
+            if (!name || !response) return showNotification('Fill in all fields', 'info');
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
             try {
@@ -3277,11 +3277,11 @@
                     credentials: 'include'
                 });
                 if (res.ok) {
-                    alert('✅ Command created');
+                    showNotification('✅ Command created', 'success');
                     document.querySelector('#custom-commands-section input').value = '';
                     document.querySelector('#custom-commands-section textarea').value = '';
                 } else {
-                    alert('❌ Failed to create command');
+                    showNotification('❌ Failed to create command', 'error');
                 }
             } catch (e) { alert('Error: ' + e.message); }
         }
@@ -3310,7 +3310,7 @@
         async function createGiveaway() {
             const prize = document.querySelector('#giveaways-section input[placeholder*="Discord"]')?.value || '';
             const duration = document.querySelector('#giveaways-section input[placeholder*="minutes"]')?.value || '60';
-            if (!prize) return alert('Enter a prize');
+            if (!prize) return showNotification('Enter a prize', 'info');
             await saveTabConfig('giveaways', { prize, duration: parseInt(duration), active: true });
         }
 
@@ -3597,7 +3597,7 @@
                 activityLogs = [];
                 localStorage.removeItem('activityLogs');
                 displayActivityLogs();
-                alert('✅ Activity logs cleared');
+                showNotification('✅ Activity logs cleared', 'success');
             }
         }
 
@@ -4044,12 +4044,12 @@
         async function updateBotSetting(setting, value) {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) {
-                alert('Please select a server first');
+                showNotification('Please select a server first', 'info');
                 return;
             }
 
             if (!value || value.trim() === '') {
-                alert('Please enter a value');
+                showNotification('Please enter a value', 'info');
                 return;
             }
 
@@ -4063,20 +4063,20 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    alert(`✅ ${setting.charAt(0).toUpperCase() + setting.slice(1)} updated successfully!`);
+                    showNotification(`✅ ${setting.charAt(0).toUpperCase() + setting.slice(1)} updated successfully!`, 'success');
                 } else {
-                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
+                    showNotification(`❌ Error: ${data.message || 'Failed to update'}`, 'error');
                 }
             } catch (err) {
                 console.error('Update error:', err);
-                alert('Error updating setting');
+                showNotification('Error updating setting', 'info');
             }
         }
 
         async function updateRoles() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) {
-                alert('Please select a server first');
+                showNotification('Please select a server first', 'info');
                 return;
             }
 
@@ -4086,7 +4086,7 @@
             const mutedRole = document.getElementById('mutedRoleSelect').value;
 
             if (!adminRole && !moderatorRole && !membersRole && !mutedRole) {
-                alert('Please select at least one role');
+                showNotification('Please select at least one role', 'info');
                 return;
             }
 
@@ -4105,13 +4105,13 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    alert('✅ Roles updated successfully!');
+                    showNotification('✅ Roles updated successfully!', 'success');
                 } else {
-                    alert(`❌ Error: ${data.message || 'Failed to update'}`);
+                    showNotification(`❌ Error: ${data.message || 'Failed to update'}`, 'error');
                 }
             } catch (err) {
                 console.error('Update error:', err);
-                alert('Error updating roles');
+                showNotification('Error updating roles', 'info');
             }
         }
 
@@ -4297,7 +4297,7 @@
         async function saveAllChanges() {
             const selectedServerId = localStorage.getItem('selectedServerId');
             if (!selectedServerId) {
-                alert('Please select a server first');
+                showNotification('Please select a server first', 'info');
                 return;
             }
 
@@ -4386,10 +4386,10 @@
                 
                 const result = await res.json();
                 console.log(`✅ Saved ${sectionName}:`, result);
-                alert(`✅ Settings saved to server successfully!`);
+                showNotification(`✅ Settings saved to server successfully!`, 'success');
             } catch (err) {
                 console.error(`❌ Error saving ${sectionName}:`, err);
-                alert(`❌ Error saving settings: ${err.message}`);
+                showNotification(`❌ Error saving settings: ${err.message}`, 'error');
             }
 
             hideUnsavedNotification();
