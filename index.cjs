@@ -3158,8 +3158,22 @@ app.get("/api/user", (req, res) => {
     return res.status(403).json({ error: "No admin servers found" });
   }
 
+  const user = req.session.user;
+  let avatarUrl = null;
+  
+  // Generate Discord avatar URL (CDN direct)
+  if (user.avatar) {
+    const isAnimated = user.avatar.startsWith('a_');
+    const ext = isAnimated ? 'gif' : 'png';
+    avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
+  }
+
   res.json({
-    user: req.session.user,
+    user: {
+      ...user,
+      avatarUrl,
+      avatar: user.avatar || null
+    },
     guilds: req.session.guilds
   });
 });
@@ -3662,12 +3676,20 @@ app.get("/api/creator/servers", (req, res) => {
   // Get bot's servers that user can admin
   const servers = client.guilds.cache
     .filter(guild => adminGuildIds.includes(guild.id))
-    .map(guild => ({
-      id: guild.id,
-      name: guild.name,
-      icon: guild.iconURL({ extension: 'png', size: 128 }) || null,
-      memberCount: guild.memberCount
-    }));
+    .map(guild => {
+      let iconUrl = null;
+      if (guild.icon) {
+        const isAnimated = guild.icon.startsWith('a_');
+        const ext = isAnimated ? 'gif' : 'png';
+        iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+      }
+      return {
+        id: guild.id,
+        name: guild.name,
+        icon: iconUrl,
+        memberCount: guild.memberCount
+      };
+    });
 
   res.json({ servers });
 });

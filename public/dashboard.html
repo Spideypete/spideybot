@@ -3726,10 +3726,10 @@
                     // Set user avatar with Discord profile picture
                     const userAvatar = document.getElementById('userAvatar');
                     userAvatar.style.overflow = 'hidden';
-                    if (user.avatar) {
+                    if (user.avatarUrl) {
                         userAvatar.innerHTML = '';
                         const img = document.createElement('img');
-                        img.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
+                        img.src = user.avatarUrl;
                         img.alt = displayName;
                         img.style.width = '100%';
                         img.style.height = '100%';
