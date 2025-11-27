@@ -2549,9 +2549,9 @@
             await loadMemberEvents();
         }
         
-        // Load servers on page load
+        // Load servers on page load - MUST happen immediately
         window.addEventListener('load', () => {
-            setTimeout(loadServerList, 100);
+            loadServerList();
         });
 
         // Store current guild for category management
@@ -3465,66 +3465,48 @@
                     const displayName = user.global_name || user.username || 'User';
                     document.getElementById('userName').textContent = displayName;
                     
-                    // Set user avatar with Discord profile picture
+                    // Set user avatar with Discord profile picture - use cleaner approach
                     const userAvatar = document.getElementById('userAvatar');
+                    userAvatar.style.overflow = 'hidden';
                     if (user.avatar) {
                         const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
-                        const img = document.createElement('img');
-                        img.src = avatarUrl;
-                        img.alt = displayName;
-                        img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
-                        img.onerror = () => {
-                            userAvatar.innerHTML = displayName.charAt(0).toUpperCase();
-                            console.warn(`⚠️ User avatar failed to load: ${avatarUrl}`);
-                        };
-                        userAvatar.innerHTML = '';
-                        userAvatar.appendChild(img);
-                        console.log(`✅ User avatar loaded: ${displayName}`);
+                        userAvatar.innerHTML = `<img src="${avatarUrl}" alt="${displayName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='${displayName.charAt(0).toUpperCase()}';console.warn('Avatar failed');"/>`;
+                        console.log(`✅ User avatar URL: ${avatarUrl}`);
                     } else {
-                        const initial = displayName.charAt(0).toUpperCase();
-                        userAvatar.textContent = initial;
-                        console.log(`ℹ️ No avatar hash for user: ${displayName}`);
+                        userAvatar.textContent = displayName.charAt(0).toUpperCase();
+                        console.log(`ℹ️ No avatar provided by Discord`);
                     }
                     
                     // Set user role/status
                     document.getElementById('userRole').textContent = 'Authenticated';
                     
-                    // Pre-load and auto-select first server if none selected
-                    try {
+                    // Load servers first, THEN load dashboard data
+                    await loadServerList();
+                    
+                    let selectedServerId = localStorage.getItem('selectedServerId');
+                    if (!selectedServerId) {
                         const serverRes = await fetch('/api/creator/servers', { credentials: 'include' });
                         if (serverRes.ok) {
                             const serverData = await serverRes.json();
-                            console.log('📡 Servers loaded:', serverData.servers?.length || 0);
-                            
-                            let selectedServerId = localStorage.getItem('selectedServerId');
-                            
-                            // If no server selected and servers available, auto-select first one
-                            if (!selectedServerId && serverData.servers && serverData.servers.length > 0) {
+                            if (serverData.servers && serverData.servers.length > 0) {
                                 selectedServerId = serverData.servers[0].id;
                                 localStorage.setItem('selectedServerId', selectedServerId);
                                 console.log('✅ Auto-selected first server:', selectedServerId);
                             }
-                            
-                            // Update server dropdown display name
-                            if (selectedServerId && serverData.servers) {
-                                const server = serverData.servers.find(s => s.id === selectedServerId);
-                                if (server) {
-                                    document.getElementById('serverDisplayName').textContent = server.name;
-                                    console.log('📝 Server display updated:', server.name);
-                                }
-                            }
-                            
-                            // NOW load all data for the selected server
-                            if (selectedServerId) {
-                                console.log('🔄 Loading data for server:', selectedServerId);
-                                await loadRoleCategories(selectedServerId);
-                                await loadMemberGraphs();
-                                await loadMemberEvents();
-                                
-                                // AUTO-SYNC: Refresh all dashboard data periodically
-                                console.log('✅ Started auto-sync - bot changes will update website in real-time');
-                                
-                                // Refresh member events every 3 seconds
+                        }
+                    }
+                    
+                    // NOW load all data for the selected server
+                    if (selectedServerId) {
+                        console.log('🔄 Loading data for server:', selectedServerId);
+                        await loadRoleCategories(selectedServerId);
+                        await loadMemberGraphs();
+                        await loadMemberEvents();
+                        
+                        // AUTO-SYNC: Refresh all dashboard data periodically
+                        console.log('✅ Started auto-sync - bot changes will update website in real-time');
+                        
+                        // Refresh member events every 3 seconds
                                 setInterval(loadMemberEvents, 3000);
                                 
                                 // Refresh member graphs every 5 seconds
