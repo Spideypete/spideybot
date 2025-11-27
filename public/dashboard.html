@@ -3400,6 +3400,76 @@
             }
         }
 
+        async function loadAdminActivityLogs(guildId) {
+            try {
+                const response = await fetch(`/api/dashboard/activity?guildId=${guildId}`, { credentials: 'include' });
+                if (!response.ok) throw new Error('Failed to fetch admin activities');
+                
+                const data = await response.json();
+                const activities = data.activities || [];
+                
+                const logsList = document.getElementById('adminActivityLogsList');
+                if (!logsList) return;
+                
+                if (activities.length === 0) {
+                    logsList.innerHTML = '<div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 3rem 0;">⏳ No admin activities yet...</div>';
+                    return;
+                }
+                
+                logsList.innerHTML = '';
+                activities.slice(0, 30).forEach(activity => {
+                    const timestamp = activity.timestamp ? new Date(activity.timestamp).toLocaleTimeString() : 'Unknown';
+                    const logEntry = document.createElement('div');
+                    logEntry.style.cssText = `
+                        padding: 0.75rem;
+                        margin-bottom: 0.5rem;
+                        background: rgba(145, 70, 255, 0.05);
+                        border-left: 3px solid #9146ff;
+                        border-radius: 4px;
+                        font-size: 0.85rem;
+                        line-height: 1.6;
+                    `;
+                    logEntry.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="color: #00d4ff; font-weight: bold;">[${timestamp}]</span>
+                                <span style="color: #ff69b4; margin: 0 0.5rem;">${activity.icon || '👮'}</span>
+                                <span style="color: rgba(255,255,255,0.9); font-weight: 600;">${activity.name || 'Admin'}</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 0.3rem; color: rgba(255,255,255,0.7);">${activity.action || 'performed action'}</div>
+                    `;
+                    logsList.appendChild(logEntry);
+                });
+                
+                console.log('✅ Loaded', activities.length, 'admin activities');
+            } catch (err) {
+                console.error('❌ Failed to load admin activities:', err);
+                const logsList = document.getElementById('adminActivityLogsList');
+                if (logsList) {
+                    logsList.innerHTML = '<div style="color: #ff6b6b;">Error loading activities</div>';
+                }
+            }
+        }
+
+        function clearAdminActivityLogs() {
+            if (confirm('Clear all admin activity logs? This cannot be undone.')) {
+                const logsList = document.getElementById('adminActivityLogsList');
+                if (logsList) {
+                    logsList.innerHTML = '<div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 3rem 0;">✅ Admin activity logs cleared</div>';
+                }
+            }
+        }
+
+        function clearRoleActivityLogs() {
+            if (confirm('Clear all role activity logs? This cannot be undone.')) {
+                const logsList = document.getElementById('roleActivityLogsList');
+                if (logsList) {
+                    logsList.innerHTML = '<div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 2rem 0;">✅ Role activity logs cleared</div>';
+                }
+            }
+        }
+
         function displayActivityLogs() {
             const logsList = document.getElementById('activityLogsList');
             if (!logsList) return;
@@ -3634,6 +3704,9 @@
                                 
                                 // Refresh role categories every 5 seconds
                                 setInterval(() => loadRoleCategories(selectedServerId), 5000);
+                                
+                                // Refresh admin activity every 3 seconds
+                                setInterval(() => loadAdminActivityLogs(selectedServerId), 3000);
                                 
                                 // Refresh settings every 5 seconds (if in settings tab)
                                 setInterval(() => {
