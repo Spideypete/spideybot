@@ -2476,6 +2476,81 @@
     </div>
 
     <script>
+        function switchSection(sectionName) {
+            console.log('🔵 switchSection:', sectionName);
+            try {
+                // 1. HIDE ALL - force display none on EVERY section
+                const allSections = document.querySelectorAll('.content-section');
+                allSections.forEach(s => {
+                    s.style.display = 'none';
+                    s.style.visibility = 'hidden';
+                    s.style.zIndex = '0';
+                    s.classList.remove('active');
+                });
+                
+                // 2. DEACTIVATE all sidebar items
+                document.querySelectorAll('.sidebar-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                
+                // 3. ACTIVATE the clicked sidebar item
+                const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                }
+                
+                // 4. SHOW target section - FORCE IT
+                const sectionId = sectionName + '-section';
+                const section = document.getElementById(sectionId);
+                
+                if (section) {
+                    section.style.display = 'block';
+                    section.style.visibility = 'visible';
+                    section.style.zIndex = '100';
+                    section.classList.add('active');
+                    console.log('   ✅ Section shown:', sectionName);
+                    
+                    // Scroll to top
+                    section.scrollIntoView({ behavior: 'auto', block: 'start' });
+                    
+                    // Load tab-specific data
+                    const loadMap = {
+                        'dashboard': loadMemberGraphs,
+                        'events': loadMemberEvents,
+                        'settings': loadSettings,
+                        'logging': loadLogging,
+                        'server-guard': loadServerGuard,
+                        'react-roles': loadReactRoles,
+                        'server-messages': loadServerMessages,
+                        'custom-commands': loadCustomCommands,
+                        'xp-levels': loadXPLevels,
+                        'leaderboards': loadLeaderboards,
+                        'giveaways': loadGiveaways,
+                        'social-notifs': loadSocialNotifs,
+                        'invite-tracking': loadInviteTracking,
+                        'message-counting': loadMessageCounting,
+                        'recordings': loadRecordings,
+                        'reminders': loadReminders,
+                        'statistics-channels': loadStatisticChannels,
+                        'role-categories': () => loadRoleCategories(localStorage.getItem('selectedServerId'))
+                    };
+                    
+                    if (loadMap[sectionName]) {
+                        try {
+                            const loadFn = loadMap[sectionName];
+                            if (typeof loadFn === 'function') loadFn();
+                        } catch (e) {
+                            console.error('Error loading ' + sectionName + ':', e);
+                        }
+                    }
+                } else {
+                    console.error('   ❌ Section NOT found:', sectionId);
+                }
+            } catch (err) {
+                console.error('   ❌ ERROR:', err.message);
+            }
+        }
+
         function toggleDarkMode() {
             const isDarkMode = !document.body.classList.contains('light-mode');
             const newMode = isDarkMode ? 'light' : 'dark';
@@ -3305,81 +3380,6 @@
             document.addEventListener('DOMContentLoaded', initializeActivityLogging);
         } else {
             initializeActivityLogging();
-        }
-
-        function switchSection(sectionName) {
-            console.log('🔵 switchSection:', sectionName);
-            try {
-                // 1. HIDE ALL - force display none on EVERY section
-                const allSections = document.querySelectorAll('.content-section');
-                allSections.forEach(s => {
-                    s.style.display = 'none';
-                    s.style.visibility = 'hidden';
-                    s.style.zIndex = '0';
-                    s.classList.remove('active');
-                });
-                
-                // 2. DEACTIVATE all sidebar items
-                document.querySelectorAll('.sidebar-item').forEach(i => {
-                    i.classList.remove('active');
-                });
-                
-                // 3. ACTIVATE the clicked sidebar item
-                const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
-                if (activeItem) {
-                    activeItem.classList.add('active');
-                }
-                
-                // 4. SHOW target section - FORCE IT
-                const sectionId = sectionName + '-section';
-                const section = document.getElementById(sectionId);
-                
-                if (section) {
-                    section.style.display = 'block';
-                    section.style.visibility = 'visible';
-                    section.style.zIndex = '100';
-                    section.classList.add('active');
-                    console.log('   ✅ Section shown:', sectionName);
-                    
-                    // Scroll to top
-                    section.scrollIntoView({ behavior: 'auto', block: 'start' });
-                    
-                    // Load tab-specific data
-                    const loadMap = {
-                        'dashboard': loadMemberGraphs,
-                        'events': loadMemberEvents,
-                        'settings': loadSettings,
-                        'logging': loadLogging,
-                        'server-guard': loadServerGuard,
-                        'react-roles': loadReactRoles,
-                        'server-messages': loadServerMessages,
-                        'custom-commands': loadCustomCommands,
-                        'xp-levels': loadXPLevels,
-                        'leaderboards': loadLeaderboards,
-                        'giveaways': loadGiveaways,
-                        'social-notifs': loadSocialNotifs,
-                        'invite-tracking': loadInviteTracking,
-                        'message-counting': loadMessageCounting,
-                        'recordings': loadRecordings,
-                        'reminders': loadReminders,
-                        'statistics-channels': loadStatisticChannels,
-                        'role-categories': () => loadRoleCategories(localStorage.getItem('selectedServerId'))
-                    };
-                    
-                    if (loadMap[sectionName]) {
-                        try {
-                            const loadFn = loadMap[sectionName];
-                            if (typeof loadFn === 'function') loadFn();
-                        } catch (e) {
-                            console.error('Error loading ' + sectionName + ':', e);
-                        }
-                    }
-                } else {
-                    console.error('   ❌ Section NOT found:', sectionId);
-                }
-            } catch (err) {
-                console.error('   ❌ ERROR:', err.message);
-            }
         }
         
         // Legacy support for event listeners (backup)
