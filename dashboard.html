@@ -1812,6 +1812,10 @@
                                         <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statRolesModified">0</div>
                                         <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Roles Modified</div>
                                     </div>
+                                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statCategoriesCreated">0</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Categories Created</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2655,6 +2659,7 @@
                     // Calculate and display role stats
                     let totalRolesCreated = 0;
                     let totalCategoriesModified = 0;
+                    let totalCategoriesCreated = categoryOptions.length;
                     
                     categoryOptions.forEach(catName => {
                         const category = categories[catName];
@@ -2668,12 +2673,14 @@
                     const statCreated = document.getElementById('statRolesCreated');
                     const statDeleted = document.getElementById('statRolesDeleted');
                     const statModified = document.getElementById('statRolesModified');
+                    const statCategoriesCreated = document.getElementById('statCategoriesCreated');
                     
                     if (statCreated) statCreated.textContent = totalRolesCreated;
                     if (statDeleted) statDeleted.textContent = '0';
                     if (statModified) statModified.textContent = totalCategoriesModified;
+                    if (statCategoriesCreated) statCategoriesCreated.textContent = totalCategoriesCreated;
                     
-                    console.log('📊 Role Stats - Created:', totalRolesCreated, 'Modified:', totalCategoriesModified);
+                    console.log('📊 Role Stats - Roles Created:', totalRolesCreated, 'Categories Created:', totalCategoriesCreated, 'Modified:', totalCategoriesModified);
                     
                     // Update all category dropdowns
                     document.querySelectorAll('select[name="category"]').forEach(select => {
