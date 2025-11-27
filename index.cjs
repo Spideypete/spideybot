@@ -3221,7 +3221,17 @@ app.get("/api/config/role-categories", (req, res) => {
   if (!guildId) return res.json({});
 
   const data = config.guilds[guildId]?.roleCategories || {};
-  res.json(data);
+  
+  // Filter out empty category names and log what we're returning
+  const filtered = {};
+  Object.keys(data).forEach(key => {
+    if (key && key.trim() !== '') {
+      filtered[key] = data[key];
+    }
+  });
+  
+  console.log(`✅ Role Categories API - Guild: ${guildId}, Categories found:`, Object.keys(filtered).length, `(${Object.keys(filtered).join(', ')})`);
+  res.json(filtered);
 });
 
 // ============== API: SAVE ROLE CATEGORIES ==============

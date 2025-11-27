@@ -2651,10 +2651,19 @@
                 
                 if (res.ok) {
                     const categories = await res.json();
-                    console.log('🔵 Categories fetched:', categories);
-                    currentCategories = categories;
-                    const categoryOptions = Object.keys(categories);
-                    console.log('🔵 Category names:', categoryOptions);
+                    console.log('🔵 Raw categories response:', categories);
+                    
+                    // Filter out empty keys
+                    const filteredCategories = {};
+                    Object.keys(categories).forEach(key => {
+                        if (key && key.trim() !== '') {
+                            filteredCategories[key] = categories[key];
+                        }
+                    });
+                    
+                    currentCategories = filteredCategories;
+                    const categoryOptions = Object.keys(filteredCategories).filter(k => k && k.trim() !== '');
+                    console.log('🔵 Filtered categories:', categoryOptions);
                     
                     // Calculate and display role stats
                     let totalRolesCreated = 0;
