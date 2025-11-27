@@ -1386,22 +1386,22 @@
                             <div class="panel-header"><div class="panel-title">✨ Feature Toggles</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Music Player</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="musicPlayerToggle" checked/> <span>Music Player</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Economy System</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="economyToggle" checked/> <span>Economy System</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Leveling System</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="levelingToggle" checked/> <span>Leveling System</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Welcome Messages</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="welcomeToggle" checked/> <span>Welcome Messages</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Moderation Tools</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="moderationToggle" checked/> <span>Moderation Tools</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Social Notifications</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="socialToggle" checked/> <span>Social Notifications</span></label>
                                 </div>
                             </div>
                         </div>
@@ -3196,12 +3196,29 @@
 
         async function loadSettings() {
             const config = await loadTabConfig('settings');
-            if (config) document.querySelector('[placeholder="//"]').value = config.prefix || '//';
+            if (config) {
+                document.querySelector('[placeholder="//"]').value = config.prefix || '//';
+                document.getElementById('musicPlayerToggle').checked = config.musicPlayer !== false;
+                document.getElementById('economyToggle').checked = config.economy !== false;
+                document.getElementById('levelingToggle').checked = config.leveling !== false;
+                document.getElementById('welcomeToggle').checked = config.welcome !== false;
+                document.getElementById('moderationToggle').checked = config.moderation !== false;
+                document.getElementById('socialToggle').checked = config.social !== false;
+            }
         }
 
         async function saveSettings() {
             const prefix = document.querySelector('[placeholder="//"]')?.value || '//';
-            await saveTabConfig('settings', { prefix });
+            const settings = {
+                prefix,
+                musicPlayer: document.getElementById('musicPlayerToggle').checked,
+                economy: document.getElementById('economyToggle').checked,
+                leveling: document.getElementById('levelingToggle').checked,
+                welcome: document.getElementById('welcomeToggle').checked,
+                moderation: document.getElementById('moderationToggle').checked,
+                social: document.getElementById('socialToggle').checked
+            };
+            await saveTabConfig('settings', settings);
         }
 
         async function loadLogging() {
