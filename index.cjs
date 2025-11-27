@@ -38,7 +38,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 }
+  cookie: { 
+    maxAge: 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
+  }
 }));
 
 // Serve static files from public (automatically serves index.html for /)

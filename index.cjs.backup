@@ -38,7 +38,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 }
+  cookie: { 
+    maxAge: 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
+  }
 }));
 
 // Serve static files from public (automatically serves index.html for /)
@@ -180,6 +185,22 @@ function autoMigrateRoles(guildId, guild, guildConfig) {
   }
 }
 
+// ============== CACHE SYSTEM ==============
+const memberStatsCache = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function getCachedMemberStats(guildId) {
+  const cached = memberStatsCache[guildId];
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCachedMemberStats(guildId, data) {
+  memberStatsCache[guildId] = { data, timestamp: Date.now() };
+}
+
 // ============== CLIENT SETUP ==============
 const client = new Client({
   intents: [
@@ -230,13 +251,13 @@ function addActivity(guildId, icon, text, action, time = null) {
 
   const activity = {
     icon,
-    text: text.substring(0, 50),
+    name: text.substring(0, 50),
     action,
-    time: time || new Date().toLocaleTimeString()
+    timestamp: time || new Date().toLocaleTimeString()
   };
 
   config.guilds[guildId].activities.unshift(activity);
-  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 20);
+  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 50);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 }
 
@@ -321,6 +342,49 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
     });
     config.guilds[newMember.guild.id].memberEvents = config.guilds[newMember.guild.id].memberEvents.slice(0, 50);
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  }
+});
+
+// ============== ROLE EVENTS ==============
+client.on("roleCreate", async (role) => {
+  addActivity(role.guild.id, "🏷️", "Role created", `${role.name} - ${role.id}`);
+});
+
+client.on("roleDelete", async (role) => {
+  addActivity(role.guild.id, "🗑️", "Role deleted", `${role.name} - ${role.id}`);
+});
+
+client.on("roleUpdate", async (oldRole, newRole) => {
+  let changes = [];
+  if (oldRole.name !== newRole.name) changes.push(`name: ${oldRole.name} → ${newRole.name}`);
+  if (oldRole.color !== newRole.color) changes.push("color changed");
+  if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) changes.push("permissions changed");
+  
+  if (changes.length > 0) {
+    addActivity(newRole.guild.id, "✏️", "Role updated", `${newRole.name} - ${changes.join(", ")}`);
+  }
+});
+
+// ============== CHANNEL EVENTS ==============
+client.on("channelCreate", async (channel) => {
+  if (channel.isDMBased()) return;
+  addActivity(channel.guild.id, "📝", "Channel created", `#${channel.name} - ${channel.id}`);
+});
+
+client.on("channelDelete", async (channel) => {
+  if (channel.isDMBased()) return;
+  addActivity(channel.guild.id, "🗑️", "Channel deleted", `#${channel.name} - ${channel.id}`);
+});
+
+client.on("channelUpdate", async (oldChannel, newChannel) => {
+  if (oldChannel.isDMBased()) return;
+  let changes = [];
+  if (oldChannel.name !== newChannel.name) changes.push(`name: ${oldChannel.name} → ${newChannel.name}`);
+  if (oldChannel.topic !== newChannel.topic) changes.push("topic changed");
+  if (oldChannel.type !== newChannel.type) changes.push("type changed");
+  
+  if (changes.length > 0) {
+    addActivity(newChannel.guild.id, "✏️", "Channel updated", `#${newChannel.name} - ${changes.join(", ")}`);
   }
 });
 
@@ -494,6 +558,7 @@ client.on("messageCreate", async (msg) => {
     if (categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" already exists!`);
     categories[categoryName] = { roles: [], banner: null };
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "📂", msg.author.username, `created category: ${categoryName}`);
     return msg.reply(`✅ Created category: **${categoryName}**\n\n*Tip: Use \`//set-category-banner ${categoryName} [gif-url]\` to add a banner!*`);
   }
 
@@ -518,6 +583,7 @@ client.on("messageCreate", async (msg) => {
     catData.roles.push({ name: roleName, id: roleId });
     categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "➕", msg.author.username, `added role: ${roleName} to ${categoryName}`);
     return msg.reply(`✅ Added **${roleName}** to category **${categoryName}**`);
   }
 
@@ -540,6 +606,7 @@ client.on("messageCreate", async (msg) => {
     catData.roles.splice(index, 1);
     categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "➖", msg.author.username, `removed role: ${roleName} from ${categoryName}`);
     return msg.reply(`✅ Removed **${roleName}** from **${categoryName}**`);
   }
 
@@ -574,6 +641,7 @@ client.on("messageCreate", async (msg) => {
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
     delete categories[categoryName];
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "🗑️", msg.author.username, `deleted category: ${categoryName}`);
     return msg.reply(`✅ Deleted category: **${categoryName}**`);
   }
 
@@ -2144,6 +2212,10 @@ client.on("interactionCreate", async (interaction) => {
       }
     }
 
+    if (addedRoles.length > 0) {
+      addActivity(interaction.guild.id, "👤", member.user.username, `claimed gaming roles: ${addedRoles.join(", ")}`);
+    }
+
     let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
     if (failedRoles.length > 0) response += `\n⚠️ Failed: ${failedRoles.join(", ")}`;
 
@@ -2189,6 +2261,10 @@ client.on("interactionCreate", async (interaction) => {
           console.error(`Failed to add role ${roleId}: ${error.message}`);
         }
       }
+    }
+
+    if (addedRoles.length > 0) {
+      addActivity(interaction.guild.id, "🎬", member.user.username, `claimed watch party roles: ${addedRoles.join(", ")}`);
     }
 
     let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
@@ -2295,6 +2371,10 @@ client.on("interactionCreate", async (interaction) => {
           console.error(`Failed to remove role ${roleValue}: ${error.message}`);
         }
       }
+    }
+
+    if (removedRoles.length > 0) {
+      addActivity(interaction.guild.id, "🗑️", member.user.username, `removed roles: ${removedRoles.join(", ")}`);
     }
 
     return interaction.update({ content: `✅ Removed: ${removedRoles.join(", ")}`, components: [] });
@@ -3083,10 +3163,48 @@ app.get("/api/user", (req, res) => {
     return res.status(403).json({ error: "No admin servers found" });
   }
 
+  const user = req.session.user;
+  let avatarUrl = null;
+  let avatarProxyUrl = null;
+  
+  // Generate Discord avatar URL (CDN direct)
+  if (user.avatar) {
+    const isAnimated = user.avatar.startsWith('a_');
+    const ext = isAnimated ? 'gif' : 'png';
+    avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
+    avatarProxyUrl = `/api/image?url=${encodeURIComponent(avatarUrl)}`;
+  }
+
   res.json({
-    user: req.session.user,
+    user: {
+      ...user,
+      avatarUrl,
+      avatarProxyUrl,
+      avatar: user.avatar || null
+    },
     guilds: req.session.guilds
   });
+});
+
+// ============== IMAGE PROXY ENDPOINT (fallback for CDN images) ==============
+app.get("/api/image", async (req, res) => {
+  const imageUrl = req.query.url;
+  if (!imageUrl) return res.status(400).json({ error: "No URL provided" });
+
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 5000,
+      headers: { 'User-Agent': 'SpideyBot/1.0' }
+    });
+    
+    res.set('Content-Type', response.headers['content-type'] || 'image/png');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(response.data);
+  } catch (err) {
+    console.warn(`⚠️ Image proxy failed for ${imageUrl}:`, err.message);
+    res.status(502).json({ error: 'Failed to fetch image' });
+  }
 });
 
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
@@ -3221,7 +3339,17 @@ app.get("/api/config/role-categories", (req, res) => {
   if (!guildId) return res.json({});
 
   const data = config.guilds[guildId]?.roleCategories || {};
-  res.json(data);
+  
+  // Filter out empty category names and log what we're returning
+  const filtered = {};
+  Object.keys(data).forEach(key => {
+    if (key && key.trim() !== '') {
+      filtered[key] = data[key];
+    }
+  });
+  
+  console.log(`✅ Role Categories API - Guild: ${guildId}, Categories found:`, Object.keys(filtered).length, `(${Object.keys(filtered).join(', ')})`);
+  res.json(filtered);
 });
 
 // ============== API: SAVE ROLE CATEGORIES ==============
@@ -3451,7 +3579,8 @@ app.get("/api/dashboard/members", (req, res) => {
 app.get("/api/dashboard/activity", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  const firstGuild = client.guilds.cache.first();
+  const guildId = req.query.guildId;
+  const firstGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
   if (!firstGuild) return res.json({ activities: [] });
 
   const config = getGuildConfig(firstGuild.id);
@@ -3576,14 +3705,65 @@ app.get("/api/creator/servers", (req, res) => {
   // Get bot's servers that user can admin
   const servers = client.guilds.cache
     .filter(guild => adminGuildIds.includes(guild.id))
-    .map(guild => ({
-      id: guild.id,
-      name: guild.name,
-      icon: guild.iconURL(),
-      memberCount: guild.memberCount
-    }));
+    .map(guild => {
+      let iconUrl = null;
+      let iconProxyUrl = null;
+      if (guild.icon) {
+        const isAnimated = guild.icon.startsWith('a_');
+        const ext = isAnimated ? 'gif' : 'png';
+        iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+        iconProxyUrl = `/api/image?url=${encodeURIComponent(iconUrl)}`;
+      }
+      return {
+        id: guild.id,
+        name: guild.name,
+        icon: iconUrl,
+        iconProxy: iconProxyUrl,
+        memberCount: guild.memberCount
+      };
+    });
 
   res.json({ servers });
+});
+
+// Get all channels in a guild
+app.get("/api/channels/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const channels = guild.channels.cache
+    .filter(channel => channel.isTextBased())
+    .map(channel => ({
+      id: channel.id,
+      name: channel.name,
+      type: channel.type,
+      parentId: channel.parentId
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json({ channels });
+});
+
+// Get all roles in a guild
+app.get("/api/roles/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const roles = guild.roles.cache
+    .filter(role => role.name !== '@everyone')
+    .map(role => ({
+      id: role.id,
+      name: role.name,
+      color: role.color,
+      position: role.position
+    }))
+    .sort((a, b) => b.position - a.position);
+
+  res.json({ roles });
 });
 
 // Get creator settings (bot nickname, timezone)
@@ -3612,15 +3792,39 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
   res.json({ success: true, settings: config.creator });
 });
 
-// Get member statistics by role for graphs
+// Get member statistics by role for graphs (with caching to avoid rate limits)
 app.get("/api/member-stats/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  const guild = client.guilds.cache.get(req.params.guildId);
+  const guildId = req.params.guildId;
+  const guild = client.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
+  // Check cache first
+  const cached = getCachedMemberStats(guildId);
+  if (cached) {
+    console.log(`📊 Using cached member stats for guild ${guildId}`);
+    return res.json(cached);
+  }
+
+  // Use cached member data if available, otherwise fetch
+  const memberCache = guild.members.cache;
+  const stats = {
+    total: memberCache.size,
+    members: memberCache.filter(m => !m.user.bot).size,
+    verified: memberCache.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
+    bots: memberCache.filter(m => m.user.bot).size,
+    admins: memberCache.filter(m => m.permissions.has('Administrator')).size,
+    mods: memberCache.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+    roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
+  };
+
+  // Cache the stats
+  setCachedMemberStats(guildId, stats);
+  
+  // Fetch fresh data in background (don't wait for it)
   guild.members.fetch().then(members => {
-    const stats = {
+    const freshStats = {
       total: members.size,
       members: members.filter(m => !m.user.bot).size,
       verified: members.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
@@ -3629,11 +3833,13 @@ app.get("/api/member-stats/:guildId", (req, res) => {
       mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
       roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
     };
-    res.json(stats);
+    setCachedMemberStats(guildId, freshStats);
+    console.log(`✅ Updated member stats cache for guild ${guildId}`);
   }).catch(err => {
-    console.error('Failed to fetch members:', err);
-    res.status(500).json({ error: 'Failed to fetch member data' });
+    console.warn(`⚠️ Background member fetch failed for guild ${guildId}:`, err.message);
   });
+
+  res.json(stats);
 });
 
 // Get member events (joins, leaves, boosts)
