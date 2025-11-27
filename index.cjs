@@ -36,7 +36,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
-  resave: false,
+  resave: true,
   saveUninitialized: true,
   cookie: { 
     maxAge: 24 * 60 * 60 * 1000,
@@ -3126,8 +3126,11 @@ app.get("/auth/discord/callback", async (req, res) => {
     req.session.guilds = adminGuilds;
     req.session.accessToken = access_token;
 
-    console.log(`✅ User logged in via Discord: ${userRes.data.username} (${adminGuilds.length} admin servers)`);
-    res.redirect("/dashboard");
+    req.session.save((err) => {
+      if (err) console.error("Session save error:", err);
+      console.log(`✅ User logged in via Discord: ${userRes.data.username} (${adminGuilds.length} admin servers)`);
+      res.redirect("/dashboard");
+    });
   } catch (err) {
     console.error("❌ OAuth error:", err.response?.data || err.message);
     console.error("Expected Redirect URI:", REDIRECT_URI);
