@@ -1876,11 +1876,14 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel" style="grid-column: 1/-1;">
-                            <div class="panel-header">
-                                <div class="panel-title">🔍 Filter Logs</div>
-                                <button class="btn btn-primary" onclick="clearActivityLogs()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🗑️ Clear</button>
+                            <div class="panel-header" onclick="toggleFilterDropdown()" style="cursor: pointer;">
+                                <div class="panel-title">🔍 <span id="filterToggleText">Show</span> Filter Logs</div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <span id="filterToggleIcon" style="transition: transform 0.3s;">▼</span>
+                                    <button class="btn btn-primary" onclick="clearActivityLogs(event)" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🗑️ Clear</button>
+                                </div>
                             </div>
-                            <div class="panel-content">
+                            <div id="filterLogsContent" class="panel-content" style="display: none;">
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem;">
                                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                                         <input type="checkbox" checked onchange="filterActivityLogs()"> 🎤 Voice Events
@@ -3295,7 +3298,24 @@
             displayActivityLogs();
         }
 
-        function clearActivityLogs() {
+        function toggleFilterDropdown() {
+            const content = document.getElementById('filterLogsContent');
+            const icon = document.getElementById('filterToggleIcon');
+            const text = document.getElementById('filterToggleText');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.style.transform = 'rotate(180deg)';
+                text.textContent = 'Hide';
+            } else {
+                content.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+                text.textContent = 'Show';
+            }
+        }
+
+        function clearActivityLogs(event) {
+            if (event) event.stopPropagation();
             if (confirm('Clear all activity logs? This cannot be undone.')) {
                 activityLogs = [];
                 localStorage.removeItem('activityLogs');
