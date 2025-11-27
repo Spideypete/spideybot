@@ -2591,10 +2591,17 @@
                     btn.onclick = () => selectServer(server.id, server.name);
                     btn.title = server.name;
                     if (server.icon) {
-                        const iconUrl = `https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png?size=128`;
-                        btn.innerHTML = `<img src="${iconUrl}" alt="${server.name}" onerror="this.parentElement.textContent='${server.name.charAt(0).toUpperCase()}';"/>`;
+                        const iconUrl = `https://cdn.discordapp.com/icons/${server.id}/${server.icon}.webp?size=128`;
+                        const img = document.createElement('img');
+                        img.src = iconUrl;
+                        img.alt = server.name;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.onerror = () => { btn.textContent = server.name.charAt(0).toUpperCase(); };
+                        btn.innerHTML = '';
+                        btn.appendChild(img);
                     } else {
-                        btn.innerHTML = server.name.charAt(0).toUpperCase();
+                        btn.textContent = server.name.charAt(0).toUpperCase();
                     }
                     container.appendChild(btn);
                 });
@@ -3547,7 +3554,8 @@
                     const userAvatar = document.getElementById('userAvatar');
                     userAvatar.style.overflow = 'hidden';
                     if (user.avatar) {
-                        const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp?size=128`;
+                        userAvatar.innerHTML = '';
+                        const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
                         const img = document.createElement('img');
                         img.src = avatarUrl;
                         img.alt = displayName;
@@ -3556,16 +3564,11 @@
                         img.style.borderRadius = '50%';
                         img.style.objectFit = 'cover';
                         img.onerror = () => {
-                            userAvatar.innerHTML = '';
-                            userAvatar.textContent = displayName.charAt(0).toUpperCase();
-                            console.warn('Avatar failed to load, using fallback');
+                            userAvatar.innerHTML = displayName.charAt(0).toUpperCase();
                         };
-                        userAvatar.innerHTML = '';
                         userAvatar.appendChild(img);
-                        console.log(`✅ User avatar URL: ${avatarUrl}`);
                     } else {
                         userAvatar.textContent = displayName.charAt(0).toUpperCase();
-                        console.log(`ℹ️ No avatar provided by Discord`);
                     }
                     
                     // Set user role/status
@@ -3865,82 +3868,6 @@
                 console.warn('Canvas not found or Chart.js not available');
             }
 
-            // Populate role dropdown - with retry if DOM not ready
-            let roleSelect = document.getElementById('customRoleSelect');
-            
-            // If element doesn't exist yet, wait for it
-            if (!roleSelect) {
-                console.warn('⚠️ customRoleSelect not found, waiting for DOM...');
-                setTimeout(async () => {
-                    roleSelect = document.getElementById('customRoleSelect');
-                    if (roleSelect && stats.roles) populateRoleDropdown(roleSelect, stats.roles);
-                }, 100);
-            } else if (stats.roles) {
-                populateRoleDropdown(roleSelect, stats.roles);
-            }
-        }
-        
-        // Helper function to populate the role dropdown
-        function populateRoleDropdown(roleSelect, roles) {
-            if (!roleSelect) {
-                console.error('❌ Role select element is null');
-                return;
-            }
-            roleSelect.innerHTML = '<option value="">Choose a role...</option>';
-            const filteredRoles = (roles || []).filter(r => r.name !== '@everyone');
-            console.log('✅ Role dropdown populated with ' + filteredRoles.length + ' roles');
-            
-            filteredRoles.forEach(role => {
-                const option = document.createElement('option');
-                option.value = role.id;
-                option.textContent = `${role.name} (${role.count} members)`;
-                roleSelect.appendChild(option);
-            });
-        }
-
-        function updateCustomGraph() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            const roleId = document.getElementById('customRoleSelect').value;
-            console.log('🔵 updateCustomGraph called with roleId:', roleId);
-            if (!selectedServerId || !roleId) {
-                console.log('❌ Missing serverId or roleId');
-                return;
-            }
-
-            fetch(`/api/member-stats/${selectedServerId}`, { credentials: 'include' }).then(r => r.json()).then(stats => {
-                const role = stats.roles.find(r => r.id === roleId);
-                console.log('🔵 Found role:', role);
-                if (role) {
-                    const customCtx = document.getElementById('customChart');
-                    console.log('🔵 Canvas found:', !!customCtx);
-                    if (customCtx && typeof Chart !== 'undefined') {
-                        try {
-                            if (charts.custom) charts.custom.destroy();
-                        } catch (e) {
-                            console.log('ℹ️ No old custom chart to destroy');
-                        }
-                        charts.custom = new Chart(customCtx, {
-                            type: 'bar',
-                            data: {
-                                labels: [role.name],
-                                datasets: [{
-                                    label: 'Members',
-                                    data: [role.count],
-                                    backgroundColor: '#00ffff',
-                                    borderColor: 'rgba(0,255,255,0.3)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: { 
-                                responsive: true, 
-                                maintainAspectRatio: false,
-                                plugins: { legend: { labels: { color: '#fff' } } },
-                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
-                            }
-                        });
-                    }
-                }
-            });
         }
 
         // Load and display member events
