@@ -1789,22 +1789,44 @@
                 <!-- Role Categories Section -->
                 <div id="role-categories-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Role Categories</div>
-                        <div class="content-subtitle">Organize server roles</div>
+                        <div class="content-title">🎭 Role Activity</div>
+                        <div class="content-subtitle">Track all role creation and modifications</div>
                     </div>
                     <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📁 Create Category</div></div>
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header">
+                                <div class="panel-title">📝 Role Activity Logs</div>
+                                <button class="btn btn-primary" onclick="clearRoleActivityLogs()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🗑️ Clear</button>
+                            </div>
                             <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Category Name</div>
-                                    <input type="text" class="form-input" placeholder="e.g., Gaming Roles"/>
+                                <div id="roleActivityLogsList" style="background: rgba(0, 0, 0, 0.3); border-radius: 6px; padding: 1rem; min-height: 300px; max-height: 600px; overflow-y: auto; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6;">
+                                    <div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 2rem 0;">
+                                        ⏳ Waiting for role activities... Messages will appear here as roles are created or modified
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Description</div>
-                                    <textarea class="form-input" rows="2" placeholder="What is this category for?"></textarea>
+                                <small style="color: rgba(255,255,255,0.5); margin-top: 0.75rem; display: block;">
+                                    📌 Shows all role creation, deletion, and modification events | Auto-updates every 3 seconds
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header"><div class="panel-title">📊 Role Stats</div></div>
+                            <div class="panel-content">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statRolesCreated">0</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Roles Created</div>
+                                    </div>
+                                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statRolesDeleted">0</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Roles Deleted</div>
+                                    </div>
+                                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #00d4ff;" id="statRolesModified">0</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Roles Modified</div>
+                                    </div>
                                 </div>
-                                <button class="btn btn-primary">Create Category</button>
                             </div>
                         </div>
                     </div>
