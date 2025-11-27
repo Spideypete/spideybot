@@ -4025,26 +4025,6 @@
 
             console.log('💾 Starting save for server:', selectedServerId);
 
-            // Save colors as "saved" (mark them as persisted)
-            const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#00d4ff';
-            const cyanAccent = localStorage.getItem('accentCyan') || localStorage.getItem('savedAccentCyan') || '#00d4ff';
-            const purpleAccent = localStorage.getItem('accentPurple') || localStorage.getItem('savedAccentPurple') || '#9146ff';
-            const pinkAccent = localStorage.getItem('accentPink') || localStorage.getItem('savedAccentPink') || '#ff69b4';
-            const textColor = localStorage.getItem('textColor') || localStorage.getItem('savedTextColor') || '#ffffff';
-
-            localStorage.setItem('savedThemeColor', themeColor);
-            localStorage.setItem('savedAccentCyan', cyanAccent);
-            localStorage.setItem('savedAccentPurple', purpleAccent);
-            localStorage.setItem('savedAccentPink', pinkAccent);
-            localStorage.setItem('savedTextColor', textColor);
-
-            // Clear unsaved color changes
-            localStorage.removeItem('themeColor');
-            localStorage.removeItem('accentCyan');
-            localStorage.removeItem('accentPurple');
-            localStorage.removeItem('accentPink');
-            localStorage.removeItem('textColor');
-
             // Find and save the CURRENTLY VISIBLE section (the active one)
             const activeSection = document.querySelector('.content-section[style*="display: block"], .content-section.active');
             if (!activeSection) {
@@ -4082,11 +4062,20 @@
             }
 
             console.log('💾 Saving section:', sectionName);
+            
+            // Only collect inputs that have actual ID or NAME attributes (real form fields)
             const inputs = activeSection.querySelectorAll('input[type="text"], input[type="number"], input[type="checkbox"], input[type="color"], select, textarea');
             const data = {};
 
             inputs.forEach(input => {
-                const key = input.id || input.name || input.placeholder || input.className;
+                // Skip inputs without proper id or name
+                if (!input.id && !input.name) return;
+                
+                const key = input.id || input.name;
+                
+                // Skip placeholder-only or class-only identifiers
+                if (!key || key.startsWith('form-') || key.includes('example') || key.includes('e.g') || key.includes('GMT') || key === 'SPIDEY BOT' || key === '//' || key === '') return;
+                
                 if (input.type === 'checkbox') {
                     data[key] = input.checked;
                     originalValues[key] = input.checked;
@@ -4103,7 +4092,7 @@
 
             // Save via API with selected guild ID
             const guildId = localStorage.getItem('selectedServerId');
-            const url = `/api/config/${sectionName}${guildId ? `?guildId=${guildId}` : ''}`;
+            const url = `/api/config/${sectionName}?guildId=${guildId}`;
             
             try {
                 const res = await fetch(url, {
@@ -4112,9 +4101,14 @@
                     body: JSON.stringify(data),
                     credentials: 'include'
                 });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
                 const result = await res.json();
                 console.log(`✅ Saved ${sectionName}:`, result);
-                alert(`✅ Settings saved successfully!`);
+                alert(`✅ Settings saved to server successfully!`);
             } catch (err) {
                 console.error(`❌ Error saving ${sectionName}:`, err);
                 alert(`❌ Error saving settings: ${err.message}`);
