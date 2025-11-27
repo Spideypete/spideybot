@@ -1165,6 +1165,7 @@
                     <ul class="sidebar-menu">
                         <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span>React Roles</span></li>
                         <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h5a2 2 0 012 2z"/></svg></span><span>Role Categories</span></li>
+                        <li class="sidebar-item" data-section="admin-activity" onclick="switchSection('admin-activity')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 1z"/></svg></span><span>Admin Activity</span></li>
                         <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>Server Messages</span></li>
                         <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4l6 6m-6-6l-6 6"/></svg></span><span>Commands</span></li>
                         <li class="sidebar-item" data-section="components" onclick="switchSection('components')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8.5" y="11.5" width="7" height="7"/></svg></span><span>Components</span></li>
@@ -1805,6 +1806,30 @@
                                         <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem;">Categories Created</div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Activity Section -->
+                <div id="admin-activity-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">👮 Admin Activity</div>
+                        <div class="content-subtitle">Track all admin actions and server modifications</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header">
+                                <div class="panel-title">📋 Admin Action Log</div>
+                                <button class="btn btn-primary" onclick="clearAdminActivityLogs()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🗑️ Clear</button>
+                            </div>
+                            <div class="panel-content">
+                                <div id="adminActivityLogsList" style="background: rgba(0, 0, 0, 0.3); border-radius: 6px; padding: 1rem; min-height: 400px; max-height: 700px; overflow-y: auto; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.8;">
+                                    <div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 3rem 0;">⏳ Waiting for admin actions...</div>
+                                </div>
+                                <small style="color: rgba(255,255,255,0.5); margin-top: 0.75rem; display: block;">
+                                    📌 Shows all role, channel, and permission changes | Auto-updates every 3 seconds
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -2525,6 +2550,7 @@
                         'reminders': loadReminders,
                         'statistics-channels': loadStatisticChannels,
                         'role-categories': () => { loadRoleCategories(localStorage.getItem('selectedServerId')); loadRoleActivityLogs(localStorage.getItem('selectedServerId')); },
+                        'admin-activity': () => loadAdminActivityLogs(localStorage.getItem('selectedServerId')),
                         'colors': loadSavedColors
                     };
                     
