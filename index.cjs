@@ -3251,13 +3251,16 @@ const dashboardPath = path.join(publicDir, 'dashboard.html');
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, public');
   res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  res.setHeader('Expires', '-1');
+  res.setHeader('ETag', 'W/"' + Date.now() + '"');
   
   try {
     const dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
-    res.send(dashboardHtml);
+    // Inject timestamp to bust CSS/JS caches
+    const versionedHtml = dashboardHtml.replace('</head>', `<meta http-equiv="refresh" content="0; charset=utf-8">\n    </head>`);
+    res.send(versionedHtml);
   } catch (err) {
     res.status(500).send('<h1>Dashboard Error</h1><p>' + err.message + '</p>');
   }
