@@ -36,7 +36,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
-  resave: true,
+  resave: false,
   saveUninitialized: true,
   cookie: { 
     maxAge: 24 * 60 * 60 * 1000,
@@ -52,7 +52,7 @@ app.set('trust proxy', true);
 
 // ============== SECURITY MIDDLEWARE ==============
 app.use(securityHeadersMiddleware);
-const rateLimiter = new RateLimiter(500, 60000); // 500 requests per minute
+const rateLimiter = new RateLimiter(100, 60000); // 100 requests per minute
 app.use(rateLimiter.middleware());
 const auditLogger = new SecurityAuditLogger();
 const antiSpam = new AntiSpamEngine();
@@ -280,14 +280,12 @@ client.on("guildMemberAdd", async (member) => {
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
   const guildConfig = getGuildConfig(member.guild.id);
-  const serverMessages = guildConfig.serverMessages || {};
-  
-  if (!serverMessages.enableWelcome || !guildConfig.welcomeChannelId) return;
+  if (!guildConfig.welcomeChannelId) return;
 
   const welcomeChannel = member.guild.channels.cache.get(guildConfig.welcomeChannelId);
   if (welcomeChannel) {
     try {
-      let message = serverMessages.welcomeMessage || "Welcome to our server! 🎉";
+      let message = guildConfig.welcomeMessage || "Welcome to our server! 🎉";
       message = message
         .replace(/{user}/g, member.toString())
         .replace(/{username}/g, member.user.username)
@@ -296,9 +294,9 @@ client.on("guildMemberAdd", async (member) => {
         .replace(/{membercount}/g, member.guild.memberCount);
 
       await welcomeChannel.send(message);
-      console.log(`✅ Welcome message sent to ${member.user.tag}`);
+      console.log(`Welcome message sent to ${member.user.tag}`);
     } catch (error) {
-      console.error(`❌ Failed to send welcome: ${error.message}`);
+      console.error(`Failed to send welcome: ${error.message}`);
     }
   }
 });
@@ -320,28 +318,6 @@ client.on("guildMemberRemove", async (member) => {
   });
   config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-
-  // Send goodbye message if enabled
-  const guildConfig = getGuildConfig(member.guild.id);
-  const serverMessages = guildConfig.serverMessages || {};
-  
-  if (!serverMessages.enableGoodbye || !guildConfig.welcomeChannelId) return;
-
-  const goodbyeChannel = member.guild.channels.cache.get(guildConfig.welcomeChannelId);
-  if (goodbyeChannel) {
-    try {
-      let message = serverMessages.goodbyeMessage || "{user} has left the server.";
-      message = message
-        .replace(/{user}/g, member.user.username)
-        .replace(/{username}/g, member.user.username)
-        .replace(/{server}/g, member.guild.name);
-
-      await goodbyeChannel.send(message);
-      console.log(`✅ Goodbye message sent for ${member.user.tag}`);
-    } catch (error) {
-      console.error(`❌ Failed to send goodbye: ${error.message}`);
-    }
-  }
 });
 
 // ============== MEMBER UPDATES (BOOSTS, ROLES) ==============
@@ -416,8 +392,6 @@ client.on("channelUpdate", async (oldChannel, newChannel) => {
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot && !msg.guild.config?.messageCountingBots) return;
   if (!msg.member) return;
-  
-  // LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
   const guildConfig = getGuildConfig(msg.guild.id);
 
   // ============== MESSAGE COUNTING ==============
@@ -435,14 +409,11 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  // ============== PERMISSIONS FROM DASHBOARD ==============
+  // ============== @MEMBERS ROLE CHECK ==============
   if (msg.content.startsWith("//")) {
-    const permissions = guildConfig.permissions || {};
-    if (permissions.membersOnly) {
-      const hasMembersRole = msg.member.roles.cache.some(role => role.name === "Members");
-      if (!hasMembersRole && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return msg.reply("❌ Only members with the **@Members** role can use bot commands!");
-      }
+    const hasMembersRole = msg.member.roles.cache.some(role => role.name === "Members");
+    if (!hasMembersRole) {
+      return msg.reply("❌ Only members with the **@Members** role can use bot commands!");
     }
   }
 
@@ -486,7 +457,7 @@ client.on("messageCreate", async (msg) => {
             if (newRole) await msg.member.roles.add(newRole);
           }
         } catch (err) {
-          console.error(`❌ Failed to manage level roles: ${err.message}`);
+          console.error(`Failed to manage level roles: ${err.message}`);
         }
       }
 
@@ -3155,11 +3126,8 @@ app.get("/auth/discord/callback", async (req, res) => {
     req.session.guilds = adminGuilds;
     req.session.accessToken = access_token;
 
-    req.session.save((err) => {
-      if (err) console.error("Session save error:", err);
-      console.log(`✅ User logged in via Discord: ${userRes.data.username} (${adminGuilds.length} admin servers)`);
-      res.redirect("/dashboard");
-    });
+    console.log(`✅ User logged in via Discord: ${userRes.data.username} (${adminGuilds.length} admin servers)`);
+    res.redirect("/dashboard");
   } catch (err) {
     console.error("❌ OAuth error:", err.response?.data || err.message);
     console.error("Expected Redirect URI:", REDIRECT_URI);
@@ -3360,266 +3328,6 @@ adminConfigs.forEach(configName => {
     console.log(`✅ Config saved by ${req.session.user?.username}: ${configName} for guild ${guildId}`);
     res.json({ success: true, message: `${configName} saved successfully` });
   });
-});
-
-// ============== API: BOT CONFIG UPDATES ==============
-app.post("/api/bot-config/prefix", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) {
-    return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
-  }
-
-  const { value } = req.body;
-  if (!value || value.trim() === '') {
-    return res.json({ success: false, message: "Prefix cannot be empty" });
-  }
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    
-    config.guilds[guildId].commandPrefix = value.trim();
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    
-    console.log(`✅ Command prefix updated: ${value} (Guild: ${guildId})`);
-    res.json({ success: true, message: "Command prefix updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating prefix:', err);
-    res.json({ success: false, message: "Error updating prefix" });
-  }
-});
-
-app.post("/api/bot-config/language", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) {
-    return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
-  }
-
-  const { value } = req.body;
-  const validLanguages = ['English', 'Spanish', 'French', 'German', 'Portuguese'];
-  
-  if (!value || !validLanguages.includes(value)) {
-    return res.json({ success: false, message: "Invalid language selection" });
-  }
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    
-    config.guilds[guildId].defaultLanguage = value;
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    
-    console.log(`✅ Default language updated: ${value} (Guild: ${guildId})`);
-    res.json({ success: true, message: "Default language updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating language:', err);
-    res.json({ success: false, message: "Error updating language" });
-  }
-});
-
-app.post("/api/bot-config/roles", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) {
-    return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
-  }
-
-  const { adminRole, moderatorRole, membersRole, mutedRole } = req.body;
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    
-    if (adminRole) config.guilds[guildId].adminRole = adminRole;
-    if (moderatorRole) config.guilds[guildId].moderatorRole = moderatorRole;
-    if (membersRole) config.guilds[guildId].membersRole = membersRole;
-    if (mutedRole) config.guilds[guildId].mutedRole = mutedRole;
-    
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    
-    console.log(`✅ Roles updated (Guild: ${guildId})`, { adminRole, moderatorRole, membersRole, mutedRole });
-    res.json({ success: true, message: "Roles updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating roles:', err);
-    res.json({ success: false, message: "Error updating roles" });
-  }
-});
-
-app.post("/api/bot-config/channels", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) {
-    return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
-  }
-
-  const { generalChannel, announcementsChannel, welcomeChannel } = req.body;
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    
-    if (generalChannel) config.guilds[guildId].generalChannel = generalChannel;
-    if (announcementsChannel) config.guilds[guildId].announcementsChannel = announcementsChannel;
-    if (welcomeChannel) config.guilds[guildId].welcomeChannel = welcomeChannel;
-    
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    
-    console.log(`✅ Channels updated (Guild: ${guildId})`, { generalChannel, announcementsChannel, welcomeChannel });
-    res.json({ success: true, message: "Channels updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating channels:', err);
-    res.json({ success: false, message: "Error updating channels" });
-  }
-});
-
-app.post("/api/bot-config/logging", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    if (!config.guilds[guildId].logging) config.guilds[guildId].logging = {};
-
-    const { logDeleted, logEdited, logBulkDelete, logChannel, logBans, logKicks, logMutes, logWarns, modLogChannel } = req.body;
-    
-    config.guilds[guildId].logging.messageLogging = { logDeleted, logEdited, logBulkDelete, logChannel };
-    config.guilds[guildId].logging.moderationLogging = { logBans, logKicks, logMutes, logWarns, modLogChannel };
-    
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log(`✅ All logging settings updated (Guild: ${guildId})`);
-    res.json({ success: true, message: "Logging updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating logging:', err);
-    res.json({ success: false, message: "Error updating logging" });
-  }
-});
-
-app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    
-    const { antiSpamEnabled, antiSpamLimit, antiSpamAction, raidEnabled, raidLimit, banRaidUsers, membersOnly, adminsBypass, allowDM, confirmDangerous } = req.body;
-    
-    config.guilds[guildId].antiSpam = { enabled: antiSpamEnabled, messagesPerLimit: antiSpamLimit, action: antiSpamAction };
-    config.guilds[guildId].raidProtection = { enabled: raidEnabled, usersPerLimit: raidLimit, banRaidUsers };
-    config.guilds[guildId].permissions = { membersOnly, adminsBypass, allowDM, confirmDangerous };
-    
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log(`✅ All Server Guard settings updated (Guild: ${guildId})`);
-    res.json({ success: true, message: "Server Guard updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating server guard:', err);
-    res.json({ success: false, message: "Error updating server guard" });
-  }
-});
-
-app.post("/api/bot-config/anti-spam", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    const { enabled, messagesPerLimit, action } = req.body;
-    config.guilds[guildId].antiSpam = { enabled, messagesPerLimit, action };
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    res.json({ success: true, message: "Anti-spam updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating anti-spam:', err);
-    res.json({ success: false, message: "Error updating anti-spam" });
-  }
-});
-
-app.post("/api/bot-config/raid", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    const { enabled, usersPerLimit, banRaidUsers } = req.body;
-    config.guilds[guildId].raidProtection = { enabled, usersPerLimit, banRaidUsers };
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    res.json({ success: true, message: "Raid protection updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating raid protection:', err);
-    res.json({ success: false, message: "Error updating raid protection" });
-  }
-});
-
-app.post("/api/bot-config/permissions", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    const { membersOnly, adminsBypass, allowDM, confirmDangerous } = req.body;
-    config.guilds[guildId].permissions = { membersOnly, adminsBypass, allowDM, confirmDangerous };
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    res.json({ success: true, message: "Permissions updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating permissions:', err);
-    res.json({ success: false, message: "Error updating permissions" });
-  }
-});
-
-app.post("/api/bot-config/messages", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
-
-  try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    const { enableWelcome, welcomeMessage, enableGoodbye, goodbyeMessage } = req.body;
-    config.guilds[guildId].serverMessages = { enableWelcome, welcomeMessage, enableGoodbye, goodbyeMessage };
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    res.json({ success: true, message: "Server messages updated successfully" });
-  } catch (err) {
-    console.error('❌ Error updating messages:', err);
-    res.json({ success: false, message: "Error updating messages" });
-  }
 });
 
 // ============== API: GET ROLE CATEGORIES ==============

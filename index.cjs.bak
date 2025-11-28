@@ -416,8 +416,6 @@ client.on("channelUpdate", async (oldChannel, newChannel) => {
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot && !msg.guild.config?.messageCountingBots) return;
   if (!msg.member) return;
-  
-  // LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
   const guildConfig = getGuildConfig(msg.guild.id);
 
   // ============== MESSAGE COUNTING ==============
@@ -435,14 +433,11 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  // ============== PERMISSIONS FROM DASHBOARD ==============
+  // ============== @MEMBERS ROLE CHECK ==============
   if (msg.content.startsWith("//")) {
-    const permissions = guildConfig.permissions || {};
-    if (permissions.membersOnly) {
-      const hasMembersRole = msg.member.roles.cache.some(role => role.name === "Members");
-      if (!hasMembersRole && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return msg.reply("❌ Only members with the **@Members** role can use bot commands!");
-      }
+    const hasMembersRole = msg.member.roles.cache.some(role => role.name === "Members");
+    if (!hasMembersRole) {
+      return msg.reply("❌ Only members with the **@Members** role can use bot commands!");
     }
   }
 
@@ -486,7 +481,7 @@ client.on("messageCreate", async (msg) => {
             if (newRole) await msg.member.roles.add(newRole);
           }
         } catch (err) {
-          console.error(`❌ Failed to manage level roles: ${err.message}`);
+          console.error(`Failed to manage level roles: ${err.message}`);
         }
       }
 

@@ -7,20 +7,29 @@
     "1235015410743775294": {
       "welcomeChannelId": "1235015412035358721",
       "welcomeMessage": "ello {user}\nWelcome to our community! We're thrilled to have you here. Before you begin your journey with us, we kindly ask that you take a moment to familiarize yourself with our community guidelines by reading our <#11235015412035358723>. . This ensures that everyone has a positive and enjoyable experience.\n\nNext, please ⁠⁠<#1235015412035358720> yourself to gain access to all the features and channels within our server. Verification helps us maintain a safe and welcoming environment for all members.\n\nOnce you're verified, don't forget to check out our ⁠<#1235015412035358726>! These allow you to personalize your experience and join specific channels tailored to your interests. Whether you're a gamer, an artist, or a music enthusiast, there's a role for you.\n\nThank you for joining us, and we hope you have a fantastic time connecting with fellow members and exploring everything our community has to offer!\n\n#{membercount}",
-      "roleCategories": {},
+      "roleCategories": {
+        "Gaming": {
+          "roles": [],
+          "banner": null
+        },
+        "Console": {
+          "roles": [],
+          "banner": null
+        }
+      },
       "modLogChannelId": "1235015413763412063",
       "messageCounting": {
-        "totalMessages": 2,
+        "totalMessages": 7,
         "byUser": {
-          "807682091591925801": 2
+          "807682091591925801": 7
         },
         "byChannel": {
           "1235015412035358728": 1,
-          "1235015413763412063": 1
+          "1235015413763412063": 6
         }
       },
       "levels": {
-        "807682091591925801_xp": 49,
+        "807682091591925801_xp": 76,
         "807682091591925801": 16,
         "807682091591925801_xp_time": 1763814041136
       },
@@ -37,7 +46,46 @@
           "userId": "222",
           "timestamp": "11/22/2025, 8:43:04 PM"
         }
-      ]
+      ],
+      "logging": {
+        "messageLogging": {
+          "logDeleted": true,
+          "logEdited": true,
+          "logBulkDelete": false,
+          "logChannel": ""
+        },
+        "moderationLogging": {
+          "logBans": true,
+          "logKicks": true,
+          "logMutes": true,
+          "logWarns": true,
+          "modLogChannel": ""
+        }
+      },
+      "commandPrefix": "//",
+      "defaultLanguage": "English",
+      "adminRole": "1235015410865410051",
+      "moderatorRole": "1235015410865410049",
+      "membersRole": "1235015410743775295",
+      "generalChannel": "1235015412035358728",
+      "announcementsChannel": "1240556844225925183",
+      "welcomeChannel": "1235015412035358721",
+      "antiSpam": {
+        "enabled": true,
+        "messagesPerLimit": 5,
+        "action": "Warn"
+      },
+      "raidProtection": {
+        "enabled": true,
+        "usersPerLimit": 10,
+        "banRaidUsers": false
+      },
+      "permissions": {
+        "membersOnly": true,
+        "adminsBypass": true,
+        "allowDM": false,
+        "confirmDangerous": true
+      }
     },
     "subscriptions": {
       "field_0": "Gold",
@@ -86,7 +134,27 @@
       "form-input": "#welcome",
       "e.g., with commands // help": "",
       "GMT": "GMT",
-      "": true
+      "": true,
+      "adminRoleSelect": "",
+      "moderatorRoleSelect": "",
+      "membersRoleSelect": "",
+      "mutedRoleSelect": "",
+      "generalChannelSelect": "",
+      "announcementsChannelSelect": "",
+      "welcomeChannelSelect": "",
+      "musicPlayerToggle": false,
+      "economyToggle": true,
+      "levelingToggle": true,
+      "welcomeToggle": true,
+      "moderationToggle": true,
+      "socialToggle": true,
+      "adminRole": "1235015410865410051",
+      "moderatorRole": "1235015410865410049",
+      "membersRole": "1235015410743775295",
+      "mutedRole": "",
+      "generalChannel": "1235015412035358728",
+      "announcementsChannel": "1240556844225925183",
+      "welcomeChannel": "1235015412035358721"
     },
     "role-categories": {
       "categoryName": "",
@@ -111,6 +179,12 @@
       "Enter emoji": "s",
       "Select role": "s",
       "": false
+    },
+    "statistics-channels": {
+      "enabled": true
+    },
+    "logging": {
+      "enabled": true
     }
   }
 }
