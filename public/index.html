@@ -290,6 +290,105 @@
       max-width: 600px;
       margin: 0 auto;
     }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      nav {
+        padding: 1rem;
+        flex-wrap: wrap;
+      }
+      .logo {
+        font-size: 1.1rem;
+      }
+      nav > div {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      nav a {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+      }
+      .hero {
+        padding: 3rem 1rem;
+      }
+      .hero h1 {
+        font-size: 2rem;
+        line-height: 1.2;
+      }
+      .hero p {
+        font-size: 1rem;
+      }
+      .container {
+        padding: 1rem;
+      }
+      .btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 0.8rem 1.5rem;
+        margin: 0.5rem 0;
+      }
+      .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .spidey-team {
+        padding: 1.5rem;
+        margin: 0 1rem 1rem 1rem;
+        max-width: calc(100% - 2rem);
+      }
+      .spidey-team-logo {
+        width: 80px;
+        height: 80px;
+      }
+      .spidey-team h2 {
+        font-size: 1.4rem;
+      }
+      h2 {
+        font-size: 1.6rem !important;
+      }
+      footer {
+        padding: 2rem 1rem;
+      }
+      footer .footer-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      nav {
+        padding: 0.75rem;
+      }
+      .logo {
+        font-size: 1rem;
+      }
+      .hero h1 {
+        font-size: 1.5rem;
+      }
+      .hero p {
+        font-size: 0.9rem;
+      }
+      .container {
+        padding: 0.75rem;
+      }
+      .btn {
+        padding: 0.7rem 1rem;
+        font-size: 0.8rem;
+      }
+      .spidey-team {
+        padding: 1rem;
+        margin: 0 0.75rem 1rem 0.75rem;
+        max-width: calc(100% - 1.5rem);
+      }
+      footer .footer-bottom {
+        font-size: 0.75rem;
+      }
+    }
   </style>
 </head>
 <body>
