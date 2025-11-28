@@ -9,6 +9,7 @@ SPIDEY BOT is a feature-rich Discord bot with an integrated web dashboard for se
 - Preferred communication style: Simple, everyday language.
 - **CRITICAL: All changes deploy directly to Render production. Every change must be tested and working before deployment.**
 - **CRITICAL: When changing languages or installing new packages, verify bot + website still work before pushing to GitHub.**
+- **CRITICAL: When changing the bot prefix, verify commands work with the new prefix before deploying.**
 
 ## Deployment Status
 
