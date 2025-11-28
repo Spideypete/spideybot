@@ -3249,6 +3249,7 @@ app.get("/api/image", async (req, res) => {
 const dashboardPath = path.join(publicDir, 'dashboard.html');
 
 app.get("/dashboard", (req, res) => {
+  if (!req.session.authenticated) return res.redirect("/login");
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
