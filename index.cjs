@@ -53,6 +53,27 @@ app.use((req, res, next) => {
   res.setHeader("Expires", "0");
   next();
 });
+
+// ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE - CRITICAL!) ==============
+const dashboardPath = path.join(publicDir, 'dashboard.html');
+
+app.get("/dashboard", (req, res) => {
+  if (!req.session.authenticated) return res.redirect("/login");
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '-1');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('CDN-Cache-Control', 'no-store');
+  
+  try {
+    const dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
+    res.send(dashboardHtml);
+  } catch (err) {
+    res.status(500).send('<h1>Dashboard Error</h1><p>' + err.message + '</p>');
+  }
+});
+
 app.use(express.static(publicDir));
 app.set('trust proxy', true);
 
@@ -3242,26 +3263,6 @@ app.get("/api/image", async (req, res) => {
   } catch (err) {
     console.warn(`⚠️ Image proxy failed for ${imageUrl}:`, err.message);
     res.status(502).json({ error: 'Failed to fetch image' });
-  }
-});
-
-// ============== WEB ROUTES FOR REACT DASHBOARD ==============
-const dashboardPath = path.join(publicDir, 'dashboard.html');
-
-app.get("/dashboard", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '-1');
-  res.setHeader('Surrogate-Control', 'no-store');
-  res.setHeader('CDN-Cache-Control', 'no-store');
-  
-  try {
-    const dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
-    res.send(dashboardHtml);
-  } catch (err) {
-    res.status(500).send('<h1>Dashboard Error</h1><p>' + err.message + '</p>');
   }
 });
 

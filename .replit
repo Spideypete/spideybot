@@ -50,6 +50,10 @@ externalPort = 3002
 localPort = 38841
 externalPort = 3001
 
+[[ports]]
+localPort = 40059
+externalPort = 3003
+
 [deployment]
 deploymentTarget = "vm"
 run = ["node", "index.cjs"]
