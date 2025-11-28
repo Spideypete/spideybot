@@ -3246,30 +3246,20 @@ app.get("/api/image", async (req, res) => {
 });
 
 // ============== WEB ROUTES FOR REACT DASHBOARD ==============
-// Load dashboard HTML once at startup
-let dashboardHtml = null;
 const dashboardPath = path.join(publicDir, 'dashboard.html');
-console.log(`📂 Attempting to load dashboard from: ${dashboardPath}`);
-console.log(`📂 File exists: ${fs.existsSync(dashboardPath)}`);
-
-try {
-  dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
-  console.log(`✅ Dashboard loaded successfully (${dashboardHtml.length} bytes)`);
-} catch (err) {
-  console.error('❌ Failed to load dashboard.html:');
-  console.error('   Path:', dashboardPath);
-  console.error('   Error:', err.message);
-  console.error('   Code:', err.code);
-  dashboardHtml = '<h1>Dashboard not found</h1>';
-}
 
 app.get("/dashboard", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  res.send(dashboardHtml);
+  
+  try {
+    const dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
+    res.send(dashboardHtml);
+  } catch (err) {
+    res.status(500).send('<h1>Dashboard Error</h1><p>' + err.message + '</p>');
+  }
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
