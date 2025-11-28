@@ -54,9 +54,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE) ==============
-const publicDir2 = path.join(__dirname, 'public');
-const dashboardPath = path.join(publicDir2, 'dashboard.html');
+// ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE - CRITICAL!) ==============
+const dashboardPath = path.join(publicDir, 'dashboard.html');
 
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
