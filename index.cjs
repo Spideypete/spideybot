@@ -30,6 +30,7 @@ const {
 } = require("./security");
 
 // ============== SETUP EXPRESS APP ==============
+const distDir = path.join(__dirname, 'dist');
 const publicDir = path.join(__dirname, 'public');
 const app = express();
 app.use(express.json());
@@ -46,7 +47,7 @@ app.use(session({
   }
 }));
 
-// Serve static files from public (automatically serves index.html for /)
+// Serve static files from dist (automatically serves index.html for /)
 app.use((req, res, next) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.setHeader("Pragma", "no-cache");
@@ -55,7 +56,7 @@ app.use((req, res, next) => {
 });
 
 // ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE - CRITICAL!) ==============
-const dashboardPath = path.join(publicDir, 'dashboard.html');
+const dashboardPath = path.join(distDir, 'dashboard.html');
 
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
@@ -77,7 +78,7 @@ app.get("/dashboard", (req, res) => {
   }
 });
 
-app.use(express.static(publicDir));
+app.use(express.static(distDir));
 app.set('trust proxy', true);
 
 // ============== SECURITY MIDDLEWARE ==============
