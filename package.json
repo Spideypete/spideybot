@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.cjs",
     "dev": "node index.cjs",
-    "build": "mkdir -p dist && cp -r public/* dist/",
+    "build": "node build.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
