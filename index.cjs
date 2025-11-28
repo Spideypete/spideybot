@@ -3186,7 +3186,6 @@ app.get("/api/config", (req, res) => {
 
 // ============== USER API ==============
 app.get("/api/user", (req, res) => {
-  if (!req.session.authenticated) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
@@ -3258,21 +3257,17 @@ try {
 }
 
 app.get("/dashboard", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(dashboardHtml);
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
 app.get("/dashboard/server/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
   res.redirect("/dashboard");
 });
 
 // ============== API ENDPOINTS ==============
 app.post("/api/config/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false });
-
   const guildId = req.params.guildId;
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
@@ -3283,23 +3278,18 @@ app.post("/api/config/:guildId", (req, res) => {
 });
 
 app.post("/api/moderation/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false });
-
   const { action, userId, reason } = req.body;
   console.log(`⚠️ Moderation: ${action} on user ${userId} - Reason: ${reason}`);
   res.json({ success: true, message: `${action} executed on user ${userId}` });
 });
 
 app.post("/api/economy/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false });
-
   const { action, userId, amount } = req.body;
   console.log(`💰 Economy: ${action} ${amount} coins to user ${userId}`);
   res.json({ success: true, message: `Updated economy for user ${userId}` });
 });
 
 app.post("/api/commands/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false });
 
   const guildId = req.params.guildId;
   const { name, response } = req.body;
@@ -3364,7 +3354,6 @@ adminConfigs.forEach(configName => {
 
 // ============== API: BOT CONFIG UPDATES ==============
 app.post("/api/bot-config/prefix", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
@@ -3395,7 +3384,6 @@ app.post("/api/bot-config/prefix", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/language", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
@@ -3428,7 +3416,6 @@ app.post("/api/bot-config/language", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/roles", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
@@ -3460,7 +3447,6 @@ app.post("/api/bot-config/roles", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/channels", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
@@ -3491,7 +3477,6 @@ app.post("/api/bot-config/channels", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/logging", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
@@ -3517,7 +3502,6 @@ app.post("/api/bot-config/logging", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
@@ -3543,7 +3527,6 @@ app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/anti-spam", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
@@ -3563,7 +3546,6 @@ app.post("/api/bot-config/anti-spam", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/raid", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
@@ -3583,7 +3565,6 @@ app.post("/api/bot-config/raid", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/permissions", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
@@ -3603,7 +3584,6 @@ app.post("/api/bot-config/permissions", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/messages", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
@@ -3624,7 +3604,6 @@ app.post("/api/bot-config/messages", express.json(), (req, res) => {
 
 // ============== API: GET ROLE CATEGORIES ==============
 app.get("/api/config/role-categories", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
   const guildId = req.query.guildId || client.guilds.cache.first()?.id;
@@ -3780,7 +3759,6 @@ app.post("/api/config/:guildId", express.json(), (req, res) => {
 
 // ============== REAL-TIME DASHBOARD API ==============
 app.get("/api/dashboard/stats", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guilds = client.guilds.cache;
   const firstGuild = guilds.first();
@@ -3807,7 +3785,6 @@ app.get("/api/dashboard/stats", (req, res) => {
 });
 
 app.get("/api/dashboard/analytics", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ growth: [], topCommands: [] });
@@ -3840,7 +3817,6 @@ app.get("/api/dashboard/analytics", (req, res) => {
 });
 
 app.get("/api/dashboard/members", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ members: [] });
@@ -3869,7 +3845,6 @@ app.get("/api/dashboard/members", (req, res) => {
 });
 
 app.get("/api/dashboard/activity", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guildId = req.query.guildId;
   const firstGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
@@ -3882,7 +3857,6 @@ app.get("/api/dashboard/activity", (req, res) => {
 });
 
 app.get("/api/dashboard/growth", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ growth: [] });
@@ -3896,7 +3870,6 @@ app.get("/api/dashboard/growth", (req, res) => {
 });
 
 app.get("/api/dashboard/active-members", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ active: [] });
@@ -3923,7 +3896,6 @@ app.get("/api/dashboard/active-members", (req, res) => {
 });
 
 app.get("/api/dashboard/statistics", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ memberCount: 0, activeMembers: 0, verifiedMembers: 0 });
@@ -3945,7 +3917,6 @@ app.get("/api/dashboard/statistics", (req, res) => {
 });
 
 app.get("/api/dashboard/top-members", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ members: [] });
@@ -3978,7 +3949,6 @@ app.get("/api/dashboard/top-members", (req, res) => {
 
 // Get all servers the bot is in (filtered to only admin-accessible servers)
 app.get("/api/creator/servers", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   // Get user's guilds from Discord OAuth (includes permission info)
   const userGuilds = req.session.guilds || [];
@@ -4020,7 +3990,6 @@ app.get("/api/creator/servers", (req, res) => {
 
 // Get all channels in a guild
 app.get("/api/channels/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guild = client.guilds.cache.get(req.params.guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
@@ -4040,7 +4009,6 @@ app.get("/api/channels/:guildId", (req, res) => {
 
 // Get all roles in a guild
 app.get("/api/roles/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guild = client.guilds.cache.get(req.params.guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
@@ -4060,7 +4028,6 @@ app.get("/api/roles/:guildId", (req, res) => {
 
 // Get creator settings (bot nickname, timezone)
 app.get("/api/creator/settings", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
   const creatorSettings = config.creator || {
@@ -4073,7 +4040,6 @@ app.get("/api/creator/settings", (req, res) => {
 
 // Save creator settings
 app.post("/api/creator/settings", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
   config.creator = config.creator || {};
@@ -4086,7 +4052,6 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
 
 // Get member statistics by role for graphs (with caching to avoid rate limits)
 app.get("/api/member-stats/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guildId = req.params.guildId;
   const guild = client.guilds.cache.get(guildId);
@@ -4136,7 +4101,6 @@ app.get("/api/member-stats/:guildId", (req, res) => {
 
 // Get member events (joins, leaves, boosts)
 app.get("/api/member-events/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
   const guildId = req.params.guildId;
@@ -4147,7 +4111,6 @@ app.get("/api/member-events/:guildId", (req, res) => {
 
 // ============== QUICK SETUP ENDPOINTS ==============
 app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const setupType = req.params.setupType;
   const guildId = req.query.guildId || req.body.guildId;
