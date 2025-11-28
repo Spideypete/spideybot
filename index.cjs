@@ -3251,9 +3251,11 @@ const dashboardPath = path.join(publicDir, 'dashboard.html');
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0');
   res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  res.setHeader('Expires', '-1');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('CDN-Cache-Control', 'no-store');
   
   try {
     const dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
