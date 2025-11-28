@@ -67,7 +67,10 @@ app.get("/dashboard", (req, res) => {
   res.setHeader('CDN-Cache-Control', 'no-store');
   
   try {
-    const dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
+    let dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
+    // Inject timestamp to force fresh version EVERY TIME
+    const timestamp = Date.now();
+    dashboardHtml = dashboardHtml.replace('</head>', `<meta name="version-timestamp" content="${timestamp}">\n  </head>`);
     res.send(dashboardHtml);
   } catch (err) {
     res.status(500).send('<h1>Dashboard Error</h1><p>' + err.message + '</p>');
