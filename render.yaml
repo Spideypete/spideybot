@@ -9,20 +9,14 @@ services:
       - key: NODE_ENV
         value: production
       - key: CLIENT_ID
-        fromDatabase:
-          name: spidey_db
-          property: client_id
+        scope: pr
       - key: DISCORD_CLIENT_SECRET
-        fromDatabase:
-          name: spidey_db
-          property: discord_client_secret
+        scope: pr
       - key: TOKEN
-        fromDatabase:
-          name: spidey_db
-          property: bot_token
+        scope: pr
       - key: OPENAI_API_KEY
-        fromDatabase:
-          name: spidey_db
-          property: openai_api_key
+        scope: pr
       - key: SESSION_SECRET
         generateValue: true
+      - key: ADMIN_PASSWORD
+        value: spidey123
