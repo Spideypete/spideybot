@@ -3272,6 +3272,7 @@ app.get("/dashboard/server/:guildId", (req, res) => {
 // ============== API ENDPOINTS ==============
 app.post("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
+
   const guildId = req.params.guildId;
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
@@ -3283,6 +3284,7 @@ app.post("/api/config/:guildId", (req, res) => {
 
 app.post("/api/moderation/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
+
   const { action, userId, reason } = req.body;
   console.log(`⚠️ Moderation: ${action} on user ${userId} - Reason: ${reason}`);
   res.json({ success: true, message: `${action} executed on user ${userId}` });
@@ -3290,6 +3292,7 @@ app.post("/api/moderation/:guildId", (req, res) => {
 
 app.post("/api/economy/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
+
   const { action, userId, amount } = req.body;
   console.log(`💰 Economy: ${action} ${amount} coins to user ${userId}`);
   res.json({ success: true, message: `Updated economy for user ${userId}` });
@@ -3621,6 +3624,7 @@ app.post("/api/bot-config/messages", express.json(), (req, res) => {
 
 // ============== API: GET ROLE CATEGORIES ==============
 app.get("/api/config/role-categories", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
   const guildId = req.query.guildId || client.guilds.cache.first()?.id;
@@ -3642,7 +3646,6 @@ app.get("/api/config/role-categories", (req, res) => {
 
 // ============== API: SAVE ROLE CATEGORIES ==============
 app.post("/api/config/role-categories", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   try {
     if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
 
@@ -3699,7 +3702,6 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
 
 // ============== API: POST CATEGORY TO DISCORD CHANNEL ==============
 app.post("/api/post-category", express.json(), async (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   try {
     if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
 
@@ -3778,18 +3780,11 @@ app.post("/api/config/:guildId", express.json(), (req, res) => {
 
 // ============== REAL-TIME DASHBOARD API ==============
 app.get("/api/dashboard/stats", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-
-  const guilds = client.guilds.cache;
-  const firstGuild = guilds.first();
-
-  if (!firstGuild) {
-    return res.json({ status: "offline", members: 0, commands: 44, activity: 0 });
-  }
+  const firstGuild = client.guilds.cache.first();
+  if (!firstGuild) return res.json({ status: "offline", members: 0, commands: 44, activity: 0 });
 
   const config = getGuildConfig(firstGuild.id);
   const levels = config.levels || {};
-
   let totalMessages = 0;
   Object.keys(levels).forEach(key => {
     if (!key.includes("_")) totalMessages++;
@@ -3805,8 +3800,6 @@ app.get("/api/dashboard/stats", (req, res) => {
 });
 
 app.get("/api/dashboard/analytics", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ growth: [], topCommands: [] });
 
@@ -3838,8 +3831,6 @@ app.get("/api/dashboard/analytics", (req, res) => {
 });
 
 app.get("/api/dashboard/members", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ members: [] });
 
