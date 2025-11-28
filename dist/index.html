@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPIDEY BOT - Complete Discord Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 50%, #0f0a1f 100%);
+      color: #fff;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        repeating-linear-gradient(0deg, rgba(0, 212, 255, 0.08) 0px, rgba(0, 212, 255, 0.08) 2px, transparent 2px, transparent 4px),
+        repeating-linear-gradient(90deg, rgba(0, 212, 255, 0.08) 0px, rgba(0, 212, 255, 0.08) 2px, transparent 2px, transparent 4px),
+        repeating-linear-gradient(45deg, transparent 0px, transparent 15px, rgba(145, 70, 255, 0.1) 15px, rgba(145, 70, 255, 0.1) 17px),
+        repeating-linear-gradient(-45deg, transparent 0px, transparent 15px, rgba(255, 20, 147, 0.08) 15px, rgba(255, 20, 147, 0.08) 17px),
+        radial-gradient(circle at 10% 20%, rgba(0, 212, 255, 0.35) 0%, transparent 35%),
+        radial-gradient(circle at 90% 30%, rgba(145, 70, 255, 0.3) 0%, transparent 30%),
+        radial-gradient(circle at 60% 90%, rgba(255, 20, 147, 0.25) 0%, transparent 35%),
+        radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 1;
+      animation: spiderVersePulse 8s ease-in-out infinite;
+    }
+    @keyframes spiderVersePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 1.2; }
+    }
+    main {
+      flex: 1;
+      position: relative;
+      z-index: 2;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
+    }
+    nav {
+      background: rgba(15, 15, 15, 0.7);
+      border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    nav img { height: 40px; }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1.5rem;
+      transition: color 0.3s;
+      font-weight: 500;
+    }
+    nav a:hover { color: #9146FF; }
+    .hero {
+      background: linear-gradient(135deg, rgba(35, 8, 25, 0.7) 0%, rgba(20, 40, 80, 0.7) 50%, rgba(40, 15, 35, 0.7) 100%);
+      padding: 6rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 3px solid rgba(220, 80, 50, 0.3);
+      box-shadow: inset 0 0 60px rgba(220, 80, 50, 0.2), inset 0 0 120px rgba(145, 70, 255, 0.1);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -30%;
+      right: -30%;
+      bottom: -30%;
+      background: 
+        radial-gradient(circle at 15% 30%, rgba(220, 80, 50, 0.4) 0%, transparent 35%),
+        radial-gradient(circle at 85% 25%, rgba(145, 70, 255, 0.35) 0%, transparent 32%),
+        radial-gradient(circle at 60% 85%, rgba(255, 20, 147, 0.3) 0%, transparent 38%);
+      animation: spiderBg 15s ease-in-out infinite;
+      filter: blur(60px);
+    }
+    @keyframes spiderBg {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-15px, 15px) scale(1.08); }
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        repeating-linear-gradient(0deg, transparent 0px, transparent 15px, rgba(0, 212, 255, 0.06) 15px, rgba(0, 212, 255, 0.06) 16px),
+        repeating-linear-gradient(90deg, transparent 0px, transparent 15px, rgba(145, 70, 255, 0.06) 15px, rgba(145, 70, 255, 0.06) 16px);
+      pointer-events: none;
+    }
+    .hero > * { position: relative; z-index: 3; }
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #FF4500 0%, #DC5032 35%, #FF6347 70%, #FFD700 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 40px rgba(220, 80, 50, 0.5), 0 0 80px rgba(255, 69, 0, 0.3);
+      filter: drop-shadow(0 0 20px rgba(220, 80, 50, 0.4));
+    }
+    .hero p {
+      font-size: 1.25rem;
+      color: #ccc;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn-group { margin: 2rem 0; }
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 2.5rem;
+      margin: 0.5rem;
+      border-radius: 15px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.9rem;
+    }
+    .btn-primary {
+      background: rgba(220, 80, 50, 0.15);
+      color: #FF6347;
+      border: 2px solid rgba(220, 80, 50, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .btn-primary:hover {
+      background: rgba(220, 80, 50, 0.25);
+      border-color: rgba(220, 80, 50, 0.7);
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(220, 80, 50, 0.6), inset 0 0 20px rgba(220, 80, 50, 0.15);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+    }
+    .btn-secondary {
+      background: rgba(15, 15, 15, 0.4);
+      color: #fff;
+      border: 2px solid rgba(220, 80, 50, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .btn-secondary:hover {
+      background: rgba(220, 80, 50, 0.15);
+      border-color: rgba(220, 80, 50, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(220, 80, 50, 0.5), inset 0 0 15px rgba(220, 80, 50, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    footer {
+      background: rgba(0, 0, 0, 0.5);
+      border-top: 1px solid rgba(0, 212, 255, 0.1);
+      padding: 3rem 2rem;
+      margin-top: 4rem;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+    }
+    footer .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    footer .footer-section h3 {
+      color: #00d4ff;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    footer .footer-section ul {
+      list-style: none;
+    }
+    footer .footer-section ul li {
+      margin-bottom: 0.75rem;
+    }
+    footer .footer-section a {
+      color: #999;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+    footer .footer-section a:hover {
+      color: #00d4ff;
+    }
+    footer .footer-bottom {
+      text-align: center;
+      color: #666;
+      font-size: 0.85rem;
+      padding-top: 2rem;
+      border-top: 1px solid #222;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .spidey-team {
+      text-align: center;
+      padding: 3rem 2rem;
+      border-bottom: 2px solid rgba(0, 212, 255, 0.2);
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(0, 212, 255, 0.05) 100%);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 15px;
+      margin: 0 2rem 2rem 2rem;
+      max-width: calc(100% - 4rem);
+      margin-left: 2rem;
+      margin-right: 2rem;
+    }
+    .spidey-team-logo {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 0.5rem;
+      border: 2px solid rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 30px rgba(145, 70, 255, 0.4);
+      transition: all 0.3s;
+    }
+    .spidey-team-logo:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 50px rgba(0, 212, 255, 0.6);
+      border-color: rgba(0, 212, 255, 0.6);
+    }
+    .spidey-team-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .spidey-team h2 {
+      color: #fff;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #00d4ff 0%, #9146FF 50%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .spidey-team p {
+      color: #ccc;
+      font-size: 0.95rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">SPIDEY BOT</div>
+    <div>
+      <a href="/">Home</a>
+      <a href="/commands">Features</a>
+      <a href="/security">Security</a>
+      <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
+    </div>
+  </nav>
+
+  <main>
+
+  <div class="hero">
+    <h1>Meet SPIDEY BOT – Your Server's Ultimate Tech Guardian</h1>
+    <p>SPIDEY BOT blends powerful intelligence with mystical powers to bring order, fun, and automation to your Discord server. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
+    <div class="btn-group">
+      <a id="addToDiscord" class="btn btn-primary">Invite To Guild →</a>
+      <a href="/commands" class="btn btn-secondary">Documentation →</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2 style="margin-top: 4rem; margin-bottom: 3rem; font-size: 2.2rem; text-align: center; color: #fff;">✨ Core Features</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(145, 70, 255, 0.03) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.15); display: flex; gap: 1rem; transition: all 0.3s;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎵 Music Playback</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Plays high-quality music in voice channels from YouTube with queue management, looping, and shuffle</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🛡️ Auto Moderation</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Detects and removes spam, bad words, and raids automatically with intelligent filtering</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">👋 Welcome Messages</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Greets new members with customizable messages and automatically assigns welcome roles</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎭 Reaction Roles</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Assigns roles to users when they click reaction emojis on messages</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">📈 Leveling System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Tracks user activity and rewards XP with level-based roles and emoji badges</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎫 Ticket Support</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Creates private support channels for members to ask questions and get help</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">📝 Logging System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Logs server events like joins, bans, edits, and deletes for audit trails</p>
+        </div>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
+        <div style="font-size: 2rem;">✓</div>
+        <div>
+          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">💰 Economy System</h3>
+          <p style="color: #aaa; font-size: 0.9rem;">Daily rewards, work commands, transfers, and leaderboards for competitive fun</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- And So Much More Section -->
+    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.12) 0%, rgba(145, 70, 255, 0.05) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 2px solid rgba(145, 70, 255, 0.2); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
+      <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 2rem;">💎 And So Much More! 💎</h2>
+      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">From seamless integrations to advanced settings, we've got everything you need and more! Need help or have questions? Explore our full command documentation!</p>
+    </div>
+
+    <!-- Tutorials Section -->
+    <div style="margin-bottom: 4rem;">
+      <h2 style="margin-bottom: 3rem; font-size: 2.2rem; text-align: center; color: #fff;">📚 Tutorials & Guides</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+        <!-- Card 1 -->
+        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
+          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">🎭 Reaction Roles Preview</div>
+          <div style="padding: 2rem;">
+            <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">Allow Users to Self Assign Roles in Discord with Reaction Roles</h3>
+            <a href="/tutorials/create-reaction-roles-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
+          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">🛡️ Moderation Setup Preview</div>
+          <div style="padding: 2rem;">
+            <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">How to Configure Auto-Moderation for Your Discord Server</h3>
+            <a href="/tutorials/create-moderation-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
+          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">📊 Dashboard Guide Preview</div>
+          <div style="padding: 2rem;">
+            <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">How to Use the Admin Dashboard and Manage Your Server</h3>
+            <a href="/tutorials/create-dashboard-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
+          </div>
+        </div>
+      </div>
+      <div style="text-align: center;">
+        <a href="/tutorials/create-reaction-roles-preview.html" class="btn btn-primary">Learn More →</a>
+      </div>
+    </div>
+
+    <!-- Support Section -->
+    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.12) 0%, rgba(145, 70, 255, 0.05) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 2px solid rgba(145, 70, 255, 0.2); border-radius: 15px; padding: 3rem 2rem; text-align: center; margin-bottom: 4rem;">
+      <h2 style="color: #fff; margin-bottom: 1rem; font-size: 2rem;">🚀 We Are Here For You!</h2>
+      <p style="color: #ccc; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;">Whether you're just getting started or managing a massive community, we're here to offer real support and powerful features that scale with you. Need a hand? Reach out through our support hub or connect with others in our Discord server anytime!</p>
+      <a href="/login" class="btn btn-primary">Access Dashboard →</a>
+    </div>
+  </div>
+
+  <script>
+    let clientId = null;
+
+    // Fetch client ID from backend
+    async function loadClientId() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        clientId = data.clientId;
+        
+        // Set up invite button
+        document.getElementById('addToDiscord').addEventListener('click', function(e) {
+          e.preventDefault();
+          if (!clientId) {
+            alert('Unable to load bot configuration. Please try again.');
+            return;
+          }
+          const redirectUri = encodeURIComponent(window.location.origin + '/auth/discord/callback');
+          const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&scope=bot`;
+          window.location.href = authUrl;
+        });
+      } catch (err) {
+        console.error('Failed to load client ID:', err);
+      }
+    }
+
+    // Load client ID on page load
+    window.addEventListener('load', loadClientId);
+  </script>
+  </main>
+
+  <footer>
+    <!-- SPIDEY TEAM Section -->
+    <div class="spidey-team">
+      <div class="spidey-team-logo">
+        <img src="/assets/spidey-team-logo.png" alt="SPIDEY TEAM Logo">
+      </div>
+      <h2>SPIDEY TEAM</h2>
+      <p>Built with passion to bring the ultimate Discord bot experience. Powered by innovation and creativity.</p>
+    </div>
+
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/commands">Features</a></li>
+          <li><a href="/login">Admin</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <ul>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Community</h3>
+        <ul>
+          <li><a href="#" onclick="return false;">Discord Server</a></li>
+          <li><a href="#" onclick="return false;">Twitter</a></li>
+          <li><a href="#" onclick="return false;">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>About</h3>
+        <ul>
+          <li style="color: #999; font-size: 0.9rem;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 SPIDEY BOT - All rights reserved | Proudly created by SPIDEY TEAM | Est. 2019</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('addToDiscord').addEventListener('click', function() {
+      const clientId = '1234567890';
+      const permissions = 8;
+      const scopes = 'bot';
+      const redirectUri = 'https://discord.com/oauth2/authorize';
+      const inviteUrl = `${redirectUri}?client_id=${clientId}&scope=${scopes}&permissions=${permissions}`;
+      window.location.href = inviteUrl;
+    });
+  </script>
+</body>
+</html>

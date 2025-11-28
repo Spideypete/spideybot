@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Guide - SPIDEY BOT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      line-height: 1.6;
+    }
+    nav {
+      background: rgba(20, 20, 20, 0.95);
+      border-bottom: 1px solid #222;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1.5rem;
+      transition: color 0.3s;
+    }
+    nav a:hover { color: #9146FF; }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .intro {
+      color: #ccc;
+      font-size: 1.1rem;
+      margin-bottom: 3rem;
+    }
+    .step {
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .step h2 {
+      color: #00d4ff;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .step-number {
+      background: #9146FF;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step p {
+      color: #ccc;
+      margin-bottom: 1rem;
+    }
+    .step ul {
+      color: #ccc;
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .step li {
+      margin-bottom: 0.5rem;
+    }
+    .note {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 4px solid #00d4ff;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 4px;
+      color: #ccc;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 2.5rem;
+      margin-top: 2rem;
+      border-radius: 15px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: rgba(0, 212, 255, 0.2);
+      color: #00d4ff;
+      border: 2px solid rgba(0, 212, 255, 0.5);
+    }
+    .btn-primary:hover {
+      background: rgba(0, 212, 255, 0.3);
+      border-color: rgba(0, 212, 255, 0.8);
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(0, 212, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">SPIDEY BOT</div>
+    <div>
+      <a href="/">Home</a>
+      <a href="/commands">Features</a>
+      <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>📊 Admin Dashboard Guide</h1>
+    <p class="intro">Master the SPIDEY BOT admin dashboard to manage your server settings, monitor statistics, and configure features.</p>
+
+    <div class="step">
+      <h2><div class="step-number">1</div> Login to Dashboard</h2>
+      <p>Visit <strong>/login</strong> and click <strong>"Login with Discord"</strong>.</p>
+      <p>Authorize the bot to access your account information.</p>
+      <div class="note">💡 You must be an admin in at least one server to access the dashboard</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">2</div> Select Your Server</h2>
+      <p>After login, you'll see a server dropdown at the top of the dashboard.</p>
+      <p>Click it to see all servers where you're an admin.</p>
+      <p>Select your server - the dashboard will load settings for that server only.</p>
+      <div class="note">💡 You can switch servers anytime using the dropdown</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">3</div> Dashboard Home - View Statistics</h2>
+      <p>The Dashboard tab shows live server statistics:</p>
+      <ul>
+        <li><strong>Member Count:</strong> Total members in your server</li>
+        <li><strong>Verified Members:</strong> Members with the @Members role</li>
+        <li><strong>Bots:</strong> Bot accounts in the server</li>
+        <li><strong>Admins & Mods:</strong> Staff member counts</li>
+        <li><strong>Activity Graph:</strong> Visual member activity</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">4</div> Navigate Sidebar Sections</h2>
+      <p>The left sidebar contains all configuration categories:</p>
+      <ul>
+        <li><strong>Settings:</strong> Basic config (prefix, language, timezone)</li>
+        <li><strong>Logging:</strong> Set up moderation & activity logs</li>
+        <li><strong>Server Guard:</strong> Anti-spam & raid protection</li>
+        <li><strong>React Roles:</strong> Reaction-based role assignment</li>
+        <li><strong>Server Messages:</strong> Welcome/goodbye messages</li>
+        <li><strong>XP Levels:</strong> Leveling system configuration</li>
+        <li><strong>...and more!</strong> 18 total configuration sections</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">5</div> Edit a Configuration</h2>
+      <p>Click any section in the sidebar (e.g., "Settings").</p>
+      <p>Fill in the form fields with your desired values.</p>
+      <p>Notice: An <strong>"Unsaved Changes"</strong> notification appears at the bottom.</p>
+      <div class="note">💡 Changes are NOT saved until you click "Save Changes"</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">6</div> Save Your Changes</h2>
+      <p>When you see the unsaved notification at the bottom, click <strong>"Save Changes"</strong>.</p>
+      <p>The notification will disappear once saved.</p>
+      <ul>
+        <li><strong>"Reset"</strong> button: Reverts unsaved changes only</li>
+        <li><strong>"Save Changes"</strong> button: Sends to bot & Discord server</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">7</div> Verify Changes Live</h2>
+      <p>Your changes take effect immediately on Discord!</p>
+      <p>Example: Change the prefix in Settings → Save → Use new prefix in Discord.</p>
+      <div class="note">✅ Most settings apply instantly to your server</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">8</div> UI Customization (Optional)</h2>
+      <p>Visit the <strong>"UI Colors"</strong> tab to customize the dashboard.</p>
+      <ul>
+        <li>Choose from 25+ color themes</li>
+        <li>Adjust accent colors</li>
+        <li>Change text colors</li>
+        <li>Toggle light/dark mode</li>
+      </ul>
+      <p>All customizations are saved to your browser.</p>
+    </div>
+
+    <a href="/" class="btn btn-primary">← Back to Home</a>
+  </div>
+</body>
+</html>

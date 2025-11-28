@@ -126,3 +126,42 @@ Required secrets (managed via `.env` file with dotenv):
 - **Node.js Runtime**: JavaScript execution environment
 - **npm**: Package management
 - **dotenv**: Environment variable loading
+
+## Deployment
+
+### Render Deployment (Recommended)
+
+**Architecture**: Separate services for bot and website
+
+**Service 1: Discord Bot (Node Web Service)**
+- Build command: `npm install`
+- Start command: `node index.cjs`
+- Port: Render auto-assigns (typically 10000)
+- Environment variables: CLIENT_ID, DISCORD_CLIENT_SECRET, TOKEN, OPENAI_API_KEY, SESSION_SECRET
+
+**Service 2: Website (Static Site)**
+- Build command: `npm run build`
+- Publish directory: `dist/`
+- This serves your landing page, dashboard, commands page, and other static content
+
+**Why Two Services?**
+- The Node service runs the Discord bot backend and API endpoints
+- The Static Site service serves your website (HTML/CSS/JS) with proper caching and no stale builds
+- This prevents the caching issue where old website code gets stuck on Render
+
+**Setup Steps:**
+1. Delete current Render service (if using Render)
+2. Create new Web Service for the bot with settings above
+3. Create new Static Site service with settings above
+4. Both pull from the same GitHub repository
+5. Deploy both services
+
+### Build Process
+
+The `npm run build` script copies all website files from `/public` to `/dist/`. This output is served by Render's Static Site service, ensuring fresh content on every build with no caching issues.
+
+### Local Testing
+
+- Run `npm run build` to test the website build
+- Files appear in `/dist/` directory
+- Same output will be served by Render's Static Site service

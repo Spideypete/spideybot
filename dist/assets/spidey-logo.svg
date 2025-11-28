@@ -1,0 +1,27 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradientS" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9146FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00D4FF;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="url(#gradientS)" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Large S Letter with Gradient -->
+  <text x="100" y="130" font-size="120" font-weight="900" font-family="Arial Black, sans-serif" 
+        fill="url(#gradientS)" text-anchor="middle" dominant-baseline="middle" filter="url(#glow)">
+    S
+  </text>
+  
+  <!-- Accent Elements -->
+  <circle cx="100" cy="100" r="85" fill="none" stroke="url(#gradientS)" stroke-width="1" opacity="0.3" stroke-dasharray="5,5"/>
+</svg>
