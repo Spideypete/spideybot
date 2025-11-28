@@ -47,6 +47,12 @@ app.use(session({
 }));
 
 // Serve static files from public (automatically serves index.html for /)
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
 app.use(express.static(publicDir));
 app.set('trust proxy', true);
 
@@ -3260,6 +3266,9 @@ try {
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.send(dashboardHtml);
 });
 
