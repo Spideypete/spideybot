@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reaction Roles Setup - SPIDEY BOT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      line-height: 1.6;
+    }
+    nav {
+      background: rgba(20, 20, 20, 0.95);
+      border-bottom: 1px solid #222;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1.5rem;
+      transition: color 0.3s;
+    }
+    nav a:hover { color: #9146FF; }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .intro {
+      color: #ccc;
+      font-size: 1.1rem;
+      margin-bottom: 3rem;
+    }
+    .step {
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .step h2 {
+      color: #00d4ff;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .step-number {
+      background: #9146FF;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step p {
+      color: #ccc;
+      margin-bottom: 1rem;
+    }
+    .step ul {
+      color: #ccc;
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .step li {
+      margin-bottom: 0.5rem;
+    }
+    .note {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 4px solid #00d4ff;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 4px;
+      color: #ccc;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 2.5rem;
+      margin-top: 2rem;
+      border-radius: 15px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: rgba(0, 212, 255, 0.2);
+      color: #00d4ff;
+      border: 2px solid rgba(0, 212, 255, 0.5);
+    }
+    .btn-primary:hover {
+      background: rgba(0, 212, 255, 0.3);
+      border-color: rgba(0, 212, 255, 0.8);
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(0, 212, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">SPIDEY BOT</div>
+    <div>
+      <a href="/">Home</a>
+      <a href="/commands">Features</a>
+      <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>🎭 Reaction Roles Setup Guide</h1>
+    <p class="intro">Learn how to set up reaction roles so members can assign themselves roles by clicking emoji reactions on messages.</p>
+
+    <div class="step">
+      <h2><div class="step-number">1</div> Access the Dashboard</h2>
+      <p>Log in to the admin dashboard at <strong>/dashboard</strong> with your Discord account.</p>
+      <p>Select your server from the server dropdown menu.</p>
+      <div class="note">💡 Only server admins can access the dashboard</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">2</div> Navigate to React Roles Section</h2>
+      <p>In the sidebar, click on the <strong>"React Roles"</strong> tab.</p>
+      <p>This is where you'll configure which reactions assign which roles.</p>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">3</div> Create a New Reaction Role</h2>
+      <p>Click <strong>"Add Reaction Role"</strong> button.</p>
+      <ul>
+        <li><strong>Select the emoji:</strong> Choose an emoji (e.g., 🎮, 🎨, 🎵)</li>
+        <li><strong>Select the role:</strong> Pick which role to assign when clicked</li>
+        <li><strong>Select the message:</strong> Choose which message to add the reaction to</li>
+      </ul>
+      <div class="note">💡 The message must be a bot message or one you have permissions to edit</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">4</div> Save Your Changes</h2>
+      <p>Click the <strong>"Save Changes"</strong> button at the bottom of the panel.</p>
+      <p>Wait for the success notification to confirm.</p>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">5</div> Test It Out</h2>
+      <p>Go to your Discord server and find the message with the reaction role.</p>
+      <p>Click the emoji - you should automatically receive the role!</p>
+      <div class="note">✅ If it works, you've successfully set up reaction roles!</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">6</div> Add More Reaction Roles (Optional)</h2>
+      <p>Repeat steps 3-5 to add more reaction roles to the same message or create new ones.</p>
+      <ul>
+        <li>Multiple roles can be assigned to one message</li>
+        <li>Members can click multiple emojis to get multiple roles</li>
+        <li>Clicking again removes the role</li>
+      </ul>
+    </div>
+
+    <a href="/" class="btn btn-primary">← Back to Home</a>
+  </div>
+</body>
+</html>

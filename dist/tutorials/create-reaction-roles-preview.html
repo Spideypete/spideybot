@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Create Reaction Roles Preview - SPIDEY BOT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      line-height: 1.6;
+    }
+    nav {
+      background: rgba(20, 20, 20, 0.95);
+      border-bottom: 1px solid #222;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1.5rem;
+      transition: color 0.3s;
+    }
+    nav a:hover { color: #9146FF; }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 0%, #9146FF 50%, #FF1493 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .intro {
+      color: #ccc;
+      font-size: 1.1rem;
+      margin-bottom: 3rem;
+    }
+    .step {
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .step h2 {
+      color: #00d4ff;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .step-number {
+      background: #9146FF;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step p {
+      color: #ccc;
+      margin-bottom: 1rem;
+    }
+    .step ul {
+      color: #ccc;
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .step li {
+      margin-bottom: 0.5rem;
+    }
+    .code-block {
+      background: #1a1a2e;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      color: #00d4ff;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+    .note {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 4px solid #00d4ff;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 4px;
+      color: #ccc;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 2.5rem;
+      margin-top: 2rem;
+      border-radius: 15px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: rgba(0, 212, 255, 0.2);
+      color: #00d4ff;
+      border: 2px solid rgba(0, 212, 255, 0.5);
+    }
+    .btn-primary:hover {
+      background: rgba(0, 212, 255, 0.3);
+      border-color: rgba(0, 212, 255, 0.8);
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(0, 212, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">SPIDEY BOT</div>
+    <div>
+      <a href="/">Home</a>
+      <a href="/commands">Features</a>
+      <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>🎭 How to Create a Reaction Roles Preview</h1>
+    <p class="intro">Learn how to create a polished preview image showing how reaction roles work in Discord.</p>
+
+    <div class="step">
+      <h2><div class="step-number">1</div> Set Up Your Discord Server</h2>
+      <p>Create or use a test Discord server where you can demonstrate the feature.</p>
+      <ul>
+        <li>Make sure SPIDEY BOT is invited to the server</li>
+        <li>Create a dedicated channel like #demo or #preview</li>
+        <li>Configure reaction roles in the bot dashboard</li>
+      </ul>
+      <div class="note">💡 Use a test server to avoid cluttering your main server</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">2</div> Create the Reaction Role Message</h2>
+      <p>In your test channel, have the bot post a message with emojis for role selection.</p>
+      <p>The message should show:</p>
+      <ul>
+        <li>A clear title (e.g., "Choose Your Roles")</li>
+        <li>Description of what each emoji does</li>
+        <li>Multiple emoji reactions for users to click</li>
+      </ul>
+      <div class="note">💡 Make it visually clear and easy to understand</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">3</div> Take a Clean Screenshot</h2>
+      <p>Use your Discord client to screenshot the message with reactions:</p>
+      <ul>
+        <li><strong>Windows:</strong> Snipping Tool or Win+Shift+S</li>
+        <li><strong>Mac:</strong> Cmd+Shift+4 or Screenshot app</li>
+        <li><strong>Linux:</strong> Flameshot or Gnome Screenshot</li>
+      </ul>
+      <p>Capture:</p>
+      <ul>
+        <li>The full message with emoji reactions visible</li>
+        <li>A portion of the chat showing the context</li>
+        <li>Member interactions clicking the emojis</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">4</div> Edit & Enhance the Image</h2>
+      <p>Use an image editor to polish your screenshot:</p>
+      <ul>
+        <li><strong>Crop:</strong> Remove unnecessary UI elements</li>
+        <li><strong>Resize:</strong> Make it 600x400px or similar for cards</li>
+        <li><strong>Enhance:</strong> Increase contrast or brightness if needed</li>
+        <li><strong>Add Label:</strong> Optional text overlay like "Reaction Roles Demo"</li>
+      </ul>
+      <p>Recommended tools:</p>
+      <ul>
+        <li>Photoshop / GIMP (free)</li>
+        <li>Canva (online, easy)</li>
+        <li>Paint.NET (simple, lightweight)</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">5</div> Optimize File Size</h2>
+      <p>Compress the image for web use:</p>
+      <div class="code-block">Use online tools like:<br>- TinyPNG.com<br>- Compressor.io<br>- ImageOptim (Mac)</div>
+      <p>Target: Keep under 500KB for fast loading</p>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">6</div> Upload to Your Website</h2>
+      <p>Store the image in your project:</p>
+      <div class="code-block">/public/assets/reaction-roles-preview.png</div>
+      <p>Then reference it in your HTML:</p>
+      <div class="code-block">&lt;img src="/assets/reaction-roles-preview.png" alt="Reaction Roles Preview"&gt;</div>
+      <div class="note">💡 Keep all preview images in the /public/assets folder</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">7</div> Update Card HTML</h2>
+      <p>Replace the placeholder preview with your actual image:</p>
+      <div class="code-block">&lt;div style="background: url('/assets/reaction-roles-preview.png'); background-size: cover; height: 180px;"&gt;&lt;/div&gt;</div>
+      <p>Or use an img tag for better compatibility:</p>
+      <div class="code-block">&lt;img src="/assets/reaction-roles-preview.png" style="width: 100%; height: 180px; object-fit: cover;"&gt;</div>
+      <div class="note">💡 Use object-fit: cover to maintain aspect ratio</div>
+    </div>
+
+    <div class="step">
+      <h2><div class="step-number">8</div> Test & Iterate</h2>
+      <p>View your card on the website and verify:</p>
+      <ul>
+        <li>Image displays correctly on desktop and mobile</li>
+        <li>Image quality is sharp and clear</li>
+        <li>Text is readable and prominent</li>
+        <li>File loads quickly</li>
+      </ul>
+      <p>If needed, go back to step 4 and refine the image.</p>
+    </div>
+
+    <a href="/" class="btn btn-primary">← Back to Home</a>
+  </div>
+</body>
+</html>
