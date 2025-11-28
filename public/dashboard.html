@@ -928,119 +928,6 @@
             border-color: rgba(var(--theme-color), 0.5);
         }
 
-        /* Unsaved Changes Notification */
-        #unsavedNotification {
-            display: none;
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(20, 20, 30, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 165, 0, 0.4);
-            border-radius: 20px;
-            padding: 0.75rem 1.5rem;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 1000;
-            gap: 1.5rem;
-            animation: slideUp 0.4s ease-out;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 165, 0, 0.1);
-            max-width: calc(100% - 2rem);
-        }
-
-        #unsavedNotification.hide {
-            animation: slideDown 0.4s ease-in;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateX(-50%) translateY(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(-50%) translateY(100%);
-                opacity: 0;
-            }
-        }
-
-        .unsaved-message {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex: 1;
-        }
-
-        .unsaved-icon {
-            font-size: 1rem;
-            color: #ff9500;
-            flex-shrink: 0;
-        }
-
-        .unsaved-text {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 0.8rem;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .unsaved-buttons {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .btn-reset {
-            background: rgb(255, 255, 255);
-            color: rgb(255, 255, 255);
-            border: 1px solid rgb(255, 255, 255);
-            padding: 0.4rem 1rem;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-reset:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgb(255, 255, 255);
-            transform: translateY(-1px);
-        }
-
-        .btn-save-changes {
-            background: rgba(34, 197, 94, 0.8);
-            color: #fff;
-            border: none;
-            padding: 0.4rem 1rem;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
-        }
-
-        .btn-save-changes:hover {
-            background: rgba(34, 197, 94, 1);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
-        }
-
         .content-section {
             display: none !important;
             visibility: hidden !important;
@@ -3976,71 +3863,6 @@
 
 
 
-        // ========== UNSAVED CHANGES DETECTION ==========
-        let hasUnsavedChanges = false;
-        let originalValues = {};
-
-        function showUnsavedNotification() {
-            if (!hasUnsavedChanges) {
-                hasUnsavedChanges = true;
-                const notification = document.getElementById('unsavedNotification');
-                if (notification) {
-                    notification.style.display = 'flex';
-                }
-            }
-        }
-
-        function checkIfChangesReverted() {
-            // Check if all current values match original values
-            const inputs = document.querySelectorAll('input, select, textarea');
-            let allReverted = true;
-            
-            inputs.forEach(input => {
-                const key = input.id || input.name || input.className;
-                if (input.type === 'checkbox' || input.type === 'radio') {
-                    if (originalValues[key] !== undefined && originalValues[key] !== input.checked) {
-                        allReverted = false;
-                    }
-                } else {
-                    if (originalValues[key] !== undefined && originalValues[key] !== input.value) {
-                        allReverted = false;
-                    }
-                }
-            });
-            
-            if (allReverted && hasUnsavedChanges) {
-                hideUnsavedNotification();
-            }
-        }
-
-        function hideUnsavedNotification() {
-            hasUnsavedChanges = false;
-            const notification = document.getElementById('unsavedNotification');
-            if (notification) {
-                notification.classList.add('hide');
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                    notification.classList.remove('hide');
-                }, 400);
-            }
-        }
-
-        function resetChanges() {
-            // Reset only changed inputs back to original values
-            const inputs = document.querySelectorAll('input, select, textarea');
-            inputs.forEach(input => {
-                const key = input.id || input.name || input.className;
-                if (originalValues[key] !== undefined) {
-                    if (input.type === 'checkbox' || input.type === 'radio') {
-                        input.checked = originalValues[key];
-                    } else {
-                        input.value = originalValues[key];
-                    }
-                }
-            });
-            hideUnsavedNotification();
-        }
-
         async function updateBotSetting(setting, value) {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) {
@@ -4451,8 +4273,6 @@
             const savedTextColor = localStorage.getItem('textColor');
             if (savedTextColor) changeTextColor(savedTextColor);
 
-            // Setup unsaved changes detection
-            setupUnsavedDetection();
         });
         
         // Global error handler - ensure page doesn't break
@@ -4465,17 +4285,5 @@
         });
 
     </script>
-
-    <!-- Unsaved Changes Notification -->
-    <div id="unsavedNotification">
-        <div class="unsaved-message">
-            <div class="unsaved-icon">⚠️</div>
-            <div class="unsaved-text">Careful — you have unsaved changes!</div>
-        </div>
-        <div class="unsaved-buttons">
-            <button class="btn-reset" onclick="resetChanges()">Reset</button>
-            <button class="btn-save-changes" onclick="saveAllChanges()">Save Changes</button>
-        </div>
-    </div>
 </body>
 </html>
