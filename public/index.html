@@ -503,13 +503,22 @@
   </footer>
 
   <script>
-    document.getElementById('addToDiscord').addEventListener('click', function() {
-      const clientId = '1234567890';
-      const permissions = 8;
-      const scopes = 'bot';
-      const redirectUri = 'https://discord.com/oauth2/authorize';
-      const inviteUrl = `${redirectUri}?client_id=${clientId}&scope=${scopes}&permissions=${permissions}`;
-      window.location.href = inviteUrl;
+    // Use server-provided invite URL (avoids 'undefined' client_id when env missing)
+    document.getElementById('addToDiscord').addEventListener('click', async function(e) {
+      e.preventDefault();
+      try {
+        const res = await fetch('/api/config');
+        const cfg = await res.json();
+        if (cfg.inviteUrl) {
+          window.location.href = cfg.inviteUrl;
+          return;
+        }
+        // Fallback to server-side invite redirect which will 503 if not configured
+        window.location.href = '/invite';
+      } catch (err) {
+        console.error('Invite error:', err);
+        alert('Unable to redirect to Discord invite. Please try again later.');
+      }
     });
   </script>
 </body>

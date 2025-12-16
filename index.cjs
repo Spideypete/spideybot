@@ -15,6 +15,8 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+// Startup marker for Render logs (avoid printing secrets)
+console.log(`SPIDEYBOT starting - pid=${process.pid} NODE_ENV=${process.env.NODE_ENV || 'unset'} RENDER_EXTERNAL_URL=${process.env.RENDER_EXTERNAL_URL ? 'set' : 'unset'} CLIENT_ID=${process.env.CLIENT_ID ? 'set' : 'unset'} TOKEN=${process.env.TOKEN ? 'set' : 'unset'}`);
 const express = require("express");
 const session = require("express-session");
 const axios = require("axios");
@@ -3133,6 +3135,16 @@ app.get("/commands", (req, res) => {
 });
 
 app.get("/auth/discord", (req, res) => {
+  if (!DISCORD_CLIENT_ID) {
+    res.status(503).send(`
+      <h2>OAuth Not Configured</h2>
+      <p>The Discord Client ID is not configured on this server. To use the Admin Login, set the <strong>CLIENT_ID</strong> environment variable and redeploy.</p>
+      <p>On Render: go to your service → Environment and add <code>CLIENT_ID</code> and <code>DISCORD_CLIENT_SECRET</code>. See <a href="/SPIDEYBOT_RENDER_SETUP.txt">SPIDEYBOT_RENDER_SETUP.txt</a> for instructions.</p>
+      <p><a href="/">Back to Home</a></p>
+    `);
+    return;
+  }
+
   const scopes = ["identify", "guilds"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
   res.redirect(authURL);
@@ -3209,10 +3221,20 @@ app.get("/logout", (req, res) => {
 // ============== PUBLIC API ==============
 app.get("/api/config", (req, res) => {
   // Serve basic config needed for frontend (like client ID)
+  const inviteUrl = DISCORD_CLIENT_ID ? `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8` : null;
   res.json({
     clientId: DISCORD_CLIENT_ID,
-    botName: "SPIDEY BOT"
+    botName: "SPIDEY BOT",
+    inviteUrl,
+    redirectUri: REDIRECT_URI
   });
+});
+
+// Invite redirect (uses server-side env so frontend doesn't need client id)
+app.get('/invite', (req, res) => {
+  if (!DISCORD_CLIENT_ID) return res.status(503).send('Bot not configured');
+  const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8`;
+  res.redirect(inviteUrl);
 });
 
 // ============== USER API ==============
@@ -4337,4 +4359,20 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 // ============== LOGIN ==============
-client.login(token);
+if (token) {
+  client.login(token).catch(err => {
+    console.error('Discord client failed to login:', err && err.message ? err.message : err);
+    if (err && err.stack) console.error(err.stack);
+    if (err && err.code) console.error('Error code:', err.code);
+    // Some errors include response data (show non-sensitive parts)
+    if (err.response && err.response.data) {
+      try {
+        console.error('Login response data:', typeof err.response.data === 'object' ? JSON.stringify(err.response.data) : err.response.data);
+      } catch (e) {
+        console.error('Login response data (raw):', err.response.data);
+      }
+    }
+  });
+} else {
+  console.warn('No TOKEN provided in environment; running in website-only mode (Discord client not logged in).');
+}
