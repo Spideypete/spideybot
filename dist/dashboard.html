@@ -3527,6 +3527,24 @@
                         console.error('Failed to load servers:', err);
                     }
                 } else {
+                    // Not authenticated or other error - show login prompt
+                    if (res.status === 401) {
+                        // Replace main content with login CTA
+                        const container = document.querySelector('.container') || document.body;
+                        container.innerHTML = `
+                            <div style="text-align:center;padding:4rem;">
+                                <h2 style="color:#fff;margin-bottom:1rem;">Please sign in to access the Admin Dashboard</h2>
+                                <p style="color:#ccc;margin-bottom:1.5rem;">Click the button below to login with Discord (admins only).</p>
+                                <a href="/login" class="btn btn-primary" style="padding:0.8rem 1.6rem;border-radius:10px;">Login with Discord</a>
+                            </div>
+                        `;
+                    } else {
+                        console.error('Failed to load user data:', res.status, res.statusText);
+                        const container = document.querySelector('.container') || document.body;
+                        container.insertAdjacentHTML('afterbegin', `<div style="color:#ff6b6b;padding:1rem;border-radius:8px;margin-bottom:1rem;">Error loading dashboard data: ${res.status} ${res.statusText}</div>`);
+                    }
+                }
+                } else {
                     window.location.href = '/login';
                 }
             } catch (err) {
