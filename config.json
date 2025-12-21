@@ -8,7 +8,12 @@
       "welcomeChannelId": "1235015412035358721",
       "roleCategories": {
         "Gaming": {
-          "roles": [],
+          "roles": [
+            {
+              "name": "Valorant",
+              "id": "1235015410819010638"
+            }
+          ],
           "banner": null
         },
         "Console": {
@@ -18,19 +23,24 @@
       },
       "modLogChannelId": "1235015413763412063",
       "messageCounting": {
-        "totalMessages": 7,
+        "totalMessages": 17,
         "byUser": {
-          "807682091591925801": 7
+          "807682091591925801": 16,
+          "391248144333275137": 1
         },
         "byChannel": {
           "1235015412035358728": 1,
-          "1235015413763412063": 6
+          "1235015413763412063": 6,
+          "1235015413763412062": 10
         }
       },
       "levels": {
-        "807682091591925801_xp": 76,
-        "807682091591925801": 16,
-        "807682091591925801_xp_time": 1763814041136
+        "807682091591925801_xp": 230,
+        "807682091591925801": 67,
+        "807682091591925801_xp_time": 1766357375152,
+        "391248144333275137": 24,
+        "391248144333275137_xp_time": 1766355172616,
+        "391248144333275137_xp": 9
       },
       "memberEvents": [
         {
@@ -90,7 +100,309 @@
         "welcomeMessage": "ello {user}\nWelcome to our community! We're thrilled to have you here. Before you begin your journey with us, we kindly ask that you take a moment to familiarize yourself with our community guidelines by reading our <#11235015412035358723>. . This ensures that everyone has a positive and enjoyable experience.\n\nNext, please ⁠⁠<#1235015412035358720> yourself to gain access to all the features and channels within our server. Verification helps us maintain a safe and welcoming environment for all members.\n\nOnce you're verified, don't forget to check out our ⁠<#1235015412035358726>! These allow you to personalize your experience and join specific channels tailored to your interests. Whether you're a gamer, an artist, or a music enthusiast, there's a role for you.\n\nThank you for joining us, and we hope you have a fantastic time connecting with fellow members and exploring everything our community has to offer!\n\n#{membercount}",
         "enableGoodbye": false,
         "goodbyeMessage": ""
-      }
+      },
+      "activities": [
+        {
+          "icon": "➕",
+          "name": "spidey_petee",
+          "action": "added role: Valorant to Gaming",
+          "timestamp": "9:16:14 PM"
+        },
+        {
+          "icon": "🗑️",
+          "name": "Role deleted",
+          "action": "My Queen - 1242923388633350175",
+          "timestamp": "8:13:46 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Kick - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Adminn - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "BotRix - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "FlaviBot - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "𝑨𝒖𝒕𝒐𝒓𝒐𝒍𝒆 - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "XP - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "𝑫𝑰𝑺𝑩𝑶𝑨𝑹𝑫.𝒐𝒓𝒈 - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Bestie - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Admin - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Discord Mods - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Giveaways - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Bots - permissions changed",
+          "timestamp": "8:13:37 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Channel updated",
+          "action": "#🔎𝑻𝒓𝒂𝒄𝒌𝒆𝒓 - topic changed",
+          "timestamp": "8:13:32 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Kick - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Adminn - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "BotRix - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "FlaviBot - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "𝑨𝒖𝒕𝒐𝒓𝒐𝒍𝒆 - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "XP - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Bestie - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Admin - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Giveaways - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "✏️",
+          "name": "Role updated",
+          "action": "Bots - permissions changed",
+          "timestamp": "8:13:30 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "81️⃣ Level 81 - 1451124229733879991",
+          "timestamp": "8:09:36 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "82️⃣ Level 82 - 1451124227037200457",
+          "timestamp": "8:09:36 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "80️⃣ Level 80 - 1451124225766199390",
+          "timestamp": "8:09:36 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "79️⃣ Level 79 - 1451124216568086571",
+          "timestamp": "8:09:33 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "81️⃣ Level 81 - 1451124212826771578",
+          "timestamp": "8:09:32 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "78️⃣ Level 78 - 1451124209475522652",
+          "timestamp": "8:09:32 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "80️⃣ Level 80 - 1451124202106257552",
+          "timestamp": "8:09:30 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "77️⃣ Level 77 - 1451124200638119947",
+          "timestamp": "8:09:30 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "79️⃣ Level 79 - 1451124194376155176",
+          "timestamp": "8:09:28 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "76️⃣ Level 76 - 1451124190231924918",
+          "timestamp": "8:09:27 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "78️⃣ Level 78 - 1451124185882558516",
+          "timestamp": "8:09:26 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "75️⃣ Level 75 - 1451124182036516966",
+          "timestamp": "8:09:25 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "77️⃣ Level 77 - 1451124178638999584",
+          "timestamp": "8:09:24 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "74️⃣ Level 74 - 1451124172737740921",
+          "timestamp": "8:09:23 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "76️⃣ Level 76 - 1451124170304782460",
+          "timestamp": "8:09:22 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "73️⃣ Level 73 - 1451124163946348658",
+          "timestamp": "8:09:21 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "75️⃣ Level 75 - 1451124162205843548",
+          "timestamp": "8:09:21 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "74️⃣ Level 74 - 1451124155025195111",
+          "timestamp": "8:09:19 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "72️⃣ Level 72 - 1451124154035212340",
+          "timestamp": "8:09:18 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "73️⃣ Level 73 - 1451124148272103535",
+          "timestamp": "8:09:17 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "71️⃣ Level 71 - 1451124144958738473",
+          "timestamp": "8:09:16 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "72️⃣ Level 72 - 1451124138235138162",
+          "timestamp": "8:09:15 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "70️⃣ Level 70 - 1451124136582578177",
+          "timestamp": "8:09:14 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "71️⃣ Level 71 - 1451124124486205597",
+          "timestamp": "8:09:12 AM"
+        },
+        {
+          "icon": "🏷️",
+          "name": "Role created",
+          "action": "69️⃣ Level 69 - 1451124123911847960",
+          "timestamp": "8:09:11 AM"
+        }
+      ]
     },
     "subscriptions": {
       "field_0": "Gold",
@@ -190,6 +502,60 @@
     },
     "logging": {
       "enabled": true
+    },
+    "1288532746989207623": {
+      "activities": [
+        {
+          "icon": "🗑️",
+          "name": "Role deleted",
+          "action": "SPIDEY BOT - 1451124625684828203",
+          "timestamp": "8:11:33 AM"
+        }
+      ]
+    },
+    "1446758690790314067": {
+      "welcomeChannelId": null,
+      "welcomeMessage": "Welcome to our server! 🎉",
+      "roleCategories": {},
+      "prefix": "//",
+      "modLogChannelId": null,
+      "twitchChannelId": null,
+      "twitchUsers": [],
+      "tiktokChannelId": null,
+      "tiktokUsers": [],
+      "kickChannelId": null,
+      "kickUsers": [],
+      "musicLoopMode": false,
+      "musicShuffle": false,
+      "musicVolume": 100,
+      "warnings": {},
+      "economy": {},
+      "levels": {
+        "609965468715057163": 12,
+        "609965468715057163_xp_time": 1766045588208,
+        "609965468715057163_xp": 11
+      },
+      "profanityFilterEnabled": true,
+      "suggestionsChannelId": null,
+      "giveaways": {},
+      "badWords": [
+        "badword1",
+        "badword2"
+      ],
+      "linkFilterEnabled": true,
+      "ticketsEnabled": false,
+      "ticketChannelId": null,
+      "customCommands": {},
+      "levelRoles": {},
+      "messageCounting": {
+        "totalMessages": 1,
+        "byUser": {
+          "609965468715057163": 1
+        },
+        "byChannel": {
+          "1446758692702781517": 1
+        }
+      }
     }
   }
 }

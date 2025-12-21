@@ -15,8 +15,6 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
-// Startup marker for Render logs (avoid printing secrets)
-console.log(`SPIDEYBOT starting - pid=${process.pid} NODE_ENV=${process.env.NODE_ENV || 'unset'} RENDER_EXTERNAL_URL=${process.env.RENDER_EXTERNAL_URL ? 'set' : 'unset'} CLIENT_ID=${process.env.CLIENT_ID ? 'set' : 'unset'} TOKEN=${process.env.TOKEN ? 'set' : 'unset'}`);
 const express = require("express");
 const session = require("express-session");
 const axios = require("axios");
@@ -469,7 +467,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== PERMISSIONS FROM DASHBOARD ==============
-  if (msg.content.startsWith("//")) {
+  if (msg.content.startsWith("/")) {
     const permissions = guildConfig.permissions || {};
     if (permissions.membersOnly) {
       const hasMembersRole = msg.member.roles.cache.some(role => role.name === "Members");
@@ -480,7 +478,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== AUTO XP GAIN ==============
-  if (!msg.content.startsWith("//")) {
+  if (!msg.content.startsWith("/")) {
     const levels = guildConfig.levels || {};
     const userId = msg.author.id;
     const lastXpTime = levels[`${userId}_xp_time`] || 0;
@@ -528,7 +526,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Message Statistics
-  if (msg.content === "//stats") {
+  if (msg.content === "/stats") {
     const messageCounting = guildConfig.messageCounting || {};
     const userCount = Object.keys(messageCounting.byUser || {}).length;
     const channelCount = Object.keys(messageCounting.byChannel || {}).length;
@@ -556,7 +554,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Bot Status
-  if (msg.content === "//ping") {
+  if (msg.content === "/ping") {
     const uptime = process.uptime();
     const hours = Math.floor(uptime / 3600);
     const minutes = Math.floor((uptime % 3600) / 60);
@@ -584,10 +582,10 @@ client.on("messageCreate", async (msg) => {
   }
 
   // List all active roles
-  if (msg.content === "//list-roles") {
+  if (msg.content === "/list-roles") {
     const categories = guildConfig.roleCategories || {};
     if (Object.keys(categories).length === 0) {
-      return msg.reply("❌ No role categories created yet! Use `//create-category [name]` to get started.");
+      return msg.reply("❌ No role categories created yet! Use `/create-category [name]` to get started.");
     }
 
     const fields = Object.entries(categories).map(([catName, catData]) => {
@@ -610,47 +608,74 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Create a new category
-  if (msg.content.startsWith("//create-category ")) {
+  if (msg.content.startsWith("/create-category ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can create categories!");
     }
     const categoryName = msg.content.slice(18).trim();
-    if (!categoryName) return msg.reply("Usage: //create-category [name]");
+    if (!categoryName) return msg.reply("Usage: /create-category [name]");
     const categories = guildConfig.roleCategories || {};
     if (categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" already exists!`);
     categories[categoryName] = { roles: [], banner: null };
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
     addActivity(msg.guild.id, "📂", msg.author.username, `created category: ${categoryName}`);
-    return msg.reply(`✅ Created category: **${categoryName}**\n\n*Tip: Use \`//set-category-banner ${categoryName} [gif-url]\` to add a banner!*`);
+    return msg.reply(`✅ Created category: **${categoryName}**\n\n*Tip: Use \`/set-category-banner ${categoryName} [gif-url]\` to add a banner!*`);
   }
 
   // Add a role to a category
-  if (msg.content.startsWith("//add-role ")) {
-    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (msg.content.startsWith("/add-role ")) {
+    // Guild-only command
+    if (!msg.guild) {
+      return msg.reply("❌ This command only works in servers!");
+    }
+    
+    // Admin permission check
+    if (!msg.member?.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const args = msg.content.slice(11).trim().split(" ");
-    const categoryName = args[0];
-    const roleName = args[1];
-    const roleId = args[2];
-    if (!categoryName || !roleName || !roleId) {
-      return msg.reply("Usage: //add-role [category] [role name] [role ID]\n\nExample: //add-role Gaming Minecraft 123456789");
+    
+    try {
+      const args = msg.content.slice(11).trim().split(" ");
+      const categoryName = args[0];
+      const roleName = args[1];
+      const roleId = args[2];
+      
+      if (!categoryName || !roleName || !roleId) {
+        return msg.reply("Usage: /add-role [category] [role name] [role ID]\n\nExample: /add-role Gaming Minecraft 123456789");
+      }
+      
+      // Verify role ID is valid and exists in guild
+      const role = await msg.guild.roles.fetch(roleId).catch(() => null);
+      if (!role) {
+        return msg.reply(`❌ Role with ID \`${roleId}\` not found in this server! Make sure the ID is correct.`);
+      }
+      
+      const categories = guildConfig.roleCategories || {};
+      if (!categories[categoryName]) {
+        return msg.reply(`❌ Category "${categoryName}" doesn't exist!\n\nCreate it first with: \`/create-category ${categoryName}\``);
+      }
+      
+      const catData = Array.isArray(categories[categoryName]) 
+        ? { roles: categories[categoryName], banner: null } 
+        : categories[categoryName];
+      
+      if (catData.roles.some(r => r.name === roleName)) {
+        return msg.reply(`❌ Role "${roleName}" is already in category "${categoryName}"!`);
+      }
+      
+      catData.roles.push({ name: roleName, id: roleId });
+      categories[categoryName] = catData;
+      updateGuildConfig(msg.guild.id, { roleCategories: categories });
+      addActivity(msg.guild.id, "➕", msg.author.username, `added role: ${roleName} to ${categoryName}`);
+      return msg.reply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**\n\n*Tip: Use \`/setup-category ${categoryName}\` to post reaction roles!*`);
+    } catch (err) {
+      console.error(`❌ Error adding role: ${err.message}`);
+      return msg.reply(`❌ Error adding role. Please check the role ID and try again.`);
     }
-    const categories = guildConfig.roleCategories || {};
-    if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" doesn't exist! Use //create-category first.`);
-    const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
-    if (catData.roles.some(r => r.name === roleName)) {
-      return msg.reply(`❌ Role "${roleName}" already in this category!`);
-    }
-    catData.roles.push({ name: roleName, id: roleId });
-    categories[categoryName] = catData;
-    updateGuildConfig(msg.guild.id, { roleCategories: categories });
-    addActivity(msg.guild.id, "➕", msg.author.username, `added role: ${roleName} to ${categoryName}`);
-    return msg.reply(`✅ Added **${roleName}** to category **${categoryName}**`);
   }
 
   // Remove a role from a category
-  if (msg.content.startsWith("//remove-role ")) {
+  if (msg.content.startsWith("/remove-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
@@ -658,7 +683,7 @@ client.on("messageCreate", async (msg) => {
     const categoryName = args[0];
     const roleName = args[1];
     if (!categoryName || !roleName) {
-      return msg.reply("Usage: //remove-role [category] [role name]");
+      return msg.reply("Usage: /remove-role [category] [role name]");
     }
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
@@ -673,7 +698,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Set category banner
-  if (msg.content.startsWith("//set-category-banner ")) {
+  if (msg.content.startsWith("/set-category-banner ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set banners!");
     }
@@ -681,7 +706,7 @@ client.on("messageCreate", async (msg) => {
     const categoryName = args[0];
     const bannerUrl = args.slice(1).join(" ");
     if (!categoryName || !bannerUrl) {
-      return msg.reply("Usage: //set-category-banner [category] [gif-url]\n\nExample: //set-category-banner Gaming https://example.com/gaming.gif");
+      return msg.reply("Usage: /set-category-banner [category] [gif-url]\n\nExample: /set-category-banner Gaming https://example.com/gaming.gif");
     }
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
@@ -689,16 +714,16 @@ client.on("messageCreate", async (msg) => {
     catData.banner = bannerUrl;
     categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
-    return msg.reply(`✅ Banner set for **${categoryName}**!\n\n*Use \`//setup-category ${categoryName}\` to see it in action!*`);
+    return msg.reply(`✅ Banner set for **${categoryName}**!\n\n*Use \`/setup-category ${categoryName}\` to see it in action!*`);
   }
 
   // Delete a category
-  if (msg.content.startsWith("//delete-category ")) {
+  if (msg.content.startsWith("/delete-category ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can delete categories!");
     }
     const categoryName = msg.content.slice(18).trim();
-    if (!categoryName) return msg.reply("Usage: //delete-category [name]");
+    if (!categoryName) return msg.reply("Usage: /delete-category [name]");
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
     delete categories[categoryName];
@@ -708,7 +733,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== ECONOMY SYSTEM ==============
-  if (msg.content === "//balance") {
+  if (msg.content === "/balance") {
     const economy = guildConfig.economy || {};
     const balance = economy[msg.author.id] || 0;
     const balanceEmbed = new EmbedBuilder()
@@ -719,7 +744,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [balanceEmbed] });
   }
 
-  if (msg.content === "//daily") {
+  if (msg.content === "/daily") {
     const economy = guildConfig.economy || {};
     const lastDaily = economy[msg.author.id + "_daily"] || 0;
     const now = Date.now();
@@ -734,7 +759,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Claimed daily reward! You got **${reward} coins** 🪙`);
   }
 
-  if (msg.content.startsWith("//work")) {
+  if (msg.content.startsWith("/work")) {
     const economy = guildConfig.economy || {};
     const lastWork = economy[msg.author.id + "_work"] || 0;
     if (Date.now() - lastWork < 300000) {
@@ -747,11 +772,11 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`💼 You worked and earned **${earnings} coins**! 🪙`);
   }
 
-  if (msg.content.startsWith("//transfer ")) {
+  if (msg.content.startsWith("/transfer ")) {
     const args = msg.content.slice(11).trim().split(" ");
     const target = msg.mentions.users.first();
     const amount = parseInt(args[1]);
-    if (!target || !amount || amount <= 0) return msg.reply("Usage: //transfer @user [amount]");
+    if (!target || !amount || amount <= 0) return msg.reply("Usage: /transfer @user [amount]");
     const economy = guildConfig.economy || {};
     const senderBalance = economy[msg.author.id] || 0;
     if (senderBalance < amount) return msg.reply(`❌ Insufficient funds! You only have ${senderBalance} coins.`);
@@ -762,7 +787,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== LEVELING SYSTEM ==============
-  if (msg.content === "//level") {
+  if (msg.content === "/level") {
     const levels = guildConfig.levels || {};
     const level = levels[msg.author.id] || 0;
     const xp = levels[msg.author.id + "_xp"] || 0;
@@ -777,7 +802,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [levelEmbed] });
   }
 
-  if (msg.content === "//leaderboard") {
+  if (msg.content === "/leaderboard") {
     const levels = guildConfig.levels || {};
     const sorted = Object.entries(levels)
       .filter(([k, v]) => !k.includes("_"))
@@ -810,7 +835,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== SERVER PROTECTION ==============
-  if (msg.content.startsWith("//filter-toggle")) {
+  if (msg.content.startsWith("/filter-toggle")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can toggle the filter!");
     }
@@ -829,7 +854,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== LINK FILTERING ==============
-  if (msg.content.startsWith("//link-filter ")) {
+  if (msg.content.startsWith("/link-filter ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can toggle link filter!");
     }
@@ -848,8 +873,8 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== TICKET SYSTEM ==============
-  if (msg.content === "//ticket") {
-    if (!guildConfig.ticketsEnabled) return msg.reply("❌ Ticket system is not enabled! Admin use: `//ticket-setup #channel`");
+  if (msg.content === "/ticket") {
+    if (!guildConfig.ticketsEnabled) return msg.reply("❌ Ticket system is not enabled! Admin use: `/ticket-setup #channel`");
     const userId = msg.author.id;
     const ticketChannelName = `ticket-${msg.author.username.slice(0, 10)}`;
 
@@ -876,44 +901,44 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  if (msg.content === "//close-ticket") {
+  if (msg.content === "/close-ticket") {
     if (!msg.channel.name.startsWith("ticket-")) return msg.reply("❌ This is not a ticket channel!");
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can close tickets!");
     msg.channel.delete().catch(() => {});
   }
 
-  if (msg.content.startsWith("//ticket-setup ")) {
+  if (msg.content.startsWith("/ticket-setup ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can setup tickets!");
     }
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //ticket-setup #channel");
+    if (!channel) return msg.reply("Usage: /ticket-setup #channel");
     updateGuildConfig(msg.guild.id, { ticketsEnabled: true, ticketChannelId: channel.id });
-    return msg.reply(`✅ Ticket system enabled! Users can create tickets with \`//ticket\``);
+    return msg.reply(`✅ Ticket system enabled! Users can create tickets with \`/ticket\``);
   }
 
   // ============== CUSTOM COMMANDS ==============
-  if (msg.content.startsWith("//addcmd ")) {
+  if (msg.content.startsWith("/addcmd ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can create custom commands!");
     }
     const args = msg.content.slice(9).trim().split("|");
     const cmdName = args[0]?.trim();
     const cmdResponse = args[1]?.trim();
-    if (!cmdName || !cmdResponse) return msg.reply("Usage: //addcmd [command] | [response]\nExample: //addcmd hello | Hey there!");
+    if (!cmdName || !cmdResponse) return msg.reply("Usage: /addcmd [command] | [response]\nExample: /addcmd hello | Hey there!");
 
     const customCmds = guildConfig.customCommands || {};
     customCmds[cmdName] = cmdResponse;
     updateGuildConfig(msg.guild.id, { customCommands: customCmds });
-    return msg.reply(`✅ Custom command **${cmdName}** created! Use \`//${cmdName}\` to trigger it.`);
+    return msg.reply(`✅ Custom command **${cmdName}** created! Use \`/${cmdName}\` to trigger it.`);
   }
 
-  if (msg.content.startsWith("//delcmd ")) {
+  if (msg.content.startsWith("/delcmd ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can delete custom commands!");
     }
     const cmdName = msg.content.slice(9).trim();
-    if (!cmdName) return msg.reply("Usage: //delcmd [command]");
+    if (!cmdName) return msg.reply("Usage: /delcmd [command]");
 
     const customCmds = guildConfig.customCommands || {};
     if (!customCmds[cmdName]) return msg.reply(`❌ Custom command **${cmdName}** not found!`);
@@ -924,7 +949,7 @@ client.on("messageCreate", async (msg) => {
 
   // Trigger custom commands
   const customCmds = guildConfig.customCommands || {};
-  if (msg.content.startsWith("//") && msg.content.length > 2) {
+  if (msg.content.startsWith("/") && msg.content.length > 2) {
     const cmdName = msg.content.slice(2).split(" ")[0];
     if (customCmds[cmdName]) {
       return msg.reply(customCmds[cmdName]);
@@ -932,15 +957,15 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== COMMUNITY TOOLS ==============
-  if (msg.content === "//suggest") {
-    return msg.reply("Usage: //suggest [your suggestion]");
+  if (msg.content === "/suggest") {
+    return msg.reply("Usage: /suggest [your suggestion]");
   }
 
-  if (msg.content.startsWith("//suggest ")) {
+  if (msg.content.startsWith("/suggest ")) {
     const suggestion = msg.content.slice(10).trim();
-    if (!suggestion) return msg.reply("Usage: //suggest [your suggestion]");
+    if (!suggestion) return msg.reply("Usage: /suggest [your suggestion]");
     const suggestionsChannel = guildConfig.suggestionsChannelId ? msg.guild.channels.cache.get(guildConfig.suggestionsChannelId) : null;
-    if (!suggestionsChannel) return msg.reply("❌ Suggestions channel not configured! Admin needs to set it with `//config-suggestions #channel`");
+    if (!suggestionsChannel) return msg.reply("❌ Suggestions channel not configured! Admin needs to set it with `/config-suggestions #channel`");
 
     const suggestionEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
@@ -955,24 +980,24 @@ client.on("messageCreate", async (msg) => {
     return msg.reply("✅ Suggestion submitted!");
   }
 
-  if (msg.content.startsWith("//config-suggestions ")) {
+  if (msg.content.startsWith("/config-suggestions ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure channels!");
     }
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-suggestions #channel");
+    if (!channel) return msg.reply("Usage: /config-suggestions #channel");
     updateGuildConfig(msg.guild.id, { suggestionsChannelId: channel.id });
     return msg.reply(`✅ Suggestions channel set to ${channel}`);
   }
 
-  if (msg.content.startsWith("//giveaway ")) {
+  if (msg.content.startsWith("/giveaway ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can create giveaways!");
     }
     const args = msg.content.slice(11).trim().split(" ");
     const prize = args[0];
     const duration = parseInt(args[1]) || 60;
-    if (!prize) return msg.reply("Usage: //giveaway [prize] [duration in seconds]");
+    if (!prize) return msg.reply("Usage: /giveaway [prize] [duration in seconds]");
 
     const giveawayEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
@@ -997,22 +1022,22 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== FUN COMMANDS ==============
-  if (msg.content === "//8ball") {
+  if (msg.content === "/8ball") {
     const responses = ["Yes! 🎯", "No! ❌", "Maybe... 🤔", "Absolutely! ✅", "Not likely! 😅", "Ask again later 🔮", "Definitely! 💯", "I don't think so 👎"];
     return msg.reply(responses[Math.floor(Math.random() * responses.length)]);
   }
 
-  if (msg.content === "//dice") {
+  if (msg.content === "/dice") {
     const roll = Math.floor(Math.random() * 6) + 1;
     return msg.reply(`🎲 You rolled a **${roll}**!`);
   }
 
-  if (msg.content === "//coin") {
+  if (msg.content === "/coin") {
     const flip = Math.random() < 0.5 ? "Heads" : "Tails";
     return msg.reply(`🪙 **${flip}**!`);
   }
 
-  if (msg.content === "//trivia") {
+  if (msg.content === "/trivia") {
     const trivia = [
       { question: "What is the capital of France?", answer: "Paris" },
       { question: "What is 2 + 2?", answer: "4" },
@@ -1027,11 +1052,11 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [triviaEmbed] });
   }
 
-  if (msg.content === "//rps") {
-    return msg.reply("Usage: //rps [rock/paper/scissors]");
+  if (msg.content === "/rps") {
+    return msg.reply("Usage: /rps [rock/paper/scissors]");
   }
 
-  if (msg.content.startsWith("//rps ")) {
+  if (msg.content.startsWith("/rps ")) {
     const choices = ["rock", "paper", "scissors"];
     const userChoice = msg.content.slice(6).trim().toLowerCase();
     if (!choices.includes(userChoice)) return msg.reply("Choose: rock, paper, or scissors!");
@@ -1050,7 +1075,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== DEVELOPERS ==============
-  if (msg.content === "//developers") {
+  if (msg.content === "/developers") {
     const developersEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("👨‍💻 SPIDEY BOT Developers")
@@ -1067,13 +1092,13 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Help - List general user commands
-  if (msg.content === "//help") {
+  if (msg.content === "/help") {
     const mainEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("🤖 SPIDEY BOT - User Commands")
       .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✨ **General User Commands** ✨\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
       .addFields(
-        { name: "🎯 Admin?", value: "Use `//adminhelp` to see all administrator commands", inline: false }
+        { name: "🎯 Admin?", value: "Use `/adminhelp` to see all administrator commands", inline: false }
       );
 
     const musicEmbed = new EmbedBuilder()
@@ -1137,7 +1162,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Admin Help - List only admin commands
-  if (msg.content === "//adminhelp") {
+  if (msg.content === "/adminhelp") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can view admin help!");
     }
@@ -1249,7 +1274,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== CONFIG COMMANDS ==============
-  if (msg.content.startsWith("//config-welcome-channel ")) {
+  if (msg.content.startsWith("/config-welcome-channel ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure the bot!");
     }
@@ -1259,7 +1284,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Welcome channel set to ${channel}`);
   }
 
-  if (msg.content.startsWith("//config-welcome-message ")) {
+  if (msg.content.startsWith("/config-welcome-message ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure the bot!");
     }
@@ -1270,14 +1295,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add game role
-  if (msg.content.startsWith("//add-game-role ")) {
+  if (msg.content.startsWith("/add-game-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
     const args = msg.content.slice(16).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: //add-game-role [role name] [role ID]\n\nExample: //add-game-role Minecraft 123456789");
+    if (!roleName || !roleId) return msg.reply("Usage: /add-game-role [role name] [role ID]\n\nExample: /add-game-role Minecraft 123456789");
     const config = getGuildConfig(msg.guild.id);
     if (config.gameRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.gameRoles.push({ name: roleName, id: roleId });
@@ -1286,12 +1311,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove game role
-  if (msg.content.startsWith("//remove-game-role ")) {
+  if (msg.content.startsWith("/remove-game-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
     const roleName = msg.content.slice(19).trim();
-    if (!roleName) return msg.reply("Usage: //remove-game-role [role name]");
+    if (!roleName) return msg.reply("Usage: /remove-game-role [role name]");
     const config = getGuildConfig(msg.guild.id);
     const index = config.gameRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
@@ -1301,14 +1326,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add watch party role
-  if (msg.content.startsWith("//add-watchparty-role ")) {
+  if (msg.content.startsWith("/add-watchparty-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
     const args = msg.content.slice(22).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: //add-watchparty-role [role name] [role ID]");
+    if (!roleName || !roleId) return msg.reply("Usage: /add-watchparty-role [role name] [role ID]");
     const config = getGuildConfig(msg.guild.id);
     if (config.watchPartyRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.watchPartyRoles.push({ name: roleName, id: roleId });
@@ -1317,12 +1342,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove watch party role
-  if (msg.content.startsWith("//remove-watchparty-role ")) {
+  if (msg.content.startsWith("/remove-watchparty-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
     const roleName = msg.content.slice(25).trim();
-    if (!roleName) return msg.reply("Usage: //remove-watchparty-role [role name]");
+    if (!roleName) return msg.reply("Usage: /remove-watchparty-role [role name]");
     const config = getGuildConfig(msg.guild.id);
     const index = config.watchPartyRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
@@ -1332,14 +1357,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add platform role
-  if (msg.content.startsWith("//add-platform-role ")) {
+  if (msg.content.startsWith("/add-platform-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
     const args = msg.content.slice(20).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: //add-platform-role [role name] [role ID]");
+    if (!roleName || !roleId) return msg.reply("Usage: /add-platform-role [role name] [role ID]");
     const config = getGuildConfig(msg.guild.id);
     if (config.platformRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.platformRoles.push({ name: roleName, id: roleId });
@@ -1348,20 +1373,20 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove platform role
-  if (msg.content.startsWith("//remove-platform-role ")) {
+  if (msg.content.startsWith("/remove-platform-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
     const roleName = msg.content.slice(23).trim();
-    if (!roleName) return msg.reply("Usage: //remove-platform-role [role name]");
+    if (!roleName) return msg.reply("Usage: /remove-platform-role [role name]");
     const config = getGuildConfig(msg.guild.id);
   // Setup category selector
-  if (msg.content.startsWith("//setup-category ")) {
+  if (msg.content.startsWith("/setup-category ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set up roles!");
     }
     const categoryName = msg.content.slice(17).trim();
-    if (!categoryName) return msg.reply("Usage: //setup-category [category name]");
+    if (!categoryName) return msg.reply("Usage: /setup-category [category name]");
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) {
       return msg.reply(`❌ Category "${categoryName}" does not exist!`);
@@ -1405,7 +1430,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Setup roles
-  if (msg.content === "//setup-roles") {
+  if (msg.content === "/setup-roles") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set up roles!");
     }
@@ -1428,7 +1453,7 @@ client.on("messageCreate", async (msg) => {
     return msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  if (msg.content === "//setup-watchparty") {
+  if (msg.content === "/setup-watchparty") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set up roles!");
     }
@@ -1451,7 +1476,7 @@ client.on("messageCreate", async (msg) => {
     return msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  if (msg.content === "//setup-platform") {
+  if (msg.content === "/setup-platform") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set up roles!");
     }
@@ -1474,7 +1499,7 @@ client.on("messageCreate", async (msg) => {
     return msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  if (msg.content === "//remove-roles") {
+  if (msg.content === "/remove-roles") {
     const embed = new EmbedBuilder()
       .setColor(0xED4245)
       .setTitle("🗑️ REMOVE ROLES")
@@ -1495,9 +1520,9 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== MUSIC COMMANDS ==============
-  if (msg.content.startsWith("//play ")) {
+  if (msg.content.startsWith("/play ")) {
     const query = msg.content.slice(7).trim();
-    if (!query) return msg.reply("Usage: //play [song name or YouTube link]");
+    if (!query) return msg.reply("Usage: /play [song name or YouTube link]");
 
     const voiceChannel = msg.member?.voice.channel;
     if (!voiceChannel) return msg.reply("❌ Join a voice channel first!");
@@ -1555,7 +1580,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  if (msg.content === "//queue") {
+  if (msg.content === "/queue") {
     const queue = player.queues.get(msg.guild);
     if (!queue || !queue.isPlaying()) {
       return msg.reply("❌ No music is playing!");
@@ -1575,7 +1600,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Music enhancements
-  if (msg.content === "//loop") {
+  if (msg.content === "/loop") {
     const queue = player.queues.get(msg.guild);
     if (!queue || !queue.isPlaying()) {
       return msg.reply("❌ No music playing!");
@@ -1585,7 +1610,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(isLooping ? "🔄 Loop disabled" : "🔄 Loop enabled - queue will repeat!");
   }
 
-  if (msg.content === "//shuffle") {
+  if (msg.content === "/shuffle") {
     const queue = player.queues.get(msg.guild);
     if (!queue || !queue.isPlaying()) {
       return msg.reply("❌ No music playing!");
@@ -1594,7 +1619,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply("🔀 Queue shuffled!");
   }
 
-  if (msg.content.startsWith("//volume ")) {
+  if (msg.content.startsWith("/volume ")) {
     const queue = player.queues.get(msg.guild);
     if (!queue || !queue.isPlaying()) {
       return msg.reply("❌ No music playing!");
@@ -1606,12 +1631,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Moderation commands
-  if (msg.content.startsWith("//kick ")) {
+  if (msg.content.startsWith("/kick ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.KickMembers)) {
       return msg.reply("❌ You need kick permissions!");
     }
     const user = msg.mentions.members.first();
-    if (!user) return msg.reply("Usage: //kick @user [reason]");
+    if (!user) return msg.reply("Usage: /kick @user [reason]");
     const reason = msg.content.slice(6).split(" ").slice(1).join(" ") || "No reason";
     try {
       await user.kick(reason);
@@ -1622,12 +1647,12 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  if (msg.content.startsWith("//ban ")) {
+  if (msg.content.startsWith("/ban ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.BanMembers)) {
       return msg.reply("❌ You need ban permissions!");
     }
     const user = msg.mentions.members.first();
-    if (!user) return msg.reply("Usage: //ban @user [reason]");
+    if (!user) return msg.reply("Usage: /ban @user [reason]");
     const reason = msg.content.slice(5).split(" ").slice(1).join(" ") || "No reason";
     try {
       await user.ban({ reason });
@@ -1638,12 +1663,12 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  if (msg.content.startsWith("//warn ")) {
+  if (msg.content.startsWith("/warn ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
       return msg.reply("❌ You need moderation permissions!");
     }
     const user = msg.mentions.members.first();
-    if (!user) return msg.reply("Usage: //warn @user [reason]");
+    if (!user) return msg.reply("Usage: /warn @user [reason]");
     const reason = msg.content.slice(6).split(" ").slice(1).join(" ") || "No reason";
 
     const warnings = guildConfig.warnings || {};
@@ -1655,12 +1680,12 @@ client.on("messageCreate", async (msg) => {
     logModAction(msg.guild, "WARN", msg.author, user.user.tag, reason);
   }
 
-  if (msg.content.startsWith("//mute ")) {
+  if (msg.content.startsWith("/mute ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
       return msg.reply("❌ You need moderation permissions!");
     }
     const user = msg.mentions.members.first();
-    if (!user) return msg.reply("Usage: //mute @user");
+    if (!user) return msg.reply("Usage: /mute @user");
     try {
       await user.timeout(60 * 60 * 1000);
       msg.reply(`🔇 Muted ${user.user.tag} for 1 hour`);
@@ -1670,12 +1695,12 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  if (msg.content.startsWith("//unmute ")) {
+  if (msg.content.startsWith("/unmute ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
       return msg.reply("❌ You need moderation permissions!");
     }
     const user = msg.mentions.members.first();
-    if (!user) return msg.reply("Usage: //unmute @user");
+    if (!user) return msg.reply("Usage: /unmute @user");
     try {
       await user.timeout(null);
       msg.reply(`🔊 Unmuted ${user.user.tag}`);
@@ -1685,62 +1710,62 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  if (msg.content.startsWith("//warnings ")) {
+  if (msg.content.startsWith("/warnings ")) {
     const user = msg.mentions.members.first();
-    if (!user) return msg.reply("Usage: //warnings @user");
+    if (!user) return msg.reply("Usage: /warnings @user");
     const warnings = guildConfig.warnings?.[user.id] || [];
     const warningList = warnings.map((w, i) => `${i+1}. ${w.reason} (by ${w.warnedBy})`).join("\n") || "No warnings";
     msg.reply(`⚠️ ${user.user.tag} has ${warnings.length} warning(s):\n${warningList}`);
   }
 
   // Config commands
-  if (msg.content.startsWith("//set-prefix ")) {
+  if (msg.content.startsWith("/set-prefix ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set prefix!");
     }
     const prefix = msg.content.slice(13).trim();
-    if (!prefix || prefix.length > 5) return msg.reply("Usage: //set-prefix [prefix] (max 5 chars)");
+    if (!prefix || prefix.length > 5) return msg.reply("Usage: /set-prefix [prefix] (max 5 chars)");
     updateGuildConfig(msg.guild.id, { prefix });
     return msg.reply(`✅ Prefix changed to \`${prefix}\``);
   }
 
-  if (msg.content.startsWith("//config-modlog")) {
+  if (msg.content.startsWith("/config-modlog")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure modlog!");
     }
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-modlog #channel");
+    if (!channel) return msg.reply("Usage: /config-modlog #channel");
     updateGuildConfig(msg.guild.id, { modLogChannelId: channel.id });
     return msg.reply(`✅ Modlog channel set to ${channel}`);
   }
 
   // Twitch & TikTok config
-  if (msg.content.startsWith("//config-twitch-channel ")) {
+  if (msg.content.startsWith("/config-twitch-channel ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-twitch-channel #channel");
+    if (!channel) return msg.reply("Usage: /config-twitch-channel #channel");
     updateGuildConfig(msg.guild.id, { twitchChannelId: channel.id });
     return msg.reply(`✅ Twitch live notifications will post to ${channel}\n\n💡 *Note: Configure your Twitch webhook at: https://dev.twitch.tv/console*`);
   }
 
-  if (msg.content.startsWith("//config-tiktok-channel ")) {
+  if (msg.content.startsWith("/config-tiktok-channel ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-tiktok-channel #channel");
+    if (!channel) return msg.reply("Usage: /config-tiktok-channel #channel");
     updateGuildConfig(msg.guild.id, { tiktokChannelId: channel.id });
     return msg.reply(`✅ TikTok post notifications will post to ${channel}\n\n💡 *Note: Configure your TikTok webhook at: https://developer.tiktok.com*`);
   }
 
-  if (msg.content.startsWith("//add-twitch-user ")) {
+  if (msg.content.startsWith("/add-twitch-user ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const twitchUser = msg.content.slice(18).trim().toLowerCase();
-    if (!twitchUser) return msg.reply("Usage: //add-twitch-user [username]\nExample: //add-twitch-user xqc");
+    if (!twitchUser) return msg.reply("Usage: /add-twitch-user [username]\nExample: /add-twitch-user xqc");
     const users = guildConfig.twitchUsers || [];
     if (users.includes(twitchUser)) return msg.reply(`❌ **${twitchUser}** is already being monitored!`);
     users.push(twitchUser);
@@ -1748,12 +1773,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${twitchUser}** to Twitch monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("//remove-twitch-user ")) {
+  if (msg.content.startsWith("/remove-twitch-user ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const twitchUser = msg.content.slice(21).trim().toLowerCase();
-    if (!twitchUser) return msg.reply("Usage: //remove-twitch-user [username]");
+    if (!twitchUser) return msg.reply("Usage: /remove-twitch-user [username]");
     const users = guildConfig.twitchUsers || [];
     const index = users.indexOf(twitchUser);
     if (index === -1) return msg.reply(`❌ **${twitchUser}** is not being monitored!`);
@@ -1762,18 +1787,18 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed **${twitchUser}** from Twitch monitoring!`);
   }
 
-  if (msg.content === "//list-twitch-users") {
+  if (msg.content === "/list-twitch-users") {
     const users = guildConfig.twitchUsers || [];
-    if (users.length === 0) return msg.reply("❌ No Twitch users being monitored! Use `//add-twitch-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No Twitch users being monitored! Use `/add-twitch-user [username]`");
     return msg.reply(`🎮 **Twitch Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
-  if (msg.content.startsWith("//add-tiktok-user ")) {
+  if (msg.content.startsWith("/add-tiktok-user ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const tiktokUser = msg.content.slice(18).trim().toLowerCase();
-    if (!tiktokUser) return msg.reply("Usage: //add-tiktok-user [username]\nExample: //add-tiktok-user charlidamelio");
+    if (!tiktokUser) return msg.reply("Usage: /add-tiktok-user [username]\nExample: /add-tiktok-user charlidamelio");
     const users = guildConfig.tiktokUsers || [];
     if (users.includes(tiktokUser)) return msg.reply(`❌ **${tiktokUser}** is already being monitored!`);
     users.push(tiktokUser);
@@ -1781,12 +1806,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${tiktokUser}** to TikTok monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("//remove-tiktok-user ")) {
+  if (msg.content.startsWith("/remove-tiktok-user ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const tiktokUser = msg.content.slice(21).trim().toLowerCase();
-    if (!tiktokUser) return msg.reply("Usage: //remove-tiktok-user [username]");
+    if (!tiktokUser) return msg.reply("Usage: /remove-tiktok-user [username]");
     const users = guildConfig.tiktokUsers || [];
     const index = users.indexOf(tiktokUser);
     if (index === -1) return msg.reply(`❌ **${tiktokUser}** is not being monitored!`);
@@ -1795,28 +1820,28 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed **${tiktokUser}** from TikTok monitoring!`);
   }
 
-  if (msg.content === "//list-tiktok-users") {
+  if (msg.content === "/list-tiktok-users") {
     const users = guildConfig.tiktokUsers || [];
-    if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `//add-tiktok-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `/add-tiktok-user [username]`");
     return msg.reply(`📱 **TikTok Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
-  if (msg.content.startsWith("//config-kick-channel ")) {
+  if (msg.content.startsWith("/config-kick-channel ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-kick-channel #channel");
+    if (!channel) return msg.reply("Usage: /config-kick-channel #channel");
     updateGuildConfig(msg.guild.id, { kickChannelId: channel.id });
     return msg.reply(`✅ Kick live notifications will post to ${channel}\n\n💡 *Note: Configure your Kick webhook at: https://developers.kick.com*`);
   }
 
-  if (msg.content.startsWith("//add-kick-user ")) {
+  if (msg.content.startsWith("/add-kick-user ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const kickUser = msg.content.slice(16).trim().toLowerCase();
-    if (!kickUser) return msg.reply("Usage: //add-kick-user [username]\nExample: //add-kick-user xqc");
+    if (!kickUser) return msg.reply("Usage: /add-kick-user [username]\nExample: /add-kick-user xqc");
     const users = guildConfig.kickUsers || [];
     if (users.includes(kickUser)) return msg.reply(`❌ **${kickUser}** is already being monitored!`);
     users.push(kickUser);
@@ -1824,12 +1849,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${kickUser}** to Kick monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("//remove-kick-user ")) {
+  if (msg.content.startsWith("/remove-kick-user ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
     const kickUser = msg.content.slice(19).trim().toLowerCase();
-    if (!kickUser) return msg.reply("Usage: //remove-kick-user [username]");
+    if (!kickUser) return msg.reply("Usage: /remove-kick-user [username]");
     const users = guildConfig.kickUsers || [];
     const index = users.indexOf(kickUser);
     if (index === -1) return msg.reply(`❌ **${kickUser}** is not being monitored!`);
@@ -1838,20 +1863,20 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed **${kickUser}** from Kick monitoring!`);
   }
 
-  if (msg.content === "//list-kick-users") {
+  if (msg.content === "/list-kick-users") {
     const users = guildConfig.kickUsers || [];
-    if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `//add-kick-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `/add-kick-user [username]`");
     return msg.reply(`🎮 **Kick Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
   // ============== ECONOMY COMMANDS ==============
-  if (msg.content === "//balance") {
+  if (msg.content === "/balance") {
     const economy = guildConfig.economy || {};
     const balance = economy[msg.author.id] || 0;
     return msg.reply(`💰 **${msg.author.username}** has **${balance}** coins!`);
   }
 
-  if (msg.content === "//daily") {
+  if (msg.content === "/daily") {
     const economy = guildConfig.economy || {};
     const lastDaily = economy[`${msg.author.id}_daily`] || 0;
     const now = Date.now();
@@ -1865,7 +1890,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Claimed **100** coins! Total: **${economy[msg.author.id]}** 💰`);
   }
 
-  if (msg.content === "//work") {
+  if (msg.content === "/work") {
     const economy = guildConfig.economy || {};
     const lastWork = economy[`${msg.author.id}_work`] || 0;
     const now = Date.now();
@@ -1880,13 +1905,13 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`💼 You worked hard and earned **${earned}** coins! Total: **${economy[msg.author.id]}** 💰`);
   }
 
-  if (msg.content.startsWith("//transfer ")) {
+  if (msg.content.startsWith("/transfer ")) {
     const target = msg.mentions.members.first();
     const amountStr = msg.content.split(" ").pop();
     const amount = parseInt(amountStr);
 
-    if (!target) return msg.reply("Usage: //transfer @user [amount]");
-    if (isNaN(amount) || amount <= 0) return msg.reply("Usage: //transfer @user [amount]\nAmount must be a positive number!");
+    if (!target) return msg.reply("Usage: /transfer @user [amount]");
+    if (isNaN(amount) || amount <= 0) return msg.reply("Usage: /transfer @user [amount]\nAmount must be a positive number!");
     if (target.id === msg.author.id) return msg.reply("❌ You can't transfer to yourself!");
 
     const economy = guildConfig.economy || {};
@@ -1901,7 +1926,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Transferred **${amount}** coins to ${target.user.tag}!\nYour new balance: **${economy[msg.author.id]}** 💰`);
   }
 
-  if (msg.content.startsWith("//addmoney ")) {
+  if (msg.content.startsWith("/addmoney ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can add money!");
     }
@@ -1909,7 +1934,7 @@ client.on("messageCreate", async (msg) => {
     const amountStr = msg.content.split(" ").pop();
     const amount = parseInt(amountStr);
 
-    if (!target) return msg.reply("Usage: //addmoney @user [amount]");
+    if (!target) return msg.reply("Usage: /addmoney @user [amount]");
     if (isNaN(amount) || amount <= 0) return msg.reply("Amount must be a positive number!");
 
     const economy = guildConfig.economy || {};
@@ -1919,7 +1944,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${amount}** coins to ${target.user.tag}!\nNew balance: **${economy[target.id]}** 💰`);
   }
 
-  if (msg.content.startsWith("//removemoney ")) {
+  if (msg.content.startsWith("/removemoney ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can remove money!");
     }
@@ -1927,7 +1952,7 @@ client.on("messageCreate", async (msg) => {
     const amountStr = msg.content.split(" ").pop();
     const amount = parseInt(amountStr);
 
-    if (!target) return msg.reply("Usage: //removemoney @user [amount]");
+    if (!target) return msg.reply("Usage: /removemoney @user [amount]");
     if (isNaN(amount) || amount <= 0) return msg.reply("Amount must be a positive number!");
 
     const economy = guildConfig.economy || {};
@@ -1938,7 +1963,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed **${amount}** coins from ${target.user.tag}!\nNew balance: **${economy[target.id]}** 💰`);
   }
 
-  if (msg.content === "//leaderboard") {
+  if (msg.content === "/leaderboard") {
     const economy = guildConfig.economy || {};
     const members = Object.entries(economy)
       .filter(([key]) => !key.includes("_"))
@@ -1958,7 +1983,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== LEVELING COMMANDS ==============
-  if (msg.content === "//level") {
+  if (msg.content === "/level") {
     const levels = guildConfig.levels || {};
     const userXp = levels[msg.author.id] || 0;
     const level = Math.floor(userXp / 500) + 1;
@@ -1978,7 +2003,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [levelEmbed] });
   }
 
-  if (msg.content === "//xpleaderboard") {
+  if (msg.content === "/xpleaderboard") {
     const levels = guildConfig.levels || {};
     const members = Object.entries(levels)
       .filter(([key]) => !key.includes("_"))
@@ -1999,7 +2024,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Setup level roles (1-100)
-  if (msg.content === "//setup-level-roles") {
+  if (msg.content === "/setup-level-roles") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can setup level roles!");
     }
@@ -2052,16 +2077,16 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== ADMIN CONFIG COMMANDS ==============
-  if (msg.content.startsWith("//config-logging ")) {
+  if (msg.content.startsWith("/config-logging ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-logging #channel");
+    if (!channel) return msg.reply("Usage: /config-logging #channel");
     const logTypes = msg.content.includes("--all") ? ["deletes", "edits", "joins", "leaves", "bans", "kicks"] : [];
     updateGuildConfig(msg.guild.id, { logging: { channelId: channel.id, types: logTypes } });
     return msg.reply(`✅ Logging configured for ${channel}! 📝`);
   }
 
-  if (msg.content.startsWith("//config-xp ")) {
+  if (msg.content.startsWith("/config-xp ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const xpPerMsg = parseInt(msg.content.split(" ")[1]) || 10;
     const levelUp = parseInt(msg.content.split(" ")[2]) || 500;
@@ -2069,15 +2094,15 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ XP set to **${xpPerMsg}** per message, **${levelUp}** XP per level! 📈`);
   }
 
-  if (msg.content.startsWith("//config-leaderboard ")) {
+  if (msg.content.startsWith("/config-leaderboard ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-leaderboard #channel");
+    if (!channel) return msg.reply("Usage: /config-leaderboard #channel");
     updateGuildConfig(msg.guild.id, { leaderboardChannel: channel.id });
     return msg.reply(`✅ Leaderboard will update in ${channel}! 🏆`);
   }
 
-  if (msg.content.startsWith("//start-giveaway ")) {
+  if (msg.content.startsWith("/start-giveaway ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can start giveaways!");
     const parts = msg.content.split(" | ");
     const prize = parts[0]?.slice(17).trim() || "Mystery Prize";
@@ -2092,7 +2117,7 @@ client.on("messageCreate", async (msg) => {
     msg.reply(`🎁 **GIVEAWAY STARTED!**\n**Prize:** ${prize}\n**Duration:** ${duration} minutes\n**Winners:** ${winners}\n\nReact with 🎉 to enter!`);
   }
 
-  if (msg.content === "//end-giveaway") {
+  if (msg.content === "/end-giveaway") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can end giveaways!");
     const giveaways = guildConfig.giveaways || [];
     if (giveaways.length === 0) return msg.reply("❌ No active giveaway!");
@@ -2101,15 +2126,15 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Giveaway ended! Selected ${giveaway.winners} winner(s) from ${giveaway.entries.length} entries! 🎊`);
   }
 
-  if (msg.content.startsWith("//config-social-notifs ")) {
+  if (msg.content.startsWith("/config-social-notifs ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-social-notifs #channel");
+    if (!channel) return msg.reply("Usage: /config-social-notifs #channel");
     updateGuildConfig(msg.guild.id, { socialNotifsChannel: channel.id });
     return msg.reply(`✅ Social notifications will post to ${channel}! 📣`);
   }
 
-  if (msg.content.startsWith("//config-subscriptions ")) {
+  if (msg.content.startsWith("/config-subscriptions ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const tierName = msg.content.split(" ")[1] || "Gold";
     const price = parseFloat(msg.content.split(" ")[2]) || 9.99;
@@ -2119,26 +2144,26 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added subscription tier **${tierName}** at **$${price}/month**! 💳`);
   }
 
-  if (msg.content.startsWith("//config-welcome-message ")) {
+  if (msg.content.startsWith("/config-welcome-message ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const message = msg.content.slice(26).trim();
-    if (!message) return msg.reply("Usage: //config-welcome-message [message with {user}, {server}, {membercount}]");
+    if (!message) return msg.reply("Usage: /config-welcome-message [message with {user}, {server}, {membercount}]");
     updateGuildConfig(msg.guild.id, { welcomeMessage: message });
     return msg.reply(`✅ Welcome message set! 👋\nPreview: ${message.replace("{user}", "Member").replace("{server}", msg.guild.name).replace("{membercount}", msg.guild.memberCount)}`);
   }
 
-  if (msg.content.startsWith("//config-goodbye-message ")) {
+  if (msg.content.startsWith("/config-goodbye-message ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const message = msg.content.slice(26).trim();
     updateGuildConfig(msg.guild.id, { goodbyeMessage: message });
     return msg.reply(`✅ Goodbye message set! 👋`);
   }
 
-  if (msg.content.startsWith("//add-custom-command ")) {
+  if (msg.content.startsWith("/add-custom-command ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can add commands!");
     const cmdName = msg.content.split(" ")[1];
     const cmdResponse = msg.content.split(" ").slice(2).join(" ");
-    if (!cmdName || !cmdResponse) return msg.reply("Usage: //add-custom-command [name] [response]");
+    if (!cmdName || !cmdResponse) return msg.reply("Usage: /add-custom-command [name] [response]");
 
     const customCmds = guildConfig.customCommands || {};
     customCmds[cmdName] = cmdResponse;
@@ -2146,7 +2171,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Custom command **//${cmdName}** added! ⌨️`);
   }
 
-  if (msg.content.startsWith("//remove-custom-command ")) {
+  if (msg.content.startsWith("/remove-custom-command ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can remove commands!");
     const cmdName = msg.content.slice(24).trim();
     const customCmds = guildConfig.customCommands || {};
@@ -2155,28 +2180,28 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed custom command **//${cmdName}**! ⌨️`);
   }
 
-  if (msg.content === "//list-custom-commands") {
+  if (msg.content === "/list-custom-commands") {
     const customCmds = guildConfig.customCommands || {};
-    const list = Object.keys(customCmds).map(cmd => `\`//${cmd}\``).join(", ") || "None";
+    const list = Object.keys(customCmds).map(cmd => `\`/${cmd}\``).join(", ") || "None";
     return msg.reply(`📋 **Custom Commands:** ${list}`);
   }
 
-  if (msg.content.startsWith("//config-react-roles ")) {
+  if (msg.content.startsWith("/config-react-roles ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     msg.reply(`✅ React roles configured! Use the web dashboard to manage reaction roles. 🎭`);
   }
 
-  if (msg.content.startsWith("//config-role-categories ")) {
+  if (msg.content.startsWith("/config-role-categories ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const catName = msg.content.slice(25).trim();
-    if (!catName) return msg.reply("Usage: //config-role-categories [name]");
+    if (!catName) return msg.reply("Usage: /config-role-categories [name]");
     const categories = guildConfig.roleCategories || {};
     categories[catName] = { roles: [], createdAt: Date.now() };
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
     return msg.reply(`✅ Role category **${catName}** created! 📂`);
   }
 
-  if (msg.content.startsWith("//config-server-guard ")) {
+  if (msg.content.startsWith("/config-server-guard ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const antiSpam = msg.content.includes("--anti-spam");
     const raidProt = msg.content.includes("--raid-protection");
@@ -2185,35 +2210,35 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Server Guard configured! 🛡️`);
   }
 
-  if (msg.content.startsWith("//config-statistics-channels ")) {
+  if (msg.content.startsWith("/config-statistics-channels ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: //config-statistics-channels #channel");
+    if (!channel) return msg.reply("Usage: /config-statistics-channels #channel");
     updateGuildConfig(msg.guild.id, { statsChannel: channel.id });
     return msg.reply(`✅ Statistics will update in ${channel}! 📉`);
   }
 
-  if (msg.content === "//config-components") {
+  if (msg.content === "/config-components") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     msg.reply(`✅ Use the web dashboard to create button menus and dropdown components! 🧩`);
   }
 
-  if (msg.content === "//config-reminders") {
+  if (msg.content === "/config-reminders") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     msg.reply(`✅ Use the web dashboard to set up automatic reminders and notifications! 🔔`);
   }
 
-  if (msg.content === "//config-recordings") {
+  if (msg.content === "/config-recordings") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     msg.reply(`✅ Voice recording settings available in web dashboard! 🎥`);
   }
 
-  if (msg.content === "//config-invite-tracking") {
+  if (msg.content === "/config-invite-tracking") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     msg.reply(`✅ Invite tracking enabled! Track who invited members. 🔗`);
   }
 
-  if (msg.content === "//config-message-counting") {
+  if (msg.content === "/config-message-counting") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     msg.reply(`✅ Message counting and XP per message now enabled! 📊`);
   }
@@ -3135,16 +3160,6 @@ app.get("/commands", (req, res) => {
 });
 
 app.get("/auth/discord", (req, res) => {
-  if (!DISCORD_CLIENT_ID) {
-    res.status(503).send(`
-      <h2>OAuth Not Configured</h2>
-      <p>The Discord Client ID is not configured on this server. To use the Admin Login, set the <strong>CLIENT_ID</strong> environment variable and redeploy.</p>
-      <p>On Render: go to your service → Environment and add <code>CLIENT_ID</code> and <code>DISCORD_CLIENT_SECRET</code>. See <a href="/SPIDEYBOT_RENDER_SETUP.txt">SPIDEYBOT_RENDER_SETUP.txt</a> for instructions.</p>
-      <p><a href="/">Back to Home</a></p>
-    `);
-    return;
-  }
-
   const scopes = ["identify", "guilds"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
   res.redirect(authURL);
@@ -3221,20 +3236,10 @@ app.get("/logout", (req, res) => {
 // ============== PUBLIC API ==============
 app.get("/api/config", (req, res) => {
   // Serve basic config needed for frontend (like client ID)
-  const inviteUrl = DISCORD_CLIENT_ID ? `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8` : null;
   res.json({
     clientId: DISCORD_CLIENT_ID,
-    botName: "SPIDEY BOT",
-    inviteUrl,
-    redirectUri: REDIRECT_URI
+    botName: "SPIDEY BOT"
   });
-});
-
-// Invite redirect (uses server-side env so frontend doesn't need client id)
-app.get('/invite', (req, res) => {
-  if (!DISCORD_CLIENT_ID) return res.status(503).send('Bot not configured');
-  const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8`;
-  res.redirect(inviteUrl);
 });
 
 // ============== USER API ==============
@@ -4359,20 +4364,4 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 // ============== LOGIN ==============
-if (token) {
-  client.login(token).catch(err => {
-    console.error('Discord client failed to login:', err && err.message ? err.message : err);
-    if (err && err.stack) console.error(err.stack);
-    if (err && err.code) console.error('Error code:', err.code);
-    // Some errors include response data (show non-sensitive parts)
-    if (err.response && err.response.data) {
-      try {
-        console.error('Login response data:', typeof err.response.data === 'object' ? JSON.stringify(err.response.data) : err.response.data);
-      } catch (e) {
-        console.error('Login response data (raw):', err.response.data);
-      }
-    }
-  });
-} else {
-  console.warn('No TOKEN provided in environment; running in website-only mode (Discord client not logged in).');
-}
+client.login(token);
