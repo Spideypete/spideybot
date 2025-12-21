@@ -8,7 +8,12 @@
       "welcomeChannelId": "1235015412035358721",
       "roleCategories": {
         "Gaming": {
-          "roles": [],
+          "roles": [
+            {
+              "name": "Valorant",
+              "id": "1235015410819010638"
+            }
+          ],
           "banner": null
         },
         "Console": {
@@ -18,14 +23,14 @@
       },
       "modLogChannelId": "1235015413763412063",
       "messageCounting": {
-        "totalMessages": 11,
+        "totalMessages": 12,
         "byUser": {
-          "807682091591925801": 11
+          "807682091591925801": 12
         },
         "byChannel": {
           "1235015412035358728": 1,
           "1235015413763412063": 6,
-          "1235015413763412062": 4
+          "1235015413763412062": 5
         }
       },
       "levels": {
@@ -93,6 +98,12 @@
         "goodbyeMessage": ""
       },
       "activities": [
+        {
+          "icon": "➕",
+          "name": "spidey_petee",
+          "action": "added role: Valorant to Gaming",
+          "timestamp": "9:16:14 PM"
+        },
         {
           "icon": "🗑️",
           "name": "Role deleted",
@@ -385,12 +396,6 @@
           "icon": "🏷️",
           "name": "Role created",
           "action": "69️⃣ Level 69 - 1451124123911847960",
-          "timestamp": "8:09:11 AM"
-        },
-        {
-          "icon": "🏷️",
-          "name": "Role created",
-          "action": "70️⃣ Level 70 - 1451124121743134803",
           "timestamp": "8:09:11 AM"
         }
       ]

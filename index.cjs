@@ -624,27 +624,54 @@ client.on("messageCreate", async (msg) => {
 
   // Add a role to a category
   if (msg.content.startsWith("//add-role ")) {
-    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    // Guild-only command
+    if (!msg.guild) {
+      return msg.reply("❌ This command only works in servers!");
+    }
+    
+    // Admin permission check
+    if (!msg.member?.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const args = msg.content.slice(11).trim().split(" ");
-    const categoryName = args[0];
-    const roleName = args[1];
-    const roleId = args[2];
-    if (!categoryName || !roleName || !roleId) {
-      return msg.reply("Usage: //add-role [category] [role name] [role ID]\n\nExample: //add-role Gaming Minecraft 123456789");
+    
+    try {
+      const args = msg.content.slice(11).trim().split(" ");
+      const categoryName = args[0];
+      const roleName = args[1];
+      const roleId = args[2];
+      
+      if (!categoryName || !roleName || !roleId) {
+        return msg.reply("Usage: //add-role [category] [role name] [role ID]\n\nExample: //add-role Gaming Minecraft 123456789");
+      }
+      
+      // Verify role ID is valid and exists in guild
+      const role = await msg.guild.roles.fetch(roleId).catch(() => null);
+      if (!role) {
+        return msg.reply(`❌ Role with ID \`${roleId}\` not found in this server! Make sure the ID is correct.`);
+      }
+      
+      const categories = guildConfig.roleCategories || {};
+      if (!categories[categoryName]) {
+        return msg.reply(`❌ Category "${categoryName}" doesn't exist!\n\nCreate it first with: \`//create-category ${categoryName}\``);
+      }
+      
+      const catData = Array.isArray(categories[categoryName]) 
+        ? { roles: categories[categoryName], banner: null } 
+        : categories[categoryName];
+      
+      if (catData.roles.some(r => r.name === roleName)) {
+        return msg.reply(`❌ Role "${roleName}" is already in category "${categoryName}"!`);
+      }
+      
+      catData.roles.push({ name: roleName, id: roleId });
+      categories[categoryName] = catData;
+      updateGuildConfig(msg.guild.id, { roleCategories: categories });
+      addActivity(msg.guild.id, "➕", msg.author.username, `added role: ${roleName} to ${categoryName}`);
+      return msg.reply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**\n\n*Tip: Use \`//setup-category ${categoryName}\` to post reaction roles!*`);
+    } catch (err) {
+      console.error(`❌ Error adding role: ${err.message}`);
+      return msg.reply(`❌ Error adding role. Please check the role ID and try again.`);
     }
-    const categories = guildConfig.roleCategories || {};
-    if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" doesn't exist! Use //create-category first.`);
-    const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
-    if (catData.roles.some(r => r.name === roleName)) {
-      return msg.reply(`❌ Role "${roleName}" already in this category!`);
-    }
-    catData.roles.push({ name: roleName, id: roleId });
-    categories[categoryName] = catData;
-    updateGuildConfig(msg.guild.id, { roleCategories: categories });
-    addActivity(msg.guild.id, "➕", msg.author.username, `added role: ${roleName} to ${categoryName}`);
-    return msg.reply(`✅ Added **${roleName}** to category **${categoryName}**`);
   }
 
   // Remove a role from a category
