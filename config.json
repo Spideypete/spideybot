@@ -71,7 +71,7 @@
           "modLogChannel": ""
         }
       },
-      "commandPrefix": "//",
+      "commandPrefix": "/",
       "defaultLanguage": "English",
       "adminRole": "1235015410865410051",
       "moderatorRole": "1235015410865410049",
