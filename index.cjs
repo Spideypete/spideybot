@@ -1,4 +1,4 @@
-/ index.cjs - SPIDEY BOT - Multi-Server Configurable Discord Bot
+// index.cjs - SPIDEY BOT - Multi-Server Configurable Discord Bot
 
 const {
   Client,
@@ -29,7 +29,7 @@ const {
   BackupSystem
 } = require("./security");
 
-/ ============== SETUP EXPRESS APP ==============
+// ============== SETUP EXPRESS APP ==============
 const distDir = path.join(__dirname, 'dist');
 const publicDir = path.join(__dirname, 'public');
 const app = express();
@@ -47,7 +47,7 @@ app.use(session({
   }
 }));
 
-/ Serve static files from dist (automatically serves index.html for /)
+// Serve static files from dist (automatically serves index.html for /)
 app.use((req, res, next) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.setHeader("Pragma", "no-cache");
@@ -55,7 +55,7 @@ app.use((req, res, next) => {
   next();
 });
 
-/ ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE - CRITICAL!) ==============
+// ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE - CRITICAL!) ==============
 const dashboardPath = path.join(distDir, 'dashboard.html');
 
 app.get("/dashboard", (req, res) => {
@@ -69,7 +69,7 @@ app.get("/dashboard", (req, res) => {
   
   try {
     let dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
-    / Inject timestamp to force fresh version EVERY TIME
+    // Inject timestamp to force fresh version EVERY TIME
     const timestamp = Date.now();
     dashboardHtml = dashboardHtml.replace('</head>', `<meta name="version-timestamp" content="${timestamp}">\n  </head>`);
     res.send(dashboardHtml);
@@ -81,39 +81,39 @@ app.get("/dashboard", (req, res) => {
 app.use(express.static(distDir));
 app.set('trust proxy', true);
 
-/ ============== SECURITY MIDDLEWARE ==============
+// ============== SECURITY MIDDLEWARE ==============
 app.use(securityHeadersMiddleware);
-const rateLimiter = new RateLimiter(500, 60000); / 500 requests per minute
+const rateLimiter = new RateLimiter(500, 60000); // 500 requests per minute
 app.use(rateLimiter.middleware());
 const auditLogger = new SecurityAuditLogger();
 const antiSpam = new AntiSpamEngine();
 const joinGate = new JoinGateSystem();
 const backupSystem = new BackupSystem();
 
-/ ============== DISCORD OAUTH CONFIG ==============
+// ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
 const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
-const REPLIT_URL = process.env.REPLIT_DOMAINS ? `https:/${process.env.REPLIT_DOMAINS}` : null;
+const REPLIT_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : null;
 
-/ Build proper redirect URI
+// Build proper redirect URI
 let BASE_REDIRECT_URI;
 if (RENDER_EXTERNAL_URL) {
   BASE_REDIRECT_URI = RENDER_EXTERNAL_URL.endsWith('/') ? RENDER_EXTERNAL_URL.slice(0, -1) : RENDER_EXTERNAL_URL;
 } else if (REPLIT_URL) {
   BASE_REDIRECT_URI = REPLIT_URL;
 } else {
-  BASE_REDIRECT_URI = "http:/localhost:5000";
+  BASE_REDIRECT_URI = "http://localhost:5000";
 }
 
-/ Hardcode Render URL as fallback if detection fails
-const REDIRECT_URI = BASE_REDIRECT_URI === "http:/localhost:5000" && process.env.NODE_ENV === 'production' 
-  ? "https:/spideybot-90sr.onrender.com/auth/discord/callback"
+// Hardcode Render URL as fallback if detection fails
+const REDIRECT_URI = BASE_REDIRECT_URI === "http://localhost:5000" && process.env.NODE_ENV === 'production' 
+  ? "https://spideybot-90sr.onrender.com/auth/discord/callback"
   : `${BASE_REDIRECT_URI}/auth/discord/callback`;
 
 console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
 
-/ ============== CONFIG MANAGEMENT ==============
+// ============== CONFIG MANAGEMENT ==============
 const configFile = path.join(__dirname, "config.json");
 
 function logModAction(guild, action, mod, target, reason) {
@@ -156,7 +156,7 @@ function getGuildConfig(guildId) {
       welcomeChannelId: null,
       welcomeMessage: "Welcome to our server! 🎉",
       roleCategories: {},
-      prefix: "/",
+      prefix: "//",
       modLogChannelId: null,
       twitchChannelId: null,
       twitchUsers: [],
@@ -216,9 +216,9 @@ function autoMigrateRoles(guildId, guild, guildConfig) {
   }
 }
 
-/ ============== CACHE SYSTEM ==============
+// ============== CACHE SYSTEM ==============
 const memberStatsCache = {};
-const CACHE_DURATION = 5 * 60 * 1000; / 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 function getCachedMemberStats(guildId) {
   const cached = memberStatsCache[guildId];
@@ -232,7 +232,7 @@ function setCachedMemberStats(guildId, data) {
   memberStatsCache[guildId] = { data, timestamp: Date.now() };
 }
 
-/ ============== CLIENT SETUP ==============
+// ============== CLIENT SETUP ==============
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -245,7 +245,7 @@ const client = new Client({
 
 const token = process.env.TOKEN;
 
-/ ============== MUSIC PLAYER ==============
+// ============== MUSIC PLAYER ==============
 const player = new Player(client, {
   skipFFmpeg: false,
   enableLavalink: false,
@@ -265,7 +265,7 @@ player.on("connectionError", (queue, error) => {
   console.error("Connection error:", error);
 });
 
-/ ============== READY EVENT ==============
+// ============== READY EVENT ==============
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
@@ -274,7 +274,7 @@ client.once("ready", () => {
   });
 });
 
-/ ============== ACTIVITY LOGGING ==============
+// ============== ACTIVITY LOGGING ==============
 function addActivity(guildId, icon, text, action, time = null) {
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
@@ -292,11 +292,11 @@ function addActivity(guildId, icon, text, action, time = null) {
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 }
 
-/ ============== WELCOME NEW MEMBERS ==============
+// ============== WELCOME NEW MEMBERS ==============
 client.on("guildMemberAdd", async (member) => {
   addActivity(member.guild.id, "👤", member.user.username, "joined the server");
   
-  / Track new member joins
+  // Track new member joins
   const config = loadConfig();
   if (!config.guilds[member.guild.id]) config.guilds[member.guild.id] = {};
   if (!config.guilds[member.guild.id].memberEvents) config.guilds[member.guild.id].memberEvents = [];
@@ -334,11 +334,11 @@ client.on("guildMemberAdd", async (member) => {
   }
 });
 
-/ ============== MEMBER LEAVES ==============
+// ============== MEMBER LEAVES ==============
 client.on("guildMemberRemove", async (member) => {
   addActivity(member.guild.id, "👋", member.user.username, "left the server");
   
-  / Track member leaves
+  // Track member leaves
   const config = loadConfig();
   if (!config.guilds[member.guild.id]) config.guilds[member.guild.id] = {};
   if (!config.guilds[member.guild.id].memberEvents) config.guilds[member.guild.id].memberEvents = [];
@@ -352,7 +352,7 @@ client.on("guildMemberRemove", async (member) => {
   config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
-  / Send goodbye message if enabled
+  // Send goodbye message if enabled
   const guildConfig = getGuildConfig(member.guild.id);
   const serverMessages = guildConfig.serverMessages || {};
   
@@ -375,16 +375,16 @@ client.on("guildMemberRemove", async (member) => {
   }
 });
 
-/ ============== MEMBER UPDATES (BOOSTS, ROLES) ==============
+// ============== MEMBER UPDATES (BOOSTS, ROLES) ==============
 client.on("guildMemberUpdate", async (oldMember, newMember) => {
-  / Check if member got a boost role
+  // Check if member got a boost role
   const oldBoostRole = oldMember.roles.cache.some(r => r.name === "Server Booster" || r.name === "Nitro Booster");
   const newBoostRole = newMember.roles.cache.some(r => r.name === "Server Booster" || r.name === "Nitro Booster");
   
   if (!oldBoostRole && newBoostRole) {
     addActivity(newMember.guild.id, "💎", newMember.user.username, "boosted the server");
     
-    / Track boosts
+    // Track boosts
     const config = loadConfig();
     if (!config.guilds[newMember.guild.id]) config.guilds[newMember.guild.id] = {};
     if (!config.guilds[newMember.guild.id].memberEvents) config.guilds[newMember.guild.id].memberEvents = [];
@@ -400,7 +400,7 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
   }
 });
 
-/ ============== ROLE EVENTS ==============
+// ============== ROLE EVENTS ==============
 client.on("roleCreate", async (role) => {
   addActivity(role.guild.id, "🏷️", "Role created", `${role.name} - ${role.id}`);
 });
@@ -420,7 +420,7 @@ client.on("roleUpdate", async (oldRole, newRole) => {
   }
 });
 
-/ ============== CHANNEL EVENTS ==============
+// ============== CHANNEL EVENTS ==============
 client.on("channelCreate", async (channel) => {
   if (channel.isDMBased()) return;
   addActivity(channel.guild.id, "📝", "Channel created", `#${channel.name} - ${channel.id}`);
@@ -443,15 +443,15 @@ client.on("channelUpdate", async (oldChannel, newChannel) => {
   }
 });
 
-/ ============== MESSAGE COMMANDS ==============
+// ============== MESSAGE COMMANDS ==============
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot && !msg.guild.config?.messageCountingBots) return;
   if (!msg.member) return;
   
-  / LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
+  // LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
   const guildConfig = getGuildConfig(msg.guild.id);
 
-  / ============== MESSAGE COUNTING ==============
+  // ============== MESSAGE COUNTING ==============
   const messageCounting = guildConfig.messageCounting || {};
   if (messageCounting.enabled !== false) {
     const ignoredChannels = messageCounting.ignoredChannels || [];
@@ -466,7 +466,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  / ============== PERMISSIONS FROM DASHBOARD ==============
+  // ============== PERMISSIONS FROM DASHBOARD ==============
   if (msg.content.startsWith("/")) {
     const permissions = guildConfig.permissions || {};
     if (permissions.membersOnly) {
@@ -477,7 +477,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  / ============== AUTO XP GAIN ==============
+  // ============== AUTO XP GAIN ==============
   if (!msg.content.startsWith("/")) {
     const levels = guildConfig.levels || {};
     const userId = msg.author.id;
@@ -500,7 +500,7 @@ client.on("messageCreate", async (msg) => {
         const newRoleId = levelRoles[`level_${level}`];
 
         try {
-          / Remove all old level roles (1-99)
+          // Remove all old level roles (1-99)
           for (let oldLevel = 1; oldLevel < level; oldLevel++) {
             const oldRoleId = levelRoles[`level_${oldLevel}`];
             if (oldRoleId) {
@@ -511,7 +511,7 @@ client.on("messageCreate", async (msg) => {
             }
           }
 
-          / Add new level role
+          // Add new level role
           if (newRoleId) {
             const newRole = msg.guild.roles.cache.get(newRoleId);
             if (newRole) await msg.member.roles.add(newRole);
@@ -525,7 +525,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  / Message Statistics
+  // Message Statistics
   if (msg.content === "/stats") {
     const messageCounting = guildConfig.messageCounting || {};
     const userCount = Object.keys(messageCounting.byUser || {}).length;
@@ -553,7 +553,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [statsEmbed] });
   }
 
-  / Bot Status
+  // Bot Status
   if (msg.content === "/ping") {
     const uptime = process.uptime();
     const hours = Math.floor(uptime / 3600);
@@ -581,7 +581,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [statusEmbed] });
   }
 
-  / List all active roles
+  // List all active roles
   if (msg.content === "/list-roles") {
     const categories = guildConfig.roleCategories || {};
     if (Object.keys(categories).length === 0) {
@@ -607,7 +607,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [rolesEmbed] });
   }
 
-  / Create a new category
+  // Create a new category
   if (msg.content.startsWith("/create-category ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can create categories!");
@@ -622,14 +622,14 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Created category: **${categoryName}**\n\n*Tip: Use \`/set-category-banner ${categoryName} [gif-url]\` to add a banner!*`);
   }
 
-  / Add a role to a category
+  // Add a role to a category
   if (msg.content.startsWith("/add-role ")) {
-    / Guild-only command
+    // Guild-only command
     if (!msg.guild) {
       return msg.reply("❌ This command only works in servers!");
     }
     
-    / Admin permission check
+    // Admin permission check
     if (!msg.member?.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
@@ -644,7 +644,7 @@ client.on("messageCreate", async (msg) => {
         return msg.reply("Usage: /add-role [category] [role name] [role ID]\n\nExample: /add-role Gaming Minecraft 123456789");
       }
       
-      / Verify role ID is valid and exists in guild
+      // Verify role ID is valid and exists in guild
       const role = await msg.guild.roles.fetch(roleId).catch(() => null);
       if (!role) {
         return msg.reply(`❌ Role with ID \`${roleId}\` not found in this server! Make sure the ID is correct.`);
@@ -674,7 +674,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  / Remove a role from a category
+  // Remove a role from a category
   if (msg.content.startsWith("/remove-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
@@ -697,7 +697,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed **${roleName}** from **${categoryName}**`);
   }
 
-  / Set category banner
+  // Set category banner
   if (msg.content.startsWith("/set-category-banner ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set banners!");
@@ -706,7 +706,7 @@ client.on("messageCreate", async (msg) => {
     const categoryName = args[0];
     const bannerUrl = args.slice(1).join(" ");
     if (!categoryName || !bannerUrl) {
-      return msg.reply("Usage: /set-category-banner [category] [gif-url]\n\nExample: /set-category-banner Gaming https:/example.com/gaming.gif");
+      return msg.reply("Usage: /set-category-banner [category] [gif-url]\n\nExample: /set-category-banner Gaming https://example.com/gaming.gif");
     }
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
@@ -717,7 +717,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Banner set for **${categoryName}**!\n\n*Use \`/setup-category ${categoryName}\` to see it in action!*`);
   }
 
-  / Delete a category
+  // Delete a category
   if (msg.content.startsWith("/delete-category ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can delete categories!");
@@ -732,7 +732,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Deleted category: **${categoryName}**`);
   }
 
-  / ============== ECONOMY SYSTEM ==============
+  // ============== ECONOMY SYSTEM ==============
   if (msg.content === "/balance") {
     const economy = guildConfig.economy || {};
     const balance = economy[msg.author.id] || 0;
@@ -786,7 +786,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Transferred **${amount} coins** to ${target.toString()}! 🪙`);
   }
 
-  / ============== LEVELING SYSTEM ==============
+  // ============== LEVELING SYSTEM ==============
   if (msg.content === "/level") {
     const levels = guildConfig.levels || {};
     const level = levels[msg.author.id] || 0;
@@ -818,7 +818,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [leaderboardEmbed] });
   }
 
-  / Gain XP on message (every message)
+  // Gain XP on message (every message)
   if (!guildConfig.levels) guildConfig.levels = {};
   const levels = guildConfig.levels;
   const xpGain = Math.floor(Math.random() * 25) + 5;
@@ -834,7 +834,7 @@ client.on("messageCreate", async (msg) => {
     updateGuildConfig(msg.guild.id, { levels });
   }
 
-  / ============== SERVER PROTECTION ==============
+  // ============== SERVER PROTECTION ==============
   if (msg.content.startsWith("/filter-toggle")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can toggle the filter!");
@@ -844,7 +844,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Profanity filter is now **${newState ? "ON" : "OFF"}**`);
   }
 
-  / Auto-delete messages with profanity
+  // Auto-delete messages with profanity
   if (guildConfig.profanityFilterEnabled && guildConfig.badWords) {
     const hasSwearing = guildConfig.badWords.some(word => msg.content.toLowerCase().includes(word.toLowerCase()));
     if (hasSwearing && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
@@ -853,7 +853,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  / ============== LINK FILTERING ==============
+  // ============== LINK FILTERING ==============
   if (msg.content.startsWith("/link-filter ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can toggle link filter!");
@@ -863,7 +863,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Link filter is now **${newState ? "ON" : "OFF"}**`);
   }
 
-  / Auto-delete messages with links/invites
+  // Auto-delete messages with links/invites
   if (guildConfig.linkFilterEnabled && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
     const linkRegex = /(https?:\/\/[^\s]+|discord\.(gg|io|me)\/[^\s]+)/gi;
     if (linkRegex.test(msg.content)) {
@@ -872,7 +872,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  / ============== TICKET SYSTEM ==============
+  // ============== TICKET SYSTEM ==============
   if (msg.content === "/ticket") {
     if (!guildConfig.ticketsEnabled) return msg.reply("❌ Ticket system is not enabled! Admin use: `/ticket-setup #channel`");
     const userId = msg.author.id;
@@ -917,7 +917,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Ticket system enabled! Users can create tickets with \`/ticket\``);
   }
 
-  / ============== CUSTOM COMMANDS ==============
+  // ============== CUSTOM COMMANDS ==============
   if (msg.content.startsWith("/addcmd ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can create custom commands!");
@@ -947,7 +947,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Custom command **${cmdName}** deleted!`);
   }
 
-  / Trigger custom commands
+  // Trigger custom commands
   const customCmds = guildConfig.customCommands || {};
   if (msg.content.startsWith("/") && msg.content.length > 2) {
     const cmdName = msg.content.slice(2).split(" ")[0];
@@ -956,7 +956,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  / ============== COMMUNITY TOOLS ==============
+  // ============== COMMUNITY TOOLS ==============
   if (msg.content === "/suggest") {
     return msg.reply("Usage: /suggest [your suggestion]");
   }
@@ -1021,7 +1021,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply("✅ Giveaway started!");
   }
 
-  / ============== FUN COMMANDS ==============
+  // ============== FUN COMMANDS ==============
   if (msg.content === "/8ball") {
     const responses = ["Yes! 🎯", "No! ❌", "Maybe... 🤔", "Absolutely! ✅", "Not likely! 😅", "Ask again later 🔮", "Definitely! 💯", "I don't think so 👎"];
     return msg.reply(responses[Math.floor(Math.random() * responses.length)]);
@@ -1074,7 +1074,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`You chose **${userChoice}**, I chose **${botChoice}**\n${result}`);
   }
 
-  / ============== DEVELOPERS ==============
+  // ============== DEVELOPERS ==============
   if (msg.content === "/developers") {
     const developersEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
@@ -1085,13 +1085,13 @@ client.on("messageCreate", async (msg) => {
         { name: "💜 Support", value: "Join our developer community to help shape SPIDEY BOT's future!", inline: false }
       )
       .addFields(
-        { name: "🔗 Developer Discord", value: "[Join the Dev Server](https:/discord.gg/spideybotdev)", inline: true }
+        { name: "🔗 Developer Discord", value: "[Join the Dev Server](https://discord.gg/spideybotdev)", inline: true }
       )
       .setFooter({ text: "Want to contribute? Join our Discord!" });
     return msg.reply({ embeds: [developersEmbed] });
   }
 
-  / Help - List general user commands
+  // Help - List general user commands
   if (msg.content === "/help") {
     const mainEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
@@ -1105,11 +1105,11 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("🎵 MUSIC PLAYER (5 commands)")
       .addFields(
-        { name: "play [song/url]", value: "Search & play from YouTube", inline: true },
-        { name: "queue", value: "Show next 10 songs", inline: true },
-        { name: "loop", value: "Toggle queue repeat", inline: true },
-        { name: "shuffle", value: "Randomize the queue", inline: true },
-        { name: "volume [0-200]", value: "Adjust volume level", inline: true },
+        { name: "🎶 //play [song/url]", value: "Search & play from YouTube", inline: true },
+        { name: "📊 //queue", value: "Show next 10 songs", inline: true },
+        { name: "🔄 //loop", value: "Toggle queue repeat", inline: true },
+        { name: "🔀 //shuffle", value: "Randomize the queue", inline: true },
+        { name: "🔊 //volume [0-200]", value: "Adjust volume level", inline: true },
         { name: "🎛️ Button Controls", value: "⏮ Back | ⏸ Pause | ▶ Resume | ⏭ Skip | ⏹ Stop", inline: false }
       );
 
@@ -1117,29 +1117,29 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("📞 UTILITIES (5 commands)")
       .addFields(
-        { name: "remove-roles", value: "Remove any roles you have", inline: true },
-        { name: "ping", value: "Check bot status & stats", inline: true },
-        { name: "adminhelp", value: "View all admin commands (admins only)", inline: true },
-        { name: "developers", value: "Meet the dev team & join Discord", inline: true },
-        { name: "ticket", value: "Create a support ticket", inline: true }
+        { name: "✅ //remove-roles", value: "Remove any roles you have", inline: true },
+        { name: "🏓 //ping", value: "Check bot status & stats", inline: true },
+        { name: "👑 //adminhelp", value: "View all admin commands (admins only)", inline: true },
+        { name: "👨‍💻 //developers", value: "Meet the dev team & join Discord", inline: true },
+        { name: "🎫 //ticket", value: "Create a support ticket", inline: true }
       );
 
     const economyEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("💰 ECONOMY (4 commands)")
       .addFields(
-        { name: "balance", value: "Check your coin balance", inline: true },
-        { name: "daily", value: "Claim 100 coins daily", inline: true },
-        { name: "work", value: "Work for coins (5 min cooldown)", inline: true },
-        { name: "transfer @user [amount]", value: "Send coins to others", inline: true }
+        { name: "💰 //balance", value: "Check your coin balance", inline: true },
+        { name: "📅 //daily", value: "Claim 100 coins daily", inline: true },
+        { name: "💼 //work", value: "Work for coins (5 min cooldown)", inline: true },
+        { name: "🔄 //transfer @user [amount]", value: "Send coins to others", inline: true }
       );
 
     const levelEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("📊 LEVELING (3 commands)")
       .addFields(
-        { name: "level", value: "Check your level & XP", inline: true },
-        { name: "xpleaderboard", value: "View top members by level", inline: true },
+        { name: "📈 //level", value: "Check your level & XP", inline: true },
+        { name: "🏆 //xpleaderboard", value: "View top members by level", inline: true },
         { name: "💡 Passive", value: "Gain 10-30 XP per minute chatting!", inline: true }
       );
 
@@ -1147,13 +1147,13 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("🎮 FUN GAMES (5 commands)")
       .addFields(
-        { name: "8ball", value: "Ask the magic 8ball", inline: true },
-        { name: "dice", value: "Roll a dice (1-6)", inline: true },
-        { name: "coin", value: "Flip a coin", inline: true },
-        { name: "trivia", value: "Random trivia question", inline: true },
-        { name: "rps [rock/paper/scissors]", value: "Rock paper scissors", inline: true }
+        { name: "🎱 //8ball", value: "Ask the magic 8ball", inline: true },
+        { name: "🎲 //dice", value: "Roll a dice (1-6)", inline: true },
+        { name: "🪙 //coin", value: "Flip a coin", inline: true },
+        { name: "🧠 //trivia", value: "Random trivia question", inline: true },
+        { name: "✂️ //rps [rock/paper/scissors]", value: "Rock paper scissors", inline: true }
       )
-      .setFooter({ text: "/adminhelp for full command list" });
+      .setFooter({ text: "💡 Admins: Use /adminhelp for full command list" });
 
     return msg.reply({ 
       embeds: [mainEmbed, musicEmbed, utilityEmbed, economyEmbed, levelEmbed, funEmbed],
@@ -1161,7 +1161,7 @@ client.on("messageCreate", async (msg) => {
     });
   }
 
-  / Admin Help - List only admin commands
+  // Admin Help - List only admin commands
   if (msg.content === "/adminhelp") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can view admin help!");
@@ -1179,21 +1179,21 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("🎭 ROLE CATEGORIES (7 commands)")
       .addFields(
-        { name: "create-category [name]", value: "Create a custom role category", inline: true },
-        { name: "add-role [cat] [name] [ID]", value: "Add role to category", inline: true },
-        { name: "remove-role [cat] [name]", value: "Remove role from category", inline: true },
-        { name: "set-category-banner [cat] [url]", value: "Add GIF banner", inline: true },
-        { name: "setup-category [name]", value: "Post selector button with banner", inline: true },
-        { name: "list-roles", value: "View all categories & roles", inline: true },
-        { name: "delete-category [name]", value: "Delete entire category", inline: true }
+        { name: "📌 //create-category [name]", value: "Create a custom role category", inline: true },
+        { name: "➕ //add-role [cat] [name] [ID]", value: "Add role to category", inline: true },
+        { name: "➖ //remove-role [cat] [name]", value: "Remove role from category", inline: true },
+        { name: "🎬 //set-category-banner [cat] [url]", value: "Add GIF banner", inline: true },
+        { name: "🔘 //setup-category [name]", value: "Post selector button with banner", inline: true },
+        { name: "📋 //list-roles", value: "View all categories & roles", inline: true },
+        { name: "🗑️ //delete-category [name]", value: "Delete entire category", inline: true }
       );
 
     const adminWelcomeEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("👋 WELCOME MESSAGES (2 commands)")
       .addFields(
-        { name: "config-welcome-channel #channel", value: "Set welcome message channel", inline: true },
-        { name: "config-welcome-message [text]", value: "Create custom welcome message", inline: true },
+        { name: "💬 //config-welcome-channel #channel", value: "Set welcome message channel", inline: true },
+        { name: "✍️ //config-welcome-message [text]", value: "Create custom welcome message", inline: true },
         { name: "📝 Placeholders", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false }
       );
 
@@ -1201,26 +1201,26 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("⚙️ CONFIGURATION (2 commands)")
       .addFields(
-        { name: "set-prefix [prefix]", value: "Change command prefix", inline: true },
-        { name: "config-modlog #channel", value: "Set moderation log channel", inline: true }
+        { name: "🔤 //set-prefix [prefix]", value: "Change command prefix", inline: true },
+        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
       );
 
     const adminSocialEmbed = new EmbedBuilder()
       .setColor(0xFF1493)
       .setTitle("📱 SOCIAL MEDIA (12 commands + API)")
       .addFields(
-        { name: "add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
-        { name: "remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
-        { name: "list-twitch-users", value: "View monitored Twitch creators", inline: true },
-        { name: "config-twitch-channel #ch", value: "Set Twitch alert channel", inline: true },
-        { name: "add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
-        { name: "remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
-        { name: "list-tiktok-users", value: "View monitored TikTok creators", inline: true },
-        { name: "config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
-        { name: "add-kick-user [user]", value: "Add Kick streamer to monitor", inline: true },
-        { name: "remove-kick-user [user]", value: "Remove Kick streamer", inline: true },
-        { name: "list-kick-users", value: "View monitored Kick streamers", inline: true },
-        { name: "config-kick-channel #ch", value: "Set Kick alert channel", inline: true },
+        { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
+        { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
+        { name: "📋 //list-twitch-users", value: "View monitored Twitch creators", inline: true },
+        { name: "📢 //config-twitch-channel #ch", value: "Set Twitch alert channel", inline: true },
+        { name: "🎵 //add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
+        { name: "➖ //remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
+        { name: "📋 //list-tiktok-users", value: "View monitored TikTok creators", inline: true },
+        { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
+        { name: "🎮 //add-kick-user [user]", value: "Add Kick streamer to monitor", inline: true },
+        { name: "➖ //remove-kick-user [user]", value: "Remove Kick streamer", inline: true },
+        { name: "📋 //list-kick-users", value: "View monitored Kick streamers", inline: true },
+        { name: "📢 //config-kick-channel #ch", value: "Set Kick alert channel", inline: true },
         { name: "🌐 WEB API", value: "Admin dashboard at `/admin` • 3 REST endpoints", inline: false }
       );
 
@@ -1228,16 +1228,16 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("💰 ECONOMY MANAGEMENT (3 commands)")
       .addFields(
-        { name: "addmoney @user [amount]", value: "Give coins to member", inline: true },
-        { name: "removemoney @user [amount]", value: "Remove coins from member", inline: true },
-        { name: "leaderboard", value: "View top richest members", inline: true }
+        { name: "➕ //addmoney @user [amount]", value: "Give coins to member", inline: true },
+        { name: "➖ //removemoney @user [amount]", value: "Remove coins from member", inline: true },
+        { name: "🏆 //leaderboard", value: "View top richest members", inline: true }
       );
 
     const adminLevelEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("📊 LEVEL ROLES (1 command)")
       .addFields(
-        { name: "setup-level-roles", value: "Create 100 auto-assigned level roles (1-100) with emoji badges", inline: false },
+        { name: "🎖️ //setup-level-roles", value: "Create 100 auto-assigned level roles (1-100) with emoji badges", inline: false },
         { name: "💡 How it works", value: "Members earn XP by chatting → Auto-get level role → Badge shows next to their name! Level badges have gradient colors", inline: false }
       );
 
@@ -1245,25 +1245,25 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("🛡️ PROTECTION & TOOLS (7 commands)")
       .addFields(
-        { name: "link-filter [on/off]", value: "Toggle link filtering", inline: true },
-        { name: "ticket-setup #channel", value: "Enable ticket system", inline: true },
-        { name: "ticket", value: "Create support ticket", inline: true },
-        { name: "close-ticket", value: "Close ticket channel", inline: true },
-        { name: "addcmd [cmd] | [response]", value: "Create custom command", inline: true },
-        { name: "delcmd [command]", value: "Delete custom command", inline: true },
-        { name: "/[yourcommand] to trigger", inline: true }
+        { name: "🔗 //link-filter [on/off]", value: "Toggle link filtering", inline: true },
+        { name: "🎫 //ticket-setup #channel", value: "Enable ticket system", inline: true },
+        { name: "🎫 //ticket", value: "Create support ticket", inline: true },
+        { name: "🔒 //close-ticket", value: "Close ticket channel", inline: true },
+        { name: "➕ //addcmd [cmd] | [response]", value: "Create custom command", inline: true },
+        { name: "➖ //delcmd [command]", value: "Delete custom command", inline: true },
+        { name: "📂 Custom Commands", value: "Use //[yourcommand] to trigger", inline: true }
       );
 
     const adminModEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("🛡️ MODERATION (6 commands)")
       .addFields(
-        { name: "kick @user [reason]", value: "Remove member from server", inline: true },
-        { name: "ban @user [reason]", value: "Permanently ban member", inline: true },
-        { name: "warn @user [reason]", value: "Warn member (tracked!)", inline: true },
-        { name: "mute @user", value: "Timeout for 1 hour", inline: true },
-        { name: "unmute @user", value: "Remove timeout", inline: true },
-        { name: "warnings @user", value: "View member's warning history", inline: true }
+        { name: "👢 //kick @user [reason]", value: "Remove member from server", inline: true },
+        { name: "🔨 //ban @user [reason]", value: "Permanently ban member", inline: true },
+        { name: "⚠️ //warn @user [reason]", value: "Warn member (tracked!)", inline: true },
+        { name: "🔇 //mute @user", value: "Timeout for 1 hour", inline: true },
+        { name: "🔊 //unmute @user", value: "Remove timeout", inline: true },
+        { name: "📋 //warnings @user", value: "View member's warning history", inline: true }
       )
       .setFooter({ text: "💡 All actions are auto-logged to your modlog channel" });
 
@@ -1273,13 +1273,13 @@ client.on("messageCreate", async (msg) => {
     });
   }
 
-  / ============== CONFIG COMMANDS ==============
+  // ============== CONFIG COMMANDS ==============
   if (msg.content.startsWith("/config-welcome-channel ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure the bot!");
     }
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Mention a channel: /config-welcome-channel #channel");
+    if (!channel) return msg.reply("Mention a channel: //config-welcome-channel #channel");
     updateGuildConfig(msg.guild.id, { welcomeChannelId: channel.id });
     return msg.reply(`✅ Welcome channel set to ${channel}`);
   }
@@ -1289,12 +1289,12 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can configure the bot!");
     }
     const welcomeMsg = msg.content.slice(26).trim();
-    if (!welcomeMsg) return msg.reply("Provide a message: /config-welcome-message Your message here\n\n**Available placeholders:**\n`{user}` - Member mention\n`{username}` - Username\n`{displayname}` - Display name\n`{server}` - Server name\n`{membercount}` - Total member count");
+    if (!welcomeMsg) return msg.reply("Provide a message: //config-welcome-message Your message here\n\n**Available placeholders:**\n`{user}` - Member mention\n`{username}` - Username\n`{displayname}` - Display name\n`{server}` - Server name\n`{membercount}` - Total member count");
     updateGuildConfig(msg.guild.id, { welcomeMessage: welcomeMsg });
     return msg.reply(`✅ Welcome message updated!\n\n**Available placeholders:**\n\`{user}\` - ${msg.member.toString()}\n\`{username}\` - ${msg.author.username}\n\`{displayname}\` - ${msg.member.displayName}\n\`{server}\` - ${msg.guild.name}\n\`{membercount}\` - ${msg.guild.memberCount}`);
   }
 
-  / Add game role
+  // Add game role
   if (msg.content.startsWith("/add-game-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
@@ -1310,7 +1310,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added game role: **${roleName}** (ID: ${roleId})`);
   }
 
-  / Remove game role
+  // Remove game role
   if (msg.content.startsWith("/remove-game-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
@@ -1325,7 +1325,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed game role: **${roleName}**`);
   }
 
-  / Add watch party role
+  // Add watch party role
   if (msg.content.startsWith("/add-watchparty-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
@@ -1341,7 +1341,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added watch party role: **${roleName}** (ID: ${roleId})`);
   }
 
-  / Remove watch party role
+  // Remove watch party role
   if (msg.content.startsWith("/remove-watchparty-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
@@ -1356,7 +1356,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed watch party role: **${roleName}**`);
   }
 
-  / Add platform role
+  // Add platform role
   if (msg.content.startsWith("/add-platform-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
@@ -1372,7 +1372,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added platform role: **${roleName}** (ID: ${roleId})`);
   }
 
-  / Remove platform role
+  // Remove platform role
   if (msg.content.startsWith("/remove-platform-role ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
@@ -1380,7 +1380,7 @@ client.on("messageCreate", async (msg) => {
     const roleName = msg.content.slice(23).trim();
     if (!roleName) return msg.reply("Usage: /remove-platform-role [role name]");
     const config = getGuildConfig(msg.guild.id);
-  / Setup category selector
+  // Setup category selector
   if (msg.content.startsWith("/setup-category ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set up roles!");
@@ -1394,7 +1394,7 @@ client.on("messageCreate", async (msg) => {
 
     const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
     if (catData.roles.length === 0) {
-      return msg.reply(`❌ Add roles with /add-role first!`);
+      return msg.reply(`❌ Add roles with //add-role first!`);
     }
 
     const roleOptions = catData.roles.map(r => ({ label: `✨ ${r.name}`, value: r.id }));
@@ -1429,7 +1429,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Removed platform role: **${roleName}**`);
   }
 
-  / Setup roles
+  // Setup roles
   if (msg.content === "/setup-roles") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set up roles!");
@@ -1519,7 +1519,7 @@ client.on("messageCreate", async (msg) => {
     return msg.channel.send({ embeds: [embed], components: [button] });
   }
 
-  / ============== MUSIC COMMANDS ==============
+  // ============== MUSIC COMMANDS ==============
   if (msg.content.startsWith("/play ")) {
     const query = msg.content.slice(7).trim();
     if (!query) return msg.reply("Usage: /play [song name or YouTube link]");
@@ -1599,7 +1599,7 @@ client.on("messageCreate", async (msg) => {
     msg.reply({ embeds: [embed] });
   }
 
-  / Music enhancements
+  // Music enhancements
   if (msg.content === "/loop") {
     const queue = player.queues.get(msg.guild);
     if (!queue || !queue.isPlaying()) {
@@ -1630,7 +1630,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`🔊 Volume set to ${vol}%`);
   }
 
-  / Moderation commands
+  // Moderation commands
   if (msg.content.startsWith("/kick ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.KickMembers)) {
       return msg.reply("❌ You need kick permissions!");
@@ -1718,7 +1718,7 @@ client.on("messageCreate", async (msg) => {
     msg.reply(`⚠️ ${user.user.tag} has ${warnings.length} warning(s):\n${warningList}`);
   }
 
-  / Config commands
+  // Config commands
   if (msg.content.startsWith("/set-prefix ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can set prefix!");
@@ -1739,7 +1739,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Modlog channel set to ${channel}`);
   }
 
-  / Twitch & TikTok config
+  // Twitch & TikTok config
   if (msg.content.startsWith("/config-twitch-channel ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
@@ -1747,7 +1747,7 @@ client.on("messageCreate", async (msg) => {
     const channel = msg.mentions.channels.first();
     if (!channel) return msg.reply("Usage: /config-twitch-channel #channel");
     updateGuildConfig(msg.guild.id, { twitchChannelId: channel.id });
-    return msg.reply(`✅ Twitch live notifications will post to ${channel}\n\n💡 *Note: Configure your Twitch webhook at: https:/dev.twitch.tv/console*`);
+    return msg.reply(`✅ Twitch live notifications will post to ${channel}\n\n💡 *Note: Configure your Twitch webhook at: https://dev.twitch.tv/console*`);
   }
 
   if (msg.content.startsWith("/config-tiktok-channel ")) {
@@ -1757,7 +1757,7 @@ client.on("messageCreate", async (msg) => {
     const channel = msg.mentions.channels.first();
     if (!channel) return msg.reply("Usage: /config-tiktok-channel #channel");
     updateGuildConfig(msg.guild.id, { tiktokChannelId: channel.id });
-    return msg.reply(`✅ TikTok post notifications will post to ${channel}\n\n💡 *Note: Configure your TikTok webhook at: https:/developer.tiktok.com*`);
+    return msg.reply(`✅ TikTok post notifications will post to ${channel}\n\n💡 *Note: Configure your TikTok webhook at: https://developer.tiktok.com*`);
   }
 
   if (msg.content.startsWith("/add-twitch-user ")) {
@@ -1833,7 +1833,7 @@ client.on("messageCreate", async (msg) => {
     const channel = msg.mentions.channels.first();
     if (!channel) return msg.reply("Usage: /config-kick-channel #channel");
     updateGuildConfig(msg.guild.id, { kickChannelId: channel.id });
-    return msg.reply(`✅ Kick live notifications will post to ${channel}\n\n💡 *Note: Configure your Kick webhook at: https:/developers.kick.com*`);
+    return msg.reply(`✅ Kick live notifications will post to ${channel}\n\n💡 *Note: Configure your Kick webhook at: https://developers.kick.com*`);
   }
 
   if (msg.content.startsWith("/add-kick-user ")) {
@@ -1869,7 +1869,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`🎮 **Kick Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
-  / ============== ECONOMY COMMANDS ==============
+  // ============== ECONOMY COMMANDS ==============
   if (msg.content === "/balance") {
     const economy = guildConfig.economy || {};
     const balance = economy[msg.author.id] || 0;
@@ -1971,7 +1971,7 @@ client.on("messageCreate", async (msg) => {
       .sort((a, b) => b.balance - a.balance)
       .slice(0, 10);
 
-    if (members.length === 0) return msg.reply("📊 No economy data yet! Use /daily or /work to start earning!");
+    if (members.length === 0) return msg.reply("📊 No economy data yet! Use //daily or //work to start earning!");
 
     const leaderboard = members.map((m, i) => {
       const user = msg.guild.members.cache.get(m.userId)?.user;
@@ -1982,7 +1982,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`🏆 **Top 10 Richest Members:**\n${leaderboard}`);
   }
 
-  / ============== LEVELING COMMANDS ==============
+  // ============== LEVELING COMMANDS ==============
   if (msg.content === "/level") {
     const levels = guildConfig.levels || {};
     const userXp = levels[msg.author.id] || 0;
@@ -2023,7 +2023,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`🏆 **Top 10 Members by Level:**\n${leaderboard}`);
   }
 
-  / Setup level roles (1-100)
+  // Setup level roles (1-100)
   if (msg.content === "/setup-level-roles") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can setup level roles!");
@@ -2076,7 +2076,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Created **${created}/100** level roles with gradient colors! Members will display their level badge next to their name as they level up.`);
   }
 
-  / ============== ADMIN CONFIG COMMANDS ==============
+  // ============== ADMIN CONFIG COMMANDS ==============
   if (msg.content.startsWith("/config-logging ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can configure!");
     const channel = msg.mentions.channels.first();
@@ -2168,7 +2168,7 @@ client.on("messageCreate", async (msg) => {
     const customCmds = guildConfig.customCommands || {};
     customCmds[cmdName] = cmdResponse;
     updateGuildConfig(msg.guild.id, { customCommands: customCmds });
-    return msg.reply(`✅ Custom command **/${cmdName}** added! ⌨️`);
+    return msg.reply(`✅ Custom command **//${cmdName}** added! ⌨️`);
   }
 
   if (msg.content.startsWith("/remove-custom-command ")) {
@@ -2177,7 +2177,7 @@ client.on("messageCreate", async (msg) => {
     const customCmds = guildConfig.customCommands || {};
     delete customCmds[cmdName];
     updateGuildConfig(msg.guild.id, { customCommands: customCmds });
-    return msg.reply(`✅ Removed custom command **/${cmdName}**! ⌨️`);
+    return msg.reply(`✅ Removed custom command **//${cmdName}**! ⌨️`);
   }
 
   if (msg.content === "/list-custom-commands") {
@@ -2243,9 +2243,9 @@ client.on("messageCreate", async (msg) => {
     msg.reply(`✅ Message counting and XP per message now enabled! 📊`);
   }
 
-  / Custom command execution
-  if (msg.content.startsWith(guildConfig.prefix || "/")) {
-    const cmdName = msg.content.slice((guildConfig.prefix || "/").length).split(" ")[0];
+  // Custom command execution
+  if (msg.content.startsWith(guildConfig.prefix || "//")) {
+    const cmdName = msg.content.slice((guildConfig.prefix || "//").length).split(" ")[0];
     const customCmds = guildConfig.customCommands || {};
     if (customCmds[cmdName]) {
       return msg.reply(customCmds[cmdName]);
@@ -2253,12 +2253,12 @@ client.on("messageCreate", async (msg) => {
   }
 });
 
-/ ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
+// ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
 client.on("interactionCreate", async (interaction) => {
   const guildConfig = getGuildConfig(interaction.guild.id);
   autoMigrateRoles(interaction.guild.id, interaction.guild, guildConfig);
 
-  / Gaming roles
+  // Gaming roles
   if (interaction.isButton() && interaction.customId === "claim_roles") {
     const allRoles = Array.from(interaction.guild.roles.cache.values())
       .filter(r => !r.managed && r.name !== "@everyone")
@@ -2309,7 +2309,7 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.update({ content: response || "No roles added.", components: [] });
   }
 
-  / Watch party roles
+  // Watch party roles
   if (interaction.isButton() && interaction.customId === "claim_watchparty") {
     const allRoles = Array.from(interaction.guild.roles.cache.values())
       .filter(r => !r.managed && r.name !== "@everyone")
@@ -2360,11 +2360,11 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.update({ content: response || "No roles added.", components: [] });
   }
 
-  / Platform roles
+  // Platform roles
   if (interaction.isButton() && interaction.customId === "claim_platform") {
     const config = getGuildConfig(interaction.guild.id);
     if (config.platformRoles.length === 0) {
-      return interaction.reply({ content: "❌ No platform roles configured! Admin: use /add-platform-role [name] [roleID]", ephemeral: true });
+      return interaction.reply({ content: "❌ No platform roles configured! Admin: use //add-platform-role [name] [roleID]", ephemeral: true });
     }
     const platformRoles = config.platformRoles.map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
     const selectMenu = new ActionRowBuilder().addComponents(
@@ -2379,7 +2379,7 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (interaction.isStringSelectMenu() && interaction.customId === "platform_roles") {
-  / Handle custom category role selections
+  // Handle custom category role selections
   if (interaction.isStringSelectMenu() && interaction.customId.startsWith("select_")) {
     const categoryName = interaction.customId.slice(7);
     const member = interaction.member;
@@ -2424,7 +2424,7 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.update({ content: `✅ Added: ${addedRoles.join(", ")}`, components: [] });
   }
 
-  / Remove roles
+  // Remove roles
   if (interaction.isButton() && interaction.customId === "remove_all_roles") {
     const config = getGuildConfig(interaction.guild.id);
     const allRoles = config.gameRoles.concat(config.watchPartyRoles, config.platformRoles).map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
@@ -2467,7 +2467,7 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.update({ content: `✅ Removed: ${removedRoles.join(", ")}`, components: [] });
   }
 
-  / Music controls
+  // Music controls
   if (interaction.isButton() && interaction.customId.startsWith("music_")) {
     const queue = player.queues.get(interaction.guild);
     if (!queue || !queue.isPlaying()) {
@@ -2494,9 +2494,9 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
-/ ============== WEB SERVER FOR UPTIME & WEBHOOKS ==============
+// ============== WEB SERVER FOR UPTIME & WEBHOOKS ==============
 
-/ Admin authentication middleware
+// Admin authentication middleware
 function verifyAdmin(req, res, next) {
   const adminToken = process.env.ADMIN_TOKEN || "spidey123";
   const token = req.query.token || req.headers["x-admin-token"];
@@ -2506,10 +2506,10 @@ function verifyAdmin(req, res, next) {
   next();
 }
 
-/ Get invite link
-const botInviteURL = `https:/discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
+// Get invite link
+const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || "1234567890"}&scope=bot&permissions=8`;
 
-/ ============== HOMEPAGE ==============
+// ============== HOMEPAGE ==============
 app.get("/", (req, res) => {
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -2517,7 +2517,7 @@ app.get("/", (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SPIDEY BOT - Complete Discord Bot</title>
-  <link href="https:/fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -2762,7 +2762,7 @@ app.get("/", (req, res) => {
     <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.2) 0%, rgba(145, 70, 255, 0.1) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
       <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 2rem;">💎 And So Much More! 💎</h2>
       <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">From seamless integrations to advanced settings, we've got everything you need and more! Need help or have questions? Join our community Discord and connect with us!</p>
-      <a href="https:/discord.com/invite/spideybot" target="_blank" class="btn btn-primary">Join Our Discord →</a>
+      <a href="https://discord.com/invite/spideybot" target="_blank" class="btn btn-primary">Join Our Discord →</a>
     </div>
 
     <!-- Support Section -->
@@ -2810,7 +2810,7 @@ app.get("/", (req, res) => {
   </footer>
   <script>
     document.getElementById('addToDiscord').addEventListener('click', function() {
-      window.location.href = 'https:/discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8';
+      window.location.href = 'https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8';
     });
   </script>
 </body>
@@ -2819,8 +2819,8 @@ app.get("/", (req, res) => {
   res.send(indexHtml);
 });
 
-/ ============== DISCORD OAUTH LOGIN ==============
-/ Redirect login page to Discord OAuth
+// ============== DISCORD OAUTH LOGIN ==============
+// Redirect login page to Discord OAuth
 app.get("/login", (req, res) => {
   if (req.session.authenticated) return res.redirect("/dashboard");
   const loginHtml = `<!DOCTYPE html>
@@ -2829,7 +2829,7 @@ app.get("/login", (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SPIDEY BOT Admin Login</title>
-  <link href="https:/fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -2894,7 +2894,7 @@ app.get("/login", (req, res) => {
   res.send(loginHtml);
 });
 
-/ ============== STATIC PAGES ==============
+// ============== STATIC PAGES ==============
 app.get("/terms", (req, res) => {
   const termsPath = path.join(publicDir, 'terms.html');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -2920,7 +2920,7 @@ app.get("/commands", (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Commands - SPIDEY BOT</title>
-  <link href="https:/fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -3053,78 +3053,78 @@ app.get("/commands", (req, res) => {
   <main>
   <div class="container">
     <h1>🕸️ SPIDEY BOT Commands</h1>
-    <p style="text-align: center; color: #aaa; margin-bottom: 2rem;">All commands start with <code style="background: rgba(0, 0, 0, 0.5); color: #00d4ff; padding: 0.2rem 0.5rem; border-radius: 4px;">/</code></p>
+    <p style="text-align: center; color: #aaa; margin-bottom: 2rem;">All commands start with <code style="background: rgba(0, 0, 0, 0.5); color: #00d4ff; padding: 0.2rem 0.5rem; border-radius: 4px;">//</code></p>
 
     <div class="commands-grid">
       <div class="command-card">
         <h3>🎵 Music Commands</h3>
-        <code>/play [song]</code>
+        <code>//play [song]</code>
         <p>Play a song from YouTube</p>
-        <code>/queue</code>
+        <code>//queue</code>
         <p>Show current queue</p>
-        <code>/skip</code>
+        <code>//skip</code>
         <p>Skip to next track</p>
-        <code>/stop</code>
+        <code>//stop</code>
         <p>Stop playing music</p>
       </div>
 
       <div class="command-card">
         <h3>🛡️ Moderation Commands</h3>
-        <code>/kick [user]</code>
+        <code>//kick [user]</code>
         <p>Kick a user from server</p>
-        <code>/ban [user]</code>
+        <code>//ban [user]</code>
         <p>Ban a user from server</p>
-        <code>/warn [user]</code>
+        <code>//warn [user]</code>
         <p>Warn a user</p>
-        <code>/mute [user]</code>
+        <code>//mute [user]</code>
         <p>Mute a user temporarily</p>
       </div>
 
       <div class="command-card">
         <h3>💰 Economy Commands</h3>
-        <code>/balance</code>
+        <code>//balance</code>
         <p>Check your coin balance</p>
-        <code>/daily</code>
+        <code>//daily</code>
         <p>Claim daily reward</p>
-        <code>/work</code>
+        <code>//work</code>
         <p>Work to earn coins</p>
-        <code>/pay [user] [amount]</code>
+        <code>//pay [user] [amount]</code>
         <p>Transfer coins to another user</p>
       </div>
 
       <div class="command-card">
         <h3>📊 Info Commands</h3>
-        <code>/stats</code>
+        <code>//stats</code>
         <p>View your statistics</p>
-        <code>/leaderboard</code>
+        <code>//leaderboard</code>
         <p>View server leaderboard</p>
-        <code>/level</code>
+        <code>//level</code>
         <p>Check your level and XP</p>
-        <code>/help</code>
+        <code>//help</code>
         <p>View all available commands</p>
       </div>
 
       <div class="command-card">
         <h3>⚙️ Admin Commands</h3>
-        <code>/config</code>
+        <code>//config</code>
         <p>Access configuration panel</p>
-        <code>/setup</code>
+        <code>//setup</code>
         <p>Initial bot setup</p>
-        <code>/prefix [new prefix]</code>
+        <code>//prefix [new prefix]</code>
         <p>Change command prefix</p>
-        <code>/logging</code>
+        <code>//logging</code>
         <p>Configure logging channels</p>
       </div>
 
       <div class="command-card">
         <h3>🎫 Tickets</h3>
-        <code>/ticket</code>
+        <code>//ticket</code>
         <p>Create a support ticket</p>
-        <code>/close</code>
+        <code>//close</code>
         <p>Close a ticket</p>
-        <code>/add [user]</code>
+        <code>//add [user]</code>
         <p>Add user to ticket</p>
-        <code>/remove [user]</code>
+        <code>//remove [user]</code>
         <p>Remove user from ticket</p>
       </div>
     </div>
@@ -3161,7 +3161,7 @@ app.get("/commands", (req, res) => {
 
 app.get("/auth/discord", (req, res) => {
   const scopes = ["identify", "guilds"];
-  const authURL = `https:/discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
+  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
   res.redirect(authURL);
 });
 
@@ -3170,7 +3170,7 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
-    const tokenRes = await axios.post("https:/discord.com/api/oauth2/token", 
+    const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         client_secret: DISCORD_CLIENT_SECRET,
@@ -3187,18 +3187,18 @@ app.get("/auth/discord/callback", async (req, res) => {
     );
 
     const { access_token } = tokenRes.data;
-    const userRes = await axios.get("https:/discord.com/api/users/@me", {
+    const userRes = await axios.get("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${access_token}` }
     });
 
-    const guildsRes = await axios.get("https:/discord.com/api/users/@me/guilds", {
+    const guildsRes = await axios.get("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${access_token}` }
     });
 
-    / Filter to only servers where user is admin (has ADMINISTRATOR permission)
+    // Filter to only servers where user is admin (has ADMINISTRATOR permission)
     const adminGuilds = guildsRes.data.filter(guild => {
-      / Check if user has admin permissions in this guild
-      / Permissions are a bitmask, ADMINISTRATOR = 0x8
+      // Check if user has admin permissions in this guild
+      // Permissions are a bitmask, ADMINISTRATOR = 0x8
       const permissions = BigInt(guild.permissions || 0);
       const ADMINISTRATOR = BigInt(8);
       return (permissions & ADMINISTRATOR) === ADMINISTRATOR;
@@ -3222,7 +3222,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     console.error("❌ OAuth error:", err.response?.data || err.message);
     console.error("Expected Redirect URI:", REDIRECT_URI);
     const errorMessage = err.response?.data?.error_description || err.message || "Unknown error";
-    res.status(500).send(`<h2>Authentication Failed</h2><p>Error: ${errorMessage}</p><p><strong>Expected Redirect URI:</strong><br/>${REDIRECT_URI}</p><p>Make sure this URI is added to your Discord app's OAuth2 redirect URIs in the <a href="https:/discord.com/developers/applications" target="_blank">Discord Developer Portal</a>.</p>`);
+    res.status(500).send(`<h2>Authentication Failed</h2><p>Error: ${errorMessage}</p><p><strong>Expected Redirect URI:</strong><br/>${REDIRECT_URI}</p><p>Make sure this URI is added to your Discord app's OAuth2 redirect URIs in the <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a>.</p>`);
   }
 });
 
@@ -3233,22 +3233,22 @@ app.get("/logout", (req, res) => {
   });
 });
 
-/ ============== PUBLIC API ==============
+// ============== PUBLIC API ==============
 app.get("/api/config", (req, res) => {
-  / Serve basic config needed for frontend (like client ID)
+  // Serve basic config needed for frontend (like client ID)
   res.json({
     clientId: DISCORD_CLIENT_ID,
     botName: "SPIDEY BOT"
   });
 });
 
-/ ============== USER API ==============
+// ============== USER API ==============
 app.get("/api/user", (req, res) => {
   if (!req.session.authenticated) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
-  / Verify user still has admin guilds
+  // Verify user still has admin guilds
   if (!req.session.guilds || req.session.guilds.length === 0) {
     return res.status(403).json({ error: "No admin servers found" });
   }
@@ -3257,11 +3257,11 @@ app.get("/api/user", (req, res) => {
   let avatarUrl = null;
   let avatarProxyUrl = null;
   
-  / Generate Discord avatar URL (CDN direct)
+  // Generate Discord avatar URL (CDN direct)
   if (user.avatar) {
     const isAnimated = user.avatar.startsWith('a_');
     const ext = isAnimated ? 'gif' : 'png';
-    avatarUrl = `https:/cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
+    avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
     avatarProxyUrl = `/api/image?url=${encodeURIComponent(avatarUrl)}`;
   }
 
@@ -3276,7 +3276,7 @@ app.get("/api/user", (req, res) => {
   });
 });
 
-/ ============== IMAGE PROXY ENDPOINT (fallback for CDN images) ==============
+// ============== IMAGE PROXY ENDPOINT (fallback for CDN images) ==============
 app.get("/api/image", async (req, res) => {
   const imageUrl = req.query.url;
   if (!imageUrl) return res.status(400).json({ error: "No URL provided" });
@@ -3297,13 +3297,13 @@ app.get("/api/image", async (req, res) => {
   }
 });
 
-/ ============== SERVER MANAGEMENT PAGE ==============
+// ============== SERVER MANAGEMENT PAGE ==============
 app.get("/dashboard/server/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   res.redirect("/dashboard");
 });
 
-/ ============== API ENDPOINTS ==============
+// ============== API ENDPOINTS ==============
 app.post("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
 
@@ -3348,18 +3348,18 @@ app.post("/api/commands/:guildId", (req, res) => {
   res.json({ success: true });
 });
 
-/ ============== ADMIN PANEL CONFIG ENDPOINTS ==============
+// ============== ADMIN PANEL CONFIG ENDPOINTS ==============
 const adminConfigs = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
 
 adminConfigs.forEach(configName => {
-  / GET endpoint to load config
+  // GET endpoint to load config
   app.get(`/api/config/${configName}`, (req, res) => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
     const guildId = req.query.guildId;
     if (!guildId) return res.json({});
 
-    / Verify user has admin access to this guild
+    // Verify user has admin access to this guild
     const hasAccess = req.session.guilds?.some(g => g.id === guildId);
     if (!hasAccess) {
       console.warn(`⚠️ Unauthorized config access attempt: ${req.session.user?.username} tried to access guild ${guildId}`);
@@ -3371,14 +3371,14 @@ adminConfigs.forEach(configName => {
     res.json(data);
   });
 
-  / POST endpoint to save config
+  // POST endpoint to save config
   app.post(`/api/config/${configName}`, express.json(), (req, res) => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
     const guildId = req.query.guildId;
     if (!guildId) return res.json({ success: false, error: "No guild found" });
 
-    / Verify user has admin access to this guild
+    // Verify user has admin access to this guild
     const hasAccess = req.session.guilds?.some(g => g.id === guildId);
     if (!hasAccess) {
       console.warn(`⚠️ Unauthorized config save attempt: ${req.session.user?.username} tried to save config for guild ${guildId}`);
@@ -3396,7 +3396,7 @@ adminConfigs.forEach(configName => {
   });
 });
 
-/ ============== API: BOT CONFIG UPDATES ==============
+// ============== API: BOT CONFIG UPDATES ==============
 app.post("/api/bot-config/prefix", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   
@@ -3656,7 +3656,7 @@ app.post("/api/bot-config/messages", express.json(), (req, res) => {
   }
 });
 
-/ ============== API: GET ROLE CATEGORIES ==============
+// ============== API: GET ROLE CATEGORIES ==============
 app.get("/api/config/role-categories", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -3666,7 +3666,7 @@ app.get("/api/config/role-categories", (req, res) => {
 
   const data = config.guilds[guildId]?.roleCategories || {};
   
-  / Filter out empty category names and log what we're returning
+  // Filter out empty category names and log what we're returning
   const filtered = {};
   Object.keys(data).forEach(key => {
     if (key && key.trim() !== '') {
@@ -3678,7 +3678,7 @@ app.get("/api/config/role-categories", (req, res) => {
   res.json(filtered);
 });
 
-/ ============== API: SAVE ROLE CATEGORIES ==============
+// ============== API: SAVE ROLE CATEGORIES ==============
 app.post("/api/config/role-categories", express.json(), (req, res) => {
   try {
     if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
@@ -3712,13 +3712,13 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
       return res.status(400).json({ success: false, error: "At least one role is required" });
     }
     
-    / If renaming, delete old category first
+    // If renaming, delete old category first
     if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
       delete config.guilds[guildId].roleCategories[oldCategoryName];
       console.log(`🔄 Renamed category: ${oldCategoryName} → ${categoryName}`);
     }
 
-    / Save or update category with message and channel
+    // Save or update category with message and channel
     config.guilds[guildId].roleCategories[categoryName] = {
       roles: roles || [],
       channel: channel || '',
@@ -3734,7 +3734,7 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
   }
 });
 
-/ ============== API: POST CATEGORY TO DISCORD CHANNEL ==============
+// ============== API: POST CATEGORY TO DISCORD CHANNEL ==============
 app.post("/api/post-category", express.json(), async (req, res) => {
   try {
     if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
@@ -3755,7 +3755,7 @@ app.post("/api/post-category", express.json(), async (req, res) => {
       return res.status(404).json({ success: false, error: "Category not found" });
     }
 
-    / Get Discord guild and channel
+    // Get Discord guild and channel
     const guild = client.guilds.cache.get(guildId);
     if (!guild) {
       return res.status(400).json({ success: false, error: "Guild not found" });
@@ -3766,7 +3766,7 @@ app.post("/api/post-category", express.json(), async (req, res) => {
       return res.status(400).json({ success: false, error: "Channel not found or not sendable" });
     }
 
-    / Create embed with role selection buttons
+    // Create embed with role selection buttons
     const embed = new EmbedBuilder()
       .setColor("#00d4ff")
       .setTitle(`${categoryName}`)
@@ -3784,7 +3784,7 @@ app.post("/api/post-category", express.json(), async (req, res) => {
       );
     });
 
-    / Send message with buttons
+    // Send message with buttons
     const message = await channel.send({
       embeds: [embed],
       components: buttons.components.length > 0 ? [buttons] : []
@@ -3798,7 +3798,7 @@ app.post("/api/post-category", express.json(), async (req, res) => {
   }
 });
 
-/ ============== API: UPDATE CONFIG ==============
+// ============== API: UPDATE CONFIG ==============
 app.post("/api/config/:guildId", express.json(), (req, res) => {
   if (!req.session.user) return res.status(401).json({ success: false, error: "Not authenticated" });
 
@@ -3812,7 +3812,7 @@ app.post("/api/config/:guildId", express.json(), (req, res) => {
   res.json({ success: true, config: getGuildConfig(guildId) });
 });
 
-/ ============== REAL-TIME DASHBOARD API ==============
+// ============== REAL-TIME DASHBOARD API ==============
 app.get("/api/dashboard/stats", (req, res) => {
   const firstGuild = client.guilds.cache.first();
   if (!firstGuild) return res.json({ status: "offline", members: 0, commands: 44, activity: 0 });
@@ -3829,7 +3829,7 @@ app.get("/api/dashboard/stats", (req, res) => {
     members: firstGuild.memberCount,
     commands: 44,
     activity: totalMessages,
-    prefix: config.prefix || "/"
+    prefix: config.prefix || "//"
   });
 });
 
@@ -3997,19 +3997,19 @@ app.get("/api/dashboard/top-members", (req, res) => {
   res.json({ members });
 });
 
-/ ============== CREATOR ONLY APIS ==============
+// ============== CREATOR ONLY APIS ==============
 
-/ Get all servers the bot is in (filtered to only admin-accessible servers)
+// Get all servers the bot is in (filtered to only admin-accessible servers)
 app.get("/api/creator/servers", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  / Get user's guilds from Discord OAuth (includes permission info)
+  // Get user's guilds from Discord OAuth (includes permission info)
   const userGuilds = req.session.guilds || [];
 
-  / Discord admin permission flag is 8
+  // Discord admin permission flag is 8
   const ADMIN_PERMISSION = 8;
 
-  / Filter to only guilds where user is admin
+  // Filter to only guilds where user is admin
   const adminGuildIds = userGuilds
     .filter(guild => {
       const permissions = BigInt(guild.permissions);
@@ -4017,7 +4017,7 @@ app.get("/api/creator/servers", (req, res) => {
     })
     .map(guild => guild.id);
 
-  / Get bot's servers that user can admin
+  // Get bot's servers that user can admin
   const servers = client.guilds.cache
     .filter(guild => adminGuildIds.includes(guild.id))
     .map(guild => {
@@ -4026,7 +4026,7 @@ app.get("/api/creator/servers", (req, res) => {
       if (guild.icon) {
         const isAnimated = guild.icon.startsWith('a_');
         const ext = isAnimated ? 'gif' : 'png';
-        iconUrl = `https:/cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+        iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
         iconProxyUrl = `/api/image?url=${encodeURIComponent(iconUrl)}`;
       }
       return {
@@ -4041,7 +4041,7 @@ app.get("/api/creator/servers", (req, res) => {
   res.json({ servers });
 });
 
-/ Get all channels in a guild
+// Get all channels in a guild
 app.get("/api/channels/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -4061,7 +4061,7 @@ app.get("/api/channels/:guildId", (req, res) => {
   res.json({ channels });
 });
 
-/ Get all roles in a guild
+// Get all roles in a guild
 app.get("/api/roles/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -4081,7 +4081,7 @@ app.get("/api/roles/:guildId", (req, res) => {
   res.json({ roles });
 });
 
-/ Get creator settings (bot nickname, timezone)
+// Get creator settings (bot nickname, timezone)
 app.get("/api/creator/settings", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -4094,7 +4094,7 @@ app.get("/api/creator/settings", (req, res) => {
   res.json(creatorSettings);
 });
 
-/ Save creator settings
+// Save creator settings
 app.post("/api/creator/settings", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -4107,7 +4107,7 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
   res.json({ success: true, settings: config.creator });
 });
 
-/ Get member statistics by role for graphs (with caching to avoid rate limits)
+// Get member statistics by role for graphs (with caching to avoid rate limits)
 app.get("/api/member-stats/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -4115,14 +4115,14 @@ app.get("/api/member-stats/:guildId", (req, res) => {
   const guild = client.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
-  / Check cache first
+  // Check cache first
   const cached = getCachedMemberStats(guildId);
   if (cached) {
     console.log(`📊 Using cached member stats for guild ${guildId}`);
     return res.json(cached);
   }
 
-  / Use cached member data if available, otherwise fetch
+  // Use cached member data if available, otherwise fetch
   const memberCache = guild.members.cache;
   const stats = {
     total: memberCache.size,
@@ -4134,10 +4134,10 @@ app.get("/api/member-stats/:guildId", (req, res) => {
     roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
   };
 
-  / Cache the stats
+  // Cache the stats
   setCachedMemberStats(guildId, stats);
   
-  / Fetch fresh data in background (don't wait for it)
+  // Fetch fresh data in background (don't wait for it)
   guild.members.fetch().then(members => {
     const freshStats = {
       total: members.size,
@@ -4157,7 +4157,7 @@ app.get("/api/member-stats/:guildId", (req, res) => {
   res.json(stats);
 });
 
-/ Get member events (joins, leaves, boosts)
+// Get member events (joins, leaves, boosts)
 app.get("/api/member-events/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -4168,7 +4168,7 @@ app.get("/api/member-events/:guildId", (req, res) => {
   res.json({ events });
 });
 
-/ ============== QUICK SETUP ENDPOINTS ==============
+// ============== QUICK SETUP ENDPOINTS ==============
 app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -4178,7 +4178,7 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
   
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
-  / Get the default text channel to post messages
+  // Get the default text channel to post messages
   const channel = guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(guild.members.me).has('SendMessages'));
   if (!channel) return res.status(400).json({ error: "No suitable channel found to post message" });
 
@@ -4259,14 +4259,14 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
         return res.json({ success: true, message: "Remove roles message posted to #" + channel.name });
 
       case 'levelRoles':
-        / Create 100 level roles with gradient colors
+        // Create 100 level roles with gradient colors
         const guildConfig = loadConfig().guilds[guildId] || {};
         const levelRoles = {};
         let created = 0;
 
         const botRole = guild.members.me?.roles.highest;
         
-        / Color gradient function
+        // Color gradient function
         const colorGradient = (level) => {
           const hue = (level / 100) * 360;
           const h = hue / 60;
@@ -4282,7 +4282,7 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
           return (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b);
         };
 
-        / Numbered emoji function
+        // Numbered emoji function
         const getNumberedEmoji = (num) => {
           const numbers = ['0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣'];
           if (num < 10) return numbers[num];
@@ -4291,7 +4291,7 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
           return numbers[tens] + numbers[ones];
         };
 
-        / Post initial status message
+        // Post initial status message
         const levelStatusEmbed = new EmbedBuilder()
           .setColor(0x00D4FF)
           .setTitle("🎖️ Creating Level Roles (1-100)")
@@ -4299,7 +4299,7 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
         
         channel.send({ embeds: [levelStatusEmbed] }).catch(() => {});
 
-        / Create roles asynchronously
+        // Create roles asynchronously
         (async () => {
           try {
             for (let level = 1; level <= 100; level++) {
@@ -4324,13 +4324,13 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
               }
             }
 
-            / Save to config
+            // Save to config
             const config = loadConfig();
             if (!config.guilds[guildId]) config.guilds[guildId] = {};
             config.guilds[guildId].levelRoles = levelRoles;
             fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
-            / Post completion message
+            // Post completion message
             const completedEmbed = new EmbedBuilder()
               .setColor(0x00D4FF)
               .setTitle("✅ Level Roles Created")
@@ -4363,5 +4363,5 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`Web server running on port ${PORT}`);
 });
 
-/ ============== LOGIN ==============
+// ============== LOGIN ==============
 client.login(token);
