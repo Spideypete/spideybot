@@ -714,6 +714,7 @@ client.on("messageCreate", async (msg) => {
     catData.banner = bannerUrl;
     categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "🎬", msg.author.username, `set banner for category: ${categoryName}`);
     return msg.reply(`✅ Banner set for **${categoryName}**!\n\n*Use \`/setup-category ${categoryName}\` to see it in action!*`);
   }
 
@@ -1281,6 +1282,7 @@ client.on("messageCreate", async (msg) => {
     const channel = msg.mentions.channels.first();
     if (!channel) return msg.reply("Mention a channel: /config-welcome-channel #channel");
     updateGuildConfig(msg.guild.id, { welcomeChannelId: channel.id });
+    addActivity(msg.guild.id, "🎉", msg.author.username, `set welcome channel to ${channel.name}`);
     return msg.reply(`✅ Welcome channel set to ${channel}`);
   }
 
@@ -1291,6 +1293,7 @@ client.on("messageCreate", async (msg) => {
     const welcomeMsg = msg.content.slice(26).trim();
     if (!welcomeMsg) return msg.reply("Provide a message: /config-welcome-message Your message here\n\n**Available placeholders:**\n`{user}` - Member mention\n`{username}` - Username\n`{displayname}` - Display name\n`{server}` - Server name\n`{membercount}` - Total member count");
     updateGuildConfig(msg.guild.id, { welcomeMessage: welcomeMsg });
+    addActivity(msg.guild.id, "📝", msg.author.username, `updated welcome message`);
     return msg.reply(`✅ Welcome message updated!\n\n**Available placeholders:**\n\`{user}\` - ${msg.member.toString()}\n\`{username}\` - ${msg.author.username}\n\`{displayname}\` - ${msg.member.displayName}\n\`{server}\` - ${msg.guild.name}\n\`{membercount}\` - ${msg.guild.memberCount}`);
   }
 
@@ -1307,6 +1310,7 @@ client.on("messageCreate", async (msg) => {
     if (config.gameRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.gameRoles.push({ name: roleName, id: roleId });
     updateGuildConfig(msg.guild.id, { gameRoles: config.gameRoles });
+    addActivity(msg.guild.id, "🎮", msg.author.username, `added game role: ${roleName}`);
     return msg.reply(`✅ Added game role: **${roleName}** (ID: ${roleId})`);
   }
 
@@ -1322,6 +1326,7 @@ client.on("messageCreate", async (msg) => {
     if (index === -1) return msg.reply("❌ Role not found!");
     config.gameRoles.splice(index, 1);
     updateGuildConfig(msg.guild.id, { gameRoles: config.gameRoles });
+    addActivity(msg.guild.id, "🗑️", msg.author.username, `removed game role: ${roleName}`);
     return msg.reply(`✅ Removed game role: **${roleName}**`);
   }
 
@@ -1338,6 +1343,7 @@ client.on("messageCreate", async (msg) => {
     if (config.watchPartyRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.watchPartyRoles.push({ name: roleName, id: roleId });
     updateGuildConfig(msg.guild.id, { watchPartyRoles: config.watchPartyRoles });
+    addActivity(msg.guild.id, "🎬", msg.author.username, `added watch party role: ${roleName}`);
     return msg.reply(`✅ Added watch party role: **${roleName}** (ID: ${roleId})`);
   }
 
@@ -1353,6 +1359,7 @@ client.on("messageCreate", async (msg) => {
     if (index === -1) return msg.reply("❌ Role not found!");
     config.watchPartyRoles.splice(index, 1);
     updateGuildConfig(msg.guild.id, { watchPartyRoles: config.watchPartyRoles });
+    addActivity(msg.guild.id, "🗑️", msg.author.username, `removed watch party role: ${roleName}`);
     return msg.reply(`✅ Removed watch party role: **${roleName}**`);
   }
 
@@ -1369,6 +1376,7 @@ client.on("messageCreate", async (msg) => {
     if (config.platformRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.platformRoles.push({ name: roleName, id: roleId });
     updateGuildConfig(msg.guild.id, { platformRoles: config.platformRoles });
+    addActivity(msg.guild.id, "💻", msg.author.username, `added platform role: ${roleName}`);
     return msg.reply(`✅ Added platform role: **${roleName}** (ID: ${roleId})`);
   }
 
@@ -1426,6 +1434,7 @@ client.on("messageCreate", async (msg) => {
     if (index === -1) return msg.reply("❌ Role not found!");
     config.platformRoles.splice(index, 1);
     updateGuildConfig(msg.guild.id, { platformRoles: config.platformRoles });
+    addActivity(msg.guild.id, "🗑️", msg.author.username, `removed platform role: ${roleName}`);
     return msg.reply(`✅ Removed platform role: **${roleName}**`);
   }
 
