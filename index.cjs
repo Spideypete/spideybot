@@ -8,7 +8,10 @@ const {
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionFlagsBits
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+  REST,
+  Routes
 } = require("discord.js");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
@@ -266,12 +269,37 @@ player.on("connectionError", (queue, error) => {
 });
 
 // ============== READY EVENT ==============
-client.once("ready", () => {
+client.once("ready", async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
   });
+
+  // Register slash commands
+  try {
+    const commands = [
+      new SlashCommandBuilder().setName("help").setDescription("Show all available commands"),
+      new SlashCommandBuilder().setName("kick").setDescription("Kick a member from the server").addUserOption(o => o.setName("user").setDescription("Member to kick").setRequired(true)).addStringOption(o => o.setName("reason").setDescription("Reason for kick").setRequired(false)),
+      new SlashCommandBuilder().setName("ban").setDescription("Ban a member from the server").addUserOption(o => o.setName("user").setDescription("Member to ban").setRequired(true)).addStringOption(o => o.setName("reason").setDescription("Reason for ban").setRequired(false)),
+      new SlashCommandBuilder().setName("warn").setDescription("Warn a member").addUserOption(o => o.setName("user").setDescription("Member to warn").setRequired(true)).addStringOption(o => o.setName("reason").setDescription("Reason for warning").setRequired(false)),
+      new SlashCommandBuilder().setName("mute").setDescription("Mute a member for 1 hour").addUserOption(o => o.setName("user").setDescription("Member to mute").setRequired(true)),
+      new SlashCommandBuilder().setName("unmute").setDescription("Unmute a member").addUserOption(o => o.setName("user").setDescription("Member to unmute").setRequired(true)),
+      new SlashCommandBuilder().setName("balance").setDescription("Check your balance"),
+      new SlashCommandBuilder().setName("pay").setDescription("Send coins to another user").addUserOption(o => o.setName("user").setDescription("User to pay").setRequired(true)).addIntegerOption(o => o.setName("amount").setDescription("Amount to send").setRequired(true)),
+      new SlashCommandBuilder().setName("play").setDescription("Play music from YouTube").addStringOption(o => o.setName("query").setDescription("Song name or URL").setRequired(true)),
+      new SlashCommandBuilder().setName("stop").setDescription("Stop the music player"),
+      new SlashCommandBuilder().setName("skip").setDescription("Skip to next song"),
+      new SlashCommandBuilder().setName("queue").setDescription("Show music queue")
+    ].map(cmd => cmd.toJSON());
+
+    const rest = new REST({ version: '10' }).setToken(token);
+    console.log(`📝 Registering ${commands.length} slash commands...`);
+    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    console.log(`✅ Registered ${data.length} slash commands!`);
+  } catch (error) {
+    console.error("Error registering commands:", error);
+  }
 });
 
 // ============== ACTIVITY LOGGING ==============
@@ -2264,6 +2292,121 @@ client.on("messageCreate", async (msg) => {
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
 client.on("interactionCreate", async (interaction) => {
+  // Handle slash commands
+  if (interaction.isChatInputCommand()) {
+    const guildConfig = getGuildConfig(interaction.guild.id);
+    const cmdName = interaction.commandName;
+    const user = interaction.options.getUser("user");
+    const reason = interaction.options.getString("reason") || "No reason";
+
+    // Help command
+    if (cmdName === "help") {
+      const embed = new EmbedBuilder()
+        .setColor(0x00D4FF)
+        .setTitle("🎯 SPIDEY BOT COMMANDS")
+        .addFields(
+          { name: "⚡ Moderation (6)", value: "/kick, /ban, /warn, /mute, /unmute, /warnings" },
+          { name: "💰 Economy (2)", value: "/balance, /pay" },
+          { name: "🎵 Music (4)", value: "/play, /stop, /skip, /queue" },
+          { name: "📋 Info", value: "/help, /adminhelp" }
+        );
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    // Moderation commands
+    if (cmdName === "kick") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) return interaction.reply({ content: "❌ You need moderation permissions!", ephemeral: true });
+      await user.send(`You were kicked from ${interaction.guild.name} for: ${reason}`).catch(() => null);
+      await interaction.guild.members.ban(user, { reason });
+      logModAction(interaction.guild, "KICK", interaction.user, user.tag, reason);
+      return interaction.reply(`✅ Kicked ${user.tag} - ${reason}`);
+    }
+
+    if (cmdName === "ban") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) return interaction.reply({ content: "❌ You need ban permissions!", ephemeral: true });
+      await user.send(`You were banned from ${interaction.guild.name} for: ${reason}`).catch(() => null);
+      await interaction.guild.members.ban(user, { reason });
+      logModAction(interaction.guild, "BAN", interaction.user, user.tag, reason);
+      return interaction.reply(`✅ Banned ${user.tag} - ${reason}`);
+    }
+
+    if (cmdName === "warn") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) return interaction.reply({ content: "❌ You need moderation permissions!", ephemeral: true });
+      const warnings = guildConfig.warnings || {};
+      if (!warnings[user.id]) warnings[user.id] = [];
+      warnings[user.id].push({ reason, warnedBy: interaction.user.tag, timestamp: new Date() });
+      updateGuildConfig(interaction.guild.id, { warnings });
+      logModAction(interaction.guild, "WARN", interaction.user, user.tag, reason);
+      return interaction.reply(`⚠️ Warned ${user.tag} (${warnings[user.id].length} warnings) - ${reason}`);
+    }
+
+    if (cmdName === "mute") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) return interaction.reply({ content: "❌ You need moderation permissions!", ephemeral: true });
+      const oneHour = 3600000;
+      await interaction.guild.members.cache.get(user.id).timeout(oneHour, reason);
+      logModAction(interaction.guild, "MUTE", interaction.user, user.tag, "1 hour timeout");
+      return interaction.reply(`🔇 Muted ${user.tag} for 1 hour`);
+    }
+
+    if (cmdName === "unmute") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) return interaction.reply({ content: "❌ You need moderation permissions!", ephemeral: true });
+      await interaction.guild.members.cache.get(user.id).timeout(null);
+      logModAction(interaction.guild, "UNMUTE", interaction.user, user.tag, "Timeout removed");
+      return interaction.reply(`🔊 Unmuted ${user.tag}`);
+    }
+
+    // Economy commands
+    if (cmdName === "balance") {
+      const economy = guildConfig.economy || {};
+      const balance = economy[interaction.user.id] || 0;
+      const embed = new EmbedBuilder().setColor(0x00D4FF).setTitle("💰 Your Balance").setDescription(`**${balance}** coins`);
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    if (cmdName === "pay") {
+      const amount = interaction.options.getInteger("amount");
+      const economy = guildConfig.economy || {};
+      const senderBalance = economy[interaction.user.id] || 0;
+      if (senderBalance < amount) return interaction.reply({ content: "❌ Insufficient funds!", ephemeral: true });
+      economy[interaction.user.id] = (economy[interaction.user.id] || 0) - amount;
+      economy[user.id] = (economy[user.id] || 0) + amount;
+      updateGuildConfig(interaction.guild.id, { economy });
+      return interaction.reply(`✅ Sent ${amount} coins to ${user.tag}`);
+    }
+
+    // Music commands
+    if (cmdName === "play") {
+      const query = interaction.options.getString("query");
+      const queue = player.nodes.create(interaction.guild, { metadata: interaction.channel });
+      if (!queue.connection) await queue.connect(interaction.member.voice.channel);
+      const track = await player.search(query, { requestedBy: interaction.user }).then(r => r.tracks[0]);
+      if (!track) return interaction.reply({ content: "❌ No results found!", ephemeral: true });
+      queue.play(track);
+      return interaction.reply(`🎵 Now playing: **${track.title}**`);
+    }
+
+    if (cmdName === "stop") {
+      const queue = player.nodes.get(interaction.guild);
+      if (!queue || !queue.isPlaying()) return interaction.reply({ content: "❌ No music playing!", ephemeral: true });
+      queue.delete();
+      return interaction.reply("⏹️ Music stopped");
+    }
+
+    if (cmdName === "skip") {
+      const queue = player.nodes.get(interaction.guild);
+      if (!queue || !queue.isPlaying()) return interaction.reply({ content: "❌ No music playing!", ephemeral: true });
+      queue.node.skip();
+      return interaction.reply("⏭️ Skipped to next song");
+    }
+
+    if (cmdName === "queue") {
+      const queue = player.nodes.get(interaction.guild);
+      if (!queue || queue.tracks.length === 0) return interaction.reply({ content: "❌ Queue is empty!", ephemeral: true });
+      const tracks = queue.tracks.slice(0, 10).map((t, i) => `${i + 1}. ${t.title}`).join("\n");
+      return interaction.reply({ content: `🎵 Queue:\n${tracks}`, ephemeral: true });
+    }
+  }
+
   const guildConfig = getGuildConfig(interaction.guild.id);
   autoMigrateRoles(interaction.guild.id, interaction.guild, guildConfig);
 
