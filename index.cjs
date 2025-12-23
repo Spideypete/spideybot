@@ -8,7 +8,10 @@ const {
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionFlagsBits
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+  REST,
+  Routes
 } = require("discord.js");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
@@ -266,12 +269,37 @@ player.on("connectionError", (queue, error) => {
 });
 
 // ============== READY EVENT ==============
-client.once("ready", () => {
+client.once("ready", async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
   });
+
+  // Register slash commands
+  try {
+    const commands = [
+      new SlashCommandBuilder().setName("help").setDescription("Show all available commands"),
+      new SlashCommandBuilder().setName("kick").setDescription("Kick a member from the server").addUserOption(o => o.setName("user").setDescription("Member to kick").setRequired(true)).addStringOption(o => o.setName("reason").setDescription("Reason for kick").setRequired(false)),
+      new SlashCommandBuilder().setName("ban").setDescription("Ban a member from the server").addUserOption(o => o.setName("user").setDescription("Member to ban").setRequired(true)).addStringOption(o => o.setName("reason").setDescription("Reason for ban").setRequired(false)),
+      new SlashCommandBuilder().setName("warn").setDescription("Warn a member").addUserOption(o => o.setName("user").setDescription("Member to warn").setRequired(true)).addStringOption(o => o.setName("reason").setDescription("Reason for warning").setRequired(false)),
+      new SlashCommandBuilder().setName("mute").setDescription("Mute a member for 1 hour").addUserOption(o => o.setName("user").setDescription("Member to mute").setRequired(true)),
+      new SlashCommandBuilder().setName("unmute").setDescription("Unmute a member").addUserOption(o => o.setName("user").setDescription("Member to unmute").setRequired(true)),
+      new SlashCommandBuilder().setName("balance").setDescription("Check your balance"),
+      new SlashCommandBuilder().setName("pay").setDescription("Send coins to another user").addUserOption(o => o.setName("user").setDescription("User to pay").setRequired(true)).addIntegerOption(o => o.setName("amount").setDescription("Amount to send").setRequired(true)),
+      new SlashCommandBuilder().setName("play").setDescription("Play music from YouTube").addStringOption(o => o.setName("query").setDescription("Song name or URL").setRequired(true)),
+      new SlashCommandBuilder().setName("stop").setDescription("Stop the music player"),
+      new SlashCommandBuilder().setName("skip").setDescription("Skip to next song"),
+      new SlashCommandBuilder().setName("queue").setDescription("Show music queue")
+    ].map(cmd => cmd.toJSON());
+
+    const rest = new REST({ version: '10' }).setToken(token);
+    console.log(`📝 Registering ${commands.length} slash commands...`);
+    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    console.log(`✅ Registered ${data.length} slash commands!`);
+  } catch (error) {
+    console.error("Error registering commands:", error);
+  }
 });
 
 // ============== ACTIVITY LOGGING ==============
@@ -714,6 +742,7 @@ client.on("messageCreate", async (msg) => {
     catData.banner = bannerUrl;
     categories[categoryName] = catData;
     updateGuildConfig(msg.guild.id, { roleCategories: categories });
+    addActivity(msg.guild.id, "🎬", msg.author.username, `set banner for category: ${categoryName}`);
     return msg.reply(`✅ Banner set for **${categoryName}**!\n\n*Use \`/setup-category ${categoryName}\` to see it in action!*`);
   }
 
@@ -1105,11 +1134,11 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("🎵 MUSIC PLAYER (5 commands)")
       .addFields(
-        { name: "🎶 //play [song/url]", value: "Search & play from YouTube", inline: true },
-        { name: "📊 //queue", value: "Show next 10 songs", inline: true },
-        { name: "🔄 //loop", value: "Toggle queue repeat", inline: true },
-        { name: "🔀 //shuffle", value: "Randomize the queue", inline: true },
-        { name: "🔊 //volume [0-200]", value: "Adjust volume level", inline: true },
+        { name: "🎶 /play [song/url]", value: "Search & play from YouTube", inline: true },
+        { name: "📊 /queue", value: "Show next 10 songs", inline: true },
+        { name: "🔄 /loop", value: "Toggle queue repeat", inline: true },
+        { name: "🔀 /shuffle", value: "Randomize the queue", inline: true },
+        { name: "🔊 /volume [0-200]", value: "Adjust volume level", inline: true },
         { name: "🎛️ Button Controls", value: "⏮ Back | ⏸ Pause | ▶ Resume | ⏭ Skip | ⏹ Stop", inline: false }
       );
 
@@ -1117,29 +1146,29 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("📞 UTILITIES (5 commands)")
       .addFields(
-        { name: "✅ //remove-roles", value: "Remove any roles you have", inline: true },
-        { name: "🏓 //ping", value: "Check bot status & stats", inline: true },
-        { name: "👑 //adminhelp", value: "View all admin commands (admins only)", inline: true },
-        { name: "👨‍💻 //developers", value: "Meet the dev team & join Discord", inline: true },
-        { name: "🎫 //ticket", value: "Create a support ticket", inline: true }
+        { name: "✅ /remove-roles", value: "Remove any roles you have", inline: true },
+        { name: "🏓 /ping", value: "Check bot status & stats", inline: true },
+        { name: "👑 /adminhelp", value: "View all admin commands (admins only)", inline: true },
+        { name: "👨‍💻 /developers", value: "Meet the dev team & join Discord", inline: true },
+        { name: "🎫 /ticket", value: "Create a support ticket", inline: true }
       );
 
     const economyEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("💰 ECONOMY (4 commands)")
       .addFields(
-        { name: "💰 //balance", value: "Check your coin balance", inline: true },
-        { name: "📅 //daily", value: "Claim 100 coins daily", inline: true },
-        { name: "💼 //work", value: "Work for coins (5 min cooldown)", inline: true },
-        { name: "🔄 //transfer @user [amount]", value: "Send coins to others", inline: true }
+        { name: "💰 /balance", value: "Check your coin balance", inline: true },
+        { name: "📅 /daily", value: "Claim 100 coins daily", inline: true },
+        { name: "💼 /work", value: "Work for coins (5 min cooldown)", inline: true },
+        { name: "🔄 /transfer @user [amount]", value: "Send coins to others", inline: true }
       );
 
     const levelEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("📊 LEVELING (3 commands)")
       .addFields(
-        { name: "📈 //level", value: "Check your level & XP", inline: true },
-        { name: "🏆 //xpleaderboard", value: "View top members by level", inline: true },
+        { name: "📈 /level", value: "Check your level & XP", inline: true },
+        { name: "🏆 /xpleaderboard", value: "View top members by level", inline: true },
         { name: "💡 Passive", value: "Gain 10-30 XP per minute chatting!", inline: true }
       );
 
@@ -1147,13 +1176,13 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("🎮 FUN GAMES (5 commands)")
       .addFields(
-        { name: "🎱 //8ball", value: "Ask the magic 8ball", inline: true },
-        { name: "🎲 //dice", value: "Roll a dice (1-6)", inline: true },
-        { name: "🪙 //coin", value: "Flip a coin", inline: true },
-        { name: "🧠 //trivia", value: "Random trivia question", inline: true },
-        { name: "✂️ //rps [rock/paper/scissors]", value: "Rock paper scissors", inline: true }
+        { name: "🎱 /8ball", value: "Ask the magic 8ball", inline: true },
+        { name: "🎲 /dice", value: "Roll a dice (1-6)", inline: true },
+        { name: "🪙 /coin", value: "Flip a coin", inline: true },
+        { name: "🧠 /trivia", value: "Random trivia question", inline: true },
+        { name: "✂️ /rps [rock/paper/scissors]", value: "Rock paper scissors", inline: true }
       )
-      .setFooter({ text: "💡 Admins: Use //adminhelp for full command list" });
+      .setFooter({ text: "💡 Admins: Use /adminhelp for full command list" });
 
     return msg.reply({ 
       embeds: [mainEmbed, musicEmbed, utilityEmbed, economyEmbed, levelEmbed, funEmbed],
@@ -1179,21 +1208,21 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("🎭 ROLE CATEGORIES (7 commands)")
       .addFields(
-        { name: "📌 //create-category [name]", value: "Create a custom role category", inline: true },
-        { name: "➕ //add-role [cat] [name] [ID]", value: "Add role to category", inline: true },
-        { name: "➖ //remove-role [cat] [name]", value: "Remove role from category", inline: true },
-        { name: "🎬 //set-category-banner [cat] [url]", value: "Add GIF banner", inline: true },
-        { name: "🔘 //setup-category [name]", value: "Post selector button with banner", inline: true },
-        { name: "📋 //list-roles", value: "View all categories & roles", inline: true },
-        { name: "🗑️ //delete-category [name]", value: "Delete entire category", inline: true }
+        { name: "📌 /create-category [name]", value: "Create a custom role category", inline: true },
+        { name: "➕ /add-role [cat] [name] [ID]", value: "Add role to category", inline: true },
+        { name: "➖ /remove-role [cat] [name]", value: "Remove role from category", inline: true },
+        { name: "🎬 /set-category-banner [cat] [url]", value: "Add GIF banner", inline: true },
+        { name: "🔘 /setup-category [name]", value: "Post selector button with banner", inline: true },
+        { name: "📋 /list-roles", value: "View all categories & roles", inline: true },
+        { name: "🗑️ /delete-category [name]", value: "Delete entire category", inline: true }
       );
 
     const adminWelcomeEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("👋 WELCOME MESSAGES (2 commands)")
       .addFields(
-        { name: "💬 //config-welcome-channel #channel", value: "Set welcome message channel", inline: true },
-        { name: "✍️ //config-welcome-message [text]", value: "Create custom welcome message", inline: true },
+        { name: "💬 /config-welcome-channel #channel", value: "Set welcome message channel", inline: true },
+        { name: "✍️ /config-welcome-message [text]", value: "Create custom welcome message", inline: true },
         { name: "📝 Placeholders", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false }
       );
 
@@ -1201,26 +1230,26 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("⚙️ CONFIGURATION (2 commands)")
       .addFields(
-        { name: "🔤 //set-prefix [prefix]", value: "Change command prefix", inline: true },
-        { name: "📝 //config-modlog #channel", value: "Set moderation log channel", inline: true }
+        { name: "🔤 /set-prefix [prefix]", value: "Change command prefix", inline: true },
+        { name: "📝 /config-modlog #channel", value: "Set moderation log channel", inline: true }
       );
 
     const adminSocialEmbed = new EmbedBuilder()
       .setColor(0xFF1493)
       .setTitle("📱 SOCIAL MEDIA (12 commands + API)")
       .addFields(
-        { name: "🎮 //add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
-        { name: "➖ //remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
-        { name: "📋 //list-twitch-users", value: "View monitored Twitch creators", inline: true },
-        { name: "📢 //config-twitch-channel #ch", value: "Set Twitch alert channel", inline: true },
-        { name: "🎵 //add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
-        { name: "➖ //remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
-        { name: "📋 //list-tiktok-users", value: "View monitored TikTok creators", inline: true },
-        { name: "📢 //config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
-        { name: "🎮 //add-kick-user [user]", value: "Add Kick streamer to monitor", inline: true },
-        { name: "➖ //remove-kick-user [user]", value: "Remove Kick streamer", inline: true },
-        { name: "📋 //list-kick-users", value: "View monitored Kick streamers", inline: true },
-        { name: "📢 //config-kick-channel #ch", value: "Set Kick alert channel", inline: true },
+        { name: "🎮 /add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
+        { name: "➖ /remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
+        { name: "📋 /list-twitch-users", value: "View monitored Twitch creators", inline: true },
+        { name: "📢 /config-twitch-channel #ch", value: "Set Twitch alert channel", inline: true },
+        { name: "🎵 /add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
+        { name: "➖ /remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
+        { name: "📋 /list-tiktok-users", value: "View monitored TikTok creators", inline: true },
+        { name: "📢 /config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
+        { name: "🎮 /add-kick-user [user]", value: "Add Kick streamer to monitor", inline: true },
+        { name: "➖ /remove-kick-user [user]", value: "Remove Kick streamer", inline: true },
+        { name: "📋 /list-kick-users", value: "View monitored Kick streamers", inline: true },
+        { name: "📢 /config-kick-channel #ch", value: "Set Kick alert channel", inline: true },
         { name: "🌐 WEB API", value: "Admin dashboard at `/admin` • 3 REST endpoints", inline: false }
       );
 
@@ -1228,16 +1257,16 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("💰 ECONOMY MANAGEMENT (3 commands)")
       .addFields(
-        { name: "➕ //addmoney @user [amount]", value: "Give coins to member", inline: true },
-        { name: "➖ //removemoney @user [amount]", value: "Remove coins from member", inline: true },
-        { name: "🏆 //leaderboard", value: "View top richest members", inline: true }
+        { name: "➕ /addmoney @user [amount]", value: "Give coins to member", inline: true },
+        { name: "➖ /removemoney @user [amount]", value: "Remove coins from member", inline: true },
+        { name: "🏆 /leaderboard", value: "View top richest members", inline: true }
       );
 
     const adminLevelEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("📊 LEVEL ROLES (1 command)")
       .addFields(
-        { name: "🎖️ //setup-level-roles", value: "Create 100 auto-assigned level roles (1-100) with emoji badges", inline: false },
+        { name: "🎖️ /setup-level-roles", value: "Create 100 auto-assigned level roles (1-100) with emoji badges", inline: false },
         { name: "💡 How it works", value: "Members earn XP by chatting → Auto-get level role → Badge shows next to their name! Level badges have gradient colors", inline: false }
       );
 
@@ -1245,25 +1274,25 @@ client.on("messageCreate", async (msg) => {
       .setColor(0x00D4FF)
       .setTitle("🛡️ PROTECTION & TOOLS (7 commands)")
       .addFields(
-        { name: "🔗 //link-filter [on/off]", value: "Toggle link filtering", inline: true },
-        { name: "🎫 //ticket-setup #channel", value: "Enable ticket system", inline: true },
-        { name: "🎫 //ticket", value: "Create support ticket", inline: true },
-        { name: "🔒 //close-ticket", value: "Close ticket channel", inline: true },
-        { name: "➕ //addcmd [cmd] | [response]", value: "Create custom command", inline: true },
-        { name: "➖ //delcmd [command]", value: "Delete custom command", inline: true },
-        { name: "📂 Custom Commands", value: "Use //[yourcommand] to trigger", inline: true }
+        { name: "🔗 /link-filter [on/off]", value: "Toggle link filtering", inline: true },
+        { name: "🎫 /ticket-setup #channel", value: "Enable ticket system", inline: true },
+        { name: "🎫 /ticket", value: "Create support ticket", inline: true },
+        { name: "🔒 /close-ticket", value: "Close ticket channel", inline: true },
+        { name: "➕ /addcmd [cmd] | [response]", value: "Create custom command", inline: true },
+        { name: "➖ /delcmd [command]", value: "Delete custom command", inline: true },
+        { name: "📂 Custom Commands", value: "Use /[yourcommand] to trigger", inline: true }
       );
 
     const adminModEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
       .setTitle("🛡️ MODERATION (6 commands)")
       .addFields(
-        { name: "👢 //kick @user [reason]", value: "Remove member from server", inline: true },
-        { name: "🔨 //ban @user [reason]", value: "Permanently ban member", inline: true },
-        { name: "⚠️ //warn @user [reason]", value: "Warn member (tracked!)", inline: true },
-        { name: "🔇 //mute @user", value: "Timeout for 1 hour", inline: true },
-        { name: "🔊 //unmute @user", value: "Remove timeout", inline: true },
-        { name: "📋 //warnings @user", value: "View member's warning history", inline: true }
+        { name: "👢 /kick @user [reason]", value: "Remove member from server", inline: true },
+        { name: "🔨 /ban @user [reason]", value: "Permanently ban member", inline: true },
+        { name: "⚠️ /warn @user [reason]", value: "Warn member (tracked!)", inline: true },
+        { name: "🔇 /mute @user", value: "Timeout for 1 hour", inline: true },
+        { name: "🔊 /unmute @user", value: "Remove timeout", inline: true },
+        { name: "📋 /warnings @user", value: "View member's warning history", inline: true }
       )
       .setFooter({ text: "💡 All actions are auto-logged to your modlog channel" });
 
@@ -1279,8 +1308,9 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can configure the bot!");
     }
     const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Mention a channel: //config-welcome-channel #channel");
+    if (!channel) return msg.reply("Mention a channel: /config-welcome-channel #channel");
     updateGuildConfig(msg.guild.id, { welcomeChannelId: channel.id });
+    addActivity(msg.guild.id, "🎉", msg.author.username, `set welcome channel to ${channel.name}`);
     return msg.reply(`✅ Welcome channel set to ${channel}`);
   }
 
@@ -1289,8 +1319,9 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can configure the bot!");
     }
     const welcomeMsg = msg.content.slice(26).trim();
-    if (!welcomeMsg) return msg.reply("Provide a message: //config-welcome-message Your message here\n\n**Available placeholders:**\n`{user}` - Member mention\n`{username}` - Username\n`{displayname}` - Display name\n`{server}` - Server name\n`{membercount}` - Total member count");
+    if (!welcomeMsg) return msg.reply("Provide a message: /config-welcome-message Your message here\n\n**Available placeholders:**\n`{user}` - Member mention\n`{username}` - Username\n`{displayname}` - Display name\n`{server}` - Server name\n`{membercount}` - Total member count");
     updateGuildConfig(msg.guild.id, { welcomeMessage: welcomeMsg });
+    addActivity(msg.guild.id, "📝", msg.author.username, `updated welcome message`);
     return msg.reply(`✅ Welcome message updated!\n\n**Available placeholders:**\n\`{user}\` - ${msg.member.toString()}\n\`{username}\` - ${msg.author.username}\n\`{displayname}\` - ${msg.member.displayName}\n\`{server}\` - ${msg.guild.name}\n\`{membercount}\` - ${msg.guild.memberCount}`);
   }
 
@@ -1307,6 +1338,7 @@ client.on("messageCreate", async (msg) => {
     if (config.gameRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.gameRoles.push({ name: roleName, id: roleId });
     updateGuildConfig(msg.guild.id, { gameRoles: config.gameRoles });
+    addActivity(msg.guild.id, "🎮", msg.author.username, `added game role: ${roleName}`);
     return msg.reply(`✅ Added game role: **${roleName}** (ID: ${roleId})`);
   }
 
@@ -1322,6 +1354,7 @@ client.on("messageCreate", async (msg) => {
     if (index === -1) return msg.reply("❌ Role not found!");
     config.gameRoles.splice(index, 1);
     updateGuildConfig(msg.guild.id, { gameRoles: config.gameRoles });
+    addActivity(msg.guild.id, "🗑️", msg.author.username, `removed game role: ${roleName}`);
     return msg.reply(`✅ Removed game role: **${roleName}**`);
   }
 
@@ -1338,6 +1371,7 @@ client.on("messageCreate", async (msg) => {
     if (config.watchPartyRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.watchPartyRoles.push({ name: roleName, id: roleId });
     updateGuildConfig(msg.guild.id, { watchPartyRoles: config.watchPartyRoles });
+    addActivity(msg.guild.id, "🎬", msg.author.username, `added watch party role: ${roleName}`);
     return msg.reply(`✅ Added watch party role: **${roleName}** (ID: ${roleId})`);
   }
 
@@ -1353,6 +1387,7 @@ client.on("messageCreate", async (msg) => {
     if (index === -1) return msg.reply("❌ Role not found!");
     config.watchPartyRoles.splice(index, 1);
     updateGuildConfig(msg.guild.id, { watchPartyRoles: config.watchPartyRoles });
+    addActivity(msg.guild.id, "🗑️", msg.author.username, `removed watch party role: ${roleName}`);
     return msg.reply(`✅ Removed watch party role: **${roleName}**`);
   }
 
@@ -1369,6 +1404,7 @@ client.on("messageCreate", async (msg) => {
     if (config.platformRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.platformRoles.push({ name: roleName, id: roleId });
     updateGuildConfig(msg.guild.id, { platformRoles: config.platformRoles });
+    addActivity(msg.guild.id, "💻", msg.author.username, `added platform role: ${roleName}`);
     return msg.reply(`✅ Added platform role: **${roleName}** (ID: ${roleId})`);
   }
 
@@ -1426,6 +1462,7 @@ client.on("messageCreate", async (msg) => {
     if (index === -1) return msg.reply("❌ Role not found!");
     config.platformRoles.splice(index, 1);
     updateGuildConfig(msg.guild.id, { platformRoles: config.platformRoles });
+    addActivity(msg.guild.id, "🗑️", msg.author.username, `removed platform role: ${roleName}`);
     return msg.reply(`✅ Removed platform role: **${roleName}**`);
   }
 
@@ -2255,6 +2292,121 @@ client.on("messageCreate", async (msg) => {
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
 client.on("interactionCreate", async (interaction) => {
+  // Handle slash commands
+  if (interaction.isChatInputCommand()) {
+    const guildConfig = getGuildConfig(interaction.guild.id);
+    const cmdName = interaction.commandName;
+    const user = interaction.options.getUser("user");
+    const reason = interaction.options.getString("reason") || "No reason";
+
+    // Help command
+    if (cmdName === "help") {
+      const embed = new EmbedBuilder()
+        .setColor(0x00D4FF)
+        .setTitle("🎯 SPIDEY BOT COMMANDS")
+        .addFields(
+          { name: "⚡ Moderation (6)", value: "/kick, /ban, /warn, /mute, /unmute, /warnings" },
+          { name: "💰 Economy (2)", value: "/balance, /pay" },
+          { name: "🎵 Music (4)", value: "/play, /stop, /skip, /queue" },
+          { name: "📋 Info", value: "/help, /adminhelp" }
+        );
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    // Moderation commands
+    if (cmdName === "kick") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) return interaction.reply({ content: "❌ You need moderation permissions!", ephemeral: true });
+      await user.send(`You were kicked from ${interaction.guild.name} for: ${reason}`).catch(() => null);
+      await interaction.guild.members.ban(user, { reason });
+      logModAction(interaction.guild, "KICK", interaction.user, user.tag, reason);
+      return interaction.reply(`✅ Kicked ${user.tag} - ${reason}`);
+    }
+
+    if (cmdName === "ban") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) return interaction.reply({ content: "❌ You need ban permissions!", ephemeral: true });
+      await user.send(`You were banned from ${interaction.guild.name} for: ${reason}`).catch(() => null);
+      await interaction.guild.members.ban(user, { reason });
+      logModAction(interaction.guild, "BAN", interaction.user, user.tag, reason);
+      return interaction.reply(`✅ Banned ${user.tag} - ${reason}`);
+    }
+
+    if (cmdName === "warn") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) return interaction.reply({ content: "❌ You need moderation permissions!", ephemeral: true });
+      const warnings = guildConfig.warnings || {};
+      if (!warnings[user.id]) warnings[user.id] = [];
+      warnings[user.id].push({ reason, warnedBy: interaction.user.tag, timestamp: new Date() });
+      updateGuildConfig(interaction.guild.id, { warnings });
+      logModAction(interaction.guild, "WARN", interaction.user, user.tag, reason);
+      return interaction.reply(`⚠️ Warned ${user.tag} (${warnings[user.id].length} warnings) - ${reason}`);
+    }
+
+    if (cmdName === "mute") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) return interaction.reply({ content: "❌ You need moderation permissions!", ephemeral: true });
+      const oneHour = 3600000;
+      await interaction.guild.members.cache.get(user.id).timeout(oneHour, reason);
+      logModAction(interaction.guild, "MUTE", interaction.user, user.tag, "1 hour timeout");
+      return interaction.reply(`🔇 Muted ${user.tag} for 1 hour`);
+    }
+
+    if (cmdName === "unmute") {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) return interaction.reply({ content: "❌ You need moderation permissions!", ephemeral: true });
+      await interaction.guild.members.cache.get(user.id).timeout(null);
+      logModAction(interaction.guild, "UNMUTE", interaction.user, user.tag, "Timeout removed");
+      return interaction.reply(`🔊 Unmuted ${user.tag}`);
+    }
+
+    // Economy commands
+    if (cmdName === "balance") {
+      const economy = guildConfig.economy || {};
+      const balance = economy[interaction.user.id] || 0;
+      const embed = new EmbedBuilder().setColor(0x00D4FF).setTitle("💰 Your Balance").setDescription(`**${balance}** coins`);
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    if (cmdName === "pay") {
+      const amount = interaction.options.getInteger("amount");
+      const economy = guildConfig.economy || {};
+      const senderBalance = economy[interaction.user.id] || 0;
+      if (senderBalance < amount) return interaction.reply({ content: "❌ Insufficient funds!", ephemeral: true });
+      economy[interaction.user.id] = (economy[interaction.user.id] || 0) - amount;
+      economy[user.id] = (economy[user.id] || 0) + amount;
+      updateGuildConfig(interaction.guild.id, { economy });
+      return interaction.reply(`✅ Sent ${amount} coins to ${user.tag}`);
+    }
+
+    // Music commands
+    if (cmdName === "play") {
+      const query = interaction.options.getString("query");
+      const queue = player.nodes.create(interaction.guild, { metadata: interaction.channel });
+      if (!queue.connection) await queue.connect(interaction.member.voice.channel);
+      const track = await player.search(query, { requestedBy: interaction.user }).then(r => r.tracks[0]);
+      if (!track) return interaction.reply({ content: "❌ No results found!", ephemeral: true });
+      queue.play(track);
+      return interaction.reply(`🎵 Now playing: **${track.title}**`);
+    }
+
+    if (cmdName === "stop") {
+      const queue = player.nodes.get(interaction.guild);
+      if (!queue || !queue.isPlaying()) return interaction.reply({ content: "❌ No music playing!", ephemeral: true });
+      queue.delete();
+      return interaction.reply("⏹️ Music stopped");
+    }
+
+    if (cmdName === "skip") {
+      const queue = player.nodes.get(interaction.guild);
+      if (!queue || !queue.isPlaying()) return interaction.reply({ content: "❌ No music playing!", ephemeral: true });
+      queue.node.skip();
+      return interaction.reply("⏭️ Skipped to next song");
+    }
+
+    if (cmdName === "queue") {
+      const queue = player.nodes.get(interaction.guild);
+      if (!queue || queue.tracks.length === 0) return interaction.reply({ content: "❌ Queue is empty!", ephemeral: true });
+      const tracks = queue.tracks.slice(0, 10).map((t, i) => `${i + 1}. ${t.title}`).join("\n");
+      return interaction.reply({ content: `🎵 Queue:\n${tracks}`, ephemeral: true });
+    }
+  }
+
   const guildConfig = getGuildConfig(interaction.guild.id);
   autoMigrateRoles(interaction.guild.id, interaction.guild, guildConfig);
 
