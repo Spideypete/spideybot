@@ -1123,186 +1123,52 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [developersEmbed] });
   }
 
-  // Help - List general user commands
+  // Help - List all user commands
   if (msg.content === "/help") {
-    const mainEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("🤖 SPIDEY BOT - User Commands")
-      .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✨ **General User Commands** ✨\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-      .addFields(
-        { name: "🎯 Admin?", value: "Use `/adminhelp` to see all administrator commands", inline: false }
-      );
+    const allCommands = "help • adminhelp • kick • ban • warn • mute • unmute • warnings • balance • pay • addmoney • removemoney • work • transfer • rps • play • stop • skip • queue • volume • suggest • ticket-setup • config-modlog • config-welcome-channel • config-welcome-message • config-goodbye-message • config-logging • config-leaderboard • config-xp • config-subscriptions • config-statistics-channels • config-server-guard • config-react-roles • config-role-categories • config-social-notifs • config-suggestions • config-kick-channel • config-tiktok-channel • config-twitch-channel • create-category • add-role • remove-role • set-category-banner • setup-category • delete-category • add-game-role • remove-game-role • add-watchparty-role • remove-watchparty-role • add-platform-role • remove-platform-role • add-custom-command • addcmd • remove-custom-command • delcmd • add-kick-user • remove-kick-user • add-tiktok-user • remove-tiktok-user • add-twitch-user • remove-twitch-user • filter-toggle • link-filter • set-prefix • giveaway • start-giveaway";
 
-    const musicEmbed = new EmbedBuilder()
+    const helpEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
-      .setTitle("🎵 MUSIC PLAYER (5 commands)")
+      .setTitle("🤖 SPIDEY BOT - All Commands (66)")
+      .setDescription("**ALL SLASH COMMANDS:**\n\n" + allCommands)
       .addFields(
-        { name: "🎶 /play [song/url]", value: "Search & play from YouTube", inline: true },
-        { name: "📊 /queue", value: "Show next 10 songs", inline: true },
-        { name: "🔄 /loop", value: "Toggle queue repeat", inline: true },
-        { name: "🔀 /shuffle", value: "Randomize the queue", inline: true },
-        { name: "🔊 /volume [0-200]", value: "Adjust volume level", inline: true },
-        { name: "🎛️ Button Controls", value: "⏮ Back | ⏸ Pause | ▶ Resume | ⏭ Skip | ⏹ Stop", inline: false }
-      );
-
-    const utilityEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("📞 UTILITIES (5 commands)")
-      .addFields(
-        { name: "✅ /remove-roles", value: "Remove any roles you have", inline: true },
-        { name: "🏓 /ping", value: "Check bot status & stats", inline: true },
-        { name: "👑 /adminhelp", value: "View all admin commands (admins only)", inline: true },
-        { name: "👨‍💻 /developers", value: "Meet the dev team & join Discord", inline: true },
-        { name: "🎫 /ticket", value: "Create a support ticket", inline: true }
-      );
-
-    const economyEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("💰 ECONOMY (4 commands)")
-      .addFields(
-        { name: "💰 /balance", value: "Check your coin balance", inline: true },
-        { name: "📅 /daily", value: "Claim 100 coins daily", inline: true },
-        { name: "💼 /work", value: "Work for coins (5 min cooldown)", inline: true },
-        { name: "🔄 /transfer @user [amount]", value: "Send coins to others", inline: true }
-      );
-
-    const levelEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("📊 LEVELING (3 commands)")
-      .addFields(
-        { name: "📈 /level", value: "Check your level & XP", inline: true },
-        { name: "🏆 /xpleaderboard", value: "View top members by level", inline: true },
-        { name: "💡 Passive", value: "Gain 10-30 XP per minute chatting!", inline: true }
-      );
-
-    const funEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("🎮 FUN GAMES (5 commands)")
-      .addFields(
-        { name: "🎱 /8ball", value: "Ask the magic 8ball", inline: true },
-        { name: "🎲 /dice", value: "Roll a dice (1-6)", inline: true },
-        { name: "🪙 /coin", value: "Flip a coin", inline: true },
-        { name: "🧠 /trivia", value: "Random trivia question", inline: true },
-        { name: "✂️ /rps [rock/paper/scissors]", value: "Rock paper scissors", inline: true }
+        { name: "🎵 Music", value: "/play • /stop • /skip • /queue • /volume", inline: true },
+        { name: "💰 Economy", value: "/balance • /pay • /work • /transfer", inline: true },
+        { name: "🎮 Games", value: "/rps", inline: true },
+        { name: "⚙️ Config", value: "/config-* (22 commands)", inline: true },
+        { name: "🎭 Roles", value: "/create-category • /add-role • /remove-role • /setup-category", inline: true },
+        { name: "🔒 Admin", value: "/kick • /ban • /warn • /mute • /unmute", inline: true },
+        { name: "❓ Help", value: "Use `/adminhelp` to see admin-only commands", inline: false }
       )
-      .setFooter({ text: "💡 Admins: Use /adminhelp for full command list" });
+      .setFooter({ text: "💡 Type any command name above with / to use it!" });
 
-    return msg.reply({ 
-      embeds: [mainEmbed, musicEmbed, utilityEmbed, economyEmbed, levelEmbed, funEmbed],
-      content: "** **"
-    });
+    return msg.reply({ embeds: [helpEmbed] });
   }
 
-  // Admin Help - List only admin commands
+  // Admin Help - List all admin commands
   if (msg.content === "/adminhelp") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can view admin help!");
     }
 
-    const adminMainEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("👑 ADMIN COMMAND GUIDE")
-      .setDescription("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔐 **Administrator-Only Commands** 🔐\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-      .addFields(
-        { name: "📊 Admin Categories", value: "**5 Sections** with full server management tools", inline: false }
-      );
-
-    const adminRoleEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("🎭 ROLE CATEGORIES (7 commands)")
-      .addFields(
-        { name: "📌 /create-category [name]", value: "Create a custom role category", inline: true },
-        { name: "➕ /add-role [cat] [name] [ID]", value: "Add role to category", inline: true },
-        { name: "➖ /remove-role [cat] [name]", value: "Remove role from category", inline: true },
-        { name: "🎬 /set-category-banner [cat] [url]", value: "Add GIF banner", inline: true },
-        { name: "🔘 /setup-category [name]", value: "Post selector button with banner", inline: true },
-        { name: "📋 /list-roles", value: "View all categories & roles", inline: true },
-        { name: "🗑️ /delete-category [name]", value: "Delete entire category", inline: true }
-      );
-
-    const adminWelcomeEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("👋 WELCOME MESSAGES (2 commands)")
-      .addFields(
-        { name: "💬 /config-welcome-channel #channel", value: "Set welcome message channel", inline: true },
-        { name: "✍️ /config-welcome-message [text]", value: "Create custom welcome message", inline: true },
-        { name: "📝 Placeholders", value: "`{user}` `{username}` `{displayname}` `{server}` `{membercount}`", inline: false }
-      );
-
-    const adminConfigEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("⚙️ CONFIGURATION (2 commands)")
-      .addFields(
-        { name: "🔤 /set-prefix [prefix]", value: "Change command prefix", inline: true },
-        { name: "📝 /config-modlog #channel", value: "Set moderation log channel", inline: true }
-      );
-
-    const adminSocialEmbed = new EmbedBuilder()
+    const adminEmbed = new EmbedBuilder()
       .setColor(0xFF1493)
-      .setTitle("📱 SOCIAL MEDIA (12 commands + API)")
+      .setTitle("👑 ADMIN COMMAND GUIDE (66 Total Commands)")
+      .setDescription("All administrator-only commands registered as slash commands")
       .addFields(
-        { name: "🎮 /add-twitch-user [user]", value: "Add Twitch creator to monitor", inline: true },
-        { name: "➖ /remove-twitch-user [user]", value: "Remove Twitch creator", inline: true },
-        { name: "📋 /list-twitch-users", value: "View monitored Twitch creators", inline: true },
-        { name: "📢 /config-twitch-channel #ch", value: "Set Twitch alert channel", inline: true },
-        { name: "🎵 /add-tiktok-user [user]", value: "Add TikTok creator to monitor", inline: true },
-        { name: "➖ /remove-tiktok-user [user]", value: "Remove TikTok creator", inline: true },
-        { name: "📋 /list-tiktok-users", value: "View monitored TikTok creators", inline: true },
-        { name: "📢 /config-tiktok-channel #ch", value: "Set TikTok alert channel", inline: true },
-        { name: "🎮 /add-kick-user [user]", value: "Add Kick streamer to monitor", inline: true },
-        { name: "➖ /remove-kick-user [user]", value: "Remove Kick streamer", inline: true },
-        { name: "📋 /list-kick-users", value: "View monitored Kick streamers", inline: true },
-        { name: "📢 /config-kick-channel #ch", value: "Set Kick alert channel", inline: true },
-        { name: "🌐 WEB API", value: "Admin dashboard at `/admin` • 3 REST endpoints", inline: false }
-      );
-
-    const adminEconomyEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("💰 ECONOMY MANAGEMENT (3 commands)")
-      .addFields(
-        { name: "➕ /addmoney @user [amount]", value: "Give coins to member", inline: true },
-        { name: "➖ /removemoney @user [amount]", value: "Remove coins from member", inline: true },
-        { name: "🏆 /leaderboard", value: "View top richest members", inline: true }
-      );
-
-    const adminLevelEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("📊 LEVEL ROLES (1 command)")
-      .addFields(
-        { name: "🎖️ /setup-level-roles", value: "Create 100 auto-assigned level roles (1-100) with emoji badges", inline: false },
-        { name: "💡 How it works", value: "Members earn XP by chatting → Auto-get level role → Badge shows next to their name! Level badges have gradient colors", inline: false }
-      );
-
-    const adminProtectionEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("🛡️ PROTECTION & TOOLS (7 commands)")
-      .addFields(
-        { name: "🔗 /link-filter [on/off]", value: "Toggle link filtering", inline: true },
-        { name: "🎫 /ticket-setup #channel", value: "Enable ticket system", inline: true },
-        { name: "🎫 /ticket", value: "Create support ticket", inline: true },
-        { name: "🔒 /close-ticket", value: "Close ticket channel", inline: true },
-        { name: "➕ /addcmd [cmd] | [response]", value: "Create custom command", inline: true },
-        { name: "➖ /delcmd [command]", value: "Delete custom command", inline: true },
-        { name: "📂 Custom Commands", value: "Use /[yourcommand] to trigger", inline: true }
-      );
-
-    const adminModEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("🛡️ MODERATION (6 commands)")
-      .addFields(
-        { name: "👢 /kick @user [reason]", value: "Remove member from server", inline: true },
-        { name: "🔨 /ban @user [reason]", value: "Permanently ban member", inline: true },
-        { name: "⚠️ /warn @user [reason]", value: "Warn member (tracked!)", inline: true },
-        { name: "🔇 /mute @user", value: "Timeout for 1 hour", inline: true },
-        { name: "🔊 /unmute @user", value: "Remove timeout", inline: true },
-        { name: "📋 /warnings @user", value: "View member's warning history", inline: true }
+        { name: "🎭 Role Categories (7)", value: "/create-category • /add-role • /remove-role • /set-category-banner • /setup-category • /delete-category • /list-roles", inline: false },
+        { name: "👋 Welcome (2)", value: "/config-welcome-channel • /config-welcome-message", inline: false },
+        { name: "⚙️ Configuration (7)", value: "/config-modlog • /config-logging • /config-leaderboard • /config-xp • /config-subscriptions • /config-statistics-channels • /set-prefix", inline: false },
+        { name: "📱 Social Media (12)", value: "/add-twitch-user • /remove-twitch-user • /config-twitch-channel • /add-tiktok-user • /remove-tiktok-user • /config-tiktok-channel • /add-kick-user • /remove-kick-user • /config-kick-channel + 3 more", inline: false },
+        { name: "💰 Economy (3)", value: "/addmoney • /removemoney • /leaderboard", inline: false },
+        { name: "🎮 Role Management (6)", value: "/add-game-role • /remove-game-role • /add-watchparty-role • /remove-watchparty-role • /add-platform-role • /remove-platform-role", inline: false },
+        { name: "🛡️ Moderation (6)", value: "/kick • /ban • /warn • /mute • /unmute • /warnings", inline: false },
+        { name: "🛠️ Protection & Tools (8)", value: "/link-filter • /ticket-setup • /filter-toggle • /addcmd • /delcmd • /add-custom-command • /remove-custom-command + more", inline: false },
+        { name: "📋 Other Admin (5)", value: "/config-server-guard • /config-react-roles • /config-role-categories • /config-social-notifs • /config-suggestions", inline: false }
       )
-      .setFooter({ text: "💡 All actions are auto-logged to your modlog channel" });
+      .setFooter({ text: "✅ All changes are logged to dashboard activity & modlog channel" });
 
-    return msg.reply({ 
-      embeds: [adminMainEmbed, adminRoleEmbed, adminWelcomeEmbed, adminConfigEmbed, adminSocialEmbed, adminEconomyEmbed, adminLevelEmbed, adminModEmbed, adminProtectionEmbed],
-      content: "** **"
-    });
+    return msg.reply({ embeds: [adminEmbed] });
   }
 
   // ============== CONFIG COMMANDS ==============
