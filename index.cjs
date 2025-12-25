@@ -1135,12 +1135,12 @@ client.on("messageCreate", async (msg) => {
       .setTitle("🤖 SPIDEY BOT - All Commands (66)")
       .setDescription("**ALL SLASH COMMANDS:**\n\n" + allCommands)
       .addFields(
-        { name: "🎵 Music", value: "/play • /stop • /skip • /queue • /volume", inline: true },
-        { name: "💰 Economy", value: "/balance • /pay • /work • /transfer", inline: true },
-        { name: "🎮 Games", value: "/rps", inline: true },
-        { name: "⚙️ Config", value: "/config-* (22 commands)", inline: true },
-        { name: "🎭 Roles", value: "/create-category • /add-role • /remove-role • /setup-category", inline: true },
-        { name: "🔒 Admin", value: "/kick • /ban • /warn • /mute • /unmute", inline: true },
+        { name: "🎵 Music", value: "`/play` • `/stop` • `/skip` • `/queue` • `/volume`", inline: true },
+        { name: "💰 Economy", value: "`/balance` • `/pay` • `/work` • `/transfer`", inline: true },
+        { name: "🎮 Games", value: "`/rps`", inline: true },
+        { name: "⚙️ Config", value: "`/config-*` (22 commands)", inline: true },
+        { name: "🎭 Roles", value: "`/create-category` • `/add-role` • `/remove-role` • `/setup-category`", inline: true },
+        { name: "🔒 Admin", value: "`/kick` • `/ban` • `/warn` • `/mute` • `/unmute`", inline: true },
         { name: "❓ Help", value: "Use `/adminhelp` to see admin-only commands", inline: false }
       )
       .setFooter({ text: "💡 Type any command name above with / to use it!" });
