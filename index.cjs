@@ -59,7 +59,7 @@ app.use((req, res, next) => {
 });
 
 // ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE - CRITICAL!) ==============
-const dashboardPath = path.join(distDir, 'dashboard.html');
+const dashboardPath = path.join(__dirname, 'public', 'dashboard.html');
 
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
@@ -71,6 +71,9 @@ app.get("/dashboard", (req, res) => {
   res.setHeader('CDN-Cache-Control', 'no-store');
   
   try {
+    if (!fs.existsSync(dashboardPath)) {
+        return res.status(404).send('<h1>Dashboard File Missing</h1><p>Expected path: ' + dashboardPath + '</p>');
+    }
     let dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
     // Inject timestamp to force fresh version EVERY TIME
     const timestamp = Date.now();
@@ -110,7 +113,7 @@ if (RENDER_EXTERNAL_URL) {
 }
 
 // Hardcode Render URL as fallback if detection fails
-const REDIRECT_URI = BASE_REDIRECT_URI === "http://localhost:5000" && process.env.NODE_ENV === 'production' 
+const REDIRECT_URI = BASE_REDIRECT_URI === "http://localhost:5000" && (process.env.NODE_ENV === 'production' || process.env.RENDER)
   ? "https://spideybot-90sr.onrender.com/auth/discord/callback"
   : `${BASE_REDIRECT_URI}/auth/discord/callback`;
 
