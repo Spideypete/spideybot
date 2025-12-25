@@ -1135,12 +1135,12 @@ client.on("messageCreate", async (msg) => {
       .setTitle("🤖 SPIDEY BOT - All Commands (66)")
       .setDescription("**ALL SLASH COMMANDS:**\n\n" + allCommands)
       .addFields(
-        { name: "🎵 Music", value: "/play • /stop • /skip • /queue • /volume", inline: true },
-        { name: "💰 Economy", value: "/balance • /pay • /work • /transfer", inline: true },
-        { name: "🎮 Games", value: "/rps", inline: true },
-        { name: "⚙️ Config", value: "/config-* (22 commands)", inline: true },
-        { name: "🎭 Roles", value: "/create-category • /add-role • /remove-role • /setup-category", inline: true },
-        { name: "🔒 Admin", value: "/kick • /ban • /warn • /mute • /unmute", inline: true },
+        { name: "🎵 Music", value: "`/play` • `/stop` • `/skip` • `/queue` • `/volume`", inline: true },
+        { name: "💰 Economy", value: "`/balance` • `/pay` • `/work` • `/transfer`", inline: true },
+        { name: "🎮 Games", value: "`/rps`", inline: true },
+        { name: "⚙️ Config", value: "`/config-*` (22 commands)", inline: true },
+        { name: "🎭 Roles", value: "`/create-category` • `/add-role` • `/remove-role` • `/setup-category`", inline: true },
+        { name: "🔒 Admin", value: "`/kick` • `/ban` • `/warn` • `/mute` • `/unmute`", inline: true },
         { name: "❓ Help", value: "Use `/adminhelp` to see admin-only commands", inline: false }
       )
       .setFooter({ text: "💡 Type any command name above with / to use it!" });
@@ -3749,22 +3749,22 @@ app.post("/api/config/:guildId", express.json(), (req, res) => {
 
 // ============== REAL-TIME DASHBOARD API ==============
 app.get("/api/dashboard/stats", (req, res) => {
-  const firstGuild = client.guilds.cache.first();
-  if (!firstGuild) return res.json({ status: "offline", members: 0, commands: 44, activity: 0 });
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  
+  const guildId = req.query.guildId;
+  const targetGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
+  
+  if (!targetGuild) return res.json({ status: "offline", members: 0, commands: 66, activity: 0, prefix: "/" });
 
-  const config = getGuildConfig(firstGuild.id);
-  const levels = config.levels || {};
-  let totalMessages = 0;
-  Object.keys(levels).forEach(key => {
-    if (!key.includes("_")) totalMessages++;
-  });
-
+  const config = getGuildConfig(targetGuild.id);
+  const activities = config.activities || [];
+  
   res.json({
     status: "online",
-    members: firstGuild.memberCount,
-    commands: 44,
-    activity: totalMessages,
-    prefix: config.prefix || "//"
+    members: targetGuild.memberCount,
+    commands: 66,
+    activity: activities.length,
+    prefix: config.prefix || "/"
   });
 });
 
@@ -3883,22 +3883,25 @@ app.get("/api/dashboard/active-members", (req, res) => {
 app.get("/api/dashboard/statistics", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  const firstGuild = client.guilds.cache.first();
-  if (!firstGuild) return res.json({ memberCount: 0, activeMembers: 0, verifiedMembers: 0 });
+  const guildId = req.query.guildId;
+  const targetGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
+  
+  if (!targetGuild) return res.json({ memberCount: 0, activeMembers: 0, verifiedMembers: 0, botCount: 0 });
 
-  const config = getGuildConfig(firstGuild.id);
+  const config = getGuildConfig(targetGuild.id);
   const levels = config.levels || {};
   const userIds = Object.keys(levels).filter(k => !k.includes("_"));
 
-  const memberCount = firstGuild.memberCount;
-  const activeMembers = Math.floor(userIds.length * 0.65);
+  const memberCount = targetGuild.memberCount;
+  const activeMembers = Math.max(userIds.length, Math.floor(memberCount * 0.1));
   const verifiedMembers = Math.floor(memberCount * 0.85);
+  const botCount = targetGuild.members.cache.filter(m => m.user.bot).size || Math.floor(memberCount * 0.05);
 
   res.json({
     memberCount,
     activeMembers,
     verifiedMembers,
-    botCount: Math.floor(memberCount * 0.08)
+    botCount
   });
 });
 
