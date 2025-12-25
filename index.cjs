@@ -113,7 +113,7 @@ if (RENDER_EXTERNAL_URL) {
 }
 
 // Hardcode Render URL as fallback if detection fails
-const REDIRECT_URI = BASE_REDIRECT_URI === "http://localhost:5000" && process.env.NODE_ENV === 'production' 
+const REDIRECT_URI = BASE_REDIRECT_URI === "http://localhost:5000" && (process.env.NODE_ENV === 'production' || process.env.RENDER)
   ? "https://spideybot-90sr.onrender.com/auth/discord/callback"
   : `${BASE_REDIRECT_URI}/auth/discord/callback`;
 
