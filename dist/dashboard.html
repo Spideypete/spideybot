@@ -2432,7 +2432,11 @@
                 }
                 
                 // 4. SHOW target section - FORCE IT
-                const sectionId = sectionName + '-section';
+                let sectionId = sectionName + '-section';
+                // Map some names to correct IDs if they differ
+                if (sectionName === 'dashboard') sectionId = 'dashboard-section';
+                if (sectionName === 'commands') sectionId = 'custom-commands-section';
+                
                 const section = document.getElementById(sectionId);
                 
                 if (section) {
@@ -2440,7 +2444,7 @@
                     section.style.visibility = 'visible';
                     section.style.zIndex = '100';
                     section.classList.add('active');
-                    console.log('   ✅ Section shown:', sectionName);
+                    console.log('   ✅ Section shown:', sectionName, 'with ID:', sectionId);
                     
                     // Scroll to top
                     section.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -2454,7 +2458,7 @@
                         'server-guard': loadServerGuard,
                         'react-roles': loadReactRoles,
                         'server-messages': loadServerMessages,
-                        'custom-commands': loadCustomCommands,
+                        'commands': loadCustomCommands,
                         'xp-levels': loadXPLevels,
                         'leaderboards': loadLeaderboards,
                         'giveaways': loadGiveaways,
@@ -2573,16 +2577,19 @@
             
             // Update active state
             document.querySelectorAll('.server-icon-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.closest('.server-icon-btn').classList.add('active');
+            const activeBtn = Array.from(document.querySelectorAll('.server-icon-btn')).find(btn => btn.title === serverName);
+            if (activeBtn) activeBtn.classList.add('active');
             
             console.log('🔄 Server switched to:', serverName, '(' + serverId + ')');
             
-            // Load ALL data for the selected server
-            await loadRoleCategories(serverId);
-            await loadMemberGraphs();
-            await loadMemberEvents();
-            await loadChannels(serverId);
-            await loadRoles(serverId);
+            // Reload the current section with new server data
+            const activeItem = document.querySelector('.sidebar-item.active');
+            if (activeItem) {
+                const sectionName = activeItem.getAttribute('data-section');
+                switchSection(sectionName);
+            } else {
+                switchSection('dashboard');
+            }
         }
 
         async function loadRoles(guildId) {
