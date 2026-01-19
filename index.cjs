@@ -52,12 +52,16 @@ app.use(session({
 
 // Inject version timestamp and cache-busting to ALL HTML pages
 app.use((req, res, next) => {
-    if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security') {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security' || !req.path.includes('.')) {
         const originalSend = res.send;
         res.send = function (body) {
             if (typeof body === 'string' && body.includes('</head>')) {
                 const timestamp = Date.now();
-                body = body.replace('</head>', `<meta name="version-timestamp" content="${timestamp}">\n    <script>window.PAGE_VERSION = "${timestamp}";</script>\n  </head>`);
+                body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n    <meta http-equiv="Pragma" content="no-cache">\n    <meta http-equiv="Expires" content="0">\n    <meta name="version-timestamp" content="${timestamp}">\n    <script>window.PAGE_VERSION = "${timestamp}"; console.log("Page Version: " + "${timestamp}");</script>\n  </head>`);
             }
             return originalSend.call(this, body);
         };
@@ -67,12 +71,12 @@ app.use((req, res, next) => {
 
 // Serve static files from dist
 app.use(express.static(distDir, {
+  etag: false,
+  lastModified: false,
   setHeaders: (res, path) => {
-    if (path.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    }
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
   }
 }));
 app.set('trust proxy', true);
