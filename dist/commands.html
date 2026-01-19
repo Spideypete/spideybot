@@ -223,6 +223,139 @@
         <p>💡 All commands are now <strong>Slash Commands</strong>. Type <code>/</code> in Discord to see the full list!</p>
       </div>
 
+      <!-- 👑 ADMIN CONTROL PANEL -->
+      <div class="command-section" data-category="admin">
+        <h2>👑 Admin Control Panel</h2>
+        <div class="command-grid">
+          <div class="command-card">
+            <h3>/adminhelp</h3>
+            <p>Show admin commands only</p>
+            <div class="command-usage">/adminhelp</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/set-prefix</h3>
+            <p>Change command prefix for the server</p>
+            <div class="command-usage">/set-prefix [prefix]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-modlog</h3>
+            <p>Set moderation log channel</p>
+            <div class="command-usage">/config-modlog #channel</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-welcome-channel</h3>
+            <p>Set welcome channel</p>
+            <div class="command-usage">/config-welcome-channel #channel</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-welcome-message</h3>
+            <p>Set welcome message</p>
+            <div class="command-usage">/config-welcome-message [message]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-goodbye-message</h3>
+            <p>Set goodbye message</p>
+            <div class="command-usage">/config-goodbye-message [message]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-logging</h3>
+            <p>Configure logging settings</p>
+            <div class="command-usage">/config-logging</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-leaderboard</h3>
+            <p>Configure leaderboard settings</p>
+            <div class="command-usage">/config-leaderboard</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-xp</h3>
+            <p>Configure XP settings</p>
+            <div class="command-usage">/config-xp</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-subscriptions</h3>
+            <p>Configure subscription settings</p>
+            <div class="command-usage">/config-subscriptions</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-statistics-channels</h3>
+            <p>Configure stats channels</p>
+            <div class="command-usage">/config-statistics-channels</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-server-guard</h3>
+            <p>Configure server guard</p>
+            <div class="command-usage">/config-server-guard</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-react-roles</h3>
+            <p>Configure reaction roles</p>
+            <div class="command-usage">/config-react-roles</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-role-categories</h3>
+            <p>Configure role categories</p>
+            <div class="command-usage">/config-role-categories</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-social-notifs</h3>
+            <p>Configure social notifications</p>
+            <div class="command-usage">/config-social-notifs</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-suggestions</h3>
+            <p>Configure suggestions</p>
+            <div class="command-usage">/config-suggestions</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-kick-channel</h3>
+            <p>Configure Kick channel</p>
+            <div class="command-usage">/config-kick-channel</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-tiktok-channel</h3>
+            <p>Configure TikTok channel</p>
+            <div class="command-usage">/config-tiktok-channel</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-twitch-channel</h3>
+            <p>Configure Twitch channel</p>
+            <div class="command-usage">/config-twitch-channel</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/addmoney</h3>
+            <p>Add money to a user's balance</p>
+            <div class="command-usage">/addmoney @user [amount]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/removemoney</h3>
+            <p>Remove money from a user's balance</p>
+            <div class="command-usage">/removemoney @user [amount]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+        </div>
+      </div>
+
       <!-- 🎵 MUSIC -->
       <div class="command-section" data-category="music">
         <h2>🎵 Music Playback</h2>
@@ -300,18 +433,6 @@
             <p>Send coins to other members</p>
             <div class="command-usage">/transfer @user [amount]</div>
             <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>/addmoney</h3>
-            <p>Add money to a user's balance</p>
-            <div class="command-usage">/addmoney @user [amount]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/removemoney</h3>
-            <p>Remove money from a user's balance</p>
-            <div class="command-usage">/removemoney @user [amount]</div>
-            <span class="badge admin">Admin</span>
           </div>
         </div>
       </div>
@@ -481,121 +602,6 @@
         </div>
       </div>
 
-      <!-- ⚙️ SERVER CONFIG -->
-      <div class="command-section" data-category="config">
-        <h2>⚙️ Server Configuration (Admin Only)</h2>
-        <div class="command-grid">
-          <div class="command-card">
-            <h3>/set-prefix</h3>
-            <p>Change command prefix</p>
-            <div class="command-usage">/set-prefix [prefix]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-modlog</h3>
-            <p>Set moderation log channel</p>
-            <div class="command-usage">/config-modlog #channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-welcome-channel</h3>
-            <p>Set welcome channel</p>
-            <div class="command-usage">/config-welcome-channel #channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-welcome-message</h3>
-            <p>Set welcome message</p>
-            <div class="command-usage">/config-welcome-message [message]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-goodbye-message</h3>
-            <p>Set goodbye message</p>
-            <div class="command-usage">/config-goodbye-message [message]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-logging</h3>
-            <p>Configure logging settings</p>
-            <div class="command-usage">/config-logging</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-leaderboard</h3>
-            <p>Configure leaderboard settings</p>
-            <div class="command-usage">/config-leaderboard</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-xp</h3>
-            <p>Configure XP settings</p>
-            <div class="command-usage">/config-xp</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-subscriptions</h3>
-            <p>Configure subscription settings</p>
-            <div class="command-usage">/config-subscriptions</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-statistics-channels</h3>
-            <p>Configure stats channels</p>
-            <div class="command-usage">/config-statistics-channels</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-server-guard</h3>
-            <p>Configure server guard</p>
-            <div class="command-usage">/config-server-guard</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-react-roles</h3>
-            <p>Configure reaction roles</p>
-            <div class="command-usage">/config-react-roles</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-role-categories</h3>
-            <p>Configure role categories</p>
-            <div class="command-usage">/config-role-categories</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-social-notifs</h3>
-            <p>Configure social notifications</p>
-            <div class="command-usage">/config-social-notifs</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-suggestions</h3>
-            <p>Configure suggestions</p>
-            <div class="command-usage">/config-suggestions</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-kick-channel</h3>
-            <p>Configure Kick channel</p>
-            <div class="command-usage">/config-kick-channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-tiktok-channel</h3>
-            <p>Configure TikTok channel</p>
-            <div class="command-usage">/config-tiktok-channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-twitch-channel</h3>
-            <p>Configure Twitch channel</p>
-            <div class="command-usage">/config-twitch-channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
-        </div>
-      </div>
-
       <!-- 🎫 TICKETS -->
       <div class="command-section" data-category="tickets">
         <h2>🎫 Ticket Support</h2>
@@ -693,12 +699,6 @@
             <p>Show full command list</p>
             <div class="command-usage">/help</div>
             <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>/adminhelp</h3>
-            <p>Show admin commands only</p>
-            <div class="command-usage">/adminhelp</div>
-            <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
             <h3>/suggest</h3>
