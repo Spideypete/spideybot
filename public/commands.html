@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SPIDEY BOT - All Commands</title>
-  <link href="https:/fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -215,7 +215,7 @@
 
   <main>
     <div class="container">
-      <h1>🎮 50+ Discord Commands</h1>
+      <h1>🎮 66+ Discord Commands</h1>
       
       <input type="text" class="search-box" placeholder="Search commands... (e.g., /play, /ban, /daily)" id="searchBox">
 
@@ -234,21 +234,21 @@
             <span class="badge public">Public</span>
           </div>
           <div class="command-card">
+            <h3>/stop</h3>
+            <p>Stop playback and clear queue</p>
+            <div class="command-usage">/stop</div>
+            <span class="badge public">Public</span>
+          </div>
+          <div class="command-card">
+            <h3>/skip</h3>
+            <p>Skip current track</p>
+            <div class="command-usage">/skip</div>
+            <span class="badge public">Public</span>
+          </div>
+          <div class="command-card">
             <h3>/queue</h3>
             <p>Show next 10 songs in queue</p>
             <div class="command-usage">/queue</div>
-            <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>/loop</h3>
-            <p>Toggle queue repeat mode</p>
-            <div class="command-usage">/loop</div>
-            <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>/shuffle</h3>
-            <p>Randomize queue order</p>
-            <div class="command-usage">/shuffle</div>
             <span class="badge public">Public</span>
           </div>
           <div class="command-card">
@@ -260,34 +260,10 @@
         </div>
       </div>
 
-      <!-- 🎮 GAMES -->
+      <!-- 🎮 GAMES & FUN -->
       <div class="command-section" data-category="games">
         <h2>🎮 Games & Fun</h2>
         <div class="command-grid">
-          <div class="command-card">
-            <h3>/8ball</h3>
-            <p>Ask the magic 8ball a yes/no question</p>
-            <div class="command-usage">/8ball</div>
-            <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>/dice</h3>
-            <p>Roll a dice (1-6)</p>
-            <div class="command-usage">/dice</div>
-            <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>/coin</h3>
-            <p>Flip a coin (heads/tails)</p>
-            <div class="command-usage">/coin</div>
-            <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>/trivia</h3>
-            <p>Get a random trivia question</p>
-            <div class="command-usage">/trivia</div>
-            <span class="badge public">Public</span>
-          </div>
           <div class="command-card">
             <h3>/rps</h3>
             <p>Play rock-paper-scissors</p>
@@ -308,14 +284,14 @@
             <span class="badge public">Public</span>
           </div>
           <div class="command-card">
-            <h3>/daily</h3>
-            <p>Claim 100 coins (24h cooldown)</p>
-            <div class="command-usage">/daily</div>
+            <h3>/pay</h3>
+            <p>Pay coins to another user</p>
+            <div class="command-usage">/pay @user [amount]</div>
             <span class="badge public">Public</span>
           </div>
           <div class="command-card">
             <h3>/work</h3>
-            <p>Work for coins (5min cooldown)</p>
+            <p>Work for coins (cooldown applies)</p>
             <div class="command-usage">/work</div>
             <span class="badge public">Public</span>
           </div>
@@ -326,41 +302,16 @@
             <span class="badge public">Public</span>
           </div>
           <div class="command-card">
-            <h3>/leaderboard</h3>
-            <p>View top 10 richest members</p>
-            <div class="command-usage">/leaderboard</div>
-            <span class="badge public">Public</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 📈 LEVELING -->
-      <div class="command-section" data-category="leveling">
-        <h2>📈 Leveling & XP</h2>
-        <div class="command-grid">
-          <div class="command-card">
-            <h3>/level</h3>
-            <p>Check your current level and XP</p>
-            <div class="command-usage">/level</div>
-            <span class="badge public">Public</span>
+            <h3>/addmoney</h3>
+            <p>Add money to a user's balance</p>
+            <div class="command-usage">/addmoney @user [amount]</div>
+            <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
-            <h3>/xpleaderboard</h3>
-            <p>View top members by level</p>
-            <div class="command-usage">/xpleaderboard</div>
-            <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>Auto XP Gain</h3>
-            <p>Passive XP from chatting (10-30/min)</p>
-            <div class="command-usage">Just chat naturally!</div>
-            <span class="badge public">Automatic</span>
-          </div>
-          <div class="command-card">
-            <h3>Auto Level Roles</h3>
-            <p>Get roles automatically at each level</p>
-            <div class="command-usage">Reach level milestones</div>
-            <span class="badge public">Automatic</span>
+            <h3>/removemoney</h3>
+            <p>Remove money from a user's balance</p>
+            <div class="command-usage">/removemoney @user [amount]</div>
+            <span class="badge admin">Admin</span>
           </div>
         </div>
       </div>
@@ -389,7 +340,7 @@
           </div>
           <div class="command-card">
             <h3>/mute</h3>
-            <p>Timeout member for 1 hour</p>
+            <p>Timeout member</p>
             <div class="command-usage">/mute @user</div>
             <span class="badge admin">Admin</span>
           </div>
@@ -449,21 +400,45 @@
             <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
-            <h3>/config-role-categories</h3>
-            <p>View and manage role categories</p>
-            <div class="command-usage">/config-role-categories</div>
+            <h3>/add-game-role</h3>
+            <p>Add a gaming role</p>
+            <div class="command-usage">/add-game-role [role]</div>
             <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
-            <h3>/setup-level-roles</h3>
-            <p>Auto-create 100 level roles</p>
-            <div class="command-usage">/setup-level-roles</div>
+            <h3>/remove-game-role</h3>
+            <p>Remove a gaming role</p>
+            <div class="command-usage">/remove-game-role [role]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/add-watchparty-role</h3>
+            <p>Add a watch party role</p>
+            <div class="command-usage">/add-watchparty-role [role]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/remove-watchparty-role</h3>
+            <p>Remove a watch party role</p>
+            <div class="command-usage">/remove-watchparty-role [role]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/add-platform-role</h3>
+            <p>Add a platform role</p>
+            <div class="command-usage">/add-platform-role [role]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/remove-platform-role</h3>
+            <p>Remove a platform role</p>
+            <div class="command-usage">/remove-platform-role [role]</div>
             <span class="badge admin">Admin</span>
           </div>
         </div>
       </div>
 
-      <!-- 📢 SOCIAL MEDIA MONITORING -->
+      <!-- 📢 SOCIAL MONITORING -->
       <div class="command-section" data-category="social">
         <h2>📢 Social Media Monitoring (Admin Only)</h2>
         <div class="command-grid">
@@ -480,18 +455,6 @@
             <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
-            <h3>/list-twitch-users</h3>
-            <p>Show all monitored Twitch users</p>
-            <div class="command-usage">/list-twitch-users</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-twitch-channel</h3>
-            <p>Set Twitch alert channel</p>
-            <div class="command-usage">/config-twitch-channel #channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
             <h3>/add-tiktok-user</h3>
             <p>Monitor TikTok creator</p>
             <div class="command-usage">/add-tiktok-user [username]</div>
@@ -501,18 +464,6 @@
             <h3>/remove-tiktok-user</h3>
             <p>Stop monitoring TikTok user</p>
             <div class="command-usage">/remove-tiktok-user [username]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/list-tiktok-users</h3>
-            <p>Show all monitored TikTok users</p>
-            <div class="command-usage">/list-tiktok-users</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-tiktok-channel</h3>
-            <p>Set TikTok alert channel</p>
-            <div class="command-usage">/config-tiktok-channel #channel</div>
             <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
@@ -527,22 +478,10 @@
             <div class="command-usage">/remove-kick-user [username]</div>
             <span class="badge admin">Admin</span>
           </div>
-          <div class="command-card">
-            <h3>/list-kick-users</h3>
-            <p>Show all monitored Kick users</p>
-            <div class="command-usage">/list-kick-users</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-kick-channel</h3>
-            <p>Set Kick alert channel</p>
-            <div class="command-usage">/config-kick-channel #channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
         </div>
       </div>
 
-      <!-- ⚙️ CONFIGURATION -->
+      <!-- ⚙️ SERVER CONFIG -->
       <div class="command-section" data-category="config">
         <h2>⚙️ Server Configuration (Admin Only)</h2>
         <div class="command-grid">
@@ -559,15 +498,99 @@
             <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
-            <h3>/link-filter</h3>
-            <p>Toggle automatic link filtering</p>
-            <div class="command-usage">/link-filter [on/off]</div>
+            <h3>/config-welcome-channel</h3>
+            <p>Set welcome channel</p>
+            <div class="command-usage">/config-welcome-channel #channel</div>
             <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
-            <h3>/ticket-setup</h3>
-            <p>Enable ticket support system</p>
-            <div class="command-usage">/ticket-setup #channel</div>
+            <h3>/config-welcome-message</h3>
+            <p>Set welcome message</p>
+            <div class="command-usage">/config-welcome-message [message]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-goodbye-message</h3>
+            <p>Set goodbye message</p>
+            <div class="command-usage">/config-goodbye-message [message]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-logging</h3>
+            <p>Configure logging settings</p>
+            <div class="command-usage">/config-logging</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-leaderboard</h3>
+            <p>Configure leaderboard settings</p>
+            <div class="command-usage">/config-leaderboard</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-xp</h3>
+            <p>Configure XP settings</p>
+            <div class="command-usage">/config-xp</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-subscriptions</h3>
+            <p>Configure subscription settings</p>
+            <div class="command-usage">/config-subscriptions</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-statistics-channels</h3>
+            <p>Configure stats channels</p>
+            <div class="command-usage">/config-statistics-channels</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-server-guard</h3>
+            <p>Configure server guard</p>
+            <div class="command-usage">/config-server-guard</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-react-roles</h3>
+            <p>Configure reaction roles</p>
+            <div class="command-usage">/config-react-roles</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-role-categories</h3>
+            <p>Configure role categories</p>
+            <div class="command-usage">/config-role-categories</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-social-notifs</h3>
+            <p>Configure social notifications</p>
+            <div class="command-usage">/config-social-notifs</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-suggestions</h3>
+            <p>Configure suggestions</p>
+            <div class="command-usage">/config-suggestions</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-kick-channel</h3>
+            <p>Configure Kick channel</p>
+            <div class="command-usage">/config-kick-channel</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-tiktok-channel</h3>
+            <p>Configure TikTok channel</p>
+            <div class="command-usage">/config-tiktok-channel</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/config-twitch-channel</h3>
+            <p>Configure Twitch channel</p>
+            <div class="command-usage">/config-twitch-channel</div>
             <span class="badge admin">Admin</span>
           </div>
         </div>
@@ -578,15 +601,9 @@
         <h2>🎫 Ticket Support</h2>
         <div class="command-grid">
           <div class="command-card">
-            <h3>/ticket</h3>
-            <p>Create a support ticket</p>
-            <div class="command-usage">/ticket</div>
-            <span class="badge public">Public</span>
-          </div>
-          <div class="command-card">
-            <h3>/close-ticket</h3>
-            <p>Close active ticket</p>
-            <div class="command-usage">/close-ticket</div>
+            <h3>/ticket-setup</h3>
+            <p>Enable ticket support system</p>
+            <div class="command-usage">/ticket-setup #channel</div>
             <span class="badge admin">Admin</span>
           </div>
         </div>
@@ -597,15 +614,65 @@
         <h2>📝 Custom Commands (Admin Only)</h2>
         <div class="command-grid">
           <div class="command-card">
+            <h3>/add-custom-command</h3>
+            <p>Add a custom command</p>
+            <div class="command-usage">/add-custom-command [name] [response]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
             <h3>/addcmd</h3>
             <p>Create custom command</p>
             <div class="command-usage">/addcmd [name] | [response]</div>
             <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
+            <h3>/remove-custom-command</h3>
+            <p>Remove custom command</p>
+            <div class="command-usage">/remove-custom-command [name]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
             <h3>/delcmd</h3>
             <p>Delete custom command</p>
             <div class="command-usage">/delcmd [command]</div>
+            <span class="badge admin">Admin</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🎁 GIVEAWAYS -->
+      <div class="command-section" data-category="giveaways">
+        <h2>🎁 Giveaways</h2>
+        <div class="command-grid">
+          <div class="command-card">
+            <h3>/giveaway</h3>
+            <p>Start a giveaway</p>
+            <div class="command-usage">/giveaway</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/start-giveaway</h3>
+            <p>Start a giveaway</p>
+            <div class="command-usage">/start-giveaway</div>
+            <span class="badge admin">Admin</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🛡️ FILTERS -->
+      <div class="command-section" data-category="filters">
+        <h2>🛡️ Filters</h2>
+        <div class="command-grid">
+          <div class="command-card">
+            <h3>/filter-toggle</h3>
+            <p>Toggle filters</p>
+            <div class="command-usage">/filter-toggle</div>
+            <span class="badge admin">Admin</span>
+          </div>
+          <div class="command-card">
+            <h3>/link-filter</h3>
+            <p>Toggle link filtering</p>
+            <div class="command-usage">/link-filter [on/off]</div>
             <span class="badge admin">Admin</span>
           </div>
         </div>
@@ -634,130 +701,91 @@
             <span class="badge admin">Admin</span>
           </div>
           <div class="command-card">
-            <h3>/developers</h3>
-            <p>Meet the dev team</p>
-            <div class="command-usage">/developers</div>
+            <h3>/suggest</h3>
+            <p>Make a suggestion</p>
+            <div class="command-usage">/suggest [text]</div>
             <span class="badge public">Public</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 👑 ADMIN CONTROL PANEL -->
-      <div class="command-section" data-category="admin">
-        <h2>👑 Admin Control Panel</h2>
-        <div class="command-grid">
-          <div class="command-card">
-            <h3>/set-prefix</h3>
-            <p>Change command prefix for the server</p>
-            <div class="command-usage">/set-prefix [prefix]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/config-modlog</h3>
-            <p>Set moderation log channel</p>
-            <div class="command-usage">/config-modlog #channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/link-filter</h3>
-            <p>Toggle automatic link filtering</p>
-            <div class="command-usage">/link-filter [on/off]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/ticket-setup</h3>
-            <p>Enable ticket support system</p>
-            <div class="command-usage">/ticket-setup #channel</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/create-category</h3>
-            <p>Create a new role category</p>
-            <div class="command-usage">/create-category [name]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/add-role</h3>
-            <p>Add role to a category</p>
-            <div class="command-usage">/add-role [category] [role name] [role ID]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/setup-category</h3>
-            <p>Post reaction role selector for category</p>
-            <div class="command-usage">/setup-category [category]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/setup-level-roles</h3>
-            <p>Auto-create 100 level roles</p>
-            <div class="command-usage">/setup-level-roles</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/add-twitch-user</h3>
-            <p>Monitor Twitch streamer</p>
-            <div class="command-usage">/add-twitch-user [username]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/addcmd</h3>
-            <p>Create custom command</p>
-            <div class="command-usage">/addcmd [name] | [response]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/kick</h3>
-            <p>Remove member from server</p>
-            <div class="command-usage">/kick @user [reason]</div>
-            <span class="badge admin">Admin</span>
-          </div>
-          <div class="command-card">
-            <h3>/ban</h3>
-            <p>Permanently ban member</p>
-            <div class="command-usage">/ban @user [reason]</div>
-            <span class="badge admin">Admin</span>
           </div>
         </div>
       </div>
 
       <div style="text-align: center; margin: 3rem 0;">
         <h2 style="color: #fff; margin-bottom: 1rem;">🚀 Ready to Get Started?</h2>
-        <p style="color: #bbb; margin-bottom: 2rem;">Invite SPIDEY BOT to your Discord server and start using these amazing commands!</p>
-        <a href="/" class="btn">← Back Home</a>
-        <a href="/login" class="btn">Admin Dashboard →</a>
+        <p style="color: #ccc; margin-bottom: 2rem;">Invite SPIDEY BOT to your server and start building your community today!</p>
+        <a id="addToDiscordFooter" class="btn">Invite To Guild →</a>
       </div>
     </div>
   </main>
 
   <footer>
-    <p>&copy; 2025 SPIDEY BOT - All rights reserved | Proudly created by SPIDEY TEAM</p>
+    <div class="footer-content">
+      <div class="footer-section">
+        <div class="logo">SPIDEY BOT</div>
+        <p style="margin-top: 1rem; color: #666; font-size: 0.85rem;">The ultimate tech guardian for your Discord server.</p>
+      </div>
+      <div class="footer-section">
+        <h3>Links</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/commands">Commands</a></li>
+          <li><a href="/login">Dashboard</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Support</h3>
+        <ul>
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/security">Security</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2024 SPIDEY BOT. All rights reserved.
+    </div>
   </footer>
 
   <script>
-    / Search functionality
+    // Load Client ID and set up invite links
+    async function loadConfig() {
+      try {
+        const response = await fetch('/api/config');
+        const data = await response.json();
+        const clientId = data.clientId;
+        const redirectUri = encodeURIComponent(window.location.origin + '/auth/discord/callback');
+        const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands`;
+        
+        document.getElementById('addToDiscordFooter').href = inviteUrl;
+      } catch (err) {
+        console.error('Failed to load config:', err);
+      }
+    }
+
+    loadConfig();
+
+    // Search functionality
     const searchBox = document.getElementById('searchBox');
+    const commandCards = document.querySelectorAll('.command-card');
     const sections = document.querySelectorAll('.command-section');
 
     searchBox.addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase();
       
       sections.forEach(section => {
+        let hasVisibleCards = false;
         const cards = section.querySelectorAll('.command-card');
-        let visibleCards = 0;
-
+        
         cards.forEach(card => {
           const text = card.textContent.toLowerCase();
-          if (text.includes(query) || query === '') {
-            card.style.display = '';
-            visibleCards++;
+          if (text.includes(query)) {
+            card.style.display = 'block';
+            hasVisibleCards = true;
           } else {
             card.style.display = 'none';
           }
         });
-
-        / Hide section if no cards are visible
-        section.style.display = visibleCards > 0 || query === '' ? '' : 'none';
+        
+        section.style.display = hasVisibleCards ? 'block' : 'none';
       });
     });
   </script>
