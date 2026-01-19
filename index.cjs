@@ -162,7 +162,7 @@ function getGuildConfig(guildId) {
       welcomeChannelId: null,
       welcomeMessage: "Welcome to our server! 🎉",
       roleCategories: {},
-      prefix: "//",
+      prefix: "/",
       modLogChannelId: null,
       twitchChannelId: null,
       twitchUsers: [],
