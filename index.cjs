@@ -75,9 +75,9 @@ app.get("/dashboard", (req, res) => {
         return res.status(404).send('<h1>Dashboard File Missing</h1><p>Expected path: ' + dashboardPath + '</p>');
     }
     let dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
-    // Inject timestamp to force fresh version EVERY TIME
+    // Inject timestamp and global variable to force fresh version
     const timestamp = Date.now();
-    dashboardHtml = dashboardHtml.replace('</head>', `<meta name="version-timestamp" content="${timestamp}">\n    <script>window.DASHBOARD_VERSION = "${timestamp}";</script>\n  </head>`);
+    dashboardHtml = dashboardHtml.replace('</head>', `<meta name="version-timestamp" content="${timestamp}">\n    <script>window.DASHBOARD_VERSION = "${timestamp}"; window.API_BASE_URL = window.location.origin;</script>\n  </head>`);
     res.send(dashboardHtml);
   } catch (err) {
     res.status(500).send('<h1>Dashboard Error</h1><p>' + err.message + '</p>');
