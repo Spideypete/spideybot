@@ -2183,6 +2183,12 @@ client.on("interactionCreate", async (interaction) => {
       
       // Emit as a fake messageCreate to reuse all existing handlers
       client.emit('messageCreate', fakeMessage);
+      
+      // Acknowledge the interaction to prevent "failed" message
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply({ ephemeral: true });
+        await interaction.editReply({ content: "✅ Command processed!" });
+      }
       return;
     } catch (err) {
       console.error(`Slash command error for /${interaction.commandName}:`, err);
