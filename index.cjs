@@ -50,41 +50,31 @@ app.use(session({
   }
 }));
 
-// Serve static files from dist (automatically serves index.html for /)
+// Inject version timestamp and cache-busting to ALL HTML pages
 app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
-  next();
-});
-
-// ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE - CRITICAL!) ==============
-const dashboardPath = path.join(__dirname, 'public', 'dashboard.html');
-
-app.get("/dashboard", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '-1');
-  res.setHeader('Surrogate-Control', 'no-store');
-  res.setHeader('CDN-Cache-Control', 'no-store');
-  
-  try {
-    if (!fs.existsSync(dashboardPath)) {
-        return res.status(404).send('<h1>Dashboard File Missing</h1><p>Expected path: ' + dashboardPath + '</p>');
+    if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security') {
+        const originalSend = res.send;
+        res.send = function (body) {
+            if (typeof body === 'string' && body.includes('</head>')) {
+                const timestamp = Date.now();
+                body = body.replace('</head>', `<meta name="version-timestamp" content="${timestamp}">\n    <script>window.PAGE_VERSION = "${timestamp}";</script>\n  </head>`);
+            }
+            return originalSend.call(this, body);
+        };
     }
-    let dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
-    // Inject timestamp and global variable to force fresh version
-    const timestamp = Date.now();
-    dashboardHtml = dashboardHtml.replace('</head>', `<meta name="version-timestamp" content="${timestamp}">\n    <script>window.DASHBOARD_VERSION = "${timestamp}"; window.API_BASE_URL = window.location.origin;</script>\n  </head>`);
-    res.send(dashboardHtml);
-  } catch (err) {
-    res.status(500).send('<h1>Dashboard Error</h1><p>' + err.message + '</p>');
-  }
+    next();
 });
 
-app.use(express.static(distDir));
+// Serve static files from dist
+app.use(express.static(distDir, {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 app.set('trust proxy', true);
 
 // ============== SECURITY MIDDLEWARE ==============
