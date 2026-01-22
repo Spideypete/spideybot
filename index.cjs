@@ -3128,12 +3128,6 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
-    console.log("🔵 Attempting OAuth exchange with:", {
-      client_id: DISCORD_CLIENT_ID,
-      redirect_uri: REDIRECT_URI,
-      code_preview: code.substring(0, 5) + "..."
-    });
-
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
@@ -3151,7 +3145,6 @@ app.get("/auth/discord/callback", async (req, res) => {
     );
 
     const { access_token } = tokenRes.data;
-    console.log("✅ Token received, fetching user info...");
 
     const userRes = await axios.get("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${access_token}` }
@@ -3161,17 +3154,13 @@ app.get("/auth/discord/callback", async (req, res) => {
       headers: { Authorization: `Bearer ${access_token}` }
     });
 
-    // Filter to only servers where user is admin (has ADMINISTRATOR permission)
     const adminGuilds = guildsRes.data.filter(guild => {
-      // Check if user has admin permissions in this guild
-      // Permissions are a bitmask, ADMINISTRATOR = 0x8
       const permissions = BigInt(guild.permissions || 0);
       const ADMINISTRATOR = BigInt(8);
       return (permissions & ADMINISTRATOR) === ADMINISTRATOR;
     });
 
     if (adminGuilds.length === 0) {
-      console.warn("⚠️ User logged in but has no admin servers:", userRes.data.username);
       return res.status(403).send(`
         <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
           <h2 style="color: #00d4ff;">❌ Access Denied</h2>
@@ -3191,7 +3180,6 @@ app.get("/auth/discord/callback", async (req, res) => {
         console.error("🔴 Session save error:", err);
         return res.status(500).send("Login failed: could not save session");
       }
-      console.log(`✅ User logged in: ${userRes.data.username} (${adminGuilds.length} admin servers)`);
       res.redirect("/dashboard.html");
     });
   } catch (err) {
