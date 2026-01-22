@@ -56,11 +56,14 @@ app.use((req, res, next) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     
-    if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security' || !req.path.includes('.')) {
+    // Add version cookie for API requests
+    const timestamp = Date.now();
+    res.cookie('v', timestamp, { maxAge: 3600000, httpOnly: false });
+
+    if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security' || req.path === '/dashboard' || !req.path.includes('.')) {
         const originalSend = res.send;
         res.send = function (body) {
             if (typeof body === 'string' && body.includes('</head>')) {
-                const timestamp = Date.now();
                 body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n    <meta http-equiv="Pragma" content="no-cache">\n    <meta http-equiv="Expires" content="0">\n    <meta name="version-timestamp" content="${timestamp}">\n    <script>window.PAGE_VERSION = "${timestamp}"; console.log("Page Version: " + "${timestamp}");</script>\n  </head>`);
             }
             return originalSend.call(this, body);
@@ -302,23 +305,43 @@ client.once("ready", async () => {
   }
 });
 
-// ============== ACTIVITY LOGGING ==============
-function addActivity(guildId, icon, text, action, time = null) {
+// ============== API ENDPOINTS FOR DASHBOARD ==============
+app.get('/api/config', (req, res) => {
   const config = loadConfig();
-  if (!config.guilds[guildId]) config.guilds[guildId] = {};
-  if (!config.guilds[guildId].activities) config.guilds[guildId].activities = [];
+  res.json({
+    clientId: DISCORD_CLIENT_ID,
+    guilds: config.guilds || {}
+  });
+});
 
-  const activity = {
-    icon,
-    name: text.substring(0, 50),
-    action,
-    timestamp: time || new Date().toLocaleTimeString()
-  };
+app.post('/api/save-config', (req, res) => {
+  const { guildId, updates } = req.body;
+  if (!guildId || !updates) return res.status(400).json({ error: 'Missing guildId or updates' });
+  
+  const config = loadConfig();
+  if (!config.guilds[guildId]) {
+    config.guilds[guildId] = getGuildConfig(guildId);
+  }
+  
+  config.guilds[guildId] = { ...config.guilds[guildId], ...updates };
+  saveConfig(config);
+  res.json({ success: true, config: config.guilds[guildId] });
+});
 
-  config.guilds[guildId].activities.unshift(activity);
-  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 50);
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-}
+app.get('/api/guilds', async (req, res) => {
+  try {
+    const guilds = client.guilds.cache.map(g => ({
+      id: g.id,
+      name: g.name,
+      icon: g.icon,
+      memberCount: g.memberCount
+    }));
+    res.json(guilds);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch guilds' });
+  }
+});
+
 
 // ============== WELCOME NEW MEMBERS ==============
 client.on("guildMemberAdd", async (member) => {

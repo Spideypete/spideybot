@@ -4404,6 +4404,78 @@
             console.error('🔴 Unhandled promise rejection:', event.reason);
         });
 
+    <script>
+        let currentGuildId = null;
+        let guilds = [];
+
+        async function initDashboard() {
+            try {
+                // Fetch guilds
+                const response = await fetch('/api/guilds');
+                guilds = await response.json();
+                
+                const container = document.getElementById('server-icons-container');
+                container.innerHTML = guilds.map(g => `
+                    <button class="server-icon-btn ${currentGuildId === g.id ? 'active' : ''}" 
+                            onclick="selectServer('${g.id}')" title="${g.name}">
+                        ${g.icon ? `<img src="https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png" alt="${g.name}">` : g.name.charAt(0)}
+                    </button>
+                `).join('');
+
+                if (guilds.length > 0 && !currentGuildId) {
+                    selectServer(guilds[0].id);
+                }
+            } catch (err) {
+                console.error('Dashboard init failed:', err);
+            }
+        }
+
+        async function selectServer(guildId) {
+            currentGuildId = guildId;
+            document.querySelectorAll('.server-icon-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = Array.from(document.querySelectorAll('.server-icon-btn')).find(b => b.title === guilds.find(g => g.id === guildId).name);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const guild = guilds.find(g => g.id === guildId);
+            document.getElementById('current-server-name').textContent = guild.name;
+
+            // Load guild config
+            const response = await fetch('/api/config');
+            const config = await response.json();
+            const guildConfig = config.guilds[guildId] || {};
+
+            // Update UI with config values
+            if (document.getElementById('prefix-input')) document.getElementById('prefix-input').value = guildConfig.prefix || '/';
+            if (document.getElementById('welcome-channel-select')) document.getElementById('welcome-channel-select').value = guildConfig.welcomeChannelId || '';
+            // Add more field updates as needed
+        }
+
+        async function saveChanges() {
+            if (!currentGuildId) return;
+
+            const updates = {
+                prefix: document.getElementById('prefix-input')?.value,
+                welcomeChannelId: document.getElementById('welcome-channel-select')?.value,
+                // Gather other inputs
+            };
+
+            try {
+                const response = await fetch('/api/save-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ guildId: currentGuildId, updates })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Changes saved successfully!');
+                }
+            } catch (err) {
+                alert('Failed to save changes');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', initDashboard);
     </script>
 </body>
 </html>
