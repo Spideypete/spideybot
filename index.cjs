@@ -3128,6 +3128,12 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
+    console.log("🔵 Attempting OAuth exchange with:", {
+      client_id: DISCORD_CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      code_preview: code.substring(0, 5) + "..."
+    });
+
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
@@ -3145,6 +3151,8 @@ app.get("/auth/discord/callback", async (req, res) => {
     );
 
     const { access_token } = tokenRes.data;
+    console.log("✅ Token received, fetching user info...");
+
     const userRes = await axios.get("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${access_token}` }
     });
@@ -3163,7 +3171,14 @@ app.get("/auth/discord/callback", async (req, res) => {
     });
 
     if (adminGuilds.length === 0) {
-      return res.status(403).send(`<h2>Access Denied</h2><p>You must be an admin in at least one Discord server with SPIDEY BOT to access this dashboard.</p><p><a href="/">Back to Home</a></p>`);
+      console.warn("⚠️ User logged in but has no admin servers:", userRes.data.username);
+      return res.status(403).send(`
+        <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+          <h2 style="color: #00d4ff;">❌ Access Denied</h2>
+          <p>You must be an <b>Administrator</b> in at least one server with SPIDEY BOT to access this dashboard.</p>
+          <a href="/" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Back to Home</a>
+        </div>
+      `);
     }
 
     req.session.authenticated = true;
@@ -3172,15 +3187,27 @@ app.get("/auth/discord/callback", async (req, res) => {
     req.session.accessToken = access_token;
 
     req.session.save((err) => {
-      if (err) console.error("Session save error:", err);
-      console.log(`✅ User logged in via Discord: ${userRes.data.username} (${adminGuilds.length} admin servers)`);
-      res.redirect("/dashboard");
+      if (err) {
+        console.error("🔴 Session save error:", err);
+        return res.status(500).send("Login failed: could not save session");
+      }
+      console.log(`✅ User logged in: ${userRes.data.username} (${adminGuilds.length} admin servers)`);
+      res.redirect("/dashboard.html");
     });
   } catch (err) {
     console.error("❌ OAuth error:", err.response?.data || err.message);
-    console.error("Expected Redirect URI:", REDIRECT_URI);
-    const errorMessage = err.response?.data?.error_description || err.message || "Unknown error";
-    res.status(500).send(`<h2>Authentication Failed</h2><p>Error: ${errorMessage}</p><p><strong>Expected Redirect URI:</strong><br/>${REDIRECT_URI}</p><p>Make sure this URI is added to your Discord app's OAuth2 redirect URIs in the <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a>.</p>`);
+    const errorMsg = err.response?.data?.error_description || err.message || "Unknown error";
+    res.status(500).send(`
+      <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+        <h2 style="color: #00d4ff;">❌ Authentication Failed</h2>
+        <p>Error: ${errorMsg}</p>
+        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left; max-width: 600px;">
+          <p><b>Expected Redirect URI:</b><br/><code style="color: #9146ff; word-break: break-all;">${REDIRECT_URI}</code></p>
+          <p style="font-size: 0.9rem; color: #ccc;">Make sure this matches EXACTLY in your <a href="https://discord.com/developers/applications" target="_blank" style="color: #00d4ff;">Discord Developer Portal</a>.</p>
+        </div>
+        <a href="/login.html" style="color: #ff1493; text-decoration: none;">← Try Again</a>
+      </div>
+    `);
   }
 });
 
@@ -3258,7 +3285,7 @@ app.get("/api/image", async (req, res) => {
 // ============== SERVER MANAGEMENT PAGE ==============
 app.get("/dashboard/server/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.redirect("/dashboard");
+  res.redirect("/dashboard.html");
 });
 
 // ============== API ENDPOINTS ==============
