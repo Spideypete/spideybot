@@ -56,6 +56,9 @@ app.use((req, res, next) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     
+    // Fix for Replit frame issue: Force headers that help with cookie persistence
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
     // Add version cookie for API requests
     const timestamp = Date.now();
     res.cookie('v', timestamp, { maxAge: 3600000, httpOnly: false });
@@ -64,7 +67,20 @@ app.use((req, res, next) => {
         const originalSend = res.send;
         res.send = function (body) {
             if (typeof body === 'string' && body.includes('</head>')) {
-                body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n    <meta http-equiv="Pragma" content="no-cache">\n    <meta http-equiv="Expires" content="0">\n    <meta name="version-timestamp" content="${timestamp}">\n    <script>window.PAGE_VERSION = "${timestamp}"; console.log("Page Version: " + "${timestamp}");</script>\n  </head>`);
+                // Add a small script to ensure we are not stuck in an iframe cache if possible
+                body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="version-timestamp" content="${timestamp}">
+    <script>
+        window.PAGE_VERSION = "${timestamp}"; 
+        console.log("Page Version: " + "${timestamp}");
+        // If we are in an iframe and the parent is replit, we might need special handling
+        if (window.self !== window.top) {
+            console.log("Running inside an iframe");
+        }
+    </script>
+  </head>`);
             }
             return originalSend.call(this, body);
         };
@@ -3117,9 +3133,20 @@ app.get("/commands", (req, res) => {
   res.send(commandsHtml);
 });
 
+// Determine redirect URI based on host
+const REDIRECT_URI_DETECTOR = (req) => {
+  const host = req.get('host');
+  // Replit often uses http for internal traffic but we need https for OAuth
+  const protocol = (host.includes('repl.co') || host.includes('replit.dev')) ? 'https' : req.protocol;
+  return `${protocol}://${host}/auth/discord/callback`;
+};
+
 app.get("/auth/discord", (req, res) => {
+  const currentRedirectUri = REDIRECT_URI_DETECTOR(req);
   const scopes = ["identify", "guilds"];
-  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
+  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(currentRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
+  
+  console.log(`🔵 Initiating OAuth login. Redirect URI: ${currentRedirectUri}`);
   res.redirect(authURL);
 });
 
@@ -3128,13 +3155,8 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
-    // Determine redirect URI based on host
-    const host = req.get('host');
-    const currentRedirectUri = host.includes('localhost') ? 
-      "http://localhost:5000/auth/discord/callback" : 
-      `https://${host}/auth/discord/callback`;
-
-    console.log(`🔵 Using Redirect URI: ${currentRedirectUri}`);
+    const currentRedirectUri = REDIRECT_URI_DETECTOR(req);
+    console.log(`🔵 Auth Callback received. Using Redirect URI: ${currentRedirectUri}`);
 
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
@@ -3188,18 +3210,28 @@ app.get("/auth/discord/callback", async (req, res) => {
         console.error("🔴 Session save error:", err);
         return res.status(500).send("Login failed: could not save session");
       }
-      res.redirect("/dashboard.html");
+      console.log(`✅ User logged in: ${userRes.data.username}`);
+      // Ensure we redirect to the full URL to avoid relative path issues in frames
+      const host = req.get('host');
+      const protocol = (host.includes('repl.co') || host.includes('replit.dev')) ? 'https' : req.protocol;
+      res.redirect(`${protocol}://${host}/dashboard.html`);
     });
   } catch (err) {
-    console.error("❌ OAuth error:", err.response?.data || err.message);
+    console.error("❌ OAuth error details:", err.response?.data || err.message);
     const errorMsg = err.response?.data?.error_description || err.message || "Unknown error";
+    
+    // Construct debug info
+    const host = req.get('host');
+    const protocol = req.protocol === 'http' && !host.includes('localhost') ? 'https' : req.protocol;
+    const attemptedUri = `${protocol}://${host}/auth/discord/callback`;
+
     res.status(500).send(`
       <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
         <h2 style="color: #00d4ff;">❌ Authentication Failed</h2>
         <p>Error: ${errorMsg}</p>
         <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left; max-width: 600px;">
-          <p><b>Expected Redirect URI:</b><br/><code style="color: #9146ff; word-break: break-all;">${REDIRECT_URI}</code></p>
-          <p style="font-size: 0.9rem; color: #ccc;">Make sure this matches EXACTLY in your <a href="https://discord.com/developers/applications" target="_blank" style="color: #00d4ff;">Discord Developer Portal</a>.</p>
+          <p><b>Attempted Redirect URI:</b><br/><code style="color: #9146ff; word-break: break-all;">${attemptedUri}</code></p>
+          <p style="font-size: 0.9rem; color: #ccc;">If this doesn't match your Discord Dev Portal, add it there.</p>
         </div>
         <a href="/login.html" style="color: #ff1493; text-decoration: none;">← Try Again</a>
       </div>
@@ -3223,10 +3255,14 @@ app.get("/api/config", (req, res) => {
   });
 });
 
-// ============== USER API ==============
 app.get("/api/user", (req, res) => {
   if (!req.session.authenticated) {
     return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const user = req.session.user;
+  if (!user) {
+    return res.status(401).json({ error: "User session expired" });
   }
 
   // Verify user still has admin guilds
@@ -3234,25 +3270,17 @@ app.get("/api/user", (req, res) => {
     return res.status(403).json({ error: "No admin servers found" });
   }
 
-  const user = req.session.user;
   let avatarUrl = null;
-  let avatarProxyUrl = null;
   
-  // Generate Discord avatar URL (CDN direct)
   if (user.avatar) {
     const isAnimated = user.avatar.startsWith('a_');
     const ext = isAnimated ? 'gif' : 'png';
     avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
-    avatarProxyUrl = `/api/image?url=${encodeURIComponent(avatarUrl)}`;
   }
 
   res.json({
-    user: {
-      ...user,
-      avatarUrl,
-      avatarProxyUrl,
-      avatar: user.avatar || null
-    },
+    ...user,
+    avatarUrl,
     guilds: req.session.guilds
   });
 });
