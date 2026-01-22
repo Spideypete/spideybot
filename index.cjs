@@ -3128,13 +3128,21 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
+    // Determine redirect URI based on host
+    const host = req.get('host');
+    const currentRedirectUri = host.includes('localhost') ? 
+      "http://localhost:5000/auth/discord/callback" : 
+      `https://${host}/auth/discord/callback`;
+
+    console.log(`🔵 Using Redirect URI: ${currentRedirectUri}`);
+
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         client_secret: DISCORD_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: currentRedirectUri,
         scope: "identify guilds"
       }),
       {
