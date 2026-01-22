@@ -4336,7 +4336,8 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Web server running on port ${PORT}`);
+  console.log(`🚀 Web server listening on port ${PORT}`);
+  console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
 });
 
 // ============== LOGIN ==============
