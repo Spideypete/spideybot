@@ -295,7 +295,7 @@ const COMMANDS_META = {
   'config-twitch-channel': { category: 'config', subsection: 'Channels', description: 'Set Twitch alerts channel', usage: '/config-twitch-channel #channel' },
 
   'create-category': { category: 'roles', subsection: 'Category', description: 'Create a role category', usage: '/create-category [name]' },
-  'list-roles': { category: 'roles', subsection: 'Category', description: 'View all active role categories', usage: '/list-roles', adminOnly: true },
+  'list-roles': { category: 'roles', subsection: 'Category', description: 'View all active role categories', usage: '/list-roles' },
   'add-role': { category: 'roles', subsection: 'Category', description: 'Add role to category', usage: '/add-role [category] [role]' },
   'remove-role': { category: 'roles', subsection: 'Category', description: 'Remove role from category', usage: '/remove-role [category] [role]' },
   'set-category-banner': { category: 'roles', subsection: 'Category', description: 'Set category banner', usage: '/set-category-banner [category] [url]' },
