@@ -1,53 +1,106 @@
-# SPIDEY BOT - Deployment Guide
+# SPIDEY BOT - Render Deployment Guide
 
-## Quick Start
+## Prerequisites
+- Discord bot created in Discord Developer Portal
+- Bot TOKEN from Discord Developer Portal
+- Client ID: `1441151515233615964`
+- Client Secret from Discord Developer Portal
+- Render account (https://render.com)
+- GitHub repository with code pushed
 
-### Prerequisites
-1. ✅ Discord bot created in Discord Developer Portal
-2. ✅ Bot TOKEN (already have)
-3. ✅ Client ID (already have)
-4. ✅ Client Secret (need to get)
-5. ✅ Render account (https://render.com)
-
-## Step 1: Get Discord Client Secret
+## Step 1: Get Discord Credentials
 
 1. Go to https://discord.com/developers/applications
 2. Select **SPIDEY BOT** application
 3. Click **"OAuth2"** → **"General"**
-4. Under "Client Secret", click **"Reset Secret"**
-5. **Copy the secret** and save it safely
+4. Copy **Client ID**: `1441151515233615964`
+5. Click **"Reset Secret"** under Client Secret and copy it
+6. Save both securely
 
-## Step 2: Add OAuth Redirect URLs to Discord
+## Step 2: Set OAuth Redirect URL in Discord
 
 1. Still in OAuth2 → General
-2. Find **"Redirects"** section
-3. Click **"Add Redirect"** and add **BOTH** URLs:
-   - **For Replit testing**: `https://b17c56dd-97ae-4115-89ec-0ae9cc59baae-00-2qrrb57gp09hi.picard.replit.dev/auth/discord/callback`
-   - **For Render production**: `https://spideybot-90sr.onrender.com/auth/discord/callback`
+2. Under **"Valid OAuth2 Redirect URIs"**
+3. Add: `https://your-service-name.onrender.com/auth/discord/callback`
+   - Replace `your-service-name` with your actual Render service name
+   - You can update this after deployment if needed
 4. Click **"Save Changes"**
 
 ## Step 3: Deploy to Render
 
-### If you haven't connected Render yet:
+### Option A: Using render.yaml (Automatic - Recommended)
 
-1. Go to https://render.com and sign up/login
+1. Go to https://render.com and sign in
 2. Click **"New +"** → **"Web Service"**
 3. Connect your GitHub repository
-4. Fill in:
-   - **Name**: spidey-bot
-   - **Environment**: Node
-   - **Build Command**: `npm install`
-   - **Start Command**: `node index.cjs`
-   - **Region**: Choose closest to you
+4. Render will auto-detect `render.yaml` and configure everything
 5. Click **"Create Web Service"**
+6. Add environment variables (see below)
 
-### Add Environment Variables to Render:
+### Option B: Manual Configuration
 
-1. In Render dashboard, go to your **spidey-bot** service
-2. Click **"Environment"** tab
+1. Go to Render and create a new **Web Service**
+2. Configure:
+   - **Name**: spidey-bot
+   - **Runtime**: Node
+   - **Build Command**: `npm install --no-audit --no-fund`
+   - **Start Command**: `node index.cjs`
+   - **Plan**: Free (or paid for persistent storage)
+
+### Set Environment Variables in Render:
+
+1. In Render dashboard, click **"Settings"** on your service
+2. Scroll to **"Environment"** section
 3. Add these variables:
    ```
-   TOKEN=your_discord_bot_token_here
+   TOKEN=your_discord_bot_token
+   CLIENT_ID=1441151515233615964
+   DISCORD_CLIENT_SECRET=your_client_secret
+   SESSION_SECRET=generate_a_random_string_here
+   BASE_URL=https://your-service-name.onrender.com
+   NODE_ENV=production
+   PORT=5000
+   ```
+
+## Step 4: Verify Deployment
+
+1. Render builds and deploys (takes 2-5 minutes)
+2. Once live, test:
+   - Homepage: `https://your-service.onrender.com/`
+   - Commands: `https://your-service.onrender.com/commands`
+   - API: `https://your-service.onrender.com/api/commands`
+3. Check Render logs for "✅ Registered X slash commands"
+4. Invite bot to Discord and type `/` to see commands
+
+## Troubleshooting Render Deployment
+
+### Build fails: "npm ERR!"
+- Check Node version (should be 18+)
+- Ensure `package.json` is valid
+- Run locally: `npm install` to verify
+
+### Bot doesn't login: "TokenInvalid"
+- Verify TOKEN environment variable is set correctly
+- Check token hasn't been rotated/revoked in Discord Developer Portal
+- Ensure no extra spaces in the token value
+
+### OAuth fails: Redirect URI mismatch
+- Update Discord redirect URI to match your Render service URL
+- Format: `https://spidey-bot-xxxxx.onrender.com/auth/discord/callback`
+- Clear browser cache and retry login
+
+### Slash commands not appearing
+- Commands auto-register ~5 seconds after bot logs in
+- Check Render logs for registration confirmations
+- Wait a few seconds, then type `/` in Discord again
+- If still not working, restart the service in Render dashboard
+
+## Render-specific Notes
+
+- **Free Plan**: Service sleeps after 15 min of inactivity (wakes on request)
+- **Persistent Storage**: Free plan doesn't have persistent `/tmp`, config.json is stored
+- **Logs**: Available in Render dashboard under "Logs" tab
+- **Custom Domain**: Upgrade to paid plan to use custom domain
    CLIENT_ID=your_client_id_here
    DISCORD_CLIENT_SECRET=your_client_secret_here
    SESSION_SECRET=any_random_string_here
