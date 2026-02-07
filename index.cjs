@@ -19,6 +19,7 @@ const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 const express = require("express");
+const helmet = require('helmet');
 const session = require("express-session");
 const axios = require("axios");
 const {
@@ -38,6 +39,7 @@ const publicDir = path.join(__dirname, 'public');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(helmet());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
   resave: true,
@@ -56,34 +58,24 @@ app.use((req, res, next) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     
-    // Fix for Replit frame issue: Force headers that help with cookie persistence
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    // Add version cookie for API requests
+    // Add cache-control headers and a lightweight version cookie for cache-busting
     const timestamp = Date.now();
     res.cookie('v', timestamp, { maxAge: 3600000, httpOnly: false });
 
     if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security' || req.path === '/dashboard' || !req.path.includes('.')) {
-        const originalSend = res.send;
-        res.send = function (body) {
-            if (typeof body === 'string' && body.includes('</head>')) {
-                // Add a small script to ensure we are not stuck in an iframe cache if possible
-                body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+      const originalSend = res.send;
+      res.send = function (body) {
+        if (typeof body === 'string' && body.includes('</head>')) {
+          // Inject a small version meta + script for client-side cache awareness
+          body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="version-timestamp" content="${timestamp}">
-    <script>
-        window.PAGE_VERSION = "${timestamp}"; 
-        console.log("Page Version: " + "${timestamp}");
-        // If we are in an iframe and the parent is replit, we might need special handling
-        if (window.self !== window.top) {
-            console.log("Running inside an iframe");
+    <script>window.PAGE_VERSION = "${timestamp}";</script>
+    </head>`);
         }
-    </script>
-  </head>`);
-            }
-            return originalSend.call(this, body);
-        };
+        return originalSend.call(this, body);
+      };
     }
     next();
 });
@@ -112,23 +104,13 @@ const backupSystem = new BackupSystem();
 // ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
-const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
-const REPLIT_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : null;
+// Prefer explicit BASE_URL in env for Codespaces / production. Keep Render fallback.
+const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || null;
+const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'http://localhost:5000');
 
-// Build proper redirect URI
-let BASE_REDIRECT_URI;
-if (RENDER_EXTERNAL_URL) {
-  BASE_REDIRECT_URI = RENDER_EXTERNAL_URL.endsWith('/') ? RENDER_EXTERNAL_URL.slice(0, -1) : RENDER_EXTERNAL_URL;
-} else if (REPLIT_URL) {
-  BASE_REDIRECT_URI = REPLIT_URL;
-} else {
-  BASE_REDIRECT_URI = "http://localhost:5000";
-}
-
-// Hardcode Render URL as fallback if detection fails
-const REDIRECT_URI = BASE_REDIRECT_URI === "http://localhost:5000" && (process.env.NODE_ENV === 'production' || process.env.RENDER)
-  ? "https://spideybot-90sr.onrender.com/auth/discord/callback"
-  : `${BASE_REDIRECT_URI}/auth/discord/callback`;
+const REDIRECT_URI = process.env.FORCE_REDIRECT_URI || ((BASE_REDIRECT_URI === 'http://localhost:5000' && (process.env.NODE_ENV === 'production' || process.env.RENDER))
+  ? 'https://spideybot-90sr.onrender.com/auth/discord/callback'
+  : `${BASE_REDIRECT_URI}/auth/discord/callback`);
 
 console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
 
@@ -251,6 +233,104 @@ function setCachedMemberStats(guildId, data) {
   memberStatsCache[guildId] = { data, timestamp: Date.now() };
 }
 
+// ------------------------------------------------------------------
+// Command metadata (shared): exposed to dashboard via /api/commands
+// This lives at top-level so the dashboard can render even when bot
+// isn't logged in or slash commands aren't registered yet.
+const COMMANDS_META = {
+  help: { category: 'info', description: 'Show full command list', usage: '/help' },
+  adminhelp: { category: 'info', description: 'Show admin-only commands', usage: '/adminhelp' },
+  kick: { category: 'moderation', description: 'Remove member from server', usage: '/kick @user [reason]' },
+  ban: { category: 'moderation', description: 'Permanently ban member', usage: '/ban @user [reason]' },
+  warn: { category: 'moderation', description: 'Warn member (tracked & logged)', usage: '/warn @user [reason]' },
+  mute: { category: 'moderation', description: 'Timeout member', usage: '/mute @user' },
+  unmute: { category: 'moderation', description: 'Remove timeout from member', usage: '/unmute @user' },
+  warnings: { category: 'moderation', description: "View member's warning history", usage: '/warnings @user' },
+
+  balance: { category: 'economy', description: 'Check your coin balance', usage: '/balance' },
+  pay: { category: 'economy', description: 'Pay another user', usage: '/pay @user [amount]' },
+  addmoney: { category: 'economy', description: 'Add money to a user (admin)', usage: '/addmoney @user [amount]' },
+  removemoney: { category: 'economy', description: 'Remove money from a user (admin)', usage: '/removemoney @user [amount]' },
+  work: { category: 'economy', description: 'Work for coins (cooldown)', usage: '/work' },
+  transfer: { category: 'economy', description: 'Send coins to other members', usage: '/transfer @user [amount]' },
+
+  rps: { category: 'games', description: 'Play rock-paper-scissors', usage: '/rps [rock/paper/scissors]' },
+  '8ball': { category: 'games', description: 'Magic 8-ball', usage: '/8ball' },
+  dice: { category: 'games', description: 'Roll a dice', usage: '/dice' },
+  coin: { category: 'games', description: 'Flip a coin', usage: '/coin' },
+  trivia: { category: 'games', description: 'Get a trivia question', usage: '/trivia' },
+
+  play: { category: 'music', description: 'Search and play music', usage: '/play [song or URL]' },
+  stop: { category: 'music', description: 'Stop playback and clear queue', usage: '/stop' },
+  skip: { category: 'music', description: 'Skip current track', usage: '/skip' },
+  queue: { category: 'music', description: 'Show music queue', usage: '/queue' },
+  volume: { category: 'music', description: 'Adjust playback volume', usage: '/volume [0-200]' },
+
+  suggest: { category: 'info', description: 'Send a suggestion', usage: '/suggest [message]' },
+  'ticket-setup': { category: 'tickets', description: 'Setup ticket system', usage: '/ticket-setup #channel' },
+  ticket: { category: 'tickets', description: 'Create a support ticket', usage: '/ticket' },
+  'close-ticket': { category: 'tickets', description: 'Close an active ticket', usage: '/close-ticket' },
+
+  'config-modlog': { category: 'config', description: 'Set moderation log channel', usage: '/config-modlog #channel' },
+  'config-welcome-channel': { category: 'config', description: 'Set welcome channel', usage: '/config-welcome-channel #channel' },
+  'config-welcome-message': { category: 'config', description: 'Set welcome message', usage: '/config-welcome-message [message]' },
+  'config-goodbye-message': { category: 'config', description: 'Set goodbye message', usage: '/config-goodbye-message [message]' },
+  'config-logging': { category: 'config', description: 'Configure logging', usage: '/config-logging' },
+  'config-leaderboard': { category: 'config', description: 'Configure leaderboards', usage: '/config-leaderboard' },
+  'config-xp': { category: 'config', description: 'Configure XP settings', usage: '/config-xp' },
+  'config-subscriptions': { category: 'config', description: 'Configure subscriptions', usage: '/config-subscriptions' },
+  'config-statistics-channels': { category: 'config', description: 'Configure statistic channels', usage: '/config-statistics-channels' },
+  'config-server-guard': { category: 'config', description: 'Server guard settings', usage: '/config-server-guard' },
+  'config-react-roles': { category: 'config', description: 'Configure reaction roles', usage: '/config-react-roles' },
+  'config-role-categories': { category: 'config', description: 'Manage role categories', usage: '/config-role-categories' },
+  'config-social-notifs': { category: 'config', description: 'Configure social notifications', usage: '/config-social-notifs' },
+  'config-suggestions': { category: 'config', description: 'Configure suggestions channel', usage: '/config-suggestions' },
+  'config-kick-channel': { category: 'config', description: 'Set kick channel', usage: '/config-kick-channel #channel' },
+  'config-tiktok-channel': { category: 'config', description: 'Set TikTok alerts channel', usage: '/config-tiktok-channel #channel' },
+  'config-twitch-channel': { category: 'config', description: 'Set Twitch alerts channel', usage: '/config-twitch-channel #channel' },
+
+  'create-category': { category: 'roles', description: 'Create a role category', usage: '/create-category [name]' },
+  'add-role': { category: 'roles', description: 'Add role to category', usage: '/add-role [category] [role]' },
+  'remove-role': { category: 'roles', description: 'Remove role from category', usage: '/remove-role [category] [role]' },
+  'set-category-banner': { category: 'roles', description: 'Set category banner', usage: '/set-category-banner [category] [url]' },
+  'setup-category': { category: 'roles', description: 'Setup a new category message', usage: '/setup-category [category]' },
+  'delete-category': { category: 'roles', description: 'Delete a category', usage: '/delete-category [category]' },
+  'add-game-role': { category: 'roles', description: 'Add game role', usage: '/add-game-role [role]' },
+  'remove-game-role': { category: 'roles', description: 'Remove game role', usage: '/remove-game-role [role]' },
+  'add-watchparty-role': { category: 'roles', description: 'Add watchparty role', usage: '/add-watchparty-role [role]' },
+  'remove-watchparty-role': { category: 'roles', description: 'Remove watchparty role', usage: '/remove-watchparty-role [role]' },
+  'add-platform-role': { category: 'roles', description: 'Add platform role', usage: '/add-platform-role [role]' },
+  'remove-platform-role': { category: 'roles', description: 'Remove platform role', usage: '/remove-platform-role [role]' },
+  'setup-roles': { category: 'roles', description: 'Post gaming roles selector with buttons', usage: '/setup-roles' },
+  'setup-watchparty': { category: 'roles', description: 'Post watch party role selector', usage: '/setup-watchparty' },
+  'setup-platform': { category: 'roles', description: 'Post platform selector', usage: '/setup-platform' },
+  'remove-roles': { category: 'roles', description: 'Post role removal message', usage: '/remove-roles' },
+  'setup-level-roles': { category: 'roles', description: 'Auto-create level roles', usage: '/setup-level-roles' },
+
+  'add-custom-command': { category: 'custom', description: 'Add a custom command', usage: '/add-custom-command [name] | [response]' },
+  addcmd: { category: 'custom', description: 'Add a custom command (alias)', usage: '/addcmd [name] | [response]' },
+  'remove-custom-command': { category: 'custom', description: 'Remove custom command', usage: '/remove-custom-command [name]' },
+  delcmd: { category: 'custom', description: 'Delete custom command (alias)', usage: '/delcmd [name]' },
+
+  giveaway: { category: 'giveaway', description: 'Create a giveaway', usage: '/giveaway' },
+  'start-giveaway': { category: 'giveaway', description: 'Start a giveaway', usage: '/start-giveaway' },
+  'filter-toggle': { category: 'config', description: 'Toggle profanity filter', usage: '/filter-toggle' },
+  'link-filter': { category: 'config', description: 'Toggle link filter', usage: '/link-filter [on/off]' },
+  'set-prefix': { category: 'config', description: 'Change command prefix', usage: '/set-prefix [prefix]' },
+  'add-kick-user': { category: 'social', description: 'Monitor Kick user', usage: '/add-kick-user [username]' },
+  'remove-kick-user': { category: 'social', description: 'Stop monitoring Kick user', usage: '/remove-kick-user [username]' },
+  'add-tiktok-user': { category: 'social', description: 'Monitor TikTok user', usage: '/add-tiktok-user [username]' },
+  'remove-tiktok-user': { category: 'social', description: 'Stop monitoring TikTok user', usage: '/remove-tiktok-user [username]' },
+  'add-twitch-user': { category: 'social', description: 'Monitor Twitch user', usage: '/add-twitch-user [username]' },
+  'remove-twitch-user': { category: 'social', description: 'Stop monitoring Twitch user', usage: '/remove-twitch-user [username]' },
+};
+
+// expose metadata to dashboard regardless of bot login
+app.get('/api/commands', (req, res) => {
+  res.json(COMMANDS_META);
+});
+// ------------------------------------------------------------------
+
 // ============== CLIENT SETUP ==============
 const client = new Client({
   intents: [
@@ -294,23 +374,8 @@ client.once("ready", async () => {
 
   // Register ALL slash commands
   try {
-    const commands = [
-      "help", "adminhelp", "kick", "ban", "warn", "mute", "unmute", "warnings",
-      "balance", "pay", "addmoney", "removemoney", "work", "transfer", "rps",
-      "play", "stop", "skip", "queue", "volume", "suggest", "ticket-setup",
-      "config-modlog", "config-welcome-channel", "config-welcome-message",
-      "config-goodbye-message", "config-logging", "config-leaderboard", "config-xp",
-      "config-subscriptions", "config-statistics-channels", "config-server-guard",
-      "config-react-roles", "config-role-categories", "config-social-notifs",
-      "config-suggestions", "config-kick-channel", "config-tiktok-channel", "config-twitch-channel",
-      "create-category", "add-role", "remove-role", "set-category-banner", "setup-category",
-      "delete-category", "add-game-role", "remove-game-role", "add-watchparty-role",
-      "remove-watchparty-role", "add-platform-role", "remove-platform-role",
-      "add-custom-command", "addcmd", "remove-custom-command", "delcmd",
-      "add-kick-user", "remove-kick-user", "add-tiktok-user", "remove-tiktok-user",
-      "add-twitch-user", "remove-twitch-user", "filter-toggle", "link-filter",
-      "set-prefix", "giveaway", "start-giveaway"
-    ].map(name => new SlashCommandBuilder().setName(name).setDescription(name.replace(/-/g, ' ')).toJSON());
+    // Use shared COMMANDS_META defined at top-level
+    const commands = Object.keys(COMMANDS_META).map(name => new SlashCommandBuilder().setName(name).setDescription(COMMANDS_META[name].description || name).toJSON());
 
     const rest = new REST({ version: '10' }).setToken(token);
     console.log(`📝 Registering ${commands.length} slash commands...`);
@@ -4377,4 +4442,8 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 // ============== LOGIN ==============
-client.login(token);
+if (token && typeof token === 'string' && token.length > 0) {
+  client.login(token).catch(err => console.error('Discord login error:', err));
+} else {
+  console.log('⚠️  No Discord `TOKEN` provided — skipping bot login. Web server remains available.');
+}
