@@ -50,41 +50,54 @@ app.use(session({
   }
 }));
 
-// Serve static files from dist (automatically serves index.html for /)
+// Inject version timestamp and cache-busting to ALL HTML pages
 app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
-  next();
-});
-
-// ============== DASHBOARD ROUTE (BEFORE STATIC MIDDLEWARE - CRITICAL!) ==============
-const dashboardPath = path.join(__dirname, 'public', 'dashboard.html');
-
-app.get("/dashboard", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '-1');
-  res.setHeader('Surrogate-Control', 'no-store');
-  res.setHeader('CDN-Cache-Control', 'no-store');
-  
-  try {
-    if (!fs.existsSync(dashboardPath)) {
-        return res.status(404).send('<h1>Dashboard File Missing</h1><p>Expected path: ' + dashboardPath + '</p>');
-    }
-    let dashboardHtml = fs.readFileSync(dashboardPath, 'utf-8');
-    // Inject timestamp to force fresh version EVERY TIME
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    // Fix for Replit frame issue: Force headers that help with cookie persistence
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    // Add version cookie for API requests
     const timestamp = Date.now();
-    dashboardHtml = dashboardHtml.replace('</head>', `<meta name="version-timestamp" content="${timestamp}">\n  </head>`);
-    res.send(dashboardHtml);
-  } catch (err) {
-    res.status(500).send('<h1>Dashboard Error</h1><p>' + err.message + '</p>');
-  }
+    res.cookie('v', timestamp, { maxAge: 3600000, httpOnly: false });
+
+    if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security' || req.path === '/dashboard' || !req.path.includes('.')) {
+        const originalSend = res.send;
+        res.send = function (body) {
+            if (typeof body === 'string' && body.includes('</head>')) {
+                // Add a small script to ensure we are not stuck in an iframe cache if possible
+                body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="version-timestamp" content="${timestamp}">
+    <script>
+        window.PAGE_VERSION = "${timestamp}"; 
+        console.log("Page Version: " + "${timestamp}");
+        // If we are in an iframe and the parent is replit, we might need special handling
+        if (window.self !== window.top) {
+            console.log("Running inside an iframe");
+        }
+    </script>
+  </head>`);
+            }
+            return originalSend.call(this, body);
+        };
+    }
+    next();
 });
 
-app.use(express.static(distDir));
+// Serve static files from dist
+app.use(express.static(distDir, {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res, path) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 app.set('trust proxy', true);
 
 // ============== SECURITY MIDDLEWARE ==============
@@ -162,7 +175,7 @@ function getGuildConfig(guildId) {
       welcomeChannelId: null,
       welcomeMessage: "Welcome to our server! 🎉",
       roleCategories: {},
-      prefix: "//",
+      prefix: "/",
       modLogChannelId: null,
       twitchChannelId: null,
       twitchUsers: [],
@@ -308,23 +321,43 @@ client.once("ready", async () => {
   }
 });
 
-// ============== ACTIVITY LOGGING ==============
-function addActivity(guildId, icon, text, action, time = null) {
+// ============== API ENDPOINTS FOR DASHBOARD ==============
+app.get('/api/config', (req, res) => {
   const config = loadConfig();
-  if (!config.guilds[guildId]) config.guilds[guildId] = {};
-  if (!config.guilds[guildId].activities) config.guilds[guildId].activities = [];
+  res.json({
+    clientId: DISCORD_CLIENT_ID,
+    guilds: config.guilds || {}
+  });
+});
 
-  const activity = {
-    icon,
-    name: text.substring(0, 50),
-    action,
-    timestamp: time || new Date().toLocaleTimeString()
-  };
+app.post('/api/save-config', (req, res) => {
+  const { guildId, updates } = req.body;
+  if (!guildId || !updates) return res.status(400).json({ error: 'Missing guildId or updates' });
+  
+  const config = loadConfig();
+  if (!config.guilds[guildId]) {
+    config.guilds[guildId] = getGuildConfig(guildId);
+  }
+  
+  config.guilds[guildId] = { ...config.guilds[guildId], ...updates };
+  saveConfig(config);
+  res.json({ success: true, config: config.guilds[guildId] });
+});
 
-  config.guilds[guildId].activities.unshift(activity);
-  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 50);
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-}
+app.get('/api/guilds', async (req, res) => {
+  try {
+    const guilds = client.guilds.cache.map(g => ({
+      id: g.id,
+      name: g.name,
+      icon: g.icon,
+      memberCount: g.memberCount
+    }));
+    res.json(guilds);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch guilds' });
+  }
+});
+
 
 // ============== WELCOME NEW MEMBERS ==============
 client.on("guildMemberAdd", async (member) => {
@@ -2183,6 +2216,12 @@ client.on("interactionCreate", async (interaction) => {
       
       // Emit as a fake messageCreate to reuse all existing handlers
       client.emit('messageCreate', fakeMessage);
+      
+      // Acknowledge the interaction to prevent "failed" message
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply({ ephemeral: true });
+        await interaction.editReply({ content: "✅ Command processed!" });
+      }
       return;
     } catch (err) {
       console.error(`Slash command error for /${interaction.commandName}:`, err);
@@ -3094,9 +3133,20 @@ app.get("/commands", (req, res) => {
   res.send(commandsHtml);
 });
 
+// Determine redirect URI based on host
+const REDIRECT_URI_DETECTOR = (req) => {
+  const host = req.get('host');
+  // Replit often uses http for internal traffic but we need https for OAuth
+  const protocol = (host.includes('repl.co') || host.includes('replit.dev')) ? 'https' : req.protocol;
+  return `${protocol}://${host}/auth/discord/callback`;
+};
+
 app.get("/auth/discord", (req, res) => {
+  const currentRedirectUri = REDIRECT_URI_DETECTOR(req);
   const scopes = ["identify", "guilds"];
-  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${scopes.join("%20")}`;
+  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(currentRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
+  
+  console.log(`🔵 Initiating OAuth login. Redirect URI: ${currentRedirectUri}`);
   res.redirect(authURL);
 });
 
@@ -3105,13 +3155,16 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
+    const currentRedirectUri = REDIRECT_URI_DETECTOR(req);
+    console.log(`🔵 Auth Callback received. Using Redirect URI: ${currentRedirectUri}`);
+
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         client_secret: DISCORD_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: currentRedirectUri,
         scope: "identify guilds"
       }),
       {
@@ -3122,6 +3175,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     );
 
     const { access_token } = tokenRes.data;
+
     const userRes = await axios.get("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${access_token}` }
     });
@@ -3130,17 +3184,20 @@ app.get("/auth/discord/callback", async (req, res) => {
       headers: { Authorization: `Bearer ${access_token}` }
     });
 
-    // Filter to only servers where user is admin (has ADMINISTRATOR permission)
     const adminGuilds = guildsRes.data.filter(guild => {
-      // Check if user has admin permissions in this guild
-      // Permissions are a bitmask, ADMINISTRATOR = 0x8
       const permissions = BigInt(guild.permissions || 0);
       const ADMINISTRATOR = BigInt(8);
       return (permissions & ADMINISTRATOR) === ADMINISTRATOR;
     });
 
     if (adminGuilds.length === 0) {
-      return res.status(403).send(`<h2>Access Denied</h2><p>You must be an admin in at least one Discord server with SPIDEY BOT to access this dashboard.</p><p><a href="/">Back to Home</a></p>`);
+      return res.status(403).send(`
+        <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+          <h2 style="color: #00d4ff;">❌ Access Denied</h2>
+          <p>You must be an <b>Administrator</b> in at least one server with SPIDEY BOT to access this dashboard.</p>
+          <a href="/" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Back to Home</a>
+        </div>
+      `);
     }
 
     req.session.authenticated = true;
@@ -3149,15 +3206,36 @@ app.get("/auth/discord/callback", async (req, res) => {
     req.session.accessToken = access_token;
 
     req.session.save((err) => {
-      if (err) console.error("Session save error:", err);
-      console.log(`✅ User logged in via Discord: ${userRes.data.username} (${adminGuilds.length} admin servers)`);
-      res.redirect("/dashboard");
+      if (err) {
+        console.error("🔴 Session save error:", err);
+        return res.status(500).send("Login failed: could not save session");
+      }
+      console.log(`✅ User logged in: ${userRes.data.username}`);
+      // Ensure we redirect to the full URL to avoid relative path issues in frames
+      const host = req.get('host');
+      const protocol = (host.includes('repl.co') || host.includes('replit.dev')) ? 'https' : req.protocol;
+      res.redirect(`${protocol}://${host}/dashboard.html`);
     });
   } catch (err) {
-    console.error("❌ OAuth error:", err.response?.data || err.message);
-    console.error("Expected Redirect URI:", REDIRECT_URI);
-    const errorMessage = err.response?.data?.error_description || err.message || "Unknown error";
-    res.status(500).send(`<h2>Authentication Failed</h2><p>Error: ${errorMessage}</p><p><strong>Expected Redirect URI:</strong><br/>${REDIRECT_URI}</p><p>Make sure this URI is added to your Discord app's OAuth2 redirect URIs in the <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a>.</p>`);
+    console.error("❌ OAuth error details:", err.response?.data || err.message);
+    const errorMsg = err.response?.data?.error_description || err.message || "Unknown error";
+    
+    // Construct debug info
+    const host = req.get('host');
+    const protocol = req.protocol === 'http' && !host.includes('localhost') ? 'https' : req.protocol;
+    const attemptedUri = `${protocol}://${host}/auth/discord/callback`;
+
+    res.status(500).send(`
+      <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+        <h2 style="color: #00d4ff;">❌ Authentication Failed</h2>
+        <p>Error: ${errorMsg}</p>
+        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left; max-width: 600px;">
+          <p><b>Attempted Redirect URI:</b><br/><code style="color: #9146ff; word-break: break-all;">${attemptedUri}</code></p>
+          <p style="font-size: 0.9rem; color: #ccc;">If this doesn't match your Discord Dev Portal, add it there.</p>
+        </div>
+        <a href="/login.html" style="color: #ff1493; text-decoration: none;">← Try Again</a>
+      </div>
+    `);
   }
 });
 
@@ -3177,10 +3255,14 @@ app.get("/api/config", (req, res) => {
   });
 });
 
-// ============== USER API ==============
 app.get("/api/user", (req, res) => {
   if (!req.session.authenticated) {
     return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const user = req.session.user;
+  if (!user) {
+    return res.status(401).json({ error: "User session expired" });
   }
 
   // Verify user still has admin guilds
@@ -3188,25 +3270,17 @@ app.get("/api/user", (req, res) => {
     return res.status(403).json({ error: "No admin servers found" });
   }
 
-  const user = req.session.user;
   let avatarUrl = null;
-  let avatarProxyUrl = null;
   
-  // Generate Discord avatar URL (CDN direct)
   if (user.avatar) {
     const isAnimated = user.avatar.startsWith('a_');
     const ext = isAnimated ? 'gif' : 'png';
     avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
-    avatarProxyUrl = `/api/image?url=${encodeURIComponent(avatarUrl)}`;
   }
 
   res.json({
-    user: {
-      ...user,
-      avatarUrl,
-      avatarProxyUrl,
-      avatar: user.avatar || null
-    },
+    ...user,
+    avatarUrl,
     guilds: req.session.guilds
   });
 });
@@ -3235,7 +3309,7 @@ app.get("/api/image", async (req, res) => {
 // ============== SERVER MANAGEMENT PAGE ==============
 app.get("/dashboard/server/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.redirect("/dashboard");
+  res.redirect("/dashboard.html");
 });
 
 // ============== API ENDPOINTS ==============
@@ -4298,7 +4372,8 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Web server running on port ${PORT}`);
+  console.log(`🚀 Web server listening on port ${PORT}`);
+  console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
 });
 
 // ============== LOGIN ==============
