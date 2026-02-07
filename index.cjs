@@ -1269,7 +1269,7 @@ client.on("messageCreate", async (msg) => {
       info: "ℹ️"
     };
 
-    const catOrder = ['music','games','economy','leveling','tickets','info'];
+    const catOrder = ['music','games','economy','leveling','info'];
     catOrder.forEach(cat => {
       if (!categoryMap[cat]) return;
       const subsections = categoryMap[cat];
@@ -1315,14 +1315,15 @@ client.on("messageCreate", async (msg) => {
       .setDescription("Administrator-only commands. Type `/[command]` to use!");
 
     // Admin-only categories
-    const adminCats = ['moderation', 'roles', 'social', 'config', 'custom', 'giveaway'];
+    const adminCats = ['moderation', 'roles', 'social', 'config', 'custom', 'giveaway', 'tickets'];
     const categoryEmojis = {
       moderation: "🛡️",
       roles: "👤",
       social: "📱",
       config: "⚙️",
       custom: "✨",
-      giveaway: "🎁"
+      giveaway: "🎁",
+      tickets: "🎫"
     };
 
     adminCats.forEach(cat => {
