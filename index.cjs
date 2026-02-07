@@ -372,6 +372,13 @@ player.on("connectionError", (queue, error) => {
 // ============== READY EVENT ==============
 client.once("ready", async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
+  try {
+    const { execSync } = require('child_process');
+    const commit = execSync('git rev-parse --short HEAD').toString().trim();
+    console.log(`🔁 Running commit: ${commit} (pid:${process.pid})`);
+  } catch (err) {
+    console.log('🔁 Running commit: unknown');
+  }
   client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
@@ -1262,7 +1269,7 @@ client.on("messageCreate", async (msg) => {
       info: "ℹ️"
     };
 
-    const catOrder = ['music','games','economy','leveling','moderation','roles','social','config','tickets','custom','giveaway','info'];
+    const catOrder = ['music','games','economy','leveling','tickets','info'];
     catOrder.forEach(cat => {
       if (!categoryMap[cat]) return;
       const subsections = categoryMap[cat];
@@ -1292,22 +1299,52 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can view admin help!");
     }
 
+    // Organize commands by category and subsection
+    const categoryMap = {};
+    Object.entries(COMMANDS_META).forEach(([name, meta]) => {
+      const cat = meta.category || 'misc';
+      if (!categoryMap[cat]) categoryMap[cat] = {};
+      const subsec = meta.subsection || 'Other';
+      if (!categoryMap[cat][subsec]) categoryMap[cat][subsec] = [];
+      categoryMap[cat][subsec].push(name);
+    });
+
     const adminEmbed = new EmbedBuilder()
       .setColor(0xFF1493)
-      .setTitle("👑 ADMIN COMMAND GUIDE (66 Total Commands)")
-      .setDescription("All administrator-only commands registered as slash commands")
-      .addFields(
-        { name: "🎭 Role Categories (7)", value: "/create-category • /add-role • /remove-role • /set-category-banner • /setup-category • /delete-category • /list-roles", inline: false },
-        { name: "👋 Welcome (2)", value: "/config-welcome-channel • /config-welcome-message", inline: false },
-        { name: "⚙️ Configuration (7)", value: "/config-modlog • /config-logging • /config-leaderboard • /config-xp • /config-subscriptions • /config-statistics-channels • /set-prefix", inline: false },
-        { name: "📱 Social Media (12)", value: "/add-twitch-user • /remove-twitch-user • /config-twitch-channel • /add-tiktok-user • /remove-tiktok-user • /config-tiktok-channel • /add-kick-user • /remove-kick-user • /config-kick-channel + 3 more", inline: false },
-        { name: "💰 Economy (3)", value: "/addmoney • /removemoney • /leaderboard", inline: false },
-        { name: "🎮 Role Management (6)", value: "/add-game-role • /remove-game-role • /add-watchparty-role • /remove-watchparty-role • /add-platform-role • /remove-platform-role", inline: false },
-        { name: "🛡️ Moderation (6)", value: "/kick • /ban • /warn • /mute • /unmute • /warnings", inline: false },
-        { name: "🛠️ Protection & Tools (8)", value: "/link-filter • /ticket-setup • /filter-toggle • /addcmd • /delcmd • /add-custom-command • /remove-custom-command + more", inline: false },
-        { name: "📋 Other Admin (5)", value: "/config-server-guard • /config-react-roles • /config-role-categories • /config-social-notifs • /config-suggestions", inline: false }
-      )
-      .setFooter({ text: "✅ All changes are logged to dashboard activity & modlog channel" });
+      .setTitle("👑 ADMIN COMMAND GUIDE")
+      .setDescription("Administrator-only commands. Type `/[command]` to use!");
+
+    // Admin-only categories
+    const adminCats = ['moderation', 'roles', 'social', 'config', 'custom', 'giveaway'];
+    const categoryEmojis = {
+      moderation: "🛡️",
+      roles: "👤",
+      social: "📱",
+      config: "⚙️",
+      custom: "✨",
+      giveaway: "🎁"
+    };
+
+    adminCats.forEach(cat => {
+      if (!categoryMap[cat]) return;
+      const subsections = categoryMap[cat];
+      const emoji = categoryEmojis[cat] || "📌";
+      
+      // Build subsection display
+      let catDisplay = "";
+      Object.keys(subsections).sort().forEach(subsec => {
+        const cmds = subsections[subsec].map(c => `/${c}`).join(" • ");
+        catDisplay += `**${subsec}:** ${cmds}\n`;
+      });
+
+      adminEmbed.addFields({
+        name: `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
+        value: catDisplay || "No commands",
+        inline: false
+      });
+    });
+
+    adminEmbed.setFooter({ text: "✅ All changes are logged to dashboard activity & modlog channel" });
 
     return msg.reply({ embeds: [adminEmbed] });
   }
