@@ -240,89 +240,94 @@ function setCachedMemberStats(guildId, data) {
 const COMMANDS_META = {
   help: { category: 'info', description: 'Show full command list', usage: '/help' },
   adminhelp: { category: 'info', description: 'Show admin-only commands', usage: '/adminhelp' },
-  kick: { category: 'moderation', description: 'Remove member from server', usage: '/kick @user [reason]' },
-  ban: { category: 'moderation', description: 'Permanently ban member', usage: '/ban @user [reason]' },
-  warn: { category: 'moderation', description: 'Warn member (tracked & logged)', usage: '/warn @user [reason]' },
-  mute: { category: 'moderation', description: 'Timeout member', usage: '/mute @user' },
-  unmute: { category: 'moderation', description: 'Remove timeout from member', usage: '/unmute @user' },
-  warnings: { category: 'moderation', description: "View member's warning history", usage: '/warnings @user' },
+  kick: { category: 'moderation', subsection: 'Core', description: 'Remove member from server', usage: '/kick @user [reason]' },
+  ban: { category: 'moderation', subsection: 'Core', description: 'Permanently ban member', usage: '/ban @user [reason]' },
+  warn: { category: 'moderation', subsection: 'Core', description: 'Warn member (tracked & logged)', usage: '/warn @user [reason]' },
+  mute: { category: 'moderation', subsection: 'Core', description: 'Timeout member', usage: '/mute @user' },
+  unmute: { category: 'moderation', subsection: 'Core', description: 'Remove timeout from member', usage: '/unmute @user' },
+  warnings: { category: 'moderation', subsection: 'Core', description: "View member's warning history", usage: '/warnings @user' },
 
-  balance: { category: 'economy', description: 'Check your coin balance', usage: '/balance' },
-  pay: { category: 'economy', description: 'Pay another user', usage: '/pay @user [amount]' },
-  addmoney: { category: 'economy', description: 'Add money to a user (admin)', usage: '/addmoney @user [amount]' },
-  removemoney: { category: 'economy', description: 'Remove money from a user (admin)', usage: '/removemoney @user [amount]' },
-  work: { category: 'economy', description: 'Work for coins (cooldown)', usage: '/work' },
-  transfer: { category: 'economy', description: 'Send coins to other members', usage: '/transfer @user [amount]' },
+  balance: { category: 'economy', subsection: 'Currency', description: 'Check your coin balance', usage: '/balance' },
+  pay: { category: 'economy', subsection: 'Currency', description: 'Pay another user', usage: '/pay @user [amount]' },
+  addmoney: { category: 'economy', subsection: 'Currency', description: 'Add money to a user (admin)', usage: '/addmoney @user [amount]' },
+  removemoney: { category: 'economy', subsection: 'Currency', description: 'Remove money from a user (admin)', usage: '/removemoney @user [amount]' },
+  work: { category: 'economy', subsection: 'Currency', description: 'Work for coins (cooldown)', usage: '/work' },
+  transfer: { category: 'economy', subsection: 'Currency', description: 'Send coins to other members', usage: '/transfer @user [amount]' },
 
-  rps: { category: 'games', description: 'Play rock-paper-scissors', usage: '/rps [rock/paper/scissors]' },
-  '8ball': { category: 'games', description: 'Magic 8-ball', usage: '/8ball' },
-  dice: { category: 'games', description: 'Roll a dice', usage: '/dice' },
-  coin: { category: 'games', description: 'Flip a coin', usage: '/coin' },
-  trivia: { category: 'games', description: 'Get a trivia question', usage: '/trivia' },
+  rps: { category: 'games', subsection: 'Game Commands', description: 'Play rock-paper-scissors', usage: '/rps [rock/paper/scissors]' },
+  '8ball': { category: 'games', subsection: 'Game Commands', description: 'Magic 8-ball', usage: '/8ball' },
+  dice: { category: 'games', subsection: 'Game Commands', description: 'Roll a dice', usage: '/dice' },
+  coin: { category: 'games', subsection: 'Game Commands', description: 'Flip a coin', usage: '/coin' },
+  trivia: { category: 'games', subsection: 'Game Commands', description: 'Get a trivia question', usage: '/trivia' },
 
-  play: { category: 'music', description: 'Search and play music', usage: '/play [song or URL]' },
-  stop: { category: 'music', description: 'Stop playback and clear queue', usage: '/stop' },
-  skip: { category: 'music', description: 'Skip current track', usage: '/skip' },
-  queue: { category: 'music', description: 'Show music queue', usage: '/queue' },
-  volume: { category: 'music', description: 'Adjust playback volume', usage: '/volume [0-200]' },
+  play: { category: 'music', subsection: 'Playback', description: 'Search and play music', usage: '/play [song or URL]' },
+  shuffle: { category: 'music', subsection: 'Playback', description: 'Randomize the queue', usage: '/shuffle' },
+  queue: { category: 'music', subsection: 'Playback', description: 'Show music queue', usage: '/queue' },
+  loop: { category: 'music', subsection: 'Playback', description: 'Toggle queue repeat', usage: '/loop' },
+  volume: { category: 'music', subsection: 'Playback', description: 'Adjust playback volume', usage: '/volume [0-200]' },
+  back: { category: 'music', subsection: 'Button Controls', description: 'Go to previous track', usage: '/back' },
+  pause: { category: 'music', subsection: 'Button Controls', description: 'Pause playback', usage: '/pause' },
+  resume: { category: 'music', subsection: 'Button Controls', description: 'Resume playback', usage: '/resume' },
+  skip: { category: 'music', subsection: 'Button Controls', description: 'Skip current track', usage: '/skip' },
+  stop: { category: 'music', subsection: 'Button Controls', description: 'Stop playback and clear queue', usage: '/stop' },
 
   suggest: { category: 'info', description: 'Send a suggestion', usage: '/suggest [message]' },
-  'ticket-setup': { category: 'tickets', description: 'Setup ticket system', usage: '/ticket-setup #channel' },
-  ticket: { category: 'tickets', description: 'Create a support ticket', usage: '/ticket' },
-  'close-ticket': { category: 'tickets', description: 'Close an active ticket', usage: '/close-ticket' },
+  'ticket-setup': { category: 'tickets', subsection: 'Setup', description: 'Setup ticket system', usage: '/ticket-setup #channel' },
+  ticket: { category: 'tickets', subsection: 'User', description: 'Create a support ticket', usage: '/ticket' },
+  'close-ticket': { category: 'tickets', subsection: 'User', description: 'Close an active ticket', usage: '/close-ticket' },
 
-  'config-modlog': { category: 'config', description: 'Set moderation log channel', usage: '/config-modlog #channel' },
-  'config-welcome-channel': { category: 'config', description: 'Set welcome channel', usage: '/config-welcome-channel #channel' },
-  'config-welcome-message': { category: 'config', description: 'Set welcome message', usage: '/config-welcome-message [message]' },
-  'config-goodbye-message': { category: 'config', description: 'Set goodbye message', usage: '/config-goodbye-message [message]' },
-  'config-logging': { category: 'config', description: 'Configure logging', usage: '/config-logging' },
-  'config-leaderboard': { category: 'config', description: 'Configure leaderboards', usage: '/config-leaderboard' },
-  'config-xp': { category: 'config', description: 'Configure XP settings', usage: '/config-xp' },
-  'config-subscriptions': { category: 'config', description: 'Configure subscriptions', usage: '/config-subscriptions' },
-  'config-statistics-channels': { category: 'config', description: 'Configure statistic channels', usage: '/config-statistics-channels' },
-  'config-server-guard': { category: 'config', description: 'Server guard settings', usage: '/config-server-guard' },
-  'config-react-roles': { category: 'config', description: 'Configure reaction roles', usage: '/config-react-roles' },
-  'config-role-categories': { category: 'config', description: 'Manage role categories', usage: '/config-role-categories' },
-  'config-social-notifs': { category: 'config', description: 'Configure social notifications', usage: '/config-social-notifs' },
-  'config-suggestions': { category: 'config', description: 'Configure suggestions channel', usage: '/config-suggestions' },
-  'config-kick-channel': { category: 'config', description: 'Set kick channel', usage: '/config-kick-channel #channel' },
-  'config-tiktok-channel': { category: 'config', description: 'Set TikTok alerts channel', usage: '/config-tiktok-channel #channel' },
-  'config-twitch-channel': { category: 'config', description: 'Set Twitch alerts channel', usage: '/config-twitch-channel #channel' },
+  'config-modlog': { category: 'config', subsection: 'Channels', description: 'Set moderation log channel', usage: '/config-modlog #channel' },
+  'config-welcome-channel': { category: 'config', subsection: 'Channels', description: 'Set welcome channel', usage: '/config-welcome-channel #channel' },
+  'config-welcome-message': { category: 'config', subsection: 'Messages', description: 'Set welcome message', usage: '/config-welcome-message [message]' },
+  'config-goodbye-message': { category: 'config', subsection: 'Messages', description: 'Set goodbye message', usage: '/config-goodbye-message [message]' },
+  'config-logging': { category: 'config', subsection: 'Features', description: 'Configure logging', usage: '/config-logging' },
+  'config-leaderboard': { category: 'config', subsection: 'Features', description: 'Configure leaderboards', usage: '/config-leaderboard' },
+  'config-xp': { category: 'config', subsection: 'Features', description: 'Configure XP settings', usage: '/config-xp' },
+  'config-subscriptions': { category: 'config', subsection: 'Features', description: 'Configure subscriptions', usage: '/config-subscriptions' },
+  'config-statistics-channels': { category: 'config', subsection: 'Channels', description: 'Configure statistic channels', usage: '/config-statistics-channels' },
+  'config-server-guard': { category: 'config', subsection: 'Features', description: 'Server guard settings', usage: '/config-server-guard' },
+  'config-react-roles': { category: 'config', subsection: 'Features', description: 'Configure reaction roles', usage: '/config-react-roles' },
+  'config-role-categories': { category: 'config', subsection: 'Features', description: 'Manage role categories', usage: '/config-role-categories' },
+  'config-social-notifs': { category: 'config', subsection: 'Features', description: 'Configure social notifications', usage: '/config-social-notifs' },
+  'config-suggestions': { category: 'config', subsection: 'Features', description: 'Configure suggestions channel', usage: '/config-suggestions' },
+  'config-kick-channel': { category: 'config', subsection: 'Channels', description: 'Set kick channel', usage: '/config-kick-channel #channel' },
+  'config-tiktok-channel': { category: 'config', subsection: 'Channels', description: 'Set TikTok alerts channel', usage: '/config-tiktok-channel #channel' },
+  'config-twitch-channel': { category: 'config', subsection: 'Channels', description: 'Set Twitch alerts channel', usage: '/config-twitch-channel #channel' },
 
-  'create-category': { category: 'roles', description: 'Create a role category', usage: '/create-category [name]' },
-  'add-role': { category: 'roles', description: 'Add role to category', usage: '/add-role [category] [role]' },
-  'remove-role': { category: 'roles', description: 'Remove role from category', usage: '/remove-role [category] [role]' },
-  'set-category-banner': { category: 'roles', description: 'Set category banner', usage: '/set-category-banner [category] [url]' },
-  'setup-category': { category: 'roles', description: 'Setup a new category message', usage: '/setup-category [category]' },
-  'delete-category': { category: 'roles', description: 'Delete a category', usage: '/delete-category [category]' },
-  'add-game-role': { category: 'roles', description: 'Add game role', usage: '/add-game-role [role]' },
-  'remove-game-role': { category: 'roles', description: 'Remove game role', usage: '/remove-game-role [role]' },
-  'add-watchparty-role': { category: 'roles', description: 'Add watchparty role', usage: '/add-watchparty-role [role]' },
-  'remove-watchparty-role': { category: 'roles', description: 'Remove watchparty role', usage: '/remove-watchparty-role [role]' },
-  'add-platform-role': { category: 'roles', description: 'Add platform role', usage: '/add-platform-role [role]' },
-  'remove-platform-role': { category: 'roles', description: 'Remove platform role', usage: '/remove-platform-role [role]' },
-  'setup-roles': { category: 'roles', description: 'Post gaming roles selector with buttons', usage: '/setup-roles' },
-  'setup-watchparty': { category: 'roles', description: 'Post watch party role selector', usage: '/setup-watchparty' },
-  'setup-platform': { category: 'roles', description: 'Post platform selector', usage: '/setup-platform' },
-  'remove-roles': { category: 'roles', description: 'Post role removal message', usage: '/remove-roles' },
-  'setup-level-roles': { category: 'roles', description: 'Auto-create level roles', usage: '/setup-level-roles' },
+  'create-category': { category: 'roles', subsection: 'Category', description: 'Create a role category', usage: '/create-category [name]' },
+  'add-role': { category: 'roles', subsection: 'Category', description: 'Add role to category', usage: '/add-role [category] [role]' },
+  'remove-role': { category: 'roles', subsection: 'Category', description: 'Remove role from category', usage: '/remove-role [category] [role]' },
+  'set-category-banner': { category: 'roles', subsection: 'Category', description: 'Set category banner', usage: '/set-category-banner [category] [url]' },
+  'setup-category': { category: 'roles', subsection: 'Category', description: 'Setup a new category message', usage: '/setup-category [category]' },
+  'delete-category': { category: 'roles', subsection: 'Category', description: 'Delete a category', usage: '/delete-category [category]' },
+  'add-game-role': { category: 'roles', subsection: 'Gaming', description: 'Add game role', usage: '/add-game-role [role]' },
+  'remove-game-role': { category: 'roles', subsection: 'Gaming', description: 'Remove game role', usage: '/remove-game-role [role]' },
+  'add-watchparty-role': { category: 'roles', subsection: 'Gaming', description: 'Add watchparty role', usage: '/add-watchparty-role [role]' },
+  'remove-watchparty-role': { category: 'roles', subsection: 'Gaming', description: 'Remove watchparty role', usage: '/remove-watchparty-role [role]' },
+  'add-platform-role': { category: 'roles', subsection: 'Gaming', description: 'Add platform role', usage: '/add-platform-role [role]' },
+  'remove-platform-role': { category: 'roles', subsection: 'Gaming', description: 'Remove platform role', usage: '/remove-platform-role [role]' },
+  'setup-roles': { category: 'roles', subsection: 'Selectors', description: 'Post gaming roles selector with buttons', usage: '/setup-roles' },
+  'setup-watchparty': { category: 'roles', subsection: 'Selectors', description: 'Post watch party role selector', usage: '/setup-watchparty' },
+  'setup-platform': { category: 'roles', subsection: 'Selectors', description: 'Post platform selector', usage: '/setup-platform' },
+  'remove-roles': { category: 'roles', subsection: 'Selectors', description: 'Post role removal message', usage: '/remove-roles' },
+  'setup-level-roles': { category: 'roles', subsection: 'Selectors', description: 'Auto-create level roles', usage: '/setup-level-roles' },
 
-  'add-custom-command': { category: 'custom', description: 'Add a custom command', usage: '/add-custom-command [name] | [response]' },
-  addcmd: { category: 'custom', description: 'Add a custom command (alias)', usage: '/addcmd [name] | [response]' },
-  'remove-custom-command': { category: 'custom', description: 'Remove custom command', usage: '/remove-custom-command [name]' },
-  delcmd: { category: 'custom', description: 'Delete custom command (alias)', usage: '/delcmd [name]' },
+  'add-custom-command': { category: 'custom', subsection: 'Management', description: 'Add a custom command', usage: '/add-custom-command [name] | [response]' },
+  addcmd: { category: 'custom', subsection: 'Management', description: 'Add a custom command (alias)', usage: '/addcmd [name] | [response]' },
+  'remove-custom-command': { category: 'custom', subsection: 'Management', description: 'Remove custom command', usage: '/remove-custom-command [name]' },
+  delcmd: { category: 'custom', subsection: 'Management', description: 'Delete custom command (alias)', usage: '/delcmd [name]' },
 
-  giveaway: { category: 'giveaway', description: 'Create a giveaway', usage: '/giveaway' },
-  'start-giveaway': { category: 'giveaway', description: 'Start a giveaway', usage: '/start-giveaway' },
-  'filter-toggle': { category: 'config', description: 'Toggle profanity filter', usage: '/filter-toggle' },
-  'link-filter': { category: 'config', description: 'Toggle link filter', usage: '/link-filter [on/off]' },
-  'set-prefix': { category: 'config', description: 'Change command prefix', usage: '/set-prefix [prefix]' },
-  'add-kick-user': { category: 'social', description: 'Monitor Kick user', usage: '/add-kick-user [username]' },
-  'remove-kick-user': { category: 'social', description: 'Stop monitoring Kick user', usage: '/remove-kick-user [username]' },
-  'add-tiktok-user': { category: 'social', description: 'Monitor TikTok user', usage: '/add-tiktok-user [username]' },
-  'remove-tiktok-user': { category: 'social', description: 'Stop monitoring TikTok user', usage: '/remove-tiktok-user [username]' },
-  'add-twitch-user': { category: 'social', description: 'Monitor Twitch user', usage: '/add-twitch-user [username]' },
-  'remove-twitch-user': { category: 'social', description: 'Stop monitoring Twitch user', usage: '/remove-twitch-user [username]' },
+  giveaway: { category: 'giveaway', subsection: 'Core', description: 'Create a giveaway', usage: '/giveaway' },
+  'start-giveaway': { category: 'giveaway', subsection: 'Core', description: 'Start a giveaway', usage: '/start-giveaway' },
+  'filter-toggle': { category: 'config', subsection: 'Features', description: 'Toggle profanity filter', usage: '/filter-toggle' },
+  'link-filter': { category: 'config', subsection: 'Features', description: 'Toggle link filter', usage: '/link-filter [on/off]' },
+  'set-prefix': { category: 'config', subsection: 'Features', description: 'Change command prefix', usage: '/set-prefix [prefix]' },
+  'add-kick-user': { category: 'social', subsection: 'Monitoring', description: 'Monitor Kick user', usage: '/add-kick-user [username]' },
+  'remove-kick-user': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Kick user', usage: '/remove-kick-user [username]' },
+  'add-tiktok-user': { category: 'social', subsection: 'Monitoring', description: 'Monitor TikTok user', usage: '/add-tiktok-user [username]' },
+  'remove-tiktok-user': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring TikTok user', usage: '/remove-tiktok-user [username]' },
+  'add-twitch-user': { category: 'social', subsection: 'Monitoring', description: 'Monitor Twitch user', usage: '/add-twitch-user [username]' },
+  'remove-twitch-user': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Twitch user', usage: '/remove-twitch-user [username]' },
 };
 
 // expose metadata to dashboard regardless of bot login
@@ -2953,250 +2958,11 @@ app.get("/security", (req, res) => {
 });
 
 app.get("/commands", (req, res) => {
-  const commandsHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Commands - SPIDEY BOT</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0f0f0f;
-      color: #fff;
-      line-height: 1.6;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    main { flex: 1; }
-    .logo {
-      font-weight: 700;
-      font-size: 1.4rem;
-      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 1px;
-    }
-    nav {
-      background: rgba(20, 20, 20, 0.95);
-      border-bottom: 1px solid #222;
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-    }
-    nav a {
-      color: #999;
-      text-decoration: none;
-      margin: 0 1.5rem;
-      transition: color 0.3s;
-      font-weight: 500;
-    }
-    nav a:hover { color: #9146FF; }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    h1 {
-      color: #9146FF;
-      margin: 3rem 0 2rem 0;
-      font-size: 2.5rem;
-      text-align: center;
-    }
-    .commands-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-bottom: 4rem;
-    }
-    .command-card {
-      background: rgba(145, 70, 255, 0.1);
-      border: 1px solid rgba(145, 70, 255, 0.2);
-      border-radius: 12px;
-      padding: 1.5rem;
-      transition: all 0.3s;
-    }
-    .command-card:hover {
-      background: rgba(145, 70, 255, 0.15);
-      border-color: rgba(145, 70, 255, 0.4);
-    }
-    .command-card h3 {
-      color: #9146FF;
-      margin-bottom: 0.5rem;
-      font-size: 1.2rem;
-    }
-    .command-card code {
-      background: rgba(0, 0, 0, 0.5);
-      color: #00d4ff;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      display: block;
-      margin: 0.5rem 0;
-    }
-    .command-card p {
-      color: #aaa;
-      font-size: 0.9rem;
-      line-height: 1.6;
-    }
-    footer {
-      background: #000;
-      border-top: 1px solid #222;
-      padding: 3rem 2rem;
-      margin-top: 4rem;
-    }
-    footer .footer-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-    footer .footer-section h3 {
-      color: #9146FF;
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    footer .footer-section a {
-      color: #999;
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: color 0.3s;
-    }
-    footer .footer-section a:hover { color: #9146FF; }
-  </style>
-</head>
-<body>
-  <nav>
-    <div class="logo">SPIDEY BOT</div>
-    <div>
-      <a href="/">Home</a>
-      <a href="/commands">Commands</a>
-      <a href="/login" style="color: #00d4ff;">Admin</a>
-    </div>
-  </nav>
-
-  <main>
-  <div class="container">
-    <h1>🕸️ SPIDEY BOT Commands</h1>
-    <p style="text-align: center; color: #aaa; margin-bottom: 2rem;">All commands start with <code style="background: rgba(0, 0, 0, 0.5); color: #00d4ff; padding: 0.2rem 0.5rem; border-radius: 4px;">//</code></p>
-
-    <div class="commands-grid">
-      <div class="command-card">
-        <h3>🎵 Music Commands</h3>
-        <code>//play [song]</code>
-        <p>Play a song from YouTube</p>
-        <code>//queue</code>
-        <p>Show current queue</p>
-        <code>//skip</code>
-        <p>Skip to next track</p>
-        <code>//stop</code>
-        <p>Stop playing music</p>
-      </div>
-
-      <div class="command-card">
-        <h3>🛡️ Moderation Commands</h3>
-        <code>//kick [user]</code>
-        <p>Kick a user from server</p>
-        <code>//ban [user]</code>
-        <p>Ban a user from server</p>
-        <code>//warn [user]</code>
-        <p>Warn a user</p>
-        <code>//mute [user]</code>
-        <p>Mute a user temporarily</p>
-      </div>
-
-      <div class="command-card">
-        <h3>💰 Economy Commands</h3>
-        <code>//balance</code>
-        <p>Check your coin balance</p>
-        <code>//daily</code>
-        <p>Claim daily reward</p>
-        <code>//work</code>
-        <p>Work to earn coins</p>
-        <code>//pay [user] [amount]</code>
-        <p>Transfer coins to another user</p>
-      </div>
-
-      <div class="command-card">
-        <h3>📊 Info Commands</h3>
-        <code>//stats</code>
-        <p>View your statistics</p>
-        <code>//leaderboard</code>
-        <p>View server leaderboard</p>
-        <code>//level</code>
-        <p>Check your level and XP</p>
-        <code>//help</code>
-        <p>View all available commands</p>
-      </div>
-
-      <div class="command-card">
-        <h3>⚙️ Admin Commands</h3>
-        <code>//config</code>
-        <p>Access configuration panel</p>
-        <code>//setup</code>
-        <p>Initial bot setup</p>
-        <code>//prefix [new prefix]</code>
-        <p>Change command prefix</p>
-        <code>//logging</code>
-        <p>Configure logging channels</p>
-      </div>
-
-      <div class="command-card">
-        <h3>🎫 Tickets</h3>
-        <code>//ticket</code>
-        <p>Create a support ticket</p>
-        <code>//close</code>
-        <p>Close a ticket</p>
-        <code>//add [user]</code>
-        <p>Add user to ticket</p>
-        <code>//remove [user]</code>
-        <p>Remove user from ticket</p>
-      </div>
-    </div>
-  </div>
-  </main>
-
-  <footer>
-    <div class="footer-content">
-      <div class="footer-section">
-        <h3>Quick Links</h3>
-        <ul style="list-style: none;">
-          <li><a href="/">Home</a></li>
-          <li><a href="/commands">Commands</a></li>
-          <li><a href="/login">Admin</a></li>
-        </ul>
-      </div>
-      <div class="footer-section">
-        <h3>Legal</h3>
-        <ul style="list-style: none;">
-          <li><a href="/terms">Terms of Service</a></li>
-          <li><a href="/privacy">Privacy Policy</a></li>
-        </ul>
-      </div>
-    </div>
-    <div style="text-align: center; color: #666; font-size: 0.85rem; padding-top: 2rem; border-top: 1px solid #222;">
-      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
-    </div>
-  </footer>
-</body>
-</html>`;
+  const commandsPath = path.join(publicDir, 'commands.html');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(commandsHtml);
+  res.sendFile(commandsPath);
 });
+
 
 // Determine redirect URI based on host
 const REDIRECT_URI_DETECTOR = (req) => {

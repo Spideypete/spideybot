@@ -37,6 +37,17 @@
       position: relative;
       z-index: 2;
     }
+    .subsection {
+      margin-bottom: 2rem;
+    }
+    .subsection-header {
+      font-size: 1.1rem;
+      color: #00d4ff;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+      font-weight: 600;
+    }
     nav {
       background: rgba(15, 15, 15, 0.7);
       border-bottom: 1px solid rgba(0, 212, 255, 0.1);
@@ -254,17 +265,47 @@
       catOrder.concat(Object.keys(groups).filter(c=>!catOrder.includes(c))).forEach(cat => {
         const items = groups[cat];
         if (!items) return;
+        
+        // Count commands
+        const cmdCount = items.length;
+        
         const section = document.createElement('div');
         section.className = 'command-section';
         section.setAttribute('data-category', cat);
-        section.innerHTML = `<h2>${cat.charAt(0).toUpperCase()+cat.slice(1)}</h2><div class="command-grid"></div>`;
-        const grid = section.querySelector('.command-grid');
-        items.sort((a,b)=>a.name.localeCompare(b.name)).forEach(cmd => {
-          const card = document.createElement('div');
-          card.className = 'command-card';
-          card.innerHTML = `<h3>/${cmd.name}</h3><p>${cmd.description||''}</p><div class="command-usage">${cmd.usage||''}</div><span class="badge ${cmd.category==='moderation' || cmd.category==='roles' || cmd.category==='config' ? 'admin' : 'public'}">${cmd.category==='moderation' || cmd.category==='roles' || cmd.category==='config' ? 'Admin' : 'Public'}</span>`;
-          grid.appendChild(card);
+        section.innerHTML = `<h2>${cat.charAt(0).toUpperCase()+cat.slice(1)} (${cmdCount} commands)</h2><div class="subsections-container"></div>`;
+        const subsectionsContainer = section.querySelector('.subsections-container');
+        
+        // Group by subsection
+        const subsections = {};
+        items.forEach(cmd => {
+          const subsec = cmd.subsection || 'Other';
+          if (!subsections[subsec]) subsections[subsec] = [];
+          subsections[subsec].push(cmd);
         });
+        
+        // Render subsections
+        Object.keys(subsections).sort().forEach(subsecName => {
+          const subsecDiv = document.createElement('div');
+          subsecDiv.className = 'subsection';
+          const header = document.createElement('h3');
+          header.className = 'subsection-header';
+          header.textContent = subsecName;
+          subsecDiv.appendChild(header);
+          
+          const grid = document.createElement('div');
+          grid.className = 'command-grid';
+          
+          subsections[subsecName].sort((a,b)=>a.name.localeCompare(b.name)).forEach(cmd => {
+            const card = document.createElement('div');
+            card.className = 'command-card';
+            card.innerHTML = `<h3>${cmd.usage || '/' + cmd.name}</h3><p>${cmd.description||''}</p><span class="badge ${cmd.category==='moderation' || cmd.category==='roles' || cmd.category==='config' ? 'admin' : 'public'}">${cmd.category==='moderation' || cmd.category==='roles' || cmd.category==='config' ? 'Admin' : 'Public'}</span>`;
+            grid.appendChild(card);
+          });
+          
+          subsecDiv.appendChild(grid);
+          subsectionsContainer.appendChild(subsecDiv);
+        });
+        
         dynamicContainer.appendChild(section);
       });
 
