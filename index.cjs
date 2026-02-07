@@ -388,16 +388,34 @@ client.once("ready", async () => {
   // Register ALL slash commands
   try {
     // Use shared COMMANDS_META defined at top-level
-    const commands = Object.keys(COMMANDS_META).map(name => new SlashCommandBuilder().setName(name).setDescription(COMMANDS_META[name].description || name).toJSON());
-
-    const rest = new REST({ version: '10' }).setToken(token);
-    console.log(`📝 Registering ${commands.length} slash commands...`);
-    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log(`✅ Registered ${data.length} slash commands!`);
+    await registerSlashCommands();
   } catch (error) {
     console.error("Error registering commands:", error);
   }
 });
+
+// Reusable function to register slash commands from COMMANDS_META
+async function registerSlashCommands() {
+  if (!token) {
+    console.warn('No Discord TOKEN provided — cannot register slash commands');
+    return;
+  }
+
+  try {
+    const commands = Object.keys(COMMANDS_META).map(name =>
+      new SlashCommandBuilder().setName(name).setDescription(COMMANDS_META[name].description || name).toJSON()
+    );
+
+    const rest = new REST({ version: '10' }).setToken(token);
+    console.log(`📝 Registering ${commands.length} slash commands...`);
+    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    console.log(`✅ Registered ${Array.isArray(data) ? data.length : 0} slash commands!`);
+    return { success: true, count: Array.isArray(data) ? data.length : 0 };
+  } catch (err) {
+    console.error('Failed to register slash commands:', err);
+    return { success: false, error: err.message || String(err) };
+  }
+}
 
 // ============== API ENDPOINTS FOR DASHBOARD ==============
 app.get('/api/config', (req, res) => {
@@ -1376,6 +1394,19 @@ client.on("messageCreate", async (msg) => {
     adminEmbed.setFooter({ text: "✅ All changes are logged to dashboard activity & modlog channel" });
 
     return msg.reply({ embeds: [adminEmbed] });
+  }
+
+  // Admin command to force re-register slash commands (in case of new entries added to COMMANDS_META)
+  if (msg.content === "/register-commands") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can register commands!");
+    }
+    const replyMsg = await msg.reply("🔁 Registering slash commands, please wait...");
+    const result = await registerSlashCommands();
+    if (result && result.success) {
+      return replyMsg.edit(`✅ Registered ${result.count} slash commands.`).catch(() => {});
+    }
+    return replyMsg.edit(`❌ Registration failed: ${result && result.error ? result.error : 'unknown error'}`).catch(() => {});
   }
 
   // ============== CONFIG COMMANDS ==============
