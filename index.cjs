@@ -249,8 +249,8 @@ const COMMANDS_META = {
 
   balance: { category: 'economy', subsection: 'Currency', description: 'Check your coin balance', usage: '/balance' },
   pay: { category: 'economy', subsection: 'Currency', description: 'Pay another user', usage: '/pay @user [amount]' },
-  addmoney: { category: 'economy', subsection: 'Currency', description: 'Add money to a user (admin)', usage: '/addmoney @user [amount]' },
-  removemoney: { category: 'economy', subsection: 'Currency', description: 'Remove money from a user (admin)', usage: '/removemoney @user [amount]' },
+  addmoney: { category: 'economy', subsection: 'Currency', description: 'Add money to a user (admin)', usage: '/addmoney @user [amount]', adminOnly: true },
+  removemoney: { category: 'economy', subsection: 'Currency', description: 'Remove money from a user (admin)', usage: '/removemoney @user [amount]', adminOnly: true },
   work: { category: 'economy', subsection: 'Currency', description: 'Work for coins (cooldown)', usage: '/work' },
   transfer: { category: 'economy', subsection: 'Currency', description: 'Send coins to other members', usage: '/transfer @user [amount]' },
 
@@ -1241,6 +1241,8 @@ client.on("messageCreate", async (msg) => {
     // Organize commands by category and subsection
     const categoryMap = {};
     Object.entries(COMMANDS_META).forEach(([name, meta]) => {
+      // Skip admin-only commands from public /help
+      if (meta && meta.adminOnly) return;
       const cat = meta.category || 'misc';
       if (!categoryMap[cat]) categoryMap[cat] = {};
       const subsec = meta.subsection || 'Other';
@@ -1314,7 +1316,7 @@ client.on("messageCreate", async (msg) => {
       .setTitle("👑 ADMIN COMMAND GUIDE")
       .setDescription("Administrator-only commands. Type `/[command]` to use!");
 
-    // Admin-only categories
+    // Admin-only categories (pre-filled categories)
     const adminCats = ['moderation', 'roles', 'social', 'config', 'custom', 'giveaway', 'tickets'];
     const categoryEmojis = {
       moderation: "🛡️",
@@ -1323,9 +1325,11 @@ client.on("messageCreate", async (msg) => {
       config: "⚙️",
       custom: "✨",
       giveaway: "🎁",
-      tickets: "🎫"
+      tickets: "🎫",
+      economy: "💰"
     };
 
+    // Render configured admin categories first
     adminCats.forEach(cat => {
       if (!categoryMap[cat]) return;
       const subsections = categoryMap[cat];
@@ -1343,6 +1347,29 @@ client.on("messageCreate", async (msg) => {
         value: catDisplay || "No commands",
         inline: false
       });
+    });
+
+    // Collect admin-only commands (flagged via adminOnly) and display any that belong to categories not already shown above
+    const adminOnlyMap = {};
+    Object.entries(COMMANDS_META).forEach(([name, meta]) => {
+      if (!meta || !meta.adminOnly) return;
+      const cat = meta.category || 'misc';
+      if (!adminOnlyMap[cat]) adminOnlyMap[cat] = {};
+      const subsec = meta.subsection || 'Other';
+      if (!adminOnlyMap[cat][subsec]) adminOnlyMap[cat][subsec] = [];
+      adminOnlyMap[cat][subsec].push(name);
+    });
+
+    Object.keys(adminOnlyMap).sort().forEach(cat => {
+      if (adminCats.includes(cat)) return; // already displayed
+      const subsections = adminOnlyMap[cat];
+      const emoji = categoryEmojis[cat] || "🔒";
+      let catDisplay = "";
+      Object.keys(subsections).sort().forEach(subsec => {
+        const cmds = subsections[subsec].map(c => `/${c}`).join(" • ");
+        catDisplay += `**${subsec}:** ${cmds}\n`;
+      });
+      adminEmbed.addFields({ name: `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)} (Admin-only)`, value: catDisplay || "No commands", inline: false });
     });
 
     adminEmbed.setFooter({ text: "✅ All changes are logged to dashboard activity & modlog channel" });
