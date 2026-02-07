@@ -1231,23 +1231,58 @@ client.on("messageCreate", async (msg) => {
 
   // Help - List all user commands
   if (msg.content === "/help") {
-    const allCommands = "help • adminhelp • kick • ban • warn • mute • unmute • warnings • balance • pay • addmoney • removemoney • work • transfer • rps • play • stop • skip • queue • volume • suggest • ticket-setup • config-modlog • config-welcome-channel • config-welcome-message • config-goodbye-message • config-logging • config-leaderboard • config-xp • config-subscriptions • config-statistics-channels • config-server-guard • config-react-roles • config-role-categories • config-social-notifs • config-suggestions • config-kick-channel • config-tiktok-channel • config-twitch-channel • create-category • add-role • remove-role • set-category-banner • setup-category • delete-category • add-game-role • remove-game-role • add-watchparty-role • remove-watchparty-role • add-platform-role • remove-platform-role • add-custom-command • addcmd • remove-custom-command • delcmd • add-kick-user • remove-kick-user • add-tiktok-user • remove-tiktok-user • add-twitch-user • remove-twitch-user • filter-toggle • link-filter • set-prefix • giveaway • start-giveaway";
+    // Organize commands by category and subsection
+    const categoryMap = {};
+    Object.entries(COMMANDS_META).forEach(([name, meta]) => {
+      const cat = meta.category || 'misc';
+      if (!categoryMap[cat]) categoryMap[cat] = {};
+      const subsec = meta.subsection || 'Other';
+      if (!categoryMap[cat][subsec]) categoryMap[cat][subsec] = [];
+      categoryMap[cat][subsec].push(name);
+    });
 
     const helpEmbed = new EmbedBuilder()
       .setColor(0x00D4FF)
-      .setTitle("🤖 SPIDEY BOT - All Commands (66)")
-      .setDescription("**ALL SLASH COMMANDS:**\n\n" + allCommands)
-      .addFields(
-        { name: "🎵 Music", value: "`/play` • `/stop` • `/skip` • `/queue` • `/volume`", inline: true },
-        { name: "💰 Economy", value: "`/balance` • `/pay` • `/work` • `/transfer`", inline: true },
-        { name: "🎮 Games", value: "`/rps`", inline: true },
-        { name: "⚙️ Config", value: "`/config-*` (22 commands)", inline: true },
-        { name: "🎭 Roles", value: "`/create-category` • `/add-role` • `/remove-role` • `/setup-category`", inline: true },
-        { name: "🔒 Admin", value: "`/kick` • `/ban` • `/warn` • `/mute` • `/unmute`", inline: true },
-        { name: "❓ Help", value: "Use `/adminhelp` to see admin-only commands", inline: false }
-      )
-      .setFooter({ text: "💡 Type any command name above with / to use it!" });
+      .setTitle("🤖 SPIDEY BOT - All Commands")
+      .setDescription("Organized by category and subsection. Type `/[command]` to use!");
 
+    // Add category sections dynamically
+    const categoryEmojis = {
+      music: "🎵",
+      games: "🎮",
+      economy: "💰",
+      leveling: "📊",
+      moderation: "🛡️",
+      roles: "👤",
+      social: "📱",
+      config: "⚙️",
+      tickets: "🎫",
+      custom: "✨",
+      giveaway: "🎁",
+      info: "ℹ️"
+    };
+
+    const catOrder = ['music','games','economy','leveling','moderation','roles','social','config','tickets','custom','giveaway','info'];
+    catOrder.forEach(cat => {
+      if (!categoryMap[cat]) return;
+      const subsections = categoryMap[cat];
+      const emoji = categoryEmojis[cat] || "📌";
+      
+      // Build subsection display
+      let catDisplay = "";
+      Object.keys(subsections).sort().forEach(subsec => {
+        const cmds = subsections[subsec].map(c => `/${c}`).join(" • ");
+        catDisplay += `**${subsec}:** ${cmds}\n`;
+      });
+
+      helpEmbed.addFields({
+        name: `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
+        value: catDisplay || "No commands",
+        inline: false
+      });
+    });
+
+    helpEmbed.setFooter({ text: "Use /adminhelp for admin-only commands | Visit /commands for full guide" });
     return msg.reply({ embeds: [helpEmbed] });
   }
 
