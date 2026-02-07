@@ -2272,6 +2272,7 @@ client.on("interactionCreate", async (interaction) => {
     try {
       // Create a pseudo-message object that mimics text command format
       const cmdName = interaction.commandName;
+      let hasReplied = false;
       const fakeMessage = {
         content: `/${cmdName}`,
         author: interaction.user,
@@ -2279,23 +2280,23 @@ client.on("interactionCreate", async (interaction) => {
         guild: interaction.guild,
         channel: interaction.channel,
         reply: async (content) => {
-          if (interaction.replied) return interaction.editReply(content);
+          if (hasReplied || interaction.replied || interaction.deferred) {
+            return interaction.editReply(content);
+          }
+          hasReplied = true;
           return interaction.reply(content);
         }
       };
       
       // Emit as a fake messageCreate to reuse all existing handlers
       client.emit('messageCreate', fakeMessage);
-      
-      // Acknowledge the interaction to prevent "failed" message
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.deferReply({ ephemeral: true });
-        await interaction.editReply({ content: "✅ Command processed!" });
-      }
       return;
     } catch (err) {
       console.error(`Slash command error for /${interaction.commandName}:`, err);
-      return interaction.reply({ content: "❌ Command error occurred", ephemeral: true });
+      if (!interaction.replied) {
+        return interaction.reply({ content: "❌ Command error occurred", ephemeral: true });
+      }
+      return;
     }
   }
 
