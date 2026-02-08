@@ -3298,14 +3298,43 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       if (commandName === 'help') {
-        const publicCommands = [
-          'kick', 'ban', 'warn', 'mute', 'unmute', 'warnings',
-          'balance', 'pay', 'work', 'transfer',
-          'rps', '8ball', 'dice', 'coin', 'trivia',
-          'play', 'shuffle', 'queue', 'loop', 'volume', 'pause', 'resume', 'skip', 'stop',
-          'ticket', 'giveaway', 'ping', 'suggest'
-        ];
-        return interaction.editReply(`📚 **Available Commands:**\n${publicCommands.map(c => `• \`/${c}\``).join('\n')}\n\n*Type /adminhelp for admin commands*`);
+        const helpText = `**💰 Economy**
+/balance - Check your current balance!
+/pay - Send money to another user!
+/work - Work to earn some money!
+/transfer - Transfer money between users!
+
+**🎮 Games**
+/rps - Play rock paper scissors!
+/8ball - Ask the magic 8ball a question!
+/dice - Roll a dice!
+/coin - Flip a coin!
+/trivia - Test your knowledge with trivia!
+
+**🎵 Music**
+/play - Play a song in voice channel!
+/shuffle - Shuffle the queue!
+/queue - View the current music queue!
+/loop - Toggle loop mode!
+/volume - Adjust the volume!
+/pause - Pause the current song!
+/resume - Resume the paused song!
+/skip - Skip to the next song!
+/stop - Stop playback and clear queue!
+
+**🎫 Tickets**
+/ticket - Create a support ticket!
+
+**🎁 Giveaways**
+/giveaway - View active giveaways!
+
+**🔧 Utility**
+/ping - Check bot latency!
+/suggest - Submit a suggestion!
+
+*Type /adminhelp for admin commands*`;
+        
+        return interaction.editReply(helpText);
       }
       
       if (commandName === 'adminhelp') {
@@ -3313,34 +3342,76 @@ client.on("interactionCreate", async (interaction) => {
           return interaction.editReply("❌ Only admins can view admin commands!");
         }
         
-        const adminCommands = [
-          '🛡️ **Moderation**', 'kick', 'ban', 'warn', 'mute', 'unmute', 'warnings',
-          '\n👤 **Roles**', 'createcategory', 'listroles', 'addrole', 'removerole', 
-          'setcategorybanner', 'setupcategory', 'deletecategory',
-          'addgamerole', 'removegamerole', 'addwatchpartyrole', 'removewatchpartyrole',
-          'addplatformrole', 'removeplatformrole', 'setuproles', 'setupwatchparty', 
-          'setupplatform', 'removeroles', 'setuplevelroles',
-          '\n📺 **Streamers**', 'addtwitchuser', 'removetwitchuser', 'addtiktokuser', 
-          'removetiktokuser', 'addkickuser', 'removekickuser',
-          '\n⚙️ **Config**', 'configwelcomechannel', 'configmodlog', 'configtwitchchannel',
-          'configtiktokchannel', 'configkickchannel', 'configsuggestions', 'configleaderboard',
-          'configwelcomemessage', 'configgoodbyemessage',
-          '\n💰 **Economy**', 'addmoney', 'removemoney',
-          '\n🎫 **Tickets**', 'ticketsetup', 'closeticket',
-          '\n🎁 **Giveaway**', 'startgiveaway',
-          '\n🔒 **Filters**', 'filtertoggle', 'linkfilter', 'setprefix'
-        ];
+        const adminHelpText = `**🛡️ Moderation**
+/kick - Kick a member from the server!
+/ban - Ban a member from the server!
+/warn - Warn a member!
+/mute - Mute a member!
+/unmute - Unmute a member!
+/warnings - View warnings for a member!
+
+**👤 Roles**
+/createcategory - Create a new role category!
+/listroles - List all roles in a category!
+/addrole - Add a role to a category!
+/removerole - Remove a role from a category!
+/setcategorybanner - Set a banner for a role category!
+/setupcategory - Setup a role category!
+/deletecategory - Delete a role category!
+/addgamerole - Add a game role!
+/removegamerole - Remove a game role!
+/addwatchpartyrole - Add a watch party role!
+/removewatchpartyrole - Remove a watch party role!
+/addplatformrole - Add a platform role!
+/removeplatformrole - Remove a platform role!
+/setuproles - Setup role categories!
+/setupwatchparty - Setup watch party roles!
+/setupplatform - Setup platform roles!
+/removeroles - Remove all roles from a category!
+/setuplevelroles - Setup level-based roles!
+
+**📺 Streamers**
+/addtwitchuser - Add a Twitch streamer to track!
+/removetwitchuser - Remove a Twitch streamer!
+/addtiktokuser - Add a TikTok streamer to track!
+/removetiktokuser - Remove a TikTok streamer!
+/addkickuser - Add a Kick streamer to track!
+/removekickuser - Remove a Kick streamer!
+
+**🤖 Custom Commands**
+/addcustomcommand - Add a custom command!
+/removecustomcommand - Remove a custom command!
+/addcmd - Add a custom command (alias)!
+/delcmd - Delete a custom command (alias)!
+
+**⚙️ Configuration**
+/configwelcomechannel - Set welcome channel!
+/configmodlog - Set moderation log channel!
+/configtwitchchannel - Set Twitch notifications channel!
+/configtiktokchannel - Set TikTok notifications channel!
+/configkickchannel - Set Kick notifications channel!
+/configsuggestions - Set suggestions channel!
+/configleaderboard - Set leaderboard channel!
+/configwelcomemessage - Set custom welcome message!
+/configgoodbyemessage - Set custom goodbye message!
+
+**💰 Economy Admin**
+/addmoney - Add money to a user's balance!
+/removemoney - Remove money from a user's balance!
+
+**🎫 Tickets Admin**
+/ticketsetup - Setup the ticket system!
+/closeticket - Close a support ticket!
+
+**🎁 Giveaways Admin**
+/startgiveaway - Start a new giveaway!
+
+**🔒 Filters**
+/filtertoggle - Toggle content filters!
+/linkfilter - Configure link filtering!
+/setprefix - Set custom command prefix!`;
         
-        let formatted = '';
-        adminCommands.forEach(cmd => {
-          if (cmd.startsWith('\n') || cmd.includes('**')) {
-            formatted += `\n${cmd}`;
-          } else {
-            formatted += `\n• \`/${cmd}\``;
-          }
-        });
-        
-        return interaction.editReply(`🔐 **Admin Commands:**${formatted}`);
+        return interaction.editReply(adminHelpText);
       }
       
       if (commandName === 'suggest') {
