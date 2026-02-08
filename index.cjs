@@ -403,10 +403,14 @@ async function registerSlashCommands() {
   }
 
   try {
-    // Use modern slash commands from slash-commands.js
-    const commands = slashCommands.map(cmd => cmd.toJSON());
-
     const rest = new REST({ version: '10' }).setToken(token);
+    
+    // First, clear all existing commands to force Discord to refresh cache
+    console.log('🗑️  Clearing old slash commands...');
+    await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
+    
+    // Then register fresh commands
+    const commands = slashCommands.map(cmd => cmd.toJSON());
     console.log(`📝 Registering ${commands.length} modern slash commands with autocomplete...`);
     const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
     console.log(`✅ Registered ${Array.isArray(data) ? data.length : 0} slash commands!`);
