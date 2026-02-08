@@ -13,6 +13,7 @@ const {
   REST,
   Routes
 } = require("discord.js");
+const { slashCommands } = require("./slash-commands");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
@@ -394,7 +395,7 @@ client.once("ready", async () => {
   }
 });
 
-// Reusable function to register slash commands from COMMANDS_META
+// Reusable function to register slash commands
 async function registerSlashCommands() {
   if (!token) {
     console.warn('No Discord TOKEN provided — cannot register slash commands');
@@ -402,12 +403,11 @@ async function registerSlashCommands() {
   }
 
   try {
-    const commands = Object.keys(COMMANDS_META).map(name =>
-      new SlashCommandBuilder().setName(name).setDescription(COMMANDS_META[name].description || name).toJSON()
-    );
+    // Use modern slash commands from slash-commands.js
+    const commands = slashCommands.map(cmd => cmd.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(token);
-    console.log(`📝 Registering ${commands.length} slash commands...`);
+    console.log(`📝 Registering ${commands.length} modern slash commands with autocomplete...`);
     const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
     console.log(`✅ Registered ${Array.isArray(data) ? data.length : 0} slash commands!`);
     return { success: true, count: Array.isArray(data) ? data.length : 0 };
@@ -2398,42 +2398,161 @@ client.on("messageCreate", async (msg) => {
   }
 });
 
-// ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
+// ============== INTERACTIONS (BUTTONS & DROPDOWNS & SLASH COMMANDS) ==============
 client.on("interactionCreate", async (interaction) => {
-  // Convert slash commands to text format and process through existing text command handlers
-  if (interaction.isChatInputCommand()) {
+  // Handle autocomplete interactions
+  if (interaction.isAutocomplete()) {
+    const { commandName, options } = interaction;
+    
     try {
-      // Defer immediately to acknowledge the interaction within Discord's 3-second window
+      if (commandName === 'remove' && options.getFocused(true).name === 'name') {
+        const type = options.getString('type');
+        const guildConfig = getGuildConfig(interaction.guild.id);
+        let choices = [];
+        
+        if (type === 'streamer') {
+          const twitchUsers = guildConfig.twitchUsers || [];
+          const tiktokUsers = guildConfig.tiktokUsers || [];
+          const kickUsers = guildConfig.kickUsers || [];
+          choices = [...twitchUsers, ...tiktokUsers, ...kickUsers];
+        } else if (type === 'game-role') {
+          const roles = Object.values(guildConfig.roleCategories || {})
+            .flatMap(cat => (cat.roles || []).map(r => r.name));
+          choices = roles;
+        } else if (type === 'custom-command') {
+          choices = Object.keys(guildConfig.customCommands || {});
+        }
+        
+        const filtered = choices.filter(choice => 
+          choice.toLowerCase().startsWith(options.getFocused().toLowerCase())
+        ).slice(0, 25);
+        
+        await interaction.respond(
+          filtered.map(choice => ({ name: choice, value: choice }))
+        );
+      } else if (commandName === 'help') {
+        const cmdList = Object.keys(COMMANDS_META).slice(0, 25);
+        await interaction.respond(
+          cmdList.map(cmd => ({ name: `/${cmd}`, value: cmd }))
+        );
+      }
+    } catch (err) {
+      console.error('Autocomplete error:', err);
+    }
+    return;
+  }
+
+  // Handle slash command interactions
+  if (interaction.isChatInputCommand()) {
+    const { commandName, options } = interaction;
+    
+    try {
       await interaction.deferReply();
       
-      // Create a pseudo-message object that mimics text command format
-      const cmdName = interaction.commandName;
-      let hasReplied = false;
-      const fakeMessage = {
-        content: `/${cmdName}`,
-        author: interaction.user,
-        member: interaction.member,
-        guild: interaction.guild,
-        channel: interaction.channel,
-        reply: async (content) => {
-          if (hasReplied || interaction.replied || interaction.deferred) {
-            return interaction.editReply(content);
-          }
-          hasReplied = true;
-          return interaction.editReply(content);
+      // Modern slash command handlers
+      if (commandName === 'add') {
+        const type = options.getString('type');
+        const name = options.getString('name');
+        const channel = options.getChannel('channel');
+        
+        if (type === 'streamer') {
+          const platform = name.includes('twitch') ? 'twitch' : name.includes('kick') ? 'kick' : 'tiktok';
+          // Reuse existing handlers
+          const fakeMsg = createFakeMessage(interaction, `/add-${platform}-user ${name}`);
+          client.emit('messageCreate', fakeMsg);
+        } else if (type === 'game-role') {
+          const args = name.split(' ');
+          const fakeMsg = createFakeMessage(interaction, `/add-game-role ${args[0]} ${args[1] || ''}`);
+          client.emit('messageCreate', fakeMsg);
+        } else if (type === 'platform-role') {
+          const args = name.split(' ');
+          const fakeMsg = createFakeMessage(interaction, `/add-platform-role ${args[0]} ${args[1] || ''}`);
+          client.emit('messageCreate', fakeMsg);
         }
-      };
+        return;
+      }
       
-      // Emit as a fake messageCreate to reuse all existing handlers
-      client.emit('messageCreate', fakeMessage);
-      return;
+      if (commandName === 'remove') {
+        const type = options.getString('type');
+        const name = options.getString('name');
+        const fakeMsg = createFakeMessage(interaction, `/remove-${type} ${name}`);
+        client.emit('messageCreate', fakeMsg);
+        return;
+      }
+      
+      if (commandName === 'config') {
+        const setting = options.getString('setting');
+        const channel = options.getChannel('channel');
+        const fakeMsg = createFakeMessage(interaction, `/config-${setting} <#${channel.id}>`);
+        client.emit('messageCreate', fakeMsg);
+        return;
+      }
+      
+      if (commandName === 'setup') {
+        const feature = options.getString('feature');
+        const fakeMsg = createFakeMessage(interaction, `/setup-${feature}`);
+        client.emit('messageCreate', fakeMsg);
+        return;
+      }
+      
+      if (commandName === 'play') {
+        const query = options.getString('query');
+        const fakeMsg = createFakeMessage(interaction, `/play ${query}`);
+        client.emit('messageCreate', fakeMsg);
+        return;
+      }
+      
+      if (commandName === 'kick') {
+        const user = options.getUser('user');
+        const reason = options.getString('reason') || 'No reason provided';
+        const fakeMsg = createFakeMessage(interaction, `/kick <@${user.id}> ${reason}`);
+        client.emit('messageCreate', fakeMsg);
+        return;
+      }
+      
+      if (commandName === 'ban') {
+        const user = options.getUser('user');
+        const reason = options.getString('reason') || 'No reason provided';
+        const fakeMsg = createFakeMessage(interaction, `/ban <@${user.id}> ${reason}`);
+        client.emit('messageCreate', fakeMsg);
+        return;
+      }
+      
+      // Default: convert to text format for backward compatibility
+      const fakeMsg = createFakeMessage(interaction, `/${commandName}`);
+      client.emit('messageCreate', fakeMsg);
+      
     } catch (err) {
-      console.error(`Slash command error for /${interaction.commandName}:`, err);
+      console.error(`Slash command error for /${commandName}:`, err);
       if (!interaction.replied && !interaction.deferred) {
         return interaction.reply({ content: "❌ Command error occurred", ephemeral: true });
       }
-      return;
     }
+    return;
+  }
+
+  // Helper function to create fake message object
+  function createFakeMessage(interaction, content) {
+    let hasReplied = false;
+    return {
+      content,
+      author: interaction.user,
+      member: interaction.member,
+      guild: interaction.guild,
+      channel: interaction.channel,
+      mentions: {
+        channels: new Map(),
+        users: new Map(),
+        first: function() { return null; }
+      },
+      reply: async (replyContent) => {
+        if (hasReplied || interaction.replied || !interaction.deferred) {
+          return interaction.editReply(replyContent);
+        }
+        hasReplied = true;
+        return interaction.editReply(replyContent);
+      }
+    };
   }
 
   const guildConfig = getGuildConfig(interaction.guild.id);
