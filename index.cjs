@@ -404,19 +404,22 @@ async function registerSlashCommands() {
 
   try {
     const rest = new REST({ version: '10' }).setToken(token);
-    
-    // First, clear all existing commands to force Discord to refresh cache
-    console.log('🗑️  Clearing old slash commands...');
-    await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
-    
-    // Then register fresh commands
     const commands = slashCommands.map(cmd => cmd.toJSON());
+    
     console.log(`📝 Registering ${commands.length} modern slash commands with autocomplete...`);
+    
+    // Register commands directly (Discord will handle caching automatically)
     const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log(`✅ Registered ${Array.isArray(data) ? data.length : 0} slash commands!`);
-    return { success: true, count: Array.isArray(data) ? data.length : 0 };
+    
+    if (Array.isArray(data)) {
+      console.log(`✅ Registered ${data.length} slash commands!`);
+      return { success: true, count: data.length };
+    } else {
+      console.log(`⚠️ Unexpected response format, but registration may have succeeded`);
+      return { success: true, count: commands.length };
+    }
   } catch (err) {
-    console.error('Failed to register slash commands:', err);
+    console.error('❌ Failed to register slash commands:', err.message || err);
     return { success: false, error: err.message || String(err) };
   }
 }
