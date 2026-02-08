@@ -281,32 +281,32 @@ const COMMANDS_META = {
   'config-welcome-message': { category: 'config', subsection: 'Messages', description: 'Set welcome message', usage: '/config-welcome-message [message]' },
   'config-goodbye-message': { category: 'config', subsection: 'Messages', description: 'Set goodbye message', usage: '/config-goodbye-message [message]' },
   'config-logging': { category: 'config', subsection: 'Features', description: 'Configure logging', usage: '/config-logging' },
-  'config-leaderboard': { category: 'config', subsection: 'Features', description: 'Configure leaderboards', usage: '/config-leaderboard' },
-  'config-xp': { category: 'config', subsection: 'Features', description: 'Configure XP settings', usage: '/config-xp' },
+  'config-leaderboard': { category: 'config', subsection: 'Features', description: 'Configure leaderboards', usage: '/config-leaderboard #channel' },
+  'config-xp': { category: 'config', subsection: 'Features', description: 'Configure XP settings', usage: '/config-xp [xpPerMessage] [xpPerLevel]' },
   'config-subscriptions': { category: 'config', subsection: 'Features', description: 'Configure subscriptions', usage: '/config-subscriptions' },
-  'config-statistics-channels': { category: 'config', subsection: 'Channels', description: 'Configure statistic channels', usage: '/config-statistics-channels' },
+  'config-statistics-channels': { category: 'config', subsection: 'Channels', description: 'Configure statistic channels', usage: '/config-statistics-channels #channel' },
   'config-server-guard': { category: 'config', subsection: 'Features', description: 'Server guard settings', usage: '/config-server-guard' },
   'config-react-roles': { category: 'config', subsection: 'Features', description: 'Configure reaction roles', usage: '/config-react-roles' },
-  'config-role-categories': { category: 'config', subsection: 'Features', description: 'Manage role categories', usage: '/config-role-categories' },
-  'config-social-notifs': { category: 'config', subsection: 'Features', description: 'Configure social notifications', usage: '/config-social-notifs' },
-  'config-suggestions': { category: 'config', subsection: 'Features', description: 'Configure suggestions channel', usage: '/config-suggestions' },
+  'config-role-categories': { category: 'config', subsection: 'Features', description: 'Manage role categories', usage: '/config-role-categories [name]' },
+  'config-social-notifs': { category: 'config', subsection: 'Features', description: 'Configure social notifications', usage: '/config-social-notifs #channel' },
+  'config-suggestions': { category: 'config', subsection: 'Features', description: 'Configure suggestions channel', usage: '/config-suggestions #channel' },
   'config-kick-channel': { category: 'config', subsection: 'Channels', description: 'Set kick channel', usage: '/config-kick-channel #channel' },
   'config-tiktok-channel': { category: 'config', subsection: 'Channels', description: 'Set TikTok alerts channel', usage: '/config-tiktok-channel #channel' },
   'config-twitch-channel': { category: 'config', subsection: 'Channels', description: 'Set Twitch alerts channel', usage: '/config-twitch-channel #channel' },
 
   'create-category': { category: 'roles', subsection: 'Category', description: 'Create a role category', usage: '/create-category [name]' },
   'list-roles': { category: 'roles', subsection: 'Category', description: 'View all active role categories', usage: '/list-roles' },
-  'add-role': { category: 'roles', subsection: 'Category', description: 'Add role to category', usage: '/add-role [category] [role]' },
-  'remove-role': { category: 'roles', subsection: 'Category', description: 'Remove role from category', usage: '/remove-role [category] [role]' },
+  'add-role': { category: 'roles', subsection: 'Category', description: 'Add role to category', usage: '/add-role [category] [role name] [role ID]' },
+  'remove-role': { category: 'roles', subsection: 'Category', description: 'Remove role from category', usage: '/remove-role [category] [role name]' },
   'set-category-banner': { category: 'roles', subsection: 'Category', description: 'Set category banner', usage: '/set-category-banner [category] [url]' },
   'setup-category': { category: 'roles', subsection: 'Category', description: 'Setup a new category message', usage: '/setup-category [category]' },
   'delete-category': { category: 'roles', subsection: 'Category', description: 'Delete a category', usage: '/delete-category [category]' },
-  'add-game-role': { category: 'roles', subsection: 'Gaming', description: 'Add game role', usage: '/add-game-role [role]' },
-  'remove-game-role': { category: 'roles', subsection: 'Gaming', description: 'Remove game role', usage: '/remove-game-role [role]' },
-  'add-watchparty-role': { category: 'roles', subsection: 'Gaming', description: 'Add watchparty role', usage: '/add-watchparty-role [role]' },
-  'remove-watchparty-role': { category: 'roles', subsection: 'Gaming', description: 'Remove watchparty role', usage: '/remove-watchparty-role [role]' },
-  'add-platform-role': { category: 'roles', subsection: 'Gaming', description: 'Add platform role', usage: '/add-platform-role [role]' },
-  'remove-platform-role': { category: 'roles', subsection: 'Gaming', description: 'Remove platform role', usage: '/remove-platform-role [role]' },
+  'add-game-role': { category: 'roles', subsection: 'Gaming', description: 'Add game role', usage: '/add-game-role [role name] [role ID]' },
+  'remove-game-role': { category: 'roles', subsection: 'Gaming', description: 'Remove game role', usage: '/remove-game-role [role name]' },
+  'add-watchparty-role': { category: 'roles', subsection: 'Gaming', description: 'Add watchparty role', usage: '/add-watchparty-role [role name] [role ID]' },
+  'remove-watchparty-role': { category: 'roles', subsection: 'Gaming', description: 'Remove watchparty role', usage: '/remove-watchparty-role [role name]' },
+  'add-platform-role': { category: 'roles', subsection: 'Gaming', description: 'Add platform role', usage: '/add-platform-role [role name] [role ID]' },
+  'remove-platform-role': { category: 'roles', subsection: 'Gaming', description: 'Remove platform role', usage: '/remove-platform-role [role name]' },
   'setup-roles': { category: 'roles', subsection: 'Selectors', description: 'Post gaming roles selector with buttons', usage: '/setup-roles' },
   'setup-watchparty': { category: 'roles', subsection: 'Selectors', description: 'Post watch party role selector', usage: '/setup-watchparty' },
   'setup-platform': { category: 'roles', subsection: 'Selectors', description: 'Post platform selector', usage: '/setup-platform' },
@@ -747,6 +747,7 @@ client.on("messageCreate", async (msg) => {
   // List all active roles
   if (msg.content === "/list-roles") {
     const categories = guildConfig.roleCategories || {};
+    console.log(`DEBUG: /list-roles invoked - categories keys: ${Object.keys(categories).length}`);
     if (Object.keys(categories).length === 0) {
       return msg.reply("❌ No role categories created yet! Use `/create-category [name]` to get started.");
     }
@@ -2402,6 +2403,9 @@ client.on("interactionCreate", async (interaction) => {
   // Convert slash commands to text format and process through existing text command handlers
   if (interaction.isChatInputCommand()) {
     try {
+      // Defer immediately to acknowledge the interaction within Discord's 3-second window
+      await interaction.deferReply();
+      
       // Create a pseudo-message object that mimics text command format
       const cmdName = interaction.commandName;
       let hasReplied = false;
@@ -2416,7 +2420,7 @@ client.on("interactionCreate", async (interaction) => {
             return interaction.editReply(content);
           }
           hasReplied = true;
-          return interaction.reply(content);
+          return interaction.editReply(content);
         }
       };
       
@@ -2425,7 +2429,7 @@ client.on("interactionCreate", async (interaction) => {
       return;
     } catch (err) {
       console.error(`Slash command error for /${interaction.commandName}:`, err);
-      if (!interaction.replied) {
+      if (!interaction.replied && !interaction.deferred) {
         return interaction.reply({ content: "❌ Command error occurred", ephemeral: true });
       }
       return;
@@ -2442,7 +2446,7 @@ client.on("interactionCreate", async (interaction) => {
       .sort((a, b) => b.position - a.position)
       .slice(0, 25)
       .map(r => ({ label: r.name, value: r.id }));
-
+    console.log(`DEBUG: claim_roles - found ${allRoles.length} roles in guild ${interaction.guild.id}`);
     if (allRoles.length === 0) {
       return interaction.reply({ content: "❌ No roles available!", ephemeral: true });
     }
@@ -2493,7 +2497,7 @@ client.on("interactionCreate", async (interaction) => {
       .sort((a, b) => b.position - a.position)
       .slice(0, 25)
       .map(r => ({ label: r.name, value: r.id }));
-
+    console.log(`DEBUG: claim_watchparty - found ${allRoles.length} roles in guild ${interaction.guild.id}`);
     if (allRoles.length === 0) {
       return interaction.reply({ content: "❌ No roles available!", ephemeral: true });
     }
@@ -2537,9 +2541,35 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.update({ content: response || "No roles added.", components: [] });
   }
 
+  // Handle custom category role selections (from `select_<category>` menus)
+  if (interaction.isStringSelectMenu() && interaction.customId.startsWith("select_")) {
+    const categoryName = interaction.customId.slice(7);
+    const member = interaction.member;
+    const config = getGuildConfig(interaction.guild.id);
+    const addedRoles = [];
+    const failedRoles = [];
+    for (const roleId of interaction.values) {
+      const role = interaction.guild.roles.cache.get(roleId);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          const roleData = config.roleCategories?.[categoryName]?.find(r => (r.id || r) === roleId);
+          addedRoles.push(roleData ? (roleData.name || roleData) : role.name);
+        } catch (error) {
+          failedRoles.push(roleId);
+          console.error(`Failed to add role ${roleId}: ${error.message}`);
+        }
+      }
+    }
+    let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
+    if (failedRoles.length > 0) response += `\n⚠️ Failed: ${failedRoles.length} roles`;
+    return interaction.update({ content: response || "No roles added.", components: [] });
+  }
+
   // Platform roles
   if (interaction.isButton() && interaction.customId === "claim_platform") {
     const config = getGuildConfig(interaction.guild.id);
+    console.log(`DEBUG: claim_platform - platformRoles length: ${Array.isArray(config.platformRoles) ? config.platformRoles.length : 0} for guild ${interaction.guild.id}`);
     if (config.platformRoles.length === 0) {
       return interaction.reply({ content: "❌ No platform roles configured! Admin: use //add-platform-role [name] [roleID]", ephemeral: true });
     }
@@ -2556,31 +2586,6 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (interaction.isStringSelectMenu() && interaction.customId === "platform_roles") {
-  // Handle custom category role selections
-  if (interaction.isStringSelectMenu() && interaction.customId.startsWith("select_")) {
-    const categoryName = interaction.customId.slice(7);
-    const member = interaction.member;
-    const config = getGuildConfig(interaction.guild.id);
-    const addedRoles = [];
-    const failedRoles = [];
-    for (const roleId of interaction.values) {
-      const role = interaction.guild.roles.cache.get(roleId);
-      if (role) {
-        try {
-          await member.roles.add(role);
-          const roleData = config.roleCategories[categoryName].find(r => r.id === roleId);
-          addedRoles.push(roleData.name);
-        } catch (error) {
-          failedRoles.push(roleId);
-          console.error(`Failed to add role ${roleId}: ${error.message}`);
-        }
-      }
-    }
-    let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
-    if (failedRoles.length > 0) response += `
-⚠️ Failed: ${failedRoles.length} roles`;
-    return interaction.update({ content: response || "No roles added.", components: [] });
-  }
     const member = interaction.member;
     const config = getGuildConfig(interaction.guild.id);
     const addedRoles = [];
@@ -4340,9 +4345,43 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
 });
 
+// ============== ERROR & DISCONNECT HANDLERS (KEEP BOT ONLINE) ==============
+// Handle client errors
+client.on('error', err => {
+  console.error('❌ Discord client error:', err);
+});
+
+// Handle disconnections and attempt auto-reconnect
+client.on('disconnect', () => {
+  console.warn('⚠️  Bot disconnected from Discord. Attempting to reconnect...');
+  setTimeout(() => {
+    if (!client.isReady()) {
+      client.login(token).catch(err => console.error('Reconnection failed:', err));
+    }
+  }, 5000);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  // Don't exit - keep process alive
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit - keep process alive
+});
+
 // ============== LOGIN ==============
 if (token && typeof token === 'string' && token.length > 0) {
-  client.login(token).catch(err => console.error('Discord login error:', err));
+  client.login(token).catch(err => {
+    console.error('❌ Discord login error:', err);
+    console.log('⏰ Retrying login in 10 seconds...');
+    setTimeout(() => {
+      client.login(token).catch(err => console.error('Second login attempt failed:', err));
+    }, 10000);
+  });
 } else {
   console.log('⚠️  No Discord `TOKEN` provided — skipping bot login. Web server remains available.');
 }

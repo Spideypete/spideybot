@@ -6,6 +6,11 @@
   "scripts": {
     "start": "node index.cjs",
     "dev": "node index.cjs",
+    "prod": "pm2 start pm2.config.js --no-daemon",
+    "prod:daemon": "pm2 start pm2.config.js",
+    "stop": "pm2 stop spidey-bot",
+    "restart": "pm2 restart spidey-bot",
+    "logs": "pm2 logs spidey-bot",
     "build": "mkdir -p dist && cp -r public/* dist/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,6 +26,7 @@
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "helmet": "^6.2.0",
+    "pm2": "^5.4.3",
     "youtube-sr": "^4.3.12"
   }
 }
