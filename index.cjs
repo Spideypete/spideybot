@@ -2403,46 +2403,36 @@ client.on("interactionCreate", async (interaction) => {
   // Handle autocomplete interactions
   if (interaction.isAutocomplete()) {
     const { commandName, options } = interaction;
+    const guildConfig = getGuildConfig(interaction.guild.id);
     
     try {
-      if (commandName === 'remove' && options.getFocused(true).name === 'name') {
-        const type = options.getString('type');
-        const guildConfig = getGuildConfig(interaction.guild.id);
-        let choices = [];
-        
-        if (type === 'streamer') {
-          const twitchUsers = guildConfig.twitchUsers || [];
-          const tiktokUsers = guildConfig.tiktokUsers || [];
-          const kickUsers = guildConfig.kickUsers || [];
-          choices = [...twitchUsers, ...tiktokUsers, ...kickUsers];
-        } else if (type === 'game-role') {
-          const roles = Object.values(guildConfig.roleCategories || {})
-            .flatMap(cat => (cat.roles || []).map(r => r.name));
-          choices = roles;
-        } else if (type === 'custom-command') {
-          choices = Object.keys(guildConfig.customCommands || {});
-        }
-        
-        const filtered = choices.filter(choice => 
-          choice.toLowerCase().startsWith(options.getFocused().toLowerCase())
-        ).slice(0, 25);
-        
-        await interaction.respond(
-          filtered.map(choice => ({ name: choice, value: choice }))
-        );
-      } else if (commandName === 'help') {
-        const cmdList = Object.keys(COMMANDS_META).slice(0, 25);
-        await interaction.respond(
-          cmdList.map(cmd => ({ name: `/${cmd}`, value: cmd }))
-        );
+      let choices = [];
+      
+      // Autocomplete for remove commands
+      if (commandName === 'remove-twitch-user') {
+        choices = guildConfig.twitchUsers || [];
+      } else if (commandName === 'remove-tiktok-user') {
+        choices = guildConfig.tiktokUsers || [];
+      } else if (commandName === 'remove-kick-user') {
+        choices = guildConfig.kickUsers || [];
+      } else if (commandName === 'remove-custom-command') {
+        choices = Object.keys(guildConfig.customCommands || {});
       }
+      
+      const filtered = choices.filter(choice => 
+        choice.toLowerCase().startsWith(options.getFocused().toLowerCase())
+      ).slice(0, 25);
+      
+      await interaction.respond(
+        filtered.map(choice => ({ name: choice, value: choice }))
+      );
     } catch (err) {
       console.error('Autocomplete error:', err);
     }
     return;
   }
 
-  // Handle slash command interactions with native handlers
+  // Handle slash command interactions - Individual command handlers
   if (interaction.isChatInputCommand()) {
     const { commandName, options } = interaction;
     
@@ -2450,223 +2440,436 @@ client.on("interactionCreate", async (interaction) => {
       await interaction.deferReply();
       const guildConfig = getGuildConfig(interaction.guild.id);
       
-      // /add command - Add streamers, roles, commands
-      if (commandName === 'add') {
-        const type = options.getString('type');
-        const name = options.getString('name');
-        const channel = options.getChannel('channel');
-        
+      // ========== ROLE MANAGEMENT ==========
+      if (commandName === 'add-role') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-          return interaction.editReply("❌ Only admins can use this command!");
+          return interaction.editReply("❌ Only admins can manage roles!");
         }
         
-        // Handle different types
-        if (type === 'streamer') {
-          const users = guildConfig.twitchUsers || [];
-          if (users.includes(name.toLowerCase())) {
-            return interaction.editReply(`❌ **${name}** is already being monitored!`);
-          }
-          users.push(name.toLowerCase());
-          updateGuildConfig(interaction.guild.id, { twitchUsers: users });
-          return interaction.editReply(`✅ Added **${name}** to Twitch monitoring! (${users.length} total)`);
+        const categoryName = options.getString('category');
+        const roleName = options.getString('role_name');
+        const roleId = options.getString('role_id');
+        
+        const categories = guildConfig.roleCategories || {};
+        if (!categories[categoryName]) {
+          return interaction.editReply(`❌ Category "${categoryName}" doesn't exist!\n\nCreate it first with: \`/create-category ${categoryName}\``);
         }
         
-        if (type === 'game-role') {
-          const categories = guildConfig.roleCategories || {};
-          const [categoryName, roleName] = name.split(' ');
-          if (!categoryName || !roleName) {
-            return interaction.editReply("Usage: Specify category and role name");
-          }
-          if (!categories[categoryName]) {
-            return interaction.editReply(`❌ Category "${categoryName}" doesn't exist!`);
-          }
-          const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName] } : categories[categoryName];
-          if (catData.roles.some(r => r.name === roleName)) {
-            return interaction.editReply(`❌ Role "${roleName}" already exists in that category!`);
-          }
-          // Would need role ID - just add basic entry
-          catData.roles.push({ name: roleName, id: null });
-          updateGuildConfig(interaction.guild.id, { roleCategories: categories });
-          return interaction.editReply(`✅ Added **${roleName}** to **${categoryName}**`);
+        const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+        if (!role) {
+          return interaction.editReply(`❌ Role with ID \`${roleId}\` not found!`);
         }
         
-        if (type === 'custom-command') {
-          const commands = guildConfig.customCommands || {};
-          const [cmdName, response] = name.split(' ');
-          if (!cmdName || !response) {
-            return interaction.editReply("Usage: Specify command name and response");
-          }
-          if (commands[cmdName]) {
-            return interaction.editReply(`❌ Command **${cmdName}** already exists!`);
-          }
-          commands[cmdName] = response;
-          updateGuildConfig(interaction.guild.id, { customCommands: commands });
-          return interaction.editReply(`✅ Created custom command **/${cmdName}**`);
+        const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName] } : categories[categoryName];
+        if (catData.roles.some(r => r.name === roleName)) {
+          return interaction.editReply(`❌ Role "${roleName}" already in category!`);
         }
         
-        return interaction.editReply("❌ Invalid type!");
+        catData.roles.push({ name: roleName, id: roleId });
+        categories[categoryName] = catData;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        addActivity(interaction.guild.id, "➕", interaction.user.username, `added role: ${roleName} to ${categoryName}`);
+        return interaction.editReply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**`);
       }
       
-      // /remove command - Remove items
-      if (commandName === 'remove') {
-        const type = options.getString('type');
-        const name = options.getString('name');
-        
+      if (commandName === 'remove-role') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-          return interaction.editReply("❌ Only admins can use this command!");
+          return interaction.editReply("❌ Only admins can manage roles!");
         }
         
-        if (type === 'streamer') {
-          const users = guildConfig.twitchUsers || [];
-          const index = users.indexOf(name.toLowerCase());
-          if (index === -1) {
-            return interaction.editReply(`❌ **${name}** is not monitored!`);
-          }
-          users.splice(index, 1);
-          updateGuildConfig(interaction.guild.id, { twitchUsers: users });
-          return interaction.editReply(`✅ Removed **${name}** from monitoring!`);
+        const categoryName = options.getString('category');
+        const roleName = options.getString('role_name');
+        
+        const categories = guildConfig.roleCategories || {};
+        if (!categories[categoryName]) {
+          return interaction.editReply(`❌ Category "${categoryName}" doesn't exist!`);
         }
         
-        if (type === 'custom-command') {
-          const commands = guildConfig.customCommands || {};
-          if (!commands[name]) {
-            return interaction.editReply(`❌ Command **${name}** doesn't exist!`);
-          }
-          delete commands[name];
-          updateGuildConfig(interaction.guild.id, { customCommands: commands });
-          return interaction.editReply(`✅ Deleted command **/${name}**`);
+        const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName] } : categories[categoryName];
+        const roleIndex = catData.roles.findIndex(r => r.name === roleName);
+        if (roleIndex === -1) {
+          return interaction.editReply(`❌ Role "${roleName}" not found in that category!`);
         }
         
-        return interaction.editReply("❌ Invalid type!");
+        catData.roles.splice(roleIndex, 1);
+        categories[categoryName] = catData;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Removed **${roleName}** from **${categoryName}**`);
       }
       
-      // /config command - Configure channels
-      if (commandName === 'config') {
-        const setting = options.getString('setting');
-        const channel = options.getChannel('channel');
+      if (commandName === 'add-game-role') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
         
+        const roleName = options.getString('role_name');
+        const roleId = options.getString('role_id');
+        
+        const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+        if (!role) {
+          return interaction.editReply(`❌ Role with ID \`${roleId}\` not found!`);
+        }
+        
+        const categories = guildConfig.roleCategories || {};
+        if (!categories.Gaming) {
+          categories.Gaming = { roles: [], banner: null };
+        }
+        const catData = Array.isArray(categories.Gaming) ? { roles: categories.Gaming } : categories.Gaming;
+        
+        if (catData.roles.some(r => r.name === roleName)) {
+          return interaction.editReply(`❌ Role "${roleName}" already exists!`);
+        }
+        
+        catData.roles.push({ name: roleName, id: roleId });
+        categories.Gaming = catData;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Added game role **${roleName}** (${role})`);
+      }
+      
+      if (commandName === 'remove-game-role') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (!categories.Gaming) {
+          return interaction.editReply("❌ No gaming roles set up yet!");
+        }
+        
+        const catData = Array.isArray(categories.Gaming) ? { roles: categories.Gaming } : categories.Gaming;
+        const roleIndex = catData.roles.findIndex(r => r.name === roleName);
+        
+        if (roleIndex === -1) {
+          return interaction.editReply(`❌ Role "${roleName}" not found!`);
+        }
+        
+        catData.roles.splice(roleIndex, 1);
+        categories.Gaming = catData;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Removed game role **${roleName}**`);
+      }
+      
+      if (commandName === 'add-watchparty-role') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roleId = options.getString('role_id');
+        
+        const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+        if (!role) {
+          return interaction.editReply(`❌ Role with ID \`${roleId}\` not found!`);
+        }
+        
+        const roles = guildConfig.watchPartyRoles || [];
+        if (roles.some(r => r.name === roleName)) {
+          return interaction.editReply(`❌ Watch party role "${roleName}" already exists!`);
+        }
+        
+        roles.push({ name: roleName, id: roleId });
+        updateGuildConfig(interaction.guild.id, { watchPartyRoles: roles });
+        return interaction.editReply(`✅ Added watch party role **${roleName}**`);
+      }
+      
+      if (commandName === 'remove-watchparty-role') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roles = guildConfig.watchPartyRoles || [];
+        const roleIndex = roles.findIndex(r => r.name === roleName);
+        
+        if (roleIndex === -1) {
+          return interaction.editReply(`❌ Watch party role "${roleName}" not found!`);
+        }
+        
+        roles.splice(roleIndex, 1);
+        updateGuildConfig(interaction.guild.id, { watchPartyRoles: roles });
+        return interaction.editReply(`✅ Removed watch party role **${roleName}**`);
+      }
+      
+      if (commandName === 'add-platform-role') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roleId = options.getString('role_id');
+        
+        const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+        if (!role) {
+          return interaction.editReply(`❌ Role with ID \`${roleId}\` not found!`);
+        }
+        
+        const roles = guildConfig.platformRoles || [];
+        if (roles.some(r => r.name === roleName)) {
+          return interaction.editReply(`❌ Platform role "${roleName}" already exists!`);
+        }
+        
+        roles.push({ name: roleName, id: roleId });
+        updateGuildConfig(interaction.guild.id, { platformRoles: roles });
+        return interaction.editReply(`✅ Added platform role **${roleName}**`);
+      }
+      
+      if (commandName === 'remove-platform-role') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roles = guildConfig.platformRoles || [];
+        const roleIndex = roles.findIndex(r => r.name === roleName);
+        
+        if (roleIndex === -1) {
+          return interaction.editReply(`❌ Platform role "${roleName}" not found!`);
+        }
+        
+        roles.splice(roleIndex, 1);
+        updateGuildConfig(interaction.guild.id, { platformRoles: roles });
+        return interaction.editReply(`✅ Removed platform role **${roleName}**`);
+      }
+      
+      // ========== STREAMER MONITORING ==========
+      if (commandName === 'add-twitch-user') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
         
-        const settingMap = {
-          'welcome-channel': 'welcomeChannel',
-          'modlog-channel': 'modLogChannel',
-          'twitch-channel': 'twitchChannel',
-          'tiktok-channel': 'tiktokChannel',
-          'kick-channel': 'kickChannel',
-          'suggestions-channel': 'suggestionsChannel'
-        };
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.twitchUsers || [];
         
-        const configKey = settingMap[setting];
-        if (!configKey) {
-          return interaction.editReply("❌ Invalid setting!");
+        if (users.includes(username)) {
+          return interaction.editReply(`❌ **${username}** is already being monitored!`);
         }
         
-        updateGuildConfig(interaction.guild.id, { [configKey]: channel.id });
-        return interaction.editReply(`✅ Set **${setting}** to ${channel}`);
+        users.push(username);
+        updateGuildConfig(interaction.guild.id, { twitchUsers: users });
+        return interaction.editReply(`✅ Added **${username}** to Twitch monitoring! (${users.length} total)`);
       }
       
-      // /setup command - Setup features
-      if (commandName === 'setup') {
-        const feature = options.getString('feature');
-        
+      if (commandName === 'remove-twitch-user') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-          return interaction.editReply("❌ Only admins can setup!");
+          return interaction.editReply("❌ Only admins can configure!");
         }
         
-        if (feature === 'roles') {
-          updateGuildConfig(interaction.guild.id, { roleSelectors: { enabled: true } });
-          return interaction.editReply("✅ Gaming roles selector enabled!");
-        }
-        if (feature === 'watchparty') {
-          updateGuildConfig(interaction.guild.id, { watchpartySelector: { enabled: true } });
-          return interaction.editReply("✅ Watch party selector enabled!");
-        }
-        if (feature === 'platform') {
-          updateGuildConfig(interaction.guild.id, { platformSelector: { enabled: true } });
-          return interaction.editReply("✅ Platform selector enabled!");
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.twitchUsers || [];
+        const index = users.indexOf(username);
+        
+        if (index === -1) {
+          return interaction.editReply(`❌ **${username}** is not being monitored!`);
         }
         
-        return interaction.editReply("❌ Feature not found!");
+        users.splice(index, 1);
+        updateGuildConfig(interaction.guild.id, { twitchUsers: users });
+        return interaction.editReply(`✅ Removed **${username}** from Twitch monitoring!`);
       }
       
-      // /ping command - Bot latency
+      if (commandName === 'add-tiktok-user') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.tiktokUsers || [];
+        
+        if (users.includes(username)) {
+          return interaction.editReply(`❌ **${username}** is already being monitored!`);
+        }
+        
+        users.push(username);
+        updateGuildConfig(interaction.guild.id, { tiktokUsers: users });
+        return interaction.editReply(`✅ Added **${username}** to TikTok monitoring! (${users.length} total)`);
+      }
+      
+      if (commandName === 'remove-tiktok-user') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.tiktokUsers || [];
+        const index = users.indexOf(username);
+        
+        if (index === -1) {
+          return interaction.editReply(`❌ **${username}** is not being monitored!`);
+        }
+        
+        users.splice(index, 1);
+        updateGuildConfig(interaction.guild.id, { tiktokUsers: users });
+        return interaction.editReply(`✅ Removed **${username}** from TikTok monitoring!`);
+      }
+      
+      if (commandName === 'add-kick-user') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.kickUsers || [];
+        
+        if (users.includes(username)) {
+          return interaction.editReply(`❌ **${username}** is already being monitored!`);
+        }
+        
+        users.push(username);
+        updateGuildConfig(interaction.guild.id, { kickUsers: users });
+        return interaction.editReply(`✅ Added **${username}** to Kick monitoring! (${users.length} total)`);
+      }
+      
+      if (commandName === 'remove-kick-user') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.kickUsers || [];
+        const index = users.indexOf(username);
+        
+        if (index === -1) {
+          return interaction.editReply(`❌ **${username}** is not being monitored!`);
+        }
+        
+        users.splice(index, 1);
+        updateGuildConfig(interaction.guild.id, { kickUsers: users });
+        return interaction.editReply(`✅ Removed **${username}** from Kick monitoring!`);
+      }
+      
+      // ========== CUSTOM COMMANDS ==========
+      if (commandName === 'add-custom-command') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const cmdName = options.getString('command_name');
+        const response = options.getString('response');
+        const commands = guildConfig.customCommands || {};
+        
+        if (commands[cmdName]) {
+          return interaction.editReply(`❌ Command **${cmdName}** already exists!`);
+        }
+        
+        commands[cmdName] = response;
+        updateGuildConfig(interaction.guild.id, { customCommands: commands });
+        addActivity(interaction.guild.id, "➕", interaction.user.username, `added command: /${cmdName}`);
+        return interaction.editReply(`✅ Created custom command **/${cmdName}**`);
+      }
+      
+      if (commandName === 'remove-custom-command') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const cmdName = options.getString('command_name');
+        const commands = guildConfig.customCommands || {};
+        
+        if (!commands[cmdName]) {
+          return interaction.editReply(`❌ Command **${cmdName}** doesn't exist!`);
+        }
+        
+        delete commands[cmdName];
+        updateGuildConfig(interaction.guild.id, { customCommands: commands });
+        return interaction.editReply(`✅ Deleted command **/${cmdName}**`);
+      }
+      
+      // ========== CONFIGURATION ==========
+      if (commandName === 'config-welcome-channel') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { welcomeChannel: channel.id });
+        return interaction.editReply(`✅ Set welcome channel to ${channel}`);
+      }
+      
+      if (commandName === 'config-modlog') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { modLogChannel: channel.id });
+        return interaction.editReply(`✅ Set mod log channel to ${channel}`);
+      }
+      
+      if (commandName === 'config-twitch-channel') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { twitchChannel: channel.id });
+        return interaction.editReply(`✅ Set Twitch notification channel to ${channel}`);
+      }
+      
+      if (commandName === 'config-tiktok-channel') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { tiktokChannel: channel.id });
+        return interaction.editReply(`✅ Set TikTok notification channel to ${channel}`);
+      }
+      
+      if (commandName === 'config-kick-channel') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { kickChannel: channel.id });
+        return interaction.editReply(`✅ Set Kick notification channel to ${channel}`);
+      }
+      
+      // ========== ECONOMY ==========
+      if (commandName === 'addmoney') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can use this command!");
+        }
+        
+        const user = options.getUser('user');
+        const amount = options.getInteger('amount');
+        const economy = guildConfig.economy || {};
+        
+        economy[user.id] = (economy[user.id] || 0) + amount;
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`✅ Added **${amount}** coins to ${user}! New balance: ${economy[user.id]}`);
+      }
+      
+      // ========== SETUP ==========
+      if (commandName === 'setup-category') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can use this command!");
+        }
+        
+        const category = options.getString('category');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (!categories[category]) {
+          return interaction.editReply(`❌ Category "${category}" doesn't exist!`);
+        }
+        
+        return interaction.editReply(`✅ Use dashboard to setup "${category}" selector!`);
+      }
+      
+      // ========== UTILITY ==========
       if (commandName === 'ping') {
         const ping = client.ws.ping;
         return interaction.editReply(`🏓 Pong! Latency: ${ping}ms`);
       }
       
-      // /play command - Music player
-      if (commandName === 'play') {
-        const query = options.getString('query');
-        // For music, we'd need discord-player setup - just acknowledge
-        return interaction.editReply(`🎵 Playing **${query}**...\n*(Music feature requires voice channel setup)*`);
-      }
-      
-      // /kick command - Kick member
-      if (commandName === 'kick') {
-        const user = options.getUser('user');
-        const reason = options.getString('reason') || 'No reason provided';
-        
-        if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
-          return interaction.editReply("❌ You don't have permission to kick members!");
-        }
-        
-        const member = interaction.guild.members.cache.get(user.id);
-        if (!member) {
-          return interaction.editReply("❌ Member not found!");
-        }
-        
-        await member.kick(reason).catch(err => {
-          return interaction.editReply(`❌ Failed to kick: ${err.message}`);
-        });
-        
-        return interaction.editReply(`✅ Kicked **${user.username}** - Reason: ${reason}`);
-      }
-      
-      // /ban command - Ban member
-      if (commandName === 'ban') {
-        const user = options.getUser('user');
-        const reason = options.getString('reason') || 'No reason provided';
-        
-        if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
-          return interaction.editReply("❌ You don't have permission to ban members!");
-        }
-        
-        const member = interaction.guild.members.cache.get(user.id);
-        if (!member) {
-          return interaction.editReply("❌ Member not found!");
-        }
-        
-        await member.ban({ reason }).catch(err => {
-          return interaction.editReply(`❌ Failed to ban: ${err.message}`);
-        });
-        
-        return interaction.editReply(`✅ Banned **${user.username}** - Reason: ${reason}`);
-      }
-      
-      // /help command - Show commands
       if (commandName === 'help') {
         const cmdList = Object.keys(COMMANDS_META).slice(0, 10);
         return interaction.editReply(`📚 **Available Commands:**\n${cmdList.map(c => `• \`/${c}\``).join('\n')}`);
       }
       
-      // /suggest command - Submit suggestion
-      if (commandName === 'suggest') {
-        const suggestion = options.getString('suggestion');
-        const suggestions = guildConfig.suggestions || [];
-        suggestions.push({
-          author: interaction.user.username,
-          text: suggestion,
-          date: new Date().toISOString(),
-          votes: 0
-        });
-        updateGuildConfig(interaction.guild.id, { suggestions });
-        return interaction.editReply(`✅ Suggestion submitted by **${interaction.user.username}**`);
-      }
-      
-      return interaction.editReply("❌ Unknown command!");
+      return interaction.editReply("❌ Unknown slash command!");
       
     } catch (err) {
       console.error(`Slash command error for /${commandName}:`, err);
