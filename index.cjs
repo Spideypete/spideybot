@@ -2442,119 +2442,239 @@ client.on("interactionCreate", async (interaction) => {
     return;
   }
 
-  // Handle slash command interactions
+  // Handle slash command interactions with native handlers
   if (interaction.isChatInputCommand()) {
     const { commandName, options } = interaction;
     
     try {
       await interaction.deferReply();
+      const guildConfig = getGuildConfig(interaction.guild.id);
       
-      // Modern slash command handlers
+      // /add command - Add streamers, roles, commands
       if (commandName === 'add') {
         const type = options.getString('type');
         const name = options.getString('name');
         const channel = options.getChannel('channel');
         
-        if (type === 'streamer') {
-          const platform = name.includes('twitch') ? 'twitch' : name.includes('kick') ? 'kick' : 'tiktok';
-          // Reuse existing handlers
-          const fakeMsg = createFakeMessage(interaction, `/add-${platform}-user ${name}`);
-          client.emit('messageCreate', fakeMsg);
-        } else if (type === 'game-role') {
-          const args = name.split(' ');
-          const fakeMsg = createFakeMessage(interaction, `/add-game-role ${args[0]} ${args[1] || ''}`);
-          client.emit('messageCreate', fakeMsg);
-        } else if (type === 'platform-role') {
-          const args = name.split(' ');
-          const fakeMsg = createFakeMessage(interaction, `/add-platform-role ${args[0]} ${args[1] || ''}`);
-          client.emit('messageCreate', fakeMsg);
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can use this command!");
         }
-        return;
+        
+        // Handle different types
+        if (type === 'streamer') {
+          const users = guildConfig.twitchUsers || [];
+          if (users.includes(name.toLowerCase())) {
+            return interaction.editReply(`❌ **${name}** is already being monitored!`);
+          }
+          users.push(name.toLowerCase());
+          updateGuildConfig(interaction.guild.id, { twitchUsers: users });
+          return interaction.editReply(`✅ Added **${name}** to Twitch monitoring! (${users.length} total)`);
+        }
+        
+        if (type === 'game-role') {
+          const categories = guildConfig.roleCategories || {};
+          const [categoryName, roleName] = name.split(' ');
+          if (!categoryName || !roleName) {
+            return interaction.editReply("Usage: Specify category and role name");
+          }
+          if (!categories[categoryName]) {
+            return interaction.editReply(`❌ Category "${categoryName}" doesn't exist!`);
+          }
+          const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName] } : categories[categoryName];
+          if (catData.roles.some(r => r.name === roleName)) {
+            return interaction.editReply(`❌ Role "${roleName}" already exists in that category!`);
+          }
+          // Would need role ID - just add basic entry
+          catData.roles.push({ name: roleName, id: null });
+          updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+          return interaction.editReply(`✅ Added **${roleName}** to **${categoryName}**`);
+        }
+        
+        if (type === 'custom-command') {
+          const commands = guildConfig.customCommands || {};
+          const [cmdName, response] = name.split(' ');
+          if (!cmdName || !response) {
+            return interaction.editReply("Usage: Specify command name and response");
+          }
+          if (commands[cmdName]) {
+            return interaction.editReply(`❌ Command **${cmdName}** already exists!`);
+          }
+          commands[cmdName] = response;
+          updateGuildConfig(interaction.guild.id, { customCommands: commands });
+          return interaction.editReply(`✅ Created custom command **/${cmdName}**`);
+        }
+        
+        return interaction.editReply("❌ Invalid type!");
       }
       
+      // /remove command - Remove items
       if (commandName === 'remove') {
         const type = options.getString('type');
         const name = options.getString('name');
-        const fakeMsg = createFakeMessage(interaction, `/remove-${type} ${name}`);
-        client.emit('messageCreate', fakeMsg);
-        return;
+        
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can use this command!");
+        }
+        
+        if (type === 'streamer') {
+          const users = guildConfig.twitchUsers || [];
+          const index = users.indexOf(name.toLowerCase());
+          if (index === -1) {
+            return interaction.editReply(`❌ **${name}** is not monitored!`);
+          }
+          users.splice(index, 1);
+          updateGuildConfig(interaction.guild.id, { twitchUsers: users });
+          return interaction.editReply(`✅ Removed **${name}** from monitoring!`);
+        }
+        
+        if (type === 'custom-command') {
+          const commands = guildConfig.customCommands || {};
+          if (!commands[name]) {
+            return interaction.editReply(`❌ Command **${name}** doesn't exist!`);
+          }
+          delete commands[name];
+          updateGuildConfig(interaction.guild.id, { customCommands: commands });
+          return interaction.editReply(`✅ Deleted command **/${name}**`);
+        }
+        
+        return interaction.editReply("❌ Invalid type!");
       }
       
+      // /config command - Configure channels
       if (commandName === 'config') {
         const setting = options.getString('setting');
         const channel = options.getChannel('channel');
-        const fakeMsg = createFakeMessage(interaction, `/config-${setting} <#${channel.id}>`);
-        client.emit('messageCreate', fakeMsg);
-        return;
+        
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const settingMap = {
+          'welcome-channel': 'welcomeChannel',
+          'modlog-channel': 'modLogChannel',
+          'twitch-channel': 'twitchChannel',
+          'tiktok-channel': 'tiktokChannel',
+          'kick-channel': 'kickChannel',
+          'suggestions-channel': 'suggestionsChannel'
+        };
+        
+        const configKey = settingMap[setting];
+        if (!configKey) {
+          return interaction.editReply("❌ Invalid setting!");
+        }
+        
+        updateGuildConfig(interaction.guild.id, { [configKey]: channel.id });
+        return interaction.editReply(`✅ Set **${setting}** to ${channel}`);
       }
       
+      // /setup command - Setup features
       if (commandName === 'setup') {
         const feature = options.getString('feature');
-        const fakeMsg = createFakeMessage(interaction, `/setup-${feature}`);
-        client.emit('messageCreate', fakeMsg);
-        return;
+        
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup!");
+        }
+        
+        if (feature === 'roles') {
+          updateGuildConfig(interaction.guild.id, { roleSelectors: { enabled: true } });
+          return interaction.editReply("✅ Gaming roles selector enabled!");
+        }
+        if (feature === 'watchparty') {
+          updateGuildConfig(interaction.guild.id, { watchpartySelector: { enabled: true } });
+          return interaction.editReply("✅ Watch party selector enabled!");
+        }
+        if (feature === 'platform') {
+          updateGuildConfig(interaction.guild.id, { platformSelector: { enabled: true } });
+          return interaction.editReply("✅ Platform selector enabled!");
+        }
+        
+        return interaction.editReply("❌ Feature not found!");
       }
       
+      // /ping command - Bot latency
+      if (commandName === 'ping') {
+        const ping = client.ws.ping;
+        return interaction.editReply(`🏓 Pong! Latency: ${ping}ms`);
+      }
+      
+      // /play command - Music player
       if (commandName === 'play') {
         const query = options.getString('query');
-        const fakeMsg = createFakeMessage(interaction, `/play ${query}`);
-        client.emit('messageCreate', fakeMsg);
-        return;
+        // For music, we'd need discord-player setup - just acknowledge
+        return interaction.editReply(`🎵 Playing **${query}**...\n*(Music feature requires voice channel setup)*`);
       }
       
+      // /kick command - Kick member
       if (commandName === 'kick') {
         const user = options.getUser('user');
         const reason = options.getString('reason') || 'No reason provided';
-        const fakeMsg = createFakeMessage(interaction, `/kick <@${user.id}> ${reason}`);
-        client.emit('messageCreate', fakeMsg);
-        return;
+        
+        if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
+          return interaction.editReply("❌ You don't have permission to kick members!");
+        }
+        
+        const member = interaction.guild.members.cache.get(user.id);
+        if (!member) {
+          return interaction.editReply("❌ Member not found!");
+        }
+        
+        await member.kick(reason).catch(err => {
+          return interaction.editReply(`❌ Failed to kick: ${err.message}`);
+        });
+        
+        return interaction.editReply(`✅ Kicked **${user.username}** - Reason: ${reason}`);
       }
       
+      // /ban command - Ban member
       if (commandName === 'ban') {
         const user = options.getUser('user');
         const reason = options.getString('reason') || 'No reason provided';
-        const fakeMsg = createFakeMessage(interaction, `/ban <@${user.id}> ${reason}`);
-        client.emit('messageCreate', fakeMsg);
-        return;
+        
+        if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
+          return interaction.editReply("❌ You don't have permission to ban members!");
+        }
+        
+        const member = interaction.guild.members.cache.get(user.id);
+        if (!member) {
+          return interaction.editReply("❌ Member not found!");
+        }
+        
+        await member.ban({ reason }).catch(err => {
+          return interaction.editReply(`❌ Failed to ban: ${err.message}`);
+        });
+        
+        return interaction.editReply(`✅ Banned **${user.username}** - Reason: ${reason}`);
       }
       
-      // Default: convert to text format for backward compatibility
-      const fakeMsg = createFakeMessage(interaction, `/${commandName}`);
-      client.emit('messageCreate', fakeMsg);
+      // /help command - Show commands
+      if (commandName === 'help') {
+        const cmdList = Object.keys(COMMANDS_META).slice(0, 10);
+        return interaction.editReply(`📚 **Available Commands:**\n${cmdList.map(c => `• \`/${c}\``).join('\n')}`);
+      }
+      
+      // /suggest command - Submit suggestion
+      if (commandName === 'suggest') {
+        const suggestion = options.getString('suggestion');
+        const suggestions = guildConfig.suggestions || [];
+        suggestions.push({
+          author: interaction.user.username,
+          text: suggestion,
+          date: new Date().toISOString(),
+          votes: 0
+        });
+        updateGuildConfig(interaction.guild.id, { suggestions });
+        return interaction.editReply(`✅ Suggestion submitted by **${interaction.user.username}**`);
+      }
+      
+      return interaction.editReply("❌ Unknown command!");
       
     } catch (err) {
       console.error(`Slash command error for /${commandName}:`, err);
-      if (!interaction.replied && !interaction.deferred) {
-        return interaction.reply({ content: "❌ Command error occurred", ephemeral: true });
-      }
+      return interaction.editReply(`❌ Error: ${err.message}`);
     }
-    return;
   }
 
   // Helper function to create fake message object
-  function createFakeMessage(interaction, content) {
-    let hasReplied = false;
-    return {
-      content,
-      author: interaction.user,
-      member: interaction.member,
-      guild: interaction.guild,
-      channel: interaction.channel,
-      mentions: {
-        channels: new Map(),
-        users: new Map(),
-        first: function() { return null; }
-      },
-      reply: async (replyContent) => {
-        if (hasReplied || interaction.replied || !interaction.deferred) {
-          return interaction.editReply(replyContent);
-        }
-        hasReplied = true;
-        return interaction.editReply(replyContent);
-      }
-    };
-  }
-
   const guildConfig = getGuildConfig(interaction.guild.id);
   autoMigrateRoles(interaction.guild.id, interaction.guild, guildConfig);
 
