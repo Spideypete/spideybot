@@ -2777,7 +2777,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== CONFIGURATION ==========
-      if (commandName === 'config-welcome-channel') {
+      if (commandName === 'configwelcomechannel') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2787,7 +2787,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Set welcome channel to ${channel}`);
       }
       
-      if (commandName === 'config-modlog') {
+      if (commandName === 'configmodlog') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2797,7 +2797,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Set mod log channel to ${channel}`);
       }
       
-      if (commandName === 'config-twitch-channel') {
+      if (commandName === 'configtwitchchannel') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2807,7 +2807,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Set Twitch notification channel to ${channel}`);
       }
       
-      if (commandName === 'config-tiktok-channel') {
+      if (commandName === 'configtiktokchannel') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2817,7 +2817,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Set TikTok notification channel to ${channel}`);
       }
       
-      if (commandName === 'config-kick-channel') {
+      if (commandName === 'configkickchannel') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2843,7 +2843,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== SETUP ==========
-      if (commandName === 'setup-category') {
+      if (commandName === 'setupcategory') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can use this command!");
         }
@@ -2921,7 +2921,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== ROLES - CATEGORY (ADDITIONAL) ==========
-      if (commandName === 'create-category') {
+      if (commandName === 'createcategory') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can create categories!");
         }
@@ -2938,7 +2938,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Created category **${name}**`);
       }
       
-      if (commandName === 'list-roles') {
+      if (commandName === 'listroles') {
         const categories = guildConfig.roleCategories || {};
         const catNames = Object.keys(categories);
         
@@ -2955,7 +2955,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`📋 **Role Categories:**\n${catList}`);
       }
       
-      if (commandName === 'set-category-banner') {
+      if (commandName === 'setcategorybanner') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can set banners!");
         }
@@ -2973,7 +2973,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Set banner for **${category}**`);
       }
       
-      if (commandName === 'delete-category') {
+      if (commandName === 'deletecategory') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can delete categories!");
         }
@@ -2991,7 +2991,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== ROLES - SELECTORS ==========
-      if (commandName === 'setup-roles') {
+      if (commandName === 'setuproles') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can setup selectors!");
         }
@@ -3000,7 +3000,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply("✅ Gaming roles selector enabled! Users can now select roles.");
       }
       
-      if (commandName === 'setup-watchparty') {
+      if (commandName === 'setupwatchparty') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can setup selectors!");
         }
@@ -3009,7 +3009,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply("✅ Watch party selector enabled!");
       }
       
-      if (commandName === 'setup-platform') {
+      if (commandName === 'setupplatform') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can setup selectors!");
         }
@@ -3018,7 +3018,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply("✅ Platform selector enabled!");
       }
       
-      if (commandName === 'remove-roles') {
+      if (commandName === 'removeroles') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can use this!");
         }
@@ -3026,7 +3026,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply("✅ Role removal feature ready!");
       }
       
-      if (commandName === 'setup-level-roles') {
+      if (commandName === 'setuplevelroles') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can setup level roles!");
         }
@@ -3071,7 +3071,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== CONFIGURATION (ADDITIONAL) ==========
-      if (commandName === 'config-suggestions') {
+      if (commandName === 'configsuggestions') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -3081,7 +3081,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Set suggestions channel to ${channel}`);
       }
       
-      if (commandName === 'config-leaderboard') {
+      if (commandName === 'configleaderboard') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -3091,7 +3091,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Set leaderboard channel to ${channel}`);
       }
       
-      if (commandName === 'config-welcome-message') {
+      if (commandName === 'configwelcomemessage') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -3101,7 +3101,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Set welcome message!`);
       }
       
-      if (commandName === 'config-goodbye-message') {
+      if (commandName === 'configgoodbyemessage') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -3259,7 +3259,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== TICKETS ==========
-      if (commandName === 'ticket-setup') {
+      if (commandName === 'ticketsetup') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can setup tickets!");
         }
@@ -3274,12 +3274,12 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`🎫 Ticket created for: **${topic}**\n*(Full ticket system coming soon)*`);
       }
       
-      if (commandName === 'close-ticket') {
+      if (commandName === 'closeticket') {
         return interaction.editReply(`🔒 Ticket closed!`);
       }
       
       // ========== GIVEAWAY ==========
-      if (commandName === 'giveaway' || commandName === 'start-giveaway') {
+      if (commandName === 'giveaway' || commandName === 'startgiveaway') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can start giveaways!");
         }
@@ -3327,7 +3327,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== FILTERS ==========
-      if (commandName === 'filter-toggle') {
+      if (commandName === 'filtertoggle') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can toggle filters!");
         }
@@ -3337,7 +3337,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`🛡️ Profanity filter ${!filterEnabled ? 'enabled' : 'disabled'}!`);
       }
       
-      if (commandName === 'link-filter') {
+      if (commandName === 'linkfilter') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure filters!");
         }
@@ -3347,7 +3347,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`🔗 Link filter ${state === 'on' ? 'enabled' : 'disabled'}!`);
       }
       
-      if (commandName === 'set-prefix') {
+      if (commandName === 'setprefix') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can set prefix!");
         }

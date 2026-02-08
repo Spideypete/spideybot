@@ -1,4 +1,4 @@
-u already have the api // slash-commands.js - Complete Slash Commands from COMMANDS_META
+// slash-commands.js - Complete Slash Commands from COMMANDS_META
 const { SlashCommandBuilder } = require('discord.js');
 
 const slashCommands = [
@@ -47,13 +47,13 @@ const slashCommands = [
 
   // ===================== ROLES - CATEGORY =====================
   new SlashCommandBuilder()
-    .setName('create-category')
+    .setName('createcategory')
     .setDescription('Create a role category')
     .addStringOption(option =>
       option.setName('name').setDescription('Category name').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('list-roles')
+    .setName('listroles')
     .setDescription('View all active role categories'),
 
   new SlashCommandBuilder()
@@ -75,7 +75,7 @@ const slashCommands = [
       option.setName('role_name').setDescription('Role name').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('set-category-banner')
+    .setName('setcategorybanner')
     .setDescription('Set category banner')
     .addStringOption(option =>
       option.setName('category').setDescription('Category name').setRequired(true))
@@ -83,13 +83,13 @@ const slashCommands = [
       option.setName('url').setDescription('Banner image URL').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('setup-category')
+    .setName('setupcategory')
     .setDescription('Setup a new category message')
     .addStringOption(option =>
       option.setName('category').setDescription('Category name').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('delete-category')
+    .setName('deletecategory')
     .setDescription('Delete a category')
     .addStringOption(option =>
       option.setName('category').setDescription('Category name').setRequired(true)),
@@ -139,23 +139,23 @@ const slashCommands = [
 
   // ===================== ROLES - SELECTORS =====================
   new SlashCommandBuilder()
-    .setName('setup-roles')
+    .setName('setuproles')
     .setDescription('Post gaming roles selector with buttons'),
 
   new SlashCommandBuilder()
-    .setName('setup-watchparty')
+    .setName('setupwatchparty')
     .setDescription('Post watch party role selector'),
 
   new SlashCommandBuilder()
-    .setName('setup-platform')
+    .setName('setupplatform')
     .setDescription('Post platform selector'),
 
   new SlashCommandBuilder()
-    .setName('remove-roles')
+    .setName('removeroles')
     .setDescription('Post role removal message'),
 
   new SlashCommandBuilder()
-    .setName('setup-level-roles')
+    .setName('setuplevelroles')
     .setDescription('Auto-create level roles'),
 
   // ===================== STREAMER MONITORING =====================
@@ -226,56 +226,56 @@ const slashCommands = [
 
   // ===================== CONFIGURATION - CHANNELS =====================
   new SlashCommandBuilder()
-    .setName('config-welcome-channel')
+    .setName('configwelcomechannel')
     .setDescription('Set welcome channel')
     .addChannelOption(option =>
       option.setName('channel').setDescription('Welcome channel').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('config-modlog')
+    .setName('configmodlog')
     .setDescription('Set moderation log channel')
     .addChannelOption(option =>
       option.setName('channel').setDescription('Mod log channel').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('config-twitch-channel')
+    .setName('configtwitchchannel')
     .setDescription('Set Twitch notification channel')
     .addChannelOption(option =>
       option.setName('channel').setDescription('Twitch channel').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('config-tiktok-channel')
+    .setName('configtiktokchannel')
     .setDescription('Set TikTok notification channel')
     .addChannelOption(option =>
       option.setName('channel').setDescription('TikTok channel').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('config-kick-channel')
+    .setName('configkickchannel')
     .setDescription('Set Kick notification channel')
     .addChannelOption(option =>
       option.setName('channel').setDescription('Kick channel').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('config-suggestions')
+    .setName('configsuggestions')
     .setDescription('Configure suggestions channel')
     .addChannelOption(option =>
       option.setName('channel').setDescription('Suggestions channel').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('config-leaderboard')
+    .setName('configleaderboard')
     .setDescription('Configure leaderboards')
     .addChannelOption(option =>
       option.setName('channel').setDescription('Leaderboard channel').setRequired(true)),
 
   // ===================== CONFIGURATION - MESSAGES =====================
   new SlashCommandBuilder()
-    .setName('config-welcome-message')
+    .setName('configwelcomemessage')
     .setDescription('Set welcome message')
     .addStringOption(option =>
       option.setName('message').setDescription('Welcome message').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('config-goodbye-message')
+    .setName('configgoodbyemessage')
     .setDescription('Set goodbye message')
     .addStringOption(option =>
       option.setName('message').setDescription('Goodbye message').setRequired(true)),
@@ -398,7 +398,7 @@ const slashCommands = [
 
   // ===================== TICKETS =====================
   new SlashCommandBuilder()
-    .setName('ticket-setup')
+    .setName('ticketsetup')
     .setDescription('Setup ticket system')
     .addChannelOption(option =>
       option.setName('channel').setDescription('Channel for tickets').setRequired(true)),
@@ -410,7 +410,7 @@ const slashCommands = [
       option.setName('topic').setDescription('What is your ticket about?').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('close-ticket')
+    .setName('closeticket')
     .setDescription('Close an active ticket'),
 
   // ===================== GIVEAWAY =====================
@@ -425,7 +425,7 @@ const slashCommands = [
       option.setName('winners').setDescription('Number of winners').setRequired(false).setMinValue(1)),
 
   new SlashCommandBuilder()
-    .setName('start-giveaway')
+    .setName('startgiveaway')
     .setDescription('Start a giveaway')
     .addStringOption(option =>
       option.setName('prize').setDescription('Prize').setRequired(true))
@@ -453,11 +453,11 @@ const slashCommands = [
 
   // ===================== FILTERS =====================
   new SlashCommandBuilder()
-    .setName('filter-toggle')
+    .setName('filtertoggle')
     .setDescription('Toggle profanity filter'),
 
   new SlashCommandBuilder()
-    .setName('link-filter')
+    .setName('linkfilter')
     .setDescription('Toggle link filter')
     .addStringOption(option =>
       option.setName('state').setDescription('Turn on or off').setRequired(true)
@@ -467,7 +467,7 @@ const slashCommands = [
         )),
 
   new SlashCommandBuilder()
-    .setName('set-prefix')
+    .setName('setprefix')
     .setDescription('Change command prefix')
     .addStringOption(option =>
       option.setName('prefix').setDescription('New prefix').setRequired(true)),
