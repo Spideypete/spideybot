@@ -1,4 +1,4 @@
-// slash-commands.js - Complete Slash Commands from COMMANDS_META
+u already have the api // slash-commands.js - Complete Slash Commands from COMMANDS_META
 const { SlashCommandBuilder } = require('discord.js');
 
 const slashCommands = [
