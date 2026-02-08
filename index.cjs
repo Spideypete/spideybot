@@ -3302,43 +3302,45 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       if (commandName === 'help') {
-        const helpText = `**💰 Economy**
-/balance - Check your current balance!
-/pay - Send money to another user!
-/work - Work to earn some money!
-/transfer - Transfer money between users!
-
-**🎮 Games**
-/rps - Play rock paper scissors!
-/8ball - Ask the magic 8ball a question!
-/dice - Roll a dice!
-/coin - Flip a coin!
-/trivia - Test your knowledge with trivia!
-
-**🎵 Music**
-/play - Play a song in voice channel!
-/shuffle - Shuffle the queue!
-/queue - View the current music queue!
-/loop - Toggle loop mode!
-/volume - Adjust the volume!
-/pause - Pause the current song!
-/resume - Resume the paused song!
-/skip - Skip to the next song!
-/stop - Stop playback and clear queue!
-
-**🎫 Tickets**
-/ticket - Create a support ticket!
-
-**🎁 Giveaways**
-/giveaway - View active giveaways!
-
-**🔧 Utility**
-/ping - Check bot latency!
-/suggest - Submit a suggestion!
-
-*Type /adminhelp for admin commands*`;
+        const embed = new EmbedBuilder()
+          .setColor('#9B59B6') // Purple
+          .setTitle('📚 Available Commands')
+          .setDescription('Here are all the public commands you can use!')
+          .addFields(
+            {
+              name: '💰 Economy',
+              value: '`/balance` - Check your current balance!\n`/pay` - Send money to another user!\n`/work` - Work to earn some money!\n`/transfer` - Transfer money between users!',
+              inline: false
+            },
+            {
+              name: '🎮 Games',
+              value: '`/rps` - Play rock paper scissors!\n`/8ball` - Ask the magic 8ball a question!\n`/dice` - Roll a dice!\n`/coin` - Flip a coin!\n`/trivia` - Test your knowledge with trivia!',
+              inline: false
+            },
+            {
+              name: '🎵 Music',
+              value: '`/play` - Play a song in voice channel!\n`/shuffle` - Shuffle the queue!\n`/queue` - View the current music queue!\n`/loop` - Toggle loop mode!\n`/volume` - Adjust the volume!\n`/pause` - Pause the current song!\n`/resume` - Resume the paused song!\n`/skip` - Skip to the next song!\n`/stop` - Stop playback and clear queue!',
+              inline: false
+            },
+            {
+              name: '🎫 Tickets',
+              value: '`/ticket` - Create a support ticket!',
+              inline: true
+            },
+            {
+              name: '🎁 Giveaways',
+              value: '`/giveaway` - View active giveaways!',
+              inline: true
+            },
+            {
+              name: '🔧 Utility',
+              value: '`/ping` - Check bot latency!\n`/suggest` - Submit a suggestion!',
+              inline: false
+            }
+          )
+          .setFooter({ text: 'Type /adminhelp for admin commands!' });
         
-        return interaction.editReply(helpText);
+        return interaction.editReply({ embeds: [embed] });
       }
       
       if (commandName === 'adminhelp') {
@@ -3346,76 +3348,70 @@ client.on("interactionCreate", async (interaction) => {
           return interaction.editReply("❌ Only admins can view admin commands!");
         }
         
-        const adminHelpText = `**🛡️ Moderation**
-/kick - Kick a member from the server!
-/ban - Ban a member from the server!
-/warn - Warn a member!
-/mute - Mute a member!
-/unmute - Unmute a member!
-/warnings - View warnings for a member!
-
-**👤 Roles**
-/createcategory - Create a new role category!
-/listroles - List all roles in a category!
-/addrole - Add a role to a category!
-/removerole - Remove a role from a category!
-/setcategorybanner - Set a banner for a role category!
-/setupcategory - Setup a role category!
-/deletecategory - Delete a role category!
-/addgamerole - Add a game role!
-/removegamerole - Remove a game role!
-/addwatchpartyrole - Add a watch party role!
-/removewatchpartyrole - Remove a watch party role!
-/addplatformrole - Add a platform role!
-/removeplatformrole - Remove a platform role!
-/setuproles - Setup role categories!
-/setupwatchparty - Setup watch party roles!
-/setupplatform - Setup platform roles!
-/removeroles - Remove all roles from a category!
-/setuplevelroles - Setup level-based roles!
-
-**📺 Streamers**
-/addtwitchuser - Add a Twitch streamer to track!
-/removetwitchuser - Remove a Twitch streamer!
-/addtiktokuser - Add a TikTok streamer to track!
-/removetiktokuser - Remove a TikTok streamer!
-/addkickuser - Add a Kick streamer to track!
-/removekickuser - Remove a Kick streamer!
-
-**🤖 Custom Commands**
-/addcustomcommand - Add a custom command!
-/removecustomcommand - Remove a custom command!
-/addcmd - Add a custom command (alias)!
-/delcmd - Delete a custom command (alias)!
-
-**⚙️ Configuration**
-/configwelcomechannel - Set welcome channel!
-/configmodlog - Set moderation log channel!
-/configtwitchchannel - Set Twitch notifications channel!
-/configtiktokchannel - Set TikTok notifications channel!
-/configkickchannel - Set Kick notifications channel!
-/configsuggestions - Set suggestions channel!
-/configleaderboard - Set leaderboard channel!
-/configwelcomemessage - Set custom welcome message!
-/configgoodbyemessage - Set custom goodbye message!
-
-**💰 Economy Admin**
-/addmoney - Add money to a user's balance!
-/removemoney - Remove money from a user's balance!
-
-**🎫 Tickets Admin**
-/ticketsetup - Setup the ticket system!
-/closeticket - Close a support ticket!
-
-**🎁 Giveaways Admin**
-/startgiveaway - Start a new giveaway!
-
-**🔒 Filters**
-/filtertoggle - Toggle content filters!
-/linkfilter - Configure link filtering!
-/setprefix - Set custom command prefix!`;
+        const embed = new EmbedBuilder()
+          .setColor('#004B87') // Petrol Blue
+          .setTitle('🔐 Admin Commands')
+          .setDescription('Admin-only commands for server management')
+          .addFields(
+            {
+              name: '🛡️ Moderation',
+              value: '`/kick` - Kick a member from the server!\n`/ban` - Ban a member from the server!\n`/warn` - Warn a member!\n`/mute` - Mute a member!\n`/unmute` - Unmute a member!\n`/warnings` - View warnings for a member!',
+              inline: false
+            },
+            {
+              name: '👤 Roles - Category',
+              value: '`/createcategory` - Create a new role category!\n`/listroles` - List all roles in a category!\n`/addrole` - Add a role to a category!\n`/removerole` - Remove a role from a category!\n`/setcategorybanner` - Set a banner for a role category!\n`/setupcategory` - Setup a role category!\n`/deletecategory` - Delete a category!',
+              inline: false
+            },
+            {
+              name: '👤 Roles - Gaming',
+              value: '`/addgamerole` - Add a game role!\n`/removegamerole` - Remove a game role!\n`/addwatchpartyrole` - Add a watch party role!\n`/removewatchpartyrole` - Remove a watch party role!\n`/addplatformrole` - Add a platform role!\n`/removeplatformrole` - Remove a platform role!',
+              inline: false
+            },
+            {
+              name: '👤 Roles - Setup',
+              value: '`/setuproles` - Post gaming roles selector with buttons!\n`/setupwatchparty` - Post watch party role selector!\n`/setupplatform` - Post platform selector!\n`/removeroles` - Post role removal message!\n`/setuplevelroles` - Auto-create level roles!',
+              inline: false
+            },
+            {
+              name: '📺 Streamers',
+              value: '`/addtwitchuser` - Add a Twitch streamer to track!\n`/removetwitchuser` - Remove a Twitch streamer!\n`/addtiktokuser` - Add a TikTok streamer to track!\n`/removetiktokuser` - Remove a TikTok streamer!\n`/addkickuser` - Add a Kick streamer to track!\n`/removekickuser` - Remove a Kick streamer!',
+              inline: false
+            },
+            {
+              name: '🤖 Custom Commands',
+              value: '`/addcustomcommand` - Add a custom command!\n`/removecustomcommand` - Remove a custom command!\n`/addcmd` - Add a custom command (alias)!\n`/delcmd` - Delete a custom command (alias)!',
+              inline: false
+            },
+            {
+              name: '⚙️ Configuration',
+              value: '`/configwelcomechannel` - Set welcome channel!\n`/configmodlog` - Set moderation log channel!\n`/configtwitchchannel` - Set Twitch notifications channel!\n`/configtiktokchannel` - Set TikTok notifications channel!\n`/configkickchannel` - Set Kick notifications channel!\n`/configsuggestions` - Set suggestions channel!\n`/configleaderboard` - Set leaderboard channel!\n`/configwelcomemessage` - Set custom welcome message!\n`/configgoodbyemessage` - Set custom goodbye message!',
+              inline: false
+            },
+            {
+              name: '💰 Economy Admin',
+              value: '`/addmoney` - Add money to a user\'s balance!\n`/removemoney` - Remove money from a user\'s balance!',
+              inline: false
+            },
+            {
+              name: '🎫 Tickets Admin',
+              value: '`/ticketsetup` - Setup the ticket system!\n`/closeticket` - Close a support ticket!',
+              inline: false
+            },
+            {
+              name: '🎁 Giveaways Admin',
+              value: '`/startgiveaway` - Start a new giveaway!',
+              inline: false
+            },
+            {
+              name: '🔒 Filters',
+              value: '`/filtertoggle` - Toggle content filters!\n`/linkfilter` - Configure link filtering!\n`/setprefix` - Set custom command prefix!',
+              inline: false
+            }
+          )
+          .setFooter({ text: 'Use these commands to manage your server!' });
         
-        return interaction.editReply(adminHelpText);
+        return interaction.editReply({ embeds: [embed] });
       }
       
       if (commandName === 'suggest') {
