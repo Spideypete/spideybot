@@ -297,39 +297,39 @@ const COMMANDS_META = {
 
   'create-category': { category: 'roles', subsection: 'Category', description: 'Create a role category', usage: '/create-category [name]' },
   'list-roles': { category: 'roles', subsection: 'Category', description: 'View all active role categories', usage: '/list-roles' },
-  'add-role': { category: 'roles', subsection: 'Category', description: 'Add role to category', usage: '/add-role [category] [role name] [role ID]' },
-  'remove-role': { category: 'roles', subsection: 'Category', description: 'Remove role from category', usage: '/remove-role [category] [role name]' },
+  'addrole': { category: 'roles', subsection: 'Category', description: 'Add role to category', usage: '/addrole [category] [role name] [role ID]' },
+  'removerole': { category: 'roles', subsection: 'Category', description: 'Remove role from category', usage: '/removerole [category] [role name]' },
   'set-category-banner': { category: 'roles', subsection: 'Category', description: 'Set category banner', usage: '/set-category-banner [category] [url]' },
   'setup-category': { category: 'roles', subsection: 'Category', description: 'Setup a new category message', usage: '/setup-category [category]' },
   'delete-category': { category: 'roles', subsection: 'Category', description: 'Delete a category', usage: '/delete-category [category]' },
-  'add-game-role': { category: 'roles', subsection: 'Gaming', description: 'Add game role', usage: '/add-game-role [role name] [role ID]' },
-  'remove-game-role': { category: 'roles', subsection: 'Gaming', description: 'Remove game role', usage: '/remove-game-role [role name]' },
-  'add-watchparty-role': { category: 'roles', subsection: 'Gaming', description: 'Add watchparty role', usage: '/add-watchparty-role [role name] [role ID]' },
-  'remove-watchparty-role': { category: 'roles', subsection: 'Gaming', description: 'Remove watchparty role', usage: '/remove-watchparty-role [role name]' },
-  'add-platform-role': { category: 'roles', subsection: 'Gaming', description: 'Add platform role', usage: '/add-platform-role [role name] [role ID]' },
-  'remove-platform-role': { category: 'roles', subsection: 'Gaming', description: 'Remove platform role', usage: '/remove-platform-role [role name]' },
+  'addgamerole': { category: 'roles', subsection: 'Gaming', description: 'Add game role', usage: '/addgamerole [role name] [role ID]' },
+  'removegamerole': { category: 'roles', subsection: 'Gaming', description: 'Remove game role', usage: '/removegamerole [role name]' },
+  'addwatchpartyrole': { category: 'roles', subsection: 'Gaming', description: 'Add watchparty role', usage: '/addwatchpartyrole [role name] [role ID]' },
+  'removewatchpartyrole': { category: 'roles', subsection: 'Gaming', description: 'Remove watchparty role', usage: '/removewatchpartyrole [role name]' },
+  'addplatformrole': { category: 'roles', subsection: 'Gaming', description: 'Add platform role', usage: '/addplatformrole [role name] [role ID]' },
+  'removeplatformrole': { category: 'roles', subsection: 'Gaming', description: 'Remove platform role', usage: '/removeplatformrole [role name]' },
   'setup-roles': { category: 'roles', subsection: 'Selectors', description: 'Post gaming roles selector with buttons', usage: '/setup-roles' },
   'setup-watchparty': { category: 'roles', subsection: 'Selectors', description: 'Post watch party role selector', usage: '/setup-watchparty' },
   'setup-platform': { category: 'roles', subsection: 'Selectors', description: 'Post platform selector', usage: '/setup-platform' },
   'remove-roles': { category: 'roles', subsection: 'Selectors', description: 'Post role removal message', usage: '/remove-roles' },
   'setup-level-roles': { category: 'roles', subsection: 'Selectors', description: 'Auto-create level roles', usage: '/setup-level-roles' },
 
-  'add-custom-command': { category: 'custom', subsection: 'Management', description: 'Add a custom command', usage: '/add-custom-command [name] | [response]' },
+  'addcustomcommand': { category: 'custom', subsection: 'Management', description: 'Add a custom command', usage: '/addcustomcommand [name] | [response]' },
   addcmd: { category: 'custom', subsection: 'Management', description: 'Add a custom command (alias)', usage: '/addcmd [name] | [response]' },
-  'remove-custom-command': { category: 'custom', subsection: 'Management', description: 'Remove custom command', usage: '/remove-custom-command [name]' },
+  'removecustomcommand': { category: 'custom', subsection: 'Management', description: 'Remove custom command', usage: '/removecustomcommand [name]' },
   delcmd: { category: 'custom', subsection: 'Management', description: 'Delete custom command (alias)', usage: '/delcmd [name]' },
 
   giveaway: { category: 'giveaway', subsection: 'Core', description: 'Create a giveaway', usage: '/giveaway' },
-  'start-giveaway': { category: 'giveaway', subsection: 'Core', description: 'Start a giveaway', usage: '/start-giveaway' },
+  'startgiveaway': { category: 'giveaway', subsection: 'Core', description: 'Start a giveaway', usage: '/startgiveaway' },
   'filter-toggle': { category: 'config', subsection: 'Features', description: 'Toggle profanity filter', usage: '/filter-toggle' },
   'link-filter': { category: 'config', subsection: 'Features', description: 'Toggle link filter', usage: '/link-filter [on/off]' },
   'set-prefix': { category: 'config', subsection: 'Features', description: 'Change command prefix', usage: '/set-prefix [prefix]' },
-  'add-kick-user': { category: 'social', subsection: 'Monitoring', description: 'Monitor Kick user', usage: '/add-kick-user [username]' },
-  'remove-kick-user': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Kick user', usage: '/remove-kick-user [username]' },
-  'add-tiktok-user': { category: 'social', subsection: 'Monitoring', description: 'Monitor TikTok user', usage: '/add-tiktok-user [username]' },
-  'remove-tiktok-user': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring TikTok user', usage: '/remove-tiktok-user [username]' },
-  'add-twitch-user': { category: 'social', subsection: 'Monitoring', description: 'Monitor Twitch user', usage: '/add-twitch-user [username]' },
-  'remove-twitch-user': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Twitch user', usage: '/remove-twitch-user [username]' },
+  'addkickuser': { category: 'social', subsection: 'Monitoring', description: 'Monitor Kick user', usage: '/addkickuser [username]' },
+  'removekickuser': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Kick user', usage: '/removekickuser [username]' },
+  'addtiktokuser': { category: 'social', subsection: 'Monitoring', description: 'Monitor TikTok user', usage: '/addtiktokuser [username]' },
+  'removetiktokuser': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring TikTok user', usage: '/removetiktokuser [username]' },
+  'addtwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Monitor Twitch user', usage: '/addtwitchuser [username]' },
+  'removetwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Twitch user', usage: '/removetwitchuser [username]' },
 };
 
 // expose metadata to dashboard regardless of bot login
@@ -787,7 +787,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add a role to a category
-  if (msg.content.startsWith("/add-role ")) {
+  if (msg.content.startsWith("/addrole ")) {
     // Guild-only command
     if (!msg.guild) {
       return msg.reply("❌ This command only works in servers!");
@@ -799,13 +799,13 @@ client.on("messageCreate", async (msg) => {
     }
     
     try {
-      const args = msg.content.slice(11).trim().split(" ");
+      const args = msg.content.slice(9).trim().split(" ");
       const categoryName = args[0];
       const roleName = args[1];
       const roleId = args[2];
       
       if (!categoryName || !roleName || !roleId) {
-        return msg.reply("Usage: /add-role [category] [role name] [role ID]\n\nExample: /add-role Gaming Minecraft 123456789");
+        return msg.reply("Usage: /addrole [category] [role name] [role ID]\n\nExample: /addrole Gaming Minecraft 123456789");
       }
       
       // Verify role ID is valid and exists in guild
@@ -831,7 +831,7 @@ client.on("messageCreate", async (msg) => {
       categories[categoryName] = catData;
       updateGuildConfig(msg.guild.id, { roleCategories: categories });
       addActivity(msg.guild.id, "➕", msg.author.username, `added role: ${roleName} to ${categoryName}`);
-      return msg.reply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**\n\n*Tip: Use \`/setup-category ${categoryName}\` to post reaction roles!*`);
+      return msg.reply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**\n\n*Tip: Use \`/setupcategory ${categoryName}\` to post reaction roles!*`);
     } catch (err) {
       console.error(`❌ Error adding role: ${err.message}`);
       return msg.reply(`❌ Error adding role. Please check the role ID and try again.`);
@@ -839,15 +839,15 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove a role from a category
-  if (msg.content.startsWith("/remove-role ")) {
+  if (msg.content.startsWith("/removerole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const args = msg.content.slice(14).trim().split(" ");
+    const args = msg.content.slice(12).trim().split(" ");
     const categoryName = args[0];
     const roleName = args[1];
     if (!categoryName || !roleName) {
-      return msg.reply("Usage: /remove-role [category] [role name]");
+      return msg.reply("Usage: /removerole [category] [role name]");
     }
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
@@ -1434,14 +1434,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add game role
-  if (msg.content.startsWith("/add-game-role ")) {
+  if (msg.content.startsWith("/addgamerole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const args = msg.content.slice(16).trim().split(" ");
+    const args = msg.content.slice(14).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: /add-game-role [role name] [role ID]\n\nExample: /add-game-role Minecraft 123456789");
+    if (!roleName || !roleId) return msg.reply("Usage: /addgamerole [role name] [role ID]\n\nExample: /addgamerole Minecraft 123456789");
     const config = getGuildConfig(msg.guild.id);
     if (config.gameRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.gameRoles.push({ name: roleName, id: roleId });
@@ -1451,12 +1451,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove game role
-  if (msg.content.startsWith("/remove-game-role ")) {
+  if (msg.content.startsWith("/removegamerole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const roleName = msg.content.slice(19).trim();
-    if (!roleName) return msg.reply("Usage: /remove-game-role [role name]");
+    const roleName = msg.content.slice(16).trim();
+    if (!roleName) return msg.reply("Usage: /removegamerole [role name]");
     const config = getGuildConfig(msg.guild.id);
     const index = config.gameRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
@@ -1467,14 +1467,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add watch party role
-  if (msg.content.startsWith("/add-watchparty-role ")) {
+  if (msg.content.startsWith("/addwatchpartyrole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
     const args = msg.content.slice(22).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: /add-watchparty-role [role name] [role ID]");
+    if (!roleName || !roleId) return msg.reply("Usage: /addwatchpartyrole [role name] [role ID]");
     const config = getGuildConfig(msg.guild.id);
     if (config.watchPartyRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.watchPartyRoles.push({ name: roleName, id: roleId });
@@ -1484,12 +1484,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove watch party role
-  if (msg.content.startsWith("/remove-watchparty-role ")) {
+  if (msg.content.startsWith("/removewatchpartyrole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const roleName = msg.content.slice(25).trim();
-    if (!roleName) return msg.reply("Usage: /remove-watchparty-role [role name]");
+    const roleName = msg.content.slice(22).trim();
+    if (!roleName) return msg.reply("Usage: /removewatchpartyrole [role name]");
     const config = getGuildConfig(msg.guild.id);
     const index = config.watchPartyRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
@@ -1500,14 +1500,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add platform role
-  if (msg.content.startsWith("/add-platform-role ")) {
+  if (msg.content.startsWith("/addplatformrole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const args = msg.content.slice(20).trim().split(" ");
+    const args = msg.content.slice(17).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: /add-platform-role [role name] [role ID]");
+    if (!roleName || !roleId) return msg.reply("Usage: /addplatformrole [role name] [role ID]");
     const config = getGuildConfig(msg.guild.id);
     if (config.platformRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.platformRoles.push({ name: roleName, id: roleId });
@@ -1517,12 +1517,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove platform role
-  if (msg.content.startsWith("/remove-platform-role ")) {
+  if (msg.content.startsWith("/removeplatformrole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const roleName = msg.content.slice(23).trim();
-    if (!roleName) return msg.reply("Usage: /remove-platform-role [role name]");
+    const roleName = msg.content.slice(20).trim();
+    if (!roleName) return msg.reply("Usage: /removeplatformrole [role name]");
     const config = getGuildConfig(msg.guild.id);
   // Setup category selector
   if (msg.content.startsWith("/setup-category ")) {
@@ -1538,7 +1538,7 @@ client.on("messageCreate", async (msg) => {
 
     const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
     if (catData.roles.length === 0) {
-      return msg.reply(`❌ Add roles with //add-role first!`);
+      return msg.reply(`❌ Add roles with //addrole first!`);
     }
 
     const roleOptions = catData.roles.map(r => ({ label: `✨ ${r.name}`, value: r.id }));
@@ -1905,12 +1905,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ TikTok post notifications will post to ${channel}\n\n💡 *Note: Configure your TikTok webhook at: https://developer.tiktok.com*`);
   }
 
-  if (msg.content.startsWith("/add-twitch-user ")) {
+  if (msg.content.startsWith("/addtwitchuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const twitchUser = msg.content.slice(18).trim().toLowerCase();
-    if (!twitchUser) return msg.reply("Usage: /add-twitch-user [username]\nExample: /add-twitch-user xqc");
+    const twitchUser = msg.content.slice(15).trim().toLowerCase();
+    if (!twitchUser) return msg.reply("Usage: /addtwitchuser [username]\nExample: /addtwitchuser xqc");
     const users = guildConfig.twitchUsers || [];
     if (users.includes(twitchUser)) return msg.reply(`❌ **${twitchUser}** is already being monitored!`);
     users.push(twitchUser);
@@ -1918,12 +1918,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${twitchUser}** to Twitch monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("/remove-twitch-user ")) {
+  if (msg.content.startsWith("/removetwitchuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const twitchUser = msg.content.slice(21).trim().toLowerCase();
-    if (!twitchUser) return msg.reply("Usage: /remove-twitch-user [username]");
+    const twitchUser = msg.content.slice(18).trim().toLowerCase();
+    if (!twitchUser) return msg.reply("Usage: /removetwitchuser [username]");
     const users = guildConfig.twitchUsers || [];
     const index = users.indexOf(twitchUser);
     if (index === -1) return msg.reply(`❌ **${twitchUser}** is not being monitored!`);
@@ -1934,16 +1934,16 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content === "/list-twitch-users") {
     const users = guildConfig.twitchUsers || [];
-    if (users.length === 0) return msg.reply("❌ No Twitch users being monitored! Use `/add-twitch-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No Twitch users being monitored! Use `/addtwitchuser [username]`");
     return msg.reply(`🎮 **Twitch Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
-  if (msg.content.startsWith("/add-tiktok-user ")) {
+  if (msg.content.startsWith("/addtiktokuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const tiktokUser = msg.content.slice(18).trim().toLowerCase();
-    if (!tiktokUser) return msg.reply("Usage: /add-tiktok-user [username]\nExample: /add-tiktok-user charlidamelio");
+    const tiktokUser = msg.content.slice(15).trim().toLowerCase();
+    if (!tiktokUser) return msg.reply("Usage: /addtiktokuser [username]\nExample: /addtiktokuser charlidamelio");
     const users = guildConfig.tiktokUsers || [];
     if (users.includes(tiktokUser)) return msg.reply(`❌ **${tiktokUser}** is already being monitored!`);
     users.push(tiktokUser);
@@ -1951,12 +1951,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${tiktokUser}** to TikTok monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("/remove-tiktok-user ")) {
+  if (msg.content.startsWith("/removetiktokuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const tiktokUser = msg.content.slice(21).trim().toLowerCase();
-    if (!tiktokUser) return msg.reply("Usage: /remove-tiktok-user [username]");
+    const tiktokUser = msg.content.slice(18).trim().toLowerCase();
+    if (!tiktokUser) return msg.reply("Usage: /removetiktokuser [username]");
     const users = guildConfig.tiktokUsers || [];
     const index = users.indexOf(tiktokUser);
     if (index === -1) return msg.reply(`❌ **${tiktokUser}** is not being monitored!`);
@@ -1967,7 +1967,7 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content === "/list-tiktok-users") {
     const users = guildConfig.tiktokUsers || [];
-    if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `/add-tiktok-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `/addtiktokuser [username]`");
     return msg.reply(`📱 **TikTok Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
@@ -1981,12 +1981,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Kick live notifications will post to ${channel}\n\n💡 *Note: Configure your Kick webhook at: https://developers.kick.com*`);
   }
 
-  if (msg.content.startsWith("/add-kick-user ")) {
+  if (msg.content.startsWith("/addkickuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const kickUser = msg.content.slice(16).trim().toLowerCase();
-    if (!kickUser) return msg.reply("Usage: /add-kick-user [username]\nExample: /add-kick-user xqc");
+    const kickUser = msg.content.slice(13).trim().toLowerCase();
+    if (!kickUser) return msg.reply("Usage: /addkickuser [username]\nExample: /addkickuser xqc");
     const users = guildConfig.kickUsers || [];
     if (users.includes(kickUser)) return msg.reply(`❌ **${kickUser}** is already being monitored!`);
     users.push(kickUser);
@@ -1994,12 +1994,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${kickUser}** to Kick monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("/remove-kick-user ")) {
+  if (msg.content.startsWith("/removekickuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const kickUser = msg.content.slice(19).trim().toLowerCase();
-    if (!kickUser) return msg.reply("Usage: /remove-kick-user [username]");
+    const kickUser = msg.content.slice(16).trim().toLowerCase();
+    if (!kickUser) return msg.reply("Usage: /removekickuser [username]");
     const users = guildConfig.kickUsers || [];
     const index = users.indexOf(kickUser);
     if (index === -1) return msg.reply(`❌ **${kickUser}** is not being monitored!`);
@@ -2010,7 +2010,7 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content === "/list-kick-users") {
     const users = guildConfig.kickUsers || [];
-    if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `/add-kick-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `/addkickuser [username]`");
     return msg.reply(`🎮 **Kick Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
@@ -2304,11 +2304,11 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Goodbye message set! 👋`);
   }
 
-  if (msg.content.startsWith("/add-custom-command ")) {
+  if (msg.content.startsWith("/addcustomcommand ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can add commands!");
     const cmdName = msg.content.split(" ")[1];
     const cmdResponse = msg.content.split(" ").slice(2).join(" ");
-    if (!cmdName || !cmdResponse) return msg.reply("Usage: /add-custom-command [name] [response]");
+    if (!cmdName || !cmdResponse) return msg.reply("Usage: /addcustomcommand [name] [response]");
 
     const customCmds = guildConfig.customCommands || {};
     customCmds[cmdName] = cmdResponse;
@@ -2316,9 +2316,9 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Custom command **//${cmdName}** added! ⌨️`);
   }
 
-  if (msg.content.startsWith("/remove-custom-command ")) {
+  if (msg.content.startsWith("/removecustomcommand ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can remove commands!");
-    const cmdName = msg.content.slice(24).trim();
+    const cmdName = msg.content.slice(21).trim();
     const customCmds = guildConfig.customCommands || {};
     delete customCmds[cmdName];
     updateGuildConfig(msg.guild.id, { customCommands: customCmds });
@@ -2409,13 +2409,13 @@ client.on("interactionCreate", async (interaction) => {
       let choices = [];
       
       // Autocomplete for remove commands
-      if (commandName === 'remove-twitch-user') {
+      if (commandName === 'removetwitchuser') {
         choices = guildConfig.twitchUsers || [];
-      } else if (commandName === 'remove-tiktok-user') {
+      } else if (commandName === 'removetiktokuser') {
         choices = guildConfig.tiktokUsers || [];
-      } else if (commandName === 'remove-kick-user') {
+      } else if (commandName === 'removekickuser') {
         choices = guildConfig.kickUsers || [];
-      } else if (commandName === 'remove-custom-command') {
+      } else if (commandName === 'removecustomcommand') {
         choices = Object.keys(guildConfig.customCommands || {});
       }
       
@@ -2441,7 +2441,7 @@ client.on("interactionCreate", async (interaction) => {
       const guildConfig = getGuildConfig(interaction.guild.id);
       
       // ========== ROLE MANAGEMENT ==========
-      if (commandName === 'add-role') {
+      if (commandName === 'addrole') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can manage roles!");
         }
@@ -2472,7 +2472,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**`);
       }
       
-      if (commandName === 'remove-role') {
+      if (commandName === 'removerole') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can manage roles!");
         }
@@ -2497,7 +2497,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Removed **${roleName}** from **${categoryName}**`);
       }
       
-      if (commandName === 'add-game-role') {
+      if (commandName === 'addgamerole') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can manage roles!");
         }
@@ -2526,7 +2526,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Added game role **${roleName}** (${role})`);
       }
       
-      if (commandName === 'remove-game-role') {
+      if (commandName === 'removegamerole') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can manage roles!");
         }
@@ -2551,7 +2551,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Removed game role **${roleName}**`);
       }
       
-      if (commandName === 'add-watchparty-role') {
+      if (commandName === 'addwatchpartyrole') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can manage roles!");
         }
@@ -2574,7 +2574,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Added watch party role **${roleName}**`);
       }
       
-      if (commandName === 'remove-watchparty-role') {
+      if (commandName === 'removewatchpartyrole') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can manage roles!");
         }
@@ -2592,7 +2592,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Removed watch party role **${roleName}**`);
       }
       
-      if (commandName === 'add-platform-role') {
+      if (commandName === 'addplatformrole') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can manage roles!");
         }
@@ -2615,7 +2615,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Added platform role **${roleName}**`);
       }
       
-      if (commandName === 'remove-platform-role') {
+      if (commandName === 'removeplatformrole') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can manage roles!");
         }
@@ -2634,7 +2634,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== STREAMER MONITORING ==========
-      if (commandName === 'add-twitch-user') {
+      if (commandName === 'addtwitchuser') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2651,7 +2651,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Added **${username}** to Twitch monitoring! (${users.length} total)`);
       }
       
-      if (commandName === 'remove-twitch-user') {
+      if (commandName === 'removetwitchuser') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2669,7 +2669,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Removed **${username}** from Twitch monitoring!`);
       }
       
-      if (commandName === 'add-tiktok-user') {
+      if (commandName === 'addtiktokuser') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2686,7 +2686,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Added **${username}** to TikTok monitoring! (${users.length} total)`);
       }
       
-      if (commandName === 'remove-tiktok-user') {
+      if (commandName === 'removetiktokuser') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2704,7 +2704,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Removed **${username}** from TikTok monitoring!`);
       }
       
-      if (commandName === 'add-kick-user') {
+      if (commandName === 'addkickuser') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2721,7 +2721,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Added **${username}** to Kick monitoring! (${users.length} total)`);
       }
       
-      if (commandName === 'remove-kick-user') {
+      if (commandName === 'removekickuser') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2740,7 +2740,7 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== CUSTOM COMMANDS ==========
-      if (commandName === 'add-custom-command') {
+      if (commandName === 'addcustomcommand') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -2759,7 +2759,7 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Created custom command **/${cmdName}**`);
       }
       
-      if (commandName === 'remove-custom-command') {
+      if (commandName === 'removecustomcommand') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -3501,7 +3501,7 @@ client.on("interactionCreate", async (interaction) => {
     const config = getGuildConfig(interaction.guild.id);
     console.log(`DEBUG: claim_platform - platformRoles length: ${Array.isArray(config.platformRoles) ? config.platformRoles.length : 0} for guild ${interaction.guild.id}`);
     if (config.platformRoles.length === 0) {
-      return interaction.reply({ content: "❌ No platform roles configured! Admin: use //add-platform-role [name] [roleID]", ephemeral: true });
+      return interaction.reply({ content: "❌ No platform roles configured! Admin: use //addplatformrole [name] [roleID]", ephemeral: true });
     }
     const platformRoles = config.platformRoles.map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
     const selectMenu = new ActionRowBuilder().addComponents(

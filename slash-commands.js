@@ -57,7 +57,7 @@ const slashCommands = [
     .setDescription('View all active role categories'),
 
   new SlashCommandBuilder()
-    .setName('add-role')
+    .setName('addrole')
     .setDescription('Add role to category')
     .addStringOption(option =>
       option.setName('category').setDescription('Category name').setRequired(true))
@@ -67,7 +67,7 @@ const slashCommands = [
       option.setName('role_id').setDescription('Role ID').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('remove-role')
+    .setName('removerole')
     .setDescription('Remove role from category')
     .addStringOption(option =>
       option.setName('category').setDescription('Category name').setRequired(true))
@@ -96,7 +96,7 @@ const slashCommands = [
 
   // ===================== ROLES - GAMING =====================
   new SlashCommandBuilder()
-    .setName('add-game-role')
+    .setName('addgamerole')
     .setDescription('Add game role')
     .addStringOption(option =>
       option.setName('role_name').setDescription('Game role name').setRequired(true))
@@ -104,13 +104,13 @@ const slashCommands = [
       option.setName('role_id').setDescription('Role ID').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('remove-game-role')
+    .setName('removegamerole')
     .setDescription('Remove game role')
     .addStringOption(option =>
       option.setName('role_name').setDescription('Game role name').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('add-watchparty-role')
+    .setName('addwatchpartyrole')
     .setDescription('Add watch party role')
     .addStringOption(option =>
       option.setName('role_name').setDescription('Watch party role name').setRequired(true))
@@ -118,13 +118,13 @@ const slashCommands = [
       option.setName('role_id').setDescription('Role ID').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('remove-watchparty-role')
+    .setName('removewatchpartyrole')
     .setDescription('Remove watch party role')
     .addStringOption(option =>
       option.setName('role_name').setDescription('Watch party role name').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('add-platform-role')
+    .setName('addplatformrole')
     .setDescription('Add platform role')
     .addStringOption(option =>
       option.setName('role_name').setDescription('Platform role name').setRequired(true))
@@ -132,7 +132,7 @@ const slashCommands = [
       option.setName('role_id').setDescription('Role ID').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('remove-platform-role')
+    .setName('removeplatformrole')
     .setDescription('Remove platform role')
     .addStringOption(option =>
       option.setName('role_name').setDescription('Platform role name').setRequired(true)),
@@ -160,44 +160,44 @@ const slashCommands = [
 
   // ===================== STREAMER MONITORING =====================
   new SlashCommandBuilder()
-    .setName('add-twitch-user')
+    .setName('addtwitchuser')
     .setDescription('Monitor Twitch user')
     .addStringOption(option =>
       option.setName('username').setDescription('Twitch username').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('remove-twitch-user')
+    .setName('removetwitchuser')
     .setDescription('Remove Twitch user from monitoring')
     .addStringOption(option =>
       option.setName('username').setDescription('Twitch username').setRequired(true).setAutocomplete(true)),
 
   new SlashCommandBuilder()
-    .setName('add-tiktok-user')
+    .setName('addtiktokuser')
     .setDescription('Monitor TikTok user')
     .addStringOption(option =>
       option.setName('username').setDescription('TikTok username').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('remove-tiktok-user')
+    .setName('removetiktokuser')
     .setDescription('Remove TikTok user from monitoring')
     .addStringOption(option =>
       option.setName('username').setDescription('TikTok username').setRequired(true).setAutocomplete(true)),
 
   new SlashCommandBuilder()
-    .setName('add-kick-user')
+    .setName('addkickuser')
     .setDescription('Monitor Kick user')
     .addStringOption(option =>
       option.setName('username').setDescription('Kick username').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('remove-kick-user')
+    .setName('removekickuser')
     .setDescription('Remove Kick user from monitoring')
     .addStringOption(option =>
       option.setName('username').setDescription('Kick username').setRequired(true).setAutocomplete(true)),
 
   // ===================== CUSTOM COMMANDS =====================
   new SlashCommandBuilder()
-    .setName('add-custom-command')
+    .setName('addcustomcommand')
     .setDescription('Add a custom command')
     .addStringOption(option =>
       option.setName('command_name').setDescription('Command name (without /)').setRequired(true))
@@ -205,7 +205,7 @@ const slashCommands = [
       option.setName('response').setDescription('Command response').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('remove-custom-command')
+    .setName('removecustomcommand')
     .setDescription('Remove a custom command')
     .addStringOption(option =>
       option.setName('command_name').setDescription('Command name').setRequired(true).setAutocomplete(true)),
