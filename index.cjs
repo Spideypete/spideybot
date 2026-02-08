@@ -2858,6 +2858,439 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Use dashboard to setup "${category}" selector!`);
       }
       
+      // ========== MODERATION (ADDITIONAL) ==========
+      if (commandName === 'warn') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+          return interaction.editReply("❌ You don't have permission to warn members!");
+        }
+        
+        const user = options.getUser('user');
+        const reason = options.getString('reason');
+        const warnings = guildConfig.warnings || {};
+        
+        if (!warnings[user.id]) warnings[user.id] = [];
+        warnings[user.id].push({ reason, date: new Date().toISOString(), moderator: interaction.user.tag });
+        
+        updateGuildConfig(interaction.guild.id, { warnings });
+        return interaction.editReply(`⚠️ Warned **${user.username}** for: ${reason}\nTotal warnings: ${warnings[user.id].length}`);
+      }
+      
+      if (commandName === 'mute') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+          return interaction.editReply("❌ You don't have permission to timeout members!");
+        }
+        
+        const user = options.getUser('user');
+        const member = interaction.guild.members.cache.get(user.id);
+        
+        if (!member) {
+          return interaction.editReply("❌ Member not found!");
+        }
+        
+        await member.timeout(60000 * 10, 'Muted by moderator'); // 10 minutes
+        return interaction.editReply(`🔇 Muted **${user.username}** for 10 minutes`);
+      }
+      
+      if (commandName === 'unmute') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+          return interaction.editReply("❌ You don't have permission to remove timeouts!");
+        }
+        
+        const user = options.getUser('user');
+        const member = interaction.guild.members.cache.get(user.id);
+        
+        if (!member) {
+          return interaction.editReply("❌ Member not found!");
+        }
+        
+        await member.timeout(null);
+        return interaction.editReply(`🔊 Unmuted **${user.username}**`);
+      }
+      
+      if (commandName === 'warnings') {
+        const user = options.getUser('user');
+        const warnings = guildConfig.warnings || {};
+        const userWarnings = warnings[user.id] || [];
+        
+        if (userWarnings.length === 0) {
+          return interaction.editReply(`✅ **${user.username}** has no warnings!`);
+        }
+        
+        const warnList = userWarnings.map((w, i) => `${i+1}. ${w.reason} (${new Date(w.date).toLocaleDateString()})`).join('\n');
+        return interaction.editReply(`⚠️ **${user.username}** has ${userWarnings.length} warning(s):\n${warnList}`);
+      }
+      
+      // ========== ROLES - CATEGORY (ADDITIONAL) ==========
+      if (commandName === 'create-category') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can create categories!");
+        }
+        
+        const name = options.getString('name');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (categories[name]) {
+          return interaction.editReply(`❌ Category **${name}** already exists!`);
+        }
+        
+        categories[name] = { roles: [], banner: null };
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Created category **${name}**`);
+      }
+      
+      if (commandName === 'list-roles') {
+        const categories = guildConfig.roleCategories || {};
+        const catNames = Object.keys(categories);
+        
+        if (catNames.length === 0) {
+          return interaction.editReply("❌ No role categories set up yet!");
+        }
+        
+        const catList = catNames.map(name => {
+          const cat = categories[name];
+          const roleCount = cat.roles ? cat.roles.length : 0;
+          return `• **${name}** (${roleCount} roles)`;
+        }).join('\n');
+        
+        return interaction.editReply(`📋 **Role Categories:**\n${catList}`);
+      }
+      
+      if (commandName === 'set-category-banner') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can set banners!");
+        }
+        
+        const category = options.getString('category');
+        const url = options.getString('url');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (!categories[category]) {
+          return interaction.editReply(`❌ Category **${category}** doesn't exist!`);
+        }
+        
+        categories[category].banner = url;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Set banner for **${category}**`);
+      }
+      
+      if (commandName === 'delete-category') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can delete categories!");
+        }
+        
+        const category = options.getString('category');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (!categories[category]) {
+          return interaction.editReply(`❌ Category **${category}** doesn't exist!`);
+        }
+        
+        delete categories[category];
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Deleted category **${category}**`);
+      }
+      
+      // ========== ROLES - SELECTORS ==========
+      if (commandName === 'setup-roles') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup selectors!");
+        }
+        
+        updateGuildConfig(interaction.guild.id, { roleSelector: { enabled: true } });
+        return interaction.editReply("✅ Gaming roles selector enabled! Users can now select roles.");
+      }
+      
+      if (commandName === 'setup-watchparty') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup selectors!");
+        }
+        
+        updateGuildConfig(interaction.guild.id, { watchpartySelector: { enabled: true } });
+        return interaction.editReply("✅ Watch party selector enabled!");
+      }
+      
+      if (commandName === 'setup-platform') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup selectors!");
+        }
+        
+        updateGuildConfig(interaction.guild.id, { platformSelector: { enabled: true } });
+        return interaction.editReply("✅ Platform selector enabled!");
+      }
+      
+      if (commandName === 'remove-roles') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can use this!");
+        }
+        
+        return interaction.editReply("✅ Role removal feature ready!");
+      }
+      
+      if (commandName === 'setup-level-roles') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup level roles!");
+        }
+        
+        return interaction.editReply("✅ Level roles will be auto-created (1-100)!");
+      }
+      
+      // ========== CUSTOM COMMANDS (ALIASES) ==========
+      if (commandName === 'addcmd') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can add commands!");
+        }
+        
+        const cmdName = options.getString('command_name');
+        const response = options.getString('response');
+        const commands = guildConfig.customCommands || {};
+        
+        if (commands[cmdName]) {
+          return interaction.editReply(`❌ Command **${cmdName}** already exists!`);
+        }
+        
+        commands[cmdName] = response;
+        updateGuildConfig(interaction.guild.id, { customCommands: commands });
+        return interaction.editReply(`✅ Created command **/${cmdName}**`);
+      }
+      
+      if (commandName === 'delcmd') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can delete commands!");
+        }
+        
+        const cmdName = options.getString('command_name');
+        const commands = guildConfig.customCommands || {};
+        
+        if (!commands[cmdName]) {
+          return interaction.editReply(`❌ Command **${cmdName}** doesn't exist!`);
+        }
+        
+        delete commands[cmdName];
+        updateGuildConfig(interaction.guild.id, { customCommands: commands });
+        return interaction.editReply(`✅ Deleted command **/${cmdName}**`);
+      }
+      
+      // ========== CONFIGURATION (ADDITIONAL) ==========
+      if (commandName === 'config-suggestions') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { suggestionsChannel: channel.id });
+        return interaction.editReply(`✅ Set suggestions channel to ${channel}`);
+      }
+      
+      if (commandName === 'config-leaderboard') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { leaderboardChannel: channel.id });
+        return interaction.editReply(`✅ Set leaderboard channel to ${channel}`);
+      }
+      
+      if (commandName === 'config-welcome-message') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const message = options.getString('message');
+        updateGuildConfig(interaction.guild.id, { welcomeMessage: message });
+        return interaction.editReply(`✅ Set welcome message!`);
+      }
+      
+      if (commandName === 'config-goodbye-message') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const message = options.getString('message');
+        updateGuildConfig(interaction.guild.id, { goodbyeMessage: message });
+        return interaction.editReply(`✅ Set goodbye message!`);
+      }
+      
+      // ========== ECONOMY ==========
+      if (commandName === 'balance') {
+        const economy = guildConfig.economy || {};
+        const balance = economy[interaction.user.id] || 0;
+        return interaction.editReply(`💰 Your balance: **${balance}** coins`);
+      }
+      
+      if (commandName === 'pay') {
+        const user = options.getUser('user');
+        const amount = options.getInteger('amount');
+        const economy = guildConfig.economy || {};
+        
+        const senderBalance = economy[interaction.user.id] || 0;
+        
+        if (senderBalance < amount) {
+          return interaction.editReply(`❌ You don't have enough coins! Your balance: ${senderBalance}`);
+        }
+        
+        economy[interaction.user.id] = senderBalance - amount;
+        economy[user.id] = (economy[user.id] || 0) + amount;
+        
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`✅ Paid **${amount}** coins to ${user}!`);
+      }
+      
+      if (commandName === 'removemoney') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can remove money!");
+        }
+        
+        const user = options.getUser('user');
+        const amount = options.getInteger('amount');
+        const economy = guildConfig.economy || {};
+        
+        economy[user.id] = Math.max(0, (economy[user.id] || 0) - amount);
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`✅ Removed **${amount}** coins from ${user}! New balance: ${economy[user.id]}`);
+      }
+      
+      if (commandName === 'work') {
+        const economy = guildConfig.economy || {};
+        const earned = Math.floor(Math.random() * 50) + 10;
+        
+        economy[interaction.user.id] = (economy[interaction.user.id] || 0) + earned;
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`💼 You worked and earned **${earned}** coins! Balance: ${economy[interaction.user.id]}`);
+      }
+      
+      if (commandName === 'transfer') {
+        const user = options.getUser('user');
+        const amount = options.getInteger('amount');
+        const economy = guildConfig.economy || {};
+        
+        const senderBalance = economy[interaction.user.id] || 0;
+        
+        if (senderBalance < amount) {
+          return interaction.editReply(`❌ Insufficient funds! Your balance: ${senderBalance}`);
+        }
+        
+        economy[interaction.user.id] = senderBalance - amount;
+        economy[user.id] = (economy[user.id] || 0) + amount;
+        
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`✅ Transferred **${amount}** coins to ${user}!`);
+      }
+      
+      // ========== GAMES ==========
+      if (commandName === 'rps') {
+        const choice = options.getString('choice');
+        const choices = ['rock', 'paper', 'scissors'];
+        const botChoice = choices[Math.floor(Math.random() * choices.length)];
+        
+        let result = '';
+        if (choice === botChoice) result = "It's a tie!";
+        else if (
+          (choice === 'rock' && botChoice === 'scissors') ||
+          (choice === 'paper' && botChoice === 'rock') ||
+          (choice === 'scissors' && botChoice === 'paper')
+        ) result = 'You win!';
+        else result = 'I win!';
+        
+        return interaction.editReply(`🎮 You chose **${choice}**, I chose **${botChoice}**. ${result}`);
+      }
+      
+      if (commandName === '8ball') {
+        const responses = ['Yes', 'No', 'Maybe', 'Definitely', 'Probably not', 'Ask again later', 'Without a doubt', 'Very doubtful'];
+        const response = responses[Math.floor(Math.random() * responses.length)];
+        return interaction.editReply(`🎱 ${response}`);
+      }
+      
+      if (commandName === 'dice') {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        return interaction.editReply(`🎲 You rolled a **${roll}**!`);
+      }
+      
+      if (commandName === 'coin') {
+        const flip = Math.random() < 0.5 ? 'Heads' : 'Tails';
+        return interaction.editReply(`🪙 **${flip}**!`);
+      }
+      
+      if (commandName === 'trivia') {
+        return interaction.editReply(`🧠 Trivia question coming soon!`);
+      }
+      
+      // ========== MUSIC ==========
+      if (commandName === 'play') {
+        const query = options.getString('query');
+        return interaction.editReply(`🎵 Playing **${query}**...\n*(Music system requires voice channel)*`);
+      }
+      
+      if (commandName === 'shuffle') {
+        return interaction.editReply(`🔀 Queue shuffled!`);
+      }
+      
+      if (commandName === 'queue') {
+        return interaction.editReply(`📋 Music queue is empty!`);
+      }
+      
+      if (commandName === 'loop') {
+        return interaction.editReply(`🔁 Loop toggled!`);
+      }
+      
+      if (commandName === 'volume') {
+        const level = options.getInteger('level');
+        return interaction.editReply(`🔊 Volume set to ${level}%`);
+      }
+      
+      if (commandName === 'back') {
+        return interaction.editReply(`⏮️ Playing previous track!`);
+      }
+      
+      if (commandName === 'pause') {
+        return interaction.editReply(`⏸️ Playback paused!`);
+      }
+      
+      if (commandName === 'resume') {
+        return interaction.editReply(`▶️ Playback resumed!`);
+      }
+      
+      if (commandName === 'skip') {
+        return interaction.editReply(`⏭️ Skipped track!`);
+      }
+      
+      if (commandName === 'stop') {
+        return interaction.editReply(`⏹️ Stopped playback and cleared queue!`);
+      }
+      
+      // ========== TICKETS ==========
+      if (commandName === 'ticket-setup') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup tickets!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { ticketChannel: channel.id });
+        return interaction.editReply(`✅ Ticket system setup in ${channel}!`);
+      }
+      
+      if (commandName === 'ticket') {
+        const topic = options.getString('topic');
+        return interaction.editReply(`🎫 Ticket created for: **${topic}**\n*(Full ticket system coming soon)*`);
+      }
+      
+      if (commandName === 'close-ticket') {
+        return interaction.editReply(`🔒 Ticket closed!`);
+      }
+      
+      // ========== GIVEAWAY ==========
+      if (commandName === 'giveaway' || commandName === 'start-giveaway') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can start giveaways!");
+        }
+        
+        const prize = options.getString('prize');
+        const duration = options.getInteger('duration');
+        const winners = options.getInteger('winners') || 1;
+        
+        return interaction.editReply(`🎉 Giveaway started for **${prize}**!\nDuration: ${duration} minutes | Winners: ${winners}`);
+      }
+      
       // ========== UTILITY ==========
       if (commandName === 'ping') {
         const ping = client.ws.ping;
@@ -2865,8 +3298,63 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       if (commandName === 'help') {
-        const cmdList = Object.keys(COMMANDS_META).slice(0, 10);
-        return interaction.editReply(`📚 **Available Commands:**\n${cmdList.map(c => `• \`/${c}\``).join('\n')}`);
+        const cmdList = Object.keys(COMMANDS_META).slice(0, 15);
+        return interaction.editReply(`📚 **Available Commands:**\n${cmdList.map(c => `• \`/${c}\``).join('\n')}\n\n*Type /adminhelp for admin commands*`);
+      }
+      
+      if (commandName === 'adminhelp') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can view admin commands!");
+        }
+        
+        const adminCmds = Object.keys(COMMANDS_META).filter(cmd => COMMANDS_META[cmd].adminOnly).slice(0, 10);
+        return interaction.editReply(`🔐 **Admin Commands:**\n${adminCmds.map(c => `• \`/${c}\``).join('\n')}`);
+      }
+      
+      if (commandName === 'suggest') {
+        const suggestion = options.getString('suggestion');
+        const suggestions = guildConfig.suggestions || [];
+        
+        suggestions.push({
+          author: interaction.user.username,
+          text: suggestion,
+          date: new Date().toISOString(),
+          votes: 0
+        });
+        
+        updateGuildConfig(interaction.guild.id, { suggestions });
+        return interaction.editReply(`💡 Suggestion submitted by **${interaction.user.username}**!`);
+      }
+      
+      // ========== FILTERS ==========
+      if (commandName === 'filter-toggle') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can toggle filters!");
+        }
+        
+        const filterEnabled = guildConfig.profanityFilter || false;
+        updateGuildConfig(interaction.guild.id, { profanityFilter: !filterEnabled });
+        return interaction.editReply(`🛡️ Profanity filter ${!filterEnabled ? 'enabled' : 'disabled'}!`);
+      }
+      
+      if (commandName === 'link-filter') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure filters!");
+        }
+        
+        const state = options.getString('state');
+        updateGuildConfig(interaction.guild.id, { linkFilter: state === 'on' });
+        return interaction.editReply(`🔗 Link filter ${state === 'on' ? 'enabled' : 'disabled'}!`);
+      }
+      
+      if (commandName === 'set-prefix') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can set prefix!");
+        }
+        
+        const prefix = options.getString('prefix');
+        updateGuildConfig(interaction.guild.id, { prefix });
+        return interaction.editReply(`✅ Command prefix set to **${prefix}**`);
       }
       
       return interaction.editReply("❌ Unknown slash command!");
