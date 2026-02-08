@@ -3298,8 +3298,14 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       if (commandName === 'help') {
-        const cmdList = Object.keys(COMMANDS_META).slice(0, 15);
-        return interaction.editReply(`📚 **Available Commands:**\n${cmdList.map(c => `• \`/${c}\``).join('\n')}\n\n*Type /adminhelp for admin commands*`);
+        const publicCommands = [
+          'kick', 'ban', 'warn', 'mute', 'unmute', 'warnings',
+          'balance', 'pay', 'work', 'transfer',
+          'rps', '8ball', 'dice', 'coin', 'trivia',
+          'play', 'shuffle', 'queue', 'loop', 'volume', 'pause', 'resume', 'skip', 'stop',
+          'ticket', 'giveaway', 'ping', 'suggest'
+        ];
+        return interaction.editReply(`📚 **Available Commands:**\n${publicCommands.map(c => `• \`/${c}\``).join('\n')}\n\n*Type /adminhelp for admin commands*`);
       }
       
       if (commandName === 'adminhelp') {
@@ -3307,8 +3313,34 @@ client.on("interactionCreate", async (interaction) => {
           return interaction.editReply("❌ Only admins can view admin commands!");
         }
         
-        const adminCmds = Object.keys(COMMANDS_META).filter(cmd => COMMANDS_META[cmd].adminOnly).slice(0, 10);
-        return interaction.editReply(`🔐 **Admin Commands:**\n${adminCmds.map(c => `• \`/${c}\``).join('\n')}`);
+        const adminCommands = [
+          '🛡️ **Moderation**', 'kick', 'ban', 'warn', 'mute', 'unmute', 'warnings',
+          '\n👤 **Roles**', 'createcategory', 'listroles', 'addrole', 'removerole', 
+          'setcategorybanner', 'setupcategory', 'deletecategory',
+          'addgamerole', 'removegamerole', 'addwatchpartyrole', 'removewatchpartyrole',
+          'addplatformrole', 'removeplatformrole', 'setuproles', 'setupwatchparty', 
+          'setupplatform', 'removeroles', 'setuplevelroles',
+          '\n📺 **Streamers**', 'addtwitchuser', 'removetwitchuser', 'addtiktokuser', 
+          'removetiktokuser', 'addkickuser', 'removekickuser',
+          '\n⚙️ **Config**', 'configwelcomechannel', 'configmodlog', 'configtwitchchannel',
+          'configtiktokchannel', 'configkickchannel', 'configsuggestions', 'configleaderboard',
+          'configwelcomemessage', 'configgoodbyemessage',
+          '\n💰 **Economy**', 'addmoney', 'removemoney',
+          '\n🎫 **Tickets**', 'ticketsetup', 'closeticket',
+          '\n🎁 **Giveaway**', 'startgiveaway',
+          '\n🔒 **Filters**', 'filtertoggle', 'linkfilter', 'setprefix'
+        ];
+        
+        let formatted = '';
+        adminCommands.forEach(cmd => {
+          if (cmd.startsWith('\n') || cmd.includes('**')) {
+            formatted += `\n${cmd}`;
+          } else {
+            formatted += `\n• \`/${cmd}\``;
+          }
+        });
+        
+        return interaction.editReply(`🔐 **Admin Commands:**${formatted}`);
       }
       
       if (commandName === 'suggest') {
