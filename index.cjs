@@ -3706,7 +3706,14 @@ client.on("interactionCreate", async (interaction) => {
           )
           .setFooter({ text: 'Type /adminhelp for admin commands!' });
         
-        return interaction.editReply({ embeds: [embed] });
+        const dismissBtn = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('dismiss_help_btn')
+            .setLabel('🗑️ Dismiss')
+            .setStyle(ButtonStyle.Danger)
+        );
+        
+        return interaction.editReply({ embeds: [embed], components: [dismissBtn] });
       }
       
       if (commandName === 'adminhelp') {
@@ -3777,7 +3784,14 @@ client.on("interactionCreate", async (interaction) => {
           )
           .setFooter({ text: 'Use these commands to manage your server!' });
         
-        return interaction.editReply({ embeds: [embed] });
+        const dismissBtn = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('dismiss_adminhelp_btn')
+            .setLabel('🗑️ Dismiss')
+            .setStyle(ButtonStyle.Danger)
+        );
+        
+        return interaction.editReply({ embeds: [embed], components: [dismissBtn] });
       }
       
       if (commandName === 'suggest') {
@@ -4069,6 +4083,17 @@ client.on("interactionCreate", async (interaction) => {
       await interaction.reply({ content: "❌ Could not close ticket - embed not found!", ephemeral: true });
     }
     
+    return;
+  }
+
+  // Dismiss buttons for help embeds
+  if (interaction.isButton() && interaction.customId === "dismiss_help_btn") {
+    await interaction.message.delete().catch(() => {});
+    return;
+  }
+
+  if (interaction.isButton() && interaction.customId === "dismiss_adminhelp_btn") {
+    await interaction.message.delete().catch(() => {});
     return;
   }
 
