@@ -405,22 +405,51 @@ async function registerSlashCommands() {
   try {
     const rest = new REST({ version: '10' }).setToken(token);
     const commands = slashCommands.map(cmd => cmd.toJSON());
+    const rawGuildIds = process.env.REGISTER_GUILD_IDS || process.env.GUILD_ID || '';
+    const guildIds = rawGuildIds
+      .split(',')
+      .map(id => id.trim())
+      .filter(Boolean);
     
-    console.log(`📝 Registering ${commands.length} modern slash commands with autocomplete...`);
-    
-    // Register commands directly (Discord will handle caching automatically)
-    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    
-    if (Array.isArray(data)) {
-      console.log(`✅ Registered ${data.length} slash commands!`);
-      return { success: true, count: data.length };
-    } else {
-      console.log(`⚠️ Unexpected response format, but registration may have succeeded`);
-      return { success: true, count: commands.length };
+    if (guildIds.length > 0) {
+      console.log(`📝 Registering ${commands.length} slash commands to ${guildIds.length} guild(s)...`);
+      console.log('⏳ Guild registration is usually near-instant...');
+
+      const results = [];
+      for (const guildId of guildIds) {
+        const startTime = Date.now();
+        const data = await rest.put(
+          Routes.applicationGuildCommands(client.user.id, guildId),
+          { body: commands }
+        );
+        const duration = Date.now() - startTime;
+        const count = Array.isArray(data) ? data.length : commands.length;
+        console.log(`✅ Registered ${count} commands for guild ${guildId} (took ${duration}ms)`);
+        results.push({ guildId, count });
+      }
+
+      return { success: true, count: commands.length, guilds: results };
     }
+
+    console.log(`📝 Registering ${commands.length} modern slash commands globally...`);
+    console.log('⏳ Global registration can take up to 1 hour to appear everywhere.');
+
+    // Register commands globally
+    const startTime = Date.now();
+    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    const duration = Date.now() - startTime;
+
+    if (Array.isArray(data)) {
+      console.log(`✅ Registered ${data.length} slash commands globally (took ${duration}ms)`);
+      return { success: true, count: data.length };
+    }
+
+    console.log(`✅ Commands registered globally (took ${duration}ms)`);
+    return { success: true, count: commands.length };
   } catch (err) {
-    console.error('❌ Failed to register slash commands:', err.message || err);
-    return { success: false, error: err.message || String(err) };
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error('❌ Failed to register slash commands:', errMsg);
+    return { success: false, error: errMsg };
   }
 }
 
@@ -2866,6 +2895,54 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== MODERATION (ADDITIONAL) ==========
+      if (commandName === 'kick') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
+          return interaction.editReply("❌ You don't have permission to kick members!");
+        }
+        
+        const user = options.getUser('user');
+        const reason = options.getString('reason') || 'No reason provided';
+        const member = interaction.guild.members.cache.get(user.id);
+        
+        if (!member) {
+          return interaction.editReply("❌ Member not found!");
+        }
+        
+        if (!member.kickable) {
+          return interaction.editReply("❌ I cannot kick this member! They may have higher roles than me.");
+        }
+        
+        try {
+          await member.kick(reason);
+          logModAction(interaction.guild, "KICK", interaction.user, user.tag, reason);
+          return interaction.editReply(`✅ Kicked **${user.username}** - ${reason}`);
+        } catch (err) {
+          return interaction.editReply(`❌ Failed to kick: ${err.message}`);
+        }
+      }
+      
+      if (commandName === 'ban') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
+          return interaction.editReply("❌ You don't have permission to ban members!");
+        }
+        
+        const user = options.getUser('user');
+        const reason = options.getString('reason') || 'No reason provided';
+        const member = interaction.guild.members.cache.get(user.id);
+        
+        if (member && !member.bannable) {
+          return interaction.editReply("❌ I cannot ban this member! They may have higher roles than me.");
+        }
+        
+        try {
+          await interaction.guild.members.ban(user.id, { reason });
+          logModAction(interaction.guild, "BAN", interaction.user, user.tag, reason);
+          return interaction.editReply(`✅ Banned **${user.username}** - ${reason}`);
+        } catch (err) {
+          return interaction.editReply(`❌ Failed to ban: ${err.message}`);
+        }
+      }
+      
       if (commandName === 'warn') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
           return interaction.editReply("❌ You don't have permission to warn members!");
