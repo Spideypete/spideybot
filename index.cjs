@@ -3345,50 +3345,220 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       if (commandName === 'trivia') {
-        return interaction.editReply(`🧠 Trivia question coming soon!`);
+        const triviaQuestions = [
+          { q: "What is the capital of France?", a: ["Paris", "paris"] },
+          { q: "What is 2 + 2?", a: ["4", "four"] },
+          { q: "What is the largest planet in our solar system?", a: ["Jupiter", "jupiter"] },
+          { q: "What year did World War II end?", a: ["1945"] },
+          { q: "What is the chemical symbol for gold?", a: ["Au", "au"] },
+          { q: "Who painted the Mona Lisa?", a: ["Leonardo da Vinci", "Leonardo", "Da Vinci"] },
+          { q: "What is the smallest prime number?", a: ["2", "two"] },
+          { q: "What is the speed of light (in km/s)?", a: ["300000", "299792"] },
+          { q: "What does HTTP stand for?", a: ["HyperText Transfer Protocol", "Hypertext Transfer Protocol"] },
+          { q: "What programming language is known for its snake logo?", a: ["Python", "python"] }
+        ];
+        
+        const randomTrivia = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+        const embed = new EmbedBuilder()
+          .setColor('#9B59B6')
+          .setTitle('🧠 Trivia Question')
+          .setDescription(randomTrivia.q)
+          .setFooter({ text: 'Answer in chat within 30 seconds!' });
+        
+        await interaction.editReply({ embeds: [embed] });
+        
+        const filter = m => m.author.id === interaction.user.id;
+        const collector = interaction.channel.createMessageCollector({ filter, time: 30000, max: 1 });
+        
+        collector.on('collect', async m => {
+          const userAnswer = m.content.trim();
+          const isCorrect = randomTrivia.a.some(ans => ans.toLowerCase() === userAnswer.toLowerCase());
+          
+          if (isCorrect) {
+            const economy = guildConfig.economy || {};
+            const reward = 25;
+            economy[interaction.user.id] = (economy[interaction.user.id] || 0) + reward;
+            updateGuildConfig(interaction.guild.id, { economy });
+            await m.reply(`✅ Correct! You earned **${reward}** coins! 🎉`);
+          } else {
+            await m.reply(`❌ Wrong! The correct answer was: **${randomTrivia.a[0]}**`);
+          }
+        });
+        
+        collector.on('end', collected => {
+          if (collected.size === 0) {
+            interaction.followUp(`⏰ Time's up! The correct answer was: **${randomTrivia.a[0]}**`);
+          }
+        });
+        
+        return;
       }
       
       // ========== MUSIC ==========
       if (commandName === 'play') {
         const query = options.getString('query');
-        return interaction.editReply(`🎵 Playing **${query}**...\n*(Music system requires voice channel)*`);
+        
+        if (!interaction.member.voice.channel) {
+          return interaction.editReply('❌ You must be in a voice channel to play music!');
+        }
+        
+        try {
+          const searchResult = await player.search(query, {
+            requestedBy: interaction.user
+          });
+          
+          if (!searchResult || !searchResult.tracks.length) {
+            return interaction.editReply('❌ No results found!');
+          }
+          
+          const queue = player.nodes.create(interaction.guild, {
+            metadata: {
+              channel: interaction.channel,
+              client: interaction.guild.members.me,
+              requestedBy: interaction.user
+            },
+            selfDeaf: true,
+            volume: 80,
+            leaveOnEmpty: true,
+            leaveOnEmptyCooldown: 300000,
+            leaveOnEnd: true,
+            leaveOnEndCooldown: 300000
+          });
+          
+          try {
+            if (!queue.connection) await queue.connect(interaction.member.voice.channel);
+          } catch {
+            player.nodes.delete(interaction.guild.id);
+            return interaction.editReply('❌ Could not join your voice channel!');
+          }
+          
+          searchResult.playlist ? queue.addTrack(searchResult.tracks) : queue.addTrack(searchResult.tracks[0]);
+          
+          if (!queue.isPlaying()) await queue.node.play();
+          
+          const embed = new EmbedBuilder()
+            .setColor('#9B59B6')
+            .setTitle('🎵 Added to Queue')
+            .setDescription(`**${searchResult.tracks[0].title}**\n${searchResult.tracks[0].author}`)
+            .setThumbnail(searchResult.tracks[0].thumbnail)
+            .addFields(
+              { name: 'Duration', value: searchResult.tracks[0].duration, inline: true },
+              { name: 'Position in Queue', value: `${queue.tracks.size}`, inline: true }
+            );
+          
+          return interaction.editReply({ embeds: [embed] });
+        } catch (err) {
+          console.error('Play command error:', err);
+          return interaction.editReply(`❌ Error playing music: ${err.message}`);
+        }
       }
       
       if (commandName === 'shuffle') {
-        return interaction.editReply(`🔀 Queue shuffled!`);
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        queue.tracks.shuffle();
+        return interaction.editReply('🔀 Queue shuffled!');
       }
       
       if (commandName === 'queue') {
-        return interaction.editReply(`📋 Music queue is empty!`);
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('📋 Music queue is empty!');
+        }
+        
+        const currentTrack = queue.currentTrack;
+        const tracks = queue.tracks.toArray().slice(0, 10);
+        
+        const embed = new EmbedBuilder()
+          .setColor('#9B59B6')
+          .setTitle('🎶 Music Queue')
+          .setDescription(
+            `**Now Playing:**\n${currentTrack.title} - ${currentTrack.author}\n\n` +
+            `**Up Next:**\n` +
+            (tracks.length > 0
+              ? tracks.map((track, i) => `${i + 1}. ${track.title} - ${track.author}`).join('\n')
+              : 'No more tracks in queue')
+          )
+          .setFooter({ text: `${queue.tracks.size} tracks in queue` });
+        
+        return interaction.editReply({ embeds: [embed] });
       }
       
       if (commandName === 'loop') {
-        return interaction.editReply(`🔁 Loop toggled!`);
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        const mode = queue.repeatMode;
+        queue.setRepeatMode(mode === 0 ? 1 : 0);
+        const modeText = queue.repeatMode === 0 ? 'Off' : 'Queue';
+        return interaction.editReply(`🔁 Loop mode: **${modeText}**`);
       }
       
       if (commandName === 'volume') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
         const level = options.getInteger('level');
+        queue.node.setVolume(level);
         return interaction.editReply(`🔊 Volume set to ${level}%`);
       }
       
       if (commandName === 'back') {
-        return interaction.editReply(`⏮️ Playing previous track!`);
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        await queue.history.previous();
+        return interaction.editReply('⏮️ Playing previous track!');
       }
       
       if (commandName === 'pause') {
-        return interaction.editReply(`⏸️ Playback paused!`);
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        queue.node.pause();
+        return interaction.editReply('⏸️ Playback paused!');
       }
       
       if (commandName === 'resume') {
-        return interaction.editReply(`▶️ Playback resumed!`);
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue) {
+          return interaction.editReply('❌ No music in queue!');
+        }
+        
+        queue.node.resume();
+        return interaction.editReply('▶️ Playback resumed!');
       }
       
       if (commandName === 'skip') {
-        return interaction.editReply(`⏭️ Skipped track!`);
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        const currentTrack = queue.currentTrack;
+        queue.node.skip();
+        return interaction.editReply(`⏭️ Skipped **${currentTrack.title}**!`);
       }
       
       if (commandName === 'stop') {
-        return interaction.editReply(`⏹️ Stopped playback and cleared queue!`);
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        queue.delete();
+        return interaction.editReply('⏹️ Stopped playback and cleared queue!');
       }
       
       // ========== TICKETS ==========
@@ -3404,11 +3574,78 @@ client.on("interactionCreate", async (interaction) => {
       
       if (commandName === 'ticket') {
         const topic = options.getString('topic');
-        return interaction.editReply(`🎫 Ticket created for: **${topic}**\n*(Full ticket system coming soon)*`);
+        const ticketChannel = guildConfig.ticketChannel;
+        
+        if (!ticketChannel) {
+          return interaction.editReply('❌ Ticket system not configured! Ask an admin to run `/ticketsetup` first.');
+        }
+        
+        const channel = interaction.guild.channels.cache.get(ticketChannel);
+        if (!channel) {
+          return interaction.editReply('❌ Configured ticket channel not found!');
+        }
+        
+        const ticketEmbed = new EmbedBuilder()
+          .setColor('#00D4FF')
+          .setTitle('🎫 New Support Ticket')
+          .setDescription(`**Submitted by:** ${interaction.user}\n**Topic:** ${topic}\n**Status:** Open`)
+          .setTimestamp();
+        
+        const closeButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('close_ticket_btn')
+            .setLabel('🔒 Close Ticket')
+            .setStyle(ButtonStyle.Danger)
+        );
+        
+        try {
+          await channel.send({ embeds: [ticketEmbed], components: [closeButton] });
+          
+          const tickets = guildConfig.tickets || [];
+          tickets.push({
+            user: interaction.user.id,
+            topic: topic,
+            timestamp: new Date().toISOString(),
+            status: 'open'
+          });
+          updateGuildConfig(interaction.guild.id, { tickets });
+          
+          return interaction.editReply(`✅ Ticket created successfully in ${channel}!\n**Topic:** ${topic}`);
+        } catch (err) {
+          return interaction.editReply(`❌ Failed to create ticket: ${err.message}`);
+        }
       }
       
       if (commandName === 'closeticket') {
-        return interaction.editReply(`🔒 Ticket closed!`);
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can close tickets!");
+        }
+        
+        const channelId = interaction.channel.id;
+        const ticketChannel = guildConfig.ticketChannel;
+        
+        if (!ticketChannel) {
+          return interaction.editReply('❌ Ticket system not configured!');
+        }
+        
+        // Find and update ticket status
+        const tickets = guildConfig.tickets || [];
+        const ticketIndex = tickets.findIndex(t => t.status === 'open');
+        
+        if (ticketIndex !== -1) {
+          tickets[ticketIndex].status = 'closed';
+          tickets[ticketIndex].closedBy = interaction.user.username;
+          tickets[ticketIndex].closedAt = new Date().toISOString();
+          updateGuildConfig(interaction.guild.id, { tickets });
+        }
+        
+        const embed = new EmbedBuilder()
+          .setColor('#ED4245')
+          .setTitle('🔒 Ticket Closed')
+          .setDescription(`This ticket has been closed by ${interaction.user}`)
+          .setTimestamp();
+        
+        return interaction.editReply({ embeds: [embed] });
       }
       
       // ========== GIVEAWAY ==========
@@ -3809,6 +4046,30 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     return interaction.update({ content: `✅ Removed: ${removedRoles.join(", ")}`, components: [] });
+  }
+
+  // Close ticket button
+  if (interaction.isButton() && interaction.customId === "close_ticket_btn") {
+    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return interaction.reply({ content: "❌ Only admins can close tickets!", ephemeral: true });
+    }
+    
+    const message = interaction.message;
+    const embed = message.embeds[0];
+    
+    if (embed) {
+      const closedEmbed = EmbedBuilder.from(embed)
+        .setColor('#ED4245')
+        .setDescription(embed.description.replace('**Status:** Open', '**Status:** Closed'))
+        .setFooter({ text: `Closed by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+      
+      await interaction.update({ embeds: [closedEmbed], components: [] });
+      await interaction.followUp({ content: `🔒 Ticket closed by ${interaction.user}`, ephemeral: false });
+    } else {
+      await interaction.reply({ content: "❌ Could not close ticket - embed not found!", ephemeral: true });
+    }
+    
+    return;
   }
 
   // Music controls
