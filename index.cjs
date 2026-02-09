@@ -3156,7 +3156,24 @@ client.on("interactionCreate", async (interaction) => {
           return interaction.editReply("❌ Only admins can use this!");
         }
         
-        return interaction.editReply("✅ Role removal feature ready!");
+          const embed = new EmbedBuilder()
+            .setColor('#ED4245')
+            .setTitle('🗑️ Role Removal')
+            .setDescription('Click the button below to remove roles you no longer want');
+        
+          const removeRoleBtn = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId('remove_all_roles')
+              .setLabel('Remove Roles')
+              .setStyle(ButtonStyle.Danger)
+          );
+        
+          try {
+            await interaction.channel.send({ embeds: [embed], components: [removeRoleBtn] });
+            return interaction.editReply('✅ Role removal message posted to this channel!');
+          } catch (err) {
+            return interaction.editReply(`❌ Failed to post: ${err.message}`);
+          }
       }
       
       if (commandName === 'setuplevelroles') {
@@ -3164,7 +3181,39 @@ client.on("interactionCreate", async (interaction) => {
           return interaction.editReply("❌ Only admins can setup level roles!");
         }
         
-        return interaction.editReply("✅ Level roles will be auto-created (1-100)!");
+          try {
+            const levelRoles = [];
+            let createdCount = 0;
+          
+            // Create 100 level roles
+            for (let i = 1; i <= 100; i++) {
+              const roleName = `Level ${i}`;
+            
+              // Check if role already exists
+              const existingRole = interaction.guild.roles.cache.find(r => r.name === roleName);
+              if (existingRole) {
+                levelRoles.push({ level: i, roleId: existingRole.id });
+                continue;
+              }
+            
+              // Create new role
+              const role = await interaction.guild.roles.create({
+                name: roleName,
+                color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                position: interaction.guild.roles.highest.position - 1
+              });
+            
+              levelRoles.push({ level: i, roleId: role.id });
+              createdCount++;
+            }
+          
+            // Save level roles to config
+            updateGuildConfig(interaction.guild.id, { levelRoles });
+          
+            return interaction.editReply(`✅ Setup complete! Created **${createdCount}** new level roles (1-100). Total roles available: **${levelRoles.length}**`);
+          } catch (err) {
+            return interaction.editReply(`❌ Failed to create level roles: ${err.message}`);
+          }
       }
       
       // ========== CUSTOM COMMANDS (ALIASES) ==========
