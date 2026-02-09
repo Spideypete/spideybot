@@ -390,11 +390,17 @@ client.once("ready", async () => {
   try {
     // Use shared COMMANDS_META defined at top-level
     await registerSlashCommands();
+    console.log('🎯 Slash command registration completed');
   } catch (error) {
     console.error("Error registering commands:", error);
   }
 
   // Auto-deploy to Render every 10 minutes
+  console.log('🔍 Checking auto-deploy conditions...');
+  console.log('  RENDER_API_KEY:', !!process.env.RENDER_API_KEY);
+  console.log('  RENDER_SERVICE_ID:', !!process.env.RENDER_SERVICE_ID);
+  console.log('  NODE_ENV:', process.env.NODE_ENV);
+  
   if (process.env.RENDER_API_KEY && process.env.RENDER_SERVICE_ID && process.env.NODE_ENV !== 'production') {
     console.log('🔄 Auto-deploy to Render enabled (every 10 minutes)');
     
@@ -433,6 +439,8 @@ client.once("ready", async () => {
         console.error('❌ Auto-deploy error:', err.message);
       }
     }, 10 * 60 * 1000); // 10 minutes
+  } else {
+    console.log('⚠️ Auto-deploy NOT enabled - missing conditions');
   }
 });
 
