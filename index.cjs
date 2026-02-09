@@ -786,7 +786,7 @@ client.on("messageCreate", async (msg) => {
       .join("\n");
 
     const statsEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("📊 Message Statistics")
       .addFields(
         { name: "📈 Total Messages", value: `${messageCounting.totalMessages || 0}`, inline: true },
@@ -812,7 +812,7 @@ client.on("messageCreate", async (msg) => {
     const activeQueues = player.queues.size;
 
     const statusEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("🤖 SPIDEY BOT - Status")
       .addFields(
         { name: "🔌 Latency", value: `${client.ws.ping}ms`, inline: true },
@@ -848,7 +848,7 @@ client.on("messageCreate", async (msg) => {
     });
 
     const rolesEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("📋 Active Role Categories")
       .setDescription("🎬 = Has a banner image")
       .addFields(...fields)
@@ -987,7 +987,7 @@ client.on("messageCreate", async (msg) => {
     const economy = guildConfig.economy || {};
     const balance = economy[msg.author.id] || 0;
     const balanceEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("💰 Your Balance")
       .setDescription(`You have **${balance} coins** 🪙`)
       .setFooter({ text: "SPIDEY BOT Economy" });
@@ -1042,7 +1042,7 @@ client.on("messageCreate", async (msg) => {
     const level = levels[msg.author.id] || 0;
     const xp = levels[msg.author.id + "_xp"] || 0;
     const levelEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("📊 Your Level")
       .addFields(
         { name: "Level", value: `${level}`, inline: true },
@@ -1061,7 +1061,7 @@ client.on("messageCreate", async (msg) => {
       .slice(0, 10);
 
     const leaderboardEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("🏆 Server Leaderboard")
       .setDescription(sorted.length === 0 ? "No data yet!" : sorted.map((e, i) => `**${i + 1}.** <@${e.userId}> - Level ${e.level}`).join("\n"))
       .setFooter({ text: "SPIDEY BOT Leaderboard" });
@@ -1139,7 +1139,7 @@ client.on("messageCreate", async (msg) => {
       });
 
       const ticketEmbed = new EmbedBuilder()
-        .setColor(0x00D4FF)
+        .setColor('#004B87')
         .setTitle("🎫 Support Ticket Created")
         .setDescription(`Support team will be with you shortly!`)
         .addFields({ name: "User", value: msg.author.toString(), inline: true });
@@ -1218,7 +1218,7 @@ client.on("messageCreate", async (msg) => {
     if (!suggestionsChannel) return msg.reply("❌ Suggestions channel not configured! Admin needs to set it with `/config-suggestions #channel`");
 
     const suggestionEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("📝 New Suggestion")
       .setDescription(suggestion)
       .setAuthor({ name: msg.author.username, iconURL: msg.author.displayAvatarURL() })
@@ -1250,7 +1250,7 @@ client.on("messageCreate", async (msg) => {
     if (!prize) return msg.reply("Usage: /giveaway [prize] [duration in seconds]");
 
     const giveawayEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#9B59B6')
       .setTitle("🎁 GIVEAWAY!")
       .setDescription(`**Prize:** ${prize}\n**Duration:** ${duration} seconds\n\nReact with 🎉 to enter!`)
       .setFooter({ text: "SPIDEY BOT Giveaway" });
@@ -1295,7 +1295,7 @@ client.on("messageCreate", async (msg) => {
     ];
     const q = trivia[Math.floor(Math.random() * trivia.length)];
     const triviaEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("🧠 Trivia Question")
       .setDescription(q.question)
       .setFooter({ text: `Answer: ${q.answer}` });
@@ -1327,7 +1327,7 @@ client.on("messageCreate", async (msg) => {
   // ============== DEVELOPERS ==============
   if (msg.content === "/developers") {
     const developersEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("👨‍💻 SPIDEY BOT Developers")
       .setDescription("Meet the team behind SPIDEY BOT!")
       .addFields(
@@ -1356,7 +1356,7 @@ client.on("messageCreate", async (msg) => {
     });
 
     const helpEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("🤖 SPIDEY BOT - All Commands")
       .setDescription("Organized by category and subsection. Type `/[command]` to use!");
 
@@ -1417,7 +1417,7 @@ client.on("messageCreate", async (msg) => {
     });
 
     const adminEmbed = new EmbedBuilder()
-      .setColor(0xFF1493)
+      .setColor('#9B59B6')
       .setTitle("👑 ADMIN COMMAND GUIDE")
       .setDescription("Administrator-only commands. Type `/[command]` to use!");
 
@@ -3157,7 +3157,7 @@ client.on("interactionCreate", async (interaction) => {
         }
         
           const embed = new EmbedBuilder()
-            .setColor('#ED4245')
+            .setColor('#9B59B6')
             .setTitle('🗑️ Role Removal')
             .setDescription('Click the button below to remove roles you no longer want');
         
@@ -3409,7 +3409,7 @@ client.on("interactionCreate", async (interaction) => {
         
         const randomTrivia = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
         const embed = new EmbedBuilder()
-          .setColor('#9B59B6')
+          .setColor('#004B87')
           .setTitle('🧠 Trivia Question')
           .setDescription(randomTrivia.q)
           .setFooter({ text: 'Answer in chat within 30 seconds!' });
@@ -3486,7 +3486,7 @@ client.on("interactionCreate", async (interaction) => {
           if (!queue.isPlaying()) await queue.node.play();
           
           const embed = new EmbedBuilder()
-            .setColor('#9B59B6')
+            .setColor('#004B87')
             .setTitle('🎵 Added to Queue')
             .setDescription(`**${searchResult.tracks[0].title}**\n${searchResult.tracks[0].author}`)
             .setThumbnail(searchResult.tracks[0].thumbnail)
@@ -3522,7 +3522,7 @@ client.on("interactionCreate", async (interaction) => {
         const tracks = queue.tracks.toArray().slice(0, 10);
         
         const embed = new EmbedBuilder()
-          .setColor('#9B59B6')
+          .setColor('#004B87')
           .setTitle('🎶 Music Queue')
           .setDescription(
             `**Now Playing:**\n${currentTrack.title} - ${currentTrack.author}\n\n` +
@@ -3635,7 +3635,7 @@ client.on("interactionCreate", async (interaction) => {
         }
         
         const ticketEmbed = new EmbedBuilder()
-          .setColor('#00D4FF')
+          .setColor('#004B87')
           .setTitle('🎫 New Support Ticket')
           .setDescription(`**Submitted by:** ${interaction.user}\n**Topic:** ${topic}\n**Status:** Open`)
           .setTimestamp();
@@ -3689,7 +3689,7 @@ client.on("interactionCreate", async (interaction) => {
         }
         
         const embed = new EmbedBuilder()
-          .setColor('#ED4245')
+          .setColor('#9B59B6')
           .setTitle('🔒 Ticket Closed')
           .setDescription(`This ticket has been closed by ${interaction.user}`)
           .setTimestamp();
@@ -3718,7 +3718,7 @@ client.on("interactionCreate", async (interaction) => {
       
       if (commandName === 'help') {
         const embed = new EmbedBuilder()
-          .setColor('#9B59B6') // Purple
+          .setColor('#004B87') // Petrol Blue
           .setTitle('📚 Available Commands')
           .setDescription('Here are all the public commands you can use!')
           .addFields(
@@ -3771,7 +3771,7 @@ client.on("interactionCreate", async (interaction) => {
         }
         
         const embed = new EmbedBuilder()
-          .setColor('#004B87') // Petrol Blue
+          .setColor('#9B59B6') // Purple
           .setTitle('🔐 Admin Commands')
           .setDescription('Admin-only commands for server management')
           .addFields(
