@@ -4082,51 +4082,88 @@
                 document.getElementById('modsLive').textContent = (stats.mods || 0).toLocaleString();
             }
 
-            // ONE COMBINED BAR CHART with all member types
+            // ANIMATED LINE CHART with all member types
             const ctx = document.getElementById('allMembersChart');
             if (ctx && typeof Chart !== 'undefined') {
                 try {
                     if (charts.allMembers) {
                         charts.allMembers.destroy();
                     }
+                    const memberColors = ['#00d4ff', '#00ff88', '#9146ff', '#ff69b4', '#ff6b35'];
+                    const memberLabels = ['Members', 'Verified', 'Bots', 'Admins', 'Moderators'];
+                    const memberData = [stats.members, stats.verified, stats.bots, stats.admins, stats.mods];
+
                     charts.allMembers = new Chart(ctx, {
-                        type: 'bar',
+                        type: 'line',
                         data: {
-                            labels: ['Members', 'Verified', 'Bots', 'Admins', 'Moderators'],
+                            labels: memberLabels,
                             datasets: [{
                                 label: 'Count',
-                                data: [stats.members, stats.verified, stats.bots, stats.admins, stats.mods],
-                                backgroundColor: ['#00d4ff', '#00ff88', '#9146ff', '#ff69b4', '#ff6b35'],
-                                borderColor: ['rgba(0,212,255,0.3)', 'rgba(0,255,136,0.3)', 'rgba(145,70,255,0.3)', 'rgba(255,105,180,0.3)', 'rgba(255,107,53,0.3)'],
-                                borderWidth: 1
+                                data: memberData,
+                                borderColor: '#00d4ff',
+                                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: memberColors,
+                                pointBorderColor: memberColors,
+                                pointRadius: 7,
+                                pointHoverRadius: 10,
+                                pointBorderWidth: 2,
+                                pointStyle: 'circle',
+                                segment: {
+                                    borderColor: function(ctx) {
+                                        return memberColors[ctx.p0DataIndex];
+                                    }
+                                }
                             }]
                         },
-                        options: { 
-                            responsive: true, 
+                        options: {
+                            responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { 
+                            animation: {
+                                duration: 1500,
+                                easing: 'easeInOutQuart',
+                                delay: function(context) {
+                                    return context.dataIndex * 200;
+                                }
+                            },
+                            plugins: {
                                 legend: { labels: { color: '#fff' } },
                                 tooltip: {
+                                    backgroundColor: 'rgba(10, 20, 40, 0.9)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                    borderWidth: 1,
+                                    padding: 12,
                                     callbacks: {
                                         label: function(context) {
                                             return context.label + ': ' + context.parsed.y;
+                                        },
+                                        labelColor: function(context) {
+                                            return {
+                                                borderColor: memberColors[context.dataIndex],
+                                                backgroundColor: memberColors[context.dataIndex]
+                                            };
                                         }
                                     }
                                 }
                             },
-                            scales: { 
-                                y: { 
-                                    ticks: { color: '#fff' }, 
-                                    grid: { color: 'rgba(255,255,255,0.1)' },
+                            scales: {
+                                y: {
+                                    ticks: { color: '#fff' },
+                                    grid: { color: 'rgba(255,255,255,0.06)' },
                                     beginAtZero: true
-                                }, 
-                                x: { 
-                                    ticks: { color: '#fff' } 
-                                } 
+                                },
+                                x: {
+                                    ticks: { color: '#fff' },
+                                    grid: { color: 'rgba(255,255,255,0.03)' }
+                                }
                             }
                         }
                     });
-                    console.log('✅ Bar chart rendered');
+                    console.log('✅ Line chart rendered');
                 } catch (e) {
                     console.error('Chart creation error:', e);
                 }
