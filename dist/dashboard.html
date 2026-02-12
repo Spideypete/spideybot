@@ -147,7 +147,7 @@
 
         /* Header */
         .header {
-            background: rgba(10, 20, 40, 0.25);
+            background: rgba(10, 20, 40, 0.95);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(var(--theme-color), 0.2);
             padding: 1rem 2rem;
@@ -156,6 +156,8 @@
             align-items: center;
             height: 70px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1000;
         }
 
         .header-left {
@@ -1067,7 +1069,7 @@
         .content-section.active {
             display: block !important;
             visibility: visible !important;
-            z-index: 100 !important;
+            z-index: 1 !important;
         }
 
         ::-webkit-scrollbar {
@@ -3543,9 +3545,6 @@
                         const container = document.querySelector('.container') || document.body;
                         container.insertAdjacentHTML('afterbegin', `<div style="color:#ff6b6b;padding:1rem;border-radius:8px;margin-bottom:1rem;">Error loading dashboard data: ${res.status} ${res.statusText}</div>`);
                     }
-                }
-                } else {
-                    window.location.href = '/login';
                 }
             } catch (err) {
                 console.error('Failed to load user:', err);

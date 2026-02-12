@@ -40,7 +40,10 @@ const publicDir = path.join(__dirname, 'public');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
   resave: true,
@@ -81,7 +84,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve static files from dist
+app.set('trust proxy', true);
+
+// ============== SECURITY MIDDLEWARE ==============
+app.use(securityHeadersMiddleware);
+const rateLimiter = new RateLimiter(500, 60000); // 500 requests per minute
+app.use(rateLimiter.middleware());
+
+// Serve static files from dist and public
 app.use(express.static(distDir, {
   etag: false,
   lastModified: false,
@@ -91,12 +101,15 @@ app.use(express.static(distDir, {
     res.setHeader('Expires', '0');
   }
 }));
-app.set('trust proxy', true);
-
-// ============== SECURITY MIDDLEWARE ==============
-app.use(securityHeadersMiddleware);
-const rateLimiter = new RateLimiter(500, 60000); // 500 requests per minute
-app.use(rateLimiter.middleware());
+app.use(express.static(publicDir, {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res, path) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 const auditLogger = new SecurityAuditLogger();
 const antiSpam = new AntiSpamEngine();
 const joinGate = new JoinGateSystem();
