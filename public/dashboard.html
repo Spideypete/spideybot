@@ -138,6 +138,97 @@
             background: transparent;
         }
 
+        /* ── Light mode: stat cards, labels, inline text ── */
+        body.light-mode [style*="color: rgba(255,255,255"] {
+            color: rgba(0,0,0,0.7) !important;
+        }
+
+        body.light-mode .content-section [style*="color: rgba(255,255,255,0.9)"] {
+            color: rgba(0,0,0,0.9) !important;
+        }
+
+        body.light-mode .content-section [style*="color: rgba(255,255,255,0.7)"] {
+            color: rgba(0,0,0,0.6) !important;
+        }
+
+        body.light-mode .content-section [style*="color: rgba(255,255,255,0.5)"] {
+            color: rgba(0,0,0,0.45) !important;
+        }
+
+        body.light-mode .content-section [style*="color: rgba(255,255,255,0.6)"] {
+            color: rgba(0,0,0,0.55) !important;
+        }
+
+        body.light-mode .content-section [style*="color: rgba(255,255,255,0.4)"] {
+            color: rgba(0,0,0,0.4) !important;
+        }
+
+        /* ── Light mode: staff panel ── */
+        body.light-mode .staff-section-label {
+            color: rgba(0,0,0,0.45);
+        }
+
+        body.light-mode .staff-member {
+            background: rgba(0,0,0,0.03);
+        }
+
+        body.light-mode .staff-member:hover {
+            background: rgba(0,0,0,0.06);
+        }
+
+        body.light-mode .staff-name {
+            color: rgba(0,0,0,0.85);
+        }
+
+        body.light-mode .staff-role-tag {
+            color: rgba(0,0,0,0.55);
+            background: rgba(var(--theme-color), 0.08);
+            border-color: rgba(var(--theme-color), 0.15);
+        }
+
+        body.light-mode .staff-avatar {
+            color: rgba(0,0,0,0.7);
+        }
+
+        body.light-mode .staff-divider {
+            background: rgba(0,0,0,0.08);
+        }
+
+        /* ── Light mode: overlay ── */
+        body.light-mode .server-select-overlay {
+            background: rgba(240, 240, 245, 0.7);
+        }
+
+        body.light-mode .server-select-prompt {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(var(--theme-color), 0.2);
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.15);
+        }
+
+        body.light-mode .server-select-prompt h2 {
+            color: rgba(0,0,0,0.9);
+        }
+
+        body.light-mode .server-select-prompt p {
+            color: rgba(0,0,0,0.5);
+        }
+
+        /* ── Light mode: notification, user profile, generic text ── */
+        body.light-mode .notification-icon {
+            color: rgba(0,0,0,0.6);
+        }
+
+        body.light-mode .content-grid .panel p,
+        body.light-mode .content-grid .panel small {
+            color: rgba(0,0,0,0.55) !important;
+        }
+
+        body.light-mode .server-dropdown-menu {
+            background: rgba(255,255,255,0.97);
+            border-color: rgba(var(--theme-color), 0.15);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
         .dashboard-wrapper {
             display: flex;
             height: 100vh;
@@ -2746,6 +2837,11 @@
                 document.getElementById('modeIcon').textContent = '🌙';
                 localStorage.setItem('theme', 'dark');
             }
+
+            // Re-render chart with correct theme colors
+            if (typeof loadMemberGraphs === 'function') {
+                try { loadMemberGraphs(); } catch(e) {}
+            }
         }
 
         function toggleProfileMenu() {
@@ -4089,6 +4185,13 @@
                     if (charts.allMembers) {
                         charts.allMembers.destroy();
                     }
+                    const isLight = document.body.classList.contains('light-mode');
+                    const textColor = isLight ? '#222' : '#fff';
+                    const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
+                    const gridColorFaint = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)';
+                    const tooltipBg = isLight ? 'rgba(255,255,255,0.95)' : 'rgba(10, 20, 40, 0.9)';
+                    const tooltipBorder = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(0, 212, 255, 0.3)';
+                    const tooltipTextColor = isLight ? '#222' : '#fff';
                     const memberColors = ['#00d4ff', '#00ff88', '#9146ff', '#ff69b4', '#ff6b35'];
                     const memberLabels = ['Members', 'Verified', 'Bots', 'Admins', 'Moderators'];
                     const memberData = [stats.members, stats.verified, stats.bots, stats.admins, stats.mods];
@@ -4129,12 +4232,12 @@
                                 }
                             },
                             plugins: {
-                                legend: { labels: { color: '#fff' } },
+                                legend: { labels: { color: textColor } },
                                 tooltip: {
-                                    backgroundColor: 'rgba(10, 20, 40, 0.9)',
-                                    titleColor: '#fff',
-                                    bodyColor: '#fff',
-                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                    backgroundColor: tooltipBg,
+                                    titleColor: tooltipTextColor,
+                                    bodyColor: tooltipTextColor,
+                                    borderColor: tooltipBorder,
                                     borderWidth: 1,
                                     padding: 12,
                                     callbacks: {
@@ -4152,13 +4255,13 @@
                             },
                             scales: {
                                 y: {
-                                    ticks: { color: '#fff' },
-                                    grid: { color: 'rgba(255,255,255,0.06)' },
+                                    ticks: { color: textColor },
+                                    grid: { color: gridColor },
                                     beginAtZero: true
                                 },
                                 x: {
-                                    ticks: { color: '#fff' },
-                                    grid: { color: 'rgba(255,255,255,0.03)' }
+                                    ticks: { color: textColor },
+                                    grid: { color: gridColorFaint }
                                 }
                             }
                         }
