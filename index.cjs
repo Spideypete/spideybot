@@ -5654,6 +5654,121 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
 });
 
 // Get member statistics by role for graphs (with caching to avoid rate limits)
+
+// Get admin and mod members for dashboard management panel
+app.get("/api/staff-members/:guildId", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  // Ensure members are fetched
+  if (guild.members.cache.size <= 1) {
+    try { await guild.members.fetch(); } catch (e) { console.warn('Failed to fetch members:', e.message); }
+  }
+
+  const members = guild.members.cache;
+  const botMember = guild.members.me;
+
+  // Get admins (non-bot members with Administrator permission)
+  const admins = members
+    .filter(m => !m.user.bot && m.permissions.has('Administrator'))
+    .map(m => {
+      const adminRoles = m.roles.cache.filter(r => r.permissions.has('Administrator') && r.name !== '@everyone');
+      return {
+        id: m.user.id,
+        username: m.user.username,
+        displayName: m.displayName,
+        avatar: m.user.avatar ? `https://cdn.discordapp.com/avatars/${m.user.id}/${m.user.avatar}.png?size=64` : null,
+        isOwner: m.id === guild.ownerId,
+        roles: adminRoles.map(r => ({ id: r.id, name: r.name, position: r.position })),
+        canRevoke: m.id !== guild.ownerId && botMember && botMember.roles.highest.position > m.roles.highest.position
+      };
+    })
+    .sort((a, b) => (a.isOwner ? -1 : b.isOwner ? 1 : a.displayName.localeCompare(b.displayName)));
+
+  // Get mods (non-bot, non-admin members with mod-like perms)
+  const mods = members
+    .filter(m => {
+      if (m.user.bot) return false;
+      if (m.permissions.has('Administrator')) return false;
+      return m.permissions.has('ModerateMembers') ||
+             m.permissions.has('KickMembers') ||
+             m.permissions.has('BanMembers') ||
+             m.permissions.has('ManageMessages') ||
+             m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
+    })
+    .map(m => {
+      const modRoles = m.roles.cache.filter(r => {
+        if (r.name === '@everyone') return false;
+        return r.permissions.has('ModerateMembers') ||
+               r.permissions.has('KickMembers') ||
+               r.permissions.has('BanMembers') ||
+               r.permissions.has('ManageMessages') ||
+               r.name.toLowerCase().includes('mod') ||
+               r.name.toLowerCase().includes('staff');
+      });
+      return {
+        id: m.user.id,
+        username: m.user.username,
+        displayName: m.displayName,
+        avatar: m.user.avatar ? `https://cdn.discordapp.com/avatars/${m.user.id}/${m.user.avatar}.png?size=64` : null,
+        roles: modRoles.map(r => ({ id: r.id, name: r.name, position: r.position })),
+        canRevoke: botMember && botMember.roles.highest.position > m.roles.highest.position
+      };
+    })
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+  res.json({ admins, mods, ownerId: guild.ownerId });
+});
+
+// Revoke a role from a member (remove admin/mod role)
+app.post("/api/revoke-role/:guildId", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const { memberId, roleId } = req.body;
+
+  if (!memberId || !roleId) return res.status(400).json({ error: "Missing memberId or roleId" });
+
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  try {
+    const member = await guild.members.fetch(memberId);
+    if (!member) return res.status(404).json({ error: "Member not found" });
+
+    // Safety: can't revoke roles from the server owner
+    if (member.id === guild.ownerId) {
+      return res.status(403).json({ error: "Cannot revoke roles from the server owner" });
+    }
+
+    const botMember = guild.members.me;
+    if (!botMember || botMember.roles.highest.position <= member.roles.highest.position) {
+      return res.status(403).json({ error: "Bot's role is not high enough to manage this member" });
+    }
+
+    const role = guild.roles.cache.get(roleId);
+    if (!role) return res.status(404).json({ error: "Role not found" });
+
+    if (!member.roles.cache.has(roleId)) {
+      return res.status(400).json({ error: "Member does not have this role" });
+    }
+
+    await member.roles.remove(roleId, `Revoked via dashboard by ${req.session.user.username}`);
+    
+    // Clear the member stats cache so numbers update
+    setCachedMemberStats(guildId, null);
+
+    console.log(`✅ Role "${role.name}" removed from ${member.user.username} by dashboard user ${req.session.user.username}`);
+    res.json({ success: true, message: `Removed role "${role.name}" from ${member.displayName}` });
+  } catch (err) {
+    console.error(`❌ Failed to revoke role: ${err.message}`);
+    res.status(500).json({ error: `Failed to revoke role: ${err.message}` });
+  }
+});
+
 app.get("/api/member-stats/:guildId", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 

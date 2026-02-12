@@ -1225,6 +1225,118 @@
             height: 350px !important;
             width: 100% !important;
         }
+
+        /* Staff Panel Styles */
+        .staff-section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .staff-member {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.4rem;
+            background: rgba(255,255,255,0.03);
+            transition: background 0.2s ease;
+        }
+
+        .staff-member:hover {
+            background: rgba(255,255,255,0.07);
+        }
+
+        .staff-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(var(--theme-color), 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+            overflow: hidden;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .staff-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .staff-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .staff-name {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .staff-roles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 3px;
+        }
+
+        .staff-role-tag {
+            font-size: 0.65rem;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(var(--theme-color), 0.15);
+            color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(var(--theme-color), 0.2);
+        }
+
+        .staff-owner-badge {
+            font-size: 0.65rem;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(255,215,0,0.2);
+            color: #ffd700;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .staff-revoke-btn {
+            flex-shrink: 0;
+            background: rgba(255,80,80,0.15);
+            border: 1px solid rgba(255,80,80,0.3);
+            color: #ff6b6b;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .staff-revoke-btn:hover {
+            background: rgba(255,80,80,0.3);
+            border-color: rgba(255,80,80,0.5);
+        }
+
+        .staff-revoke-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .staff-divider {
+            height: 1px;
+            background: rgba(var(--theme-color), 0.1);
+            margin: 0.75rem 0;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -1399,16 +1511,10 @@
                                     <div class="graph-container"><canvas id="allMembersChart" width="400" height="350"></canvas></div>
                                 </div>
                             </div>
-                            <div class="panel">
-                                <div class="panel-header"><div class="panel-title">🎯 Custom Role</div></div>
-                                <div class="panel-content">
-                                    <div class="form-group">
-                                        <div class="form-label">Select Role</div>
-                                        <select id="customRoleSelect" class="form-input glass-select" onchange="updateCustomGraph()">
-                                            <option value="">Choose a role...</option>
-                                        </select>
-                                    </div>
-                                    <div class="graph-container"><canvas id="customChart" width="400" height="350"></canvas></div>
+                            <div class="panel" style="max-height: 500px; overflow-y: auto;">
+                                <div class="panel-header"><div class="panel-title">👑 Server Staff</div></div>
+                                <div class="panel-content" id="staffPanel">
+                                    <div style="color: rgba(255,255,255,0.5); padding: 1rem; text-align: center; font-size: 0.85rem;">Select a server to view staff</div>
                                 </div>
                             </div>
                         </div>
@@ -2757,6 +2863,123 @@
             await loadRoleCategories(serverId);
             await loadMemberGraphs();
             await loadMemberEvents();
+            await loadStaffMembers(serverId);
+        }
+
+        // Staff Members Panel
+        async function loadStaffMembers(guildId) {
+            const panel = document.getElementById('staffPanel');
+            if (!panel) return;
+            panel.innerHTML = '<div style="color: rgba(255,255,255,0.5); padding: 1rem; text-align: center; font-size: 0.85rem;">Loading staff...</div>';
+
+            try {
+                const res = await fetch(`/api/staff-members/${guildId}`, { credentials: 'include' });
+                if (!res.ok) {
+                    panel.innerHTML = '<div style="color: #ff6b6b; padding: 1rem; text-align: center; font-size: 0.85rem;">Failed to load staff</div>';
+                    return;
+                }
+                const data = await res.json();
+                let html = '';
+
+                // Admins section
+                html += '<div class="staff-section-label">Admins (' + data.admins.length + ')</div>';
+                if (data.admins.length === 0) {
+                    html += '<div style="color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 0.5rem;">No admins found</div>';
+                } else {
+                    data.admins.forEach(m => {
+                        html += renderStaffMember(m, guildId, 'admin');
+                    });
+                }
+
+                html += '<div class="staff-divider"></div>';
+
+                // Mods section
+                html += '<div class="staff-section-label">Moderators (' + data.mods.length + ')</div>';
+                if (data.mods.length === 0) {
+                    html += '<div style="color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 0.5rem;">No moderators found</div>';
+                } else {
+                    data.mods.forEach(m => {
+                        html += renderStaffMember(m, guildId, 'mod');
+                    });
+                }
+
+                panel.innerHTML = html;
+            } catch (err) {
+                console.error('Failed to load staff:', err);
+                panel.innerHTML = '<div style="color: #ff6b6b; padding: 1rem; text-align: center; font-size: 0.85rem;">Error loading staff</div>';
+            }
+        }
+
+        function renderStaffMember(member, guildId, type) {
+            const avatarHtml = member.avatar
+                ? `<img src="/api/image?url=${encodeURIComponent(member.avatar)}" alt="" onerror="this.outerHTML='${member.displayName.charAt(0).toUpperCase()}'">`
+                : member.displayName.charAt(0).toUpperCase();
+
+            const ownerBadge = member.isOwner ? '<span class="staff-owner-badge">Owner</span>' : '';
+
+            const roleTags = member.roles.map(r =>
+                `<span class="staff-role-tag">${r.name}</span>`
+            ).join('');
+
+            // Build revoke buttons per-role
+            let revokeHtml = '';
+            if (!member.isOwner && member.canRevoke && member.roles.length > 0) {
+                revokeHtml = member.roles.map(r =>
+                    `<button class="staff-revoke-btn" onclick="revokeRole('${guildId}', '${member.id}', '${r.id}', this)" title="Remove ${r.name}">Revoke ${r.name}</button>`
+                ).join(' ');
+            } else if (member.isOwner) {
+                revokeHtml = '<span style="font-size:0.65rem;color:rgba(255,255,255,0.3);">Owner</span>';
+            } else if (!member.canRevoke) {
+                revokeHtml = '<span style="font-size:0.65rem;color:rgba(255,255,255,0.3);">Higher role</span>';
+            }
+
+            return `
+                <div class="staff-member">
+                    <div class="staff-avatar">${avatarHtml}</div>
+                    <div class="staff-info">
+                        <div class="staff-name">${member.displayName} ${ownerBadge}</div>
+                        <div class="staff-roles">${roleTags}</div>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;">${revokeHtml}</div>
+                </div>
+            `;
+        }
+
+        async function revokeRole(guildId, memberId, roleId, btn) {
+            if (!confirm('Are you sure you want to revoke this role? This action will take effect immediately in Discord.')) return;
+
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            try {
+                const res = await fetch(`/api/revoke-role/${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ memberId, roleId })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    btn.textContent = 'Revoked';
+                    btn.style.background = 'rgba(0,200,100,0.2)';
+                    btn.style.borderColor = 'rgba(0,200,100,0.4)';
+                    btn.style.color = '#00c864';
+                    // Refresh staff list and stats after a short delay
+                    setTimeout(async () => {
+                        await loadStaffMembers(guildId);
+                        await loadMemberGraphs();
+                    }, 1000);
+                } else {
+                    alert('Failed: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.textContent = 'Revoke';
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+                btn.disabled = false;
+                btn.textContent = 'Revoke';
+            }
         }
 
         // Store current guild for category management
@@ -3911,83 +4134,7 @@
                 console.warn('Canvas not found or Chart.js not available');
             }
 
-            // Populate role dropdown - with retry if DOM not ready
-            let roleSelect = document.getElementById('customRoleSelect');
-            
-            // If element doesn't exist yet, wait for it
-            if (!roleSelect) {
-                console.warn('⚠️ customRoleSelect not found, waiting for DOM...');
-                setTimeout(async () => {
-                    roleSelect = document.getElementById('customRoleSelect');
-                    if (roleSelect && stats.roles) populateRoleDropdown(roleSelect, stats.roles);
-                }, 100);
-            } else if (stats.roles) {
-                populateRoleDropdown(roleSelect, stats.roles);
             }
-        }
-        
-        // Helper function to populate the role dropdown
-        function populateRoleDropdown(roleSelect, roles) {
-            if (!roleSelect) {
-                console.error('❌ Role select element is null');
-                return;
-            }
-            roleSelect.innerHTML = '<option value="">Choose a role...</option>';
-            const filteredRoles = (roles || []).filter(r => r.name !== '@everyone');
-            console.log('✅ Role dropdown populated with ' + filteredRoles.length + ' roles');
-            
-            filteredRoles.forEach(role => {
-                const option = document.createElement('option');
-                option.value = role.id;
-                option.textContent = `${role.name} (${role.count} members)`;
-                roleSelect.appendChild(option);
-            });
-        }
-
-        function updateCustomGraph() {
-            const selectedServerId = localStorage.getItem('selectedServerId');
-            const roleId = document.getElementById('customRoleSelect').value;
-            console.log('🔵 updateCustomGraph called with roleId:', roleId);
-            if (!selectedServerId || !roleId) {
-                console.log('❌ Missing serverId or roleId');
-                return;
-            }
-
-            fetch(`/api/member-stats/${selectedServerId}`, { credentials: 'include' }).then(r => r.json()).then(stats => {
-                const role = stats.roles.find(r => r.id === roleId);
-                console.log('🔵 Found role:', role);
-                if (role) {
-                    const customCtx = document.getElementById('customChart');
-                    console.log('🔵 Canvas found:', !!customCtx);
-                    if (customCtx && typeof Chart !== 'undefined') {
-                        try {
-                            if (charts.custom) charts.custom.destroy();
-                        } catch (e) {
-                            console.log('ℹ️ No old custom chart to destroy');
-                        }
-                        charts.custom = new Chart(customCtx, {
-                            type: 'bar',
-                            data: {
-                                labels: [role.name],
-                                datasets: [{
-                                    label: 'Members',
-                                    data: [role.count],
-                                    backgroundColor: '#00ffff',
-                                    borderColor: 'rgba(0,255,255,0.3)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: { 
-                                responsive: true, 
-                                maintainAspectRatio: false,
-                                plugins: { legend: { labels: { color: '#fff' } } },
-                                scales: { y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#fff' } } }
-                            }
-                        });
-                    }
-                }
-            });
-        }
 
         // Load and display member events
         async function loadMemberEvents() {
