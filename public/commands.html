@@ -298,7 +298,7 @@
           subsections[subsecName].sort((a,b)=>a.name.localeCompare(b.name)).forEach(cmd => {
             const card = document.createElement('div');
             card.className = 'command-card';
-            card.innerHTML = `<h3>${cmd.usage || '/' + cmd.name}</h3><p>${cmd.description||''}</p><span class="badge ${cmd.category==='moderation' || cmd.category==='roles' || cmd.category==='config' ? 'admin' : 'public'}">${cmd.category==='moderation' || cmd.category==='roles' || cmd.category==='config' ? 'Admin' : 'Public'}</span>`;
+            card.innerHTML = `<h3>${cmd.usage || '/' + cmd.name}</h3><p>${cmd.description||''}</p><span class="badge ${cmd.adminOnly || cmd.category==='moderation' || cmd.category==='roles' || cmd.category==='config' ? 'admin' : 'public'}">${cmd.adminOnly || cmd.category==='moderation' || cmd.category==='roles' || cmd.category==='config' ? 'ADMIN' : 'PUBLIC'}</span>`;
             grid.appendChild(card);
           });
           

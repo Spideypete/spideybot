@@ -107,7 +107,7 @@ const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
 // Prefer explicit BASE_URL in env for Codespaces / production. Keep Render fallback.
 const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || null;
-const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'http://localhost:5000');
+const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'https://zany-space-guacamole-v696776796573pvgv-5000.app.github.dev');
 
 const REDIRECT_URI = process.env.FORCE_REDIRECT_URI || ((BASE_REDIRECT_URI === 'http://localhost:5000' && (process.env.NODE_ENV === 'production' || process.env.RENDER))
   ? 'https://spideybot-90sr.onrender.com/auth/discord/callback'
@@ -218,6 +218,24 @@ function autoMigrateRoles(guildId, guild, guildConfig) {
   }
 }
 
+// ============== ACTIVITY LOGGING ==============
+function addActivity(guildId, icon, text, action) {
+  const config = loadConfig();
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  if (!config.guilds[guildId].activities) config.guilds[guildId].activities = [];
+
+  config.guilds[guildId].activities.unshift({
+    icon,
+    text,
+    action,
+    time: new Date().toLocaleString()
+  });
+
+  // Keep only latest 100 activities
+  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 100);
+  saveConfig(config);
+}
+
 // ============== CACHE SYSTEM ==============
 const memberStatsCache = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -240,7 +258,7 @@ function setCachedMemberStats(guildId, data) {
 // isn't logged in or slash commands aren't registered yet.
 const COMMANDS_META = {
   help: { category: 'info', description: 'Show full command list', usage: '/help' },
-  adminhelp: { category: 'info', description: 'Show admin-only commands', usage: '/adminhelp' },
+  adminhelp: { category: 'info', description: 'Show admin-only commands', usage: '/adminhelp', adminOnly: true },
   kick: { category: 'moderation', subsection: 'Core', description: 'Remove member from server', usage: '/kick @user [reason]' },
   ban: { category: 'moderation', subsection: 'Core', description: 'Permanently ban member', usage: '/ban @user [reason]' },
   warn: { category: 'moderation', subsection: 'Core', description: 'Warn member (tracked & logged)', usage: '/warn @user [reason]' },
@@ -273,9 +291,9 @@ const COMMANDS_META = {
   stop: { category: 'music', subsection: 'Button Controls', description: 'Stop playback and clear queue', usage: '/stop' },
 
   suggest: { category: 'info', description: 'Send a suggestion', usage: '/suggest [message]' },
-  ticketsetup: { category: 'tickets', subsection: 'Setup', description: 'Setup ticket system', usage: '/ticketsetup #channel' },
+  ticketsetup: { category: 'tickets', subsection: 'Setup', description: 'Setup ticket system', usage: '/ticketsetup #channel', adminOnly: true },
   ticket: { category: 'tickets', subsection: 'User', description: 'Create a support ticket', usage: '/ticket' },
-  closeticket: { category: 'tickets', subsection: 'User', description: 'Close an active ticket', usage: '/closeticket' },
+  closeticket: { category: 'tickets', subsection: 'User', description: 'Close an active ticket', usage: '/closeticket', adminOnly: true },
 
   configmodlog: { category: 'config', subsection: 'Channels', description: 'Set moderation log channel', usage: '/configmodlog #channel' },
   configwelcomechannel: { category: 'config', subsection: 'Channels', description: 'Set welcome channel', usage: '/configwelcomechannel #channel' },
@@ -314,22 +332,22 @@ const COMMANDS_META = {
   removeroles: { category: 'roles', subsection: 'Selectors', description: 'Post role removal message', usage: '/removeroles' },
   setuplevelroles: { category: 'roles', subsection: 'Selectors', description: 'Auto-create level roles', usage: '/setuplevelroles' },
 
-  addcustomcommand: { category: 'custom', subsection: 'Management', description: 'Add a custom command', usage: '/addcustomcommand [name] | [response]' },
-  addcmd: { category: 'custom', subsection: 'Management', description: 'Add a custom command (alias)', usage: '/addcmd [name] | [response]' },
-  removecustomcommand: { category: 'custom', subsection: 'Management', description: 'Remove custom command', usage: '/removecustomcommand [name]' },
-  delcmd: { category: 'custom', subsection: 'Management', description: 'Delete custom command (alias)', usage: '/delcmd [name]' },
+  addcustomcommand: { category: 'custom', subsection: 'Management', description: 'Add a custom command', usage: '/addcustomcommand [name] | [response]', adminOnly: true },
+  addcmd: { category: 'custom', subsection: 'Management', description: 'Add a custom command (alias)', usage: '/addcmd [name] | [response]', adminOnly: true },
+  removecustomcommand: { category: 'custom', subsection: 'Management', description: 'Remove custom command', usage: '/removecustomcommand [name]', adminOnly: true },
+  delcmd: { category: 'custom', subsection: 'Management', description: 'Delete custom command (alias)', usage: '/delcmd [name]', adminOnly: true },
 
-  giveaway: { category: 'giveaway', subsection: 'Core', description: 'Create a giveaway', usage: '/giveaway' },
-  startgiveaway: { category: 'giveaway', subsection: 'Core', description: 'Start a giveaway', usage: '/startgiveaway' },
+  giveaway: { category: 'giveaway', subsection: 'Core', description: 'Create a giveaway', usage: '/giveaway', adminOnly: true },
+  startgiveaway: { category: 'giveaway', subsection: 'Core', description: 'Start a giveaway', usage: '/startgiveaway', adminOnly: true },
   filtertoggle: { category: 'config', subsection: 'Features', description: 'Toggle profanity filter', usage: '/filtertoggle' },
   linkfilter: { category: 'config', subsection: 'Features', description: 'Toggle link filter', usage: '/linkfilter [on/off]' },
   setprefix: { category: 'config', subsection: 'Features', description: 'Change command prefix', usage: '/setprefix [prefix]' },
-  addkickuser: { category: 'social', subsection: 'Monitoring', description: 'Monitor Kick user', usage: '/addkickuser [username]' },
-  removekickuser: { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Kick user', usage: '/removekickuser [username]' },
-  addtiktokuser: { category: 'social', subsection: 'Monitoring', description: 'Monitor TikTok user', usage: '/addtiktokuser [username]' },
-  removetiktokuser: { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring TikTok user', usage: '/removetiktokuser [username]' },
-  'addtwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Monitor Twitch user', usage: '/addtwitchuser [username]' },
-  'removetwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Twitch user', usage: '/removetwitchuser [username]' },
+  addkickuser: { category: 'social', subsection: 'Monitoring', description: 'Monitor Kick user', usage: '/addkickuser [username]', adminOnly: true },
+  removekickuser: { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Kick user', usage: '/removekickuser [username]', adminOnly: true },
+  addtiktokuser: { category: 'social', subsection: 'Monitoring', description: 'Monitor TikTok user', usage: '/addtiktokuser [username]', adminOnly: true },
+  removetiktokuser: { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring TikTok user', usage: '/removetiktokuser [username]', adminOnly: true },
+  'addtwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Monitor Twitch user', usage: '/addtwitchuser [username]', adminOnly: true },
+  'removetwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Twitch user', usage: '/removetwitchuser [username]', adminOnly: true },
 };
 
 // expose metadata to dashboard regardless of bot login
@@ -394,6 +412,18 @@ client.once("ready", async () => {
   } catch (error) {
     console.error("Error registering commands:", error);
   }
+
+  // Pre-fetch members for all guilds so dashboard stats work immediately
+  console.log('📊 Pre-fetching members for all guilds...');
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      await guild.members.fetch();
+      console.log(`  ✅ Fetched ${guild.members.cache.size} members for ${guild.name}`);
+    } catch (err) {
+      console.warn(`  ⚠️ Failed to fetch members for ${guild.name}: ${err.message}`);
+    }
+  }
+  console.log('📊 Member pre-fetch complete');
 
   // Auto-deploy to Render every 10 minutes
   console.log('🔍 Checking auto-deploy conditions...');
@@ -507,6 +537,7 @@ app.get('/api/config', (req, res) => {
   const config = loadConfig();
   res.json({
     clientId: DISCORD_CLIENT_ID,
+    botName: "SPIDEY BOT",
     guilds: config.guilds || {}
   });
 });
@@ -4499,9 +4530,14 @@ app.get("/", (req, res) => {
 });
 
 // ============== DISCORD OAUTH LOGIN ==============
+// Route /dashboard to dashboard.html
+app.get("/dashboard", (req, res) => {
+  res.redirect("/dashboard.html");
+});
+
 // Redirect login page to Discord OAuth
 app.get("/login", (req, res) => {
-  if (req.session.authenticated) return res.redirect("/dashboard");
+  if (req.session.authenticated) return res.redirect("/dashboard.html");
   const loginHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4601,9 +4637,10 @@ app.get("/commands", (req, res) => {
 
 // Determine redirect URI based on host
 const REDIRECT_URI_DETECTOR = (req) => {
-  const host = req.get('host');
-  // Replit often uses http for internal traffic but we need https for OAuth
-  const protocol = (host.includes('repl.co') || host.includes('replit.dev')) ? 'https' : req.protocol;
+  const host = req.get('x-forwarded-host') || req.get('host');
+  const forwardedProto = req.get('x-forwarded-proto');
+  // Replit and GitHub Codespaces use http internally but we need https for OAuth
+  const protocol = (forwardedProto === 'https' || host.includes('repl.co') || host.includes('replit.dev') || host.includes('app.github.dev')) ? 'https' : req.protocol;
   return `${protocol}://${host}/auth/discord/callback`;
 };
 
@@ -4678,8 +4715,9 @@ app.get("/auth/discord/callback", async (req, res) => {
       }
       console.log(`✅ User logged in: ${userRes.data.username}`);
       // Ensure we redirect to the full URL to avoid relative path issues in frames
-      const host = req.get('host');
-      const protocol = (host.includes('repl.co') || host.includes('replit.dev')) ? 'https' : req.protocol;
+      const host = req.get('x-forwarded-host') || req.get('host');
+      const forwardedProto = req.get('x-forwarded-proto');
+      const protocol = (forwardedProto === 'https' || host.includes('repl.co') || host.includes('replit.dev') || host.includes('app.github.dev')) ? 'https' : req.protocol;
       res.redirect(`${protocol}://${host}/dashboard.html`);
     });
   } catch (err) {
@@ -4687,9 +4725,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     const errorMsg = err.response?.data?.error_description || err.message || "Unknown error";
     
     // Construct debug info
-    const host = req.get('host');
-    const protocol = req.protocol === 'http' && !host.includes('localhost') ? 'https' : req.protocol;
-    const attemptedUri = `${protocol}://${host}/auth/discord/callback`;
+    const attemptedUri = REDIRECT_URI_DETECTOR(req);
 
     res.status(500).send(`
       <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
@@ -4712,14 +4748,14 @@ app.get("/logout", (req, res) => {
   });
 });
 
-// ============== PUBLIC API ==============
-app.get("/api/config", (req, res) => {
-  // Serve basic config needed for frontend (like client ID)
-  res.json({
-    clientId: DISCORD_CLIENT_ID,
-    botName: "SPIDEY BOT"
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) console.error("Logout error:", err);
+    res.json({ success: true });
   });
 });
+
+// ============== PUBLIC API ==============
 
 app.get("/api/user", (req, res) => {
   if (!req.session.authenticated) {
@@ -4745,8 +4781,10 @@ app.get("/api/user", (req, res) => {
   }
 
   res.json({
-    ...user,
-    avatarUrl,
+    user: {
+      ...user,
+      avatarUrl
+    },
     guilds: req.session.guilds
   });
 });
@@ -4783,6 +4821,10 @@ app.post("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
 
   const guildId = req.params.guildId;
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
 
@@ -5273,19 +5315,7 @@ app.post("/api/post-category", express.json(), async (req, res) => {
   }
 });
 
-// ============== API: UPDATE CONFIG ==============
-app.post("/api/config/:guildId", express.json(), (req, res) => {
-  if (!req.session.user) return res.status(401).json({ success: false, error: "Not authenticated" });
-
-  const guildId = req.params.guildId;
-  const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => g.id === guildId);
-
-  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
-
-  updateGuildConfig(guildId, req.body);
-  res.json({ success: true, config: getGuildConfig(guildId) });
-});
+// (Duplicate /api/config/:guildId POST removed — handled above)
 
 // ============== REAL-TIME DASHBOARD API ==============
 app.get("/api/dashboard/stats", (req, res) => {
@@ -5483,6 +5513,8 @@ app.get("/api/creator/servers", (req, res) => {
 
   // Get user's guilds from Discord OAuth (includes permission info)
   const userGuilds = req.session.guilds || [];
+  console.log(`📡 User has ${userGuilds.length} admin guilds from OAuth`);
+  console.log(`📡 Bot is in ${client.guilds.cache.size} guilds`);
 
   // Discord admin permission flag is 8
   const ADMIN_PERMISSION = 8;
@@ -5494,6 +5526,9 @@ app.get("/api/creator/servers", (req, res) => {
       return (permissions & BigInt(ADMIN_PERMISSION)) === BigInt(ADMIN_PERMISSION);
     })
     .map(guild => guild.id);
+
+  console.log(`📡 Admin guild IDs: ${adminGuildIds.join(', ')}`);
+  console.log(`📡 Bot guild IDs: ${client.guilds.cache.map(g => g.id).join(', ')}`);
 
   // Get bot's servers that user can admin
   const servers = client.guilds.cache
@@ -5586,7 +5621,7 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
 });
 
 // Get member statistics by role for graphs (with caching to avoid rate limits)
-app.get("/api/member-stats/:guildId", (req, res) => {
+app.get("/api/member-stats/:guildId", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guildId = req.params.guildId;
@@ -5602,13 +5637,25 @@ app.get("/api/member-stats/:guildId", (req, res) => {
 
   // Use cached member data if available, otherwise fetch
   const memberCache = guild.members.cache;
+  
+  // If cache is too small (likely not fetched yet), fetch now
+  if (memberCache.size <= 1) {
+    console.log(`📊 Member cache empty for ${guildId}, fetching...`);
+    try {
+      await guild.members.fetch();
+    } catch (err) {
+      console.warn(`⚠️ Failed to fetch members for ${guildId}:`, err.message);
+    }
+  }
+  
+  const members = guild.members.cache;
   const stats = {
-    total: memberCache.size,
-    members: memberCache.filter(m => !m.user.bot).size,
-    verified: memberCache.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
-    bots: memberCache.filter(m => m.user.bot).size,
-    admins: memberCache.filter(m => m.permissions.has('Administrator')).size,
-    mods: memberCache.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+    total: members.size,
+    members: members.filter(m => !m.user.bot).size,
+    verified: members.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
+    bots: members.filter(m => m.user.bot).size,
+    admins: members.filter(m => m.permissions.has('Administrator')).size,
+    mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
     roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
   };
 

@@ -4,6 +4,13 @@
     "dockerfile": "Dockerfile"
   },
   "forwardPorts": [5000],
+  "portsAttributes": {
+    "5000": {
+      "label": "SpideyBot Web",
+      "visibility": "public",
+      "onAutoForward": "openBrowser"
+    }
+  },
   "postCreateCommand": "npm install",
   "customizations": {
     "vscode": {
