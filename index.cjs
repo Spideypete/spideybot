@@ -5521,50 +5521,70 @@ app.get("/api/dashboard/top-members", (req, res) => {
 // ============== CREATOR ONLY APIS ==============
 
 // Get all servers the bot is in (filtered to only admin-accessible servers)
-app.get("/api/creator/servers", (req, res) => {
+app.get("/api/creator/servers", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  // Get user's guilds from Discord OAuth (includes permission info)
-  const userGuilds = req.session.guilds || [];
-  console.log(`📡 User has ${userGuilds.length} admin guilds from OAuth`);
-  console.log(`📡 Bot is in ${client.guilds.cache.size} guilds`);
+  const ADMIN_PERMISSION = BigInt(8);
 
-  // Discord admin permission flag is 8
-  const ADMIN_PERMISSION = 8;
+  try {
+    // Always fetch fresh guild list from Discord using stored access token
+    let userGuilds = req.session.guilds || [];
 
-  // Filter to only guilds where user is admin
-  const adminGuildIds = userGuilds
-    .filter(guild => {
-      const permissions = BigInt(guild.permissions);
-      return (permissions & BigInt(ADMIN_PERMISSION)) === BigInt(ADMIN_PERMISSION);
-    })
-    .map(guild => guild.id);
-
-  console.log(`📡 Admin guild IDs: ${adminGuildIds.join(', ')}`);
-  console.log(`📡 Bot guild IDs: ${client.guilds.cache.map(g => g.id).join(', ')}`);
-
-  // Get bot's servers that user can admin
-  const servers = client.guilds.cache
-    .filter(guild => adminGuildIds.includes(guild.id))
-    .map(guild => {
-      let iconUrl = null;
-      let iconProxyUrl = null;
-      if (guild.icon) {
-        const isAnimated = guild.icon.startsWith('a_');
-        const ext = isAnimated ? 'gif' : 'png';
-        iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
-        iconProxyUrl = `/api/image?url=${encodeURIComponent(iconUrl)}`;
+    if (req.session.accessToken) {
+      try {
+        const guildsRes = await axios.get("https://discord.com/api/users/@me/guilds", {
+          headers: { Authorization: `Bearer ${req.session.accessToken}` }
+        });
+        // Filter to admin-only guilds and update session
+        userGuilds = guildsRes.data.filter(guild => {
+          const permissions = BigInt(guild.permissions || 0);
+          return (permissions & ADMIN_PERMISSION) === ADMIN_PERMISSION;
+        });
+        req.session.guilds = userGuilds;
+        console.log(`📡 Refreshed guild list from Discord: ${userGuilds.length} admin guilds`);
+      } catch (discordErr) {
+        console.warn(`⚠️ Could not refresh guilds from Discord (token may be expired), using cached data: ${discordErr.message}`);
+        // Fall back to session-stored guilds
       }
-      return {
-        id: guild.id,
-        name: guild.name,
-        icon: iconUrl,
-        iconProxy: iconProxyUrl,
-        memberCount: guild.memberCount
-      };
-    });
+    }
 
-  res.json({ servers });
+    console.log(`📡 User has ${userGuilds.length} admin guilds`);
+    console.log(`📡 Bot is in ${client.guilds.cache.size} guilds`);
+
+    // Get IDs of user's admin guilds
+    const adminGuildIds = userGuilds.map(guild => guild.id);
+
+    console.log(`📡 Admin guild IDs: ${adminGuildIds.join(', ')}`);
+    console.log(`📡 Bot guild IDs: ${client.guilds.cache.map(g => g.id).join(', ')}`);
+
+    // Get bot's servers where user is admin — the intersection
+    const servers = client.guilds.cache
+      .filter(guild => adminGuildIds.includes(guild.id))
+      .map(guild => {
+        let iconUrl = null;
+        let iconProxyUrl = null;
+        if (guild.icon) {
+          const isAnimated = guild.icon.startsWith('a_');
+          const ext = isAnimated ? 'gif' : 'png';
+          iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+          iconProxyUrl = `/api/image?url=${encodeURIComponent(iconUrl)}`;
+        }
+        return {
+          id: guild.id,
+          name: guild.name,
+          icon: iconUrl,
+          iconProxy: iconProxyUrl,
+          memberCount: guild.memberCount
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    console.log(`📡 Returning ${servers.length} servers to dashboard`);
+    res.json({ servers });
+  } catch (err) {
+    console.error('❌ Error in /api/creator/servers:', err);
+    res.status(500).json({ error: 'Failed to load servers' });
+  }
 });
 
 // Get all channels in a guild
