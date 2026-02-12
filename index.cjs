@@ -5682,13 +5682,34 @@ app.get("/api/member-stats/:guildId", async (req, res) => {
   }
   
   const members = guild.members.cache;
+  
+  // Count non-bot members (humans)
+  const humans = members.filter(m => !m.user.bot);
+  
+  // Verified = members who have passed Discord's membership screening / have roles beyond @everyone
+  const verified = humans.filter(m => !m.pending && m.roles.cache.size > 1).size;
+  
+  // Admins = members with Administrator permission (excluding bots)
+  const admins = members.filter(m => !m.user.bot && m.permissions.has('Administrator')).size;
+  
+  // Moderators = members with mod-like permissions but not full admin (excluding bots)
+  const mods = members.filter(m => {
+    if (m.user.bot) return false;
+    if (m.permissions.has('Administrator')) return false; // Don't double-count admins
+    return m.permissions.has('ModerateMembers') || 
+           m.permissions.has('KickMembers') || 
+           m.permissions.has('BanMembers') || 
+           m.permissions.has('ManageMessages') ||
+           m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
+  }).size;
+  
   const stats = {
     total: members.size,
-    members: members.filter(m => !m.user.bot).size,
-    verified: members.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
+    members: humans.size,
+    verified: verified,
     bots: members.filter(m => m.user.bot).size,
-    admins: members.filter(m => m.permissions.has('Administrator')).size,
-    mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+    admins: admins,
+    mods: mods,
     roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
   };
 
@@ -5696,14 +5717,27 @@ app.get("/api/member-stats/:guildId", async (req, res) => {
   setCachedMemberStats(guildId, stats);
   
   // Fetch fresh data in background (don't wait for it)
-  guild.members.fetch().then(members => {
+  guild.members.fetch().then(freshMembers => {
+    const freshHumans = freshMembers.filter(m => !m.user.bot);
+    const freshVerified = freshHumans.filter(m => !m.pending && m.roles.cache.size > 1).size;
+    const freshAdmins = freshMembers.filter(m => !m.user.bot && m.permissions.has('Administrator')).size;
+    const freshMods = freshMembers.filter(m => {
+      if (m.user.bot) return false;
+      if (m.permissions.has('Administrator')) return false;
+      return m.permissions.has('ModerateMembers') || 
+             m.permissions.has('KickMembers') || 
+             m.permissions.has('BanMembers') || 
+             m.permissions.has('ManageMessages') ||
+             m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
+    }).size;
+    
     const freshStats = {
-      total: members.size,
-      members: members.filter(m => !m.user.bot).size,
-      verified: members.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
-      bots: members.filter(m => m.user.bot).size,
-      admins: members.filter(m => m.permissions.has('Administrator')).size,
-      mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+      total: freshMembers.size,
+      members: freshHumans.size,
+      verified: freshVerified,
+      bots: freshMembers.filter(m => m.user.bot).size,
+      admins: freshAdmins,
+      mods: freshMods,
       roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
     };
     setCachedMemberStats(guildId, freshStats);
