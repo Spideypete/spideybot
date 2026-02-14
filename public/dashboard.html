@@ -3127,11 +3127,12 @@
                 if (config.welcomeChannel) { const s = document.getElementById('welcomeChannelSelect'); if (s) s.value = config.welcomeChannel; }
 
                 // Restore language
-                if (config.language) {
-                    const sel = document.getElementById('languageSelect');
-                    if (sel) sel.value = config.language;
-                    changeLanguage(config.language);
-                }
+                const savedLang = config.language || 'en';
+                const sel = document.getElementById('languageSelect');
+                if (sel) sel.value = savedLang;
+                currentLanguage = savedLang;
+                localStorage.setItem('dashboardLanguage', savedLang);
+                applyLanguage(savedLang);
 
                 // Restore feature toggles
                 const toggleKeys = ['musicPlayer', 'economySystem', 'levelingSystem', 'welcomeMessages', 'moderationTools', 'socialNotifications'];
@@ -3282,6 +3283,9 @@
             await loadMemberGraphs();
             await loadMemberEvents();
             await loadStaffMembers(serverId);
+
+            // Re-capture original values now that server data is loaded
+            setupUnsavedDetection();
         }
 
         // Staff Members Panel
@@ -4882,11 +4886,12 @@
             const savedTextColor = localStorage.getItem('textColor');
             if (savedTextColor) changeTextColor(savedTextColor);
 
-            // Restore saved language
+            // Restore saved language (will be overridden by server config when server is selected)
             const savedLang = localStorage.getItem('dashboardLanguage');
             if (savedLang && savedLang !== 'en') {
                 const sel = document.getElementById('languageSelect');
                 if (sel) sel.value = savedLang;
+                currentLanguage = savedLang;
                 applyLanguage(savedLang);
             }
 
