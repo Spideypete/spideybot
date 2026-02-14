@@ -3863,10 +3863,15 @@
         }
 
         async function loadLogging() {
-            const config = await loadTabConfig('logging');
-            if (!config) return;
-            const ml = config.messageLogging || {};
-            const mod = config.moderationLogging || {};
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            try {
+            const resp = await fetch('/api/config/' + guildId, { credentials: 'include' });
+            if (!resp.ok) return;
+            const fullConfig = await resp.json();
+            const loggingObj = fullConfig.logging || {};
+            const ml = loggingObj.messageLogging || {};
+            const mod = loggingObj.moderationLogging || {};
             if (ml.logDeleted !== undefined) { const c = document.getElementById('log_deleted'); if (c) c.checked = ml.logDeleted; }
             if (ml.logEdited !== undefined) { const c = document.getElementById('log_edited'); if (c) c.checked = ml.logEdited; }
             if (ml.logBulkDelete !== undefined) { const c = document.getElementById('log_bulkDelete'); if (c) c.checked = ml.logBulkDelete; }
@@ -3876,6 +3881,7 @@
             if (mod.logMutes !== undefined) { const c = document.getElementById('log_mutes'); if (c) c.checked = mod.logMutes; }
             if (mod.logWarns !== undefined) { const c = document.getElementById('log_warns'); if (c) c.checked = mod.logWarns; }
             if (mod.modLogChannel) { const s = document.getElementById('modLogChannelSelect'); if (s) s.value = mod.modLogChannel; }
+            } catch (e) { console.error('Error loading logging:', e); }
         }
 
         async function saveLogging() {
