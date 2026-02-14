@@ -2293,14 +2293,8 @@
                                     <input type="text" id="categoryMessage" class="form-input" placeholder="Select a role below"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Add Roles</div>
-                                    <div style="display:flex; gap:0.5rem;">
-                                        <input type="text" id="creatingRoleInput" class="form-input" placeholder="Type role name..." style="flex:1;" onkeypress="if(event.key==='Enter') addRoleWhileCreating()"/>
-                                        <button class="btn btn-primary" onclick="addRoleWhileCreating()" style="white-space:nowrap;">+ Add</button>
-                                    </div>
-                                </div>
-                                <div id="creatingRolesList" style="margin-bottom:0.75rem;">
-                                    <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; padding: 0.5rem;">Add roles above</div>
+                                    <div class="form-label">Select Roles <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(hold Ctrl/Cmd to pick multiple)</span></div>
+                                    <select id="cc_roleSelect" class="form-input role-select" multiple size="6" style="min-height:140px;"></select>
                                 </div>
                                 <button class="btn btn-primary" onclick="createRoleCategory()" style="width:100%;">📂 Create Category</button>
                             </div>
@@ -3389,7 +3383,7 @@
 
                 if (rolesRes.ok) {
                     const { roles } = await rolesRes.json();
-                    const roleSelects = ['adminRoleSelect', 'modRoleSelect', 'membersRoleSelect', 'mutedRoleSelect', 'rr_roleSelect', 'gr_roleSelect', 'wp_roleSelect', 'pl_roleSelect'];
+                    const roleSelects = ['adminRoleSelect', 'modRoleSelect', 'membersRoleSelect', 'mutedRoleSelect', 'rr_roleSelect', 'gr_roleSelect', 'wp_roleSelect', 'pl_roleSelect', 'cc_roleSelect'];
                     roleSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
@@ -3976,8 +3970,12 @@
                 return;
             }
             
-            if (creatingCategoryRoles.length === 0) {
-                alert('❌ Please add at least one role to this category');
+            // Gather selected roles from multi-select as {name, id} objects
+            const sel = document.getElementById('cc_roleSelect');
+            const selectedRoles = sel ? Array.from(sel.selectedOptions).map(o => ({ name: o.textContent.trim(), id: o.value })) : [];
+            
+            if (selectedRoles.length === 0) {
+                alert('❌ Please select at least one role');
                 return;
             }
             
@@ -3986,7 +3984,7 @@
                 const payload = {
                     categoryName: name,
                     message: message || 'Select a role below',
-                    roles: creatingCategoryRoles
+                    roles: selectedRoles
                 };
                 
                 console.log('🔵 Creating category:', { url, payload, guildId, rolesCount: creatingCategoryRoles.length });
@@ -4002,13 +4000,12 @@
                 console.log('🔵 API Response:', { status: res.status, data });
                 
                 if (res.ok && data.success) {
-                    alert(`✅ Category "${name}" created with ${creatingCategoryRoles.length} roles!`);
+                    alert(`✅ Category "${name}" created with ${selectedRoles.length} roles!`);
                     // Clear form
                     document.getElementById('categoryName').value = '';
                     document.getElementById('categoryMessage').value = '';
-                    document.getElementById('creatingRoleInput').value = '';
-                    creatingCategoryRoles = [];
-                    displayCreatingRolesList();
+                    // Deselect all options in multi-select
+                    if (sel) Array.from(sel.options).forEach(o => o.selected = false);
                     
                     // Force reload categories with proper wait
                     console.log('🔵 Loading categories after creation...');
