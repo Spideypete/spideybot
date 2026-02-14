@@ -6848,4 +6848,47 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Web server li
+  console.log(`🚀 Web server listening on port ${PORT}`);
+  console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+});
+
+// ============== ERROR & DISCONNECT HANDLERS (KEEP BOT ONLINE) ==============
+// Handle client errors
+client.on('error', err => {
+  console.error('❌ Discord client error:', err);
+});
+
+// Handle disconnections and attempt auto-reconnect
+client.on('disconnect', () => {
+  console.warn('⚠️  Bot disconnected from Discord. Attempting to reconnect...');
+  setTimeout(() => {
+    if (!client.isReady()) {
+      client.login(token).catch(err => console.error('Reconnection failed:', err));
+    }
+  }, 5000);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  // Don't exit - keep process alive
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit - keep process alive
+});
+
+// ============== LOGIN ==============
+if (token && typeof token === 'string' && token.length > 0) {
+  client.login(token).catch(err => {
+    console.error('❌ Discord login error:', err);
+    console.log('⏰ Retrying login in 10 seconds...');
+    setTimeout(() => {
+      client.login(token).catch(err => console.error('Second login attempt failed:', err));
+    }, 10000);
+  });
+} else {
+  console.log('⚠️  No Discord `TOKEN` provided — skipping bot login. Web server remains available.');
+}

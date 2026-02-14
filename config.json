@@ -96,6 +96,24 @@
       },
       "activities": [
         {
+          "icon": "➕",
+          "text": "Dashboard",
+          "action": "added 3 platform role(s)",
+          "time": "2/14/2026, 9:46:48 AM"
+        },
+        {
+          "icon": "➕",
+          "text": "Dashboard",
+          "action": "added 2 watch party role(s)",
+          "time": "2/14/2026, 9:46:11 AM"
+        },
+        {
+          "icon": "➕",
+          "text": "Dashboard",
+          "action": "added 22 gaming role(s)",
+          "time": "2/14/2026, 9:45:52 AM"
+        },
+        {
           "icon": "🗑️",
           "text": "Dashboard",
           "action": "removed gaming role: Call Of Duty",
@@ -494,13 +512,126 @@
         "frequency": "6h",
         "retention": 30
       },
-      "gameRoles": [],
+      "gameRoles": [
+        {
+          "name": "Valorant",
+          "id": "1235015410819010638"
+        },
+        {
+          "name": "Minecraft",
+          "id": "1235015410819010637"
+        },
+        {
+          "name": "Call Of Duty",
+          "id": "1235015410819010636"
+        },
+        {
+          "name": "Dying Light",
+          "id": "1235015410819010635"
+        },
+        {
+          "name": "FiveM",
+          "id": "1235015410819010634"
+        },
+        {
+          "name": "Golf With Friends",
+          "id": "1235015410819010633"
+        },
+        {
+          "name": "Need Of Speed",
+          "id": "1235015410819010632"
+        },
+        {
+          "name": "Fortnite",
+          "id": "1235015410819010631"
+        },
+        {
+          "name": "Rust",
+          "id": "1235015410819010630"
+        },
+        {
+          "name": "CarX",
+          "id": "1235015410768810103"
+        },
+        {
+          "name": "HellDivers",
+          "id": "1235285561963581472"
+        },
+        {
+          "name": "Assetto Corsa",
+          "id": "1235313074454659083"
+        },
+        {
+          "name": "Formula 1",
+          "id": "1236766879977177128"
+        },
+        {
+          "name": "Rocket League",
+          "id": "1238537530727596124"
+        },
+        {
+          "name": "Overwatch",
+          "id": "1238537709493030964"
+        },
+        {
+          "name": "Doom",
+          "id": "1238537919082266624"
+        },
+        {
+          "name": "League Of Legends",
+          "id": "1238538002876338217"
+        },
+        {
+          "name": "GTA",
+          "id": "1238538129279811665"
+        },
+        {
+          "name": "CSGO",
+          "id": "1238538369777139833"
+        },
+        {
+          "name": "Apex",
+          "id": "1238538434667085824"
+        },
+        {
+          "name": "Destiny",
+          "id": "1238538513167945759"
+        },
+        {
+          "name": "Sons Of The Forest",
+          "id": "1242152559024668823"
+        }
+      ],
       "reactRoles": {
         "entries": [],
         "allowMultiple": true,
         "removeOnUnreact": true,
         "dmConfirm": false
-      }
+      },
+      "watchPartyRoles": [
+        {
+          "name": "Anime",
+          "id": "1235015410768810102"
+        },
+        {
+          "name": "Formula 1 WP",
+          "id": "1236767729248374935"
+        }
+      ],
+      "platformRoles": [
+        {
+          "name": "PC",
+          "id": "1235300034916909158"
+        },
+        {
+          "name": "PS",
+          "id": "1235300039388303401"
+        },
+        {
+          "name": "XBOX",
+          "id": "1235299927161180211"
+        }
+      ]
     },
     "subscriptions": {
       "field_0": "Gold",
