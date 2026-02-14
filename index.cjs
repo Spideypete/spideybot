@@ -5818,32 +5818,40 @@ app.post("/api/bot-config/typed-role/add", express.json(), (req, res) => {
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
-    const { type, roleId, roleName } = req.body;
+    const { type, roles, roleId, roleName } = req.body;
     const configKeyMap = { game: 'gameRoles', watchparty: 'watchPartyRoles', platform: 'platformRoles' };
     const configKey = configKeyMap[type];
     if (!configKey) return res.json({ success: false, error: "Invalid role type" });
-    if (!roleId || !roleName) return res.json({ success: false, error: "Missing role info" });
+
+    // Support both single role (legacy) and bulk roles array
+    const toAdd = Array.isArray(roles) ? roles : (roleId && roleName ? [{ roleId, roleName }] : []);
+    if (!toAdd.length) return res.json({ success: false, error: "No roles provided" });
 
     const guild = client.guilds.cache.get(guildId);
     if (!guild) return res.json({ success: false, error: "Guild not in bot cache" });
-    const role = guild.roles.cache.get(roleId);
-    if (!role) return res.json({ success: false, error: "Role not found in server" });
 
     const config = loadConfig();
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!Array.isArray(config.guilds[guildId][configKey])) config.guilds[guildId][configKey] = [];
 
-    // Check for duplicate
-    if (config.guilds[guildId][configKey].some(r => (r.id || r) === roleId || (r.name || r) === roleName)) {
-      return res.json({ success: false, error: "Role already exists in this list" });
+    let added = 0;
+    const skipped = [];
+    const typeNames = { game: 'gaming', watchparty: 'watch party', platform: 'platform' };
+
+    for (const { roleId: rId, roleName: rName } of toAdd) {
+      if (!rId || !rName) continue;
+      const role = guild.roles.cache.get(rId);
+      if (!role) { skipped.push(rName + ' (not found)'); continue; }
+      if (config.guilds[guildId][configKey].some(r => (r.id || r) === rId)) { skipped.push(rName + ' (duplicate)'); continue; }
+      config.guilds[guildId][configKey].push({ name: rName.replace(/@/g, ''), id: rId });
+      added++;
     }
 
-    config.guilds[guildId][configKey].push({ name: roleName.replace(/@/g, ''), id: roleId });
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    const typeNames = { game: 'gaming', watchparty: 'watch party', platform: 'platform' };
-    console.log(`✅ Added ${typeNames[type]} role: ${roleName} (Guild: ${guildId})`);
-    addActivity(guildId, "➕", "Dashboard", `added ${typeNames[type]} role: ${roleName}`);
-    res.json({ success: true, message: "Role added" });
+    console.log(`✅ Added ${added} ${typeNames[type]} role(s) (Guild: ${guildId})`);
+    if (added > 0) addActivity(guildId, "➕", "Dashboard", `added ${added} ${typeNames[type]} role(s)`);
+    const msg = added > 0 ? `Added ${added} role(s)` : 'No new roles added';
+    res.json({ success: true, added, skipped, message: msg });
   } catch (err) {
     console.error('❌ Error adding typed role:', err);
     res.json({ success: false, message: "Error adding role" });
@@ -6840,47 +6848,4 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Web server listening on port ${PORT}`);
-  console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
-});
-
-// ============== ERROR & DISCONNECT HANDLERS (KEEP BOT ONLINE) ==============
-// Handle client errors
-client.on('error', err => {
-  console.error('❌ Discord client error:', err);
-});
-
-// Handle disconnections and attempt auto-reconnect
-client.on('disconnect', () => {
-  console.warn('⚠️  Bot disconnected from Discord. Attempting to reconnect...');
-  setTimeout(() => {
-    if (!client.isReady()) {
-      client.login(token).catch(err => console.error('Reconnection failed:', err));
-    }
-  }, 5000);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.error('❌ Uncaught Exception:', err);
-  // Don't exit - keep process alive
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit - keep process alive
-});
-
-// ============== LOGIN ==============
-if (token && typeof token === 'string' && token.length > 0) {
-  client.login(token).catch(err => {
-    console.error('❌ Discord login error:', err);
-    console.log('⏰ Retrying login in 10 seconds...');
-    setTimeout(() => {
-      client.login(token).catch(err => console.error('Second login attempt failed:', err));
-    }, 10000);
-  });
-} else {
-  console.log('⚠️  No Discord `TOKEN` provided — skipping bot login. Web server remains available.');
-}
+  console.log(`🚀 Web server li

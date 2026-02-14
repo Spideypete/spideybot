@@ -2194,10 +2194,10 @@
                                     💡 <strong>How it works:</strong> Add game roles here (e.g. Valorant, Minecraft). Members click the 🎮 button posted via Quick Setup → Gaming Roles to choose which games they play. Same as the bot command <code>/addgamerole [name] [roleID]</code>.
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Select Role</div>
-                                    <select id="gr_roleSelect" class="form-input role-select"><option value="">Select role...</option></select>
+                                    <div class="form-label">Select Roles <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(hold Ctrl/Cmd to pick multiple)</span></div>
+                                    <select id="gr_roleSelect" class="form-input role-select" multiple size="5" style="min-height:120px;"></select>
                                 </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('game')" style="width:100%;">➕ Add Gaming Role</button>
+                                <button class="btn btn-primary" onclick="addTypedRole('game')" style="width:100%;">➕ Add Selected Gaming Roles</button>
                                 <div id="gr_list" style="margin-top:0.75rem;"></div>
                             </div>
                         </div>
@@ -2208,10 +2208,10 @@
                                     💡 <strong>How it works:</strong> Add streaming/watch party roles. Members click the 🎬 button from Quick Setup → Watch Party to join. Same as <code>/addwatchpartyrole [name] [roleID]</code>.
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Select Role</div>
-                                    <select id="wp_roleSelect" class="form-input role-select"><option value="">Select role...</option></select>
+                                    <div class="form-label">Select Roles <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(hold Ctrl/Cmd to pick multiple)</span></div>
+                                    <select id="wp_roleSelect" class="form-input role-select" multiple size="5" style="min-height:120px;"></select>
                                 </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('watchparty')" style="width:100%;">➕ Add Watch Party Role</button>
+                                <button class="btn btn-primary" onclick="addTypedRole('watchparty')" style="width:100%;">➕ Add Selected Watch Party Roles</button>
                                 <div id="wp_list" style="margin-top:0.75rem;"></div>
                             </div>
                         </div>
@@ -2224,10 +2224,10 @@
                                     💡 <strong>How it works:</strong> Add platform roles (PC, PlayStation, Xbox, etc). Members pick their platforms via the 💻 button from Quick Setup → Platform Roles. Same as <code>/addplatformrole [name] [roleID]</code>.
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Select Role</div>
-                                    <select id="pl_roleSelect" class="form-input role-select"><option value="">Select role...</option></select>
+                                    <div class="form-label">Select Roles <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(hold Ctrl/Cmd to pick multiple)</span></div>
+                                    <select id="pl_roleSelect" class="form-input role-select" multiple size="5" style="min-height:120px;"></select>
                                 </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('platform')" style="width:100%;">➕ Add Platform Role</button>
+                                <button class="btn btn-primary" onclick="addTypedRole('platform')" style="width:100%;">➕ Add Selected Platform Roles</button>
                                 <div id="pl_list" style="margin-top:0.75rem;"></div>
                             </div>
                         </div>
@@ -3189,9 +3189,14 @@
                     roleSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
-                        const currentVal = sel.value;
-                        // Keep the first placeholder option
-                        sel.innerHTML = '<option value="">' + sel.options[0].textContent + '</option>';
+                        const isMulti = sel.multiple;
+                        const currentVal = isMulti ? Array.from(sel.selectedOptions).map(o => o.value) : sel.value;
+                        // For multi-selects, no placeholder; for single-selects, keep placeholder
+                        if (isMulti) {
+                            sel.innerHTML = '';
+                        } else {
+                            sel.innerHTML = '<option value="">' + (sel.options[0]?.textContent || 'Select role...') + '</option>';
+                        }
                         roles.forEach(role => {
                             const opt = document.createElement('option');
                             opt.value = role.id;
@@ -3202,7 +3207,11 @@
                             }
                             sel.appendChild(opt);
                         });
-                        if (currentVal) sel.value = currentVal;
+                        if (isMulti) {
+                            currentVal.forEach(v => { const o = sel.querySelector('option[value="' + v + '"]'); if (o) o.selected = true; });
+                        } else {
+                            if (currentVal) sel.value = currentVal;
+                        }
                     });
                 }
 
@@ -4225,20 +4234,25 @@
             if (!guildId) return alert('Select a server first');
             const selectIds = { game: 'gr_roleSelect', watchparty: 'wp_roleSelect', platform: 'pl_roleSelect' };
             const selectEl = document.getElementById(selectIds[type]);
-            if (!selectEl || !selectEl.value) return alert('Please select a role first');
-            const roleId = selectEl.value;
-            const roleName = selectEl.options[selectEl.selectedIndex]?.text || roleId;
+            if (!selectEl) return;
+            // Gather all selected options
+            const selected = Array.from(selectEl.selectedOptions).filter(o => o.value);
+            if (!selected.length) return alert('Please select at least one role');
+            const roles = selected.map(o => ({ roleId: o.value, roleName: o.text }));
             try {
                 const res = await fetch('/api/bot-config/typed-role/add?guildId=' + guildId, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type, roleId, roleName }),
+                    body: JSON.stringify({ type, roles }),
                     credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
-                    selectEl.value = '';
+                    // Deselect all
+                    Array.from(selectEl.options).forEach(o => o.selected = false);
                     loadTypedRoles();
+                    const count = data.added || roles.length;
+                    if (count > 1) alert('✅ Added ' + count + ' roles!');
                 } else {
                     alert('❌ ' + (data.error || data.message || 'Failed'));
                 }

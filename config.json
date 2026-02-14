@@ -6,26 +6,12 @@
   "guilds": {
     "1235015410743775294": {
       "welcomeChannelId": "1235015412035358721",
-      "roleCategories": {
-        "Gaming": {
-          "roles": [
-            {
-              "name": "Valorant",
-              "id": "1235015410819010638"
-            }
-          ],
-          "banner": null
-        },
-        "Console": {
-          "roles": [],
-          "banner": null
-        }
-      },
+      "roleCategories": {},
       "modLogChannelId": "1235015413763412063",
       "messageCounting": {
-        "totalMessages": 36,
+        "totalMessages": 37,
         "byUser": {
-          "807682091591925801": 34,
+          "807682091591925801": 35,
           "391248144333275137": 1,
           "935559100899659796": 1
         },
@@ -34,13 +20,14 @@
           "1235015413763412063": 9,
           "1235015413763412062": 20,
           "undefined": 5,
-          "1235015412492800072": 1
+          "1235015412492800072": 1,
+          "1235015412035358726": 1
         }
       },
       "levels": {
-        "807682091591925801_xp": 538,
-        "807682091591925801": 67,
-        "807682091591925801_xp_time": 1766357375152,
+        "807682091591925801_xp": 553,
+        "807682091591925801": 85,
+        "807682091591925801_xp_time": 1771061405089,
         "391248144333275137": 24,
         "391248144333275137_xp_time": 1766355172616,
         "391248144333275137_xp": 9,
@@ -108,6 +95,54 @@
         "goodbyeMessage": ""
       },
       "activities": [
+        {
+          "icon": "🗑️",
+          "text": "Dashboard",
+          "action": "removed gaming role: Call Of Duty",
+          "time": "2/14/2026, 9:34:18 AM"
+        },
+        {
+          "icon": "🗑️",
+          "text": "Dashboard",
+          "action": "removed gaming role: Valorant",
+          "time": "2/14/2026, 9:34:15 AM"
+        },
+        {
+          "icon": "🗑️",
+          "text": "Dashboard",
+          "action": "removed gaming role: Minecraft",
+          "time": "2/14/2026, 9:34:13 AM"
+        },
+        {
+          "icon": "➕",
+          "text": "Dashboard",
+          "action": "added gaming role: Call Of Duty",
+          "time": "2/14/2026, 9:33:09 AM"
+        },
+        {
+          "icon": "➕",
+          "text": "Dashboard",
+          "action": "added gaming role: Valorant",
+          "time": "2/14/2026, 9:32:54 AM"
+        },
+        {
+          "icon": "➕",
+          "text": "Dashboard",
+          "action": "added gaming role: Minecraft",
+          "time": "2/14/2026, 9:32:38 AM"
+        },
+        {
+          "icon": "🗑️",
+          "text": "Dashboard",
+          "action": "deleted category: Gaming",
+          "time": "2/14/2026, 9:26:34 AM"
+        },
+        {
+          "icon": "🗑️",
+          "text": "Dashboard",
+          "action": "deleted category: Console",
+          "time": "2/14/2026, 9:26:30 AM"
+        },
         {
           "icon": "➕",
           "name": "spidey_petee",
@@ -458,6 +493,13 @@
         "enabled": true,
         "frequency": "6h",
         "retention": 30
+      },
+      "gameRoles": [],
+      "reactRoles": {
+        "entries": [],
+        "allowMultiple": true,
+        "removeOnUnreact": true,
+        "dmConfirm": false
       }
     },
     "subscriptions": {
