@@ -3063,7 +3063,7 @@
         // ========== LOAD SAVED SETTINGS FOR A SERVER ==========
         async function loadServerSettings(guildId) {
             try {
-                const res = await fetch('/api/config/settings?guildId=' + guildId, { credentials: 'include' });
+                const res = await fetch('/api/config/' + guildId, { credentials: 'include' });
                 if (!res.ok) return;
                 const config = await res.json();
 
@@ -4744,8 +4744,8 @@
             settingsData.accentPink = pinkAccent;
             settingsData.textColor = textColor;
 
-            // POST to API — save under the 'settings' config key
-            fetch('/api/config/settings?guildId=' + selectedServerId, {
+            // POST to API
+            fetch('/api/config/' + selectedServerId, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settingsData),

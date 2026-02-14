@@ -4830,6 +4830,18 @@ app.get("/dashboard/server/:guildId", (req, res) => {
 });
 
 // ============== API ENDPOINTS ==============
+app.get("/api/config/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false });
+
+  const guildId = req.params.guildId;
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
+  const config = loadConfig();
+  res.json(config.guilds[guildId] || {});
+});
+
 app.post("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
 
