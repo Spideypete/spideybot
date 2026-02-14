@@ -2157,6 +2157,9 @@
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">📨 Quick Post Role Selector</div></div>
                             <div class="panel-content">
+                                <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Posts an embed message to a channel. Copy the Message ID from the posted message, then use the "Create Reaction Role" form above to attach emoji → role mappings to it.
+                                </div>
                                 <div class="form-group">
                                     <div class="form-label">Post to Channel</div>
                                     <select id="rr_postChannel" class="form-input channel-select">
@@ -2178,6 +2181,67 @@
                             <div class="panel-header"><div class="panel-title">📜 Role Categories</div></div>
                             <div class="panel-content" id="rr_categoriesList">
                                 <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading categories...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gaming Roles Section -->
+                    <div class="content-grid" style="margin-top: 1rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Add game roles here (e.g. Valorant, Minecraft). Members click the 🎮 button posted via Quick Setup → Gaming Roles to choose which games they play. Same as the bot command <code>/addgamerole [name] [roleID]</code>.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Select Role</div>
+                                    <select id="gr_roleSelect" class="form-input role-select"><option value="">Select role...</option></select>
+                                </div>
+                                <button class="btn btn-primary" onclick="addTypedRole('game')" style="width:100%;">➕ Add Gaming Role</button>
+                                <div id="gr_list" style="margin-top:0.75rem;"></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎬 Watch Party Roles</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(78,205,196,0.06); border:1px solid rgba(78,205,196,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Add streaming/watch party roles. Members click the 🎬 button from Quick Setup → Watch Party to join. Same as <code>/addwatchpartyrole [name] [roleID]</code>.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Select Role</div>
+                                    <select id="wp_roleSelect" class="form-input role-select"><option value="">Select role...</option></select>
+                                </div>
+                                <button class="btn btn-primary" onclick="addTypedRole('watchparty')" style="width:100%;">➕ Add Watch Party Role</button>
+                                <div id="wp_list" style="margin-top:0.75rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content-grid" style="margin-top: 1rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(69,183,209,0.06); border:1px solid rgba(69,183,209,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Add platform roles (PC, PlayStation, Xbox, etc). Members pick their platforms via the 💻 button from Quick Setup → Platform Roles. Same as <code>/addplatformrole [name] [roleID]</code>.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Select Role</div>
+                                    <select id="pl_roleSelect" class="form-input role-select"><option value="">Select role...</option></select>
+                                </div>
+                                <button class="btn btn-primary" onclick="addTypedRole('platform')" style="width:100%;">➕ Add Platform Role</button>
+                                <div id="pl_list" style="margin-top:0.75rem;"></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📖 How Roles Work</div></div>
+                            <div class="panel-content">
+                                <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.7;">
+                                    <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in the sections above (Gaming, Watch Party, Platform)</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click the Post button for each type</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>3.</strong> The bot posts an embed with a button in your server</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>4.</strong> Members click the button → dropdown appears → they pick roles</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>5.</strong> For <strong>Reaction Roles</strong>: post a message, add emoji→role pairs above</p>
+                                    <p style="margin:0;"><strong>6.</strong> For <strong>Role Categories</strong>: create categories in the Role Categories tab, then use <code>/setupcategory [name]</code> in Discord</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3121,7 +3185,7 @@
 
                 if (rolesRes.ok) {
                     const { roles } = await rolesRes.json();
-                    const roleSelects = ['adminRoleSelect', 'modRoleSelect', 'membersRoleSelect', 'mutedRoleSelect', 'rr_roleSelect'];
+                    const roleSelects = ['adminRoleSelect', 'modRoleSelect', 'membersRoleSelect', 'mutedRoleSelect', 'rr_roleSelect', 'gr_roleSelect', 'wp_roleSelect', 'pl_roleSelect'];
                     roleSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
@@ -4056,6 +4120,10 @@
                 renderReactRoles(rr.entries || []);
                 // Render role categories in the categories panel
                 renderRRCategories(data.roleCategories || {});
+                // Render typed role lists (gaming, watchparty, platform)
+                renderTypedRoles('game', data.gameRoles || []);
+                renderTypedRoles('watchparty', data.watchPartyRoles || []);
+                renderTypedRoles('platform', data.platformRoles || []);
             } catch (e) { console.error('loadReactRoles error:', e); }
         }
 
@@ -4097,13 +4165,113 @@
                 const cat = categories[name];
                 const roles = Array.isArray(cat.roles) ? cat.roles : (Array.isArray(cat) ? cat : []);
                 const el = document.createElement('div');
-                el.style.cssText = 'padding:0.6rem 0.75rem; background:rgba(145,70,255,0.08); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(145,70,255,0.15);';
+                el.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; background:rgba(145,70,255,0.08); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(145,70,255,0.15);';
                 el.innerHTML = `
-                    <div style="font-weight:600; color:#fff;">📁 ${name}</div>
-                    <div style="font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:0.25rem;">${roles.length} role${roles.length !== 1 ? 's' : ''}: ${roles.map(r => typeof r === 'string' ? r : r.name).join(', ') || 'none'}</div>
+                    <div>
+                        <div style="font-weight:600; color:#fff;">📁 ${name}</div>
+                        <div style="font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:0.25rem;">${roles.length} role${roles.length !== 1 ? 's' : ''}: ${roles.map(r => typeof r === 'string' ? r : r.name).join(', ') || 'none'}</div>
+                    </div>
+                    <button onclick="deleteCategory('${name.replace(/'/g, "\\'")}')" style="background:rgba(255,107,107,0.2); border:1px solid rgba(255,107,107,0.3); color:#ff6b6b; padding:0.3rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;">🗑️ Delete</button>
                 `;
                 container.appendChild(el);
             });
+        }
+
+        async function deleteCategory(categoryName) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            if (!confirm('Delete category "' + categoryName + '"? This will remove it from the bot too.')) return;
+            try {
+                const res = await fetch('/api/bot-config/role-category/delete?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoryName }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Category "' + categoryName + '" deleted');
+                    loadReactRoles();
+                    loadRoleCategories(guildId);
+                } else {
+                    alert('❌ ' + (data.message || 'Failed'));
+                }
+            } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+
+        function renderTypedRoles(type, roles) {
+            const listIds = { game: 'gr_list', watchparty: 'wp_list', platform: 'pl_list' };
+            const container = document.getElementById(listIds[type]);
+            if (!container) return;
+            if (!roles || !roles.length) {
+                container.innerHTML = '<div style="color:rgba(255,255,255,0.4); font-size:0.8rem; text-align:center; padding:0.5rem;">No roles added yet</div>';
+                return;
+            }
+            container.innerHTML = '';
+            roles.forEach((role, i) => {
+                const name = typeof role === 'string' ? role : role.name;
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.6rem; background:rgba(0,212,255,0.06); border-radius:6px; margin-bottom:0.4rem; border:1px solid rgba(0,212,255,0.1);';
+                row.innerHTML = `
+                    <span style="font-size:0.85rem; color:#fff;">@${name}</span>
+                    <button onclick="removeTypedRole('${type}', ${i})" style="background:rgba(255,107,107,0.2); border:1px solid rgba(255,107,107,0.3); color:#ff6b6b; padding:0.2rem 0.6rem; border-radius:5px; cursor:pointer; font-size:0.75rem;">✕</button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        async function addTypedRole(type) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            const selectIds = { game: 'gr_roleSelect', watchparty: 'wp_roleSelect', platform: 'pl_roleSelect' };
+            const selectEl = document.getElementById(selectIds[type]);
+            if (!selectEl || !selectEl.value) return alert('Please select a role first');
+            const roleId = selectEl.value;
+            const roleName = selectEl.options[selectEl.selectedIndex]?.text || roleId;
+            try {
+                const res = await fetch('/api/bot-config/typed-role/add?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, roleId, roleName }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    selectEl.value = '';
+                    loadTypedRoles();
+                } else {
+                    alert('❌ ' + (data.error || data.message || 'Failed'));
+                }
+            } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+
+        async function removeTypedRole(type, index) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            try {
+                const res = await fetch('/api/bot-config/typed-role/remove?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, index }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) loadTypedRoles();
+                else alert('❌ ' + (data.message || 'Failed'));
+            } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+
+        async function loadTypedRoles() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            try {
+                const res = await fetch('/api/config/' + guildId, { credentials: 'include' });
+                if (!res.ok) return;
+                const data = await res.json();
+                renderTypedRoles('game', data.gameRoles || []);
+                renderTypedRoles('watchparty', data.watchPartyRoles || []);
+                renderTypedRoles('platform', data.platformRoles || []);
+            } catch (e) { console.error('loadTypedRoles error:', e); }
         }
 
         async function addReactRole() {

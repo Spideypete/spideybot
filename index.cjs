@@ -5784,6 +5784,101 @@ app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) =>
   }
 });
 
+// Delete a role category from dashboard
+app.post("/api/bot-config/role-category/delete", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { categoryName } = req.body;
+    if (!categoryName) return res.json({ success: false, message: "Category name required" });
+    const config = loadConfig();
+    if (!config.guilds[guildId]) return res.json({ success: false, message: "Guild not found" });
+    const categories = config.guilds[guildId].roleCategories || {};
+    if (!categories[categoryName]) return res.json({ success: false, message: "Category not found" });
+    delete categories[categoryName];
+    config.guilds[guildId].roleCategories = categories;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ Category deleted from dashboard: ${categoryName} (Guild: ${guildId})`);
+    addActivity(guildId, "🗑️", "Dashboard", `deleted category: ${categoryName}`);
+    res.json({ success: true, message: "Category deleted" });
+  } catch (err) {
+    console.error('❌ Error deleting category:', err);
+    res.json({ success: false, message: "Error deleting category" });
+  }
+});
+
+// Add a typed role (game / watchparty / platform) from dashboard
+app.post("/api/bot-config/typed-role/add", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { type, roleId, roleName } = req.body;
+    const configKeyMap = { game: 'gameRoles', watchparty: 'watchPartyRoles', platform: 'platformRoles' };
+    const configKey = configKeyMap[type];
+    if (!configKey) return res.json({ success: false, error: "Invalid role type" });
+    if (!roleId || !roleName) return res.json({ success: false, error: "Missing role info" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not in bot cache" });
+    const role = guild.roles.cache.get(roleId);
+    if (!role) return res.json({ success: false, error: "Role not found in server" });
+
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!Array.isArray(config.guilds[guildId][configKey])) config.guilds[guildId][configKey] = [];
+
+    // Check for duplicate
+    if (config.guilds[guildId][configKey].some(r => (r.id || r) === roleId || (r.name || r) === roleName)) {
+      return res.json({ success: false, error: "Role already exists in this list" });
+    }
+
+    config.guilds[guildId][configKey].push({ name: roleName.replace(/@/g, ''), id: roleId });
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    const typeNames = { game: 'gaming', watchparty: 'watch party', platform: 'platform' };
+    console.log(`✅ Added ${typeNames[type]} role: ${roleName} (Guild: ${guildId})`);
+    addActivity(guildId, "➕", "Dashboard", `added ${typeNames[type]} role: ${roleName}`);
+    res.json({ success: true, message: "Role added" });
+  } catch (err) {
+    console.error('❌ Error adding typed role:', err);
+    res.json({ success: false, message: "Error adding role" });
+  }
+});
+
+// Remove a typed role (game / watchparty / platform) from dashboard
+app.post("/api/bot-config/typed-role/remove", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { type, index } = req.body;
+    const configKeyMap = { game: 'gameRoles', watchparty: 'watchPartyRoles', platform: 'platformRoles' };
+    const configKey = configKeyMap[type];
+    if (!configKey) return res.json({ success: false, message: "Invalid role type" });
+
+    const config = loadConfig();
+    const roles = config.guilds[guildId]?.[configKey];
+    if (!roles || index < 0 || index >= roles.length) return res.json({ success: false, message: "Invalid index" });
+
+    const removed = roles.splice(index, 1)[0];
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    const typeNames = { game: 'gaming', watchparty: 'watch party', platform: 'platform' };
+    console.log(`✅ Removed ${typeNames[type]} role: ${removed.name || removed} (Guild: ${guildId})`);
+    addActivity(guildId, "🗑️", "Dashboard", `removed ${typeNames[type]} role: ${removed.name || removed}`);
+    res.json({ success: true, message: "Role removed" });
+  } catch (err) {
+    console.error('❌ Error removing typed role:', err);
+    res.json({ success: false, message: "Error removing role" });
+  }
+});
+
 app.post("/api/bot-config/anti-spam", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
