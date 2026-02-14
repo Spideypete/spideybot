@@ -1480,81 +1480,81 @@
             <div class="server-select-overlay" id="serverSelectOverlay">
                 <div class="server-select-prompt">
                     <div class="prompt-icon">🖥️</div>
-                    <h2>Select a Server</h2>
-                    <p>Choose a server from the dropdown above to view its dashboard and manage settings.</p>
+                    <h2 data-i18n="overlay_selectServer">Select a Server</h2>
+                    <p data-i18n="overlay_selectServerDesc">Choose a server from the dropdown above to view its dashboard and manage settings.</p>
                 </div>
             </div>
             <!-- Sidebar -->
             <div class="sidebar">
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">MAIN</div>
+                    <div class="sidebar-section-title" data-i18n="nav_main">MAIN</div>
                     <ul class="sidebar-menu">
                         <li class="sidebar-item active" data-section="dashboard" onclick="switchSection('dashboard')">
                             <span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
-                            <span>Dashboard</span>
+                            <span data-i18n="sidebar_dashboard">Dashboard</span>
                         </li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">CORE</div>
+                    <div class="sidebar-section-title" data-i18n="nav_core">CORE</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="settings" onclick="switchSection('settings')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m8.48 0l4.24-4.24M1 12h6m6 0h6m-17.78 7.78l4.24-4.24m8.48 0l4.24 4.24"/></svg></span><span>Settings</span></li>
-                        <li class="sidebar-item" data-section="logging" onclick="switchSection('logging')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2h-2M9 7h6M9 13h6M9 19h2"/></svg></span><span>Logging</span></li>
-                        <li class="sidebar-item" data-section="server-guard" onclick="switchSection('server-guard')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1l7 3.5v5.5c0 4-7 7-7 7s-7-3-7-7V4.5L12 1z"/></svg></span><span>Server Guard</span></li>
+                        <li class="sidebar-item" data-section="settings" onclick="switchSection('settings')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m8.48 0l4.24-4.24M1 12h6m6 0h6m-17.78 7.78l4.24-4.24m8.48 0l4.24 4.24"/></svg></span><span data-i18n="sidebar_settings">Settings</span></li>
+                        <li class="sidebar-item" data-section="logging" onclick="switchSection('logging')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2h-2M9 7h6M9 13h6M9 19h2"/></svg></span><span data-i18n="sidebar_logging">Logging</span></li>
+                        <li class="sidebar-item" data-section="server-guard" onclick="switchSection('server-guard')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1l7 3.5v5.5c0 4-7 7-7 7s-7-3-7-7V4.5L12 1z"/></svg></span><span data-i18n="sidebar_serverGuard">Server Guard</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">FEATURES</div>
+                    <div class="sidebar-section-title" data-i18n="nav_features">FEATURES</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span>React Roles</span></li>
-                        <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h5a2 2 0 012 2z"/></svg></span><span>Role Categories</span></li>
-                        <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>Server Messages</span></li>
-                        <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4l6 6m-6-6l-6 6"/></svg></span><span>Commands</span></li>
-                        <li class="sidebar-item" data-section="components" onclick="switchSection('components')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8.5" y="11.5" width="7" height="7"/></svg></span><span>Components</span></li>
+                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span data-i18n="sidebar_reactRoles">React Roles</span></li>
+                        <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h5a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_roleCategories">Role Categories</span></li>
+                        <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_serverMessages">Server Messages</span></li>
+                        <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4l6 6m-6-6l-6 6"/></svg></span><span data-i18n="sidebar_commands">Commands</span></li>
+                        <li class="sidebar-item" data-section="components" onclick="switchSection('components')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8.5" y="11.5" width="7" height="7"/></svg></span><span data-i18n="sidebar_components">Components</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">SYSTEMS</div>
+                    <div class="sidebar-section-title" data-i18n="nav_systems">SYSTEMS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span>XP Levels</span></li>
-                        <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6-7 6 7M3 12h18v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z"/></svg></span><span>Leaderboards</span></li>
-                        <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span>Giveaways</span></li>
+                        <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span data-i18n="sidebar_xpLevels">XP Levels</span></li>
+                        <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6-7 6 7M3 12h18v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z"/></svg></span><span data-i18n="sidebar_leaderboards">Leaderboards</span></li>
+                        <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span data-i18n="sidebar_giveaways">Giveaways</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">MONITORING</div>
+                    <div class="sidebar-section-title" data-i18n="nav_monitoring">MONITORING</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span>Member Activity</span></li>
-                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6l3-6z"/></svg></span><span>Social Notifs</span></li>
-                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><span>Invites</span></li>
-                        <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>Messages</span></li>
+                        <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
+                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6l3-6z"/></svg></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
+                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><span data-i18n="sidebar_invites">Invites</span></li>
+                        <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_messages">Messages</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">ADVANCED</div>
+                    <div class="sidebar-section-title" data-i18n="nav_advanced">ADVANCED</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="recordings" onclick="switchSection('recordings')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 8v4M4.22 4.22l2.83 2.83m5.9 0l2.83-2.83M1 12h4m8 0h4m-15.78 7.78l2.83-2.83m5.9 0l2.83 2.83"/></svg></span><span>Recordings</span></li>
-                        <li class="sidebar-item" data-section="reminders" onclick="switchSection('reminders')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span>Reminders</span></li>
-                        <li class="sidebar-item" data-section="statistics-channels" onclick="switchSection('statistics-channels')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="3" height="14"/><rect x="10" y="3" width="3" height="18"/><rect x="17" y="10" width="3" height="11"/></svg></span><span>Stats</span></li>
+                        <li class="sidebar-item" data-section="recordings" onclick="switchSection('recordings')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 8v4M4.22 4.22l2.83 2.83m5.9 0l2.83-2.83M1 12h4m8 0h4m-15.78 7.78l2.83-2.83m5.9 0l2.83 2.83"/></svg></span><span data-i18n="sidebar_recordings">Recordings</span></li>
+                        <li class="sidebar-item" data-section="reminders" onclick="switchSection('reminders')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span data-i18n="sidebar_reminders">Reminders</span></li>
+                        <li class="sidebar-item" data-section="statistics-channels" onclick="switchSection('statistics-channels')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="3" height="14"/><rect x="10" y="3" width="3" height="18"/><rect x="17" y="10" width="3" height="11"/></svg></span><span data-i18n="sidebar_stats">Stats</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">SUBSCRIPTIONS</div>
+                    <div class="sidebar-section-title" data-i18n="nav_subscriptions">SUBSCRIPTIONS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="subscriptions" onclick="switchSection('subscriptions')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span>Premium</span></li>
+                        <li class="sidebar-item" data-section="subscriptions" onclick="switchSection('subscriptions')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span data-i18n="sidebar_premium">Premium</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">TOOLS</div>
+                    <div class="sidebar-section-title" data-i18n="nav_tools">TOOLS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="colors" onclick="switchSection('colors')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg></span><span>Colors</span></li>
+                        <li class="sidebar-item" data-section="colors" onclick="switchSection('colors')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg></span><span data-i18n="sidebar_colors">Colors</span></li>
                     </ul>
                 </div>
             </div>
@@ -1564,46 +1564,46 @@
                 <!-- Dashboard Section -->
                 <div id="dashboard-section" class="content-section active">
                     <div class="content-header">
-                        <div class="content-title">Dashboard</div>
-                        <div class="content-subtitle">Real-time server analytics</div>
+                        <div class="content-title" data-i18n="title_dashboard">Dashboard</div>
+                        <div class="content-subtitle" data-i18n="subtitle_dashboard">Real-time server analytics</div>
                     </div>
 
                     <div style="margin-bottom: 2rem;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                             <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Total Members</div>
+                                <div data-i18n="stat_totalMembers" style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Total Members</div>
                                 <div id="totalMembersLive" style="font-size: 2rem; font-weight: 700; color: #00d4ff;">0</div>
                             </div>
                             <div style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Verified Users</div>
+                                <div data-i18n="stat_verifiedUsers" style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Verified Users</div>
                                 <div id="verifiedMembersLive" style="font-size: 2rem; font-weight: 700; color: #00ff88;">0</div>
                             </div>
                             <div style="background: rgba(145,70,255,0.1); border: 1px solid rgba(145,70,255,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Bots</div>
+                                <div data-i18n="stat_bots" style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Bots</div>
                                 <div id="botsLive" style="font-size: 2rem; font-weight: 700; color: #9146ff;">0</div>
                             </div>
                             <div style="background: rgba(255,105,180,0.1); border: 1px solid rgba(255,105,180,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Admins</div>
+                                <div data-i18n="stat_admins" style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Admins</div>
                                 <div id="adminsLive" style="font-size: 2rem; font-weight: 700; color: #ff69b4;">0</div>
                             </div>
                             <div style="background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.3); border-radius: 8px; padding: 1.5rem; text-align: center;">
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Moderators</div>
+                                <div data-i18n="stat_moderators" style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">Moderators</div>
                                 <div id="modsLive" style="font-size: 2rem; font-weight: 700; color: #ff6b35;">0</div>
                             </div>
                         </div>
                     </div>
 
                     <div style="margin-top: 2rem;">
-                        <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; color: rgba(255,255,255,0.9);">Member Overview</div>
+                        <div data-i18n="heading_memberOverview" style="font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; color: rgba(255,255,255,0.9);">Member Overview</div>
                         <div class="content-grid wide">
                             <div class="panel">
-                                <div class="panel-header"><div class="panel-title">📊 All Member Types</div></div>
+                                <div class="panel-header"><div class="panel-title" data-i18n="panel_allMemberTypes">📊 All Member Types</div></div>
                                 <div class="panel-content">
                                     <div class="graph-container"><canvas id="allMembersChart" width="400" height="350"></canvas></div>
                                 </div>
                             </div>
                             <div class="panel" style="max-height: 500px; overflow-y: auto;">
-                                <div class="panel-header"><div class="panel-title">👑 Server Staff</div></div>
+                                <div class="panel-header"><div class="panel-title" data-i18n="panel_serverStaff">👑 Server Staff</div></div>
                                 <div class="panel-content" id="staffPanel">
                                     <div style="color: rgba(255,255,255,0.5); padding: 1rem; text-align: center; font-size: 0.85rem;">Select a server to view staff</div>
                                 </div>
@@ -1615,7 +1615,7 @@
                 <!-- Member Events Section -->
                 <div id="events-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Member Activity</div>
+                        <div class="content-title" data-i18n="title_memberActivity">Member Activity</div>
                         <div class="content-subtitle">Live member events: joins, leaves, invites, and boosts</div>
                     </div>
                     <div class="content-grid">
@@ -1633,23 +1633,23 @@
                 <!-- Settings Section -->
                 <div id="settings-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Settings</div>
-                        <div class="content-subtitle">Configure bot settings and server preferences</div>
+                        <div class="content-title" data-i18n="title_settings">Settings</div>
+                        <div class="content-subtitle" data-i18n="subtitle_settings">Configure bot settings and server preferences</div>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⚙️ Bot Configuration</div></div>
+                            <div class="panel-header"><div class="panel-title" data-i18n="panel_botConfig">⚙️ Bot Configuration</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Command Prefix</div>
-                                    <input type="text" class="form-input" placeholder="//" value="//"/>
+                                    <div class="form-label" data-i18n="commandPrefix">Command Prefix</div>
+                                    <input type="text" class="form-input" value="/" readonly disabled style="opacity: 0.6; cursor: not-allowed;" title="Slash commands only"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Bot Nickname</div>
+                                    <div class="form-label" data-i18n="label_botNickname">Bot Nickname</div>
                                     <input type="text" class="form-input" placeholder="SPIDEY BOT" value="SPIDEY BOT" disabled style="opacity: 0.6; cursor: not-allowed;"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Bot Status</div>
+                                    <div class="form-label" data-i18n="label_botStatus">Bot Status</div>
                                     <select class="form-input" disabled style="opacity: 0.6; cursor: not-allowed;">
                                         <option selected>Online</option>
                                         <option>Idle</option>
@@ -1658,62 +1658,75 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Bot Activity</div>
+                                    <div class="form-label" data-i18n="label_botActivity">Bot Activity</div>
                                     <input type="text" class="form-input" placeholder="e.g., with commands // help" disabled style="opacity: 0.6; cursor: not-allowed;"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Default Language</div>
-                                    <select class="form-input">
-                                        <option selected>English</option>
-                                        <option>Spanish</option>
-                                        <option>French</option>
-                                        <option>German</option>
-                                        <option>Portuguese</option>
+                                    <div class="form-label" data-i18n="defaultLanguage">Default Language</div>
+                                    <select class="form-input" id="languageSelect" onchange="changeLanguage(this.value)">
+                                        <option value="en" selected>English</option>
+                                        <option value="es">Español (Spanish)</option>
+                                        <option value="fr">Français (French)</option>
+                                        <option value="de">Deutsch (German)</option>
+                                        <option value="pt">Português (Portuguese)</option>
+                                        <option value="it">Italiano (Italian)</option>
+                                        <option value="nl">Nederlands (Dutch)</option>
+                                        <option value="pl">Polski (Polish)</option>
+                                        <option value="ru">Русский (Russian)</option>
+                                        <option value="ja">日本語 (Japanese)</option>
+                                        <option value="ko">한국어 (Korean)</option>
+                                        <option value="zh">中文 (Chinese)</option>
+                                        <option value="ar">العربية (Arabic)</option>
+                                        <option value="hi">हिन्दी (Hindi)</option>
+                                        <option value="tr">Türkçe (Turkish)</option>
+                                        <option value="sv">Svenska (Swedish)</option>
+                                        <option value="da">Dansk (Danish)</option>
+                                        <option value="no">Norsk (Norwegian)</option>
+                                        <option value="fi">Suomi (Finnish)</option>
+                                        <option value="cs">Čeština (Czech)</option>
+                                        <option value="ro">Română (Romanian)</option>
+                                        <option value="hu">Magyar (Hungarian)</option>
+                                        <option value="uk">Українська (Ukrainian)</option>
+                                        <option value="th">ไทย (Thai)</option>
+                                        <option value="vi">Tiếng Việt (Vietnamese)</option>
+                                        <option value="id">Bahasa Indonesia</option>
+                                        <option value="ms">Bahasa Melayu (Malay)</option>
+                                        <option value="el">Ελληνικά (Greek)</option>
+                                        <option value="bg">Български (Bulgarian)</option>
+                                        <option value="hr">Hrvatski (Croatian)</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Timezone (GMT)</div>
+                                    <div class="form-label" data-i18n="label_timezone">Timezone (GMT)</div>
                                     <input type="text" class="form-input" placeholder="GMT" value="GMT" disabled style="opacity: 0.6; cursor: not-allowed;"/>
                                 </div>
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👥 Role Management</div></div>
+                            <div class="panel-header"><div class="panel-title" data-i18n="panel_roleManagement">👥 Role Management</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">Admin Role</div>
-                                    <select class="form-input">
-                                        <option>Select admin role...</option>
-                                        <option>Admin</option>
-                                        <option>Owner</option>
-                                        <option>Manager</option>
+                                    <div class="form-label" data-i18n="label_adminRole">Admin Role</div>
+                                    <select class="form-input" id="adminRoleSelect">
+                                        <option value="">Select admin role...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Moderator Role</div>
-                                    <select class="form-input">
-                                        <option>Select moderator role...</option>
-                                        <option>Moderator</option>
-                                        <option>Helper</option>
-                                        <option>Staff</option>
+                                    <div class="form-label" data-i18n="label_modRole">Moderator Role</div>
+                                    <select class="form-input" id="modRoleSelect">
+                                        <option value="">Select moderator role...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Members Role</div>
-                                    <select class="form-input">
-                                        <option>Select members role...</option>
-                                        <option>@Members</option>
-                                        <option>Users</option>
-                                        <option>Verified</option>
+                                    <div class="form-label" data-i18n="label_membersRole">Members Role</div>
+                                    <select class="form-input" id="membersRoleSelect">
+                                        <option value="">Select members role...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Muted Role</div>
-                                    <select class="form-input">
-                                        <option>Select muted role...</option>
-                                        <option>Muted</option>
-                                        <option>Silenced</option>
-                                        <option>Restricted</option>
+                                    <div class="form-label" data-i18n="label_mutedRole">Muted Role</div>
+                                    <select class="form-input" id="mutedRoleSelect">
+                                        <option value="">Select muted role...</option>
                                     </select>
                                 </div>
                             </div>
@@ -1722,55 +1735,48 @@
 
                     <div class="content-grid" style="margin-top: 2rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📝 Channels</div></div>
+                            <div class="panel-header"><div class="panel-title" data-i18n="panel_channels">📝 Channels</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <div class="form-label">General Channel</div>
-                                    <select class="form-input">
-                                        <option>Select general channel...</option>
-                                        <option>#general</option>
-                                        <option>#main</option>
-                                        <option>#lounge</option>
+                                    <div class="form-label" data-i18n="label_generalChannel">General Channel</div>
+                                    <select class="form-input" id="generalChannelSelect">
+                                        <option value="">Select general channel...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Announcements Channel</div>
-                                    <select class="form-input">
-                                        <option>Select announcements channel...</option>
-                                        <option>#announcements</option>
-                                        <option>#news</option>
+                                    <div class="form-label" data-i18n="label_announcementsChannel">Announcements Channel</div>
+                                    <select class="form-input" id="announcementsChannelSelect">
+                                        <option value="">Select announcements channel...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Welcome Channel</div>
-                                    <select class="form-input">
-                                        <option>Select welcome channel...</option>
-                                        <option>#welcome</option>
-                                        <option>#intro</option>
+                                    <div class="form-label" data-i18n="label_welcomeChannel">Welcome Channel</div>
+                                    <select class="form-input" id="welcomeChannelSelect">
+                                        <option value="">Select welcome channel...</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">✨ Feature Toggles</div></div>
+                            <div class="panel-header"><div class="panel-title" data-i18n="panel_featureToggles">✨ Feature Toggles</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Music Player</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_musicPlayer">Music Player</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Economy System</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_economySystem">Economy System</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Leveling System</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_levelingSystem">Leveling System</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Welcome Messages</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_welcomeMessages">Welcome Messages</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Moderation Tools</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_moderationTools">Moderation Tools</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Social Notifications</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_socialNotifications">Social Notifications</span></label>
                                 </div>
                             </div>
                         </div>
@@ -1781,7 +1787,7 @@
                 <!-- Logging Section -->
                 <div id="logging-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Logging</div>
+                        <div class="content-title" data-i18n="title_logging">Logging</div>
                         <div class="content-subtitle">Configure logging channels</div>
                     </div>
                     <div class="content-grid">
@@ -1830,7 +1836,7 @@
                 <!-- Server Guard Section -->
                 <div id="server-guard-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Server Guard</div>
+                        <div class="content-title" data-i18n="title_serverGuard">Server Guard</div>
                         <div class="content-subtitle">Anti-spam and raid protection</div>
                     </div>
                     <div class="content-grid">
@@ -2025,7 +2031,7 @@
                 <!-- React Roles Section -->
                 <div id="react-roles-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">React Roles</div>
+                        <div class="content-title" data-i18n="title_reactRoles">React Roles</div>
                         <div class="content-subtitle">Reaction-based role assignment</div>
                     </div>
                     <div class="content-grid">
@@ -2196,7 +2202,7 @@
                 <!-- Server Messages Section -->
                 <div id="server-messages-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Server Messages</div>
+                        <div class="content-title" data-i18n="title_serverMessages">Server Messages</div>
                         <div class="content-subtitle">Welcome and goodbye messages</div>
                     </div>
                     <div class="content-grid">
@@ -2232,7 +2238,7 @@
                 <!-- Custom Commands Section -->
                 <div id="custom-commands-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Custom Commands</div>
+                        <div class="content-title" data-i18n="title_customCommands">Custom Commands</div>
                         <div class="content-subtitle">Create custom bot commands</div>
                     </div>
                     <div class="content-grid">
@@ -2276,7 +2282,7 @@
                 <!-- Components Section -->
                 <div id="components-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Components</div>
+                        <div class="content-title" data-i18n="title_components">Components</div>
                         <div class="content-subtitle">Manage bot components and features</div>
                     </div>
                     <div class="content-grid">
@@ -2303,7 +2309,7 @@
                 <!-- XP Levels Section -->
                 <div id="xp-levels-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">XP Levels</div>
+                        <div class="content-title" data-i18n="title_xpLevels">XP Levels</div>
                         <div class="content-subtitle">Configure leveling system</div>
                     </div>
                     <div class="content-grid">
@@ -2368,7 +2374,7 @@
                 <!-- Leaderboards Section -->
                 <div id="leaderboards-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Leaderboards</div>
+                        <div class="content-title" data-i18n="title_leaderboards">Leaderboards</div>
                         <div class="content-subtitle">Configure leaderboard display</div>
                     </div>
                     <div class="content-grid">
@@ -2403,7 +2409,7 @@
                 <!-- Giveaways Section -->
                 <div id="giveaways-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Giveaways</div>
+                        <div class="content-title" data-i18n="title_giveaways">Giveaways</div>
                         <div class="content-subtitle">Manage giveaways</div>
                     </div>
                     <div class="content-grid">
@@ -2441,7 +2447,7 @@
                 <!-- Social Notifs Section -->
                 <div id="social-notifs-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Social Notifications</div>
+                        <div class="content-title" data-i18n="title_socialNotifs">Social Notifications</div>
                         <div class="content-subtitle">Monitor Twitch, TikTok, Kick</div>
                     </div>
                     <div class="content-grid">
@@ -2480,7 +2486,7 @@
                 <!-- Invite Tracking Section -->
                 <div id="invite-tracking-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Invite Tracking</div>
+                        <div class="content-title" data-i18n="title_inviteTracking">Invite Tracking</div>
                         <div class="content-subtitle">Track member invites</div>
                     </div>
                     <div class="content-grid">
@@ -2512,7 +2518,7 @@
                 <!-- Message Counting Section -->
                 <div id="message-counting-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Message Counting</div>
+                        <div class="content-title" data-i18n="title_messageCounting">Message Counting</div>
                         <div class="content-subtitle">Track message statistics</div>
                     </div>
                     <div class="content-grid">
@@ -2544,7 +2550,7 @@
                 <!-- Recordings Section -->
                 <div id="recordings-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Recordings</div>
+                        <div class="content-title" data-i18n="title_recordings">Recordings</div>
                         <div class="content-subtitle">Manage voice recordings</div>
                     </div>
                     <div class="content-grid">
@@ -2577,7 +2583,7 @@
                 <!-- Reminders Section -->
                 <div id="reminders-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Reminders</div>
+                        <div class="content-title" data-i18n="title_reminders">Reminders</div>
                         <div class="content-subtitle">Configure reminders</div>
                     </div>
                     <div class="content-grid">
@@ -2624,7 +2630,7 @@
                 <!-- Statistics Channels Section -->
                 <div id="statistics-channels-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Statistics Channels</div>
+                        <div class="content-title" data-i18n="title_statsChannels">Statistics Channels</div>
                         <div class="content-subtitle">Display server statistics</div>
                     </div>
                     <div class="content-grid">
@@ -2666,7 +2672,7 @@
                 <!-- Subscriptions Section -->
                 <div id="subscriptions-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">Premium Subscriptions</div>
+                        <div class="content-title" data-i18n="title_premium">Premium Subscriptions</div>
                         <div class="content-subtitle">Manage premium features</div>
                     </div>
                     <div class="content-grid">
@@ -2713,7 +2719,7 @@
                 <!-- Colors Section -->
                 <div id="colors-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title">UI Colors</div>
+                        <div class="content-title" data-i18n="title_colors">UI Colors</div>
                         <div class="content-subtitle">Customize dashboard colors</div>
                     </div>
                     <div class="content-grid">
@@ -2824,7 +2830,255 @@
     </div>
 
     <script>
-        function toggleDarkMode() {
+        // ========== I18N TRANSLATION ENGINE ==========
+        const translations = {
+            en: {},
+            es: {
+                overlay_selectServer: 'Seleccionar un Servidor', overlay_selectServerDesc: 'Elige un servidor del menú superior para ver su panel y gestionar configuraciones.',
+                nav_main: 'PRINCIPAL', nav_core: 'NÚCLEO', nav_features: 'FUNCIONES', nav_systems: 'SISTEMAS', nav_monitoring: 'MONITOREO', nav_advanced: 'AVANZADO', nav_subscriptions: 'SUSCRIPCIONES', nav_tools: 'HERRAMIENTAS',
+                sidebar_dashboard: 'Panel', sidebar_settings: 'Configuración', sidebar_logging: 'Registros', sidebar_serverGuard: 'Guardia del Servidor', sidebar_reactRoles: 'Roles de Reacción', sidebar_roleCategories: 'Categorías de Roles', sidebar_serverMessages: 'Mensajes del Servidor', sidebar_commands: 'Comandos', sidebar_components: 'Componentes', sidebar_xpLevels: 'Niveles XP', sidebar_leaderboards: 'Clasificaciones', sidebar_giveaways: 'Sorteos', sidebar_memberActivity: 'Actividad de Miembros', sidebar_socialNotifs: 'Notificaciones', sidebar_invites: 'Invitaciones', sidebar_messages: 'Mensajes', sidebar_recordings: 'Grabaciones', sidebar_reminders: 'Recordatorios', sidebar_stats: 'Estadísticas', sidebar_premium: 'Premium', sidebar_colors: 'Colores',
+                title_dashboard: 'Panel', subtitle_dashboard: 'Análisis del servidor en tiempo real', title_settings: 'Configuración', subtitle_settings: 'Configurar el bot y preferencias del servidor', title_logging: 'Registros', title_serverGuard: 'Guardia del Servidor', title_reactRoles: 'Roles de Reacción', title_serverMessages: 'Mensajes del Servidor', title_customCommands: 'Comandos Personalizados', title_components: 'Componentes', title_xpLevels: 'Niveles XP', title_leaderboards: 'Clasificaciones', title_giveaways: 'Sorteos', title_memberActivity: 'Actividad de Miembros', title_socialNotifs: 'Notificaciones Sociales', title_inviteTracking: 'Seguimiento de Invitaciones', title_messageCounting: 'Conteo de Mensajes', title_recordings: 'Grabaciones', title_reminders: 'Recordatorios', title_statsChannels: 'Canales de Estadísticas', title_premium: 'Suscripciones Premium', title_colors: 'Colores de Interfaz',
+                stat_totalMembers: 'Miembros Totales', stat_verifiedUsers: 'Usuarios Verificados', stat_bots: 'Bots', stat_admins: 'Administradores', stat_moderators: 'Moderadores', heading_memberOverview: 'Resumen de Miembros',
+                panel_allMemberTypes: '📊 Todos los Tipos de Miembros', panel_serverStaff: '👑 Personal del Servidor', panel_botConfig: '⚙️ Configuración del Bot', panel_roleManagement: '👥 Gestión de Roles', panel_channels: '📝 Canales', panel_featureToggles: '✨ Funciones',
+                commandPrefix: 'Prefijo de Comando', defaultLanguage: 'Idioma Predeterminado', label_botNickname: 'Apodo del Bot', label_botStatus: 'Estado del Bot', label_botActivity: 'Actividad del Bot', label_timezone: 'Zona Horaria (GMT)',
+                label_adminRole: 'Rol de Administrador', label_modRole: 'Rol de Moderador', label_membersRole: 'Rol de Miembros', label_mutedRole: 'Rol de Silenciado',
+                label_generalChannel: 'Canal General', label_announcementsChannel: 'Canal de Anuncios', label_welcomeChannel: 'Canal de Bienvenida',
+                toggle_musicPlayer: 'Reproductor de Música', toggle_economySystem: 'Sistema de Economía', toggle_levelingSystem: 'Sistema de Niveles', toggle_welcomeMessages: 'Mensajes de Bienvenida', toggle_moderationTools: 'Herramientas de Moderación', toggle_socialNotifications: 'Notificaciones Sociales'
+            },
+            fr: {
+                overlay_selectServer: 'Sélectionner un Serveur', overlay_selectServerDesc: 'Choisissez un serveur dans le menu ci-dessus pour afficher son tableau de bord et gérer les paramètres.',
+                nav_main: 'PRINCIPAL', nav_core: 'BASE', nav_features: 'FONCTIONNALITÉS', nav_systems: 'SYSTÈMES', nav_monitoring: 'SURVEILLANCE', nav_advanced: 'AVANCÉ', nav_subscriptions: 'ABONNEMENTS', nav_tools: 'OUTILS',
+                sidebar_dashboard: 'Tableau de bord', sidebar_settings: 'Paramètres', sidebar_logging: 'Journaux', sidebar_serverGuard: 'Garde du Serveur', sidebar_reactRoles: 'Rôles de Réaction', sidebar_roleCategories: 'Catégories de Rôles', sidebar_serverMessages: 'Messages du Serveur', sidebar_commands: 'Commandes', sidebar_components: 'Composants', sidebar_xpLevels: 'Niveaux XP', sidebar_leaderboards: 'Classements', sidebar_giveaways: 'Concours', sidebar_memberActivity: 'Activité des Membres', sidebar_socialNotifs: 'Notifications', sidebar_invites: 'Invitations', sidebar_messages: 'Messages', sidebar_recordings: 'Enregistrements', sidebar_reminders: 'Rappels', sidebar_stats: 'Statistiques', sidebar_premium: 'Premium', sidebar_colors: 'Couleurs',
+                title_dashboard: 'Tableau de bord', subtitle_dashboard: 'Analyses du serveur en temps réel', title_settings: 'Paramètres', subtitle_settings: 'Configurer le bot et les préférences du serveur', title_logging: 'Journaux', title_serverGuard: 'Garde du Serveur', title_reactRoles: 'Rôles de Réaction', title_serverMessages: 'Messages du Serveur', title_customCommands: 'Commandes Personnalisées', title_components: 'Composants', title_xpLevels: 'Niveaux XP', title_leaderboards: 'Classements', title_giveaways: 'Concours', title_memberActivity: 'Activité des Membres', title_socialNotifs: 'Notifications Sociales', title_inviteTracking: 'Suivi des Invitations', title_messageCounting: 'Compteur de Messages', title_recordings: 'Enregistrements', title_reminders: 'Rappels', title_statsChannels: 'Canaux de Statistiques', title_premium: 'Abonnements Premium', title_colors: 'Couleurs de l\'Interface',
+                stat_totalMembers: 'Membres Totaux', stat_verifiedUsers: 'Utilisateurs Vérifiés', stat_bots: 'Bots', stat_admins: 'Administrateurs', stat_moderators: 'Modérateurs', heading_memberOverview: 'Aperçu des Membres',
+                panel_allMemberTypes: '📊 Tous les Types de Membres', panel_serverStaff: '👑 Personnel du Serveur', panel_botConfig: '⚙️ Configuration du Bot', panel_roleManagement: '👥 Gestion des Rôles', panel_channels: '📝 Canaux', panel_featureToggles: '✨ Fonctionnalités',
+                commandPrefix: 'Préfixe de Commande', defaultLanguage: 'Langue par Défaut', label_botNickname: 'Surnom du Bot', label_botStatus: 'Statut du Bot', label_botActivity: 'Activité du Bot', label_timezone: 'Fuseau Horaire (GMT)',
+                label_adminRole: 'Rôle Administrateur', label_modRole: 'Rôle Modérateur', label_membersRole: 'Rôle Membres', label_mutedRole: 'Rôle Muet',
+                label_generalChannel: 'Canal Général', label_announcementsChannel: 'Canal d\'Annonces', label_welcomeChannel: 'Canal de Bienvenue',
+                toggle_musicPlayer: 'Lecteur Musique', toggle_economySystem: 'Système Économique', toggle_levelingSystem: 'Système de Niveaux', toggle_welcomeMessages: 'Messages de Bienvenue', toggle_moderationTools: 'Outils de Modération', toggle_socialNotifications: 'Notifications Sociales'
+            },
+            de: {
+                overlay_selectServer: 'Server auswählen', overlay_selectServerDesc: 'Wähle einen Server aus dem Dropdown oben, um das Dashboard zu sehen und Einstellungen zu verwalten.',
+                nav_main: 'HAUPT', nav_core: 'KERN', nav_features: 'FUNKTIONEN', nav_systems: 'SYSTEME', nav_monitoring: 'ÜBERWACHUNG', nav_advanced: 'ERWEITERT', nav_subscriptions: 'ABONNEMENTS', nav_tools: 'WERKZEUGE',
+                sidebar_dashboard: 'Dashboard', sidebar_settings: 'Einstellungen', sidebar_logging: 'Protokolle', sidebar_serverGuard: 'Server-Schutz', sidebar_reactRoles: 'Reaktionsrollen', sidebar_roleCategories: 'Rollenkategorien', sidebar_serverMessages: 'Servernachrichten', sidebar_commands: 'Befehle', sidebar_components: 'Komponenten', sidebar_xpLevels: 'XP-Stufen', sidebar_leaderboards: 'Bestenlisten', sidebar_giveaways: 'Verlosungen', sidebar_memberActivity: 'Mitgliederaktivität', sidebar_socialNotifs: 'Benachrichtigungen', sidebar_invites: 'Einladungen', sidebar_messages: 'Nachrichten', sidebar_recordings: 'Aufnahmen', sidebar_reminders: 'Erinnerungen', sidebar_stats: 'Statistiken', sidebar_premium: 'Premium', sidebar_colors: 'Farben',
+                title_dashboard: 'Dashboard', subtitle_dashboard: 'Echtzeit-Serveranalysen', title_settings: 'Einstellungen', subtitle_settings: 'Bot-Einstellungen und Serverpräferenzen konfigurieren', title_logging: 'Protokolle', title_serverGuard: 'Server-Schutz', title_reactRoles: 'Reaktionsrollen', title_serverMessages: 'Servernachrichten', title_customCommands: 'Benutzerdefinierte Befehle', title_components: 'Komponenten', title_xpLevels: 'XP-Stufen', title_leaderboards: 'Bestenlisten', title_giveaways: 'Verlosungen', title_memberActivity: 'Mitgliederaktivität', title_socialNotifs: 'Soziale Benachrichtigungen', title_inviteTracking: 'Einladungsverfolgung', title_messageCounting: 'Nachrichtenzählung', title_recordings: 'Aufnahmen', title_reminders: 'Erinnerungen', title_statsChannels: 'Statistikkanäle', title_premium: 'Premium-Abonnements', title_colors: 'UI-Farben',
+                stat_totalMembers: 'Gesamtmitglieder', stat_verifiedUsers: 'Verifizierte Benutzer', stat_bots: 'Bots', stat_admins: 'Administratoren', stat_moderators: 'Moderatoren', heading_memberOverview: 'Mitgliederübersicht',
+                panel_allMemberTypes: '📊 Alle Mitgliedertypen', panel_serverStaff: '👑 Serverpersonal', panel_botConfig: '⚙️ Bot-Konfiguration', panel_roleManagement: '👥 Rollenverwaltung', panel_channels: '📝 Kanäle', panel_featureToggles: '✨ Funktionen',
+                commandPrefix: 'Befehlspräfix', defaultLanguage: 'Standardsprache', label_botNickname: 'Bot-Spitzname', label_botStatus: 'Bot-Status', label_botActivity: 'Bot-Aktivität', label_timezone: 'Zeitzone (GMT)',
+                label_adminRole: 'Admin-Rolle', label_modRole: 'Moderator-Rolle', label_membersRole: 'Mitglieder-Rolle', label_mutedRole: 'Stummgeschaltet-Rolle',
+                label_generalChannel: 'Allgemeiner Kanal', label_announcementsChannel: 'Ankündigungskanal', label_welcomeChannel: 'Willkommenskanal',
+                toggle_musicPlayer: 'Musikspieler', toggle_economySystem: 'Wirtschaftssystem', toggle_levelingSystem: 'Levelsystem', toggle_welcomeMessages: 'Willkommensnachrichten', toggle_moderationTools: 'Moderationstools', toggle_socialNotifications: 'Soziale Benachrichtigungen'
+            },
+            pt: {
+                nav_main: 'PRINCIPAL', nav_core: 'NÚCLEO', nav_features: 'RECURSOS', nav_systems: 'SISTEMAS', nav_monitoring: 'MONITORAMENTO', nav_advanced: 'AVANÇADO', nav_subscriptions: 'ASSINATURAS', nav_tools: 'FERRAMENTAS',
+                sidebar_dashboard: 'Painel', sidebar_settings: 'Configurações', sidebar_logging: 'Registros', sidebar_serverGuard: 'Guarda do Servidor', sidebar_reactRoles: 'Cargos de Reação', sidebar_roleCategories: 'Categorias de Cargos', sidebar_serverMessages: 'Mensagens do Servidor', sidebar_commands: 'Comandos', sidebar_components: 'Componentes', sidebar_xpLevels: 'Níveis XP', sidebar_leaderboards: 'Classificações', sidebar_giveaways: 'Sorteios', sidebar_memberActivity: 'Atividade de Membros', sidebar_socialNotifs: 'Notificações', sidebar_invites: 'Convites', sidebar_messages: 'Mensagens', sidebar_recordings: 'Gravações', sidebar_reminders: 'Lembretes', sidebar_stats: 'Estatísticas', sidebar_premium: 'Premium', sidebar_colors: 'Cores',
+                title_dashboard: 'Painel', subtitle_dashboard: 'Análises do servidor em tempo real', title_settings: 'Configurações', subtitle_settings: 'Configurar bot e preferências do servidor',
+                stat_totalMembers: 'Total de Membros', stat_verifiedUsers: 'Usuários Verificados', stat_bots: 'Bots', stat_admins: 'Administradores', stat_moderators: 'Moderadores', heading_memberOverview: 'Visão Geral dos Membros',
+                panel_botConfig: '⚙️ Configuração do Bot', panel_roleManagement: '👥 Gerenciamento de Cargos', panel_channels: '📝 Canais', panel_featureToggles: '✨ Recursos',
+                commandPrefix: 'Prefixo de Comando', defaultLanguage: 'Idioma Padrão', label_botNickname: 'Apelido do Bot', label_botStatus: 'Status do Bot', label_botActivity: 'Atividade do Bot', label_timezone: 'Fuso Horário (GMT)',
+                label_adminRole: 'Cargo Admin', label_modRole: 'Cargo Moderador', label_membersRole: 'Cargo Membros', label_mutedRole: 'Cargo Silenciado',
+                label_generalChannel: 'Canal Geral', label_announcementsChannel: 'Canal de Anúncios', label_welcomeChannel: 'Canal de Boas-Vindas',
+                toggle_musicPlayer: 'Tocador de Música', toggle_economySystem: 'Sistema Econômico', toggle_levelingSystem: 'Sistema de Níveis', toggle_welcomeMessages: 'Mensagens de Boas-Vindas', toggle_moderationTools: 'Ferramentas de Moderação', toggle_socialNotifications: 'Notificações Sociais'
+            },
+            it: {
+                nav_main: 'PRINCIPALE', nav_core: 'BASE', nav_features: 'FUNZIONALITÀ', nav_systems: 'SISTEMI', nav_monitoring: 'MONITORAGGIO', nav_advanced: 'AVANZATO', nav_subscriptions: 'ABBONAMENTI', nav_tools: 'STRUMENTI',
+                sidebar_dashboard: 'Pannello', sidebar_settings: 'Impostazioni', sidebar_logging: 'Registri', sidebar_serverGuard: 'Guardia del Server', sidebar_reactRoles: 'Ruoli di Reazione', sidebar_roleCategories: 'Categorie Ruoli', sidebar_serverMessages: 'Messaggi del Server', sidebar_commands: 'Comandi', sidebar_components: 'Componenti', sidebar_xpLevels: 'Livelli XP', sidebar_leaderboards: 'Classifiche', sidebar_giveaways: 'Giveaway', sidebar_memberActivity: 'Attività Membri', sidebar_socialNotifs: 'Notifiche', sidebar_invites: 'Inviti', sidebar_messages: 'Messaggi', sidebar_recordings: 'Registrazioni', sidebar_reminders: 'Promemoria', sidebar_stats: 'Statistiche', sidebar_premium: 'Premium', sidebar_colors: 'Colori',
+                title_dashboard: 'Pannello', subtitle_dashboard: 'Analisi del server in tempo reale', title_settings: 'Impostazioni', subtitle_settings: 'Configura il bot e le preferenze del server',
+                stat_totalMembers: 'Membri Totali', stat_verifiedUsers: 'Utenti Verificati', stat_bots: 'Bot', stat_admins: 'Amministratori', stat_moderators: 'Moderatori', heading_memberOverview: 'Panoramica Membri',
+                panel_botConfig: '⚙️ Configurazione Bot', panel_roleManagement: '👥 Gestione Ruoli', panel_channels: '📝 Canali', panel_featureToggles: '✨ Funzionalità',
+                commandPrefix: 'Prefisso Comando', defaultLanguage: 'Lingua Predefinita', label_botNickname: 'Soprannome Bot', label_botStatus: 'Stato Bot', label_botActivity: 'Attività Bot', label_timezone: 'Fuso Orario (GMT)',
+                label_adminRole: 'Ruolo Admin', label_modRole: 'Ruolo Moderatore', label_membersRole: 'Ruolo Membri', label_mutedRole: 'Ruolo Silenziato',
+                toggle_musicPlayer: 'Lettore Musicale', toggle_economySystem: 'Sistema Economico', toggle_levelingSystem: 'Sistema di Livelli', toggle_welcomeMessages: 'Messaggi di Benvenuto', toggle_moderationTools: 'Strumenti di Moderazione', toggle_socialNotifications: 'Notifiche Sociali'
+            },
+            nl: {
+                nav_main: 'HOOFD', nav_core: 'KERN', nav_features: 'FUNCTIES', nav_systems: 'SYSTEMEN', nav_monitoring: 'MONITORING', nav_advanced: 'GEAVANCEERD', nav_subscriptions: 'ABONNEMENTEN', nav_tools: 'GEREEDSCHAP',
+                sidebar_dashboard: 'Dashboard', sidebar_settings: 'Instellingen', sidebar_logging: 'Logboeken', sidebar_serverGuard: 'Server Bewaker', sidebar_reactRoles: 'Reactie Rollen', sidebar_roleCategories: 'Rolcategorieën', sidebar_serverMessages: 'Serverberichten', sidebar_commands: 'Commando\'s', sidebar_components: 'Componenten', sidebar_xpLevels: 'XP Niveaus', sidebar_leaderboards: 'Ranglijsten', sidebar_giveaways: 'Weggeefacties', sidebar_memberActivity: 'Ledenactiviteit', sidebar_socialNotifs: 'Meldingen', sidebar_invites: 'Uitnodigingen', sidebar_messages: 'Berichten', sidebar_recordings: 'Opnames', sidebar_reminders: 'Herinneringen', sidebar_stats: 'Statistieken', sidebar_premium: 'Premium', sidebar_colors: 'Kleuren',
+                title_dashboard: 'Dashboard', subtitle_dashboard: 'Realtime serveranalyses', title_settings: 'Instellingen', subtitle_settings: 'Bot-instellingen en servervoorkeuren configureren',
+                stat_totalMembers: 'Totaal Leden', stat_verifiedUsers: 'Geverifieerde Gebruikers', stat_bots: 'Bots', stat_admins: 'Beheerders', stat_moderators: 'Moderatoren', heading_memberOverview: 'Ledenoverzicht',
+                commandPrefix: 'Commandoprefix', defaultLanguage: 'Standaardtaal',
+                toggle_musicPlayer: 'Muziekspeler', toggle_economySystem: 'Economiesysteem', toggle_levelingSystem: 'Nivellering', toggle_welcomeMessages: 'Welkomstberichten', toggle_moderationTools: 'Moderatietools', toggle_socialNotifications: 'Sociale Meldingen'
+            },
+            pl: {
+                nav_main: 'GŁÓWNE', nav_core: 'RDZEŃ', nav_features: 'FUNKCJE', nav_systems: 'SYSTEMY', nav_monitoring: 'MONITORING', nav_advanced: 'ZAAWANSOWANE', nav_subscriptions: 'SUBSKRYPCJE', nav_tools: 'NARZĘDZIA',
+                sidebar_dashboard: 'Panel', sidebar_settings: 'Ustawienia', sidebar_logging: 'Logi', sidebar_serverGuard: 'Strażnik Serwera', sidebar_reactRoles: 'Role Reakcji', sidebar_commands: 'Polecenia', sidebar_components: 'Komponenty', sidebar_xpLevels: 'Poziomy XP', sidebar_leaderboards: 'Rankingi', sidebar_giveaways: 'Konkursy', sidebar_memberActivity: 'Aktywność Członków', sidebar_invites: 'Zaproszenia', sidebar_messages: 'Wiadomości', sidebar_recordings: 'Nagrania', sidebar_reminders: 'Przypomnienia', sidebar_stats: 'Statystyki', sidebar_premium: 'Premium', sidebar_colors: 'Kolory',
+                title_dashboard: 'Panel', subtitle_dashboard: 'Analiza serwera w czasie rzeczywistym', title_settings: 'Ustawienia', subtitle_settings: 'Konfiguracja bota i preferencji serwera',
+                stat_totalMembers: 'Wszystkich Członków', stat_verifiedUsers: 'Zweryfikowani', stat_bots: 'Boty', stat_admins: 'Administratorzy', stat_moderators: 'Moderatorzy',
+                commandPrefix: 'Prefiks Polecenia', defaultLanguage: 'Domyślny Język'
+            },
+            ru: {
+                nav_main: 'ГЛАВНОЕ', nav_core: 'ОСНОВНОЕ', nav_features: 'ФУНКЦИИ', nav_systems: 'СИСТЕМЫ', nav_monitoring: 'МОНИТОРИНГ', nav_advanced: 'РАСШИРЕННОЕ', nav_subscriptions: 'ПОДПИСКИ', nav_tools: 'ИНСТРУМЕНТЫ',
+                sidebar_dashboard: 'Панель', sidebar_settings: 'Настройки', sidebar_logging: 'Логи', sidebar_serverGuard: 'Защита Сервера', sidebar_reactRoles: 'Роли Реакций', sidebar_roleCategories: 'Категории Ролей', sidebar_serverMessages: 'Сообщения Сервера', sidebar_commands: 'Команды', sidebar_components: 'Компоненты', sidebar_xpLevels: 'Уровни XP', sidebar_leaderboards: 'Рейтинги', sidebar_giveaways: 'Розыгрыши', sidebar_memberActivity: 'Активность Участников', sidebar_socialNotifs: 'Уведомления', sidebar_invites: 'Приглашения', sidebar_messages: 'Сообщения', sidebar_recordings: 'Записи', sidebar_reminders: 'Напоминания', sidebar_stats: 'Статистика', sidebar_premium: 'Премиум', sidebar_colors: 'Цвета',
+                title_dashboard: 'Панель', subtitle_dashboard: 'Аналитика сервера в реальном времени', title_settings: 'Настройки', subtitle_settings: 'Настройка бота и предпочтений сервера',
+                stat_totalMembers: 'Всего Участников', stat_verifiedUsers: 'Проверенные', stat_bots: 'Боты', stat_admins: 'Администраторы', stat_moderators: 'Модераторы', heading_memberOverview: 'Обзор Участников',
+                panel_botConfig: '⚙️ Конфигурация Бота', panel_roleManagement: '👥 Управление Ролями', panel_channels: '📝 Каналы', panel_featureToggles: '✨ Функции',
+                commandPrefix: 'Префикс Команды', defaultLanguage: 'Язык по Умолчанию', label_botNickname: 'Ник Бота', label_botStatus: 'Статус Бота', label_botActivity: 'Активность Бота', label_timezone: 'Часовой Пояс (GMT)',
+                label_adminRole: 'Роль Администратора', label_modRole: 'Роль Модератора', label_membersRole: 'Роль Участников', label_mutedRole: 'Роль Мута',
+                toggle_musicPlayer: 'Музыкальный Плеер', toggle_economySystem: 'Экономическая Система', toggle_levelingSystem: 'Система Уровней', toggle_welcomeMessages: 'Приветственные Сообщения', toggle_moderationTools: 'Инструменты Модерации', toggle_socialNotifications: 'Социальные Уведомления'
+            },
+            ja: {
+                nav_main: 'メイン', nav_core: 'コア', nav_features: '機能', nav_systems: 'システム', nav_monitoring: 'モニタリング', nav_advanced: '詳細', nav_subscriptions: 'サブスクリプション', nav_tools: 'ツール',
+                sidebar_dashboard: 'ダッシュボード', sidebar_settings: '設定', sidebar_logging: 'ログ', sidebar_serverGuard: 'サーバーガード', sidebar_reactRoles: 'リアクションロール', sidebar_roleCategories: 'ロールカテゴリ', sidebar_serverMessages: 'サーバーメッセージ', sidebar_commands: 'コマンド', sidebar_components: 'コンポーネント', sidebar_xpLevels: 'XPレベル', sidebar_leaderboards: 'リーダーボード', sidebar_giveaways: 'プレゼント', sidebar_memberActivity: 'メンバー活動', sidebar_socialNotifs: '通知', sidebar_invites: '招待', sidebar_messages: 'メッセージ', sidebar_recordings: '録音', sidebar_reminders: 'リマインダー', sidebar_stats: '統計', sidebar_premium: 'プレミアム', sidebar_colors: '色',
+                title_dashboard: 'ダッシュボード', subtitle_dashboard: 'リアルタイムサーバー分析', title_settings: '設定', subtitle_settings: 'ボットの設定とサーバーの環境設定',
+                stat_totalMembers: '合計メンバー', stat_verifiedUsers: '認証済みユーザー', stat_bots: 'ボット', stat_admins: '管理者', stat_moderators: 'モデレーター', heading_memberOverview: 'メンバー概要',
+                commandPrefix: 'コマンドプレフィックス', defaultLanguage: 'デフォルト言語'
+            },
+            ko: {
+                nav_main: '메인', nav_core: '코어', nav_features: '기능', nav_systems: '시스템', nav_monitoring: '모니터링', nav_advanced: '고급', nav_subscriptions: '구독', nav_tools: '도구',
+                sidebar_dashboard: '대시보드', sidebar_settings: '설정', sidebar_logging: '로그', sidebar_serverGuard: '서버 가드', sidebar_reactRoles: '반응 역할', sidebar_commands: '명령어', sidebar_components: '구성요소', sidebar_xpLevels: 'XP 레벨', sidebar_leaderboards: '리더보드', sidebar_giveaways: '경품', sidebar_memberActivity: '멤버 활동', sidebar_invites: '초대', sidebar_messages: '메시지', sidebar_recordings: '녹음', sidebar_reminders: '알림', sidebar_stats: '통계', sidebar_premium: '프리미엄', sidebar_colors: '색상',
+                title_dashboard: '대시보드', subtitle_dashboard: '실시간 서버 분석', title_settings: '설정', subtitle_settings: '봇 설정 및 서버 환경설정',
+                stat_totalMembers: '전체 멤버', stat_verifiedUsers: '인증된 사용자', stat_bots: '봇', stat_admins: '관리자', stat_moderators: '모더레이터',
+                commandPrefix: '명령어 접두사', defaultLanguage: '기본 언어'
+            },
+            zh: {
+                nav_main: '主要', nav_core: '核心', nav_features: '功能', nav_systems: '系统', nav_monitoring: '监控', nav_advanced: '高级', nav_subscriptions: '订阅', nav_tools: '工具',
+                sidebar_dashboard: '仪表板', sidebar_settings: '设置', sidebar_logging: '日志', sidebar_serverGuard: '服务器守护', sidebar_reactRoles: '反应角色', sidebar_roleCategories: '角色分类', sidebar_serverMessages: '服务器消息', sidebar_commands: '命令', sidebar_components: '组件', sidebar_xpLevels: 'XP等级', sidebar_leaderboards: '排行榜', sidebar_giveaways: '抽奖', sidebar_memberActivity: '成员活动', sidebar_socialNotifs: '通知', sidebar_invites: '邀请', sidebar_messages: '消息', sidebar_recordings: '录音', sidebar_reminders: '提醒', sidebar_stats: '统计', sidebar_premium: '高级版', sidebar_colors: '颜色',
+                title_dashboard: '仪表板', subtitle_dashboard: '实时服务器分析', title_settings: '设置', subtitle_settings: '配置机器人设置和服务器偏好',
+                stat_totalMembers: '总成员', stat_verifiedUsers: '已验证用户', stat_bots: '机器人', stat_admins: '管理员', stat_moderators: '版主', heading_memberOverview: '成员概览',
+                commandPrefix: '命令前缀', defaultLanguage: '默认语言'
+            },
+            ar: {
+                nav_main: 'رئيسي', nav_core: 'أساسي', nav_features: 'الميزات', nav_systems: 'الأنظمة', nav_monitoring: 'المراقبة', nav_advanced: 'متقدم', nav_subscriptions: 'الاشتراكات', nav_tools: 'الأدوات',
+                sidebar_dashboard: 'لوحة القيادة', sidebar_settings: 'الإعدادات', sidebar_logging: 'السجلات', sidebar_serverGuard: 'حارس الخادم', sidebar_reactRoles: 'أدوار التفاعل', sidebar_commands: 'الأوامر', sidebar_components: 'المكونات', sidebar_xpLevels: 'مستويات XP', sidebar_leaderboards: 'لوحات المتصدرين', sidebar_giveaways: 'الهدايا', sidebar_memberActivity: 'نشاط الأعضاء', sidebar_invites: 'الدعوات', sidebar_messages: 'الرسائل', sidebar_recordings: 'التسجيلات', sidebar_reminders: 'التذكيرات', sidebar_stats: 'الإحصائيات', sidebar_premium: 'بريميوم', sidebar_colors: 'الألوان',
+                title_dashboard: 'لوحة القيادة', subtitle_dashboard: 'تحليلات الخادم في الوقت الفعلي', title_settings: 'الإعدادات',
+                stat_totalMembers: 'إجمالي الأعضاء', stat_verifiedUsers: 'المستخدمون الموثقون', stat_bots: 'البوتات', stat_admins: 'المشرفون', stat_moderators: 'المراقبون',
+                commandPrefix: 'بادئة الأمر', defaultLanguage: 'اللغة الافتراضية'
+            },
+            hi: {
+                nav_main: 'मुख्य', nav_core: 'कोर', nav_features: 'सुविधाएँ', nav_systems: 'सिस्टम', nav_monitoring: 'निगरानी', nav_advanced: 'उन्नत', nav_subscriptions: 'सदस्यता', nav_tools: 'उपकरण',
+                sidebar_dashboard: 'डैशबोर्ड', sidebar_settings: 'सेटिंग्स', sidebar_logging: 'लॉग', sidebar_serverGuard: 'सर्वर गार्ड', sidebar_commands: 'कमांड', sidebar_memberActivity: 'सदस्य गतिविधि', sidebar_messages: 'संदेश', sidebar_premium: 'प्रीमियम', sidebar_colors: 'रंग',
+                title_dashboard: 'डैशबोर्ड', subtitle_dashboard: 'रीयल-टाइम सर्वर एनालिटिक्स', title_settings: 'सेटिंग्स',
+                stat_totalMembers: 'कुल सदस्य', stat_verifiedUsers: 'सत्यापित उपयोगकर्ता', stat_bots: 'बॉट', stat_admins: 'व्यवस्थापक', stat_moderators: 'मॉडरेटर',
+                commandPrefix: 'कमांड प्रीफ़िक्स', defaultLanguage: 'डिफ़ॉल्ट भाषा'
+            },
+            tr: {
+                nav_main: 'ANA', nav_core: 'ÇEKIRDEK', nav_features: 'ÖZELLİKLER', nav_systems: 'SİSTEMLER', nav_monitoring: 'İZLEME', nav_advanced: 'GELİŞMİŞ', nav_subscriptions: 'ABONELİKLER', nav_tools: 'ARAÇLAR',
+                sidebar_dashboard: 'Gösterge Paneli', sidebar_settings: 'Ayarlar', sidebar_logging: 'Günlükler', sidebar_serverGuard: 'Sunucu Koruması', sidebar_reactRoles: 'Tepki Rolleri', sidebar_commands: 'Komutlar', sidebar_components: 'Bileşenler', sidebar_xpLevels: 'XP Seviyeleri', sidebar_leaderboards: 'Sıralamalar', sidebar_giveaways: 'Çekilişler', sidebar_memberActivity: 'Üye Etkinliği', sidebar_invites: 'Davetler', sidebar_messages: 'Mesajlar', sidebar_recordings: 'Kayıtlar', sidebar_reminders: 'Hatırlatıcılar', sidebar_stats: 'İstatistikler', sidebar_premium: 'Premium', sidebar_colors: 'Renkler',
+                title_dashboard: 'Gösterge Paneli', subtitle_dashboard: 'Gerçek zamanlı sunucu analitiği', title_settings: 'Ayarlar',
+                stat_totalMembers: 'Toplam Üyeler', stat_verifiedUsers: 'Doğrulanmış Kullanıcılar', stat_bots: 'Botlar', stat_admins: 'Yöneticiler', stat_moderators: 'Moderatörler',
+                commandPrefix: 'Komut Öneki', defaultLanguage: 'Varsayılan Dil'
+            },
+            sv: { sidebar_dashboard: 'Kontrollpanel', sidebar_settings: 'Inställningar', stat_totalMembers: 'Totalt Medlemmar', stat_verifiedUsers: 'Verifierade', stat_bots: 'Botar', stat_admins: 'Administratörer', stat_moderators: 'Moderatorer', commandPrefix: 'Kommandoprefix', defaultLanguage: 'Standardspråk', title_dashboard: 'Kontrollpanel', title_settings: 'Inställningar' },
+            da: { sidebar_dashboard: 'Kontrolpanel', sidebar_settings: 'Indstillinger', stat_totalMembers: 'Samlet Medlemmer', stat_verifiedUsers: 'Verificerede', stat_bots: 'Bots', stat_admins: 'Administratorer', stat_moderators: 'Moderatorer', commandPrefix: 'Kommandopræfiks', defaultLanguage: 'Standardsprog', title_dashboard: 'Kontrolpanel', title_settings: 'Indstillinger' },
+            no: { sidebar_dashboard: 'Kontrollpanel', sidebar_settings: 'Innstillinger', stat_totalMembers: 'Totalt Medlemmer', stat_verifiedUsers: 'Verifiserte', stat_bots: 'Boter', stat_admins: 'Administratorer', stat_moderators: 'Moderatorer', commandPrefix: 'Kommandoprefiks', defaultLanguage: 'Standardspråk', title_dashboard: 'Kontrollpanel', title_settings: 'Innstillinger' },
+            fi: { sidebar_dashboard: 'Hallintapaneeli', sidebar_settings: 'Asetukset', stat_totalMembers: 'Jäseniä Yhteensä', stat_verifiedUsers: 'Vahvistetut', stat_bots: 'Botit', stat_admins: 'Ylläpitäjät', stat_moderators: 'Moderaattorit', commandPrefix: 'Komentoetuliite', defaultLanguage: 'Oletuskieli', title_dashboard: 'Hallintapaneeli', title_settings: 'Asetukset' },
+            cs: { sidebar_dashboard: 'Nástěnka', sidebar_settings: 'Nastavení', stat_totalMembers: 'Celkem Členů', stat_verifiedUsers: 'Ověření', stat_bots: 'Boti', stat_admins: 'Administrátoři', stat_moderators: 'Moderátoři', commandPrefix: 'Příkazový Prefix', defaultLanguage: 'Výchozí Jazyk', title_dashboard: 'Nástěnka', title_settings: 'Nastavení' },
+            ro: { sidebar_dashboard: 'Panou', sidebar_settings: 'Setări', stat_totalMembers: 'Total Membri', stat_verifiedUsers: 'Verificați', stat_bots: 'Boți', stat_admins: 'Administratori', stat_moderators: 'Moderatori', commandPrefix: 'Prefix Comandă', defaultLanguage: 'Limba Implicită', title_dashboard: 'Panou', title_settings: 'Setări' },
+            hu: { sidebar_dashboard: 'Vezérlőpult', sidebar_settings: 'Beállítások', stat_totalMembers: 'Összes Tag', stat_verifiedUsers: 'Ellenőrzött', stat_bots: 'Botok', stat_admins: 'Adminisztrátorok', stat_moderators: 'Moderátorok', commandPrefix: 'Parancs Előtag', defaultLanguage: 'Alapértelmezett Nyelv', title_dashboard: 'Vezérlőpult', title_settings: 'Beállítások' },
+            uk: { sidebar_dashboard: 'Панель', sidebar_settings: 'Налаштування', stat_totalMembers: 'Всього Учасників', stat_verifiedUsers: 'Перевірені', stat_bots: 'Боти', stat_admins: 'Адміністратори', stat_moderators: 'Модератори', commandPrefix: 'Префікс Команди', defaultLanguage: 'Мова за Замовчуванням', title_dashboard: 'Панель', title_settings: 'Налаштування' },
+            th: { sidebar_dashboard: 'แดชบอร์ด', sidebar_settings: 'การตั้งค่า', stat_totalMembers: 'สมาชิกทั้งหมด', stat_verifiedUsers: 'ยืนยันแล้ว', stat_bots: 'บอท', stat_admins: 'ผู้ดูแล', stat_moderators: 'ผู้ตรวจสอบ', commandPrefix: 'คำนำหน้าคำสั่ง', defaultLanguage: 'ภาษาเริ่มต้น', title_dashboard: 'แดชบอร์ด', title_settings: 'การตั้งค่า' },
+            vi: { sidebar_dashboard: 'Bảng điều khiển', sidebar_settings: 'Cài đặt', stat_totalMembers: 'Tổng Thành Viên', stat_verifiedUsers: 'Đã Xác Minh', stat_bots: 'Bot', stat_admins: 'Quản Trị', stat_moderators: 'Điều Hành', commandPrefix: 'Tiền Tố Lệnh', defaultLanguage: 'Ngôn Ngữ Mặc Định', title_dashboard: 'Bảng Điều Khiển', title_settings: 'Cài Đặt' },
+            id: { sidebar_dashboard: 'Dasbor', sidebar_settings: 'Pengaturan', stat_totalMembers: 'Total Anggota', stat_verifiedUsers: 'Terverifikasi', stat_bots: 'Bot', stat_admins: 'Administrator', stat_moderators: 'Moderator', commandPrefix: 'Awalan Perintah', defaultLanguage: 'Bahasa Default', title_dashboard: 'Dasbor', title_settings: 'Pengaturan' },
+            ms: { sidebar_dashboard: 'Papan Pemuka', sidebar_settings: 'Tetapan', stat_totalMembers: 'Jumlah Ahli', stat_verifiedUsers: 'Disahkan', stat_bots: 'Bot', stat_admins: 'Pentadbir', stat_moderators: 'Moderator', commandPrefix: 'Awalan Arahan', defaultLanguage: 'Bahasa Lalai', title_dashboard: 'Papan Pemuka', title_settings: 'Tetapan' },
+            el: { sidebar_dashboard: 'Πίνακας', sidebar_settings: 'Ρυθμίσεις', stat_totalMembers: 'Σύνολο Μελών', stat_verifiedUsers: 'Επαληθευμένοι', stat_bots: 'Μπότ', stat_admins: 'Διαχειριστές', stat_moderators: 'Συντονιστές', commandPrefix: 'Πρόθεμα Εντολής', defaultLanguage: 'Προεπιλεγμένη Γλώσσα', title_dashboard: 'Πίνακας', title_settings: 'Ρυθμίσεις' },
+            bg: { sidebar_dashboard: 'Табло', sidebar_settings: 'Настройки', stat_totalMembers: 'Общо Членове', stat_verifiedUsers: 'Проверени', stat_bots: 'Ботове', stat_admins: 'Администратори', stat_moderators: 'Модератори', commandPrefix: 'Префикс на Команда', defaultLanguage: 'Език по Подразбиране', title_dashboard: 'Табло', title_settings: 'Настройки' },
+            hr: { sidebar_dashboard: 'Nadzorna ploča', sidebar_settings: 'Postavke', stat_totalMembers: 'Ukupno Članova', stat_verifiedUsers: 'Verificirani', stat_bots: 'Botovi', stat_admins: 'Administratori', stat_moderators: 'Moderatori', commandPrefix: 'Prefiks Naredbe', defaultLanguage: 'Zadani Jezik', title_dashboard: 'Nadzorna Ploča', title_settings: 'Postavke' }
+        };
+
+        let currentLanguage = localStorage.getItem('dashboardLanguage') || 'en';
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('dashboardLanguage', lang);
+            applyLanguage(lang);
+        }
+
+        function applyLanguage(lang) {
+            const dict = translations[lang] || {};
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    el.textContent = dict[key];
+                } else if (lang !== 'en') {
+                    // Fallback: keep English (already in HTML)
+                }
+            });
+            // Update the language selector to reflect current choice
+            const sel = document.getElementById('languageSelect');
+            if (sel) sel.value = lang;
+        }
+
+        // ========== LOAD ROLES & CHANNELS INTO DROPDOWNS ==========
+        async function loadServerRolesAndChannels(guildId) {
+            try {
+                const [rolesRes, channelsRes] = await Promise.all([
+                    fetch('/api/roles/' + guildId, { credentials: 'include' }),
+                    fetch('/api/channels/' + guildId, { credentials: 'include' })
+                ]);
+
+                if (rolesRes.ok) {
+                    const { roles } = await rolesRes.json();
+                    const roleSelects = ['adminRoleSelect', 'modRoleSelect', 'membersRoleSelect', 'mutedRoleSelect'];
+                    roleSelects.forEach(selectId => {
+                        const sel = document.getElementById(selectId);
+                        if (!sel) return;
+                        const currentVal = sel.value;
+                        // Keep the first placeholder option
+                        sel.innerHTML = '<option value="">' + sel.options[0].textContent + '</option>';
+                        roles.forEach(role => {
+                            const opt = document.createElement('option');
+                            opt.value = role.id;
+                            opt.textContent = role.name;
+                            if (role.color) {
+                                const hex = '#' + role.color.toString(16).padStart(6, '0');
+                                if (hex !== '#000000') opt.style.color = hex;
+                            }
+                            sel.appendChild(opt);
+                        });
+                        if (currentVal) sel.value = currentVal;
+                    });
+                }
+
+                if (channelsRes.ok) {
+                    const { channels } = await channelsRes.json();
+                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect'];
+                    channelSelects.forEach(selectId => {
+                        const sel = document.getElementById(selectId);
+                        if (!sel) return;
+                        const currentVal = sel.value;
+                        sel.innerHTML = '<option value="">' + sel.options[0].textContent + '</option>';
+                        channels.forEach(ch => {
+                            const opt = document.createElement('option');
+                            opt.value = ch.id;
+                            opt.textContent = '#' + ch.name;
+                            sel.appendChild(opt);
+                        });
+                        if (currentVal) sel.value = currentVal;
+                    });
+                }
+            } catch (e) {
+                console.error('Error loading roles/channels:', e);
+            }
+        }
+
+        // ========== LOAD SAVED SETTINGS FOR A SERVER ==========
+        async function loadServerSettings(guildId) {
+            try {
+                const res = await fetch('/api/config/settings?guildId=' + guildId, { credentials: 'include' });
+                if (!res.ok) return;
+                const config = await res.json();
+
+                // Restore role selections
+                if (config.adminRole) { const s = document.getElementById('adminRoleSelect'); if (s) s.value = config.adminRole; }
+                if (config.modRole) { const s = document.getElementById('modRoleSelect'); if (s) s.value = config.modRole; }
+                if (config.membersRole) { const s = document.getElementById('membersRoleSelect'); if (s) s.value = config.membersRole; }
+                if (config.mutedRole) { const s = document.getElementById('mutedRoleSelect'); if (s) s.value = config.mutedRole; }
+
+                // Restore channel selections
+                if (config.generalChannel) { const s = document.getElementById('generalChannelSelect'); if (s) s.value = config.generalChannel; }
+                if (config.announcementsChannel) { const s = document.getElementById('announcementsChannelSelect'); if (s) s.value = config.announcementsChannel; }
+                if (config.welcomeChannel) { const s = document.getElementById('welcomeChannelSelect'); if (s) s.value = config.welcomeChannel; }
+
+                // Restore language
+                if (config.language) {
+                    const sel = document.getElementById('languageSelect');
+                    if (sel) sel.value = config.language;
+                    changeLanguage(config.language);
+                }
+            } catch (e) {
+                console.error('Error loading server settings:', e);
+            }
+        }
+
             const isDarkMode = !document.body.classList.contains('light-mode');
             const newMode = isDarkMode ? 'light' : 'dark';
             
@@ -2956,6 +3210,8 @@
             console.log('🔄 Server switched to:', serverName, '(' + serverId + ')');
             
             // Load ALL data for the selected server
+            await loadServerRolesAndChannels(serverId);
+            await loadServerSettings(serverId);
             await loadRoleCategories(serverId);
             await loadMemberGraphs();
             await loadMemberEvents();
@@ -3517,12 +3773,12 @@
 
         async function loadSettings() {
             const config = await loadTabConfig('settings');
-            if (config) document.querySelector('[placeholder="//"]').value = config.prefix || '//';
+            // Prefix is locked to "/" — do not overwrite
         }
 
         async function saveSettings() {
-            const prefix = document.querySelector('[placeholder="//"]')?.value || '//';
-            await saveTabConfig('settings', { prefix });
+            // Prefix is locked to "/" — always save as /
+            await saveTabConfig('settings', { prefix: '/' });
         }
 
         async function loadLogging() {
@@ -4430,7 +4686,30 @@
                 return;
             }
 
-            // Save colors as "saved" (mark them as persisted)
+            // ── Collect settings data ──
+            const settingsData = {
+                prefix: '/',
+                language: document.getElementById('languageSelect')?.value || 'en',
+                adminRole: document.getElementById('adminRoleSelect')?.value || '',
+                modRole: document.getElementById('modRoleSelect')?.value || '',
+                membersRole: document.getElementById('membersRoleSelect')?.value || '',
+                mutedRole: document.getElementById('mutedRoleSelect')?.value || '',
+                generalChannel: document.getElementById('generalChannelSelect')?.value || '',
+                announcementsChannel: document.getElementById('announcementsChannelSelect')?.value || '',
+                welcomeChannel: document.getElementById('welcomeChannelSelect')?.value || ''
+            };
+
+            // Collect feature toggles
+            const toggleSection = document.querySelector('#settings-section');
+            if (toggleSection) {
+                const checkboxes = toggleSection.querySelectorAll('input[type="checkbox"]');
+                const toggleKeys = ['musicPlayer', 'economySystem', 'levelingSystem', 'welcomeMessages', 'moderationTools', 'socialNotifications'];
+                checkboxes.forEach((cb, i) => {
+                    if (toggleKeys[i]) settingsData[toggleKeys[i]] = cb.checked;
+                });
+            }
+
+            // Save colors
             const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#00d4ff';
             const cyanAccent = localStorage.getItem('accentCyan') || localStorage.getItem('savedAccentCyan') || '#00d4ff';
             const purpleAccent = localStorage.getItem('accentPurple') || localStorage.getItem('savedAccentPurple') || '#9146ff';
@@ -4442,73 +4721,43 @@
             localStorage.setItem('savedAccentPurple', purpleAccent);
             localStorage.setItem('savedAccentPink', pinkAccent);
             localStorage.setItem('savedTextColor', textColor);
-
-            // Clear unsaved color changes
             localStorage.removeItem('themeColor');
             localStorage.removeItem('accentCyan');
             localStorage.removeItem('accentPurple');
             localStorage.removeItem('accentPink');
             localStorage.removeItem('textColor');
 
-            // Map sections to their IDs
-            const sectionMap = {
-                'settings-section': 'settings',
-                'logging-section': 'logging',
-                'server-guard-section': 'server-guard',
-                'react-roles-section': 'react-roles',
-                'role-categories-section': 'role-categories',
-                'server-messages-section': 'server-messages',
-                'custom-commands-section': 'custom-commands',
-                'components-section': 'components',
-                'xp-levels-section': 'xp-levels',
-                'leaderboards-section': 'leaderboards',
-                'invite-tracking-section': 'invite-tracking',
-                'message-counting-section': 'message-counting',
-                'statistics-channels-section': 'statistics-channels',
-                'giveaways-section': 'giveaways',
-                'social-notifs-section': 'social-notifs',
-                'reminders-section': 'reminders',
-                'recordings-section': 'recordings'
-            };
+            settingsData.themeColor = themeColor;
+            settingsData.accentCyan = cyanAccent;
+            settingsData.accentPurple = purpleAccent;
+            settingsData.accentPink = pinkAccent;
+            settingsData.textColor = textColor;
 
-            // Collect data from all sections
-            Object.keys(sectionMap).forEach(sectionId => {
-                const section = document.getElementById(sectionId);
-                if (section && section.classList.contains('active')) {
-                    const sectionName = sectionMap[sectionId];
-                    const inputs = section.querySelectorAll('input[type="text"], input[type="number"], input[type="checkbox"], input[type="color"], select, textarea');
-                    const data = {};
-
+            // POST to API
+            fetch('/api/config/' + selectedServerId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settingsData),
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    // Update original values so unsaved detection resets
+                    const inputs = document.querySelectorAll('#settings-section input, #settings-section select, #settings-section textarea');
                     inputs.forEach(input => {
-                        const key = input.id || input.name || input.placeholder || input.className;
-                        if (input.type === 'checkbox') {
-                            data[key] = input.checked;
-                            // Update originalValues to mark as saved
-                            originalValues[key] = input.checked;
-                        } else if (input.type === 'color') {
-                            data[key] = input.value;
-                            // Update originalValues to mark as saved
-                            originalValues[key] = input.value;
-                        } else {
-                            data[key] = input.value;
-                            // Update originalValues to mark as saved
-                            originalValues[key] = input.value;
-                        }
+                        const key = input.id || input.name || input.className;
+                        if (input.type === 'checkbox') originalValues[key] = input.checked;
+                        else originalValues[key] = input.value;
                     });
-
-                    // Save this section via API with selected guild ID
-                    const guildId = localStorage.getItem('selectedServerId');
-                    const url = `/api/config/${sectionName}${guildId ? `?guildId=${guildId}` : ''}`;
-                    fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data),
-                        credentials: 'include'
-                    })
-                    .then(r => r.json())
-                    .then(res => console.log(`✅ Saved ${sectionName}:`, res))
-                    .catch(err => console.error(`❌ Error saving ${sectionName}:`, err));
+                    alert('✅ Settings saved successfully!');
+                } else {
+                    alert('❌ Failed to save: ' + (res.error || 'Unknown error'));
                 }
+            })
+            .catch(err => {
+                console.error('Save error:', err);
+                alert('❌ Error saving settings: ' + err.message);
             });
 
             hideUnsavedNotification();
@@ -4569,6 +4818,14 @@
 
             const savedTextColor = localStorage.getItem('textColor');
             if (savedTextColor) changeTextColor(savedTextColor);
+
+            // Restore saved language
+            const savedLang = localStorage.getItem('dashboardLanguage');
+            if (savedLang && savedLang !== 'en') {
+                const sel = document.getElementById('languageSelect');
+                if (sel) sel.value = savedLang;
+                applyLanguage(savedLang);
+            }
 
             // Setup unsaved changes detection
             setupUnsavedDetection();
