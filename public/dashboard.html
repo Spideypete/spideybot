@@ -902,6 +902,54 @@
             box-shadow: 0 8px 32px rgba(var(--theme-color), 0.15);
         }
 
+        /* Toggle Switch */
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 0.3rem 0;
+            font-size: 0.95rem;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.15);
+            transition: 0.3s ease;
+            border-radius: 24px;
+        }
+        .toggle-slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            transition: 0.3s ease;
+            border-radius: 50%;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: rgba(var(--theme-color), 0.8);
+        }
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
         .panel-header {
             display: flex;
             justify-content: space-between;
@@ -1771,22 +1819,22 @@
                             <div class="panel-header"><div class="panel-title" data-i18n="panel_featureToggles">✨ Feature Toggles</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_musicPlayer">Music Player</span></label>
+                                    <label class="toggle-label"><span data-i18n="toggle_musicPlayer">Music Player</span><label class="toggle-switch"><input type="checkbox" id="toggle_musicPlayer" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_economySystem">Economy System</span></label>
+                                    <label class="toggle-label"><span data-i18n="toggle_economySystem">Economy System</span><label class="toggle-switch"><input type="checkbox" id="toggle_economySystem" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_levelingSystem">Leveling System</span></label>
+                                    <label class="toggle-label"><span data-i18n="toggle_levelingSystem">Leveling System</span><label class="toggle-switch"><input type="checkbox" id="toggle_levelingSystem" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_welcomeMessages">Welcome Messages</span></label>
+                                    <label class="toggle-label"><span data-i18n="toggle_welcomeMessages">Welcome Messages</span><label class="toggle-switch"><input type="checkbox" id="toggle_welcomeMessages" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_moderationTools">Moderation Tools</span></label>
+                                    <label class="toggle-label"><span data-i18n="toggle_moderationTools">Moderation Tools</span><label class="toggle-switch"><input type="checkbox" id="toggle_moderationTools" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span data-i18n="toggle_socialNotifications">Social Notifications</span></label>
+                                    <label class="toggle-label"><span data-i18n="toggle_socialNotifications">Social Notifications</span><label class="toggle-switch"><input type="checkbox" id="toggle_socialNotifications" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                             </div>
                         </div>
@@ -3084,6 +3132,13 @@
                     if (sel) sel.value = config.language;
                     changeLanguage(config.language);
                 }
+
+                // Restore feature toggles
+                const toggleKeys = ['musicPlayer', 'economySystem', 'levelingSystem', 'welcomeMessages', 'moderationTools', 'socialNotifications'];
+                toggleKeys.forEach(key => {
+                    const cb = document.getElementById('toggle_' + key);
+                    if (cb && config[key] !== undefined) cb.checked = config[key];
+                });
             } catch (e) {
                 console.error('Error loading server settings:', e);
             }
@@ -4710,15 +4765,12 @@
                 welcomeChannel: document.getElementById('welcomeChannelSelect')?.value || ''
             };
 
-            // Collect feature toggles
-            const toggleSection = document.querySelector('#settings-section');
-            if (toggleSection) {
-                const checkboxes = toggleSection.querySelectorAll('input[type="checkbox"]');
-                const toggleKeys = ['musicPlayer', 'economySystem', 'levelingSystem', 'welcomeMessages', 'moderationTools', 'socialNotifications'];
-                checkboxes.forEach((cb, i) => {
-                    if (toggleKeys[i]) settingsData[toggleKeys[i]] = cb.checked;
-                });
-            }
+            // Collect feature toggles by ID
+            const toggleKeys = ['musicPlayer', 'economySystem', 'levelingSystem', 'welcomeMessages', 'moderationTools', 'socialNotifications'];
+            toggleKeys.forEach(key => {
+                const cb = document.getElementById('toggle_' + key);
+                if (cb) settingsData[key] = cb.checked;
+            });
 
             // Save colors
             const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#00d4ff';

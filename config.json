@@ -82,9 +82,9 @@
       "adminRole": "1235015410865410051",
       "moderatorRole": "1235015410865410049",
       "membersRole": "1235015410743775295",
-      "generalChannel": "",
-      "announcementsChannel": "",
-      "welcomeChannel": "",
+      "generalChannel": "1235015412035358728",
+      "announcementsChannel": "1240556844225925183",
+      "welcomeChannel": "1235015412035358721",
       "antiSpam": {
         "enabled": true,
         "messagesPerLimit": 5,

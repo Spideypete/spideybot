@@ -603,6 +603,10 @@ client.on("guildMemberAdd", async (member) => {
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
   const guildConfig = getGuildConfig(member.guild.id);
+  
+  // Check if welcome messages are disabled via dashboard toggle
+  if (guildConfig.welcomeMessages === false) return;
+  
   const serverMessages = guildConfig.serverMessages || {};
   
   if (!serverMessages.enableWelcome || !guildConfig.welcomeChannelId) return;
@@ -770,7 +774,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== AUTO XP GAIN ==============
-  if (!msg.content.startsWith("/")) {
+  if (!msg.content.startsWith("/") && guildConfig.levelingSystem !== false) {
     const levels = guildConfig.levels || {};
     const userId = msg.author.id;
     const lastXpTime = levels[`${userId}_xp_time`] || 0;
@@ -2568,6 +2572,20 @@ client.on("interactionCreate", async (interaction) => {
     try {
       await interaction.deferReply();
       const guildConfig = getGuildConfig(interaction.guild.id);
+
+      // ========== FEATURE TOGGLE CHECKS ==========
+      const cmdMeta = COMMANDS_META[commandName];
+      if (cmdMeta) {
+        const toggleMap = {
+          music: 'musicPlayer',
+          economy: 'economySystem',
+          moderation: 'moderationTools'
+        };
+        const toggleKey = toggleMap[cmdMeta.category];
+        if (toggleKey && guildConfig[toggleKey] === false) {
+          return interaction.editReply(`❌ **${cmdMeta.category.charAt(0).toUpperCase() + cmdMeta.category.slice(1)}** commands are disabled by the server admin.`);
+        }
+      }
       
       // ========== ROLE MANAGEMENT ==========
       if (commandName === 'addrole') {
