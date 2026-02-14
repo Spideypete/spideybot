@@ -2276,6 +2276,58 @@
                         </div>
                     </div>
 
+                    <!-- Create Category + Post Category (side by side) -->
+                    <div class="content-grid" style="margin-top: 1rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📂 Create Category</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(145,70,255,0.06); border:1px solid rgba(145,70,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Create a new role category with a name and roles. Same as <code>/create-category [name]</code> + <code>/addrole [category] [name] [id]</code>. After creating, use Post Category to send it to a channel.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Category Name</div>
+                                    <input type="text" id="categoryName" class="form-input" placeholder="e.g. Competitive, Chill, Events..."/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Description <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(optional)</span></div>
+                                    <input type="text" id="categoryMessage" class="form-input" placeholder="Select a role below"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Add Roles</div>
+                                    <div style="display:flex; gap:0.5rem;">
+                                        <input type="text" id="creatingRoleInput" class="form-input" placeholder="Type role name..." style="flex:1;" onkeypress="if(event.key==='Enter') addRoleWhileCreating()"/>
+                                        <button class="btn btn-primary" onclick="addRoleWhileCreating()" style="white-space:nowrap;">+ Add</button>
+                                    </div>
+                                </div>
+                                <div id="creatingRolesList" style="margin-bottom:0.75rem;">
+                                    <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; padding: 0.5rem;">Add roles above</div>
+                                </div>
+                                <button class="btn btn-primary" onclick="createRoleCategory()" style="width:100%;">📂 Create Category</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📤 Post Category Selector</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Pick a category and channel, then post a role selector embed with a dropdown. Members use the dropdown to self-assign roles. Same as <code>/setupcategory [name]</code>.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Category</div>
+                                    <select id="sc_categorySelect" class="form-input">
+                                        <option value="">Select a category...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Post to Channel</div>
+                                    <select id="sc_channelSelect" class="form-input channel-select">
+                                        <option value="">Select channel...</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" onclick="setupCategory()" style="width:100%;">📤 Post Category Selector</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Gaming Roles Section (full width) -->
                     <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
                         <div class="panel">
@@ -2326,39 +2378,18 @@
                         </div>
                     </div>
 
-                    <!-- Setup Category + How Roles Work (side by side) -->
-                    <div class="content-grid" style="margin-top: 1rem;">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📂 Setup Category Selector</div></div>
-                            <div class="panel-content">
-                                <div style="background:rgba(145,70,255,0.06); border:1px solid rgba(145,70,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
-                                    💡 <strong>How it works:</strong> Select a category you've created and post it as a role selector embed with a dropdown menu to a channel. Members use the dropdown to pick roles. Same as <code>/setupcategory [name]</code>.
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Category</div>
-                                    <select id="sc_categorySelect" class="form-input">
-                                        <option value="">Select a category...</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Post to Channel</div>
-                                    <select id="sc_channelSelect" class="form-input channel-select">
-                                        <option value="">Select channel...</option>
-                                    </select>
-                                </div>
-                                <button class="btn btn-primary" onclick="setupCategory()" style="width:100%;">📂 Post Category Selector</button>
-                            </div>
-                        </div>
+                    <!-- How Roles Work -->
+                    <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">📖 How Roles Work</div></div>
                             <div class="panel-content">
-                                <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.7;">
+                                <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.7; display:grid; grid-template-columns: 1fr 1fr; gap: 0 2rem;">
                                     <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in the sections above (Gaming, Watch Party, Platform)</p>
-                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click the Post button for each type</p>
-                                    <p style="margin:0 0 0.5rem 0;"><strong>3.</strong> The bot posts an embed with a button in your server</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>4.</strong> Members click the button → dropdown appears → they pick roles</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click the Post button for each type</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>5.</strong> For <strong>Reaction Roles</strong>: post a message, add emoji→role pairs above</p>
-                                    <p style="margin:0 0 0.5rem 0;"><strong>6.</strong> For <strong>Role Categories</strong>: pick a category above and click Post, or use <code>/setupcategory [name]</code> in Discord</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>3.</strong> The bot posts an embed with a button in your server</p>
+                                    <p style="margin:0;"><strong>6.</strong> For <strong>Role Categories</strong>: create one above, then use Post Category or <code>/setupcategory [name]</code></p>
                                 </div>
                             </div>
                         </div>
