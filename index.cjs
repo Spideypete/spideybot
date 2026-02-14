@@ -5321,6 +5321,81 @@ app.get("/dashboard/server/:guildId", (req, res) => {
   res.redirect("/dashboard.html");
 });
 
+// ============== API: GET ROLE CATEGORIES (must be before :guildId) ==============
+app.get("/api/config/role-categories", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const config = loadConfig();
+  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+  if (!guildId) return res.json({});
+
+  const data = config.guilds[guildId]?.roleCategories || {};
+  
+  const filtered = {};
+  Object.keys(data).forEach(key => {
+    if (key && key.trim() !== '') {
+      filtered[key] = data[key];
+    }
+  });
+  
+  console.log(`✅ Role Categories API - Guild: ${guildId}, Categories found:`, Object.keys(filtered).length, `(${Object.keys(filtered).join(', ')})`);
+  res.json(filtered);
+});
+
+// ============== API: SAVE ROLE CATEGORIES (must be before :guildId) ==============
+app.post("/api/config/role-categories", express.json(), (req, res) => {
+  try {
+    if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+
+    console.log('📝 POST /api/config/role-categories received');
+    console.log('   Query:', req.query);
+    console.log('   Body:', req.body);
+
+    const config = loadConfig();
+    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    
+    console.log('   Using guildId:', guildId);
+    
+    if (!guildId) {
+      console.error('❌ Role category save failed: No guild ID provided');
+      return res.status(400).json({ success: false, error: "No guild found" });
+    }
+
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
+
+    const { categoryName, oldCategoryName, roles, channel, message } = req.body;
+    
+    if (!categoryName) {
+      console.error('❌ Role category save failed: No category name provided');
+      return res.status(400).json({ success: false, error: "Category name is required" });
+    }
+
+    if (!roles || !Array.isArray(roles) || roles.length === 0) {
+      console.error('❌ Role category save failed: No roles provided');
+      return res.status(400).json({ success: false, error: "At least one role is required" });
+    }
+    
+    if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
+      delete config.guilds[guildId].roleCategories[oldCategoryName];
+      console.log(`🔄 Renamed category: ${oldCategoryName} → ${categoryName}`);
+    }
+
+    config.guilds[guildId].roleCategories[categoryName] = {
+      roles: roles || [],
+      channel: channel || '',
+      message: message || ''
+    };
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ Role category saved: ${categoryName} (Guild: ${guildId})`);
+    res.json({ success: true, message: "Role category saved successfully", categoryName, guildId });
+  } catch (err) {
+    console.error('❌ Error saving role category:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ============== API ENDPOINTS ==============
 app.get("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
@@ -6021,84 +6096,6 @@ app.post("/api/bot-config/messages", express.json(), (req, res) => {
   } catch (err) {
     console.error('❌ Error updating messages:', err);
     res.json({ success: false, message: "Error updating messages" });
-  }
-});
-
-// ============== API: GET ROLE CATEGORIES ==============
-app.get("/api/config/role-categories", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-
-  const config = loadConfig();
-  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
-  if (!guildId) return res.json({});
-
-  const data = config.guilds[guildId]?.roleCategories || {};
-  
-  // Filter out empty category names and log what we're returning
-  const filtered = {};
-  Object.keys(data).forEach(key => {
-    if (key && key.trim() !== '') {
-      filtered[key] = data[key];
-    }
-  });
-  
-  console.log(`✅ Role Categories API - Guild: ${guildId}, Categories found:`, Object.keys(filtered).length, `(${Object.keys(filtered).join(', ')})`);
-  res.json(filtered);
-});
-
-// ============== API: SAVE ROLE CATEGORIES ==============
-app.post("/api/config/role-categories", express.json(), (req, res) => {
-  try {
-    if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-
-    console.log('📝 POST /api/config/role-categories received');
-    console.log('   Query:', req.query);
-    console.log('   Body:', req.body);
-
-    const config = loadConfig();
-    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
-    
-    console.log('   Using guildId:', guildId);
-    
-    if (!guildId) {
-      console.error('❌ Role category save failed: No guild ID provided');
-      return res.status(400).json({ success: false, error: "No guild found" });
-    }
-
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
-
-    const { categoryName, oldCategoryName, roles, channel, message } = req.body;
-    
-    if (!categoryName) {
-      console.error('❌ Role category save failed: No category name provided');
-      return res.status(400).json({ success: false, error: "Category name is required" });
-    }
-
-    if (!roles || !Array.isArray(roles) || roles.length === 0) {
-      console.error('❌ Role category save failed: No roles provided');
-      return res.status(400).json({ success: false, error: "At least one role is required" });
-    }
-    
-    // If renaming, delete old category first
-    if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
-      delete config.guilds[guildId].roleCategories[oldCategoryName];
-      console.log(`🔄 Renamed category: ${oldCategoryName} → ${categoryName}`);
-    }
-
-    // Save or update category with message and channel
-    config.guilds[guildId].roleCategories[categoryName] = {
-      roles: roles || [],
-      channel: channel || '',
-      message: message || ''
-    };
-    
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log(`✅ Role category saved: ${categoryName} (Guild: ${guildId})`);
-    res.json({ success: true, message: "Role category saved successfully", categoryName, guildId });
-  } catch (err) {
-    console.error('❌ Error saving role category:', err);
-    res.status(500).json({ success: false, error: err.message });
   }
 });
 
