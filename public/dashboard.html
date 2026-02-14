@@ -1893,9 +1893,7 @@
                             </div>
                         </div>
                     </div>
-                    <div style="margin-top: 1rem; text-align: right;">
-                        <button class="btn btn-primary" onclick="saveLogging()" style="padding: 0.6rem 1.5rem; background: rgba(var(--theme-color), 0.3); border: 1px solid rgba(var(--theme-color), 0.5); border-radius: 8px; color: white; cursor: pointer; font-size: 0.9rem;">💾 Save Logging Settings</button>
-                    </div>
+
                 </div>
 
                 <!-- Server Guard Section -->
@@ -2131,7 +2129,6 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Require Message Reaction</label>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                     </div>
@@ -2465,7 +2462,6 @@
                                     <div class="form-label">Top Users to Show</div>
                                     <input type="number" class="form-input" placeholder="10" value="10"/>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                     </div>
@@ -2568,7 +2564,6 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Track Invite Links</label>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -2600,7 +2595,6 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Count Bot Messages</label>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -2633,7 +2627,6 @@
                                     <div class="form-label">Max Recording Duration (minutes)</div>
                                     <input type="number" class="form-input" placeholder="60" value="60"/>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveLogging()">Save Settings</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -4796,7 +4789,7 @@
             hideUnsavedNotification();
         }
 
-        function saveAllChanges() {
+        async function saveAllChanges() {
             const selectedServerId = localStorage.getItem('selectedServerId');
             if (!selectedServerId) {
                 alert('Please select a server first');
@@ -4847,34 +4840,56 @@
             settingsData.accentPink = pinkAccent;
             settingsData.textColor = textColor;
 
-            // POST to API
-            fetch('/api/config/' + selectedServerId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(settingsData),
-                credentials: 'include'
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    // Update original values so unsaved detection resets
-                    const inputs = document.querySelectorAll('#settings-section input, #settings-section select, #settings-section textarea');
-                    inputs.forEach(input => {
+            // ── Collect logging data ──
+            const loggingData = {
+                logDeleted: document.getElementById('log_deleted')?.checked ?? true,
+                logEdited: document.getElementById('log_edited')?.checked ?? true,
+                logBulkDelete: document.getElementById('log_bulkDelete')?.checked ?? false,
+                logChannel: document.getElementById('messageLogChannelSelect')?.value || '',
+                logBans: document.getElementById('log_bans')?.checked ?? true,
+                logKicks: document.getElementById('log_kicks')?.checked ?? true,
+                logMutes: document.getElementById('log_mutes')?.checked ?? true,
+                logWarns: document.getElementById('log_warns')?.checked ?? true,
+                modLogChannel: document.getElementById('modLogChannelSelect')?.value || ''
+            };
+
+            try {
+                // Save settings + logging in parallel
+                const [settingsRes, loggingRes] = await Promise.all([
+                    fetch('/api/config/' + selectedServerId, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(settingsData),
+                        credentials: 'include'
+                    }).then(r => r.json()),
+                    fetch('/api/bot-config/logging?guildId=' + selectedServerId, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(loggingData),
+                        credentials: 'include'
+                    }).then(r => r.json())
+                ]);
+
+                if (settingsRes.success && loggingRes.success) {
+                    // Snapshot ALL inputs as original so unsaved detection resets
+                    const allInputs = document.querySelectorAll('input, select, textarea');
+                    allInputs.forEach(input => {
                         const key = input.id || input.name || input.className;
-                        if (input.type === 'checkbox') originalValues[key] = input.checked;
+                        if (input.type === 'checkbox' || input.type === 'radio') originalValues[key] = input.checked;
                         else originalValues[key] = input.value;
                     });
-                    alert('✅ Settings saved successfully!');
+                    hideUnsavedNotification();
+                    alert('✅ All settings saved successfully!');
                 } else {
-                    alert('❌ Failed to save: ' + (res.error || 'Unknown error'));
+                    const errors = [];
+                    if (!settingsRes.success) errors.push('Settings: ' + (settingsRes.error || 'failed'));
+                    if (!loggingRes.success) errors.push('Logging: ' + (loggingRes.message || 'failed'));
+                    alert('❌ ' + errors.join('\n'));
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error('Save error:', err);
-                alert('❌ Error saving settings: ' + err.message);
-            });
-
-            hideUnsavedNotification();
+                alert('❌ Error saving: ' + err.message);
+            }
         }
 
         function setupUnsavedDetection() {
