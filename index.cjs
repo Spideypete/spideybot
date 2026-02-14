@@ -3,6 +3,7 @@
 const {
   Client,
   GatewayIntentBits,
+  Partials,
   ActionRowBuilder,
   StringSelectMenuBuilder,
   EmbedBuilder,
@@ -408,8 +409,10 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessageReactions
   ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
 const token = process.env.TOKEN;
@@ -998,6 +1001,114 @@ client.on("messageDeleteBulk", async (messages) => {
     )
     .setTimestamp();
   logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
+// ============== REACTION ROLE HANDLERS ==============
+client.on("messageReactionAdd", async (reaction, user) => {
+  if (user.bot) return;
+  // Partial handling — fetch full data if needed
+  if (reaction.partial) { try { await reaction.fetch(); } catch (e) { return; } }
+  if (reaction.message.partial) { try { await reaction.message.fetch(); } catch (e) { return; } }
+
+  const guildId = reaction.message.guild?.id;
+  if (!guildId) return;
+
+  const config = loadConfig();
+  const rr = config.guilds[guildId]?.reactRoles;
+  if (!rr || !Array.isArray(rr.entries) || rr.entries.length === 0) return;
+
+  const messageId = reaction.message.id;
+  const emojiStr = reaction.emoji.id ? `<:${reaction.emoji.name}:${reaction.emoji.id}>` : reaction.emoji.name;
+
+  // Find matching entry
+  const entry = rr.entries.find(e => e.messageId === messageId && (e.emoji === emojiStr || e.emoji === reaction.emoji.name));
+  if (!entry) return;
+
+  try {
+    const guild = reaction.message.guild;
+    const member = await guild.members.fetch(user.id);
+    const role = guild.roles.cache.get(entry.roleId);
+    if (!role) return;
+
+    // If allowMultiple is false, check if user already has a reaction role from this message
+    if (rr.allowMultiple === false) {
+      const messageEntries = rr.entries.filter(e => e.messageId === messageId);
+      for (const me of messageEntries) {
+        if (me.roleId !== entry.roleId && member.roles.cache.has(me.roleId)) {
+          const oldRole = guild.roles.cache.get(me.roleId);
+          if (oldRole) await member.roles.remove(oldRole).catch(() => {});
+          // Remove their reaction on the old emoji
+          try {
+            const oldReaction = reaction.message.reactions.cache.find(r => r.emoji.name === me.emoji || r.emoji.toString() === me.emoji);
+            if (oldReaction) await oldReaction.users.remove(user.id).catch(() => {});
+          } catch (e) { /* ignore */ }
+        }
+      }
+    }
+
+    await member.roles.add(role);
+    console.log(`🎭 Reaction role: +@${role.name} to ${user.tag} (${guildId})`);
+
+    // DM confirmation
+    if (rr.dmConfirm) {
+      try {
+        await user.send({ embeds: [
+          new EmbedBuilder()
+            .setColor(0x00D4FF)
+            .setTitle('✅ Role Added')
+            .setDescription(`You've been given the **@${role.name}** role in **${guild.name}**!`)
+            .setTimestamp()
+        ]});
+      } catch (e) { /* DMs may be disabled */ }
+    }
+  } catch (err) {
+    console.error('❌ Reaction role add error:', err.message);
+  }
+});
+
+client.on("messageReactionRemove", async (reaction, user) => {
+  if (user.bot) return;
+  if (reaction.partial) { try { await reaction.fetch(); } catch (e) { return; } }
+  if (reaction.message.partial) { try { await reaction.message.fetch(); } catch (e) { return; } }
+
+  const guildId = reaction.message.guild?.id;
+  if (!guildId) return;
+
+  const config = loadConfig();
+  const rr = config.guilds[guildId]?.reactRoles;
+  if (!rr || !Array.isArray(rr.entries) || rr.entries.length === 0) return;
+  if (rr.removeOnUnreact === false) return; // Setting: don't remove on unreact
+
+  const messageId = reaction.message.id;
+  const emojiStr = reaction.emoji.id ? `<:${reaction.emoji.name}:${reaction.emoji.id}>` : reaction.emoji.name;
+
+  const entry = rr.entries.find(e => e.messageId === messageId && (e.emoji === emojiStr || e.emoji === reaction.emoji.name));
+  if (!entry) return;
+
+  try {
+    const guild = reaction.message.guild;
+    const member = await guild.members.fetch(user.id);
+    const role = guild.roles.cache.get(entry.roleId);
+    if (!role) return;
+
+    await member.roles.remove(role);
+    console.log(`🎭 Reaction role: -@${role.name} from ${user.tag} (${guildId})`);
+
+    // DM confirmation
+    if (rr.dmConfirm) {
+      try {
+        await user.send({ embeds: [
+          new EmbedBuilder()
+            .setColor(0xED4245)
+            .setTitle('❌ Role Removed')
+            .setDescription(`The **@${role.name}** role has been removed in **${guild.name}**.`)
+            .setTimestamp()
+        ]});
+      } catch (e) { /* DMs may be disabled */ }
+    }
+  } catch (err) {
+    console.error('❌ Reaction role remove error:', err.message);
+  }
 });
 
 // ============== MESSAGE COMMANDS ==============
@@ -5502,6 +5613,174 @@ app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
   } catch (err) {
     console.error('❌ Error updating server guard:', err);
     res.json({ success: false, message: "Error updating server guard" });
+  }
+});
+
+// ============== REACT ROLES API ENDPOINTS ==============
+// Save react role settings (allowMultiple, removeOnUnreact, dmConfirm)
+app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].reactRoles) config.guilds[guildId].reactRoles = { entries: [] };
+    const { allowMultiple, removeOnUnreact, dmConfirm } = req.body;
+    config.guilds[guildId].reactRoles.allowMultiple = allowMultiple;
+    config.guilds[guildId].reactRoles.removeOnUnreact = removeOnUnreact;
+    config.guilds[guildId].reactRoles.dmConfirm = dmConfirm;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ React roles settings saved (Guild: ${guildId})`);
+    res.json({ success: true, message: "React roles settings saved" });
+  } catch (err) {
+    console.error('❌ Error saving react roles settings:', err);
+    res.json({ success: false, message: "Error saving settings" });
+  }
+});
+
+// Add a single reaction role entry (and bot adds the reaction to the message)
+app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { channelId, messageId, emoji, roleId } = req.body;
+    if (!channelId || !messageId || !emoji || !roleId) return res.json({ success: false, error: "Missing fields" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+
+    // Verify channel exists
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.json({ success: false, error: "Channel not found" });
+
+    // Verify message exists
+    let message;
+    try {
+      message = await channel.messages.fetch(messageId);
+    } catch (e) {
+      return res.json({ success: false, error: "Could not find message with that ID in the selected channel" });
+    }
+
+    // Verify role exists
+    const role = guild.roles.cache.get(roleId);
+    if (!role) return res.json({ success: false, error: "Role not found" });
+
+    // Try to add the reaction to the message
+    try {
+      await message.react(emoji);
+    } catch (e) {
+      console.warn('Could not add reaction:', e.message);
+      return res.json({ success: false, error: "Could not add reaction. Make sure the emoji is valid and the bot has permissions." });
+    }
+
+    // Save to config
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].reactRoles) config.guilds[guildId].reactRoles = { entries: [], allowMultiple: true, removeOnUnreact: true, dmConfirm: false };
+    if (!Array.isArray(config.guilds[guildId].reactRoles.entries)) config.guilds[guildId].reactRoles.entries = [];
+
+    // Check for duplicate
+    const exists = config.guilds[guildId].reactRoles.entries.some(e => e.messageId === messageId && e.emoji === emoji);
+    if (exists) return res.json({ success: false, error: "A reaction role with this emoji on this message already exists" });
+
+    config.guilds[guildId].reactRoles.entries.push({
+      channelId,
+      channelName: channel.name,
+      messageId,
+      emoji,
+      roleId,
+      roleName: role.name,
+      createdAt: new Date().toISOString()
+    });
+
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ React role added: ${emoji} → @${role.name} on message ${messageId} (Guild: ${guildId})`);
+    addActivity(guildId, "🎭", "Admin", `added reaction role: ${emoji} → @${role.name}`);
+    res.json({ success: true, message: "Reaction role added" });
+  } catch (err) {
+    console.error('❌ Error adding react role:', err);
+    res.json({ success: false, message: "Error adding reaction role: " + err.message });
+  }
+});
+
+// Remove a reaction role entry by index
+app.post("/api/bot-config/react-roles/remove", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { index } = req.body;
+    const config = loadConfig();
+    const entries = config.guilds[guildId]?.reactRoles?.entries;
+    if (!entries || index < 0 || index >= entries.length) return res.json({ success: false, message: "Invalid index" });
+
+    const removed = entries.splice(index, 1)[0];
+
+    // Try to remove the bot's reaction from the message
+    try {
+      const guild = client.guilds.cache.get(guildId);
+      if (guild) {
+        const channel = guild.channels.cache.get(removed.channelId);
+        if (channel) {
+          const message = await channel.messages.fetch(removed.messageId);
+          if (message) {
+            const reaction = message.reactions.cache.find(r => r.emoji.name === removed.emoji || r.emoji.toString() === removed.emoji);
+            if (reaction) await reaction.users.remove(client.user.id).catch(() => {});
+          }
+        }
+      }
+    } catch (e) { console.warn('Could not remove bot reaction:', e.message); }
+
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ React role removed: ${removed.emoji} → @${removed.roleName} (Guild: ${guildId})`);
+    addActivity(guildId, "🎭", "Admin", `removed reaction role: ${removed.emoji} → @${removed.roleName}`);
+    res.json({ success: true, message: "Reaction role removed" });
+  } catch (err) {
+    console.error('❌ Error removing react role:', err);
+    res.json({ success: false, message: "Error removing reaction role" });
+  }
+});
+
+// Post a new reaction role embed to a channel
+app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { channelId, title, description } = req.body;
+    if (!channelId || !title) return res.json({ success: false, error: "Channel and title required" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.json({ success: false, error: "Channel not found" });
+
+    // Build and send embed
+    const embed = new EmbedBuilder()
+      .setColor(0x00D4FF)
+      .setTitle(title)
+      .setDescription(description || 'React below to claim your roles!')
+      .setFooter({ text: 'SPIDEY BOT • React to get roles' })
+      .setTimestamp();
+
+    const msg = await channel.send({ embeds: [embed] });
+    console.log(`✅ React role message posted: ${msg.id} in #${channel.name} (Guild: ${guildId})`);
+    addActivity(guildId, "📨", "Admin", `posted reaction role message in #${channel.name}`);
+    res.json({ success: true, messageId: msg.id, message: "Message posted" });
+  } catch (err) {
+    console.error('❌ Error posting react role message:', err);
+    res.json({ success: false, message: "Error posting message: " + err.message });
   }
 });
 

@@ -2097,7 +2097,7 @@
                 <div id="react-roles-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title" data-i18n="title_reactRoles">React Roles</div>
-                        <div class="content-subtitle">Reaction-based role assignment</div>
+                        <div class="content-subtitle">Reaction-based role assignment — react to a message, get a role</div>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
@@ -2105,32 +2105,79 @@
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                    <select id="rr_channelSelect" class="form-input channel-select">
+                                        <option value="">Select channel...</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Message ID</div>
-                                    <input type="text" class="form-input" placeholder="Enter message ID"/>
+                                    <input type="text" id="rr_messageId" class="form-input" placeholder="Right-click message → Copy Message ID"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Emoji</div>
-                                    <input type="text" class="form-input" placeholder="Enter emoji"/>
+                                    <input type="text" id="rr_emoji" class="form-input" placeholder="e.g. 🎮 or a custom emoji name"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Role</div>
-                                    <input type="text" class="form-input" placeholder="Select role"/>
+                                    <div class="form-label">Role to Assign</div>
+                                    <select id="rr_roleSelect" class="form-input role-select">
+                                        <option value="">Select role...</option>
+                                    </select>
                                 </div>
-                                <button class="btn btn-primary" onclick="createReactRole()">Add Reaction Role</button>
+                                <button class="btn btn-primary" onclick="addReactRole()" style="width:100%;">➕ Add Reaction Role</button>
                             </div>
                         </div>
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">⚙️ Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Allow Multiple Roles</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="rr_allowMultiple" checked/> Allow Multiple Roles</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Require Message Reaction</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="rr_removeOnUnreact" checked/> Remove Role on Unreact</label>
                                 </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="rr_dmConfirm"/> DM User on Role Change</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Reaction Roles List -->
+                    <div class="content-grid" style="margin-top: 1rem;">
+                        <div class="panel" style="grid-column: 1 / -1;">
+                            <div class="panel-header"><div class="panel-title">📋 Active Reaction Roles</div></div>
+                            <div class="panel-content" id="rr_activeList">
+                                <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No reaction roles configured yet</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Post Section -->
+                    <div class="content-grid" style="margin-top: 1rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📨 Quick Post Role Selector</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Post to Channel</div>
+                                    <select id="rr_postChannel" class="form-input channel-select">
+                                        <option value="">Select channel...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Title</div>
+                                    <input type="text" id="rr_postTitle" class="form-input" placeholder="e.g. Choose Your Roles!"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Description</div>
+                                    <textarea id="rr_postDesc" class="form-input" rows="3" placeholder="React below to claim roles..."></textarea>
+                                </div>
+                                <button class="btn btn-primary" onclick="postReactRoleMessage()" style="width:100%;">📨 Post Reaction Role Message</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📜 Role Categories</div></div>
+                            <div class="panel-content" id="rr_categoriesList">
+                                <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading categories...</div>
                             </div>
                         </div>
                     </div>
@@ -3074,7 +3121,7 @@
 
                 if (rolesRes.ok) {
                     const { roles } = await rolesRes.json();
-                    const roleSelects = ['adminRoleSelect', 'modRoleSelect', 'membersRoleSelect', 'mutedRoleSelect'];
+                    const roleSelects = ['adminRoleSelect', 'modRoleSelect', 'membersRoleSelect', 'mutedRoleSelect', 'rr_roleSelect'];
                     roleSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
@@ -3097,7 +3144,7 @@
 
                 if (channelsRes.ok) {
                     const { channels } = await channelsRes.json();
-                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect', 'messageLogChannelSelect', 'modLogChannelSelect', 'sg_auditLogChannel'];
+                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect', 'messageLogChannelSelect', 'modLogChannelSelect', 'sg_auditLogChannel', 'rr_channelSelect', 'rr_postChannel'];
                     channelSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
@@ -3991,17 +4038,164 @@
         }
 
         async function loadReactRoles() {
-            await loadTabConfig('react-roles');
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            try {
+                const res = await fetch('/api/config/' + guildId, { credentials: 'include' });
+                if (!res.ok) return;
+                const data = await res.json();
+                const rr = data.reactRoles || {};
+                // Restore settings checkboxes
+                const am = document.getElementById('rr_allowMultiple');
+                const ru = document.getElementById('rr_removeOnUnreact');
+                const dm = document.getElementById('rr_dmConfirm');
+                if (am) am.checked = rr.allowMultiple !== false;
+                if (ru) ru.checked = rr.removeOnUnreact !== false;
+                if (dm) dm.checked = !!rr.dmConfirm;
+                // Render active roles
+                renderReactRoles(rr.entries || []);
+                // Render role categories in the categories panel
+                renderRRCategories(data.roleCategories || {});
+            } catch (e) { console.error('loadReactRoles error:', e); }
+        }
+
+        function renderReactRoles(entries) {
+            const container = document.getElementById('rr_activeList');
+            if (!container) return;
+            if (!entries.length) {
+                container.innerHTML = '<div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No reaction roles configured yet</div>';
+                return;
+            }
+            container.innerHTML = '';
+            entries.forEach((entry, i) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; background:rgba(0,212,255,0.08); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(0,212,255,0.15);';
+                row.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <span style="font-size:1.3rem;">${entry.emoji || '❓'}</span>
+                        <div>
+                            <div style="font-weight:600; color:#fff;">@${entry.roleName || entry.roleId}</div>
+                            <div style="font-size:0.75rem; color:rgba(255,255,255,0.5);">Channel: #${entry.channelName || entry.channelId} &bull; Msg: ${entry.messageId}</div>
+                        </div>
+                    </div>
+                    <button onclick="deleteReactRole(${i})" style="background:rgba(255,107,107,0.2); border:1px solid rgba(255,107,107,0.3); color:#ff6b6b; padding:0.3rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;">🗑️ Remove</button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function renderRRCategories(categories) {
+            const container = document.getElementById('rr_categoriesList');
+            if (!container) return;
+            const keys = Object.keys(categories);
+            if (!keys.length) {
+                container.innerHTML = '<div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No role categories configured</div>';
+                return;
+            }
+            container.innerHTML = '';
+            keys.forEach(name => {
+                const cat = categories[name];
+                const roles = Array.isArray(cat.roles) ? cat.roles : (Array.isArray(cat) ? cat : []);
+                const el = document.createElement('div');
+                el.style.cssText = 'padding:0.6rem 0.75rem; background:rgba(145,70,255,0.08); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(145,70,255,0.15);';
+                el.innerHTML = `
+                    <div style="font-weight:600; color:#fff;">📁 ${name}</div>
+                    <div style="font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:0.25rem;">${roles.length} role${roles.length !== 1 ? 's' : ''}: ${roles.map(r => typeof r === 'string' ? r : r.name).join(', ') || 'none'}</div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        async function addReactRole() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            const channelId = document.getElementById('rr_channelSelect')?.value;
+            const messageId = document.getElementById('rr_messageId')?.value?.trim();
+            const emoji = document.getElementById('rr_emoji')?.value?.trim();
+            const roleId = document.getElementById('rr_roleSelect')?.value;
+            if (!channelId || !messageId || !emoji || !roleId) return alert('Please fill in all fields: Channel, Message ID, Emoji, and Role');
+            try {
+                const res = await fetch('/api/bot-config/react-roles/add?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channelId, messageId, emoji, roleId }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Reaction role added! The bot will now add the reaction to the message.');
+                    document.getElementById('rr_messageId').value = '';
+                    document.getElementById('rr_emoji').value = '';
+                    loadReactRoles();
+                } else {
+                    alert('❌ ' + (data.error || data.message || 'Failed to add reaction role'));
+                }
+            } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+
+        async function deleteReactRole(index) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            if (!confirm('Remove this reaction role?')) return;
+            try {
+                const res = await fetch('/api/bot-config/react-roles/remove?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ index }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadReactRoles();
+                } else {
+                    alert('❌ ' + (data.message || 'Failed to remove'));
+                }
+            } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+
+        async function postReactRoleMessage() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            const channelId = document.getElementById('rr_postChannel')?.value;
+            const title = document.getElementById('rr_postTitle')?.value?.trim();
+            const description = document.getElementById('rr_postDesc')?.value?.trim();
+            if (!channelId) return alert('Please select a channel to post to');
+            if (!title) return alert('Please enter a title');
+            try {
+                const res = await fetch('/api/bot-config/react-roles/post?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channelId, title, description }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Reaction role message posted! Message ID: ' + data.messageId + '\n\nNow add reaction roles using this message ID.');
+                    document.getElementById('rr_messageId').value = data.messageId;
+                } else {
+                    alert('❌ ' + (data.error || data.message || 'Failed to post'));
+                }
+            } catch (e) { alert('❌ Error: ' + e.message); }
         }
 
         async function saveReactRoles() {
-            await saveTabConfig('react-roles', { enabled: true });
-        }
-
-        async function createReactRole() {
+            // Settings only — entries are added/removed individually via addReactRole/deleteReactRole
             const guildId = localStorage.getItem('selectedServerId');
-            if (!guildId) return alert('Select a server first');
-            alert('✅ Reaction role configuration saved');
+            if (!guildId) return { success: false };
+            const settingsData = {
+                allowMultiple: document.getElementById('rr_allowMultiple')?.checked ?? true,
+                removeOnUnreact: document.getElementById('rr_removeOnUnreact')?.checked ?? true,
+                dmConfirm: document.getElementById('rr_dmConfirm')?.checked ?? false
+            };
+            try {
+                const res = await fetch('/api/bot-config/react-roles/settings?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settingsData),
+                    credentials: 'include'
+                });
+                return await res.json();
+            } catch (e) { return { success: false, message: e.message }; }
         }
 
         async function loadServerMessages() {
@@ -4933,9 +5127,16 @@
             // ── Collect server guard data ──
             const guardData = collectServerGuardData();
 
+            // ── Collect react roles settings ──
+            const rrSettingsData = {
+                allowMultiple: document.getElementById('rr_allowMultiple')?.checked ?? true,
+                removeOnUnreact: document.getElementById('rr_removeOnUnreact')?.checked ?? true,
+                dmConfirm: document.getElementById('rr_dmConfirm')?.checked ?? false
+            };
+
             try {
-                // Save settings + logging + server guard in parallel
-                const [settingsRes, loggingRes, guardRes] = await Promise.all([
+                // Save settings + logging + server guard + react roles settings in parallel
+                const [settingsRes, loggingRes, guardRes, rrRes] = await Promise.all([
                     fetch('/api/config/' + selectedServerId, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -4953,10 +5154,16 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(guardData),
                         credentials: 'include'
+                    }).then(r => r.json()),
+                    fetch('/api/bot-config/react-roles/settings?guildId=' + selectedServerId, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(rrSettingsData),
+                        credentials: 'include'
                     }).then(r => r.json())
                 ]);
 
-                if (settingsRes.success && loggingRes.success && guardRes.success) {
+                if (settingsRes.success && loggingRes.success && guardRes.success && rrRes.success) {
                     // Snapshot ALL inputs as original so unsaved detection resets
                     const allInputs = document.querySelectorAll('input, select, textarea');
                     allInputs.forEach(input => {
@@ -4971,6 +5178,7 @@
                     if (!settingsRes.success) errors.push('Settings: ' + (settingsRes.error || 'failed'));
                     if (!loggingRes.success) errors.push('Logging: ' + (loggingRes.message || 'failed'));
                     if (!guardRes.success) errors.push('Server Guard: ' + (guardRes.message || 'failed'));
+                    if (!rrRes.success) errors.push('React Roles: ' + (rrRes.message || 'failed'));
                     alert('❌ ' + errors.join('\n'));
                 }
             } catch (err) {

@@ -88,7 +88,7 @@
       "antiSpam": {
         "enabled": true,
         "messagesPerLimit": 5,
-        "action": "Warn"
+        "action": "warn"
       },
       "raidProtection": {
         "enabled": true,
@@ -423,7 +423,42 @@
       "accentCyan": "#00d4ff",
       "accentPurple": "#9146ff",
       "accentPink": "#ff69b4",
-      "textColor": "#ffffff"
+      "textColor": "#ffffff",
+      "antiNuke": {
+        "enabled": true,
+        "mode": "monitor",
+        "maxActions": 10
+      },
+      "linkScanning": {
+        "enabled": true,
+        "detectPhishing": true,
+        "blockScamSites": true,
+        "malwareDetection": true
+      },
+      "joinGate": {
+        "enabled": true,
+        "accountAgeCheck": true,
+        "minAccountAge": 3,
+        "suspiciousAvatars": true,
+        "usernameAnalysis": true
+      },
+      "rateLimiting": {
+        "enabled": true,
+        "requestsPerMin": 100,
+        "dosProtection": true,
+        "action": "throttle"
+      },
+      "auditLog": {
+        "enabled": true,
+        "channel": "",
+        "logApiRequests": true,
+        "ipTracking": true
+      },
+      "backup": {
+        "enabled": true,
+        "frequency": "6h",
+        "retention": 30
+      }
     },
     "subscriptions": {
       "field_0": "Gold",
