@@ -1783,6 +1783,14 @@
         body.light-mode .cms-option { color: rgba(0,0,0,0.7); }
         body.light-mode .cms-option:hover { background: rgba(var(--theme-color), 0.06); }
         body.light-mode .cms-option.selected { background: rgba(var(--theme-color), 0.1); color: #000; }
+
+        /* Allow dropdown overflow on panels containing custom multi-selects */
+        .panel:has(.custom-multiselect) {
+            overflow: visible;
+        }
+        .panel:has(.custom-multiselect) .panel-content {
+            overflow: visible;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>

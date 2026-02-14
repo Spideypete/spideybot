@@ -191,6 +191,12 @@
       },
       "activities": [
         {
+          "icon": "📂",
+          "text": "Dashboard",
+          "action": "posted category selector: Gaming → #🪪𝑺𝒆𝒍𝒇-𝑹𝒐𝒍𝒆𝒔",
+          "time": "2/14/2026, 11:17:07 AM"
+        },
+        {
           "icon": "➕",
           "text": "Dashboard",
           "action": "added 3 platform role(s)",
