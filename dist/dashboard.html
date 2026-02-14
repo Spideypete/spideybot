@@ -1907,19 +1907,19 @@
                             <div class="panel-header"><div class="panel-title">🛡️ Anti-Spam</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Anti-Spam</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_antiSpamEnabled" checked/> Enable Anti-Spam</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Messages per 5s</div>
-                                    <input type="number" class="form-input" placeholder="5" value="5"/>
+                                    <input type="number" id="sg_antiSpamLimit" class="form-input" placeholder="5" value="5"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Action</div>
-                                    <select class="form-input">
-                                        <option>Warn</option>
-                                        <option>Mute</option>
-                                        <option>Kick</option>
-                                        <option>Ban</option>
+                                    <select id="sg_antiSpamAction" class="form-input">
+                                        <option value="warn">Warn</option>
+                                        <option value="mute">Mute</option>
+                                        <option value="kick">Kick</option>
+                                        <option value="ban">Ban</option>
                                     </select>
                                 </div>
                             </div>
@@ -1928,14 +1928,14 @@
                             <div class="panel-header"><div class="panel-title">⚠️ Raid Protection</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Raid Detection</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_raidEnabled" checked/> Enable Raid Detection</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Users per 10s</div>
-                                    <input type="number" class="form-input" placeholder="10" value="10"/>
+                                    <input type="number" id="sg_raidLimit" class="form-input" placeholder="10" value="10"/>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Ban Raid Users</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_banRaidUsers"/> Ban Raid Users</label>
                                 </div>
                             </div>
                         </div>
@@ -1946,16 +1946,16 @@
                             <div class="panel-header"><div class="panel-title">🔐 Permissions</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Only @Members can use commands</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_membersOnly" checked/> <span>Only @Members can use commands</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Admins bypass all restrictions</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_adminsBypass" checked/> <span>Admins bypass all restrictions</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> <span>Allow DM commands</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_allowDM"/> <span>Allow DM commands</span></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Require confirmation for dangerous actions</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_confirmDangerous" checked/> <span>Require confirmation for dangerous actions</span></label>
                                 </div>
                             </div>
                         </div>
@@ -1966,19 +1966,19 @@
                             <div class="panel-header"><div class="panel-title">🚨 Anti-Nuke System</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Anti-Nuke</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_antiNukeEnabled" checked/> Enable Anti-Nuke</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Staff Activity Monitoring</div>
-                                    <select class="form-input">
-                                        <option>24/7 Monitoring</option>
-                                        <option>Alert Only</option>
-                                        <option>Auto-Lockdown</option>
+                                    <select id="sg_antiNukeMode" class="form-input">
+                                        <option value="monitor">24/7 Monitoring</option>
+                                        <option value="alert">Alert Only</option>
+                                        <option value="lockdown">Auto-Lockdown</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Max Actions per 30s</div>
-                                    <input type="number" class="form-input" placeholder="10" value="10"/>
+                                    <input type="number" id="sg_antiNukeLimit" class="form-input" placeholder="10" value="10"/>
                                 </div>
                             </div>
                         </div>
@@ -1986,16 +1986,16 @@
                             <div class="panel-header"><div class="panel-title">🔗 Link Scanning</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Link Scanning</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_linkScanEnabled" checked/> Enable Link Scanning</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Detect Phishing</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_detectPhishing" checked/> Detect Phishing</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Block Scam Sites</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_blockScamSites" checked/> Block Scam Sites</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Malware Detection</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_malwareDetection" checked/> Malware Detection</label>
                                 </div>
                             </div>
                         </div>
@@ -2006,20 +2006,20 @@
                             <div class="panel-header"><div class="panel-title">🚪 Advanced Join Gate</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Join Gate</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_joinGateEnabled" checked/> Enable Join Gate</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Account Age Check</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_accountAgeCheck" checked/> Account Age Check</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Min Account Age (days)</div>
-                                    <input type="number" class="form-input" placeholder="3" value="3"/>
+                                    <input type="number" id="sg_minAccountAge" class="form-input" placeholder="3" value="3"/>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Detect Suspicious Avatars</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_suspiciousAvatars" checked/> Detect Suspicious Avatars</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Username Analysis</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_usernameAnalysis" checked/> Username Analysis</label>
                                 </div>
                             </div>
                         </div>
@@ -2027,21 +2027,21 @@
                             <div class="panel-header"><div class="panel-title">📊 Rate Limiting</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Rate Limiting</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_rateLimitEnabled" checked/> Enable Rate Limiting</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Requests per Minute</div>
-                                    <input type="number" class="form-input" placeholder="100" value="100"/>
+                                    <input type="number" id="sg_rateLimitPerMin" class="form-input" placeholder="100" value="100"/>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> DoS Protection</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_dosProtection" checked/> DoS Protection</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Response on Limit</div>
-                                    <select class="form-input">
-                                        <option>Throttle</option>
-                                        <option>Temporary Block</option>
-                                        <option>Kick</option>
+                                    <select id="sg_rateLimitAction" class="form-input">
+                                        <option value="throttle">Throttle</option>
+                                        <option value="block">Temporary Block</option>
+                                        <option value="kick">Kick</option>
                                     </select>
                                 </div>
                             </div>
@@ -2053,17 +2053,19 @@
                             <div class="panel-header"><div class="panel-title">📝 Audit Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Audit Logs</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_auditLogEnabled" checked/> Enable Audit Logs</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Audit Log Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select audit log channel"/>
+                                    <select id="sg_auditLogChannel" class="form-input channel-select">
+                                        <option value="">Select audit log channel...</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log All API Requests</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_logApiRequests" checked/> Log All API Requests</label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Include IP Tracking</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_ipTracking" checked/> Include IP Tracking</label>
                                 </div>
                             </div>
                         </div>
@@ -2071,19 +2073,19 @@
                             <div class="panel-header"><div class="panel-title">💾 Backup System</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Auto-Backup Enabled</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_autoBackup" checked/> Auto-Backup Enabled</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Backup Frequency</div>
-                                    <select class="form-input">
-                                        <option>Every 6 Hours</option>
-                                        <option>Daily</option>
-                                        <option>Weekly</option>
+                                    <select id="sg_backupFrequency" class="form-input">
+                                        <option value="6h">Every 6 Hours</option>
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Retention Period</div>
-                                    <input type="number" class="form-input" placeholder="30" value="30"/>
+                                    <input type="number" id="sg_backupRetention" class="form-input" placeholder="30" value="30"/>
                                     <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.2rem;">days</div>
                                 </div>
                             </div>
@@ -3095,7 +3097,7 @@
 
                 if (channelsRes.ok) {
                     const { channels } = await channelsRes.json();
-                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect', 'messageLogChannelSelect', 'modLogChannelSelect'];
+                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect', 'messageLogChannelSelect', 'modLogChannelSelect', 'sg_auditLogChannel'];
                     channelSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
@@ -3287,6 +3289,7 @@
             await loadServerRolesAndChannels(serverId);
             await loadServerSettings(serverId);
             await loadLogging();
+            await loadServerGuard();
             await loadRoleCategories(serverId);
             await loadMemberGraphs();
             await loadMemberEvents();
@@ -3903,14 +3906,82 @@
         }
 
         async function loadServerGuard() {
-            const config = await loadTabConfig('server-guard');
-            const chk = document.querySelector('#server-guard-section input[type="checkbox"]');
-            if (chk && config.enabled) chk.checked = true;
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            try {
+                const res = await fetch('/api/config/' + guildId, { credentials: 'include' });
+                if (!res.ok) return;
+                const cfg = await res.json();
+                const as = cfg.antiSpam || {};
+                const rp = cfg.raidProtection || {};
+                const pm = cfg.permissions || {};
+                const an = cfg.antiNuke || {};
+                const ls = cfg.linkScanning || {};
+                const jg = cfg.joinGate || {};
+                const rl = cfg.rateLimiting || {};
+                const al = cfg.auditLog || {};
+                const bu = cfg.backup || {};
+
+                // Anti-Spam
+                const el = (id, val) => { const e = document.getElementById(id); if (e) { if (e.type === 'checkbox') e.checked = val !== false; else e.value = val ?? e.value; } };
+                el('sg_antiSpamEnabled', as.enabled);
+                el('sg_antiSpamLimit', as.messagesPerLimit);
+                el('sg_antiSpamAction', as.action);
+                // Raid
+                el('sg_raidEnabled', rp.enabled);
+                el('sg_raidLimit', rp.usersPerLimit);
+                el('sg_banRaidUsers', rp.banRaidUsers);
+                // Permissions
+                el('sg_membersOnly', pm.membersOnly);
+                el('sg_adminsBypass', pm.adminsBypass);
+                el('sg_allowDM', pm.allowDM);
+                el('sg_confirmDangerous', pm.confirmDangerous);
+                // Anti-Nuke
+                el('sg_antiNukeEnabled', an.enabled);
+                el('sg_antiNukeMode', an.mode);
+                el('sg_antiNukeLimit', an.maxActions);
+                // Link Scanning
+                el('sg_linkScanEnabled', ls.enabled);
+                el('sg_detectPhishing', ls.detectPhishing);
+                el('sg_blockScamSites', ls.blockScamSites);
+                el('sg_malwareDetection', ls.malwareDetection);
+                // Join Gate
+                el('sg_joinGateEnabled', jg.enabled);
+                el('sg_accountAgeCheck', jg.accountAgeCheck);
+                el('sg_minAccountAge', jg.minAccountAge);
+                el('sg_suspiciousAvatars', jg.suspiciousAvatars);
+                el('sg_usernameAnalysis', jg.usernameAnalysis);
+                // Rate Limiting
+                el('sg_rateLimitEnabled', rl.enabled);
+                el('sg_rateLimitPerMin', rl.requestsPerMin);
+                el('sg_dosProtection', rl.dosProtection);
+                el('sg_rateLimitAction', rl.action);
+                // Audit Log
+                el('sg_auditLogEnabled', al.enabled);
+                el('sg_auditLogChannel', al.channel);
+                el('sg_logApiRequests', al.logApiRequests);
+                el('sg_ipTracking', al.ipTracking);
+                // Backup
+                el('sg_autoBackup', bu.enabled);
+                el('sg_backupFrequency', bu.frequency);
+                el('sg_backupRetention', bu.retention);
+            } catch (e) { console.error('Error loading server guard:', e); }
         }
 
-        async function saveServerGuard() {
-            const enabled = document.querySelector('#server-guard-section input[type="checkbox"]')?.checked;
-            await saveTabConfig('server-guard', { enabled });
+        function collectServerGuardData() {
+            const cb = id => document.getElementById(id)?.checked ?? false;
+            const val = id => document.getElementById(id)?.value || '';
+            return {
+                antiSpam: { enabled: cb('sg_antiSpamEnabled'), messagesPerLimit: parseInt(val('sg_antiSpamLimit')) || 5, action: val('sg_antiSpamAction') || 'warn' },
+                raidProtection: { enabled: cb('sg_raidEnabled'), usersPerLimit: parseInt(val('sg_raidLimit')) || 10, banRaidUsers: cb('sg_banRaidUsers') },
+                permissions: { membersOnly: cb('sg_membersOnly'), adminsBypass: cb('sg_adminsBypass'), allowDM: cb('sg_allowDM'), confirmDangerous: cb('sg_confirmDangerous') },
+                antiNuke: { enabled: cb('sg_antiNukeEnabled'), mode: val('sg_antiNukeMode') || 'monitor', maxActions: parseInt(val('sg_antiNukeLimit')) || 10 },
+                linkScanning: { enabled: cb('sg_linkScanEnabled'), detectPhishing: cb('sg_detectPhishing'), blockScamSites: cb('sg_blockScamSites'), malwareDetection: cb('sg_malwareDetection') },
+                joinGate: { enabled: cb('sg_joinGateEnabled'), accountAgeCheck: cb('sg_accountAgeCheck'), minAccountAge: parseInt(val('sg_minAccountAge')) || 3, suspiciousAvatars: cb('sg_suspiciousAvatars'), usernameAnalysis: cb('sg_usernameAnalysis') },
+                rateLimiting: { enabled: cb('sg_rateLimitEnabled'), requestsPerMin: parseInt(val('sg_rateLimitPerMin')) || 100, dosProtection: cb('sg_dosProtection'), action: val('sg_rateLimitAction') || 'throttle' },
+                auditLog: { enabled: cb('sg_auditLogEnabled'), channel: val('sg_auditLogChannel'), logApiRequests: cb('sg_logApiRequests'), ipTracking: cb('sg_ipTracking') },
+                backup: { enabled: cb('sg_autoBackup'), frequency: val('sg_backupFrequency') || '6h', retention: parseInt(val('sg_backupRetention')) || 30 }
+            };
         }
 
         async function loadReactRoles() {
@@ -4853,9 +4924,12 @@
                 modLogChannel: document.getElementById('modLogChannelSelect')?.value || ''
             };
 
+            // ── Collect server guard data ──
+            const guardData = collectServerGuardData();
+
             try {
-                // Save settings + logging in parallel
-                const [settingsRes, loggingRes] = await Promise.all([
+                // Save settings + logging + server guard in parallel
+                const [settingsRes, loggingRes, guardRes] = await Promise.all([
                     fetch('/api/config/' + selectedServerId, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -4867,10 +4941,16 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(loggingData),
                         credentials: 'include'
+                    }).then(r => r.json()),
+                    fetch('/api/bot-config/server-guard?guildId=' + selectedServerId, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(guardData),
+                        credentials: 'include'
                     }).then(r => r.json())
                 ]);
 
-                if (settingsRes.success && loggingRes.success) {
+                if (settingsRes.success && loggingRes.success && guardRes.success) {
                     // Snapshot ALL inputs as original so unsaved detection resets
                     const allInputs = document.querySelectorAll('input, select, textarea');
                     allInputs.forEach(input => {
@@ -4884,6 +4964,7 @@
                     const errors = [];
                     if (!settingsRes.success) errors.push('Settings: ' + (settingsRes.error || 'failed'));
                     if (!loggingRes.success) errors.push('Logging: ' + (loggingRes.message || 'failed'));
+                    if (!guardRes.success) errors.push('Server Guard: ' + (guardRes.message || 'failed'));
                     alert('❌ ' + errors.join('\n'));
                 }
             } catch (err) {

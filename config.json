@@ -66,15 +66,15 @@
         "messageLogging": {
           "logDeleted": true,
           "logEdited": true,
-          "logBulkDelete": false,
-          "logChannel": ""
+          "logBulkDelete": true,
+          "logChannel": "1235015413763412063"
         },
         "moderationLogging": {
           "logBans": true,
           "logKicks": true,
           "logMutes": true,
           "logWarns": true,
-          "modLogChannel": ""
+          "modLogChannel": "1235015410865410055"
         }
       },
       "commandPrefix": "/",

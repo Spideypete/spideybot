@@ -115,6 +115,28 @@ const antiSpam = new AntiSpamEngine();
 const joinGate = new JoinGateSystem();
 const backupSystem = new BackupSystem();
 
+// ============== SERVER GUARD TRACKING MAPS ==============
+const spamTracker = new Map();       // guildId:userId -> { timestamps: [], warned: bool }
+const raidTracker = new Map();       // guildId -> { joins: [timestamp, ...] }
+const nukeTracker = new Map();       // guildId:userId -> { actions: [timestamp, ...] }
+const userRateLimit = new Map();     // guildId:userId -> { timestamps: [] }
+
+// Known phishing / scam domains
+const PHISH_DOMAINS = ['discord-nitro.gift','discordgift.site','steamcommunlty.com','dlscord.gift','dlscord-nitro.com','free-nitro.com','discord-airdrop.com','discordapp.gift','nitro-discord.com'];
+
+function sendAuditLog(guild, guildConfig, title, description, color = 0x5865F2) {
+  const al = guildConfig.auditLog;
+  if (!al || al.enabled === false) return;
+  const ch = al.channel ? guild.channels.cache.get(al.channel) : null;
+  if (!ch) return;
+  const embed = new EmbedBuilder()
+    .setColor(color)
+    .setTitle(title)
+    .setDescription(description)
+    .setTimestamp();
+  ch.send({ embeds: [embed] }).catch(() => {});
+}
+
 // ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
@@ -613,7 +635,74 @@ client.on("guildMemberAdd", async (member) => {
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
   const guildConfig = getGuildConfig(member.guild.id);
-  
+
+  // ============== SERVER GUARD: RAID DETECTION ==============
+  const rpConfig = guildConfig.raidProtection || {};
+  if (rpConfig.enabled !== false) {
+    const rKey = member.guild.id;
+    const now = Date.now();
+    if (!raidTracker.has(rKey)) raidTracker.set(rKey, { joins: [] });
+    const rt = raidTracker.get(rKey);
+    rt.joins.push(now);
+    rt.joins = rt.joins.filter(t => now - t < 10000); // last 10 seconds
+    const raidLimit = rpConfig.usersPerLimit || 10;
+
+    if (rt.joins.length >= raidLimit) {
+      sendAuditLog(member.guild, guildConfig, '🚨 RAID DETECTED', `**${rt.joins.length} joins in 10 seconds!**\nRaid threshold: ${raidLimit}\nLatest: ${member.user.tag}`, 0xED4245);
+
+      if (rpConfig.banRaidUsers) {
+        try {
+          await member.ban({ reason: 'SpideyBot Raid Protection: mass join detected' });
+          logModAction(member.guild, 'BAN', client.user, member.user.tag, 'Raid Protection: mass join');
+        } catch (e) { console.error('Raid ban failed:', e.message); }
+      }
+      rt.joins = [];
+    }
+  }
+
+  // ============== SERVER GUARD: JOIN GATE ==============
+  const jgConfig = guildConfig.joinGate || {};
+  if (jgConfig.enabled !== false) {
+    const accountAgeDays = (Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24);
+    const minAge = jgConfig.minAccountAge || 3;
+    let kicked = false;
+    let reason = '';
+
+    // Account age check
+    if (jgConfig.accountAgeCheck !== false && accountAgeDays < minAge) {
+      kicked = true;
+      reason = `Account too new (${Math.floor(accountAgeDays)} days old, minimum: ${minAge})`;
+    }
+
+    // Suspicious avatar check (no avatar)
+    if (!kicked && jgConfig.suspiciousAvatars !== false && !member.user.avatar) {
+      // Only flag very new accounts with no avatar
+      if (accountAgeDays < 7) {
+        kicked = true;
+        reason = 'Suspicious: new account with no avatar';
+      }
+    }
+
+    // Username analysis: contains invite links, mass numbers, or known spam patterns
+    if (!kicked && jgConfig.usernameAnalysis !== false) {
+      const uname = member.user.username.toLowerCase();
+      if (uname.includes('discord.gg') || uname.includes('http') || /^[a-z]{1,2}\d{6,}$/.test(uname) || uname.includes('free nitro')) {
+        kicked = true;
+        reason = 'Suspicious username pattern: ' + member.user.username;
+      }
+    }
+
+    if (kicked) {
+      try {
+        await member.send(`🚪 You were kicked from **${member.guild.name}** — ${reason}. Please contact an admin if this was a mistake.`).catch(() => {});
+        await member.kick('SpideyBot Join Gate: ' + reason);
+        logModAction(member.guild, 'KICK', client.user, member.user.tag, 'Join Gate: ' + reason);
+        sendAuditLog(member.guild, guildConfig, '🚪 Join Gate KICK', `**User:** ${member.user.tag}\n**Reason:** ${reason}\n**Account Age:** ${Math.floor(accountAgeDays)} days`, 0xFF6B6B);
+      } catch (e) { console.error('Join gate action failed:', e.message); }
+      return; // Don't send welcome message to kicked user
+    }
+  }
+
   // Check if welcome messages are disabled via dashboard toggle
   if (guildConfig.welcomeMessages === false) return;
   
@@ -735,6 +824,39 @@ client.on("channelCreate", async (channel) => {
 client.on("channelDelete", async (channel) => {
   if (channel.isDMBased()) return;
   addActivity(channel.guild.id, "🗑️", "Channel deleted", `#${channel.name} - ${channel.id}`);
+
+  // Anti-nuke: track channel deletions by audit log executor
+  const guildConfig = getGuildConfig(channel.guild.id);
+  const anConfig = guildConfig.antiNuke || {};
+  if (anConfig.enabled !== false) {
+    try {
+      const auditLogs = await channel.guild.fetchAuditLogs({ type: 12, limit: 1 }); // CHANNEL_DELETE = 12
+      const entry = auditLogs.entries.first();
+      if (entry && entry.executor && !entry.executor.bot) {
+        const key = `${channel.guild.id}:${entry.executor.id}`;
+        const now = Date.now();
+        if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
+        const nt = nukeTracker.get(key);
+        nt.actions.push(now);
+        nt.actions = nt.actions.filter(t => now - t < 30000);
+        const maxActions = anConfig.maxActions || 10;
+
+        if (nt.actions.length >= maxActions) {
+          sendAuditLog(channel.guild, guildConfig, '🚨 ANTI-NUKE TRIGGERED', `**${entry.executor.tag}** performed ${nt.actions.length} destructive actions in 30s!\nAction: Channel deletion`, 0xED4245);
+          if (anConfig.mode === 'lockdown') {
+            try {
+              const member = channel.guild.members.cache.get(entry.executor.id);
+              if (member && member.manageable) {
+                await member.roles.set([], 'SpideyBot Anti-Nuke: lockdown');
+                await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass destructive actions');
+              }
+            } catch (e) { console.error('Anti-nuke lockdown failed:', e.message); }
+          }
+          nt.actions = [];
+        }
+      }
+    } catch (e) { /* audit log fetch may fail without permissions */ }
+  }
 });
 
 client.on("channelUpdate", async (oldChannel, newChannel) => {
@@ -747,6 +869,69 @@ client.on("channelUpdate", async (oldChannel, newChannel) => {
   if (changes.length > 0) {
     addActivity(newChannel.guild.id, "✏️", "Channel updated", `#${newChannel.name} - ${changes.join(", ")}`);
   }
+});
+
+// ============== ANTI-NUKE: ROLE DELETE ==============
+client.on("roleDelete", async (role) => {
+  const guildConfig = getGuildConfig(role.guild.id);
+  const anConfig = guildConfig.antiNuke || {};
+  if (anConfig.enabled === false) return;
+  try {
+    const auditLogs = await role.guild.fetchAuditLogs({ type: 32, limit: 1 }); // ROLE_DELETE = 32
+    const entry = auditLogs.entries.first();
+    if (entry && entry.executor && !entry.executor.bot) {
+      const key = `${role.guild.id}:${entry.executor.id}`;
+      const now = Date.now();
+      if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
+      const nt = nukeTracker.get(key);
+      nt.actions.push(now);
+      nt.actions = nt.actions.filter(t => now - t < 30000);
+      const maxActions = anConfig.maxActions || 10;
+      if (nt.actions.length >= maxActions) {
+        sendAuditLog(role.guild, guildConfig, '🚨 ANTI-NUKE TRIGGERED', `**${entry.executor.tag}** deleted ${nt.actions.length} roles in 30s!`, 0xED4245);
+        if (anConfig.mode === 'lockdown') {
+          const member = role.guild.members.cache.get(entry.executor.id);
+          if (member && member.manageable) {
+            await member.roles.set([], 'Anti-Nuke: mass role deletion').catch(() => {});
+            await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass role deletion').catch(() => {});
+          }
+        }
+        nt.actions = [];
+      }
+    }
+  } catch (e) { /* permissions may prevent audit log access */ }
+});
+
+// ============== ANTI-NUKE: MASS BAN DETECTION ==============
+client.on("guildBanAdd", async (ban) => {
+  addActivity(ban.guild.id, "🔨", ban.user.username, "was banned");
+  const guildConfig = getGuildConfig(ban.guild.id);
+  const anConfig = guildConfig.antiNuke || {};
+  if (anConfig.enabled === false) return;
+  try {
+    const auditLogs = await ban.guild.fetchAuditLogs({ type: 22, limit: 1 }); // MEMBER_BAN_ADD = 22
+    const entry = auditLogs.entries.first();
+    if (entry && entry.executor && !entry.executor.bot) {
+      const key = `${ban.guild.id}:${entry.executor.id}`;
+      const now = Date.now();
+      if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
+      const nt = nukeTracker.get(key);
+      nt.actions.push(now);
+      nt.actions = nt.actions.filter(t => now - t < 30000);
+      const maxActions = anConfig.maxActions || 10;
+      if (nt.actions.length >= maxActions) {
+        sendAuditLog(ban.guild, guildConfig, '🚨 ANTI-NUKE: MASS BAN', `**${entry.executor.tag}** banned ${nt.actions.length} users in 30s!`, 0xED4245);
+        if (anConfig.mode === 'lockdown') {
+          const member = ban.guild.members.cache.get(entry.executor.id);
+          if (member && member.manageable) {
+            await member.roles.set([], 'Anti-Nuke: mass banning').catch(() => {});
+            await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass banning').catch(() => {});
+          }
+        }
+        nt.actions = [];
+      }
+    }
+  } catch (e) { /* permissions may prevent audit log access */ }
 });
 
 // ============== MESSAGE LOGGING ==============
@@ -835,6 +1020,108 @@ client.on("messageCreate", async (msg) => {
       messageCounting.byChannel[msg.channelId] = (messageCounting.byChannel[msg.channelId] || 0) + 1;
       guildConfig.messageCounting = messageCounting;
       updateGuildConfig(msg.guild.id, { messageCounting });
+    }
+  }
+
+  // ============== SERVER GUARD: ANTI-SPAM ==============
+  const asConfig = guildConfig.antiSpam || {};
+  if (asConfig.enabled !== false && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    const key = `${msg.guild.id}:${msg.author.id}`;
+    const now = Date.now();
+    if (!spamTracker.has(key)) spamTracker.set(key, { timestamps: [], warned: false });
+    const tracker = spamTracker.get(key);
+    tracker.timestamps.push(now);
+    // Keep only messages within the last 5 seconds
+    tracker.timestamps = tracker.timestamps.filter(t => now - t < 5000);
+    const limit = asConfig.messagesPerLimit || 5;
+
+    if (tracker.timestamps.length > limit) {
+      const action = (asConfig.action || 'warn').toLowerCase();
+      try {
+        if (action === 'ban') {
+          await msg.member.ban({ reason: 'SpideyBot Anti-Spam: exceeded message limit' });
+          logModAction(msg.guild, 'BAN', client.user, msg.author.tag, 'Anti-Spam: exceeded message limit');
+          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam BAN', `${msg.author.tag} was banned for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xED4245);
+        } else if (action === 'kick') {
+          await msg.member.kick('SpideyBot Anti-Spam: exceeded message limit');
+          logModAction(msg.guild, 'KICK', client.user, msg.author.tag, 'Anti-Spam: exceeded message limit');
+          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam KICK', `${msg.author.tag} was kicked for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFF6B6B);
+        } else if (action === 'mute') {
+          await msg.member.timeout(5 * 60 * 1000, 'SpideyBot Anti-Spam: exceeded message limit');
+          logModAction(msg.guild, 'MUTE', client.user, msg.author.tag, 'Anti-Spam: 5min timeout');
+          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam MUTE', `${msg.author.tag} was timed out for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFFBD39);
+        } else if (!tracker.warned) {
+          await msg.reply('⚠️ **Slow down!** You are sending messages too fast.');
+          tracker.warned = true;
+          logModAction(msg.guild, 'WARN', client.user, msg.author.tag, 'Anti-Spam: sending messages too fast');
+          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam WARN', `${msg.author.tag} warned for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFFBD39);
+          setTimeout(() => { tracker.warned = false; }, 10000);
+        }
+      } catch (e) { console.error('Anti-spam action failed:', e.message); }
+      tracker.timestamps = [];
+      return;
+    }
+  }
+
+  // ============== SERVER GUARD: LINK SCANNING ==============
+  const lsConfig = guildConfig.linkScanning || {};
+  if (lsConfig.enabled !== false && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    const urlRegex = /https?:\/\/([^\s\/]+)/gi;
+    let match;
+    while ((match = urlRegex.exec(msg.content)) !== null) {
+      const domain = match[1].toLowerCase();
+      let blocked = false;
+      let reason = '';
+
+      if (lsConfig.detectPhishing !== false && PHISH_DOMAINS.some(p => domain.includes(p))) {
+        blocked = true; reason = 'Phishing link detected';
+      }
+      if (lsConfig.blockScamSites !== false && (domain.includes('free-nitro') || domain.includes('gift-discord') || domain.includes('steam-community') || domain.includes('robux-free'))) {
+        blocked = true; reason = 'Scam site blocked';
+      }
+      // Discord invite links from other servers
+      if (lsConfig.blockScamSites !== false && (domain.includes('discord.gg') || domain.includes('discordapp.com/invite'))) {
+        blocked = true; reason = 'Unauthorized invite link';
+      }
+
+      if (blocked) {
+        try {
+          await msg.delete();
+          await msg.channel.send(`🚫 **Link blocked** — ${reason}. Message from ${msg.author} was removed.`);
+          sendAuditLog(msg.guild, guildConfig, '🔗 Link Blocked', `**User:** ${msg.author.tag}\n**Reason:** ${reason}\n**Domain:** ${domain}`, 0xED4245);
+        } catch (e) { console.error('Link scan action failed:', e.message); }
+        return;
+      }
+    }
+  }
+
+  // ============== SERVER GUARD: RATE LIMITING ==============
+  const rlConfig = guildConfig.rateLimiting || {};
+  if (rlConfig.enabled !== false && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    const key = `${msg.guild.id}:${msg.author.id}`;
+    const now = Date.now();
+    if (!userRateLimit.has(key)) userRateLimit.set(key, { timestamps: [] });
+    const rl = userRateLimit.get(key);
+    rl.timestamps.push(now);
+    rl.timestamps = rl.timestamps.filter(t => now - t < 60000);
+    const perMin = rlConfig.requestsPerMin || 100;
+
+    if (rl.timestamps.length > perMin) {
+      const action = (rlConfig.action || 'throttle').toLowerCase();
+      try {
+        if (action === 'kick') {
+          await msg.member.kick('SpideyBot Rate Limit exceeded');
+          sendAuditLog(msg.guild, guildConfig, '📊 Rate Limit KICK', `${msg.author.tag} kicked for exceeding ${perMin} msgs/min`, 0xFF6B6B);
+        } else if (action === 'block') {
+          await msg.member.timeout(10 * 60 * 1000, 'SpideyBot Rate Limit: temp block');
+          sendAuditLog(msg.guild, guildConfig, '📊 Rate Limit BLOCK', `${msg.author.tag} blocked 10min for exceeding ${perMin} msgs/min`, 0xFFBD39);
+        } else {
+          await msg.member.timeout(60 * 1000, 'SpideyBot Rate Limit: throttle');
+          sendAuditLog(msg.guild, guildConfig, '📊 Rate Limit Throttle', `${msg.author.tag} throttled for exceeding ${perMin} msgs/min`, 0xFFBD39);
+        }
+      } catch (e) { console.error('Rate limit action failed:', e.message); }
+      rl.timestamps = [];
+      return;
     }
   }
 
@@ -5197,11 +5484,17 @@ app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
     const config = loadConfig();
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     
-    const { antiSpamEnabled, antiSpamLimit, antiSpamAction, raidEnabled, raidLimit, banRaidUsers, membersOnly, adminsBypass, allowDM, confirmDangerous } = req.body;
+    const { antiSpam, raidProtection, permissions, antiNuke, linkScanning, joinGate, rateLimiting, auditLog, backup } = req.body;
     
-    config.guilds[guildId].antiSpam = { enabled: antiSpamEnabled, messagesPerLimit: antiSpamLimit, action: antiSpamAction };
-    config.guilds[guildId].raidProtection = { enabled: raidEnabled, usersPerLimit: raidLimit, banRaidUsers };
-    config.guilds[guildId].permissions = { membersOnly, adminsBypass, allowDM, confirmDangerous };
+    if (antiSpam) config.guilds[guildId].antiSpam = antiSpam;
+    if (raidProtection) config.guilds[guildId].raidProtection = raidProtection;
+    if (permissions) config.guilds[guildId].permissions = permissions;
+    if (antiNuke) config.guilds[guildId].antiNuke = antiNuke;
+    if (linkScanning) config.guilds[guildId].linkScanning = linkScanning;
+    if (joinGate) config.guilds[guildId].joinGate = joinGate;
+    if (rateLimiting) config.guilds[guildId].rateLimiting = rateLimiting;
+    if (auditLog) config.guilds[guildId].auditLog = auditLog;
+    if (backup) config.guilds[guildId].backup = backup;
     
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
     console.log(`✅ All Server Guard settings updated (Guild: ${guildId})`);
