@@ -5810,6 +5810,63 @@ app.post("/api/bot-config/role-category/delete", express.json(), (req, res) => {
   }
 });
 
+// Setup category selector - posts embed with dropdown to a channel
+app.post("/api/bot-config/setup-category", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, error: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
+  try {
+    const { categoryName, channelId } = req.body;
+    if (!categoryName) return res.json({ success: false, error: "Category name required" });
+    if (!channelId) return res.json({ success: false, error: "Channel required" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.json({ success: false, error: "Channel not found" });
+
+    const config = loadConfig();
+    const categories = config.guilds[guildId]?.roleCategories || {};
+    if (!categories[categoryName]) return res.json({ success: false, error: `Category "${categoryName}" doesn't exist` });
+
+    const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
+    if (!catData.roles || catData.roles.length === 0) return res.json({ success: false, error: "Category has no roles. Add roles first!" });
+
+    const roleOptions = catData.roles.map(r => ({ label: `✨ ${r.name}`, value: r.id }));
+    const colorMap = { gaming: 0xFF6B6B, streaming: 0x4ECDC4, platform: 0x45B7D1, community: 0x96CEB4, events: 0xFFBD39 };
+    const embedColor = colorMap[categoryName.toLowerCase()] || 0x5865F2;
+
+    const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+    const embed = new EmbedBuilder()
+      .setColor(embedColor)
+      .setTitle(`🎯 ${categoryName.toUpperCase()} ROLES`)
+      .setDescription(`✨ Click below to select your ${categoryName.toLowerCase()} roles!\n\n*Choose multiple roles to add yourself to communities*`)
+      .setFooter({ text: "SPIDEY BOT • Select roles to join communities" });
+
+    if (catData.banner) embed.setImage(catData.banner);
+
+    const selectMenu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`select_${categoryName}`)
+        .setPlaceholder(`🔍 Select ${categoryName.toLowerCase()} roles...`)
+        .setMinValues(1)
+        .setMaxValues(roleOptions.length)
+        .addOptions(roleOptions)
+    );
+
+    await channel.send({ embeds: [embed], components: [selectMenu] });
+    addActivity(guildId, "📂", "Dashboard", `posted category selector: ${categoryName} → #${channel.name}`);
+    console.log(`✅ Category selector posted from dashboard: ${categoryName} → #${channel.name} (Guild: ${guildId})`);
+    res.json({ success: true, message: `Category selector posted to #${channel.name}` });
+  } catch (err) {
+    console.error('❌ Error posting category selector:', err);
+    res.json({ success: false, error: "Error posting: " + err.message });
+  }
+});
+
 // Add a typed role (game / watchparty / platform) from dashboard
 app.post("/api/bot-config/typed-role/add", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });

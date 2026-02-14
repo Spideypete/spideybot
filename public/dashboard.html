@@ -2276,8 +2276,8 @@
                         </div>
                     </div>
 
-                    <!-- Gaming Roles Section -->
-                    <div class="content-grid" style="margin-top: 1rem;">
+                    <!-- Gaming Roles Section (full width) -->
+                    <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
                             <div class="panel-content">
@@ -2292,6 +2292,10 @@
                                 <div id="gr_list" style="margin-top:0.75rem;"></div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Watch Party + Platform Roles (side by side) -->
+                    <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">🎬 Watch Party Roles</div></div>
                             <div class="panel-content">
@@ -2306,8 +2310,6 @@
                                 <div id="wp_list" style="margin-top:0.75rem;"></div>
                             </div>
                         </div>
-                    </div>
-                    <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
                             <div class="panel-content">
@@ -2322,6 +2324,31 @@
                                 <div id="pl_list" style="margin-top:0.75rem;"></div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Setup Category + How Roles Work (side by side) -->
+                    <div class="content-grid" style="margin-top: 1rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📂 Setup Category Selector</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(145,70,255,0.06); border:1px solid rgba(145,70,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Select a category you've created and post it as a role selector embed with a dropdown menu to a channel. Members use the dropdown to pick roles. Same as <code>/setupcategory [name]</code>.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Category</div>
+                                    <select id="sc_categorySelect" class="form-input">
+                                        <option value="">Select a category...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Post to Channel</div>
+                                    <select id="sc_channelSelect" class="form-input channel-select">
+                                        <option value="">Select channel...</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" onclick="setupCategory()" style="width:100%;">📂 Post Category Selector</button>
+                            </div>
+                        </div>
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">📖 How Roles Work</div></div>
                             <div class="panel-content">
@@ -2331,7 +2358,7 @@
                                     <p style="margin:0 0 0.5rem 0;"><strong>3.</strong> The bot posts an embed with a button in your server</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>4.</strong> Members click the button → dropdown appears → they pick roles</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>5.</strong> For <strong>Reaction Roles</strong>: post a message, add emoji→role pairs above</p>
-                                    <p style="margin:0;"><strong>6.</strong> For <strong>Role Categories</strong>: create categories in the Role Categories tab, then use <code>/setupcategory [name]</code> in Discord</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>6.</strong> For <strong>Role Categories</strong>: pick a category above and click Post, or use <code>/setupcategory [name]</code> in Discord</p>
                                 </div>
                             </div>
                         </div>
@@ -3363,7 +3390,7 @@
 
                 if (channelsRes.ok) {
                     const { channels } = await channelsRes.json();
-                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect', 'messageLogChannelSelect', 'modLogChannelSelect', 'sg_auditLogChannel', 'rr_channelSelect', 'rr_postChannel'];
+                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect', 'messageLogChannelSelect', 'modLogChannelSelect', 'sg_auditLogChannel', 'rr_channelSelect', 'rr_postChannel', 'sc_channelSelect'];
                     channelSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
@@ -4275,6 +4302,21 @@
                 renderReactRoles(rr.entries || []);
                 // Render role categories in the categories panel
                 renderRRCategories(data.roleCategories || {});
+                // Populate setup category dropdown
+                const scSel = document.getElementById('sc_categorySelect');
+                if (scSel) {
+                    const curVal = scSel.value;
+                    scSel.innerHTML = '<option value="">Select a category...</option>';
+                    Object.keys(data.roleCategories || {}).forEach(name => {
+                        const cat = data.roleCategories[name];
+                        const roles = Array.isArray(cat.roles) ? cat.roles : (Array.isArray(cat) ? cat : []);
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        opt.textContent = '📁 ' + name + ' (' + roles.length + ' roles)';
+                        scSel.appendChild(opt);
+                    });
+                    if (curVal) scSel.value = curVal;
+                }
                 // Render typed role lists (gaming, watchparty, platform)
                 renderTypedRoles('game', data.gameRoles || []);
                 renderTypedRoles('watchparty', data.watchPartyRoles || []);
@@ -4330,6 +4372,29 @@
                 `;
                 container.appendChild(el);
             });
+        }
+
+        async function setupCategory() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            const categoryName = document.getElementById('sc_categorySelect')?.value;
+            const channelId = document.getElementById('sc_channelSelect')?.value;
+            if (!categoryName) return alert('⚠️ Please select a category');
+            if (!channelId) return alert('⚠️ Please select a channel');
+            try {
+                const res = await fetch('/api/bot-config/setup-category?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoryName, channelId }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Category selector for "' + categoryName + '" posted!\n\n' + (data.message || ''));
+                } else {
+                    alert('❌ ' + (data.error || 'Failed to post category selector'));
+                }
+            } catch (e) { alert('❌ Error: ' + e.message); }
         }
 
         async function deleteCategory(categoryName) {
