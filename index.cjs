@@ -136,9 +136,19 @@ function logModAction(guild, action, mod, target, reason) {
 
   const config = loadConfig();
   const guildConfig = config.guilds[guild.id];
-  if (!guildConfig?.modLogChannelId) return;
+  if (!guildConfig) return;
 
-  const modLogChannel = guild.channels.cache.get(guildConfig.modLogChannelId);
+  // Check dashboard logging toggles
+  const modLogging = guildConfig.logging?.moderationLogging || {};
+  const actionToggleMap = { WARN: 'logWarns', KICK: 'logKicks', BAN: 'logBans', MUTE: 'logMutes', UNMUTE: 'logMutes' };
+  const toggleKey = actionToggleMap[action];
+  if (toggleKey && modLogging[toggleKey] === false) return;
+
+  // Use dashboard modLogChannel first, fall back to config modLogChannelId
+  const channelId = modLogging.modLogChannel || guildConfig.modLogChannelId;
+  if (!channelId) return;
+
+  const modLogChannel = guild.channels.cache.get(channelId);
   if (modLogChannel) {
     const embed = new EmbedBuilder()
       .setColor(action === "WARN" ? 0xFFBD39 : action === "KICK" ? 0xFF6B6B : action === "BAN" ? 0xED4245 : 0x5865F2)
@@ -737,6 +747,72 @@ client.on("channelUpdate", async (oldChannel, newChannel) => {
   if (changes.length > 0) {
     addActivity(newChannel.guild.id, "✏️", "Channel updated", `#${newChannel.name} - ${changes.join(", ")}`);
   }
+});
+
+// ============== MESSAGE LOGGING ==============
+client.on("messageDelete", async (message) => {
+  if (!message.guild || message.author?.bot) return;
+  const config = loadConfig();
+  const logging = config.guilds?.[message.guild.id]?.logging?.messageLogging;
+  if (!logging?.logDeleted || !logging?.logChannel) return;
+
+  const logChannel = message.guild.channels.cache.get(logging.logChannel);
+  if (!logChannel) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(0xFF6B6B)
+    .setTitle("🗑️ Message Deleted")
+    .addFields(
+      { name: "Author", value: message.author?.tag || "Unknown", inline: true },
+      { name: "Channel", value: `<#${message.channel.id}>`, inline: true },
+      { name: "Content", value: (message.content || "*No text content*").substring(0, 1024) }
+    )
+    .setTimestamp();
+  logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
+client.on("messageUpdate", async (oldMessage, newMessage) => {
+  if (!newMessage.guild || newMessage.author?.bot) return;
+  if (oldMessage.content === newMessage.content) return;
+  const config = loadConfig();
+  const logging = config.guilds?.[newMessage.guild.id]?.logging?.messageLogging;
+  if (!logging?.logEdited || !logging?.logChannel) return;
+
+  const logChannel = newMessage.guild.channels.cache.get(logging.logChannel);
+  if (!logChannel) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(0xFFBD39)
+    .setTitle("✏️ Message Edited")
+    .addFields(
+      { name: "Author", value: newMessage.author?.tag || "Unknown", inline: true },
+      { name: "Channel", value: `<#${newMessage.channel.id}>`, inline: true },
+      { name: "Before", value: (oldMessage.content || "*empty*").substring(0, 1024) },
+      { name: "After", value: (newMessage.content || "*empty*").substring(0, 1024) }
+    )
+    .setTimestamp();
+  logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
+client.on("messageDeleteBulk", async (messages) => {
+  const first = messages.first();
+  if (!first?.guild) return;
+  const config = loadConfig();
+  const logging = config.guilds?.[first.guild.id]?.logging?.messageLogging;
+  if (!logging?.logBulkDelete || !logging?.logChannel) return;
+
+  const logChannel = first.guild.channels.cache.get(logging.logChannel);
+  if (!logChannel) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(0xED4245)
+    .setTitle("🗑️ Bulk Message Delete")
+    .addFields(
+      { name: "Channel", value: `<#${first.channel.id}>`, inline: true },
+      { name: "Messages Deleted", value: `${messages.size}`, inline: true }
+    )
+    .setTimestamp();
+  logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
 // ============== MESSAGE COMMANDS ==============

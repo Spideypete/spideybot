@@ -1853,17 +1853,19 @@
                             <div class="panel-header"><div class="panel-title">📝 Message Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Deleted Messages</label>
+                                    <label class="toggle-label"><span>Log Deleted Messages</span><label class="toggle-switch"><input type="checkbox" id="log_deleted" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Edited Messages</label>
+                                    <label class="toggle-label"><span>Log Edited Messages</span><label class="toggle-switch"><input type="checkbox" id="log_edited" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Log Bulk Deletes</label>
+                                    <label class="toggle-label"><span>Log Bulk Deletes</span><label class="toggle-switch"><input type="checkbox" id="log_bulkDelete"/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Log Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select log channel"/>
+                                    <select class="form-input" id="messageLogChannelSelect">
+                                        <option value="">Select log channel...</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -1871,23 +1873,28 @@
                             <div class="panel-header"><div class="panel-title">👤 Moderation Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Bans</label>
+                                    <label class="toggle-label"><span>Log Bans</span><label class="toggle-switch"><input type="checkbox" id="log_bans" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Kicks</label>
+                                    <label class="toggle-label"><span>Log Kicks</span><label class="toggle-switch"><input type="checkbox" id="log_kicks" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Mutes</label>
+                                    <label class="toggle-label"><span>Log Mutes</span><label class="toggle-switch"><input type="checkbox" id="log_mutes" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Log Warns</label>
+                                    <label class="toggle-label"><span>Log Warns</span><label class="toggle-switch"><input type="checkbox" id="log_warns" checked/><span class="toggle-slider"></span></label></label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Moderation Log Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select mod log channel"/>
+                                    <select class="form-input" id="modLogChannelSelect">
+                                        <option value="">Select mod log channel...</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div style="margin-top: 1rem; text-align: right;">
+                        <button class="btn btn-primary" onclick="saveLogging()" style="padding: 0.6rem 1.5rem; background: rgba(var(--theme-color), 0.3); border: 1px solid rgba(var(--theme-color), 0.5); border-radius: 8px; color: white; cursor: pointer; font-size: 0.9rem;">💾 Save Logging Settings</button>
                     </div>
                 </div>
 
@@ -3095,7 +3102,7 @@
 
                 if (channelsRes.ok) {
                     const { channels } = await channelsRes.json();
-                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect'];
+                    const channelSelects = ['generalChannelSelect', 'announcementsChannelSelect', 'welcomeChannelSelect', 'messageLogChannelSelect', 'modLogChannelSelect'];
                     channelSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
@@ -3286,6 +3293,7 @@
             // Load ALL data for the selected server
             await loadServerRolesAndChannels(serverId);
             await loadServerSettings(serverId);
+            await loadLogging();
             await loadRoleCategories(serverId);
             await loadMemberGraphs();
             await loadMemberEvents();
@@ -3860,13 +3868,45 @@
 
         async function loadLogging() {
             const config = await loadTabConfig('logging');
-            const chk = document.querySelector('#logging-section input[type="checkbox"]');
-            if (chk && config.enabled) chk.checked = true;
+            if (!config) return;
+            const ml = config.messageLogging || {};
+            const mod = config.moderationLogging || {};
+            if (ml.logDeleted !== undefined) { const c = document.getElementById('log_deleted'); if (c) c.checked = ml.logDeleted; }
+            if (ml.logEdited !== undefined) { const c = document.getElementById('log_edited'); if (c) c.checked = ml.logEdited; }
+            if (ml.logBulkDelete !== undefined) { const c = document.getElementById('log_bulkDelete'); if (c) c.checked = ml.logBulkDelete; }
+            if (ml.logChannel) { const s = document.getElementById('messageLogChannelSelect'); if (s) s.value = ml.logChannel; }
+            if (mod.logBans !== undefined) { const c = document.getElementById('log_bans'); if (c) c.checked = mod.logBans; }
+            if (mod.logKicks !== undefined) { const c = document.getElementById('log_kicks'); if (c) c.checked = mod.logKicks; }
+            if (mod.logMutes !== undefined) { const c = document.getElementById('log_mutes'); if (c) c.checked = mod.logMutes; }
+            if (mod.logWarns !== undefined) { const c = document.getElementById('log_warns'); if (c) c.checked = mod.logWarns; }
+            if (mod.modLogChannel) { const s = document.getElementById('modLogChannelSelect'); if (s) s.value = mod.modLogChannel; }
         }
 
         async function saveLogging() {
-            const enabled = document.querySelector('#logging-section input[type="checkbox"]')?.checked;
-            await saveTabConfig('logging', { enabled });
+            const data = {
+                logDeleted: document.getElementById('log_deleted')?.checked ?? true,
+                logEdited: document.getElementById('log_edited')?.checked ?? true,
+                logBulkDelete: document.getElementById('log_bulkDelete')?.checked ?? false,
+                logChannel: document.getElementById('messageLogChannelSelect')?.value || '',
+                logBans: document.getElementById('log_bans')?.checked ?? true,
+                logKicks: document.getElementById('log_kicks')?.checked ?? true,
+                logMutes: document.getElementById('log_mutes')?.checked ?? true,
+                logWarns: document.getElementById('log_warns')?.checked ?? true,
+                modLogChannel: document.getElementById('modLogChannelSelect')?.value || ''
+            };
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            try {
+                const res = await fetch('/api/bot-config/logging?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    credentials: 'include'
+                });
+                const result = await res.json();
+                if (result.success) alert('✅ Logging settings saved!');
+                else alert('❌ ' + (result.message || 'Failed'));
+            } catch (e) { alert('Error: ' + e.message); }
         }
 
         async function loadServerGuard() {
