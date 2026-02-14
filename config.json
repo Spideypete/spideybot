@@ -82,9 +82,9 @@
       "adminRole": "1235015410865410051",
       "moderatorRole": "1235015410865410049",
       "membersRole": "1235015410743775295",
-      "generalChannel": "1235015412035358728",
-      "announcementsChannel": "1240556844225925183",
-      "welcomeChannel": "1235015412035358721",
+      "generalChannel": "",
+      "announcementsChannel": "",
+      "welcomeChannel": "",
       "antiSpam": {
         "enabled": true,
         "messagesPerLimit": 5,
@@ -408,7 +408,22 @@
           "action": "69️⃣ Level 69 - 1451124123911847960",
           "timestamp": "8:09:11 AM"
         }
-      ]
+      ],
+      "prefix": "/",
+      "language": "en",
+      "modRole": "1235015410865410049",
+      "mutedRole": "1235015410865410054",
+      "musicPlayer": true,
+      "economySystem": true,
+      "levelingSystem": true,
+      "welcomeMessages": true,
+      "moderationTools": true,
+      "socialNotifications": true,
+      "themeColor": "#00d4ff",
+      "accentCyan": "#00d4ff",
+      "accentPurple": "#9146ff",
+      "accentPink": "#ff69b4",
+      "textColor": "#ffffff"
     },
     "subscriptions": {
       "field_0": "Gold",
