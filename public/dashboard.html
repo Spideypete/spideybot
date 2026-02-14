@@ -4007,23 +4007,9 @@
                     // Deselect all options in multi-select
                     if (sel) Array.from(sel.options).forEach(o => o.selected = false);
                     
-                    // Force reload categories with proper wait
-                    console.log('🔵 Loading categories after creation...');
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    // Reload all category displays
                     await loadRoleCategories(guildId);
-                    
-                    // Force select the newly created category
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    const select = document.getElementById('editCategorySelect');
-                    if (select) {
-                        const opts = Array.from(select.options).map(o => o.value);
-                        console.log('🔵 Available options:', opts);
-                        select.value = name;
-                        if (select.value === name) {
-                            console.log('✅ Category selected:', name);
-                            loadCategoryDetails();
-                        }
-                    }
+                    await loadReactRoles();
                 } else {
                     alert(`❌ Error: ${data.error || 'Failed to create category'}`);
                     console.error('🔴 API Error:', data);
