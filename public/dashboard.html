@@ -1577,6 +1577,212 @@
             background: rgba(var(--theme-color), 0.1);
             margin: 0.75rem 0;
         }
+
+        /* ========== Custom Multi-Select Dropdown ========== */
+        .custom-multiselect {
+            position: relative;
+            width: 100%;
+        }
+        .custom-multiselect .cms-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(var(--theme-color), 0.2);
+            border-radius: 5px;
+            padding: 0.35rem 0.5rem;
+            cursor: pointer;
+            min-height: 34px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .custom-multiselect .cms-trigger:hover {
+            border-color: rgba(var(--theme-color), 0.4);
+            background: rgba(0, 0, 0, 0.4);
+        }
+        .custom-multiselect.open .cms-trigger {
+            border-color: rgba(var(--theme-color), 0.5);
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 12px rgba(var(--theme-color), 0.15);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .cms-trigger-text {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            flex: 1;
+            overflow: hidden;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .cms-trigger-text .cms-tag {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(var(--theme-color), 0.15);
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-radius: 3px;
+            padding: 1px 6px;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.85);
+            white-space: nowrap;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cms-trigger-text .cms-tag .cms-tag-x {
+            margin-left: 4px;
+            cursor: pointer;
+            font-size: 0.65rem;
+            opacity: 0.6;
+            transition: opacity 0.15s;
+        }
+        .cms-trigger-text .cms-tag .cms-tag-x:hover {
+            opacity: 1;
+            color: #ff6b6b;
+        }
+        .cms-trigger-text .cms-overflow {
+            font-size: 0.65rem;
+            color: rgba(var(--theme-color), 0.8);
+            white-space: nowrap;
+            align-self: center;
+        }
+        .cms-arrow {
+            margin-left: 6px;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.4);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        .custom-multiselect.open .cms-arrow {
+            transform: rotate(180deg);
+        }
+        .cms-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: #141e3c;
+            border: 1px solid rgba(var(--theme-color), 0.3);
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 200px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+        .custom-multiselect.open .cms-dropdown {
+            display: block;
+            animation: cmsFadeIn 0.15s ease;
+        }
+        @keyframes cmsFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .cms-search {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(var(--theme-color), 0.1);
+            position: sticky;
+            top: 0;
+            background: #141e3c;
+            z-index: 1;
+        }
+        .cms-search input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(var(--theme-color), 0.15);
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            color: #fff;
+            outline: none;
+        }
+        .cms-search input::placeholder { color: rgba(255, 255, 255, 0.3); }
+        .cms-search input:focus {
+            border-color: rgba(var(--theme-color), 0.4);
+        }
+        .cms-options {
+            max-height: 160px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(var(--theme-color), 0.3) transparent;
+        }
+        .cms-options::-webkit-scrollbar { width: 5px; }
+        .cms-options::-webkit-scrollbar-track { background: transparent; }
+        .cms-options::-webkit-scrollbar-thumb {
+            background: rgba(var(--theme-color), 0.3);
+            border-radius: 3px;
+        }
+        .cms-option {
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.73rem;
+            color: rgba(255, 255, 255, 0.75);
+            transition: background 0.12s ease;
+            gap: 8px;
+        }
+        .cms-option:hover {
+            background: rgba(var(--theme-color), 0.08);
+        }
+        .cms-option.selected {
+            background: rgba(var(--theme-color), 0.12);
+            color: rgba(255, 255, 255, 0.95);
+        }
+        .cms-option .cms-check {
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid rgba(var(--theme-color), 0.3);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+        .cms-option.selected .cms-check {
+            background: rgba(var(--theme-color), 0.4);
+            border-color: rgba(var(--theme-color), 0.7);
+            color: #fff;
+        }
+        .cms-option .cms-role-color {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .cms-empty {
+            padding: 12px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Light mode overrides for custom multi-select */
+        body.light-mode .cms-trigger {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(var(--theme-color), 0.2);
+        }
+        body.light-mode .cms-trigger:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+        body.light-mode .custom-multiselect.open .cms-trigger {
+            background: rgba(0, 0, 0, 0.08);
+        }
+        body.light-mode .cms-trigger-text { color: rgba(0, 0, 0, 0.4); }
+        body.light-mode .cms-trigger-text .cms-tag {
+            background: rgba(var(--theme-color), 0.1);
+            color: rgba(0, 0, 0, 0.75);
+        }
+        body.light-mode .cms-dropdown { background: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        body.light-mode .cms-search { background: #fff; }
+        body.light-mode .cms-search input { background: rgba(0,0,0,0.04); color: #222; }
+        body.light-mode .cms-option { color: rgba(0,0,0,0.7); }
+        body.light-mode .cms-option:hover { background: rgba(var(--theme-color), 0.06); }
+        body.light-mode .cms-option.selected { background: rgba(var(--theme-color), 0.1); color: #000; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -2293,8 +2499,8 @@
                                     <input type="text" id="categoryMessage" class="form-input" placeholder="Select a role below"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Select Roles <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(hold Ctrl/Cmd to pick multiple)</span></div>
-                                    <select id="cc_roleSelect" class="form-input role-select" multiple size="6" style="min-height:140px;"></select>
+                                    <div class="form-label">Select Roles</div>
+                                    <div id="cc_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
                                 </div>
                                 <button class="btn btn-primary" onclick="createRoleCategory()" style="width:100%;">📂 Create Category</button>
                             </div>
@@ -2331,8 +2537,8 @@
                                     💡 <strong>How it works:</strong> Add game roles here (e.g. Valorant, Minecraft). Members click the 🎮 button posted via Quick Setup → Gaming Roles to choose which games they play. Same as the bot command <code>/addgamerole [name] [roleID]</code>.
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Select Roles <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(hold Ctrl/Cmd to pick multiple)</span></div>
-                                    <select id="gr_roleSelect" class="form-input role-select" multiple size="5" style="min-height:120px;"></select>
+                                    <div class="form-label">Select Roles</div>
+                                    <div id="gr_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
                                 </div>
                                 <button class="btn btn-primary" onclick="addTypedRole('game')" style="width:100%;">➕ Add Selected Gaming Roles</button>
                                 <div id="gr_list" style="margin-top:0.75rem;"></div>
@@ -2349,8 +2555,8 @@
                                     💡 <strong>How it works:</strong> Add streaming/watch party roles. Members click the 🎬 button from Quick Setup → Watch Party to join. Same as <code>/addwatchpartyrole [name] [roleID]</code>.
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Select Roles <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(hold Ctrl/Cmd to pick multiple)</span></div>
-                                    <select id="wp_roleSelect" class="form-input role-select" multiple size="5" style="min-height:120px;"></select>
+                                    <div class="form-label">Select Roles</div>
+                                    <div id="wp_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
                                 </div>
                                 <button class="btn btn-primary" onclick="addTypedRole('watchparty')" style="width:100%;">➕ Add Selected Watch Party Roles</button>
                                 <div id="wp_list" style="margin-top:0.75rem;"></div>
@@ -2363,8 +2569,8 @@
                                     💡 <strong>How it works:</strong> Add platform roles (PC, PlayStation, Xbox, etc). Members pick their platforms via the 💻 button from Quick Setup → Platform Roles. Same as <code>/addplatformrole [name] [roleID]</code>.
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Select Roles <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">(hold Ctrl/Cmd to pick multiple)</span></div>
-                                    <select id="pl_roleSelect" class="form-input role-select" multiple size="5" style="min-height:120px;"></select>
+                                    <div class="form-label">Select Roles</div>
+                                    <div id="pl_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
                                 </div>
                                 <button class="btn btn-primary" onclick="addTypedRole('platform')" style="width:100%;">➕ Add Selected Platform Roles</button>
                                 <div id="pl_list" style="margin-top:0.75rem;"></div>
@@ -3373,6 +3579,184 @@
             if (sel) sel.value = lang;
         }
 
+        // ========== CUSTOM MULTI-SELECT COMPONENT ==========
+        function initCustomMultiSelect(container) {
+            if (container._cmsInit) return; // already initialized
+            container._cmsInit = true;
+            container._options = []; // {value, text, color, selected}
+            const placeholder = container.dataset.placeholder || 'Select...';
+
+            // Build inner HTML
+            container.innerHTML = `
+                <div class="cms-trigger">
+                    <div class="cms-trigger-text"><span style="color:inherit">${placeholder}</span></div>
+                    <span class="cms-arrow">▼</span>
+                </div>
+                <div class="cms-dropdown">
+                    <div class="cms-search"><input type="text" placeholder="Search roles..." /></div>
+                    <div class="cms-options"></div>
+                </div>
+            `;
+
+            const trigger = container.querySelector('.cms-trigger');
+            const dropdown = container.querySelector('.cms-dropdown');
+            const searchInput = container.querySelector('.cms-search input');
+            const optionsList = container.querySelector('.cms-options');
+
+            // Toggle open/close
+            trigger.addEventListener('click', (e) => {
+                if (e.target.classList.contains('cms-tag-x')) return; // handled separately
+                // Close others
+                document.querySelectorAll('.custom-multiselect.open').forEach(el => {
+                    if (el !== container) el.classList.remove('open');
+                });
+                container.classList.toggle('open');
+                if (container.classList.contains('open')) {
+                    setTimeout(() => searchInput.focus(), 50);
+                }
+            });
+
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    container.classList.remove('open');
+                }
+            });
+
+            // Search/filter
+            searchInput.addEventListener('input', () => {
+                const q = searchInput.value.toLowerCase();
+                optionsList.querySelectorAll('.cms-option').forEach(opt => {
+                    const text = opt.dataset.text.toLowerCase();
+                    opt.style.display = text.includes(q) ? '' : 'none';
+                });
+                // Show empty message if nothing matches
+                const visible = optionsList.querySelectorAll('.cms-option:not([style*="display: none"])');
+                let empty = optionsList.querySelector('.cms-empty');
+                if (visible.length === 0) {
+                    if (!empty) { empty = document.createElement('div'); empty.className = 'cms-empty'; empty.textContent = 'No roles found'; optionsList.appendChild(empty); }
+                    empty.style.display = '';
+                } else if (empty) {
+                    empty.style.display = 'none';
+                }
+            });
+
+            // Prevent dropdown close on search click
+            searchInput.addEventListener('click', (e) => e.stopPropagation());
+
+            // Render methods
+            container._renderOptions = function() {
+                optionsList.innerHTML = '';
+                if (container._options.length === 0) {
+                    optionsList.innerHTML = '<div class="cms-empty">No roles available</div>';
+                    return;
+                }
+                container._options.forEach((opt, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'cms-option' + (opt.selected ? ' selected' : '');
+                    div.dataset.value = opt.value;
+                    div.dataset.text = opt.text;
+                    div.dataset.index = i;
+                    const colorDot = opt.color && opt.color !== '#000000'
+                        ? `<span class="cms-role-color" style="background:${opt.color}"></span>` : '';
+                    div.innerHTML = `<span class="cms-check">${opt.selected ? '✓' : ''}</span>${colorDot}<span>${opt.text}</span>`;
+                    div.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        opt.selected = !opt.selected;
+                        div.classList.toggle('selected', opt.selected);
+                        div.querySelector('.cms-check').textContent = opt.selected ? '✓' : '';
+                        container._updateTrigger();
+                    });
+                    optionsList.appendChild(div);
+                });
+                searchInput.value = '';
+            };
+
+            container._updateTrigger = function() {
+                const triggerText = container.querySelector('.cms-trigger-text');
+                const selected = container._options.filter(o => o.selected);
+                if (selected.length === 0) {
+                    triggerText.innerHTML = `<span style="color:inherit">${placeholder}</span>`;
+                    return;
+                }
+                const maxTags = 4;
+                let html = '';
+                selected.slice(0, maxTags).forEach(o => {
+                    html += `<span class="cms-tag">${o.text}<span class="cms-tag-x" data-value="${o.value}">✕</span></span>`;
+                });
+                if (selected.length > maxTags) {
+                    html += `<span class="cms-overflow">+${selected.length - maxTags} more</span>`;
+                }
+                triggerText.innerHTML = html;
+                // Bind tag remove buttons
+                triggerText.querySelectorAll('.cms-tag-x').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = btn.dataset.value;
+                        const opt = container._options.find(o => o.value === val);
+                        if (opt) {
+                            opt.selected = false;
+                            container._renderOptions();
+                            container._updateTrigger();
+                        }
+                    });
+                });
+            };
+
+            // Public API: set options (array of {value, text, color?})
+            container.setOptions = function(options) {
+                const prevSelected = container._options.filter(o => o.selected).map(o => o.value);
+                container._options = options.map(o => ({
+                    value: o.value,
+                    text: o.text,
+                    color: o.color || null,
+                    selected: prevSelected.includes(o.value)
+                }));
+                container._renderOptions();
+                container._updateTrigger();
+            };
+
+            // Public API: get selected values [{value, text}]
+            container.getSelected = function() {
+                return container._options.filter(o => o.selected).map(o => ({ value: o.value, text: o.text }));
+            };
+
+            // Public API: clear selections
+            container.clearSelection = function() {
+                container._options.forEach(o => o.selected = false);
+                container._renderOptions();
+                container._updateTrigger();
+            };
+
+            // Public API: compatibility with old code checking .multiple
+            container.multiple = true;
+            Object.defineProperty(container, 'selectedOptions', {
+                get: function() {
+                    return container._options.filter(o => o.selected).map(o => ({
+                        value: o.value,
+                        text: o.text,
+                        textContent: o.text
+                    }));
+                }
+            });
+            Object.defineProperty(container, 'options', {
+                get: function() {
+                    return container._options.map(o => ({
+                        value: o.value,
+                        text: o.text,
+                        textContent: o.text,
+                        selected: o.selected
+                    }));
+                }
+            });
+        }
+
+        // Initialize all custom multi-selects on the page
+        function initAllCustomMultiSelects() {
+            document.querySelectorAll('.custom-multiselect').forEach(el => initCustomMultiSelect(el));
+        }
+        initAllCustomMultiSelects();
+
         // ========== LOAD ROLES & CHANNELS INTO DROPDOWNS ==========
         async function loadServerRolesAndChannels(guildId) {
             try {
@@ -3387,6 +3771,23 @@
                     roleSelects.forEach(selectId => {
                         const sel = document.getElementById(selectId);
                         if (!sel) return;
+
+                        // Custom multi-select component
+                        if (sel.classList.contains('custom-multiselect')) {
+                            initCustomMultiSelect(sel);
+                            const options = roles.map(role => {
+                                let color = null;
+                                if (role.color) {
+                                    const hex = '#' + role.color.toString(16).padStart(6, '0');
+                                    if (hex !== '#000000') color = hex;
+                                }
+                                return { value: role.id, text: role.name, color };
+                            });
+                            sel.setOptions(options);
+                            return;
+                        }
+
+                        // Native select fallback
                         const isMulti = sel.multiple;
                         const currentVal = isMulti ? Array.from(sel.selectedOptions).map(o => o.value) : sel.value;
                         // For multi-selects, no placeholder; for single-selects, keep placeholder
@@ -3972,7 +4373,12 @@
             
             // Gather selected roles from multi-select as {name, id} objects
             const sel = document.getElementById('cc_roleSelect');
-            const selectedRoles = sel ? Array.from(sel.selectedOptions).map(o => ({ name: o.textContent.trim(), id: o.value })) : [];
+            let selectedRoles = [];
+            if (sel && sel.classList.contains('custom-multiselect') && sel.getSelected) {
+                selectedRoles = sel.getSelected().map(o => ({ name: o.text.trim(), id: o.value }));
+            } else if (sel) {
+                selectedRoles = Array.from(sel.selectedOptions).map(o => ({ name: o.textContent.trim(), id: o.value }));
+            }
             
             if (selectedRoles.length === 0) {
                 alert('❌ Please select at least one role');
@@ -4005,7 +4411,8 @@
                     document.getElementById('categoryName').value = '';
                     document.getElementById('categoryMessage').value = '';
                     // Deselect all options in multi-select
-                    if (sel) Array.from(sel.options).forEach(o => o.selected = false);
+                    if (sel && sel.clearSelection) sel.clearSelection();
+                    else if (sel) Array.from(sel.options).forEach(o => o.selected = false);
                     
                     // Reload all category displays
                     await loadRoleCategories(guildId);
@@ -4460,10 +4867,17 @@
             const selectIds = { game: 'gr_roleSelect', watchparty: 'wp_roleSelect', platform: 'pl_roleSelect' };
             const selectEl = document.getElementById(selectIds[type]);
             if (!selectEl) return;
-            // Gather all selected options
-            const selected = Array.from(selectEl.selectedOptions).filter(o => o.value);
-            if (!selected.length) return alert('Please select at least one role');
-            const roles = selected.map(o => ({ roleId: o.value, roleName: o.text }));
+            // Gather all selected options (works with both custom-multiselect and native select)
+            let selected, roles;
+            if (selectEl.classList.contains('custom-multiselect') && selectEl.getSelected) {
+                selected = selectEl.getSelected();
+                if (!selected.length) return alert('Please select at least one role');
+                roles = selected.map(o => ({ roleId: o.value, roleName: o.text }));
+            } else {
+                selected = Array.from(selectEl.selectedOptions).filter(o => o.value);
+                if (!selected.length) return alert('Please select at least one role');
+                roles = selected.map(o => ({ roleId: o.value, roleName: o.text }));
+            }
             try {
                 const res = await fetch('/api/bot-config/typed-role/add?guildId=' + guildId, {
                     method: 'POST',
@@ -4473,8 +4887,9 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    // Deselect all
-                    Array.from(selectEl.options).forEach(o => o.selected = false);
+                    // Clear selections
+                    if (selectEl.clearSelection) selectEl.clearSelection();
+                    else Array.from(selectEl.options).forEach(o => o.selected = false);
                     loadTypedRoles();
                     const count = data.added || roles.length;
                     if (count > 1) alert('✅ Added ' + count + ' roles!');
