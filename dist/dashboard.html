@@ -4744,8 +4744,8 @@
             settingsData.accentPink = pinkAccent;
             settingsData.textColor = textColor;
 
-            // POST to API
-            fetch('/api/config/' + selectedServerId, {
+            // POST to API — save under the 'settings' config key
+            fetch('/api/config/settings?guildId=' + selectedServerId, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settingsData),
