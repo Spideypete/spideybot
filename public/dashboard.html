@@ -22,6 +22,10 @@
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+        }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -806,11 +810,19 @@
             flex: 1;
             overflow: hidden;
             position: relative;
+            min-height: 0; /* allow children to scroll instead of overflowing */
+        }
+
+        /* Flex overflow fixes (prevents "dissociated" layouts on narrow widths) */
+        .sidebar,
+        .content-area {
+            min-width: 0;
         }
 
         /* Sidebar */
         .sidebar {
             width: 240px;
+            flex: 0 0 240px;
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px);
             border-right: 1px solid rgba(15, 20, 30, 0.12);
@@ -1017,8 +1029,14 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(5, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 1rem;
+        }
+
+        /* Keep grid/flex children from forcing overflow */
+        .stats-grid > *,
+        .content-grid > * {
+            min-width: 0;
         }
 
         .stat-card {
@@ -1072,13 +1090,29 @@
 
         @media (max-width: 1024px) {
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            .header-search {
+                width: 220px;
             }
         }
 
         @media (max-width: 640px) {
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+            .header {
+                padding: 0.8rem 1rem;
+            }
+            .header-search {
+                display: none;
+            }
+            .sidebar {
+                width: 210px;
+                flex-basis: 210px;
+            }
+            .content-area {
+                padding: 1.25rem;
             }
         }
 
