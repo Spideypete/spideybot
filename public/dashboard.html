@@ -2724,68 +2724,18 @@
                         </div>
                     </div>
 
-                    <!-- Gaming Roles Section (full width) -->
-                    <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
-                            <div class="panel-content">
-                                <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
-                                    💡 <strong>How it works:</strong> Add game roles here (e.g. Valorant, Minecraft). Members click the 🎮 button posted via Quick Setup → Gaming Roles to choose which games they play. Same as the bot command <code>/addgamerole [name] [roleID]</code>.
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Select Roles</div>
-                                    <div id="gr_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
-                                </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('game')" style="width:100%;">➕ Add Selected Gaming Roles</button>
-                                <div id="gr_list" style="margin-top:0.75rem;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Watch Party + Platform Roles (side by side) -->
-                    <div class="content-grid" style="margin-top: 1rem;">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎬 Watch Party Roles</div></div>
-                            <div class="panel-content">
-                                <div style="background:rgba(78,205,196,0.06); border:1px solid rgba(78,205,196,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
-                                    💡 <strong>How it works:</strong> Add streaming/watch party roles. Members click the 🎬 button from Quick Setup → Watch Party to join. Same as <code>/addwatchpartyrole [name] [roleID]</code>.
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Select Roles</div>
-                                    <div id="wp_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
-                                </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('watchparty')" style="width:100%;">➕ Add Selected Watch Party Roles</button>
-                                <div id="wp_list" style="margin-top:0.75rem;"></div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
-                            <div class="panel-content">
-                                <div style="background:rgba(69,183,209,0.06); border:1px solid rgba(69,183,209,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
-                                    💡 <strong>How it works:</strong> Add platform roles (PC, PlayStation, Xbox, etc). Members pick their platforms via the 💻 button from Quick Setup → Platform Roles. Same as <code>/addplatformrole [name] [roleID]</code>.
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Select Roles</div>
-                                    <div id="pl_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
-                                </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('platform')" style="width:100%;">➕ Add Selected Platform Roles</button>
-                                <div id="pl_list" style="margin-top:0.75rem;"></div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- How Roles Work -->
                     <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">📖 How Roles Work</div></div>
                             <div class="panel-content">
                                 <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.7; display:grid; grid-template-columns: 1fr 1fr; gap: 0 2rem;">
-                                    <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in the sections above (Gaming, Watch Party, Platform)</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in the <strong>Role Categories</strong> section above</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>4.</strong> Members click the button → dropdown appears → they pick roles</p>
-                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click the Post button for each type</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click Post Category</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>5.</strong> For <strong>Reaction Roles</strong>: post a message, add emoji→role pairs above</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>3.</strong> The bot posts an embed with a button in your server</p>
-                                    <p style="margin:0;"><strong>6.</strong> For <strong>Role Categories</strong>: create one above, then use Post Category or <code>/setupcategory [name]</code></p>
+                                    <p style="margin:0;"><strong>6.</strong> Use <strong>Post Category Selector</strong> or <code>/setupcategory [name]</code></p>
                                 </div>
                             </div>
                         </div>
@@ -2799,27 +2749,6 @@
                         <div class="content-subtitle">One-click setup for popular role features</div>
                     </div>
                     <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
-                            <div class="panel-content">
-                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send gaming role selector message with button interaction</p>
-                                <button class="btn btn-primary" onclick="quickSetup('gaming')" style="width: 100%;">Post Gaming Roles Selector</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎬 Watch Party</div></div>
-                            <div class="panel-content">
-                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send watch party role selector message</p>
-                                <button class="btn btn-primary" onclick="quickSetup('watchparty')" style="width: 100%;">Post Watch Party Selector</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
-                            <div class="panel-content">
-                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send platform role selector message</p>
-                                <button class="btn btn-primary" onclick="quickSetup('platform')" style="width: 100%;">Post Platform Selector</button>
-                            </div>
-                        </div>
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">🗑️ Remove Roles</div></div>
                             <div class="panel-content">
@@ -4467,9 +4396,6 @@
 
         async function quickSetup(setupType) {
             const setupNames = {
-                'gaming': 'Gaming Roles',
-                'watchparty': 'Watch Party',
-                'platform': 'Platform Roles',
                 'removeRoles': 'Remove Roles',
                 'levelRoles': 'Level Roles (1-100)'
             };
@@ -4942,10 +4868,10 @@
                     });
                     if (curVal) scSel.value = curVal;
                 }
-                // Render typed role lists (gaming, watchparty, platform)
-                renderTypedRoles('game', data.gameRoles || []);
-                renderTypedRoles('watchparty', data.watchPartyRoles || []);
-                renderTypedRoles('platform', data.platformRoles || []);
+                // Typed roles removed (gaming, watchparty, platform)
+                // renderTypedRoles('game', data.gameRoles || []);
+                // renderTypedRoles('watchparty', data.watchPartyRoles || []);
+                // renderTypedRoles('platform', data.platformRoles || []);
             } catch (e) { console.error('loadReactRoles error:', e); }
         }
 
@@ -5126,9 +5052,10 @@
                 const res = await fetch('/api/config/' + guildId, { credentials: 'include' });
                 if (!res.ok) return;
                 const data = await res.json();
-                renderTypedRoles('game', data.gameRoles || []);
-                renderTypedRoles('watchparty', data.watchPartyRoles || []);
-                renderTypedRoles('platform', data.platformRoles || []);
+                // Typed roles removed (gaming, watchparty, platform)
+                // renderTypedRoles('game', data.gameRoles || []);
+                // renderTypedRoles('watchparty', data.watchPartyRoles || []);
+                // renderTypedRoles('platform', data.platformRoles || []);
             } catch (e) { console.error('loadTypedRoles error:', e); }
         }
 
