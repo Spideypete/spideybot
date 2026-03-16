@@ -20,6 +20,14 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+
+// Validate required environment variables (do not log secrets)
+const requiredEnvVars = ["TOKEN", "CLIENT_ID", "CLIENT_SECRET"];
+const missingEnvVars = requiredEnvVars.filter(k => !process.env[k]);
+if (missingEnvVars.length) {
+  console.warn(`⚠️ Missing required environment variables: ${missingEnvVars.join(", ")}`);
+}
+
 const express = require("express");
 const helmet = require('helmet');
 const session = require("express-session");
@@ -139,8 +147,8 @@ function sendAuditLog(guild, guildConfig, title, description, color = 0x5865F2) 
 }
 
 // ============== DISCORD OAUTH CONFIG ==============
-const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
+const DISCORD_CLIENT_ID = process.env.CLIENT_ID || "";
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "";
 // Prefer explicit BASE_URL in env for Codespaces / production. Keep Render fallback.
 const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || null;
 const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'https://zany-space-guacamole-v696776796573pvgv-5000.app.github.dev');
@@ -415,7 +423,8 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
-const token = process.env.TOKEN;
+const token = process.env.TOKEN || "";
+let botLoggedIn = false;
 
 // ============== MUSIC PLAYER ==============
 const player = new Player(client, {
@@ -439,6 +448,7 @@ player.on("connectionError", (queue, error) => {
 
 // ============== READY EVENT ==============
 client.once("ready", async () => {
+  botLoggedIn = true;
   console.log(`✅ Logged in as ${client.user.tag}`);
   try {
     const { execSync } = require('child_process');
@@ -5144,13 +5154,29 @@ app.get("/commands", (req, res) => {
 const REDIRECT_URI_DETECTOR = (req) => {
   const host = req.get('x-forwarded-host') || req.get('host');
   const forwardedProto = req.get('x-forwarded-proto');
-  // Replit and GitHub Codespaces use http internally but we need https for OAuth
-  const protocol = (forwardedProto === 'https' || host.includes('repl.co') || host.includes('replit.dev') || host.includes('app.github.dev')) ? 'https' : req.protocol;
+
+  // We may be behind a HTTPS tunnel (VS Code Remote, Codespaces, etc.) where
+  // the internal request is HTTP but the external URL is HTTPS. Discord requires
+  // the redirect URI to match the public URL exactly, so prefer HTTPS for all
+  // non-local hosts.
+  const isLocalHost = host && (
+    host.startsWith('localhost') ||
+    host.startsWith('127.') ||
+    host.startsWith('::1') ||
+    host.includes('192.168.') ||
+    host.includes('10.') ||
+    host.includes('172.')
+  );
+
+  const protocol = (forwardedProto === 'https' || (!forwardedProto && !isLocalHost))
+    ? 'https'
+    : req.protocol;
+
   return `${protocol}://${host}/auth/discord/callback`;
 };
 
 app.get("/auth/discord", (req, res) => {
-  const currentRedirectUri = REDIRECT_URI_DETECTOR(req);
+  const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
   const scopes = ["identify", "guilds"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(currentRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
   
@@ -5163,7 +5189,7 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
-    const currentRedirectUri = REDIRECT_URI_DETECTOR(req);
+    const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
     console.log(`🔵 Auth Callback received. Using Redirect URI: ${currentRedirectUri}`);
 
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
@@ -5291,6 +5317,38 @@ app.get("/api/user", (req, res) => {
       avatarUrl
     },
     guilds: req.session.guilds
+  });
+});
+
+// ============== DASHBOARD DEBUG STATUS ==============
+app.get('/api/dashboard-status', (req, res) => {
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  res.json({
+    user: req.session.user || null,
+    guilds: req.session.guilds || [],
+    selectedServerId: req.session.selectedServerId || null,
+    serverCount: (req.session.guilds || []).length,
+    env: {
+      nodeEnv: process.env.NODE_ENV || 'development',
+      version: require('./package.json').version || null
+    }
+  });
+});
+
+app.get('/status', (req, res) => {
+  res.json({
+    uptime: process.uptime(),
+    botLoggedIn,
+    hasToken: !!process.env.TOKEN,
+    hasClientId: !!process.env.CLIENT_ID,
+    hasClientSecret: !!process.env.CLIENT_SECRET,
+    redirectUri: REDIRECT_URI,
+    baseRedirectUri: BASE_REDIRECT_URI,
+    nodeEnv: process.env.NODE_ENV || 'development',
+    version: require('./package.json').version || null,
   });
 });
 
@@ -6901,6 +6959,20 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+// Health/status endpoint
+console.log('🔧 Registering /status endpoint');
+app.get('/status', (req, res) => {
+  res.json({
+    uptime: process.uptime(),
+    port: PORT,
+    env: process.env.NODE_ENV || 'development',
+    botLoggedIn,
+    discordUser: client.user ? client.user.tag : null,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Web server listening on port ${PORT}`);
   console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
