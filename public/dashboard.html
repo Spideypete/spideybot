@@ -869,6 +869,19 @@
             font-size: 1.8rem;
             font-weight: 700;
             color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dashboard-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(var(--theme-color), 0.15);
+            color: rgba(var(--theme-color), 0.95);
+            border: 1px solid rgba(var(--theme-color), 0.25);
         }
 
         .dashboard-subtitle {
@@ -2052,7 +2065,7 @@
                 <!-- Dashboard Section -->
                 <div id="dashboard-section" class="content-section active">
                     <div class="dashboard-header">
-                        <div class="dashboard-title">Dashboard</div>
+                        <div class="dashboard-title">Dashboard <span class="dashboard-badge">SPIDEY BOT</span></div>
                         <div class="dashboard-subtitle">Real-time server analytics</div>
                     </div>
 
