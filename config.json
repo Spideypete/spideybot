@@ -12,117 +12,35 @@
             {
               "name": "Valorant",
               "id": "1235015410819010638"
-            },
-            {
-              "name": "Minecraft",
-              "id": "1235015410819010637"
-            },
-            {
-              "name": "Call Of Duty",
-              "id": "1235015410819010636"
-            },
-            {
-              "name": "Dying Light",
-              "id": "1235015410819010635"
-            },
-            {
-              "name": "FiveM",
-              "id": "1235015410819010634"
-            },
-            {
-              "name": "Golf With Friends",
-              "id": "1235015410819010633"
-            },
-            {
-              "name": "Need Of Speed",
-              "id": "1235015410819010632"
-            },
-            {
-              "name": "Fortnite",
-              "id": "1235015410819010631"
-            },
-            {
-              "name": "Rust",
-              "id": "1235015410819010630"
-            },
-            {
-              "name": "CarX",
-              "id": "1235015410768810103"
-            },
-            {
-              "name": "HellDivers",
-              "id": "1235285561963581472"
-            },
-            {
-              "name": "Assetto Corsa",
-              "id": "1235313074454659083"
-            },
-            {
-              "name": "Formula 1",
-              "id": "1236766879977177128"
-            },
-            {
-              "name": "Rocket League",
-              "id": "1238537530727596124"
-            },
-            {
-              "name": "Overwatch",
-              "id": "1238537709493030964"
-            },
-            {
-              "name": "Doom",
-              "id": "1238537919082266624"
-            },
-            {
-              "name": "League Of Legends",
-              "id": "1238538002876338217"
-            },
-            {
-              "name": "GTA",
-              "id": "1238538129279811665"
-            },
-            {
-              "name": "CSGO",
-              "id": "1238538369777139833"
-            },
-            {
-              "name": "Apex",
-              "id": "1238538434667085824"
-            },
-            {
-              "name": "Destiny",
-              "id": "1238538513167945759"
-            },
-            {
-              "name": "Sons Of The Forest",
-              "id": "1242152559024668823"
             }
           ],
-          "channel": "",
-          "message": "React to this message with the corresponding emoji to get your game role:"
+          "banner": null
+        },
+        "Console": {
+          "roles": [],
+          "banner": null
         }
       },
       "modLogChannelId": "1235015413763412063",
       "messageCounting": {
-        "totalMessages": 37,
+        "totalMessages": 28,
         "byUser": {
-          "807682091591925801": 35,
+          "807682091591925801": 26,
           "391248144333275137": 1,
           "935559100899659796": 1
         },
         "byChannel": {
           "1235015412035358728": 1,
           "1235015413763412063": 9,
-          "1235015413763412062": 20,
-          "undefined": 5,
-          "1235015412492800072": 1,
-          "1235015412035358726": 1
+          "1235015413763412062": 13,
+          "undefined": 4,
+          "1235015412492800072": 1
         }
       },
       "levels": {
-        "807682091591925801_xp": 553,
-        "807682091591925801": 85,
-        "807682091591925801_xp_time": 1771061405089,
+        "807682091591925801_xp": 430,
+        "807682091591925801": 67,
+        "807682091591925801_xp_time": 1766357375152,
         "391248144333275137": 24,
         "391248144333275137_xp_time": 1766355172616,
         "391248144333275137_xp": 9,
@@ -148,15 +66,15 @@
         "messageLogging": {
           "logDeleted": true,
           "logEdited": true,
-          "logBulkDelete": true,
-          "logChannel": "1235015413763412063"
+          "logBulkDelete": false,
+          "logChannel": ""
         },
         "moderationLogging": {
           "logBans": true,
           "logKicks": true,
           "logMutes": true,
           "logWarns": true,
-          "modLogChannel": "1235015410865410055"
+          "modLogChannel": ""
         }
       },
       "commandPrefix": "/",
@@ -170,7 +88,7 @@
       "antiSpam": {
         "enabled": true,
         "messagesPerLimit": 5,
-        "action": "warn"
+        "action": "Warn"
       },
       "raidProtection": {
         "enabled": true,
@@ -190,78 +108,6 @@
         "goodbyeMessage": ""
       },
       "activities": [
-        {
-          "icon": "📂",
-          "text": "Dashboard",
-          "action": "posted category selector: Gaming → #🪪𝑺𝒆𝒍𝒇-𝑹𝒐𝒍𝒆𝒔",
-          "time": "2/14/2026, 11:17:07 AM"
-        },
-        {
-          "icon": "➕",
-          "text": "Dashboard",
-          "action": "added 3 platform role(s)",
-          "time": "2/14/2026, 9:46:48 AM"
-        },
-        {
-          "icon": "➕",
-          "text": "Dashboard",
-          "action": "added 2 watch party role(s)",
-          "time": "2/14/2026, 9:46:11 AM"
-        },
-        {
-          "icon": "➕",
-          "text": "Dashboard",
-          "action": "added 22 gaming role(s)",
-          "time": "2/14/2026, 9:45:52 AM"
-        },
-        {
-          "icon": "🗑️",
-          "text": "Dashboard",
-          "action": "removed gaming role: Call Of Duty",
-          "time": "2/14/2026, 9:34:18 AM"
-        },
-        {
-          "icon": "🗑️",
-          "text": "Dashboard",
-          "action": "removed gaming role: Valorant",
-          "time": "2/14/2026, 9:34:15 AM"
-        },
-        {
-          "icon": "🗑️",
-          "text": "Dashboard",
-          "action": "removed gaming role: Minecraft",
-          "time": "2/14/2026, 9:34:13 AM"
-        },
-        {
-          "icon": "➕",
-          "text": "Dashboard",
-          "action": "added gaming role: Call Of Duty",
-          "time": "2/14/2026, 9:33:09 AM"
-        },
-        {
-          "icon": "➕",
-          "text": "Dashboard",
-          "action": "added gaming role: Valorant",
-          "time": "2/14/2026, 9:32:54 AM"
-        },
-        {
-          "icon": "➕",
-          "text": "Dashboard",
-          "action": "added gaming role: Minecraft",
-          "time": "2/14/2026, 9:32:38 AM"
-        },
-        {
-          "icon": "🗑️",
-          "text": "Dashboard",
-          "action": "deleted category: Gaming",
-          "time": "2/14/2026, 9:26:34 AM"
-        },
-        {
-          "icon": "🗑️",
-          "text": "Dashboard",
-          "action": "deleted category: Console",
-          "time": "2/14/2026, 9:26:30 AM"
-        },
         {
           "icon": "➕",
           "name": "spidey_petee",
@@ -561,176 +407,6 @@
           "name": "Role created",
           "action": "69️⃣ Level 69 - 1451124123911847960",
           "timestamp": "8:09:11 AM"
-        }
-      ],
-      "prefix": "/",
-      "language": "en",
-      "modRole": "1235015410865410049",
-      "mutedRole": "1235015410865410054",
-      "musicPlayer": true,
-      "economySystem": true,
-      "levelingSystem": true,
-      "welcomeMessages": true,
-      "moderationTools": true,
-      "socialNotifications": true,
-      "themeColor": "#00d4ff",
-      "accentCyan": "#00d4ff",
-      "accentPurple": "#9146ff",
-      "accentPink": "#ff69b4",
-      "textColor": "#ffffff",
-      "antiNuke": {
-        "enabled": true,
-        "mode": "monitor",
-        "maxActions": 10
-      },
-      "linkScanning": {
-        "enabled": true,
-        "detectPhishing": true,
-        "blockScamSites": true,
-        "malwareDetection": true
-      },
-      "joinGate": {
-        "enabled": true,
-        "accountAgeCheck": true,
-        "minAccountAge": 3,
-        "suspiciousAvatars": true,
-        "usernameAnalysis": true
-      },
-      "rateLimiting": {
-        "enabled": true,
-        "requestsPerMin": 100,
-        "dosProtection": true,
-        "action": "throttle"
-      },
-      "auditLog": {
-        "enabled": true,
-        "channel": "",
-        "logApiRequests": true,
-        "ipTracking": true
-      },
-      "backup": {
-        "enabled": true,
-        "frequency": "6h",
-        "retention": 30
-      },
-      "gameRoles": [
-        {
-          "name": "Valorant",
-          "id": "1235015410819010638"
-        },
-        {
-          "name": "Minecraft",
-          "id": "1235015410819010637"
-        },
-        {
-          "name": "Call Of Duty",
-          "id": "1235015410819010636"
-        },
-        {
-          "name": "Dying Light",
-          "id": "1235015410819010635"
-        },
-        {
-          "name": "FiveM",
-          "id": "1235015410819010634"
-        },
-        {
-          "name": "Golf With Friends",
-          "id": "1235015410819010633"
-        },
-        {
-          "name": "Need Of Speed",
-          "id": "1235015410819010632"
-        },
-        {
-          "name": "Fortnite",
-          "id": "1235015410819010631"
-        },
-        {
-          "name": "Rust",
-          "id": "1235015410819010630"
-        },
-        {
-          "name": "CarX",
-          "id": "1235015410768810103"
-        },
-        {
-          "name": "HellDivers",
-          "id": "1235285561963581472"
-        },
-        {
-          "name": "Assetto Corsa",
-          "id": "1235313074454659083"
-        },
-        {
-          "name": "Formula 1",
-          "id": "1236766879977177128"
-        },
-        {
-          "name": "Rocket League",
-          "id": "1238537530727596124"
-        },
-        {
-          "name": "Overwatch",
-          "id": "1238537709493030964"
-        },
-        {
-          "name": "Doom",
-          "id": "1238537919082266624"
-        },
-        {
-          "name": "League Of Legends",
-          "id": "1238538002876338217"
-        },
-        {
-          "name": "GTA",
-          "id": "1238538129279811665"
-        },
-        {
-          "name": "CSGO",
-          "id": "1238538369777139833"
-        },
-        {
-          "name": "Apex",
-          "id": "1238538434667085824"
-        },
-        {
-          "name": "Destiny",
-          "id": "1238538513167945759"
-        },
-        {
-          "name": "Sons Of The Forest",
-          "id": "1242152559024668823"
-        }
-      ],
-      "reactRoles": {
-        "entries": [],
-        "allowMultiple": true,
-        "removeOnUnreact": true,
-        "dmConfirm": false
-      },
-      "watchPartyRoles": [
-        {
-          "name": "Anime",
-          "id": "1235015410768810102"
-        },
-        {
-          "name": "Formula 1 WP",
-          "id": "1236767729248374935"
-        }
-      ],
-      "platformRoles": [
-        {
-          "name": "PC",
-          "id": "1235300034916909158"
-        },
-        {
-          "name": "PS",
-          "id": "1235300039388303401"
-        },
-        {
-          "name": "XBOX",
-          "id": "1235299927161180211"
         }
       ]
     },
