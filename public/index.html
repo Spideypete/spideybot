@@ -290,105 +290,6 @@
       max-width: 600px;
       margin: 0 auto;
     }
-    
-    /* Mobile Responsiveness */
-    @media (max-width: 768px) {
-      nav {
-        padding: 1rem;
-        flex-wrap: wrap;
-      }
-      .logo {
-        font-size: 1.1rem;
-      }
-      nav > div {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-      }
-      nav a {
-        margin: 0.25rem 0;
-        font-size: 0.9rem;
-      }
-      .hero {
-        padding: 3rem 1rem;
-      }
-      .hero h1 {
-        font-size: 2rem;
-        line-height: 1.2;
-      }
-      .hero p {
-        font-size: 1rem;
-      }
-      .container {
-        padding: 1rem;
-      }
-      .btn {
-        display: block;
-        width: 100%;
-        text-align: center;
-        padding: 0.8rem 1.5rem;
-        margin: 0.5rem 0;
-      }
-      .btn-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .spidey-team {
-        padding: 1.5rem;
-        margin: 0 1rem 1rem 1rem;
-        max-width: calc(100% - 2rem);
-      }
-      .spidey-team-logo {
-        width: 80px;
-        height: 80px;
-      }
-      .spidey-team h2 {
-        font-size: 1.4rem;
-      }
-      h2 {
-        font-size: 1.6rem !important;
-      }
-      footer {
-        padding: 2rem 1rem;
-      }
-      footer .footer-content {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      nav {
-        padding: 0.75rem;
-      }
-      .logo {
-        font-size: 1rem;
-      }
-      .hero h1 {
-        font-size: 1.5rem;
-      }
-      .hero p {
-        font-size: 0.9rem;
-      }
-      .container {
-        padding: 0.75rem;
-      }
-      .btn {
-        padding: 0.7rem 1rem;
-        font-size: 0.8rem;
-      }
-      .spidey-team {
-        padding: 1rem;
-        margin: 0 0.75rem 1rem 0.75rem;
-        max-width: calc(100% - 1.5rem);
-      }
-      footer .footer-bottom {
-        font-size: 0.75rem;
-      }
-    }
   </style>
 </head>
 <body>
@@ -406,7 +307,7 @@
 
   <div class="hero">
     <h1>Meet SPIDEY BOT – Your Server's Ultimate Tech Guardian</h1>
-    <p>SPIDEY BOT blends powerful intelligence with mystical powers to bring order, fun, and automation to your Discord server. Music, moderation, economy, leveling, and 66+ slash commands to manage and entertain your community.</p>
+    <p>SPIDEY BOT blends powerful intelligence with mystical powers to bring order, fun, and automation to your Discord server. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
     <div class="btn-group">
       <a id="addToDiscord" class="btn btn-primary">Invite To Guild →</a>
       <a href="/commands" class="btn btn-secondary">Documentation →</a>
@@ -582,14 +483,6 @@
         </ul>
       </div>
       <div class="footer-section">
-        <h3>Community</h3>
-        <ul>
-          <li><a href="#" onclick="return false;">Discord Server</a></li>
-          <li><a href="#" onclick="return false;">Twitter</a></li>
-          <li><a href="#" onclick="return false;">GitHub</a></li>
-        </ul>
-      </div>
-      <div class="footer-section">
         <h3>About</h3>
         <ul>
           <li style="color: #999; font-size: 0.9rem;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
@@ -602,13 +495,22 @@
   </footer>
 
   <script>
-    document.getElementById('addToDiscord').addEventListener('click', function() {
-      const clientId = '1234567890';
-      const permissions = 8;
-      const scopes = 'bot';
-      const redirectUri = 'https://discord.com/oauth2/authorize';
-      const inviteUrl = `${redirectUri}?client_id=${clientId}&scope=${scopes}&permissions=${permissions}`;
-      window.location.href = inviteUrl;
+    // Use server-provided invite URL (avoids 'undefined' client_id when env missing)
+    document.getElementById('addToDiscord').addEventListener('click', async function(e) {
+      e.preventDefault();
+      try {
+        const res = await fetch('/api/config');
+        const cfg = await res.json();
+        if (cfg.inviteUrl) {
+          window.location.href = cfg.inviteUrl;
+          return;
+        }
+        // Fallback to server-side invite redirect which will 503 if not configured
+        window.location.href = '/invite';
+      } catch (err) {
+        console.error('Invite error:', err);
+        alert('Unable to redirect to Discord invite. Please try again later.');
+      }
     });
   </script>
 </body>

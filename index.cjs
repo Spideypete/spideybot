@@ -3,6 +3,7 @@
 const {
   Client,
   GatewayIntentBits,
+  Partials,
   ActionRowBuilder,
   StringSelectMenuBuilder,
   EmbedBuilder,
@@ -13,12 +14,22 @@ const {
   REST,
   Routes
 } = require("discord.js");
+const { slashCommands } = require("./slash-commands");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+
+// Validate required environment variables (do not log secrets)
+const requiredEnvVars = ["TOKEN", "CLIENT_ID", "CLIENT_SECRET"];
+const missingEnvVars = requiredEnvVars.filter(k => !process.env[k]);
+if (missingEnvVars.length) {
+  console.warn(`⚠️ Missing required environment variables: ${missingEnvVars.join(", ")}`);
+}
+
 const express = require("express");
+const helmet = require('helmet');
 const session = require("express-session");
 const axios = require("axios");
 const {
@@ -38,6 +49,10 @@ const publicDir = path.join(__dirname, 'public');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
   resave: true,
@@ -56,39 +71,36 @@ app.use((req, res, next) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     
-    // Fix for Replit frame issue: Force headers that help with cookie persistence
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    // Add version cookie for API requests
+    // Add cache-control headers and a lightweight version cookie for cache-busting
     const timestamp = Date.now();
     res.cookie('v', timestamp, { maxAge: 3600000, httpOnly: false });
 
     if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security' || req.path === '/dashboard' || !req.path.includes('.')) {
-        const originalSend = res.send;
-        res.send = function (body) {
-            if (typeof body === 'string' && body.includes('</head>')) {
-                // Add a small script to ensure we are not stuck in an iframe cache if possible
-                body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+      const originalSend = res.send;
+      res.send = function (body) {
+        if (typeof body === 'string' && body.includes('</head>')) {
+          // Inject a small version meta + script for client-side cache awareness
+          body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="version-timestamp" content="${timestamp}">
-    <script>
-        window.PAGE_VERSION = "${timestamp}"; 
-        console.log("Page Version: " + "${timestamp}");
-        // If we are in an iframe and the parent is replit, we might need special handling
-        if (window.self !== window.top) {
-            console.log("Running inside an iframe");
+    <script>window.PAGE_VERSION = "${timestamp}";</script>
+    </head>`);
         }
-    </script>
-  </head>`);
-            }
-            return originalSend.call(this, body);
-        };
+        return originalSend.call(this, body);
+      };
     }
     next();
 });
 
-// Serve static files from dist
+app.set('trust proxy', true);
+
+// ============== SECURITY MIDDLEWARE ==============
+app.use(securityHeadersMiddleware);
+const rateLimiter = new RateLimiter(500, 60000); // 500 requests per minute
+app.use(rateLimiter.middleware());
+
+// Serve static files from dist and public
 app.use(express.static(distDir, {
   etag: false,
   lastModified: false,
@@ -98,37 +110,52 @@ app.use(express.static(distDir, {
     res.setHeader('Expires', '0');
   }
 }));
-app.set('trust proxy', true);
-
-// ============== SECURITY MIDDLEWARE ==============
-app.use(securityHeadersMiddleware);
-const rateLimiter = new RateLimiter(500, 60000); // 500 requests per minute
-app.use(rateLimiter.middleware());
+app.use(express.static(publicDir, {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res, path) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 const auditLogger = new SecurityAuditLogger();
 const antiSpam = new AntiSpamEngine();
 const joinGate = new JoinGateSystem();
 const backupSystem = new BackupSystem();
 
-// ============== DISCORD OAUTH CONFIG ==============
-const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "default_secret";
-const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
-const REPLIT_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : null;
+// ============== SERVER GUARD TRACKING MAPS ==============
+const spamTracker = new Map();       // guildId:userId -> { timestamps: [], warned: bool }
+const raidTracker = new Map();       // guildId -> { joins: [timestamp, ...] }
+const nukeTracker = new Map();       // guildId:userId -> { actions: [timestamp, ...] }
+const userRateLimit = new Map();     // guildId:userId -> { timestamps: [] }
 
-// Build proper redirect URI
-let BASE_REDIRECT_URI;
-if (RENDER_EXTERNAL_URL) {
-  BASE_REDIRECT_URI = RENDER_EXTERNAL_URL.endsWith('/') ? RENDER_EXTERNAL_URL.slice(0, -1) : RENDER_EXTERNAL_URL;
-} else if (REPLIT_URL) {
-  BASE_REDIRECT_URI = REPLIT_URL;
-} else {
-  BASE_REDIRECT_URI = "http://localhost:5000";
+// Known phishing / scam domains
+const PHISH_DOMAINS = ['discord-nitro.gift','discordgift.site','steamcommunlty.com','dlscord.gift','dlscord-nitro.com','free-nitro.com','discord-airdrop.com','discordapp.gift','nitro-discord.com'];
+
+function sendAuditLog(guild, guildConfig, title, description, color = 0x5865F2) {
+  const al = guildConfig.auditLog;
+  if (!al || al.enabled === false) return;
+  const ch = al.channel ? guild.channels.cache.get(al.channel) : null;
+  if (!ch) return;
+  const embed = new EmbedBuilder()
+    .setColor(color)
+    .setTitle(title)
+    .setDescription(description)
+    .setTimestamp();
+  ch.send({ embeds: [embed] }).catch(() => {});
 }
 
-// Hardcode Render URL as fallback if detection fails
-const REDIRECT_URI = BASE_REDIRECT_URI === "http://localhost:5000" && (process.env.NODE_ENV === 'production' || process.env.RENDER)
-  ? "https://spideybot-90sr.onrender.com/auth/discord/callback"
-  : `${BASE_REDIRECT_URI}/auth/discord/callback`;
+// ============== DISCORD OAUTH CONFIG ==============
+const DISCORD_CLIENT_ID = process.env.CLIENT_ID || "";
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "";
+// Prefer explicit BASE_URL in env for Codespaces / production. Keep Render fallback.
+const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || null;
+const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'https://zany-space-guacamole-v696776796573pvgv-5000.app.github.dev');
+
+const REDIRECT_URI = process.env.FORCE_REDIRECT_URI || ((BASE_REDIRECT_URI === 'http://localhost:5000' && (process.env.NODE_ENV === 'production' || process.env.RENDER))
+  ? 'https://spideybot-90sr.onrender.com/auth/discord/callback'
+  : `${BASE_REDIRECT_URI}/auth/discord/callback`);
 
 console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
 
@@ -140,9 +167,19 @@ function logModAction(guild, action, mod, target, reason) {
 
   const config = loadConfig();
   const guildConfig = config.guilds[guild.id];
-  if (!guildConfig?.modLogChannelId) return;
+  if (!guildConfig) return;
 
-  const modLogChannel = guild.channels.cache.get(guildConfig.modLogChannelId);
+  // Check dashboard logging toggles
+  const modLogging = guildConfig.logging?.moderationLogging || {};
+  const actionToggleMap = { WARN: 'logWarns', KICK: 'logKicks', BAN: 'logBans', MUTE: 'logMutes', UNMUTE: 'logMutes' };
+  const toggleKey = actionToggleMap[action];
+  if (toggleKey && modLogging[toggleKey] === false) return;
+
+  // Use dashboard modLogChannel first, fall back to config modLogChannelId
+  const channelId = modLogging.modLogChannel || guildConfig.modLogChannelId;
+  if (!channelId) return;
+
+  const modLogChannel = guild.channels.cache.get(channelId);
   if (modLogChannel) {
     const embed = new EmbedBuilder()
       .setColor(action === "WARN" ? 0xFFBD39 : action === "KICK" ? 0xFF6B6B : action === "BAN" ? 0xED4245 : 0x5865F2)
@@ -235,6 +272,24 @@ function autoMigrateRoles(guildId, guild, guildConfig) {
   }
 }
 
+// ============== ACTIVITY LOGGING ==============
+function addActivity(guildId, icon, text, action) {
+  const config = loadConfig();
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  if (!config.guilds[guildId].activities) config.guilds[guildId].activities = [];
+
+  config.guilds[guildId].activities.unshift({
+    icon,
+    text,
+    action,
+    time: new Date().toLocaleString()
+  });
+
+  // Keep only latest 100 activities
+  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 100);
+  saveConfig(config);
+}
+
 // ============== CACHE SYSTEM ==============
 const memberStatsCache = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -251,6 +306,110 @@ function setCachedMemberStats(guildId, data) {
   memberStatsCache[guildId] = { data, timestamp: Date.now() };
 }
 
+// ------------------------------------------------------------------
+// Command metadata (shared): exposed to dashboard via /api/commands
+// This lives at top-level so the dashboard can render even when bot
+// isn't logged in or slash commands aren't registered yet.
+const COMMANDS_META = {
+  help: { category: 'info', description: 'Show full command list', usage: '/help' },
+  adminhelp: { category: 'info', description: 'Show admin-only commands', usage: '/adminhelp', adminOnly: true },
+  kick: { category: 'moderation', subsection: 'Core', description: 'Remove member from server', usage: '/kick @user [reason]' },
+  ban: { category: 'moderation', subsection: 'Core', description: 'Permanently ban member', usage: '/ban @user [reason]' },
+  warn: { category: 'moderation', subsection: 'Core', description: 'Warn member (tracked & logged)', usage: '/warn @user [reason]' },
+  mute: { category: 'moderation', subsection: 'Core', description: 'Timeout member', usage: '/mute @user' },
+  unmute: { category: 'moderation', subsection: 'Core', description: 'Remove timeout from member', usage: '/unmute @user' },
+  warnings: { category: 'moderation', subsection: 'Core', description: "View member's warning history", usage: '/warnings @user' },
+
+  balance: { category: 'economy', subsection: 'Currency', description: 'Check your coin balance', usage: '/balance' },
+  pay: { category: 'economy', subsection: 'Currency', description: 'Pay another user', usage: '/pay @user [amount]' },
+  addmoney: { category: 'economy', subsection: 'Currency', description: 'Add money to a user (admin)', usage: '/addmoney @user [amount]', adminOnly: true },
+  removemoney: { category: 'economy', subsection: 'Currency', description: 'Remove money from a user (admin)', usage: '/removemoney @user [amount]', adminOnly: true },
+  work: { category: 'economy', subsection: 'Currency', description: 'Work for coins (cooldown)', usage: '/work' },
+  transfer: { category: 'economy', subsection: 'Currency', description: 'Send coins to other members', usage: '/transfer @user [amount]' },
+
+  rps: { category: 'games', subsection: 'Game Commands', description: 'Play rock-paper-scissors', usage: '/rps [rock/paper/scissors]' },
+  '8ball': { category: 'games', subsection: 'Game Commands', description: 'Magic 8-ball', usage: '/8ball' },
+  dice: { category: 'games', subsection: 'Game Commands', description: 'Roll a dice', usage: '/dice' },
+  coin: { category: 'games', subsection: 'Game Commands', description: 'Flip a coin', usage: '/coin' },
+  trivia: { category: 'games', subsection: 'Game Commands', description: 'Get a trivia question', usage: '/trivia' },
+
+  play: { category: 'music', subsection: 'Playback', description: 'Search and play music', usage: '/play [song or URL]' },
+  shuffle: { category: 'music', subsection: 'Playback', description: 'Randomize the queue', usage: '/shuffle' },
+  queue: { category: 'music', subsection: 'Playback', description: 'Show music queue', usage: '/queue' },
+  loop: { category: 'music', subsection: 'Playback', description: 'Toggle queue repeat', usage: '/loop' },
+  volume: { category: 'music', subsection: 'Playback', description: 'Adjust playback volume', usage: '/volume [0-200]' },
+  back: { category: 'music', subsection: 'Button Controls', description: 'Go to previous track', usage: '/back' },
+  pause: { category: 'music', subsection: 'Button Controls', description: 'Pause playback', usage: '/pause' },
+  resume: { category: 'music', subsection: 'Button Controls', description: 'Resume playback', usage: '/resume' },
+  skip: { category: 'music', subsection: 'Button Controls', description: 'Skip current track', usage: '/skip' },
+  stop: { category: 'music', subsection: 'Button Controls', description: 'Stop playback and clear queue', usage: '/stop' },
+
+  suggest: { category: 'info', description: 'Send a suggestion', usage: '/suggest [message]' },
+  ticketsetup: { category: 'tickets', subsection: 'Setup', description: 'Setup ticket system', usage: '/ticketsetup #channel', adminOnly: true },
+  ticket: { category: 'tickets', subsection: 'User', description: 'Create a support ticket', usage: '/ticket' },
+  closeticket: { category: 'tickets', subsection: 'User', description: 'Close an active ticket', usage: '/closeticket', adminOnly: true },
+
+  configmodlog: { category: 'config', subsection: 'Channels', description: 'Set moderation log channel', usage: '/configmodlog #channel' },
+  configwelcomechannel: { category: 'config', subsection: 'Channels', description: 'Set welcome channel', usage: '/configwelcomechannel #channel' },
+  configwelcomemessage: { category: 'config', subsection: 'Messages', description: 'Set welcome message', usage: '/configwelcomemessage [message]' },
+  configgoodbyemessage: { category: 'config', subsection: 'Messages', description: 'Set goodbye message', usage: '/configgoodbyemessage [message]' },
+  configlogging: { category: 'config', subsection: 'Features', description: 'Configure logging', usage: '/configlogging' },
+  configleaderboard: { category: 'config', subsection: 'Features', description: 'Configure leaderboards', usage: '/configleaderboard #channel' },
+  configxp: { category: 'config', subsection: 'Features', description: 'Configure XP settings', usage: '/configxp [xpPerMessage] [xpPerLevel]' },
+  configsubscriptions: { category: 'config', subsection: 'Features', description: 'Configure subscriptions', usage: '/configsubscriptions' },
+  configstatisticschannels: { category: 'config', subsection: 'Channels', description: 'Configure statistic channels', usage: '/configstatisticschannels #channel' },
+  configserverguard: { category: 'config', subsection: 'Features', description: 'Server guard settings', usage: '/configserverguard' },
+  configreactroles: { category: 'config', subsection: 'Features', description: 'Configure reaction roles', usage: '/configreactroles' },
+  configrolecategories: { category: 'config', subsection: 'Features', description: 'Manage role categories', usage: '/configrolecategories [name]' },
+  configsocialnotifs: { category: 'config', subsection: 'Features', description: 'Configure social notifications', usage: '/configsocialnotifs #channel' },
+  configsuggestions: { category: 'config', subsection: 'Features', description: 'Configure suggestions channel', usage: '/configsuggestions #channel' },
+  configkickchannel: { category: 'config', subsection: 'Channels', description: 'Set kick channel', usage: '/configkickchannel #channel' },
+  configtiktokchannel: { category: 'config', subsection: 'Channels', description: 'Set TikTok alerts channel', usage: '/configtiktokchannel #channel' },
+  configtwitchchannel: { category: 'config', subsection: 'Channels', description: 'Set Twitch alerts channel', usage: '/configtwitchchannel #channel' },
+
+  createcategory: { category: 'roles', subsection: 'Category', description: 'Create a role category', usage: '/createcategory [name]' },
+  listroles: { category: 'roles', subsection: 'Category', description: 'View all active role categories', usage: '/listroles' },
+  addrole: { category: 'roles', subsection: 'Category', description: 'Add role to category', usage: '/addrole [category] [role name] [role ID]' },
+  removerole: { category: 'roles', subsection: 'Category', description: 'Remove role from category', usage: '/removerole [category] [role name]' },
+  setcategorybanner: { category: 'roles', subsection: 'Category', description: 'Set category banner', usage: '/setcategorybanner [category] [url]' },
+  setupcategory: { category: 'roles', subsection: 'Category', description: 'Setup a new category message', usage: '/setupcategory [category]' },
+  deletecategory: { category: 'roles', subsection: 'Category', description: 'Delete a category', usage: '/deletecategory [category]' },
+  addgamerole: { category: 'roles', subsection: 'Gaming', description: 'Add game role', usage: '/addgamerole [role name] [role ID]' },
+  removegamerole: { category: 'roles', subsection: 'Gaming', description: 'Remove game role', usage: '/removegamerole [role name]' },
+  addwatchpartyrole: { category: 'roles', subsection: 'Gaming', description: 'Add watchparty role', usage: '/addwatchpartyrole [role name] [role ID]' },
+  removewatchpartyrole: { category: 'roles', subsection: 'Gaming', description: 'Remove watchparty role', usage: '/removewatchpartyrole [role name]' },
+  addplatformrole: { category: 'roles', subsection: 'Gaming', description: 'Add platform role', usage: '/addplatformrole [role name] [role ID]' },
+  removeplatformrole: { category: 'roles', subsection: 'Gaming', description: 'Remove platform role', usage: '/removeplatformrole [role name]' },
+  setuproles: { category: 'roles', subsection: 'Selectors', description: 'Post gaming roles selector with buttons', usage: '/setuproles' },
+  setupwatchparty: { category: 'roles', subsection: 'Selectors', description: 'Post watch party role selector', usage: '/setupwatchparty' },
+  setupplatform: { category: 'roles', subsection: 'Selectors', description: 'Post platform selector', usage: '/setupplatform' },
+  removeroles: { category: 'roles', subsection: 'Selectors', description: 'Post role removal message', usage: '/removeroles' },
+  setuplevelroles: { category: 'roles', subsection: 'Selectors', description: 'Auto-create level roles', usage: '/setuplevelroles' },
+
+  addcustomcommand: { category: 'custom', subsection: 'Management', description: 'Add a custom command', usage: '/addcustomcommand [name] | [response]', adminOnly: true },
+  addcmd: { category: 'custom', subsection: 'Management', description: 'Add a custom command (alias)', usage: '/addcmd [name] | [response]', adminOnly: true },
+  removecustomcommand: { category: 'custom', subsection: 'Management', description: 'Remove custom command', usage: '/removecustomcommand [name]', adminOnly: true },
+  delcmd: { category: 'custom', subsection: 'Management', description: 'Delete custom command (alias)', usage: '/delcmd [name]', adminOnly: true },
+
+  giveaway: { category: 'giveaway', subsection: 'Core', description: 'Create a giveaway', usage: '/giveaway', adminOnly: true },
+  startgiveaway: { category: 'giveaway', subsection: 'Core', description: 'Start a giveaway', usage: '/startgiveaway', adminOnly: true },
+  filtertoggle: { category: 'config', subsection: 'Features', description: 'Toggle profanity filter', usage: '/filtertoggle' },
+  linkfilter: { category: 'config', subsection: 'Features', description: 'Toggle link filter', usage: '/linkfilter [on/off]' },
+  setprefix: { category: 'config', subsection: 'Features', description: 'Change command prefix', usage: '/setprefix [prefix]' },
+  addkickuser: { category: 'social', subsection: 'Monitoring', description: 'Monitor Kick user', usage: '/addkickuser [username]', adminOnly: true },
+  removekickuser: { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Kick user', usage: '/removekickuser [username]', adminOnly: true },
+  addtiktokuser: { category: 'social', subsection: 'Monitoring', description: 'Monitor TikTok user', usage: '/addtiktokuser [username]', adminOnly: true },
+  removetiktokuser: { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring TikTok user', usage: '/removetiktokuser [username]', adminOnly: true },
+  'addtwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Monitor Twitch user', usage: '/addtwitchuser [username]', adminOnly: true },
+  'removetwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Twitch user', usage: '/removetwitchuser [username]', adminOnly: true },
+};
+
+// expose metadata to dashboard regardless of bot login
+app.get('/api/commands', (req, res) => {
+  res.json(COMMANDS_META);
+});
+// ------------------------------------------------------------------
+
 // ============== CLIENT SETUP ==============
 const client = new Client({
   intents: [
@@ -258,11 +417,14 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessageReactions
   ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
-const token = process.env.TOKEN;
+const token = process.env.TOKEN || "";
+let botLoggedIn = false;
 
 // ============== MUSIC PLAYER ==============
 const player = new Player(client, {
@@ -286,7 +448,15 @@ player.on("connectionError", (queue, error) => {
 
 // ============== READY EVENT ==============
 client.once("ready", async () => {
+  botLoggedIn = true;
   console.log(`✅ Logged in as ${client.user.tag}`);
+  try {
+    const { execSync } = require('child_process');
+    const commit = execSync('git rev-parse --short HEAD').toString().trim();
+    console.log(`🔁 Running commit: ${commit} (pid:${process.pid})`);
+  } catch (err) {
+    console.log('🔁 Running commit: unknown');
+  }
   client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
@@ -294,38 +464,138 @@ client.once("ready", async () => {
 
   // Register ALL slash commands
   try {
-    const commands = [
-      "help", "adminhelp", "kick", "ban", "warn", "mute", "unmute", "warnings",
-      "balance", "pay", "addmoney", "removemoney", "work", "transfer", "rps",
-      "play", "stop", "skip", "queue", "volume", "suggest", "ticket-setup",
-      "config-modlog", "config-welcome-channel", "config-welcome-message",
-      "config-goodbye-message", "config-logging", "config-leaderboard", "config-xp",
-      "config-subscriptions", "config-statistics-channels", "config-server-guard",
-      "config-react-roles", "config-role-categories", "config-social-notifs",
-      "config-suggestions", "config-kick-channel", "config-tiktok-channel", "config-twitch-channel",
-      "create-category", "add-role", "remove-role", "set-category-banner", "setup-category",
-      "delete-category", "add-game-role", "remove-game-role", "add-watchparty-role",
-      "remove-watchparty-role", "add-platform-role", "remove-platform-role",
-      "add-custom-command", "addcmd", "remove-custom-command", "delcmd",
-      "add-kick-user", "remove-kick-user", "add-tiktok-user", "remove-tiktok-user",
-      "add-twitch-user", "remove-twitch-user", "filter-toggle", "link-filter",
-      "set-prefix", "giveaway", "start-giveaway"
-    ].map(name => new SlashCommandBuilder().setName(name).setDescription(name.replace(/-/g, ' ')).toJSON());
-
-    const rest = new REST({ version: '10' }).setToken(token);
-    console.log(`📝 Registering ${commands.length} slash commands...`);
-    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log(`✅ Registered ${data.length} slash commands!`);
+    // Use shared COMMANDS_META defined at top-level
+    await registerSlashCommands();
+    console.log('🎯 Slash command registration completed');
   } catch (error) {
     console.error("Error registering commands:", error);
   }
+
+  // Pre-fetch members for all guilds so dashboard stats work immediately
+  console.log('📊 Pre-fetching members for all guilds...');
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      await guild.members.fetch();
+      console.log(`  ✅ Fetched ${guild.members.cache.size} members for ${guild.name}`);
+    } catch (err) {
+      console.warn(`  ⚠️ Failed to fetch members for ${guild.name}: ${err.message}`);
+    }
+  }
+  console.log('📊 Member pre-fetch complete');
+
+  // Auto-deploy to Render every 10 minutes
+  console.log('🔍 Checking auto-deploy conditions...');
+  console.log('  RENDER_API_KEY:', !!process.env.RENDER_API_KEY);
+  console.log('  RENDER_SERVICE_ID:', !!process.env.RENDER_SERVICE_ID);
+  console.log('  NODE_ENV:', process.env.NODE_ENV);
+  
+  if (process.env.RENDER_API_KEY && process.env.RENDER_SERVICE_ID && process.env.NODE_ENV !== 'production') {
+    console.log('🔄 Auto-deploy to Render enabled (every 10 minutes)');
+    
+    setInterval(async () => {
+      try {
+        const https = require('https');
+        const data = JSON.stringify({ clearCache: 'do_not_clear' });
+        
+        const options = {
+          hostname: 'api.render.com',
+          port: 443,
+          path: `/v1/services/${process.env.RENDER_SERVICE_ID}/deploys`,
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.RENDER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'Content-Length': data.length
+          }
+        };
+        
+        const req = https.request(options, (res) => {
+          if (res.statusCode === 202) {
+            console.log('✅ Auto-deployed to Render successfully');
+          } else {
+            console.log(`⚠️ Render auto-deploy returned HTTP ${res.statusCode}`);
+          }
+        });
+        
+        req.on('error', (error) => {
+          console.error('❌ Render auto-deploy failed:', error.message);
+        });
+        
+        req.write(data);
+        req.end();
+      } catch (err) {
+        console.error('❌ Auto-deploy error:', err.message);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+  } else {
+    console.log('⚠️ Auto-deploy NOT enabled - missing conditions');
+  }
 });
+
+// Reusable function to register slash commands
+async function registerSlashCommands() {
+  if (!token) {
+    console.warn('No Discord TOKEN provided — cannot register slash commands');
+    return;
+  }
+
+  try {
+    const rest = new REST({ version: '10' }).setToken(token);
+    const commands = slashCommands.map(cmd => cmd.toJSON());
+    const rawGuildIds = process.env.REGISTER_GUILD_IDS || process.env.GUILD_ID || '';
+    const guildIds = rawGuildIds
+      .split(',')
+      .map(id => id.trim())
+      .filter(Boolean);
+    
+    if (guildIds.length > 0) {
+      console.log(`📝 Registering ${commands.length} slash commands to ${guildIds.length} guild(s)...`);
+      console.log('⏳ Guild registration is usually near-instant...');
+
+      const results = [];
+      for (const guildId of guildIds) {
+        const startTime = Date.now();
+        const data = await rest.put(
+          Routes.applicationGuildCommands(client.user.id, guildId),
+          { body: commands }
+        );
+        const duration = Date.now() - startTime;
+        const count = Array.isArray(data) ? data.length : commands.length;
+        console.log(`✅ Registered ${count} commands for guild ${guildId} (took ${duration}ms)`);
+        results.push({ guildId, count });
+      }
+
+      return { success: true, count: commands.length, guilds: results };
+    }
+
+    console.log(`📝 Registering ${commands.length} modern slash commands globally...`);
+    console.log('⏳ Global registration can take up to 1 hour to appear everywhere.');
+
+    // Register commands globally
+    const startTime = Date.now();
+    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    const duration = Date.now() - startTime;
+
+    if (Array.isArray(data)) {
+      console.log(`✅ Registered ${data.length} slash commands globally (took ${duration}ms)`);
+      return { success: true, count: data.length };
+    }
+
+    console.log(`✅ Commands registered globally (took ${duration}ms)`);
+    return { success: true, count: commands.length };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error('❌ Failed to register slash commands:', errMsg);
+    return { success: false, error: errMsg };
+  }
+}
 
 // ============== API ENDPOINTS FOR DASHBOARD ==============
 app.get('/api/config', (req, res) => {
   const config = loadConfig();
   res.json({
     clientId: DISCORD_CLIENT_ID,
+    botName: "SPIDEY BOT",
     guilds: config.guilds || {}
   });
 });
@@ -378,6 +648,77 @@ client.on("guildMemberAdd", async (member) => {
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
   const guildConfig = getGuildConfig(member.guild.id);
+
+  // ============== SERVER GUARD: RAID DETECTION ==============
+  const rpConfig = guildConfig.raidProtection || {};
+  if (rpConfig.enabled !== false) {
+    const rKey = member.guild.id;
+    const now = Date.now();
+    if (!raidTracker.has(rKey)) raidTracker.set(rKey, { joins: [] });
+    const rt = raidTracker.get(rKey);
+    rt.joins.push(now);
+    rt.joins = rt.joins.filter(t => now - t < 10000); // last 10 seconds
+    const raidLimit = rpConfig.usersPerLimit || 10;
+
+    if (rt.joins.length >= raidLimit) {
+      sendAuditLog(member.guild, guildConfig, '🚨 RAID DETECTED', `**${rt.joins.length} joins in 10 seconds!**\nRaid threshold: ${raidLimit}\nLatest: ${member.user.tag}`, 0xED4245);
+
+      if (rpConfig.banRaidUsers) {
+        try {
+          await member.ban({ reason: 'SpideyBot Raid Protection: mass join detected' });
+          logModAction(member.guild, 'BAN', client.user, member.user.tag, 'Raid Protection: mass join');
+        } catch (e) { console.error('Raid ban failed:', e.message); }
+      }
+      rt.joins = [];
+    }
+  }
+
+  // ============== SERVER GUARD: JOIN GATE ==============
+  const jgConfig = guildConfig.joinGate || {};
+  if (jgConfig.enabled !== false) {
+    const accountAgeDays = (Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24);
+    const minAge = jgConfig.minAccountAge || 3;
+    let kicked = false;
+    let reason = '';
+
+    // Account age check
+    if (jgConfig.accountAgeCheck !== false && accountAgeDays < minAge) {
+      kicked = true;
+      reason = `Account too new (${Math.floor(accountAgeDays)} days old, minimum: ${minAge})`;
+    }
+
+    // Suspicious avatar check (no avatar)
+    if (!kicked && jgConfig.suspiciousAvatars !== false && !member.user.avatar) {
+      // Only flag very new accounts with no avatar
+      if (accountAgeDays < 7) {
+        kicked = true;
+        reason = 'Suspicious: new account with no avatar';
+      }
+    }
+
+    // Username analysis: contains invite links, mass numbers, or known spam patterns
+    if (!kicked && jgConfig.usernameAnalysis !== false) {
+      const uname = member.user.username.toLowerCase();
+      if (uname.includes('discord.gg') || uname.includes('http') || /^[a-z]{1,2}\d{6,}$/.test(uname) || uname.includes('free nitro')) {
+        kicked = true;
+        reason = 'Suspicious username pattern: ' + member.user.username;
+      }
+    }
+
+    if (kicked) {
+      try {
+        await member.send(`🚪 You were kicked from **${member.guild.name}** — ${reason}. Please contact an admin if this was a mistake.`).catch(() => {});
+        await member.kick('SpideyBot Join Gate: ' + reason);
+        logModAction(member.guild, 'KICK', client.user, member.user.tag, 'Join Gate: ' + reason);
+        sendAuditLog(member.guild, guildConfig, '🚪 Join Gate KICK', `**User:** ${member.user.tag}\n**Reason:** ${reason}\n**Account Age:** ${Math.floor(accountAgeDays)} days`, 0xFF6B6B);
+      } catch (e) { console.error('Join gate action failed:', e.message); }
+      return; // Don't send welcome message to kicked user
+    }
+  }
+
+  // Check if welcome messages are disabled via dashboard toggle
+  if (guildConfig.welcomeMessages === false) return;
+  
   const serverMessages = guildConfig.serverMessages || {};
   
   if (!serverMessages.enableWelcome || !guildConfig.welcomeChannelId) return;
@@ -496,6 +837,39 @@ client.on("channelCreate", async (channel) => {
 client.on("channelDelete", async (channel) => {
   if (channel.isDMBased()) return;
   addActivity(channel.guild.id, "🗑️", "Channel deleted", `#${channel.name} - ${channel.id}`);
+
+  // Anti-nuke: track channel deletions by audit log executor
+  const guildConfig = getGuildConfig(channel.guild.id);
+  const anConfig = guildConfig.antiNuke || {};
+  if (anConfig.enabled !== false) {
+    try {
+      const auditLogs = await channel.guild.fetchAuditLogs({ type: 12, limit: 1 }); // CHANNEL_DELETE = 12
+      const entry = auditLogs.entries.first();
+      if (entry && entry.executor && !entry.executor.bot) {
+        const key = `${channel.guild.id}:${entry.executor.id}`;
+        const now = Date.now();
+        if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
+        const nt = nukeTracker.get(key);
+        nt.actions.push(now);
+        nt.actions = nt.actions.filter(t => now - t < 30000);
+        const maxActions = anConfig.maxActions || 10;
+
+        if (nt.actions.length >= maxActions) {
+          sendAuditLog(channel.guild, guildConfig, '🚨 ANTI-NUKE TRIGGERED', `**${entry.executor.tag}** performed ${nt.actions.length} destructive actions in 30s!\nAction: Channel deletion`, 0xED4245);
+          if (anConfig.mode === 'lockdown') {
+            try {
+              const member = channel.guild.members.cache.get(entry.executor.id);
+              if (member && member.manageable) {
+                await member.roles.set([], 'SpideyBot Anti-Nuke: lockdown');
+                await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass destructive actions');
+              }
+            } catch (e) { console.error('Anti-nuke lockdown failed:', e.message); }
+          }
+          nt.actions = [];
+        }
+      }
+    } catch (e) { /* audit log fetch may fail without permissions */ }
+  }
 });
 
 client.on("channelUpdate", async (oldChannel, newChannel) => {
@@ -507,6 +881,243 @@ client.on("channelUpdate", async (oldChannel, newChannel) => {
   
   if (changes.length > 0) {
     addActivity(newChannel.guild.id, "✏️", "Channel updated", `#${newChannel.name} - ${changes.join(", ")}`);
+  }
+});
+
+// ============== ANTI-NUKE: ROLE DELETE ==============
+client.on("roleDelete", async (role) => {
+  const guildConfig = getGuildConfig(role.guild.id);
+  const anConfig = guildConfig.antiNuke || {};
+  if (anConfig.enabled === false) return;
+  try {
+    const auditLogs = await role.guild.fetchAuditLogs({ type: 32, limit: 1 }); // ROLE_DELETE = 32
+    const entry = auditLogs.entries.first();
+    if (entry && entry.executor && !entry.executor.bot) {
+      const key = `${role.guild.id}:${entry.executor.id}`;
+      const now = Date.now();
+      if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
+      const nt = nukeTracker.get(key);
+      nt.actions.push(now);
+      nt.actions = nt.actions.filter(t => now - t < 30000);
+      const maxActions = anConfig.maxActions || 10;
+      if (nt.actions.length >= maxActions) {
+        sendAuditLog(role.guild, guildConfig, '🚨 ANTI-NUKE TRIGGERED', `**${entry.executor.tag}** deleted ${nt.actions.length} roles in 30s!`, 0xED4245);
+        if (anConfig.mode === 'lockdown') {
+          const member = role.guild.members.cache.get(entry.executor.id);
+          if (member && member.manageable) {
+            await member.roles.set([], 'Anti-Nuke: mass role deletion').catch(() => {});
+            await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass role deletion').catch(() => {});
+          }
+        }
+        nt.actions = [];
+      }
+    }
+  } catch (e) { /* permissions may prevent audit log access */ }
+});
+
+// ============== ANTI-NUKE: MASS BAN DETECTION ==============
+client.on("guildBanAdd", async (ban) => {
+  addActivity(ban.guild.id, "🔨", ban.user.username, "was banned");
+  const guildConfig = getGuildConfig(ban.guild.id);
+  const anConfig = guildConfig.antiNuke || {};
+  if (anConfig.enabled === false) return;
+  try {
+    const auditLogs = await ban.guild.fetchAuditLogs({ type: 22, limit: 1 }); // MEMBER_BAN_ADD = 22
+    const entry = auditLogs.entries.first();
+    if (entry && entry.executor && !entry.executor.bot) {
+      const key = `${ban.guild.id}:${entry.executor.id}`;
+      const now = Date.now();
+      if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
+      const nt = nukeTracker.get(key);
+      nt.actions.push(now);
+      nt.actions = nt.actions.filter(t => now - t < 30000);
+      const maxActions = anConfig.maxActions || 10;
+      if (nt.actions.length >= maxActions) {
+        sendAuditLog(ban.guild, guildConfig, '🚨 ANTI-NUKE: MASS BAN', `**${entry.executor.tag}** banned ${nt.actions.length} users in 30s!`, 0xED4245);
+        if (anConfig.mode === 'lockdown') {
+          const member = ban.guild.members.cache.get(entry.executor.id);
+          if (member && member.manageable) {
+            await member.roles.set([], 'Anti-Nuke: mass banning').catch(() => {});
+            await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass banning').catch(() => {});
+          }
+        }
+        nt.actions = [];
+      }
+    }
+  } catch (e) { /* permissions may prevent audit log access */ }
+});
+
+// ============== MESSAGE LOGGING ==============
+client.on("messageDelete", async (message) => {
+  if (!message.guild || message.author?.bot) return;
+  const config = loadConfig();
+  const logging = config.guilds?.[message.guild.id]?.logging?.messageLogging;
+  if (!logging?.logDeleted || !logging?.logChannel) return;
+
+  const logChannel = message.guild.channels.cache.get(logging.logChannel);
+  if (!logChannel) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(0xFF6B6B)
+    .setTitle("🗑️ Message Deleted")
+    .addFields(
+      { name: "Author", value: message.author?.tag || "Unknown", inline: true },
+      { name: "Channel", value: `<#${message.channel.id}>`, inline: true },
+      { name: "Content", value: (message.content || "*No text content*").substring(0, 1024) }
+    )
+    .setTimestamp();
+  logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
+client.on("messageUpdate", async (oldMessage, newMessage) => {
+  if (!newMessage.guild || newMessage.author?.bot) return;
+  if (oldMessage.content === newMessage.content) return;
+  const config = loadConfig();
+  const logging = config.guilds?.[newMessage.guild.id]?.logging?.messageLogging;
+  if (!logging?.logEdited || !logging?.logChannel) return;
+
+  const logChannel = newMessage.guild.channels.cache.get(logging.logChannel);
+  if (!logChannel) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(0xFFBD39)
+    .setTitle("✏️ Message Edited")
+    .addFields(
+      { name: "Author", value: newMessage.author?.tag || "Unknown", inline: true },
+      { name: "Channel", value: `<#${newMessage.channel.id}>`, inline: true },
+      { name: "Before", value: (oldMessage.content || "*empty*").substring(0, 1024) },
+      { name: "After", value: (newMessage.content || "*empty*").substring(0, 1024) }
+    )
+    .setTimestamp();
+  logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
+client.on("messageDeleteBulk", async (messages) => {
+  const first = messages.first();
+  if (!first?.guild) return;
+  const config = loadConfig();
+  const logging = config.guilds?.[first.guild.id]?.logging?.messageLogging;
+  if (!logging?.logBulkDelete || !logging?.logChannel) return;
+
+  const logChannel = first.guild.channels.cache.get(logging.logChannel);
+  if (!logChannel) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(0xED4245)
+    .setTitle("🗑️ Bulk Message Delete")
+    .addFields(
+      { name: "Channel", value: `<#${first.channel.id}>`, inline: true },
+      { name: "Messages Deleted", value: `${messages.size}`, inline: true }
+    )
+    .setTimestamp();
+  logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
+// ============== REACTION ROLE HANDLERS ==============
+client.on("messageReactionAdd", async (reaction, user) => {
+  if (user.bot) return;
+  // Partial handling — fetch full data if needed
+  if (reaction.partial) { try { await reaction.fetch(); } catch (e) { return; } }
+  if (reaction.message.partial) { try { await reaction.message.fetch(); } catch (e) { return; } }
+
+  const guildId = reaction.message.guild?.id;
+  if (!guildId) return;
+
+  const config = loadConfig();
+  const rr = config.guilds[guildId]?.reactRoles;
+  if (!rr || !Array.isArray(rr.entries) || rr.entries.length === 0) return;
+
+  const messageId = reaction.message.id;
+  const emojiStr = reaction.emoji.id ? `<:${reaction.emoji.name}:${reaction.emoji.id}>` : reaction.emoji.name;
+
+  // Find matching entry
+  const entry = rr.entries.find(e => e.messageId === messageId && (e.emoji === emojiStr || e.emoji === reaction.emoji.name));
+  if (!entry) return;
+
+  try {
+    const guild = reaction.message.guild;
+    const member = await guild.members.fetch(user.id);
+    const role = guild.roles.cache.get(entry.roleId);
+    if (!role) return;
+
+    // If allowMultiple is false, check if user already has a reaction role from this message
+    if (rr.allowMultiple === false) {
+      const messageEntries = rr.entries.filter(e => e.messageId === messageId);
+      for (const me of messageEntries) {
+        if (me.roleId !== entry.roleId && member.roles.cache.has(me.roleId)) {
+          const oldRole = guild.roles.cache.get(me.roleId);
+          if (oldRole) await member.roles.remove(oldRole).catch(() => {});
+          // Remove their reaction on the old emoji
+          try {
+            const oldReaction = reaction.message.reactions.cache.find(r => r.emoji.name === me.emoji || r.emoji.toString() === me.emoji);
+            if (oldReaction) await oldReaction.users.remove(user.id).catch(() => {});
+          } catch (e) { /* ignore */ }
+        }
+      }
+    }
+
+    await member.roles.add(role);
+    console.log(`🎭 Reaction role: +@${role.name} to ${user.tag} (${guildId})`);
+
+    // DM confirmation
+    if (rr.dmConfirm) {
+      try {
+        await user.send({ embeds: [
+          new EmbedBuilder()
+            .setColor(0x00D4FF)
+            .setTitle('✅ Role Added')
+            .setDescription(`You've been given the **@${role.name}** role in **${guild.name}**!`)
+            .setTimestamp()
+        ]});
+      } catch (e) { /* DMs may be disabled */ }
+    }
+  } catch (err) {
+    console.error('❌ Reaction role add error:', err.message);
+  }
+});
+
+client.on("messageReactionRemove", async (reaction, user) => {
+  if (user.bot) return;
+  if (reaction.partial) { try { await reaction.fetch(); } catch (e) { return; } }
+  if (reaction.message.partial) { try { await reaction.message.fetch(); } catch (e) { return; } }
+
+  const guildId = reaction.message.guild?.id;
+  if (!guildId) return;
+
+  const config = loadConfig();
+  const rr = config.guilds[guildId]?.reactRoles;
+  if (!rr || !Array.isArray(rr.entries) || rr.entries.length === 0) return;
+  if (rr.removeOnUnreact === false) return; // Setting: don't remove on unreact
+
+  const messageId = reaction.message.id;
+  const emojiStr = reaction.emoji.id ? `<:${reaction.emoji.name}:${reaction.emoji.id}>` : reaction.emoji.name;
+
+  const entry = rr.entries.find(e => e.messageId === messageId && (e.emoji === emojiStr || e.emoji === reaction.emoji.name));
+  if (!entry) return;
+
+  try {
+    const guild = reaction.message.guild;
+    const member = await guild.members.fetch(user.id);
+    const role = guild.roles.cache.get(entry.roleId);
+    if (!role) return;
+
+    await member.roles.remove(role);
+    console.log(`🎭 Reaction role: -@${role.name} from ${user.tag} (${guildId})`);
+
+    // DM confirmation
+    if (rr.dmConfirm) {
+      try {
+        await user.send({ embeds: [
+          new EmbedBuilder()
+            .setColor(0xED4245)
+            .setTitle('❌ Role Removed')
+            .setDescription(`The **@${role.name}** role has been removed in **${guild.name}**.`)
+            .setTimestamp()
+        ]});
+      } catch (e) { /* DMs may be disabled */ }
+    }
+  } catch (err) {
+    console.error('❌ Reaction role remove error:', err.message);
   }
 });
 
@@ -533,6 +1144,108 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
+  // ============== SERVER GUARD: ANTI-SPAM ==============
+  const asConfig = guildConfig.antiSpam || {};
+  if (asConfig.enabled !== false && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    const key = `${msg.guild.id}:${msg.author.id}`;
+    const now = Date.now();
+    if (!spamTracker.has(key)) spamTracker.set(key, { timestamps: [], warned: false });
+    const tracker = spamTracker.get(key);
+    tracker.timestamps.push(now);
+    // Keep only messages within the last 5 seconds
+    tracker.timestamps = tracker.timestamps.filter(t => now - t < 5000);
+    const limit = asConfig.messagesPerLimit || 5;
+
+    if (tracker.timestamps.length > limit) {
+      const action = (asConfig.action || 'warn').toLowerCase();
+      try {
+        if (action === 'ban') {
+          await msg.member.ban({ reason: 'SpideyBot Anti-Spam: exceeded message limit' });
+          logModAction(msg.guild, 'BAN', client.user, msg.author.tag, 'Anti-Spam: exceeded message limit');
+          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam BAN', `${msg.author.tag} was banned for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xED4245);
+        } else if (action === 'kick') {
+          await msg.member.kick('SpideyBot Anti-Spam: exceeded message limit');
+          logModAction(msg.guild, 'KICK', client.user, msg.author.tag, 'Anti-Spam: exceeded message limit');
+          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam KICK', `${msg.author.tag} was kicked for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFF6B6B);
+        } else if (action === 'mute') {
+          await msg.member.timeout(5 * 60 * 1000, 'SpideyBot Anti-Spam: exceeded message limit');
+          logModAction(msg.guild, 'MUTE', client.user, msg.author.tag, 'Anti-Spam: 5min timeout');
+          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam MUTE', `${msg.author.tag} was timed out for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFFBD39);
+        } else if (!tracker.warned) {
+          await msg.reply('⚠️ **Slow down!** You are sending messages too fast.');
+          tracker.warned = true;
+          logModAction(msg.guild, 'WARN', client.user, msg.author.tag, 'Anti-Spam: sending messages too fast');
+          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam WARN', `${msg.author.tag} warned for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFFBD39);
+          setTimeout(() => { tracker.warned = false; }, 10000);
+        }
+      } catch (e) { console.error('Anti-spam action failed:', e.message); }
+      tracker.timestamps = [];
+      return;
+    }
+  }
+
+  // ============== SERVER GUARD: LINK SCANNING ==============
+  const lsConfig = guildConfig.linkScanning || {};
+  if (lsConfig.enabled !== false && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    const urlRegex = /https?:\/\/([^\s\/]+)/gi;
+    let match;
+    while ((match = urlRegex.exec(msg.content)) !== null) {
+      const domain = match[1].toLowerCase();
+      let blocked = false;
+      let reason = '';
+
+      if (lsConfig.detectPhishing !== false && PHISH_DOMAINS.some(p => domain.includes(p))) {
+        blocked = true; reason = 'Phishing link detected';
+      }
+      if (lsConfig.blockScamSites !== false && (domain.includes('free-nitro') || domain.includes('gift-discord') || domain.includes('steam-community') || domain.includes('robux-free'))) {
+        blocked = true; reason = 'Scam site blocked';
+      }
+      // Discord invite links from other servers
+      if (lsConfig.blockScamSites !== false && (domain.includes('discord.gg') || domain.includes('discordapp.com/invite'))) {
+        blocked = true; reason = 'Unauthorized invite link';
+      }
+
+      if (blocked) {
+        try {
+          await msg.delete();
+          await msg.channel.send(`🚫 **Link blocked** — ${reason}. Message from ${msg.author} was removed.`);
+          sendAuditLog(msg.guild, guildConfig, '🔗 Link Blocked', `**User:** ${msg.author.tag}\n**Reason:** ${reason}\n**Domain:** ${domain}`, 0xED4245);
+        } catch (e) { console.error('Link scan action failed:', e.message); }
+        return;
+      }
+    }
+  }
+
+  // ============== SERVER GUARD: RATE LIMITING ==============
+  const rlConfig = guildConfig.rateLimiting || {};
+  if (rlConfig.enabled !== false && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    const key = `${msg.guild.id}:${msg.author.id}`;
+    const now = Date.now();
+    if (!userRateLimit.has(key)) userRateLimit.set(key, { timestamps: [] });
+    const rl = userRateLimit.get(key);
+    rl.timestamps.push(now);
+    rl.timestamps = rl.timestamps.filter(t => now - t < 60000);
+    const perMin = rlConfig.requestsPerMin || 100;
+
+    if (rl.timestamps.length > perMin) {
+      const action = (rlConfig.action || 'throttle').toLowerCase();
+      try {
+        if (action === 'kick') {
+          await msg.member.kick('SpideyBot Rate Limit exceeded');
+          sendAuditLog(msg.guild, guildConfig, '📊 Rate Limit KICK', `${msg.author.tag} kicked for exceeding ${perMin} msgs/min`, 0xFF6B6B);
+        } else if (action === 'block') {
+          await msg.member.timeout(10 * 60 * 1000, 'SpideyBot Rate Limit: temp block');
+          sendAuditLog(msg.guild, guildConfig, '📊 Rate Limit BLOCK', `${msg.author.tag} blocked 10min for exceeding ${perMin} msgs/min`, 0xFFBD39);
+        } else {
+          await msg.member.timeout(60 * 1000, 'SpideyBot Rate Limit: throttle');
+          sendAuditLog(msg.guild, guildConfig, '📊 Rate Limit Throttle', `${msg.author.tag} throttled for exceeding ${perMin} msgs/min`, 0xFFBD39);
+        }
+      } catch (e) { console.error('Rate limit action failed:', e.message); }
+      rl.timestamps = [];
+      return;
+    }
+  }
+
   // ============== PERMISSIONS FROM DASHBOARD ==============
   if (msg.content.startsWith("/")) {
     const permissions = guildConfig.permissions || {};
@@ -545,7 +1258,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== AUTO XP GAIN ==============
-  if (!msg.content.startsWith("/")) {
+  if (!msg.content.startsWith("/") && guildConfig.levelingSystem !== false) {
     const levels = guildConfig.levels || {};
     const userId = msg.author.id;
     const lastXpTime = levels[`${userId}_xp_time`] || 0;
@@ -605,7 +1318,7 @@ client.on("messageCreate", async (msg) => {
       .join("\n");
 
     const statsEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("📊 Message Statistics")
       .addFields(
         { name: "📈 Total Messages", value: `${messageCounting.totalMessages || 0}`, inline: true },
@@ -631,7 +1344,7 @@ client.on("messageCreate", async (msg) => {
     const activeQueues = player.queues.size;
 
     const statusEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("🤖 SPIDEY BOT - Status")
       .addFields(
         { name: "🔌 Latency", value: `${client.ws.ping}ms`, inline: true },
@@ -651,6 +1364,7 @@ client.on("messageCreate", async (msg) => {
   // List all active roles
   if (msg.content === "/list-roles") {
     const categories = guildConfig.roleCategories || {};
+    console.log(`DEBUG: /list-roles invoked - categories keys: ${Object.keys(categories).length}`);
     if (Object.keys(categories).length === 0) {
       return msg.reply("❌ No role categories created yet! Use `/create-category [name]` to get started.");
     }
@@ -666,7 +1380,7 @@ client.on("messageCreate", async (msg) => {
     });
 
     const rolesEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("📋 Active Role Categories")
       .setDescription("🎬 = Has a banner image")
       .addFields(...fields)
@@ -690,7 +1404,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add a role to a category
-  if (msg.content.startsWith("/add-role ")) {
+  if (msg.content.startsWith("/addrole ")) {
     // Guild-only command
     if (!msg.guild) {
       return msg.reply("❌ This command only works in servers!");
@@ -702,13 +1416,13 @@ client.on("messageCreate", async (msg) => {
     }
     
     try {
-      const args = msg.content.slice(11).trim().split(" ");
+      const args = msg.content.slice(9).trim().split(" ");
       const categoryName = args[0];
       const roleName = args[1];
       const roleId = args[2];
       
       if (!categoryName || !roleName || !roleId) {
-        return msg.reply("Usage: /add-role [category] [role name] [role ID]\n\nExample: /add-role Gaming Minecraft 123456789");
+        return msg.reply("Usage: /addrole [category] [role name] [role ID]\n\nExample: /addrole Gaming Minecraft 123456789");
       }
       
       // Verify role ID is valid and exists in guild
@@ -734,7 +1448,7 @@ client.on("messageCreate", async (msg) => {
       categories[categoryName] = catData;
       updateGuildConfig(msg.guild.id, { roleCategories: categories });
       addActivity(msg.guild.id, "➕", msg.author.username, `added role: ${roleName} to ${categoryName}`);
-      return msg.reply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**\n\n*Tip: Use \`/setup-category ${categoryName}\` to post reaction roles!*`);
+      return msg.reply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**\n\n*Tip: Use \`/setupcategory ${categoryName}\` to post reaction roles!*`);
     } catch (err) {
       console.error(`❌ Error adding role: ${err.message}`);
       return msg.reply(`❌ Error adding role. Please check the role ID and try again.`);
@@ -742,15 +1456,15 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove a role from a category
-  if (msg.content.startsWith("/remove-role ")) {
+  if (msg.content.startsWith("/removerole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const args = msg.content.slice(14).trim().split(" ");
+    const args = msg.content.slice(12).trim().split(" ");
     const categoryName = args[0];
     const roleName = args[1];
     if (!categoryName || !roleName) {
-      return msg.reply("Usage: /remove-role [category] [role name]");
+      return msg.reply("Usage: /removerole [category] [role name]");
     }
     const categories = guildConfig.roleCategories || {};
     if (!categories[categoryName]) return msg.reply(`❌ Category "${categoryName}" not found!`);
@@ -805,7 +1519,7 @@ client.on("messageCreate", async (msg) => {
     const economy = guildConfig.economy || {};
     const balance = economy[msg.author.id] || 0;
     const balanceEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("💰 Your Balance")
       .setDescription(`You have **${balance} coins** 🪙`)
       .setFooter({ text: "SPIDEY BOT Economy" });
@@ -860,7 +1574,7 @@ client.on("messageCreate", async (msg) => {
     const level = levels[msg.author.id] || 0;
     const xp = levels[msg.author.id + "_xp"] || 0;
     const levelEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("📊 Your Level")
       .addFields(
         { name: "Level", value: `${level}`, inline: true },
@@ -879,7 +1593,7 @@ client.on("messageCreate", async (msg) => {
       .slice(0, 10);
 
     const leaderboardEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("🏆 Server Leaderboard")
       .setDescription(sorted.length === 0 ? "No data yet!" : sorted.map((e, i) => `**${i + 1}.** <@${e.userId}> - Level ${e.level}`).join("\n"))
       .setFooter({ text: "SPIDEY BOT Leaderboard" });
@@ -957,7 +1671,7 @@ client.on("messageCreate", async (msg) => {
       });
 
       const ticketEmbed = new EmbedBuilder()
-        .setColor(0x00D4FF)
+        .setColor('#004B87')
         .setTitle("🎫 Support Ticket Created")
         .setDescription(`Support team will be with you shortly!`)
         .addFields({ name: "User", value: msg.author.toString(), inline: true });
@@ -1036,7 +1750,7 @@ client.on("messageCreate", async (msg) => {
     if (!suggestionsChannel) return msg.reply("❌ Suggestions channel not configured! Admin needs to set it with `/config-suggestions #channel`");
 
     const suggestionEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("📝 New Suggestion")
       .setDescription(suggestion)
       .setAuthor({ name: msg.author.username, iconURL: msg.author.displayAvatarURL() })
@@ -1068,7 +1782,7 @@ client.on("messageCreate", async (msg) => {
     if (!prize) return msg.reply("Usage: /giveaway [prize] [duration in seconds]");
 
     const giveawayEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#9B59B6')
       .setTitle("🎁 GIVEAWAY!")
       .setDescription(`**Prize:** ${prize}\n**Duration:** ${duration} seconds\n\nReact with 🎉 to enter!`)
       .setFooter({ text: "SPIDEY BOT Giveaway" });
@@ -1113,7 +1827,7 @@ client.on("messageCreate", async (msg) => {
     ];
     const q = trivia[Math.floor(Math.random() * trivia.length)];
     const triviaEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("🧠 Trivia Question")
       .setDescription(q.question)
       .setFooter({ text: `Answer: ${q.answer}` });
@@ -1145,7 +1859,7 @@ client.on("messageCreate", async (msg) => {
   // ============== DEVELOPERS ==============
   if (msg.content === "/developers") {
     const developersEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
+      .setColor('#004B87')
       .setTitle("👨‍💻 SPIDEY BOT Developers")
       .setDescription("Meet the team behind SPIDEY BOT!")
       .addFields(
@@ -1161,23 +1875,60 @@ client.on("messageCreate", async (msg) => {
 
   // Help - List all user commands
   if (msg.content === "/help") {
-    const allCommands = "help • adminhelp • kick • ban • warn • mute • unmute • warnings • balance • pay • addmoney • removemoney • work • transfer • rps • play • stop • skip • queue • volume • suggest • ticket-setup • config-modlog • config-welcome-channel • config-welcome-message • config-goodbye-message • config-logging • config-leaderboard • config-xp • config-subscriptions • config-statistics-channels • config-server-guard • config-react-roles • config-role-categories • config-social-notifs • config-suggestions • config-kick-channel • config-tiktok-channel • config-twitch-channel • create-category • add-role • remove-role • set-category-banner • setup-category • delete-category • add-game-role • remove-game-role • add-watchparty-role • remove-watchparty-role • add-platform-role • remove-platform-role • add-custom-command • addcmd • remove-custom-command • delcmd • add-kick-user • remove-kick-user • add-tiktok-user • remove-tiktok-user • add-twitch-user • remove-twitch-user • filter-toggle • link-filter • set-prefix • giveaway • start-giveaway";
+    // Organize commands by category and subsection
+    const categoryMap = {};
+    Object.entries(COMMANDS_META).forEach(([name, meta]) => {
+      // Skip admin-only commands from public /help
+      if (meta && meta.adminOnly) return;
+      const cat = meta.category || 'misc';
+      if (!categoryMap[cat]) categoryMap[cat] = {};
+      const subsec = meta.subsection || 'Other';
+      if (!categoryMap[cat][subsec]) categoryMap[cat][subsec] = [];
+      categoryMap[cat][subsec].push(name);
+    });
 
     const helpEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle("🤖 SPIDEY BOT - All Commands (66)")
-      .setDescription("**ALL SLASH COMMANDS:**\n\n" + allCommands)
-      .addFields(
-        { name: "🎵 Music", value: "`/play` • `/stop` • `/skip` • `/queue` • `/volume`", inline: true },
-        { name: "💰 Economy", value: "`/balance` • `/pay` • `/work` • `/transfer`", inline: true },
-        { name: "🎮 Games", value: "`/rps`", inline: true },
-        { name: "⚙️ Config", value: "`/config-*` (22 commands)", inline: true },
-        { name: "🎭 Roles", value: "`/create-category` • `/add-role` • `/remove-role` • `/setup-category`", inline: true },
-        { name: "🔒 Admin", value: "`/kick` • `/ban` • `/warn` • `/mute` • `/unmute`", inline: true },
-        { name: "❓ Help", value: "Use `/adminhelp` to see admin-only commands", inline: false }
-      )
-      .setFooter({ text: "💡 Type any command name above with / to use it!" });
+      .setColor('#004B87')
+      .setTitle("🤖 SPIDEY BOT - All Commands")
+      .setDescription("Organized by category and subsection. Type `/[command]` to use!");
 
+    // Add category sections dynamically
+    const categoryEmojis = {
+      music: "🎵",
+      games: "🎮",
+      economy: "💰",
+      leveling: "📊",
+      moderation: "🛡️",
+      roles: "👤",
+      social: "📱",
+      config: "⚙️",
+      tickets: "🎫",
+      custom: "✨",
+      giveaway: "🎁",
+      info: "ℹ️"
+    };
+
+    const catOrder = ['music','games','economy','leveling','info'];
+    catOrder.forEach(cat => {
+      if (!categoryMap[cat]) return;
+      const subsections = categoryMap[cat];
+      const emoji = categoryEmojis[cat] || "📌";
+      
+      // Build subsection display
+      let catDisplay = "";
+      Object.keys(subsections).sort().forEach(subsec => {
+        const cmds = subsections[subsec].map(c => `/${c}`).join(" • ");
+        catDisplay += `**${subsec}:** ${cmds}\n`;
+      });
+
+      helpEmbed.addFields({
+        name: `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
+        value: catDisplay || "No commands",
+        inline: false
+      });
+    });
+
+    helpEmbed.setFooter({ text: "Use /adminhelp for admin-only commands | Visit /commands for full guide" });
     return msg.reply({ embeds: [helpEmbed] });
   }
 
@@ -1187,24 +1938,93 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can view admin help!");
     }
 
+    // Organize commands by category and subsection
+    const categoryMap = {};
+    Object.entries(COMMANDS_META).forEach(([name, meta]) => {
+      const cat = meta.category || 'misc';
+      if (!categoryMap[cat]) categoryMap[cat] = {};
+      const subsec = meta.subsection || 'Other';
+      if (!categoryMap[cat][subsec]) categoryMap[cat][subsec] = [];
+      categoryMap[cat][subsec].push(name);
+    });
+
     const adminEmbed = new EmbedBuilder()
-      .setColor(0xFF1493)
-      .setTitle("👑 ADMIN COMMAND GUIDE (66 Total Commands)")
-      .setDescription("All administrator-only commands registered as slash commands")
-      .addFields(
-        { name: "🎭 Role Categories (7)", value: "/create-category • /add-role • /remove-role • /set-category-banner • /setup-category • /delete-category • /list-roles", inline: false },
-        { name: "👋 Welcome (2)", value: "/config-welcome-channel • /config-welcome-message", inline: false },
-        { name: "⚙️ Configuration (7)", value: "/config-modlog • /config-logging • /config-leaderboard • /config-xp • /config-subscriptions • /config-statistics-channels • /set-prefix", inline: false },
-        { name: "📱 Social Media (12)", value: "/add-twitch-user • /remove-twitch-user • /config-twitch-channel • /add-tiktok-user • /remove-tiktok-user • /config-tiktok-channel • /add-kick-user • /remove-kick-user • /config-kick-channel + 3 more", inline: false },
-        { name: "💰 Economy (3)", value: "/addmoney • /removemoney • /leaderboard", inline: false },
-        { name: "🎮 Role Management (6)", value: "/add-game-role • /remove-game-role • /add-watchparty-role • /remove-watchparty-role • /add-platform-role • /remove-platform-role", inline: false },
-        { name: "🛡️ Moderation (6)", value: "/kick • /ban • /warn • /mute • /unmute • /warnings", inline: false },
-        { name: "🛠️ Protection & Tools (8)", value: "/link-filter • /ticket-setup • /filter-toggle • /addcmd • /delcmd • /add-custom-command • /remove-custom-command + more", inline: false },
-        { name: "📋 Other Admin (5)", value: "/config-server-guard • /config-react-roles • /config-role-categories • /config-social-notifs • /config-suggestions", inline: false }
-      )
-      .setFooter({ text: "✅ All changes are logged to dashboard activity & modlog channel" });
+      .setColor('#9B59B6')
+      .setTitle("👑 ADMIN COMMAND GUIDE")
+      .setDescription("Administrator-only commands. Type `/[command]` to use!");
+
+    // Admin-only categories (pre-filled categories)
+    const adminCats = ['moderation', 'roles', 'social', 'config', 'custom', 'giveaway', 'tickets'];
+    const categoryEmojis = {
+      moderation: "🛡️",
+      roles: "👤",
+      social: "📱",
+      config: "⚙️",
+      custom: "✨",
+      giveaway: "🎁",
+      tickets: "🎫",
+      economy: "💰"
+    };
+
+    // Render configured admin categories first
+    adminCats.forEach(cat => {
+      if (!categoryMap[cat]) return;
+      const subsections = categoryMap[cat];
+      const emoji = categoryEmojis[cat] || "📌";
+      
+      // Build subsection display
+      let catDisplay = "";
+      Object.keys(subsections).sort().forEach(subsec => {
+        const cmds = subsections[subsec].map(c => `/${c}`).join(" • ");
+        catDisplay += `**${subsec}:** ${cmds}\n`;
+      });
+
+      adminEmbed.addFields({
+        name: `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
+        value: catDisplay || "No commands",
+        inline: false
+      });
+    });
+
+    // Collect admin-only commands (flagged via adminOnly) and display any that belong to categories not already shown above
+    const adminOnlyMap = {};
+    Object.entries(COMMANDS_META).forEach(([name, meta]) => {
+      if (!meta || !meta.adminOnly) return;
+      const cat = meta.category || 'misc';
+      if (!adminOnlyMap[cat]) adminOnlyMap[cat] = {};
+      const subsec = meta.subsection || 'Other';
+      if (!adminOnlyMap[cat][subsec]) adminOnlyMap[cat][subsec] = [];
+      adminOnlyMap[cat][subsec].push(name);
+    });
+
+    Object.keys(adminOnlyMap).sort().forEach(cat => {
+      if (adminCats.includes(cat)) return; // already displayed
+      const subsections = adminOnlyMap[cat];
+      const emoji = categoryEmojis[cat] || "🔒";
+      let catDisplay = "";
+      Object.keys(subsections).sort().forEach(subsec => {
+        const cmds = subsections[subsec].map(c => `/${c}`).join(" • ");
+        catDisplay += `**${subsec}:** ${cmds}\n`;
+      });
+      adminEmbed.addFields({ name: `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)} (Admin-only)`, value: catDisplay || "No commands", inline: false });
+    });
+
+    adminEmbed.setFooter({ text: "✅ All changes are logged to dashboard activity & modlog channel" });
 
     return msg.reply({ embeds: [adminEmbed] });
+  }
+
+  // Admin command to force re-register slash commands (in case of new entries added to COMMANDS_META)
+  if (msg.content === "/register-commands") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can register commands!");
+    }
+    const replyMsg = await msg.reply("🔁 Registering slash commands, please wait...");
+    const result = await registerSlashCommands();
+    if (result && result.success) {
+      return replyMsg.edit(`✅ Registered ${result.count} slash commands.`).catch(() => {});
+    }
+    return replyMsg.edit(`❌ Registration failed: ${result && result.error ? result.error : 'unknown error'}`).catch(() => {});
   }
 
   // ============== CONFIG COMMANDS ==============
@@ -1231,14 +2051,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add game role
-  if (msg.content.startsWith("/add-game-role ")) {
+  if (msg.content.startsWith("/addgamerole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const args = msg.content.slice(16).trim().split(" ");
+    const args = msg.content.slice(14).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: /add-game-role [role name] [role ID]\n\nExample: /add-game-role Minecraft 123456789");
+    if (!roleName || !roleId) return msg.reply("Usage: /addgamerole [role name] [role ID]\n\nExample: /addgamerole Minecraft 123456789");
     const config = getGuildConfig(msg.guild.id);
     if (config.gameRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.gameRoles.push({ name: roleName, id: roleId });
@@ -1248,12 +2068,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove game role
-  if (msg.content.startsWith("/remove-game-role ")) {
+  if (msg.content.startsWith("/removegamerole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const roleName = msg.content.slice(19).trim();
-    if (!roleName) return msg.reply("Usage: /remove-game-role [role name]");
+    const roleName = msg.content.slice(16).trim();
+    if (!roleName) return msg.reply("Usage: /removegamerole [role name]");
     const config = getGuildConfig(msg.guild.id);
     const index = config.gameRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
@@ -1264,14 +2084,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add watch party role
-  if (msg.content.startsWith("/add-watchparty-role ")) {
+  if (msg.content.startsWith("/addwatchpartyrole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
     const args = msg.content.slice(22).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: /add-watchparty-role [role name] [role ID]");
+    if (!roleName || !roleId) return msg.reply("Usage: /addwatchpartyrole [role name] [role ID]");
     const config = getGuildConfig(msg.guild.id);
     if (config.watchPartyRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.watchPartyRoles.push({ name: roleName, id: roleId });
@@ -1281,12 +2101,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove watch party role
-  if (msg.content.startsWith("/remove-watchparty-role ")) {
+  if (msg.content.startsWith("/removewatchpartyrole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const roleName = msg.content.slice(25).trim();
-    if (!roleName) return msg.reply("Usage: /remove-watchparty-role [role name]");
+    const roleName = msg.content.slice(22).trim();
+    if (!roleName) return msg.reply("Usage: /removewatchpartyrole [role name]");
     const config = getGuildConfig(msg.guild.id);
     const index = config.watchPartyRoles.findIndex(r => r.name === roleName);
     if (index === -1) return msg.reply("❌ Role not found!");
@@ -1297,14 +2117,14 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Add platform role
-  if (msg.content.startsWith("/add-platform-role ")) {
+  if (msg.content.startsWith("/addplatformrole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const args = msg.content.slice(20).trim().split(" ");
+    const args = msg.content.slice(17).trim().split(" ");
     const roleName = args[0];
     const roleId = args[1];
-    if (!roleName || !roleId) return msg.reply("Usage: /add-platform-role [role name] [role ID]");
+    if (!roleName || !roleId) return msg.reply("Usage: /addplatformrole [role name] [role ID]");
     const config = getGuildConfig(msg.guild.id);
     if (config.platformRoles.some(r => r.name === roleName)) return msg.reply("❌ Role already added!");
     config.platformRoles.push({ name: roleName, id: roleId });
@@ -1314,12 +2134,12 @@ client.on("messageCreate", async (msg) => {
   }
 
   // Remove platform role
-  if (msg.content.startsWith("/remove-platform-role ")) {
+  if (msg.content.startsWith("/removeplatformrole ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can manage roles!");
     }
-    const roleName = msg.content.slice(23).trim();
-    if (!roleName) return msg.reply("Usage: /remove-platform-role [role name]");
+    const roleName = msg.content.slice(20).trim();
+    if (!roleName) return msg.reply("Usage: /removeplatformrole [role name]");
     const config = getGuildConfig(msg.guild.id);
   // Setup category selector
   if (msg.content.startsWith("/setup-category ")) {
@@ -1335,7 +2155,7 @@ client.on("messageCreate", async (msg) => {
 
     const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
     if (catData.roles.length === 0) {
-      return msg.reply(`❌ Add roles with //add-role first!`);
+      return msg.reply(`❌ Add roles with //addrole first!`);
     }
 
     const roleOptions = catData.roles.map(r => ({ label: `✨ ${r.name}`, value: r.id }));
@@ -1702,12 +2522,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ TikTok post notifications will post to ${channel}\n\n💡 *Note: Configure your TikTok webhook at: https://developer.tiktok.com*`);
   }
 
-  if (msg.content.startsWith("/add-twitch-user ")) {
+  if (msg.content.startsWith("/addtwitchuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const twitchUser = msg.content.slice(18).trim().toLowerCase();
-    if (!twitchUser) return msg.reply("Usage: /add-twitch-user [username]\nExample: /add-twitch-user xqc");
+    const twitchUser = msg.content.slice(15).trim().toLowerCase();
+    if (!twitchUser) return msg.reply("Usage: /addtwitchuser [username]\nExample: /addtwitchuser xqc");
     const users = guildConfig.twitchUsers || [];
     if (users.includes(twitchUser)) return msg.reply(`❌ **${twitchUser}** is already being monitored!`);
     users.push(twitchUser);
@@ -1715,12 +2535,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${twitchUser}** to Twitch monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("/remove-twitch-user ")) {
+  if (msg.content.startsWith("/removetwitchuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const twitchUser = msg.content.slice(21).trim().toLowerCase();
-    if (!twitchUser) return msg.reply("Usage: /remove-twitch-user [username]");
+    const twitchUser = msg.content.slice(18).trim().toLowerCase();
+    if (!twitchUser) return msg.reply("Usage: /removetwitchuser [username]");
     const users = guildConfig.twitchUsers || [];
     const index = users.indexOf(twitchUser);
     if (index === -1) return msg.reply(`❌ **${twitchUser}** is not being monitored!`);
@@ -1731,16 +2551,16 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content === "/list-twitch-users") {
     const users = guildConfig.twitchUsers || [];
-    if (users.length === 0) return msg.reply("❌ No Twitch users being monitored! Use `/add-twitch-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No Twitch users being monitored! Use `/addtwitchuser [username]`");
     return msg.reply(`🎮 **Twitch Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
-  if (msg.content.startsWith("/add-tiktok-user ")) {
+  if (msg.content.startsWith("/addtiktokuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const tiktokUser = msg.content.slice(18).trim().toLowerCase();
-    if (!tiktokUser) return msg.reply("Usage: /add-tiktok-user [username]\nExample: /add-tiktok-user charlidamelio");
+    const tiktokUser = msg.content.slice(15).trim().toLowerCase();
+    if (!tiktokUser) return msg.reply("Usage: /addtiktokuser [username]\nExample: /addtiktokuser charlidamelio");
     const users = guildConfig.tiktokUsers || [];
     if (users.includes(tiktokUser)) return msg.reply(`❌ **${tiktokUser}** is already being monitored!`);
     users.push(tiktokUser);
@@ -1748,12 +2568,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${tiktokUser}** to TikTok monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("/remove-tiktok-user ")) {
+  if (msg.content.startsWith("/removetiktokuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const tiktokUser = msg.content.slice(21).trim().toLowerCase();
-    if (!tiktokUser) return msg.reply("Usage: /remove-tiktok-user [username]");
+    const tiktokUser = msg.content.slice(18).trim().toLowerCase();
+    if (!tiktokUser) return msg.reply("Usage: /removetiktokuser [username]");
     const users = guildConfig.tiktokUsers || [];
     const index = users.indexOf(tiktokUser);
     if (index === -1) return msg.reply(`❌ **${tiktokUser}** is not being monitored!`);
@@ -1764,7 +2584,7 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content === "/list-tiktok-users") {
     const users = guildConfig.tiktokUsers || [];
-    if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `/add-tiktok-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No TikTok users being monitored! Use `/addtiktokuser [username]`");
     return msg.reply(`📱 **TikTok Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
@@ -1778,12 +2598,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Kick live notifications will post to ${channel}\n\n💡 *Note: Configure your Kick webhook at: https://developers.kick.com*`);
   }
 
-  if (msg.content.startsWith("/add-kick-user ")) {
+  if (msg.content.startsWith("/addkickuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const kickUser = msg.content.slice(16).trim().toLowerCase();
-    if (!kickUser) return msg.reply("Usage: /add-kick-user [username]\nExample: /add-kick-user xqc");
+    const kickUser = msg.content.slice(13).trim().toLowerCase();
+    if (!kickUser) return msg.reply("Usage: /addkickuser [username]\nExample: /addkickuser xqc");
     const users = guildConfig.kickUsers || [];
     if (users.includes(kickUser)) return msg.reply(`❌ **${kickUser}** is already being monitored!`);
     users.push(kickUser);
@@ -1791,12 +2611,12 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Added **${kickUser}** to Kick monitoring! (${users.length} total)`);
   }
 
-  if (msg.content.startsWith("/remove-kick-user ")) {
+  if (msg.content.startsWith("/removekickuser ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can configure!");
     }
-    const kickUser = msg.content.slice(19).trim().toLowerCase();
-    if (!kickUser) return msg.reply("Usage: /remove-kick-user [username]");
+    const kickUser = msg.content.slice(16).trim().toLowerCase();
+    if (!kickUser) return msg.reply("Usage: /removekickuser [username]");
     const users = guildConfig.kickUsers || [];
     const index = users.indexOf(kickUser);
     if (index === -1) return msg.reply(`❌ **${kickUser}** is not being monitored!`);
@@ -1807,7 +2627,7 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content === "/list-kick-users") {
     const users = guildConfig.kickUsers || [];
-    if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `/add-kick-user [username]`");
+    if (users.length === 0) return msg.reply("❌ No Kick users being monitored! Use `/addkickuser [username]`");
     return msg.reply(`🎮 **Kick Users Being Monitored:**\n${users.map((u, i) => `${i+1}. ${u}`).join("\n")}`);
   }
 
@@ -2101,11 +2921,11 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Goodbye message set! 👋`);
   }
 
-  if (msg.content.startsWith("/add-custom-command ")) {
+  if (msg.content.startsWith("/addcustomcommand ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can add commands!");
     const cmdName = msg.content.split(" ")[1];
     const cmdResponse = msg.content.split(" ").slice(2).join(" ");
-    if (!cmdName || !cmdResponse) return msg.reply("Usage: /add-custom-command [name] [response]");
+    if (!cmdName || !cmdResponse) return msg.reply("Usage: /addcustomcommand [name] [response]");
 
     const customCmds = guildConfig.customCommands || {};
     customCmds[cmdName] = cmdResponse;
@@ -2113,9 +2933,9 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Custom command **//${cmdName}** added! ⌨️`);
   }
 
-  if (msg.content.startsWith("/remove-custom-command ")) {
+  if (msg.content.startsWith("/removecustomcommand ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can remove commands!");
-    const cmdName = msg.content.slice(24).trim();
+    const cmdName = msg.content.slice(21).trim();
     const customCmds = guildConfig.customCommands || {};
     delete customCmds[cmdName];
     updateGuildConfig(msg.guild.id, { customCommands: customCmds });
@@ -2195,40 +3015,1435 @@ client.on("messageCreate", async (msg) => {
   }
 });
 
-// ============== INTERACTIONS (BUTTONS & DROPDOWNS) ==============
+// ============== INTERACTIONS (BUTTONS & DROPDOWNS & SLASH COMMANDS) ==============
 client.on("interactionCreate", async (interaction) => {
-  // Convert slash commands to text format and process through existing text command handlers
-  if (interaction.isChatInputCommand()) {
+  // Handle autocomplete interactions
+  if (interaction.isAutocomplete()) {
+    const { commandName, options } = interaction;
+    const guildConfig = getGuildConfig(interaction.guild.id);
+    
     try {
-      // Create a pseudo-message object that mimics text command format
-      const cmdName = interaction.commandName;
-      const fakeMessage = {
-        content: `/${cmdName}`,
-        author: interaction.user,
-        member: interaction.member,
-        guild: interaction.guild,
-        channel: interaction.channel,
-        reply: async (content) => {
-          if (interaction.replied) return interaction.editReply(content);
-          return interaction.reply(content);
-        }
-      };
+      let choices = [];
       
-      // Emit as a fake messageCreate to reuse all existing handlers
-      client.emit('messageCreate', fakeMessage);
-      
-      // Acknowledge the interaction to prevent "failed" message
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.deferReply({ ephemeral: true });
-        await interaction.editReply({ content: "✅ Command processed!" });
+      // Autocomplete for remove commands
+      if (commandName === 'removetwitchuser') {
+        choices = guildConfig.twitchUsers || [];
+      } else if (commandName === 'removetiktokuser') {
+        choices = guildConfig.tiktokUsers || [];
+      } else if (commandName === 'removekickuser') {
+        choices = guildConfig.kickUsers || [];
+      } else if (commandName === 'removecustomcommand') {
+        choices = Object.keys(guildConfig.customCommands || {});
       }
-      return;
+      
+      const filtered = choices.filter(choice => 
+        choice.toLowerCase().startsWith(options.getFocused().toLowerCase())
+      ).slice(0, 25);
+      
+      await interaction.respond(
+        filtered.map(choice => ({ name: choice, value: choice }))
+      );
     } catch (err) {
-      console.error(`Slash command error for /${interaction.commandName}:`, err);
-      return interaction.reply({ content: "❌ Command error occurred", ephemeral: true });
+      console.error('Autocomplete error:', err);
+    }
+    return;
+  }
+
+  // Handle slash command interactions - Individual command handlers
+  if (interaction.isChatInputCommand()) {
+    const { commandName, options } = interaction;
+    
+    try {
+      await interaction.deferReply();
+      const guildConfig = getGuildConfig(interaction.guild.id);
+
+      // ========== FEATURE TOGGLE CHECKS ==========
+      const cmdMeta = COMMANDS_META[commandName];
+      if (cmdMeta) {
+        const toggleMap = {
+          music: 'musicPlayer',
+          economy: 'economySystem',
+          moderation: 'moderationTools'
+        };
+        const toggleKey = toggleMap[cmdMeta.category];
+        if (toggleKey && guildConfig[toggleKey] === false) {
+          return interaction.editReply(`❌ **${cmdMeta.category.charAt(0).toUpperCase() + cmdMeta.category.slice(1)}** commands are disabled by the server admin.`);
+        }
+      }
+      
+      // ========== ROLE MANAGEMENT ==========
+      if (commandName === 'addrole') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const categoryName = options.getString('category');
+        const roleName = options.getString('role_name');
+        const roleId = options.getString('role_id');
+        
+        const categories = guildConfig.roleCategories || {};
+        if (!categories[categoryName]) {
+          return interaction.editReply(`❌ Category "${categoryName}" doesn't exist!\n\nCreate it first with: \`/create-category ${categoryName}\``);
+        }
+        
+        const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+        if (!role) {
+          return interaction.editReply(`❌ Role with ID \`${roleId}\` not found!`);
+        }
+        
+        const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName] } : categories[categoryName];
+        if (catData.roles.some(r => r.name === roleName)) {
+          return interaction.editReply(`❌ Role "${roleName}" already in category!`);
+        }
+        
+        catData.roles.push({ name: roleName, id: roleId });
+        categories[categoryName] = catData;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        addActivity(interaction.guild.id, "➕", interaction.user.username, `added role: ${roleName} to ${categoryName}`);
+        return interaction.editReply(`✅ Added **${roleName}** (${role}) to category **${categoryName}**`);
+      }
+      
+      if (commandName === 'removerole') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const categoryName = options.getString('category');
+        const roleName = options.getString('role_name');
+        
+        const categories = guildConfig.roleCategories || {};
+        if (!categories[categoryName]) {
+          return interaction.editReply(`❌ Category "${categoryName}" doesn't exist!`);
+        }
+        
+        const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName] } : categories[categoryName];
+        const roleIndex = catData.roles.findIndex(r => r.name === roleName);
+        if (roleIndex === -1) {
+          return interaction.editReply(`❌ Role "${roleName}" not found in that category!`);
+        }
+        
+        catData.roles.splice(roleIndex, 1);
+        categories[categoryName] = catData;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Removed **${roleName}** from **${categoryName}**`);
+      }
+      
+      if (commandName === 'addgamerole') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roleId = options.getString('role_id');
+        
+        const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+        if (!role) {
+          return interaction.editReply(`❌ Role with ID \`${roleId}\` not found!`);
+        }
+        
+        const categories = guildConfig.roleCategories || {};
+        if (!categories.Gaming) {
+          categories.Gaming = { roles: [], banner: null };
+        }
+        const catData = Array.isArray(categories.Gaming) ? { roles: categories.Gaming } : categories.Gaming;
+        
+        if (catData.roles.some(r => r.name === roleName)) {
+          return interaction.editReply(`❌ Role "${roleName}" already exists!`);
+        }
+        
+        catData.roles.push({ name: roleName, id: roleId });
+        categories.Gaming = catData;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Added game role **${roleName}** (${role})`);
+      }
+      
+      if (commandName === 'removegamerole') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (!categories.Gaming) {
+          return interaction.editReply("❌ No gaming roles set up yet!");
+        }
+        
+        const catData = Array.isArray(categories.Gaming) ? { roles: categories.Gaming } : categories.Gaming;
+        const roleIndex = catData.roles.findIndex(r => r.name === roleName);
+        
+        if (roleIndex === -1) {
+          return interaction.editReply(`❌ Role "${roleName}" not found!`);
+        }
+        
+        catData.roles.splice(roleIndex, 1);
+        categories.Gaming = catData;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Removed game role **${roleName}**`);
+      }
+      
+      if (commandName === 'addwatchpartyrole') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roleId = options.getString('role_id');
+        
+        const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+        if (!role) {
+          return interaction.editReply(`❌ Role with ID \`${roleId}\` not found!`);
+        }
+        
+        const roles = guildConfig.watchPartyRoles || [];
+        if (roles.some(r => r.name === roleName)) {
+          return interaction.editReply(`❌ Watch party role "${roleName}" already exists!`);
+        }
+        
+        roles.push({ name: roleName, id: roleId });
+        updateGuildConfig(interaction.guild.id, { watchPartyRoles: roles });
+        return interaction.editReply(`✅ Added watch party role **${roleName}**`);
+      }
+      
+      if (commandName === 'removewatchpartyrole') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roles = guildConfig.watchPartyRoles || [];
+        const roleIndex = roles.findIndex(r => r.name === roleName);
+        
+        if (roleIndex === -1) {
+          return interaction.editReply(`❌ Watch party role "${roleName}" not found!`);
+        }
+        
+        roles.splice(roleIndex, 1);
+        updateGuildConfig(interaction.guild.id, { watchPartyRoles: roles });
+        return interaction.editReply(`✅ Removed watch party role **${roleName}**`);
+      }
+      
+      if (commandName === 'addplatformrole') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roleId = options.getString('role_id');
+        
+        const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+        if (!role) {
+          return interaction.editReply(`❌ Role with ID \`${roleId}\` not found!`);
+        }
+        
+        const roles = guildConfig.platformRoles || [];
+        if (roles.some(r => r.name === roleName)) {
+          return interaction.editReply(`❌ Platform role "${roleName}" already exists!`);
+        }
+        
+        roles.push({ name: roleName, id: roleId });
+        updateGuildConfig(interaction.guild.id, { platformRoles: roles });
+        return interaction.editReply(`✅ Added platform role **${roleName}**`);
+      }
+      
+      if (commandName === 'removeplatformrole') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can manage roles!");
+        }
+        
+        const roleName = options.getString('role_name');
+        const roles = guildConfig.platformRoles || [];
+        const roleIndex = roles.findIndex(r => r.name === roleName);
+        
+        if (roleIndex === -1) {
+          return interaction.editReply(`❌ Platform role "${roleName}" not found!`);
+        }
+        
+        roles.splice(roleIndex, 1);
+        updateGuildConfig(interaction.guild.id, { platformRoles: roles });
+        return interaction.editReply(`✅ Removed platform role **${roleName}**`);
+      }
+      
+      // ========== STREAMER MONITORING ==========
+      if (commandName === 'addtwitchuser') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.twitchUsers || [];
+        
+        if (users.includes(username)) {
+          return interaction.editReply(`❌ **${username}** is already being monitored!`);
+        }
+        
+        users.push(username);
+        updateGuildConfig(interaction.guild.id, { twitchUsers: users });
+        return interaction.editReply(`✅ Added **${username}** to Twitch monitoring! (${users.length} total)`);
+      }
+      
+      if (commandName === 'removetwitchuser') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.twitchUsers || [];
+        const index = users.indexOf(username);
+        
+        if (index === -1) {
+          return interaction.editReply(`❌ **${username}** is not being monitored!`);
+        }
+        
+        users.splice(index, 1);
+        updateGuildConfig(interaction.guild.id, { twitchUsers: users });
+        return interaction.editReply(`✅ Removed **${username}** from Twitch monitoring!`);
+      }
+      
+      if (commandName === 'addtiktokuser') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.tiktokUsers || [];
+        
+        if (users.includes(username)) {
+          return interaction.editReply(`❌ **${username}** is already being monitored!`);
+        }
+        
+        users.push(username);
+        updateGuildConfig(interaction.guild.id, { tiktokUsers: users });
+        return interaction.editReply(`✅ Added **${username}** to TikTok monitoring! (${users.length} total)`);
+      }
+      
+      if (commandName === 'removetiktokuser') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.tiktokUsers || [];
+        const index = users.indexOf(username);
+        
+        if (index === -1) {
+          return interaction.editReply(`❌ **${username}** is not being monitored!`);
+        }
+        
+        users.splice(index, 1);
+        updateGuildConfig(interaction.guild.id, { tiktokUsers: users });
+        return interaction.editReply(`✅ Removed **${username}** from TikTok monitoring!`);
+      }
+      
+      if (commandName === 'addkickuser') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.kickUsers || [];
+        
+        if (users.includes(username)) {
+          return interaction.editReply(`❌ **${username}** is already being monitored!`);
+        }
+        
+        users.push(username);
+        updateGuildConfig(interaction.guild.id, { kickUsers: users });
+        return interaction.editReply(`✅ Added **${username}** to Kick monitoring! (${users.length} total)`);
+      }
+      
+      if (commandName === 'removekickuser') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const username = options.getString('username').toLowerCase();
+        const users = guildConfig.kickUsers || [];
+        const index = users.indexOf(username);
+        
+        if (index === -1) {
+          return interaction.editReply(`❌ **${username}** is not being monitored!`);
+        }
+        
+        users.splice(index, 1);
+        updateGuildConfig(interaction.guild.id, { kickUsers: users });
+        return interaction.editReply(`✅ Removed **${username}** from Kick monitoring!`);
+      }
+      
+      // ========== CUSTOM COMMANDS ==========
+      if (commandName === 'addcustomcommand') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const cmdName = options.getString('command_name');
+        const response = options.getString('response');
+        const commands = guildConfig.customCommands || {};
+        
+        if (commands[cmdName]) {
+          return interaction.editReply(`❌ Command **${cmdName}** already exists!`);
+        }
+        
+        commands[cmdName] = response;
+        updateGuildConfig(interaction.guild.id, { customCommands: commands });
+        addActivity(interaction.guild.id, "➕", interaction.user.username, `added command: /${cmdName}`);
+        return interaction.editReply(`✅ Created custom command **/${cmdName}**`);
+      }
+      
+      if (commandName === 'removecustomcommand') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const cmdName = options.getString('command_name');
+        const commands = guildConfig.customCommands || {};
+        
+        if (!commands[cmdName]) {
+          return interaction.editReply(`❌ Command **${cmdName}** doesn't exist!`);
+        }
+        
+        delete commands[cmdName];
+        updateGuildConfig(interaction.guild.id, { customCommands: commands });
+        return interaction.editReply(`✅ Deleted command **/${cmdName}**`);
+      }
+      
+      // ========== CONFIGURATION ==========
+      if (commandName === 'configwelcomechannel') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { welcomeChannel: channel.id });
+        return interaction.editReply(`✅ Set welcome channel to ${channel}`);
+      }
+      
+      if (commandName === 'configmodlog') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { modLogChannel: channel.id });
+        return interaction.editReply(`✅ Set mod log channel to ${channel}`);
+      }
+      
+      if (commandName === 'configtwitchchannel') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { twitchChannel: channel.id });
+        return interaction.editReply(`✅ Set Twitch notification channel to ${channel}`);
+      }
+      
+      if (commandName === 'configtiktokchannel') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { tiktokChannel: channel.id });
+        return interaction.editReply(`✅ Set TikTok notification channel to ${channel}`);
+      }
+      
+      if (commandName === 'configkickchannel') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { kickChannel: channel.id });
+        return interaction.editReply(`✅ Set Kick notification channel to ${channel}`);
+      }
+      
+      // ========== ECONOMY ==========
+      if (commandName === 'addmoney') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can use this command!");
+        }
+        
+        const user = options.getUser('user');
+        const amount = options.getInteger('amount');
+        const economy = guildConfig.economy || {};
+        
+        economy[user.id] = (economy[user.id] || 0) + amount;
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`✅ Added **${amount}** coins to ${user}! New balance: ${economy[user.id]}`);
+      }
+      
+      // ========== SETUP ==========
+      if (commandName === 'setupcategory') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can use this command!");
+        }
+        
+        const category = options.getString('category');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (!categories[category]) {
+          return interaction.editReply(`❌ Category "${category}" doesn't exist!`);
+        }
+        
+        return interaction.editReply(`✅ Use dashboard to setup "${category}" selector!`);
+      }
+      
+      // ========== MODERATION (ADDITIONAL) ==========
+      if (commandName === 'kick') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
+          return interaction.editReply("❌ You don't have permission to kick members!");
+        }
+        
+        const user = options.getUser('user');
+        const reason = options.getString('reason') || 'No reason provided';
+        const member = interaction.guild.members.cache.get(user.id);
+        
+        if (!member) {
+          return interaction.editReply("❌ Member not found!");
+        }
+        
+        if (!member.kickable) {
+          return interaction.editReply("❌ I cannot kick this member! They may have higher roles than me.");
+        }
+        
+        try {
+          await member.kick(reason);
+          logModAction(interaction.guild, "KICK", interaction.user, user.tag, reason);
+          return interaction.editReply(`✅ Kicked **${user.username}** - ${reason}`);
+        } catch (err) {
+          return interaction.editReply(`❌ Failed to kick: ${err.message}`);
+        }
+      }
+      
+      if (commandName === 'ban') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
+          return interaction.editReply("❌ You don't have permission to ban members!");
+        }
+        
+        const user = options.getUser('user');
+        const reason = options.getString('reason') || 'No reason provided';
+        const member = interaction.guild.members.cache.get(user.id);
+        
+        if (member && !member.bannable) {
+          return interaction.editReply("❌ I cannot ban this member! They may have higher roles than me.");
+        }
+        
+        try {
+          await interaction.guild.members.ban(user.id, { reason });
+          logModAction(interaction.guild, "BAN", interaction.user, user.tag, reason);
+          return interaction.editReply(`✅ Banned **${user.username}** - ${reason}`);
+        } catch (err) {
+          return interaction.editReply(`❌ Failed to ban: ${err.message}`);
+        }
+      }
+      
+      if (commandName === 'warn') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+          return interaction.editReply("❌ You don't have permission to warn members!");
+        }
+        
+        const user = options.getUser('user');
+        const reason = options.getString('reason');
+        const warnings = guildConfig.warnings || {};
+        
+        if (!warnings[user.id]) warnings[user.id] = [];
+        warnings[user.id].push({ reason, date: new Date().toISOString(), moderator: interaction.user.tag });
+        
+        updateGuildConfig(interaction.guild.id, { warnings });
+        return interaction.editReply(`⚠️ Warned **${user.username}** for: ${reason}\nTotal warnings: ${warnings[user.id].length}`);
+      }
+      
+      if (commandName === 'mute') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+          return interaction.editReply("❌ You don't have permission to timeout members!");
+        }
+        
+        const user = options.getUser('user');
+        const member = interaction.guild.members.cache.get(user.id);
+        
+        if (!member) {
+          return interaction.editReply("❌ Member not found!");
+        }
+        
+        await member.timeout(60000 * 10, 'Muted by moderator'); // 10 minutes
+        return interaction.editReply(`🔇 Muted **${user.username}** for 10 minutes`);
+      }
+      
+      if (commandName === 'unmute') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+          return interaction.editReply("❌ You don't have permission to remove timeouts!");
+        }
+        
+        const user = options.getUser('user');
+        const member = interaction.guild.members.cache.get(user.id);
+        
+        if (!member) {
+          return interaction.editReply("❌ Member not found!");
+        }
+        
+        await member.timeout(null);
+        return interaction.editReply(`🔊 Unmuted **${user.username}**`);
+      }
+      
+      if (commandName === 'warnings') {
+        const user = options.getUser('user');
+        const warnings = guildConfig.warnings || {};
+        const userWarnings = warnings[user.id] || [];
+        
+        if (userWarnings.length === 0) {
+          return interaction.editReply(`✅ **${user.username}** has no warnings!`);
+        }
+        
+        const warnList = userWarnings.map((w, i) => `${i+1}. ${w.reason} (${new Date(w.date).toLocaleDateString()})`).join('\n');
+        return interaction.editReply(`⚠️ **${user.username}** has ${userWarnings.length} warning(s):\n${warnList}`);
+      }
+      
+      // ========== ROLES - CATEGORY (ADDITIONAL) ==========
+      if (commandName === 'createcategory') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can create categories!");
+        }
+        
+        const name = options.getString('name');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (categories[name]) {
+          return interaction.editReply(`❌ Category **${name}** already exists!`);
+        }
+        
+        categories[name] = { roles: [], banner: null };
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Created category **${name}**`);
+      }
+      
+      if (commandName === 'listroles') {
+        const categories = guildConfig.roleCategories || {};
+        const catNames = Object.keys(categories);
+        
+        if (catNames.length === 0) {
+          return interaction.editReply("❌ No role categories set up yet!");
+        }
+        
+        const catList = catNames.map(name => {
+          const cat = categories[name];
+          const roleCount = cat.roles ? cat.roles.length : 0;
+          return `• **${name}** (${roleCount} roles)`;
+        }).join('\n');
+        
+        return interaction.editReply(`📋 **Role Categories:**\n${catList}`);
+      }
+      
+      if (commandName === 'setcategorybanner') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can set banners!");
+        }
+        
+        const category = options.getString('category');
+        const url = options.getString('url');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (!categories[category]) {
+          return interaction.editReply(`❌ Category **${category}** doesn't exist!`);
+        }
+        
+        categories[category].banner = url;
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Set banner for **${category}**`);
+      }
+      
+      if (commandName === 'deletecategory') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can delete categories!");
+        }
+        
+        const category = options.getString('category');
+        const categories = guildConfig.roleCategories || {};
+        
+        if (!categories[category]) {
+          return interaction.editReply(`❌ Category **${category}** doesn't exist!`);
+        }
+        
+        delete categories[category];
+        updateGuildConfig(interaction.guild.id, { roleCategories: categories });
+        return interaction.editReply(`✅ Deleted category **${category}**`);
+      }
+      
+      // ========== ROLES - SELECTORS ==========
+      if (commandName === 'setuproles') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup selectors!");
+        }
+        
+        updateGuildConfig(interaction.guild.id, { roleSelector: { enabled: true } });
+        return interaction.editReply("✅ Gaming roles selector enabled! Users can now select roles.");
+      }
+      
+      if (commandName === 'setupwatchparty') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup selectors!");
+        }
+        
+        updateGuildConfig(interaction.guild.id, { watchpartySelector: { enabled: true } });
+        return interaction.editReply("✅ Watch party selector enabled!");
+      }
+      
+      if (commandName === 'setupplatform') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup selectors!");
+        }
+        
+        updateGuildConfig(interaction.guild.id, { platformSelector: { enabled: true } });
+        return interaction.editReply("✅ Platform selector enabled!");
+      }
+      
+      if (commandName === 'removeroles') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can use this!");
+        }
+        
+          const embed = new EmbedBuilder()
+            .setColor('#9B59B6')
+            .setTitle('🗑️ Role Removal')
+            .setDescription('Click the button below to remove roles you no longer want');
+        
+          const removeRoleBtn = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId('remove_all_roles')
+              .setLabel('Remove Roles')
+              .setStyle(ButtonStyle.Danger)
+          );
+        
+          try {
+            await interaction.channel.send({ embeds: [embed], components: [removeRoleBtn] });
+            return interaction.editReply('✅ Role removal message posted to this channel!');
+          } catch (err) {
+            return interaction.editReply(`❌ Failed to post: ${err.message}`);
+          }
+      }
+      
+      if (commandName === 'setuplevelroles') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup level roles!");
+        }
+        
+          try {
+            const levelRoles = [];
+            let createdCount = 0;
+          
+            // Create 100 level roles
+            for (let i = 1; i <= 100; i++) {
+              const roleName = `Level ${i}`;
+            
+              // Check if role already exists
+              const existingRole = interaction.guild.roles.cache.find(r => r.name === roleName);
+              if (existingRole) {
+                levelRoles.push({ level: i, roleId: existingRole.id });
+                continue;
+              }
+            
+              // Create new role
+              const role = await interaction.guild.roles.create({
+                name: roleName,
+                color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                position: interaction.guild.roles.highest.position - 1
+              });
+            
+              levelRoles.push({ level: i, roleId: role.id });
+              createdCount++;
+            }
+          
+            // Save level roles to config
+            updateGuildConfig(interaction.guild.id, { levelRoles });
+          
+            return interaction.editReply(`✅ Setup complete! Created **${createdCount}** new level roles (1-100). Total roles available: **${levelRoles.length}**`);
+          } catch (err) {
+            return interaction.editReply(`❌ Failed to create level roles: ${err.message}`);
+          }
+      }
+      
+      // ========== CUSTOM COMMANDS (ALIASES) ==========
+      if (commandName === 'addcmd') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can add commands!");
+        }
+        
+        const cmdName = options.getString('command_name');
+        const response = options.getString('response');
+        const commands = guildConfig.customCommands || {};
+        
+        if (commands[cmdName]) {
+          return interaction.editReply(`❌ Command **${cmdName}** already exists!`);
+        }
+        
+        commands[cmdName] = response;
+        updateGuildConfig(interaction.guild.id, { customCommands: commands });
+        return interaction.editReply(`✅ Created command **/${cmdName}**`);
+      }
+      
+      if (commandName === 'delcmd') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can delete commands!");
+        }
+        
+        const cmdName = options.getString('command_name');
+        const commands = guildConfig.customCommands || {};
+        
+        if (!commands[cmdName]) {
+          return interaction.editReply(`❌ Command **${cmdName}** doesn't exist!`);
+        }
+        
+        delete commands[cmdName];
+        updateGuildConfig(interaction.guild.id, { customCommands: commands });
+        return interaction.editReply(`✅ Deleted command **/${cmdName}**`);
+      }
+      
+      // ========== CONFIGURATION (ADDITIONAL) ==========
+      if (commandName === 'configsuggestions') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { suggestionsChannel: channel.id });
+        return interaction.editReply(`✅ Set suggestions channel to ${channel}`);
+      }
+      
+      if (commandName === 'configleaderboard') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { leaderboardChannel: channel.id });
+        return interaction.editReply(`✅ Set leaderboard channel to ${channel}`);
+      }
+      
+      if (commandName === 'configwelcomemessage') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const message = options.getString('message');
+        updateGuildConfig(interaction.guild.id, { welcomeMessage: message });
+        return interaction.editReply(`✅ Set welcome message!`);
+      }
+      
+      if (commandName === 'configgoodbyemessage') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure!");
+        }
+        
+        const message = options.getString('message');
+        updateGuildConfig(interaction.guild.id, { goodbyeMessage: message });
+        return interaction.editReply(`✅ Set goodbye message!`);
+      }
+      
+      // ========== ECONOMY ==========
+      if (commandName === 'balance') {
+        const economy = guildConfig.economy || {};
+        const balance = economy[interaction.user.id] || 0;
+        return interaction.editReply(`💰 Your balance: **${balance}** coins`);
+      }
+      
+      if (commandName === 'pay') {
+        const user = options.getUser('user');
+        const amount = options.getInteger('amount');
+        const economy = guildConfig.economy || {};
+        
+        const senderBalance = economy[interaction.user.id] || 0;
+        
+        if (senderBalance < amount) {
+          return interaction.editReply(`❌ You don't have enough coins! Your balance: ${senderBalance}`);
+        }
+        
+        economy[interaction.user.id] = senderBalance - amount;
+        economy[user.id] = (economy[user.id] || 0) + amount;
+        
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`✅ Paid **${amount}** coins to ${user}!`);
+      }
+      
+      if (commandName === 'removemoney') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can remove money!");
+        }
+        
+        const user = options.getUser('user');
+        const amount = options.getInteger('amount');
+        const economy = guildConfig.economy || {};
+        
+        economy[user.id] = Math.max(0, (economy[user.id] || 0) - amount);
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`✅ Removed **${amount}** coins from ${user}! New balance: ${economy[user.id]}`);
+      }
+      
+      if (commandName === 'work') {
+        const economy = guildConfig.economy || {};
+        const earned = Math.floor(Math.random() * 50) + 10;
+        
+        economy[interaction.user.id] = (economy[interaction.user.id] || 0) + earned;
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`💼 You worked and earned **${earned}** coins! Balance: ${economy[interaction.user.id]}`);
+      }
+      
+      if (commandName === 'transfer') {
+        const user = options.getUser('user');
+        const amount = options.getInteger('amount');
+        const economy = guildConfig.economy || {};
+        
+        const senderBalance = economy[interaction.user.id] || 0;
+        
+        if (senderBalance < amount) {
+          return interaction.editReply(`❌ Insufficient funds! Your balance: ${senderBalance}`);
+        }
+        
+        economy[interaction.user.id] = senderBalance - amount;
+        economy[user.id] = (economy[user.id] || 0) + amount;
+        
+        updateGuildConfig(interaction.guild.id, { economy });
+        return interaction.editReply(`✅ Transferred **${amount}** coins to ${user}!`);
+      }
+      
+      // ========== GAMES ==========
+      if (commandName === 'rps') {
+        const choice = options.getString('choice');
+        const choices = ['rock', 'paper', 'scissors'];
+        const botChoice = choices[Math.floor(Math.random() * choices.length)];
+        
+        let result = '';
+        if (choice === botChoice) result = "It's a tie!";
+        else if (
+          (choice === 'rock' && botChoice === 'scissors') ||
+          (choice === 'paper' && botChoice === 'rock') ||
+          (choice === 'scissors' && botChoice === 'paper')
+        ) result = 'You win!';
+        else result = 'I win!';
+        
+        return interaction.editReply(`🎮 You chose **${choice}**, I chose **${botChoice}**. ${result}`);
+      }
+      
+      if (commandName === '8ball') {
+        const responses = ['Yes', 'No', 'Maybe', 'Definitely', 'Probably not', 'Ask again later', 'Without a doubt', 'Very doubtful'];
+        const response = responses[Math.floor(Math.random() * responses.length)];
+        return interaction.editReply(`🎱 ${response}`);
+      }
+      
+      if (commandName === 'dice') {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        return interaction.editReply(`🎲 You rolled a **${roll}**!`);
+      }
+      
+      if (commandName === 'coin') {
+        const flip = Math.random() < 0.5 ? 'Heads' : 'Tails';
+        return interaction.editReply(`🪙 **${flip}**!`);
+      }
+      
+      if (commandName === 'trivia') {
+        const triviaQuestions = [
+          { q: "What is the capital of France?", a: ["Paris", "paris"] },
+          { q: "What is 2 + 2?", a: ["4", "four"] },
+          { q: "What is the largest planet in our solar system?", a: ["Jupiter", "jupiter"] },
+          { q: "What year did World War II end?", a: ["1945"] },
+          { q: "What is the chemical symbol for gold?", a: ["Au", "au"] },
+          { q: "Who painted the Mona Lisa?", a: ["Leonardo da Vinci", "Leonardo", "Da Vinci"] },
+          { q: "What is the smallest prime number?", a: ["2", "two"] },
+          { q: "What is the speed of light (in km/s)?", a: ["300000", "299792"] },
+          { q: "What does HTTP stand for?", a: ["HyperText Transfer Protocol", "Hypertext Transfer Protocol"] },
+          { q: "What programming language is known for its snake logo?", a: ["Python", "python"] }
+        ];
+        
+        const randomTrivia = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+        const embed = new EmbedBuilder()
+          .setColor('#004B87')
+          .setTitle('🧠 Trivia Question')
+          .setDescription(randomTrivia.q)
+          .setFooter({ text: 'Answer in chat within 30 seconds!' });
+        
+        await interaction.editReply({ embeds: [embed] });
+        
+        const filter = m => m.author.id === interaction.user.id;
+        const collector = interaction.channel.createMessageCollector({ filter, time: 30000, max: 1 });
+        
+        collector.on('collect', async m => {
+          const userAnswer = m.content.trim();
+          const isCorrect = randomTrivia.a.some(ans => ans.toLowerCase() === userAnswer.toLowerCase());
+          
+          if (isCorrect) {
+            const economy = guildConfig.economy || {};
+            const reward = 25;
+            economy[interaction.user.id] = (economy[interaction.user.id] || 0) + reward;
+            updateGuildConfig(interaction.guild.id, { economy });
+            await m.reply(`✅ Correct! You earned **${reward}** coins! 🎉`);
+          } else {
+            await m.reply(`❌ Wrong! The correct answer was: **${randomTrivia.a[0]}**`);
+          }
+        });
+        
+        collector.on('end', collected => {
+          if (collected.size === 0) {
+            interaction.followUp(`⏰ Time's up! The correct answer was: **${randomTrivia.a[0]}**`);
+          }
+        });
+        
+        return;
+      }
+      
+      // ========== MUSIC ==========
+      if (commandName === 'play') {
+        const query = options.getString('query');
+        
+        if (!interaction.member.voice.channel) {
+          return interaction.editReply('❌ You must be in a voice channel to play music!');
+        }
+        
+        try {
+          const searchResult = await player.search(query, {
+            requestedBy: interaction.user
+          });
+          
+          if (!searchResult || !searchResult.tracks.length) {
+            return interaction.editReply('❌ No results found!');
+          }
+          
+          const queue = player.nodes.create(interaction.guild, {
+            metadata: {
+              channel: interaction.channel,
+              client: interaction.guild.members.me,
+              requestedBy: interaction.user
+            },
+            selfDeaf: true,
+            volume: 80,
+            leaveOnEmpty: true,
+            leaveOnEmptyCooldown: 300000,
+            leaveOnEnd: true,
+            leaveOnEndCooldown: 300000
+          });
+          
+          try {
+            if (!queue.connection) await queue.connect(interaction.member.voice.channel);
+          } catch {
+            player.nodes.delete(interaction.guild.id);
+            return interaction.editReply('❌ Could not join your voice channel!');
+          }
+          
+          searchResult.playlist ? queue.addTrack(searchResult.tracks) : queue.addTrack(searchResult.tracks[0]);
+          
+          if (!queue.isPlaying()) await queue.node.play();
+          
+          const embed = new EmbedBuilder()
+            .setColor('#004B87')
+            .setTitle('🎵 Added to Queue')
+            .setDescription(`**${searchResult.tracks[0].title}**\n${searchResult.tracks[0].author}`)
+            .setThumbnail(searchResult.tracks[0].thumbnail)
+            .addFields(
+              { name: 'Duration', value: searchResult.tracks[0].duration, inline: true },
+              { name: 'Position in Queue', value: `${queue.tracks.size}`, inline: true }
+            );
+          
+          return interaction.editReply({ embeds: [embed] });
+        } catch (err) {
+          console.error('Play command error:', err);
+          return interaction.editReply(`❌ Error playing music: ${err.message}`);
+        }
+      }
+      
+      if (commandName === 'shuffle') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        queue.tracks.shuffle();
+        return interaction.editReply('🔀 Queue shuffled!');
+      }
+      
+      if (commandName === 'queue') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('📋 Music queue is empty!');
+        }
+        
+        const currentTrack = queue.currentTrack;
+        const tracks = queue.tracks.toArray().slice(0, 10);
+        
+        const embed = new EmbedBuilder()
+          .setColor('#004B87')
+          .setTitle('🎶 Music Queue')
+          .setDescription(
+            `**Now Playing:**\n${currentTrack.title} - ${currentTrack.author}\n\n` +
+            `**Up Next:**\n` +
+            (tracks.length > 0
+              ? tracks.map((track, i) => `${i + 1}. ${track.title} - ${track.author}`).join('\n')
+              : 'No more tracks in queue')
+          )
+          .setFooter({ text: `${queue.tracks.size} tracks in queue` });
+        
+        return interaction.editReply({ embeds: [embed] });
+      }
+      
+      if (commandName === 'loop') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        const mode = queue.repeatMode;
+        queue.setRepeatMode(mode === 0 ? 1 : 0);
+        const modeText = queue.repeatMode === 0 ? 'Off' : 'Queue';
+        return interaction.editReply(`🔁 Loop mode: **${modeText}**`);
+      }
+      
+      if (commandName === 'volume') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        const level = options.getInteger('level');
+        queue.node.setVolume(level);
+        return interaction.editReply(`🔊 Volume set to ${level}%`);
+      }
+      
+      if (commandName === 'back') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        await queue.history.previous();
+        return interaction.editReply('⏮️ Playing previous track!');
+      }
+      
+      if (commandName === 'pause') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        queue.node.pause();
+        return interaction.editReply('⏸️ Playback paused!');
+      }
+      
+      if (commandName === 'resume') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue) {
+          return interaction.editReply('❌ No music in queue!');
+        }
+        
+        queue.node.resume();
+        return interaction.editReply('▶️ Playback resumed!');
+      }
+      
+      if (commandName === 'skip') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        const currentTrack = queue.currentTrack;
+        queue.node.skip();
+        return interaction.editReply(`⏭️ Skipped **${currentTrack.title}**!`);
+      }
+      
+      if (commandName === 'stop') {
+        const queue = player.nodes.get(interaction.guild);
+        if (!queue || !queue.isPlaying()) {
+          return interaction.editReply('❌ No music is playing!');
+        }
+        
+        queue.delete();
+        return interaction.editReply('⏹️ Stopped playback and cleared queue!');
+      }
+      
+      // ========== TICKETS ==========
+      if (commandName === 'ticketsetup') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can setup tickets!");
+        }
+        
+        const channel = options.getChannel('channel');
+        updateGuildConfig(interaction.guild.id, { ticketChannel: channel.id });
+        return interaction.editReply(`✅ Ticket system setup in ${channel}!`);
+      }
+      
+      if (commandName === 'ticket') {
+        const topic = options.getString('topic');
+        const ticketChannel = guildConfig.ticketChannel;
+        
+        if (!ticketChannel) {
+          return interaction.editReply('❌ Ticket system not configured! Ask an admin to run `/ticketsetup` first.');
+        }
+        
+        const channel = interaction.guild.channels.cache.get(ticketChannel);
+        if (!channel) {
+          return interaction.editReply('❌ Configured ticket channel not found!');
+        }
+        
+        const ticketEmbed = new EmbedBuilder()
+          .setColor('#004B87')
+          .setTitle('🎫 New Support Ticket')
+          .setDescription(`**Submitted by:** ${interaction.user}\n**Topic:** ${topic}\n**Status:** Open`)
+          .setTimestamp();
+        
+        const closeButton = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('close_ticket_btn')
+            .setLabel('🔒 Close Ticket')
+            .setStyle(ButtonStyle.Danger)
+        );
+        
+        try {
+          await channel.send({ embeds: [ticketEmbed], components: [closeButton] });
+          
+          const tickets = guildConfig.tickets || [];
+          tickets.push({
+            user: interaction.user.id,
+            topic: topic,
+            timestamp: new Date().toISOString(),
+            status: 'open'
+          });
+          updateGuildConfig(interaction.guild.id, { tickets });
+          
+          return interaction.editReply(`✅ Ticket created successfully in ${channel}!\n**Topic:** ${topic}`);
+        } catch (err) {
+          return interaction.editReply(`❌ Failed to create ticket: ${err.message}`);
+        }
+      }
+      
+      if (commandName === 'closeticket') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can close tickets!");
+        }
+        
+        const channelId = interaction.channel.id;
+        const ticketChannel = guildConfig.ticketChannel;
+        
+        if (!ticketChannel) {
+          return interaction.editReply('❌ Ticket system not configured!');
+        }
+        
+        // Find and update ticket status
+        const tickets = guildConfig.tickets || [];
+        const ticketIndex = tickets.findIndex(t => t.status === 'open');
+        
+        if (ticketIndex !== -1) {
+          tickets[ticketIndex].status = 'closed';
+          tickets[ticketIndex].closedBy = interaction.user.username;
+          tickets[ticketIndex].closedAt = new Date().toISOString();
+          updateGuildConfig(interaction.guild.id, { tickets });
+        }
+        
+        const embed = new EmbedBuilder()
+          .setColor('#9B59B6')
+          .setTitle('🔒 Ticket Closed')
+          .setDescription(`This ticket has been closed by ${interaction.user}`)
+          .setTimestamp();
+        
+        return interaction.editReply({ embeds: [embed] });
+      }
+      
+      // ========== GIVEAWAY ==========
+      if (commandName === 'giveaway' || commandName === 'startgiveaway') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can start giveaways!");
+        }
+        
+        const prize = options.getString('prize');
+        const duration = options.getInteger('duration');
+        const winners = options.getInteger('winners') || 1;
+        
+        return interaction.editReply(`🎉 Giveaway started for **${prize}**!\nDuration: ${duration} minutes | Winners: ${winners}`);
+      }
+      
+      // ========== UTILITY ==========
+      if (commandName === 'ping') {
+        const ping = client.ws.ping;
+        return interaction.editReply(`🏓 Pong! Latency: ${ping}ms`);
+      }
+      
+      if (commandName === 'help') {
+        const embed = new EmbedBuilder()
+          .setColor('#004B87') // Petrol Blue
+          .setTitle('📚 Available Commands')
+          .setDescription('Here are all the public commands you can use!')
+          .addFields(
+            {
+              name: '💰 Economy',
+              value: '`/balance` - Check your current balance!\n`/pay` - Send money to another user!\n`/work` - Work to earn some money!\n`/transfer` - Transfer money between users!',
+              inline: false
+            },
+            {
+              name: '🎮 Games',
+              value: '`/rps` - Play rock paper scissors!\n`/8ball` - Ask the magic 8ball a question!\n`/dice` - Roll a dice!\n`/coin` - Flip a coin!\n`/trivia` - Test your knowledge with trivia!',
+              inline: false
+            },
+            {
+              name: '🎵 Music',
+              value: '`/play` - Play a song in voice channel!\n`/shuffle` - Shuffle the queue!\n`/queue` - View the current music queue!\n`/loop` - Toggle loop mode!\n`/volume` - Adjust the volume!\n`/pause` - Pause the current song!\n`/resume` - Resume the paused song!\n`/skip` - Skip to the next song!\n`/stop` - Stop playback and clear queue!',
+              inline: false
+            },
+            {
+              name: '🎫 Tickets',
+              value: '`/ticket` - Create a support ticket!',
+              inline: true
+            },
+            {
+              name: '🎁 Giveaways',
+              value: '`/giveaway` - View active giveaways!',
+              inline: true
+            },
+            {
+              name: '🔧 Utility',
+              value: '`/ping` - Check bot latency!\n`/suggest` - Submit a suggestion!',
+              inline: false
+            }
+          )
+          .setFooter({ text: 'Type /adminhelp for admin commands!' });
+        
+        const dismissBtn = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('dismiss_help_btn')
+            .setLabel('🗑️ Dismiss')
+            .setStyle(ButtonStyle.Danger)
+        );
+        
+        return interaction.editReply({ embeds: [embed], components: [dismissBtn] });
+      }
+      
+      if (commandName === 'adminhelp') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can view admin commands!");
+        }
+        
+        const embed = new EmbedBuilder()
+          .setColor('#9B59B6') // Purple
+          .setTitle('🔐 Admin Commands')
+          .setDescription('Admin-only commands for server management')
+          .addFields(
+            {
+              name: '🛡️ Moderation',
+              value: '`/kick` - Kick a member from the server!\n`/ban` - Ban a member from the server!\n`/warn` - Warn a member!\n`/mute` - Mute a member!\n`/unmute` - Unmute a member!\n`/warnings` - View warnings for a member!',
+              inline: false
+            },
+            {
+              name: '👤 Roles - Category',
+              value: '`/createcategory` - Create a new role category!\n`/listroles` - List all roles in a category!\n`/addrole` - Add a role to a category!\n`/removerole` - Remove a role from a category!\n`/setcategorybanner` - Set a banner for a role category!\n`/setupcategory` - Setup a role category!\n`/deletecategory` - Delete a category!',
+              inline: false
+            },
+            {
+              name: '👤 Roles - Gaming',
+              value: '`/addgamerole` - Add a game role!\n`/removegamerole` - Remove a game role!\n`/addwatchpartyrole` - Add a watch party role!\n`/removewatchpartyrole` - Remove a watch party role!\n`/addplatformrole` - Add a platform role!\n`/removeplatformrole` - Remove a platform role!',
+              inline: false
+            },
+            {
+              name: '👤 Roles - Setup',
+              value: '`/setuproles` - Post gaming roles selector with buttons!\n`/setupwatchparty` - Post watch party role selector!\n`/setupplatform` - Post platform selector!\n`/removeroles` - Post role removal message!\n`/setuplevelroles` - Auto-create level roles!',
+              inline: false
+            },
+            {
+              name: '📺 Streamers',
+              value: '`/addtwitchuser` - Add a Twitch streamer to track!\n`/removetwitchuser` - Remove a Twitch streamer!\n`/addtiktokuser` - Add a TikTok streamer to track!\n`/removetiktokuser` - Remove a TikTok streamer!\n`/addkickuser` - Add a Kick streamer to track!\n`/removekickuser` - Remove a Kick streamer!',
+              inline: false
+            },
+            {
+              name: '🤖 Custom Commands',
+              value: '`/addcustomcommand` - Add a custom command!\n`/removecustomcommand` - Remove a custom command!\n`/addcmd` - Add a custom command (alias)!\n`/delcmd` - Delete a custom command (alias)!',
+              inline: false
+            },
+            {
+              name: '⚙️ Configuration',
+              value: '`/configwelcomechannel` - Set welcome channel!\n`/configmodlog` - Set moderation log channel!\n`/configtwitchchannel` - Set Twitch notifications channel!\n`/configtiktokchannel` - Set TikTok notifications channel!\n`/configkickchannel` - Set Kick notifications channel!\n`/configsuggestions` - Set suggestions channel!\n`/configleaderboard` - Set leaderboard channel!\n`/configwelcomemessage` - Set custom welcome message!\n`/configgoodbyemessage` - Set custom goodbye message!',
+              inline: false
+            },
+            {
+              name: '💰 Economy Admin',
+              value: '`/addmoney` - Add money to a user\'s balance!\n`/removemoney` - Remove money from a user\'s balance!',
+              inline: false
+            },
+            {
+              name: '🎫 Tickets Admin',
+              value: '`/ticketsetup` - Setup the ticket system!\n`/closeticket` - Close a support ticket!',
+              inline: false
+            },
+            {
+              name: '🎁 Giveaways Admin',
+              value: '`/startgiveaway` - Start a new giveaway!',
+              inline: false
+            },
+            {
+              name: '🔒 Filters',
+              value: '`/filtertoggle` - Toggle content filters!\n`/linkfilter` - Configure link filtering!\n`/setprefix` - Set custom command prefix!',
+              inline: false
+            }
+          )
+          .setFooter({ text: 'Use these commands to manage your server!' });
+        
+        const dismissBtn = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('dismiss_adminhelp_btn')
+            .setLabel('🗑️ Dismiss')
+            .setStyle(ButtonStyle.Danger)
+        );
+        
+        return interaction.editReply({ embeds: [embed], components: [dismissBtn] });
+      }
+      
+      if (commandName === 'suggest') {
+        const suggestion = options.getString('suggestion');
+        const suggestions = guildConfig.suggestions || [];
+        
+        suggestions.push({
+          author: interaction.user.username,
+          text: suggestion,
+          date: new Date().toISOString(),
+          votes: 0
+        });
+        
+        updateGuildConfig(interaction.guild.id, { suggestions });
+        return interaction.editReply(`💡 Suggestion submitted by **${interaction.user.username}**!`);
+      }
+      
+      // ========== FILTERS ==========
+      if (commandName === 'filtertoggle') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can toggle filters!");
+        }
+        
+        const filterEnabled = guildConfig.profanityFilter || false;
+        updateGuildConfig(interaction.guild.id, { profanityFilter: !filterEnabled });
+        return interaction.editReply(`🛡️ Profanity filter ${!filterEnabled ? 'enabled' : 'disabled'}!`);
+      }
+      
+      if (commandName === 'linkfilter') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can configure filters!");
+        }
+        
+        const state = options.getString('state');
+        updateGuildConfig(interaction.guild.id, { linkFilter: state === 'on' });
+        return interaction.editReply(`🔗 Link filter ${state === 'on' ? 'enabled' : 'disabled'}!`);
+      }
+      
+      if (commandName === 'setprefix') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.editReply("❌ Only admins can set prefix!");
+        }
+        
+        const prefix = options.getString('prefix');
+        updateGuildConfig(interaction.guild.id, { prefix });
+        return interaction.editReply(`✅ Command prefix set to **${prefix}**`);
+      }
+      
+      return interaction.editReply("❌ Unknown slash command!");
+      
+    } catch (err) {
+      console.error(`Slash command error for /${commandName}:`, err);
+      return interaction.editReply(`❌ Error: ${err.message}`);
     }
   }
 
+  // Helper function to create fake message object
   const guildConfig = getGuildConfig(interaction.guild.id);
   autoMigrateRoles(interaction.guild.id, interaction.guild, guildConfig);
 
@@ -2239,7 +4454,7 @@ client.on("interactionCreate", async (interaction) => {
       .sort((a, b) => b.position - a.position)
       .slice(0, 25)
       .map(r => ({ label: r.name, value: r.id }));
-
+    console.log(`DEBUG: claim_roles - found ${allRoles.length} roles in guild ${interaction.guild.id}`);
     if (allRoles.length === 0) {
       return interaction.reply({ content: "❌ No roles available!", ephemeral: true });
     }
@@ -2290,7 +4505,7 @@ client.on("interactionCreate", async (interaction) => {
       .sort((a, b) => b.position - a.position)
       .slice(0, 25)
       .map(r => ({ label: r.name, value: r.id }));
-
+    console.log(`DEBUG: claim_watchparty - found ${allRoles.length} roles in guild ${interaction.guild.id}`);
     if (allRoles.length === 0) {
       return interaction.reply({ content: "❌ No roles available!", ephemeral: true });
     }
@@ -2334,11 +4549,37 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.update({ content: response || "No roles added.", components: [] });
   }
 
+  // Handle custom category role selections (from `select_<category>` menus)
+  if (interaction.isStringSelectMenu() && interaction.customId.startsWith("select_")) {
+    const categoryName = interaction.customId.slice(7);
+    const member = interaction.member;
+    const config = getGuildConfig(interaction.guild.id);
+    const addedRoles = [];
+    const failedRoles = [];
+    for (const roleId of interaction.values) {
+      const role = interaction.guild.roles.cache.get(roleId);
+      if (role) {
+        try {
+          await member.roles.add(role);
+          const roleData = config.roleCategories?.[categoryName]?.find(r => (r.id || r) === roleId);
+          addedRoles.push(roleData ? (roleData.name || roleData) : role.name);
+        } catch (error) {
+          failedRoles.push(roleId);
+          console.error(`Failed to add role ${roleId}: ${error.message}`);
+        }
+      }
+    }
+    let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
+    if (failedRoles.length > 0) response += `\n⚠️ Failed: ${failedRoles.length} roles`;
+    return interaction.update({ content: response || "No roles added.", components: [] });
+  }
+
   // Platform roles
   if (interaction.isButton() && interaction.customId === "claim_platform") {
     const config = getGuildConfig(interaction.guild.id);
+    console.log(`DEBUG: claim_platform - platformRoles length: ${Array.isArray(config.platformRoles) ? config.platformRoles.length : 0} for guild ${interaction.guild.id}`);
     if (config.platformRoles.length === 0) {
-      return interaction.reply({ content: "❌ No platform roles configured! Admin: use //add-platform-role [name] [roleID]", ephemeral: true });
+      return interaction.reply({ content: "❌ No platform roles configured! Admin: use //addplatformrole [name] [roleID]", ephemeral: true });
     }
     const platformRoles = config.platformRoles.map(r => ({ label: typeof r === 'string' ? r : r.name, value: typeof r === 'string' ? r : r.id }));
     const selectMenu = new ActionRowBuilder().addComponents(
@@ -2353,31 +4594,6 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (interaction.isStringSelectMenu() && interaction.customId === "platform_roles") {
-  // Handle custom category role selections
-  if (interaction.isStringSelectMenu() && interaction.customId.startsWith("select_")) {
-    const categoryName = interaction.customId.slice(7);
-    const member = interaction.member;
-    const config = getGuildConfig(interaction.guild.id);
-    const addedRoles = [];
-    const failedRoles = [];
-    for (const roleId of interaction.values) {
-      const role = interaction.guild.roles.cache.get(roleId);
-      if (role) {
-        try {
-          await member.roles.add(role);
-          const roleData = config.roleCategories[categoryName].find(r => r.id === roleId);
-          addedRoles.push(roleData.name);
-        } catch (error) {
-          failedRoles.push(roleId);
-          console.error(`Failed to add role ${roleId}: ${error.message}`);
-        }
-      }
-    }
-    let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
-    if (failedRoles.length > 0) response += `
-⚠️ Failed: ${failedRoles.length} roles`;
-    return interaction.update({ content: response || "No roles added.", components: [] });
-  }
     const member = interaction.member;
     const config = getGuildConfig(interaction.guild.id);
     const addedRoles = [];
@@ -2439,6 +4655,41 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     return interaction.update({ content: `✅ Removed: ${removedRoles.join(", ")}`, components: [] });
+  }
+
+  // Close ticket button
+  if (interaction.isButton() && interaction.customId === "close_ticket_btn") {
+    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return interaction.reply({ content: "❌ Only admins can close tickets!", ephemeral: true });
+    }
+    
+    const message = interaction.message;
+    const embed = message.embeds[0];
+    
+    if (embed) {
+      const closedEmbed = EmbedBuilder.from(embed)
+        .setColor('#ED4245')
+        .setDescription(embed.description.replace('**Status:** Open', '**Status:** Closed'))
+        .setFooter({ text: `Closed by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+      
+      await interaction.update({ embeds: [closedEmbed], components: [] });
+      await interaction.followUp({ content: `🔒 Ticket closed by ${interaction.user}`, ephemeral: false });
+    } else {
+      await interaction.reply({ content: "❌ Could not close ticket - embed not found!", ephemeral: true });
+    }
+    
+    return;
+  }
+
+  // Dismiss buttons for help embeds
+  if (interaction.isButton() && interaction.customId === "dismiss_help_btn") {
+    await interaction.message.delete().catch(() => {});
+    return;
+  }
+
+  if (interaction.isButton() && interaction.customId === "dismiss_adminhelp_btn") {
+    await interaction.message.delete().catch(() => {});
+    return;
   }
 
   // Music controls
@@ -2794,9 +5045,14 @@ app.get("/", (req, res) => {
 });
 
 // ============== DISCORD OAUTH LOGIN ==============
+// Route /dashboard to dashboard.html
+app.get("/dashboard", (req, res) => {
+  res.redirect("/dashboard.html");
+});
+
 // Redirect login page to Discord OAuth
 app.get("/login", (req, res) => {
-  if (req.session.authenticated) return res.redirect("/dashboard");
+  if (req.session.authenticated) return res.redirect("/dashboard.html");
   const loginHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2888,261 +5144,39 @@ app.get("/security", (req, res) => {
 });
 
 app.get("/commands", (req, res) => {
-  const commandsHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Commands - SPIDEY BOT</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0f0f0f;
-      color: #fff;
-      line-height: 1.6;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    main { flex: 1; }
-    .logo {
-      font-weight: 700;
-      font-size: 1.4rem;
-      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 1px;
-    }
-    nav {
-      background: rgba(20, 20, 20, 0.95);
-      border-bottom: 1px solid #222;
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-    }
-    nav a {
-      color: #999;
-      text-decoration: none;
-      margin: 0 1.5rem;
-      transition: color 0.3s;
-      font-weight: 500;
-    }
-    nav a:hover { color: #9146FF; }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    h1 {
-      color: #9146FF;
-      margin: 3rem 0 2rem 0;
-      font-size: 2.5rem;
-      text-align: center;
-    }
-    .commands-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-bottom: 4rem;
-    }
-    .command-card {
-      background: rgba(145, 70, 255, 0.1);
-      border: 1px solid rgba(145, 70, 255, 0.2);
-      border-radius: 12px;
-      padding: 1.5rem;
-      transition: all 0.3s;
-    }
-    .command-card:hover {
-      background: rgba(145, 70, 255, 0.15);
-      border-color: rgba(145, 70, 255, 0.4);
-    }
-    .command-card h3 {
-      color: #9146FF;
-      margin-bottom: 0.5rem;
-      font-size: 1.2rem;
-    }
-    .command-card code {
-      background: rgba(0, 0, 0, 0.5);
-      color: #00d4ff;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      display: block;
-      margin: 0.5rem 0;
-    }
-    .command-card p {
-      color: #aaa;
-      font-size: 0.9rem;
-      line-height: 1.6;
-    }
-    footer {
-      background: #000;
-      border-top: 1px solid #222;
-      padding: 3rem 2rem;
-      margin-top: 4rem;
-    }
-    footer .footer-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-    footer .footer-section h3 {
-      color: #9146FF;
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    footer .footer-section a {
-      color: #999;
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: color 0.3s;
-    }
-    footer .footer-section a:hover { color: #9146FF; }
-  </style>
-</head>
-<body>
-  <nav>
-    <div class="logo">SPIDEY BOT</div>
-    <div>
-      <a href="/">Home</a>
-      <a href="/commands">Commands</a>
-      <a href="/login" style="color: #00d4ff;">Admin</a>
-    </div>
-  </nav>
-
-  <main>
-  <div class="container">
-    <h1>🕸️ SPIDEY BOT Commands</h1>
-    <p style="text-align: center; color: #aaa; margin-bottom: 2rem;">All commands start with <code style="background: rgba(0, 0, 0, 0.5); color: #00d4ff; padding: 0.2rem 0.5rem; border-radius: 4px;">//</code></p>
-
-    <div class="commands-grid">
-      <div class="command-card">
-        <h3>🎵 Music Commands</h3>
-        <code>//play [song]</code>
-        <p>Play a song from YouTube</p>
-        <code>//queue</code>
-        <p>Show current queue</p>
-        <code>//skip</code>
-        <p>Skip to next track</p>
-        <code>//stop</code>
-        <p>Stop playing music</p>
-      </div>
-
-      <div class="command-card">
-        <h3>🛡️ Moderation Commands</h3>
-        <code>//kick [user]</code>
-        <p>Kick a user from server</p>
-        <code>//ban [user]</code>
-        <p>Ban a user from server</p>
-        <code>//warn [user]</code>
-        <p>Warn a user</p>
-        <code>//mute [user]</code>
-        <p>Mute a user temporarily</p>
-      </div>
-
-      <div class="command-card">
-        <h3>💰 Economy Commands</h3>
-        <code>//balance</code>
-        <p>Check your coin balance</p>
-        <code>//daily</code>
-        <p>Claim daily reward</p>
-        <code>//work</code>
-        <p>Work to earn coins</p>
-        <code>//pay [user] [amount]</code>
-        <p>Transfer coins to another user</p>
-      </div>
-
-      <div class="command-card">
-        <h3>📊 Info Commands</h3>
-        <code>//stats</code>
-        <p>View your statistics</p>
-        <code>//leaderboard</code>
-        <p>View server leaderboard</p>
-        <code>//level</code>
-        <p>Check your level and XP</p>
-        <code>//help</code>
-        <p>View all available commands</p>
-      </div>
-
-      <div class="command-card">
-        <h3>⚙️ Admin Commands</h3>
-        <code>//config</code>
-        <p>Access configuration panel</p>
-        <code>//setup</code>
-        <p>Initial bot setup</p>
-        <code>//prefix [new prefix]</code>
-        <p>Change command prefix</p>
-        <code>//logging</code>
-        <p>Configure logging channels</p>
-      </div>
-
-      <div class="command-card">
-        <h3>🎫 Tickets</h3>
-        <code>//ticket</code>
-        <p>Create a support ticket</p>
-        <code>//close</code>
-        <p>Close a ticket</p>
-        <code>//add [user]</code>
-        <p>Add user to ticket</p>
-        <code>//remove [user]</code>
-        <p>Remove user from ticket</p>
-      </div>
-    </div>
-  </div>
-  </main>
-
-  <footer>
-    <div class="footer-content">
-      <div class="footer-section">
-        <h3>Quick Links</h3>
-        <ul style="list-style: none;">
-          <li><a href="/">Home</a></li>
-          <li><a href="/commands">Commands</a></li>
-          <li><a href="/login">Admin</a></li>
-        </ul>
-      </div>
-      <div class="footer-section">
-        <h3>Legal</h3>
-        <ul style="list-style: none;">
-          <li><a href="/terms">Terms of Service</a></li>
-          <li><a href="/privacy">Privacy Policy</a></li>
-        </ul>
-      </div>
-    </div>
-    <div style="text-align: center; color: #666; font-size: 0.85rem; padding-top: 2rem; border-top: 1px solid #222;">
-      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
-    </div>
-  </footer>
-</body>
-</html>`;
+  const commandsPath = path.join(publicDir, 'commands.html');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(commandsHtml);
+  res.sendFile(commandsPath);
 });
+
 
 // Determine redirect URI based on host
 const REDIRECT_URI_DETECTOR = (req) => {
-  const host = req.get('host');
-  // Replit often uses http for internal traffic but we need https for OAuth
-  const protocol = (host.includes('repl.co') || host.includes('replit.dev')) ? 'https' : req.protocol;
+  const host = req.get('x-forwarded-host') || req.get('host');
+  const forwardedProto = req.get('x-forwarded-proto');
+
+  // We may be behind a HTTPS tunnel (VS Code Remote, Codespaces, etc.) where
+  // the internal request is HTTP but the external URL is HTTPS. Discord requires
+  // the redirect URI to match the public URL exactly, so prefer HTTPS for all
+  // non-local hosts.
+  const isLocalHost = host && (
+    host.startsWith('localhost') ||
+    host.startsWith('127.') ||
+    host.startsWith('::1') ||
+    host.includes('192.168.') ||
+    host.includes('10.') ||
+    host.includes('172.')
+  );
+
+  const protocol = (forwardedProto === 'https' || (!forwardedProto && !isLocalHost))
+    ? 'https'
+    : req.protocol;
+
   return `${protocol}://${host}/auth/discord/callback`;
 };
 
 app.get("/auth/discord", (req, res) => {
-  const currentRedirectUri = REDIRECT_URI_DETECTOR(req);
+  const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
   const scopes = ["identify", "guilds"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(currentRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
   
@@ -3155,7 +5189,7 @@ app.get("/auth/discord/callback", async (req, res) => {
   if (!code) return res.status(400).send("No code provided");
 
   try {
-    const currentRedirectUri = REDIRECT_URI_DETECTOR(req);
+    const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
     console.log(`🔵 Auth Callback received. Using Redirect URI: ${currentRedirectUri}`);
 
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
@@ -3212,8 +5246,9 @@ app.get("/auth/discord/callback", async (req, res) => {
       }
       console.log(`✅ User logged in: ${userRes.data.username}`);
       // Ensure we redirect to the full URL to avoid relative path issues in frames
-      const host = req.get('host');
-      const protocol = (host.includes('repl.co') || host.includes('replit.dev')) ? 'https' : req.protocol;
+      const host = req.get('x-forwarded-host') || req.get('host');
+      const forwardedProto = req.get('x-forwarded-proto');
+      const protocol = (forwardedProto === 'https' || host.includes('repl.co') || host.includes('replit.dev') || host.includes('app.github.dev')) ? 'https' : req.protocol;
       res.redirect(`${protocol}://${host}/dashboard.html`);
     });
   } catch (err) {
@@ -3221,9 +5256,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     const errorMsg = err.response?.data?.error_description || err.message || "Unknown error";
     
     // Construct debug info
-    const host = req.get('host');
-    const protocol = req.protocol === 'http' && !host.includes('localhost') ? 'https' : req.protocol;
-    const attemptedUri = `${protocol}://${host}/auth/discord/callback`;
+    const attemptedUri = REDIRECT_URI_DETECTOR(req);
 
     res.status(500).send(`
       <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
@@ -3246,14 +5279,14 @@ app.get("/logout", (req, res) => {
   });
 });
 
-// ============== PUBLIC API ==============
-app.get("/api/config", (req, res) => {
-  // Serve basic config needed for frontend (like client ID)
-  res.json({
-    clientId: DISCORD_CLIENT_ID,
-    botName: "SPIDEY BOT"
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) console.error("Logout error:", err);
+    res.json({ success: true });
   });
 });
+
+// ============== PUBLIC API ==============
 
 app.get("/api/user", (req, res) => {
   if (!req.session.authenticated) {
@@ -3279,9 +5312,43 @@ app.get("/api/user", (req, res) => {
   }
 
   res.json({
-    ...user,
-    avatarUrl,
+    user: {
+      ...user,
+      avatarUrl
+    },
     guilds: req.session.guilds
+  });
+});
+
+// ============== DASHBOARD DEBUG STATUS ==============
+app.get('/api/dashboard-status', (req, res) => {
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  res.json({
+    user: req.session.user || null,
+    guilds: req.session.guilds || [],
+    selectedServerId: req.session.selectedServerId || null,
+    serverCount: (req.session.guilds || []).length,
+    env: {
+      nodeEnv: process.env.NODE_ENV || 'development',
+      version: require('./package.json').version || null
+    }
+  });
+});
+
+app.get('/status', (req, res) => {
+  res.json({
+    uptime: process.uptime(),
+    botLoggedIn,
+    hasToken: !!process.env.TOKEN,
+    hasClientId: !!process.env.CLIENT_ID,
+    hasClientSecret: !!process.env.CLIENT_SECRET,
+    redirectUri: REDIRECT_URI,
+    baseRedirectUri: BASE_REDIRECT_URI,
+    nodeEnv: process.env.NODE_ENV || 'development',
+    version: require('./package.json').version || null,
   });
 });
 
@@ -3312,11 +5379,102 @@ app.get("/dashboard/server/:guildId", (req, res) => {
   res.redirect("/dashboard.html");
 });
 
+// ============== API: GET ROLE CATEGORIES (must be before :guildId) ==============
+app.get("/api/config/role-categories", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const config = loadConfig();
+  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+  if (!guildId) return res.json({});
+
+  const data = config.guilds[guildId]?.roleCategories || {};
+  
+  const filtered = {};
+  Object.keys(data).forEach(key => {
+    if (key && key.trim() !== '') {
+      filtered[key] = data[key];
+    }
+  });
+  
+  console.log(`✅ Role Categories API - Guild: ${guildId}, Categories found:`, Object.keys(filtered).length, `(${Object.keys(filtered).join(', ')})`);
+  res.json(filtered);
+});
+
+// ============== API: SAVE ROLE CATEGORIES (must be before :guildId) ==============
+app.post("/api/config/role-categories", express.json(), (req, res) => {
+  try {
+    if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+
+    console.log('📝 POST /api/config/role-categories received');
+    console.log('   Query:', req.query);
+    console.log('   Body:', req.body);
+
+    const config = loadConfig();
+    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    
+    console.log('   Using guildId:', guildId);
+    
+    if (!guildId) {
+      console.error('❌ Role category save failed: No guild ID provided');
+      return res.status(400).json({ success: false, error: "No guild found" });
+    }
+
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
+
+    const { categoryName, oldCategoryName, roles, channel, message } = req.body;
+    
+    if (!categoryName) {
+      console.error('❌ Role category save failed: No category name provided');
+      return res.status(400).json({ success: false, error: "Category name is required" });
+    }
+
+    if (!roles || !Array.isArray(roles) || roles.length === 0) {
+      console.error('❌ Role category save failed: No roles provided');
+      return res.status(400).json({ success: false, error: "At least one role is required" });
+    }
+    
+    if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
+      delete config.guilds[guildId].roleCategories[oldCategoryName];
+      console.log(`🔄 Renamed category: ${oldCategoryName} → ${categoryName}`);
+    }
+
+    config.guilds[guildId].roleCategories[categoryName] = {
+      roles: roles || [],
+      channel: channel || '',
+      message: message || ''
+    };
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ Role category saved: ${categoryName} (Guild: ${guildId})`);
+    res.json({ success: true, message: "Role category saved successfully", categoryName, guildId });
+  } catch (err) {
+    console.error('❌ Error saving role category:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ============== API ENDPOINTS ==============
+app.get("/api/config/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false });
+
+  const guildId = req.params.guildId;
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
+  const config = loadConfig();
+  res.json(config.guilds[guildId] || {});
+});
+
 app.post("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
 
   const guildId = req.params.guildId;
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
 
@@ -3570,11 +5728,17 @@ app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
     const config = loadConfig();
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     
-    const { antiSpamEnabled, antiSpamLimit, antiSpamAction, raidEnabled, raidLimit, banRaidUsers, membersOnly, adminsBypass, allowDM, confirmDangerous } = req.body;
+    const { antiSpam, raidProtection, permissions, antiNuke, linkScanning, joinGate, rateLimiting, auditLog, backup } = req.body;
     
-    config.guilds[guildId].antiSpam = { enabled: antiSpamEnabled, messagesPerLimit: antiSpamLimit, action: antiSpamAction };
-    config.guilds[guildId].raidProtection = { enabled: raidEnabled, usersPerLimit: raidLimit, banRaidUsers };
-    config.guilds[guildId].permissions = { membersOnly, adminsBypass, allowDM, confirmDangerous };
+    if (antiSpam) config.guilds[guildId].antiSpam = antiSpam;
+    if (raidProtection) config.guilds[guildId].raidProtection = raidProtection;
+    if (permissions) config.guilds[guildId].permissions = permissions;
+    if (antiNuke) config.guilds[guildId].antiNuke = antiNuke;
+    if (linkScanning) config.guilds[guildId].linkScanning = linkScanning;
+    if (joinGate) config.guilds[guildId].joinGate = joinGate;
+    if (rateLimiting) config.guilds[guildId].rateLimiting = rateLimiting;
+    if (auditLog) config.guilds[guildId].auditLog = auditLog;
+    if (backup) config.guilds[guildId].backup = backup;
     
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
     console.log(`✅ All Server Guard settings updated (Guild: ${guildId})`);
@@ -3582,6 +5746,334 @@ app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
   } catch (err) {
     console.error('❌ Error updating server guard:', err);
     res.json({ success: false, message: "Error updating server guard" });
+  }
+});
+
+// ============== REACT ROLES API ENDPOINTS ==============
+// Save react role settings (allowMultiple, removeOnUnreact, dmConfirm)
+app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].reactRoles) config.guilds[guildId].reactRoles = { entries: [] };
+    const { allowMultiple, removeOnUnreact, dmConfirm } = req.body;
+    config.guilds[guildId].reactRoles.allowMultiple = allowMultiple;
+    config.guilds[guildId].reactRoles.removeOnUnreact = removeOnUnreact;
+    config.guilds[guildId].reactRoles.dmConfirm = dmConfirm;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ React roles settings saved (Guild: ${guildId})`);
+    res.json({ success: true, message: "React roles settings saved" });
+  } catch (err) {
+    console.error('❌ Error saving react roles settings:', err);
+    res.json({ success: false, message: "Error saving settings" });
+  }
+});
+
+// Add a single reaction role entry (and bot adds the reaction to the message)
+app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { channelId, messageId, emoji, roleId } = req.body;
+    if (!channelId || !messageId || !emoji || !roleId) return res.json({ success: false, error: "Missing fields" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+
+    // Verify channel exists
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.json({ success: false, error: "Channel not found" });
+
+    // Verify message exists
+    let message;
+    try {
+      message = await channel.messages.fetch(messageId);
+    } catch (e) {
+      return res.json({ success: false, error: "Could not find message with that ID in the selected channel" });
+    }
+
+    // Verify role exists
+    const role = guild.roles.cache.get(roleId);
+    if (!role) return res.json({ success: false, error: "Role not found" });
+
+    // Try to add the reaction to the message
+    try {
+      await message.react(emoji);
+    } catch (e) {
+      console.warn('Could not add reaction:', e.message);
+      return res.json({ success: false, error: "Could not add reaction. Make sure the emoji is valid and the bot has permissions." });
+    }
+
+    // Save to config
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].reactRoles) config.guilds[guildId].reactRoles = { entries: [], allowMultiple: true, removeOnUnreact: true, dmConfirm: false };
+    if (!Array.isArray(config.guilds[guildId].reactRoles.entries)) config.guilds[guildId].reactRoles.entries = [];
+
+    // Check for duplicate
+    const exists = config.guilds[guildId].reactRoles.entries.some(e => e.messageId === messageId && e.emoji === emoji);
+    if (exists) return res.json({ success: false, error: "A reaction role with this emoji on this message already exists" });
+
+    config.guilds[guildId].reactRoles.entries.push({
+      channelId,
+      channelName: channel.name,
+      messageId,
+      emoji,
+      roleId,
+      roleName: role.name,
+      createdAt: new Date().toISOString()
+    });
+
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ React role added: ${emoji} → @${role.name} on message ${messageId} (Guild: ${guildId})`);
+    addActivity(guildId, "🎭", "Admin", `added reaction role: ${emoji} → @${role.name}`);
+    res.json({ success: true, message: "Reaction role added" });
+  } catch (err) {
+    console.error('❌ Error adding react role:', err);
+    res.json({ success: false, message: "Error adding reaction role: " + err.message });
+  }
+});
+
+// Remove a reaction role entry by index
+app.post("/api/bot-config/react-roles/remove", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { index } = req.body;
+    const config = loadConfig();
+    const entries = config.guilds[guildId]?.reactRoles?.entries;
+    if (!entries || index < 0 || index >= entries.length) return res.json({ success: false, message: "Invalid index" });
+
+    const removed = entries.splice(index, 1)[0];
+
+    // Try to remove the bot's reaction from the message
+    try {
+      const guild = client.guilds.cache.get(guildId);
+      if (guild) {
+        const channel = guild.channels.cache.get(removed.channelId);
+        if (channel) {
+          const message = await channel.messages.fetch(removed.messageId);
+          if (message) {
+            const reaction = message.reactions.cache.find(r => r.emoji.name === removed.emoji || r.emoji.toString() === removed.emoji);
+            if (reaction) await reaction.users.remove(client.user.id).catch(() => {});
+          }
+        }
+      }
+    } catch (e) { console.warn('Could not remove bot reaction:', e.message); }
+
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ React role removed: ${removed.emoji} → @${removed.roleName} (Guild: ${guildId})`);
+    addActivity(guildId, "🎭", "Admin", `removed reaction role: ${removed.emoji} → @${removed.roleName}`);
+    res.json({ success: true, message: "Reaction role removed" });
+  } catch (err) {
+    console.error('❌ Error removing react role:', err);
+    res.json({ success: false, message: "Error removing reaction role" });
+  }
+});
+
+// Post a new reaction role embed to a channel
+app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { channelId, title, description } = req.body;
+    if (!channelId || !title) return res.json({ success: false, error: "Channel and title required" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.json({ success: false, error: "Channel not found" });
+
+    // Build and send embed
+    const embed = new EmbedBuilder()
+      .setColor(0x00D4FF)
+      .setTitle(title)
+      .setDescription(description || 'React below to claim your roles!')
+      .setFooter({ text: 'SPIDEY BOT • React to get roles' })
+      .setTimestamp();
+
+    const msg = await channel.send({ embeds: [embed] });
+    console.log(`✅ React role message posted: ${msg.id} in #${channel.name} (Guild: ${guildId})`);
+    addActivity(guildId, "📨", "Admin", `posted reaction role message in #${channel.name}`);
+    res.json({ success: true, messageId: msg.id, message: "Message posted" });
+  } catch (err) {
+    console.error('❌ Error posting react role message:', err);
+    res.json({ success: false, message: "Error posting message: " + err.message });
+  }
+});
+
+// Delete a role category from dashboard
+app.post("/api/bot-config/role-category/delete", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { categoryName } = req.body;
+    if (!categoryName) return res.json({ success: false, message: "Category name required" });
+    const config = loadConfig();
+    if (!config.guilds[guildId]) return res.json({ success: false, message: "Guild not found" });
+    const categories = config.guilds[guildId].roleCategories || {};
+    if (!categories[categoryName]) return res.json({ success: false, message: "Category not found" });
+    delete categories[categoryName];
+    config.guilds[guildId].roleCategories = categories;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ Category deleted from dashboard: ${categoryName} (Guild: ${guildId})`);
+    addActivity(guildId, "🗑️", "Dashboard", `deleted category: ${categoryName}`);
+    res.json({ success: true, message: "Category deleted" });
+  } catch (err) {
+    console.error('❌ Error deleting category:', err);
+    res.json({ success: false, message: "Error deleting category" });
+  }
+});
+
+// Setup category selector - posts embed with dropdown to a channel
+app.post("/api/bot-config/setup-category", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, error: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
+  try {
+    const { categoryName, channelId } = req.body;
+    if (!categoryName) return res.json({ success: false, error: "Category name required" });
+    if (!channelId) return res.json({ success: false, error: "Channel required" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.json({ success: false, error: "Channel not found" });
+
+    const config = loadConfig();
+    const categories = config.guilds[guildId]?.roleCategories || {};
+    if (!categories[categoryName]) return res.json({ success: false, error: `Category "${categoryName}" doesn't exist` });
+
+    const catData = Array.isArray(categories[categoryName]) ? { roles: categories[categoryName], banner: null } : categories[categoryName];
+    if (!catData.roles || catData.roles.length === 0) return res.json({ success: false, error: "Category has no roles. Add roles first!" });
+
+    const roleOptions = catData.roles.map(r => ({ label: `✨ ${r.name}`, value: r.id }));
+    const colorMap = { gaming: 0xFF6B6B, streaming: 0x4ECDC4, platform: 0x45B7D1, community: 0x96CEB4, events: 0xFFBD39 };
+    const embedColor = colorMap[categoryName.toLowerCase()] || 0x5865F2;
+
+    const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+    const embed = new EmbedBuilder()
+      .setColor(embedColor)
+      .setTitle(`🎯 ${categoryName.toUpperCase()} ROLES`)
+      .setDescription(`✨ Click below to select your ${categoryName.toLowerCase()} roles!\n\n*Choose multiple roles to add yourself to communities*`)
+      .setFooter({ text: "SPIDEY BOT • Select roles to join communities" });
+
+    if (catData.banner) embed.setImage(catData.banner);
+
+    const selectMenu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`select_${categoryName}`)
+        .setPlaceholder(`🔍 Select ${categoryName.toLowerCase()} roles...`)
+        .setMinValues(1)
+        .setMaxValues(roleOptions.length)
+        .addOptions(roleOptions)
+    );
+
+    await channel.send({ embeds: [embed], components: [selectMenu] });
+    addActivity(guildId, "📂", "Dashboard", `posted category selector: ${categoryName} → #${channel.name}`);
+    console.log(`✅ Category selector posted from dashboard: ${categoryName} → #${channel.name} (Guild: ${guildId})`);
+    res.json({ success: true, message: `Category selector posted to #${channel.name}` });
+  } catch (err) {
+    console.error('❌ Error posting category selector:', err);
+    res.json({ success: false, error: "Error posting: " + err.message });
+  }
+});
+
+// Add a typed role (game / watchparty / platform) from dashboard
+app.post("/api/bot-config/typed-role/add", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { type, roles, roleId, roleName } = req.body;
+    const configKeyMap = { game: 'gameRoles', watchparty: 'watchPartyRoles', platform: 'platformRoles' };
+    const configKey = configKeyMap[type];
+    if (!configKey) return res.json({ success: false, error: "Invalid role type" });
+
+    // Support both single role (legacy) and bulk roles array
+    const toAdd = Array.isArray(roles) ? roles : (roleId && roleName ? [{ roleId, roleName }] : []);
+    if (!toAdd.length) return res.json({ success: false, error: "No roles provided" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not in bot cache" });
+
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!Array.isArray(config.guilds[guildId][configKey])) config.guilds[guildId][configKey] = [];
+
+    let added = 0;
+    const skipped = [];
+    const typeNames = { game: 'gaming', watchparty: 'watch party', platform: 'platform' };
+
+    for (const { roleId: rId, roleName: rName } of toAdd) {
+      if (!rId || !rName) continue;
+      const role = guild.roles.cache.get(rId);
+      if (!role) { skipped.push(rName + ' (not found)'); continue; }
+      if (config.guilds[guildId][configKey].some(r => (r.id || r) === rId)) { skipped.push(rName + ' (duplicate)'); continue; }
+      config.guilds[guildId][configKey].push({ name: rName.replace(/@/g, ''), id: rId });
+      added++;
+    }
+
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✅ Added ${added} ${typeNames[type]} role(s) (Guild: ${guildId})`);
+    if (added > 0) addActivity(guildId, "➕", "Dashboard", `added ${added} ${typeNames[type]} role(s)`);
+    const msg = added > 0 ? `Added ${added} role(s)` : 'No new roles added';
+    res.json({ success: true, added, skipped, message: msg });
+  } catch (err) {
+    console.error('❌ Error adding typed role:', err);
+    res.json({ success: false, message: "Error adding role" });
+  }
+});
+
+// Remove a typed role (game / watchparty / platform) from dashboard
+app.post("/api/bot-config/typed-role/remove", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { type, index } = req.body;
+    const configKeyMap = { game: 'gameRoles', watchparty: 'watchPartyRoles', platform: 'platformRoles' };
+    const configKey = configKeyMap[type];
+    if (!configKey) return res.json({ success: false, message: "Invalid role type" });
+
+    const config = loadConfig();
+    const roles = config.guilds[guildId]?.[configKey];
+    if (!roles || index < 0 || index >= roles.length) return res.json({ success: false, message: "Invalid index" });
+
+    const removed = roles.splice(index, 1)[0];
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    const typeNames = { game: 'gaming', watchparty: 'watch party', platform: 'platform' };
+    console.log(`✅ Removed ${typeNames[type]} role: ${removed.name || removed} (Guild: ${guildId})`);
+    addActivity(guildId, "🗑️", "Dashboard", `removed ${typeNames[type]} role: ${removed.name || removed}`);
+    res.json({ success: true, message: "Role removed" });
+  } catch (err) {
+    console.error('❌ Error removing typed role:', err);
+    res.json({ success: false, message: "Error removing role" });
   }
 });
 
@@ -3665,84 +6157,6 @@ app.post("/api/bot-config/messages", express.json(), (req, res) => {
   }
 });
 
-// ============== API: GET ROLE CATEGORIES ==============
-app.get("/api/config/role-categories", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
-
-  const config = loadConfig();
-  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
-  if (!guildId) return res.json({});
-
-  const data = config.guilds[guildId]?.roleCategories || {};
-  
-  // Filter out empty category names and log what we're returning
-  const filtered = {};
-  Object.keys(data).forEach(key => {
-    if (key && key.trim() !== '') {
-      filtered[key] = data[key];
-    }
-  });
-  
-  console.log(`✅ Role Categories API - Guild: ${guildId}, Categories found:`, Object.keys(filtered).length, `(${Object.keys(filtered).join(', ')})`);
-  res.json(filtered);
-});
-
-// ============== API: SAVE ROLE CATEGORIES ==============
-app.post("/api/config/role-categories", express.json(), (req, res) => {
-  try {
-    if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-
-    console.log('📝 POST /api/config/role-categories received');
-    console.log('   Query:', req.query);
-    console.log('   Body:', req.body);
-
-    const config = loadConfig();
-    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
-    
-    console.log('   Using guildId:', guildId);
-    
-    if (!guildId) {
-      console.error('❌ Role category save failed: No guild ID provided');
-      return res.status(400).json({ success: false, error: "No guild found" });
-    }
-
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    if (!config.guilds[guildId].roleCategories) config.guilds[guildId].roleCategories = {};
-
-    const { categoryName, oldCategoryName, roles, channel, message } = req.body;
-    
-    if (!categoryName) {
-      console.error('❌ Role category save failed: No category name provided');
-      return res.status(400).json({ success: false, error: "Category name is required" });
-    }
-
-    if (!roles || !Array.isArray(roles) || roles.length === 0) {
-      console.error('❌ Role category save failed: No roles provided');
-      return res.status(400).json({ success: false, error: "At least one role is required" });
-    }
-    
-    // If renaming, delete old category first
-    if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
-      delete config.guilds[guildId].roleCategories[oldCategoryName];
-      console.log(`🔄 Renamed category: ${oldCategoryName} → ${categoryName}`);
-    }
-
-    // Save or update category with message and channel
-    config.guilds[guildId].roleCategories[categoryName] = {
-      roles: roles || [],
-      channel: channel || '',
-      message: message || ''
-    };
-    
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log(`✅ Role category saved: ${categoryName} (Guild: ${guildId})`);
-    res.json({ success: true, message: "Role category saved successfully", categoryName, guildId });
-  } catch (err) {
-    console.error('❌ Error saving role category:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
 // ============== API: POST CATEGORY TO DISCORD CHANNEL ==============
 app.post("/api/post-category", express.json(), async (req, res) => {
   try {
@@ -3807,19 +6221,7 @@ app.post("/api/post-category", express.json(), async (req, res) => {
   }
 });
 
-// ============== API: UPDATE CONFIG ==============
-app.post("/api/config/:guildId", express.json(), (req, res) => {
-  if (!req.session.user) return res.status(401).json({ success: false, error: "Not authenticated" });
-
-  const guildId = req.params.guildId;
-  const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => g.id === guildId);
-
-  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
-
-  updateGuildConfig(guildId, req.body);
-  res.json({ success: true, config: getGuildConfig(guildId) });
-});
+// (Duplicate /api/config/:guildId POST removed — handled above)
 
 // ============== REAL-TIME DASHBOARD API ==============
 app.get("/api/dashboard/stats", (req, res) => {
@@ -4012,45 +6414,70 @@ app.get("/api/dashboard/top-members", (req, res) => {
 // ============== CREATOR ONLY APIS ==============
 
 // Get all servers the bot is in (filtered to only admin-accessible servers)
-app.get("/api/creator/servers", (req, res) => {
+app.get("/api/creator/servers", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
-  // Get user's guilds from Discord OAuth (includes permission info)
-  const userGuilds = req.session.guilds || [];
+  const ADMIN_PERMISSION = BigInt(8);
 
-  // Discord admin permission flag is 8
-  const ADMIN_PERMISSION = 8;
+  try {
+    // Always fetch fresh guild list from Discord using stored access token
+    let userGuilds = req.session.guilds || [];
 
-  // Filter to only guilds where user is admin
-  const adminGuildIds = userGuilds
-    .filter(guild => {
-      const permissions = BigInt(guild.permissions);
-      return (permissions & BigInt(ADMIN_PERMISSION)) === BigInt(ADMIN_PERMISSION);
-    })
-    .map(guild => guild.id);
-
-  // Get bot's servers that user can admin
-  const servers = client.guilds.cache
-    .filter(guild => adminGuildIds.includes(guild.id))
-    .map(guild => {
-      let iconUrl = null;
-      let iconProxyUrl = null;
-      if (guild.icon) {
-        const isAnimated = guild.icon.startsWith('a_');
-        const ext = isAnimated ? 'gif' : 'png';
-        iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
-        iconProxyUrl = `/api/image?url=${encodeURIComponent(iconUrl)}`;
+    if (req.session.accessToken) {
+      try {
+        const guildsRes = await axios.get("https://discord.com/api/users/@me/guilds", {
+          headers: { Authorization: `Bearer ${req.session.accessToken}` }
+        });
+        // Filter to admin-only guilds and update session
+        userGuilds = guildsRes.data.filter(guild => {
+          const permissions = BigInt(guild.permissions || 0);
+          return (permissions & ADMIN_PERMISSION) === ADMIN_PERMISSION;
+        });
+        req.session.guilds = userGuilds;
+        console.log(`📡 Refreshed guild list from Discord: ${userGuilds.length} admin guilds`);
+      } catch (discordErr) {
+        console.warn(`⚠️ Could not refresh guilds from Discord (token may be expired), using cached data: ${discordErr.message}`);
+        // Fall back to session-stored guilds
       }
-      return {
-        id: guild.id,
-        name: guild.name,
-        icon: iconUrl,
-        iconProxy: iconProxyUrl,
-        memberCount: guild.memberCount
-      };
-    });
+    }
 
-  res.json({ servers });
+    console.log(`📡 User has ${userGuilds.length} admin guilds`);
+    console.log(`📡 Bot is in ${client.guilds.cache.size} guilds`);
+
+    // Get IDs of user's admin guilds
+    const adminGuildIds = userGuilds.map(guild => guild.id);
+
+    console.log(`📡 Admin guild IDs: ${adminGuildIds.join(', ')}`);
+    console.log(`📡 Bot guild IDs: ${client.guilds.cache.map(g => g.id).join(', ')}`);
+
+    // Get bot's servers where user is admin — the intersection
+    const servers = client.guilds.cache
+      .filter(guild => adminGuildIds.includes(guild.id))
+      .map(guild => {
+        let iconUrl = null;
+        let iconProxyUrl = null;
+        if (guild.icon) {
+          const isAnimated = guild.icon.startsWith('a_');
+          const ext = isAnimated ? 'gif' : 'png';
+          iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+          iconProxyUrl = `/api/image?url=${encodeURIComponent(iconUrl)}`;
+        }
+        return {
+          id: guild.id,
+          name: guild.name,
+          icon: iconUrl,
+          iconProxy: iconProxyUrl,
+          memberCount: guild.memberCount
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    console.log(`📡 Returning ${servers.length} servers to dashboard`);
+    res.json({ servers });
+  } catch (err) {
+    console.error('❌ Error in /api/creator/servers:', err);
+    res.status(500).json({ error: 'Failed to load servers' });
+  }
 });
 
 // Get all channels in a guild
@@ -4120,7 +6547,122 @@ app.post("/api/creator/settings", express.json(), (req, res) => {
 });
 
 // Get member statistics by role for graphs (with caching to avoid rate limits)
-app.get("/api/member-stats/:guildId", (req, res) => {
+
+// Get admin and mod members for dashboard management panel
+app.get("/api/staff-members/:guildId", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  // Ensure members are fetched
+  if (guild.members.cache.size <= 1) {
+    try { await guild.members.fetch(); } catch (e) { console.warn('Failed to fetch members:', e.message); }
+  }
+
+  const members = guild.members.cache;
+  const botMember = guild.members.me;
+
+  // Get admins (non-bot members with Administrator permission)
+  const admins = members
+    .filter(m => !m.user.bot && m.permissions.has('Administrator'))
+    .map(m => {
+      const adminRoles = m.roles.cache.filter(r => r.permissions.has('Administrator') && r.name !== '@everyone');
+      return {
+        id: m.user.id,
+        username: m.user.username,
+        displayName: m.displayName,
+        avatar: m.user.avatar ? `https://cdn.discordapp.com/avatars/${m.user.id}/${m.user.avatar}.png?size=64` : null,
+        isOwner: m.id === guild.ownerId,
+        roles: adminRoles.map(r => ({ id: r.id, name: r.name, position: r.position })),
+        canRevoke: m.id !== guild.ownerId && botMember && botMember.roles.highest.position > m.roles.highest.position
+      };
+    })
+    .sort((a, b) => (a.isOwner ? -1 : b.isOwner ? 1 : a.displayName.localeCompare(b.displayName)));
+
+  // Get mods (non-bot, non-admin members with mod-like perms)
+  const mods = members
+    .filter(m => {
+      if (m.user.bot) return false;
+      if (m.permissions.has('Administrator')) return false;
+      return m.permissions.has('ModerateMembers') ||
+             m.permissions.has('KickMembers') ||
+             m.permissions.has('BanMembers') ||
+             m.permissions.has('ManageMessages') ||
+             m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
+    })
+    .map(m => {
+      const modRoles = m.roles.cache.filter(r => {
+        if (r.name === '@everyone') return false;
+        return r.permissions.has('ModerateMembers') ||
+               r.permissions.has('KickMembers') ||
+               r.permissions.has('BanMembers') ||
+               r.permissions.has('ManageMessages') ||
+               r.name.toLowerCase().includes('mod') ||
+               r.name.toLowerCase().includes('staff');
+      });
+      return {
+        id: m.user.id,
+        username: m.user.username,
+        displayName: m.displayName,
+        avatar: m.user.avatar ? `https://cdn.discordapp.com/avatars/${m.user.id}/${m.user.avatar}.png?size=64` : null,
+        roles: modRoles.map(r => ({ id: r.id, name: r.name, position: r.position })),
+        canRevoke: botMember && botMember.roles.highest.position > m.roles.highest.position
+      };
+    })
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+  res.json({ admins, mods, ownerId: guild.ownerId });
+});
+
+// Revoke a role from a member (remove admin/mod role)
+app.post("/api/revoke-role/:guildId", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const { memberId, roleId } = req.body;
+
+  if (!memberId || !roleId) return res.status(400).json({ error: "Missing memberId or roleId" });
+
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  try {
+    const member = await guild.members.fetch(memberId);
+    if (!member) return res.status(404).json({ error: "Member not found" });
+
+    // Safety: can't revoke roles from the server owner
+    if (member.id === guild.ownerId) {
+      return res.status(403).json({ error: "Cannot revoke roles from the server owner" });
+    }
+
+    const botMember = guild.members.me;
+    if (!botMember || botMember.roles.highest.position <= member.roles.highest.position) {
+      return res.status(403).json({ error: "Bot's role is not high enough to manage this member" });
+    }
+
+    const role = guild.roles.cache.get(roleId);
+    if (!role) return res.status(404).json({ error: "Role not found" });
+
+    if (!member.roles.cache.has(roleId)) {
+      return res.status(400).json({ error: "Member does not have this role" });
+    }
+
+    await member.roles.remove(roleId, `Revoked via dashboard by ${req.session.user.username}`);
+    
+    // Clear the member stats cache so numbers update
+    setCachedMemberStats(guildId, null);
+
+    console.log(`✅ Role "${role.name}" removed from ${member.user.username} by dashboard user ${req.session.user.username}`);
+    res.json({ success: true, message: `Removed role "${role.name}" from ${member.displayName}` });
+  } catch (err) {
+    console.error(`❌ Failed to revoke role: ${err.message}`);
+    res.status(500).json({ error: `Failed to revoke role: ${err.message}` });
+  }
+});
+
+app.get("/api/member-stats/:guildId", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guildId = req.params.guildId;
@@ -4136,13 +6678,46 @@ app.get("/api/member-stats/:guildId", (req, res) => {
 
   // Use cached member data if available, otherwise fetch
   const memberCache = guild.members.cache;
+  
+  // If cache is too small (likely not fetched yet), fetch now
+  if (memberCache.size <= 1) {
+    console.log(`📊 Member cache empty for ${guildId}, fetching...`);
+    try {
+      await guild.members.fetch();
+    } catch (err) {
+      console.warn(`⚠️ Failed to fetch members for ${guildId}:`, err.message);
+    }
+  }
+  
+  const members = guild.members.cache;
+  
+  // Count non-bot members (humans)
+  const humans = members.filter(m => !m.user.bot);
+  
+  // Verified = members who have passed Discord's membership screening / have roles beyond @everyone
+  const verified = humans.filter(m => !m.pending && m.roles.cache.size > 1).size;
+  
+  // Admins = members with Administrator permission (excluding bots)
+  const admins = members.filter(m => !m.user.bot && m.permissions.has('Administrator')).size;
+  
+  // Moderators = members with mod-like permissions but not full admin (excluding bots)
+  const mods = members.filter(m => {
+    if (m.user.bot) return false;
+    if (m.permissions.has('Administrator')) return false; // Don't double-count admins
+    return m.permissions.has('ModerateMembers') || 
+           m.permissions.has('KickMembers') || 
+           m.permissions.has('BanMembers') || 
+           m.permissions.has('ManageMessages') ||
+           m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
+  }).size;
+  
   const stats = {
-    total: memberCache.size,
-    members: memberCache.filter(m => !m.user.bot).size,
-    verified: memberCache.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
-    bots: memberCache.filter(m => m.user.bot).size,
-    admins: memberCache.filter(m => m.permissions.has('Administrator')).size,
-    mods: memberCache.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+    total: members.size,
+    members: humans.size,
+    verified: verified,
+    bots: members.filter(m => m.user.bot).size,
+    admins: admins,
+    mods: mods,
     roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
   };
 
@@ -4150,14 +6725,27 @@ app.get("/api/member-stats/:guildId", (req, res) => {
   setCachedMemberStats(guildId, stats);
   
   // Fetch fresh data in background (don't wait for it)
-  guild.members.fetch().then(members => {
+  guild.members.fetch().then(freshMembers => {
+    const freshHumans = freshMembers.filter(m => !m.user.bot);
+    const freshVerified = freshHumans.filter(m => !m.pending && m.roles.cache.size > 1).size;
+    const freshAdmins = freshMembers.filter(m => !m.user.bot && m.permissions.has('Administrator')).size;
+    const freshMods = freshMembers.filter(m => {
+      if (m.user.bot) return false;
+      if (m.permissions.has('Administrator')) return false;
+      return m.permissions.has('ModerateMembers') || 
+             m.permissions.has('KickMembers') || 
+             m.permissions.has('BanMembers') || 
+             m.permissions.has('ManageMessages') ||
+             m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
+    }).size;
+    
     const freshStats = {
-      total: members.size,
-      members: members.filter(m => !m.user.bot).size,
-      verified: members.filter(m => m.roles.cache.some(r => r.name === '@Members' || r.name === 'Members')).size,
-      bots: members.filter(m => m.user.bot).size,
-      admins: members.filter(m => m.permissions.has('Administrator')).size,
-      mods: members.filter(m => m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('moderator'))).size,
+      total: freshMembers.size,
+      members: freshHumans.size,
+      verified: freshVerified,
+      bots: freshMembers.filter(m => m.user.bot).size,
+      admins: freshAdmins,
+      mods: freshMods,
       roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
     };
     setCachedMemberStats(guildId, freshStats);
@@ -4371,10 +6959,62 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+// Health/status endpoint
+console.log('🔧 Registering /status endpoint');
+app.get('/status', (req, res) => {
+  res.json({
+    uptime: process.uptime(),
+    port: PORT,
+    env: process.env.NODE_ENV || 'development',
+    botLoggedIn,
+    discordUser: client.user ? client.user.tag : null,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Web server listening on port ${PORT}`);
   console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
 });
 
+// ============== ERROR & DISCONNECT HANDLERS (KEEP BOT ONLINE) ==============
+// Handle client errors
+client.on('error', err => {
+  console.error('❌ Discord client error:', err);
+});
+
+// Handle disconnections and attempt auto-reconnect
+client.on('disconnect', () => {
+  console.warn('⚠️  Bot disconnected from Discord. Attempting to reconnect...');
+  setTimeout(() => {
+    if (!client.isReady()) {
+      client.login(token).catch(err => console.error('Reconnection failed:', err));
+    }
+  }, 5000);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  // Don't exit - keep process alive
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit - keep process alive
+});
+
 // ============== LOGIN ==============
-client.login(token);
+if (token && typeof token === 'string' && token.length > 0) {
+  client.login(token).catch(err => {
+    console.error('❌ Discord login error:', err);
+    console.log('⏰ Retrying login in 10 seconds...');
+    setTimeout(() => {
+      client.login(token).catch(err => console.error('Second login attempt failed:', err));
+    }, 10000);
+  });
+} else {
+  console.log('⚠️  No Discord `TOKEN` provided — skipping bot login. Web server remains available.');
+}
