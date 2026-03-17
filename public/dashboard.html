@@ -2044,7 +2044,7 @@
                     <ul class="sidebar-menu">
                         <li class="sidebar-item active" data-section="dashboard" onclick="switchSection('dashboard')">
                             <span class="sidebar-item-icon"><i class="ph-bold ph-chalkboard-simple"></i></span>
-                            <span data-i18n="sidebar_dashboard">Dashboard</span>
+                            <span class="sidebar-item-icon"><i class="ph-bold ph-chalkboard-simple"></i></span><span data-i18n="sidebar_dashboard">Dashboard</span>
                         </li>
                     </ul>
                 </div>
@@ -2343,7 +2343,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📝 Message Logging</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-clipboard-text"></i> Message Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label class="toggle-label"><span>Log Deleted Messages</span><label class="toggle-switch"><input type="checkbox" id="log_deleted" checked/><span class="toggle-slider"></span></label></label>
@@ -2363,7 +2363,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👤 Moderation Logging</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-clipboard-text"></i> Moderation Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label class="toggle-label"><span>Log Bans</span><label class="toggle-switch"><input type="checkbox" id="log_bans" checked/><span class="toggle-slider"></span></label></label>
@@ -2543,7 +2543,7 @@
 
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📝 Audit Logging</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-shield-check"></i> Audit Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_auditLogEnabled" checked/> Enable Audit Logs</label>
@@ -2620,7 +2620,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⚙️ Settings</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-gear"></i> Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="rr_allowMultiple" checked/> Allow Multiple Roles</label>
@@ -2638,7 +2638,7 @@
                     <!-- Active Reaction Roles List -->
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel" style="grid-column: 1 / -1;">
-                            <div class="panel-header"><div class="panel-title">📋 Active Reaction Roles</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-check-square-offset"></i> Active Reaction Roles</div></div>
                             <div class="panel-content" id="rr_activeList">
                                 <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No reaction roles configured yet</div>
                             </div>
@@ -2648,7 +2648,7 @@
                     <!-- Quick Post Section -->
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📨 Quick Post Role Selector</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-check-square-offset"></i> Quick Post Role Selector</div></div>
                             <div class="panel-content">
                                 <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
                                     💡 <strong>How it works:</strong> Posts an embed message to a channel. Copy the Message ID from the posted message, then use the "Create Reaction Role" form above to attach emoji → role mappings to it.
@@ -2671,7 +2671,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📜 Role Categories</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-list"></i> Role Categories</div></div>
                             <div class="panel-content" id="rr_categoriesList">
                                 <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading categories...</div>
                             </div>
@@ -2681,7 +2681,7 @@
                     <!-- Create Category + Post Category (side by side) -->
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📂 Create Category</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-list"></i> Create Category</div></div>
                             <div class="panel-content">
                                 <div style="background:rgba(145,70,255,0.06); border:1px solid rgba(145,70,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
                                     💡 <strong>How it works:</strong> Create a new role category with a name and roles. Same as <code>/create-category [name]</code> + <code>/addrole [category] [name] [id]</code>. After creating, use Post Category to send it to a channel.
@@ -2702,7 +2702,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📤 Post Category Selector</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-list"></i> Post Category Selector</div></div>
                             <div class="panel-content">
                                 <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
                                     💡 <strong>How it works:</strong> Pick a category and channel, then post a role selector embed with a dropdown. Members use the dropdown to self-assign roles. Same as <code>/setupcategory [name]</code>.
@@ -2727,7 +2727,7 @@
                     <!-- How Roles Work -->
                     <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📖 How Roles Work</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-check-square-offset"></i> How Roles Work</div></div>
                             <div class="panel-content">
                                 <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.7; display:grid; grid-template-columns: 1fr 1fr; gap: 0 2rem;">
                                     <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in the <strong>Role Categories</strong> section above</p>
@@ -2750,14 +2750,14 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🗑️ Remove Roles</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-check-square-offset"></i> Remove Roles</div></div>
                             <div class="panel-content">
                                 <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send role removal message for members</p>
                                 <button class="btn btn-primary" onclick="quickSetup('removeRoles')" style="width: 100%;">Post Remove Roles</button>
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎖️ Auto Level Roles</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-lightning"></i> Auto Level Roles</div></div>
                             <div class="panel-content">
                                 <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Create 100 level roles with emoji badges (takes a moment)</p>
                                 <button class="btn btn-primary" onclick="quickSetup('levelRoles')" style="width: 100%;">Create Level Roles 1-100</button>
@@ -2775,7 +2775,7 @@
                     <div class="content-grid">
                         <div class="panel" style="grid-column: 1/-1;">
                             <div class="panel-header">
-                                <div class="panel-title">🔍 Filter Logs</div>
+                                <div class="panel-title"><i class="ph-bold ph-clipboard-text"></i> Filter Logs</div>
                                 <button class="btn btn-primary" onclick="clearActivityLogs()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🗑️ Clear</button>
                             </div>
                             <div class="panel-content">
@@ -2809,7 +2809,7 @@
                         </div>
 
                         <div class="panel" style="grid-column: 1/-1;">
-                            <div class="panel-header"><div class="panel-title">📋 Recent Activities</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-pulse"></i> Recent Activities</div></div>
                             <div class="panel-content">
                                 <div id="activityLogsList" style="background: rgba(0, 0, 0, 0.3); border-radius: 6px; padding: 1rem; min-height: 300px; max-height: 600px; overflow-y: auto; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6;">
                                     <div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 2rem 0;">
@@ -2823,7 +2823,7 @@
                         </div>
 
                         <div class="panel" style="grid-column: 1/-1;">
-                            <div class="panel-header"><div class="panel-title">📊 Log Statistics</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chart-bar"></i> Log Statistics</div></div>
                             <div class="panel-content">
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
                                     <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
@@ -2856,7 +2856,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chat-centered-text"></i> Welcome Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
@@ -2869,7 +2869,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chat-centered-text"></i> Goodbye Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
@@ -2892,7 +2892,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⚡ Create Command</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-terminal"></i> Create Command</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Command Name</div>
@@ -2910,7 +2910,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📝 Aliases</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-terminal"></i> Aliases</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Command</div>
@@ -2936,7 +2936,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🧩 Available Components</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-diamonds-four"></i> Available Components</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Music Player</label>
@@ -2963,7 +2963,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⭐ XP Settings</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-lightning"></i> XP Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">XP per Message</div>
@@ -2981,7 +2981,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎯 Level Roles</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-lightning"></i> Level Roles</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Level</div>
@@ -2998,7 +2998,7 @@
 
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎯 Leveling Settings</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-lightning"></i> Leveling Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">XP per Message</div>
@@ -3028,7 +3028,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🏆 Leaderboard Settings</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-ranking"></i> Leaderboard Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Leaderboard</label>
@@ -3062,7 +3062,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎁 Start New Giveaway</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-gift"></i> Start New Giveaway</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Prize</div>
@@ -3084,7 +3084,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📊 Active Giveaways</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-gift"></i> Active Giveaways</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No active giveaways</div>
                             </div>
@@ -3100,7 +3100,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📡 Add Streamer</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-notification"></i> Add Streamer</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Platform</div>
@@ -3123,7 +3123,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📋 Monitored Accounts</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-notification"></i> Monitored Accounts</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No monitored accounts yet</div>
                             </div>
@@ -3139,7 +3139,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🔗 Settings</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-info"></i> Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Invite Tracking</label>
@@ -3154,7 +3154,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📊 Invite Leaderboard</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-info"></i> Invite Leaderboard</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">Top inviters will appear here</div>
                             </div>
@@ -3170,7 +3170,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💭 Settings</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chat-centered"></i> Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Message Counting</label>
@@ -3185,7 +3185,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📈 Message Stats</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chat-centered"></i> Message Stats</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">Message statistics will appear here</div>
                             </div>
@@ -3201,7 +3201,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎚️ Recording Settings</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-record"></i> Recording Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Enable Voice Recording</label>
@@ -3217,7 +3217,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📁 Recording Library</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-record"></i> Recording Library</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No recordings yet</div>
                             </div>
@@ -3233,7 +3233,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">⏱️ Create Reminder</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-note"></i> Create Reminder</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Reminder Title</div>
@@ -3264,7 +3264,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📅 Scheduled Reminders</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-note"></i> Scheduled Reminders</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No scheduled reminders</div>
                             </div>
@@ -3280,7 +3280,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📈 Channel Statistics</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chart-bar"></i> Channel Statistics</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Statistic Type</div>
@@ -3306,7 +3306,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📊 Active Stats</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chart-bar"></i> Active Stats</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No stat channels configured</div>
                             </div>
@@ -3322,7 +3322,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💳 Current Plan</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-wallet"></i> Current Plan</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Status</div>
@@ -3340,7 +3340,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎯 Features Included</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-wallet"></i> Features Included</div></div>
                             <div class="panel-content">
                                 <div style="display: flex; flex-direction: column; gap: 0.8rem;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -3369,7 +3369,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎨 Theme Colors</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-paint-brush-broad"></i> Theme Colors</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Primary Theme Color</div>
@@ -3411,7 +3411,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🌈 Accent Colors</div></div>
+                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-paint-brush-broad"></i> Accent Colors</div></div>
                             <div class="panel-content">
                                 <div style="display: flex; flex-direction: column; gap: 1.2rem;">
                                     <div class="form-group">
