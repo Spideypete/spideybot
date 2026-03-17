@@ -5168,7 +5168,15 @@ const REDIRECT_URI_DETECTOR = (req) => {
     host.includes('172.')
   );
 
-  const protocol = (forwardedProto === 'https' || (!forwardedProto && !isLocalHost))
+  const isSecureDomain = host && (
+    host.includes('repl.co') ||
+    host.includes('replit.dev') ||
+    host.includes('app.github.dev') ||
+    host.includes('devtunnels') ||
+    host.includes('onrender')
+  );
+
+  const protocol = (forwardedProto === 'https' || (!forwardedProto && !isLocalHost) || isSecureDomain)
     ? 'https'
     : req.protocol;
 
@@ -5180,13 +5188,23 @@ app.get("/auth/discord", (req, res) => {
   const scopes = ["identify", "guilds"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(currentRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
   
-  console.log(`🔵 Initiating OAuth login. Redirect URI: ${currentRedirectUri}`);
+  console.log("========== OAUTH LOGIN ==========");
+  console.log("Redirect URI:", currentRedirectUri);
+  console.log("==================================");
   res.redirect(authURL);
 });
 
 app.get("/auth/discord/callback", async (req, res) => {
+  console.log("========== CALLBACK HIT ==========");
+  console.log("Query:", req.query);
+  console.log("Host:", req.get('host'));
+  console.log("==================================");
+  
   const code = req.query.code;
-  if (!code) return res.status(400).send("No code provided");
+  if (!code) {
+    console.log("No code provided!");
+    return res.status(400).send("No code provided");
+  }
 
   try {
     const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
@@ -5248,7 +5266,8 @@ app.get("/auth/discord/callback", async (req, res) => {
       // Ensure we redirect to the full URL to avoid relative path issues in frames
       const host = req.get('x-forwarded-host') || req.get('host');
       const forwardedProto = req.get('x-forwarded-proto');
-      const protocol = (forwardedProto === 'https' || host.includes('repl.co') || host.includes('replit.dev') || host.includes('app.github.dev')) ? 'https' : req.protocol;
+      const protocol = (forwardedProto === 'https' || host.includes('repl.co') || host.includes('replit.dev') || host.includes('app.github.dev') || host.includes('devtunnels')) ? 'https' : req.protocol;
+      console.log(`🔵 Redirecting to: ${protocol}://${host}/dashboard.html`);
       res.redirect(`${protocol}://${host}/dashboard.html`);
     });
   } catch (err) {

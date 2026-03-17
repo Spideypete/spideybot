@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: spidey-bot
+    runtime: node
+    runtimeVersion: 18
+    plan: free
+    buildCommand: npm install --no-audit --no-fund
+    startCommand: npm run prod
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: TOKEN
+        scope: pr
+      - key: CLIENT_ID
+        scope: pr
+      - key: DISCORD_CLIENT_SECRET
+        scope: pr
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: BASE_URL
+        scope: pr
