@@ -1,0 +1,27 @@
+[dotenv@17.2.3] injecting env (0) from .env [2m-- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops[0m
+⚠️ Missing required environment variables: CLIENT_SECRET
+🔐 OAuth Redirect URI: https://zany-space-guacamole-v696776796573pvgv-5000.app.github.dev/auth/discord/callback
+🔧 Registering /status endpoint
+🚀 Web server listening on port 5000
+🔗 Public URL: https://workspace.spideypete.repl.co
+❌ Discord login error: Error [TokenInvalid]: An invalid token was provided.
+    at WebSocketManager.connect [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/client/websocket/WebSocketManager.js:140:26[90m)[39m
+    at Client.login [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/client/Client.js:229:21[90m)[39m
+    at Object.<anonymous> [90m(/home/runner/workspace/[39mindex.cjs:7011:10[90m)[39m
+[90m    at Module._compile (node:internal/modules/cjs/loader:1521:14)[39m
+[90m    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)[39m
+[90m    at Module.load (node:internal/modules/cjs/loader:1266:32)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1091:12)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m {
+  code: [32m'TokenInvalid'[39m
+}
+⏰ Retrying login in 10 seconds...
+Second login attempt failed: Error [TokenInvalid]: An invalid token was provided.
+    at WebSocketManager.connect [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/client/websocket/WebSocketManager.js:140:26[90m)[39m
+    at Client.login [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/client/Client.js:229:21[90m)[39m
+    at Timeout._onTimeout [90m(/home/runner/workspace/[39mindex.cjs:7015:14[90m)[39m
+[90m    at listOnTimeout (node:internal/timers:581:17)[39m
+[90m    at process.processTimers (node:internal/timers:519:7)[39m {
+  code: [32m'TokenInvalid'[39m
+}

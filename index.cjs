@@ -20,6 +20,10 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+console.log("[DEBUG] Dotenv loaded, env vars:");
+console.log("[DEBUG] TOKEN:", process.env.TOKEN ? "set" : "NOT SET");
+console.log("[DEBUG] CLIENT_ID:", process.env.CLIENT_ID ? "set" : "NOT SET");
+console.log("[DEBUG] CLIENT_SECRET:", process.env.CLIENT_SECRET ? "set" : "NOT SET");
 
 // Validate required environment variables (do not log secrets)
 const requiredEnvVars = ["TOKEN", "CLIENT_ID", "CLIENT_SECRET"];
@@ -60,8 +64,8 @@ app.use(session({
   cookie: { 
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production'
+    sameSite: 'none',
+    secure: true
   }
 }));
 
@@ -148,7 +152,10 @@ function sendAuditLog(guild, guildConfig, title, description, color = 0x5865F2) 
 
 // ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID || "";
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "";
+const DISCORD_CLIENT_SECRET = process.env.CLIENT_SECRET || "";
+
+console.log("[DEBUG] CLIENT_ID:", DISCORD_CLIENT_ID ? "set" : "NOT SET");
+console.log("[DEBUG] CLIENT_SECRET:", DISCORD_CLIENT_SECRET ? "set (length: " + DISCORD_CLIENT_SECRET.length + ")" : "NOT SET");
 // Prefer explicit BASE_URL in env for Codespaces / production. Keep Render fallback.
 const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || null;
 const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'https://zany-space-guacamole-v696776796573pvgv-5000.app.github.dev');
@@ -5185,7 +5192,7 @@ const REDIRECT_URI_DETECTOR = (req) => {
 
 app.get("/auth/discord", (req, res) => {
   const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
-  const scopes = ["identify", "guilds"];
+  const scopes = ["identify", "guilds", "guilds.join"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(currentRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
   
   console.log("========== OAUTH LOGIN ==========");
@@ -5217,7 +5224,7 @@ app.get("/auth/discord/callback", async (req, res) => {
         code,
         grant_type: "authorization_code",
         redirect_uri: currentRedirectUri,
-        scope: "identify guilds"
+        scope: "identify guilds guilds.join"
       }),
       {
         headers: {
@@ -5262,7 +5269,7 @@ app.get("/auth/discord/callback", async (req, res) => {
         console.error("🔴 Session save error:", err);
         return res.status(500).send("Login failed: could not save session");
       }
-      console.log(`✅ User logged in: ${userRes.data.username}`);
+      console.log(`✅ User logged in: ${userRes.data.username} | Session ID: ${req.sessionID} | Guilds: ${adminGuilds.length}`);
       // Ensure we redirect to the full URL to avoid relative path issues in frames
       const host = req.get('x-forwarded-host') || req.get('host');
       const forwardedProto = req.get('x-forwarded-proto');
@@ -5308,6 +5315,11 @@ app.post("/logout", (req, res) => {
 // ============== PUBLIC API ==============
 
 app.get("/api/user", (req, res) => {
+  console.log("[DEBUG /api/user] Session ID:", req.sessionID);
+  console.log("[DEBUG /api/user] Authenticated:", req.session.authenticated);
+  console.log("[DEBUG /api/user] Guilds in session:", req.session.guilds?.length || 0);
+  console.log("[DEBUG /api/user] User in session:", req.session.user?.username);
+  
   if (!req.session.authenticated) {
     return res.status(401).json({ error: "Not authenticated" });
   }

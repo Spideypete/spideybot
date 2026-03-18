@@ -1,0 +1,36 @@
+═══════════════════════════════════════════════════════════════════
+
+YOUR SPIDEY BOT RENDER AUTH IS CONFIGURED FOR:
+
+Domain: https://spideybot-90sr.onrender.com
+Status: ✅ Ready for Discord OAuth Configuration
+
+═══════════════════════════════════════════════════════════════════
+
+DISCORD OAUTH REDIRECT URIs TO ADD:
+
+1. https://spideybot-90sr.onrender.com/auth/discord/callback
+2. https://spideybot-90sr.onrender.com/login
+
+COPY THESE EXACTLY TO YOUR DISCORD DEVELOPER PORTAL
+
+═══════════════════════════════════════════════════════════════════
+
+RENDER ENVIRONMENT VARIABLES NEEDED:
+
+TOKEN = Your Discord Bot Token
+CLIENT_ID = Your Discord App Client ID  
+DISCORD_CLIENT_SECRET = Your Discord App Client Secret
+SESSION_SECRET = Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+═══════════════════════════════════════════════════════════════════
+
+QUICK STEPS:
+
+1. Go to Discord Developer Portal
+2. Add the 2 redirect URIs above
+3. Go to Render Dashboard  
+4. Set the 4 environment variables above
+5. Test: https://spideybot-90sr.onrender.com/login
+
+═══════════════════════════════════════════════════════════════════

@@ -1,0 +1,22 @@
+[dotenv@17.2.3] injecting env (0) from .env [2m-- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit[0m
+🔐 OAuth Redirect URI: https://b17c56dd-97ae-4115-89ec-0ae9cc59baae-00-2qrrb57gp09hi.picard.replit.dev/auth/discord/callback
+🚀 Web server listening on port 5000
+🔗 Public URL: https://workspace.spideypete.repl.co
+/home/runner/workspace/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140
+    const invalidToken = new DiscordjsError(ErrorCodes.TokenInvalid);
+                         ^
+
+Error [TokenInvalid]: An invalid token was provided.
+    at WebSocketManager.connect [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/client/websocket/WebSocketManager.js:140:26[90m)[39m
+    at Client.login [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/client/Client.js:229:21[90m)[39m
+    at Object.<anonymous> [90m(/home/runner/workspace/[39mindex.cjs:4380:8[90m)[39m
+[90m    at Module._compile (node:internal/modules/cjs/loader:1521:14)[39m
+[90m    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)[39m
+[90m    at Module.load (node:internal/modules/cjs/loader:1266:32)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1091:12)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m {
+  code: [32m'TokenInvalid'[39m
+}
+
+Node.js v20.20.0

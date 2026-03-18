@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SPIDEY BOT - Admin Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1">
     <style>
         :root {
             --theme-color: 0, 212, 255;
             --text-color: rgba(255, 255, 255, 0.92);
-            --bg-primary: #000000;
+            --bg-primary: #040b1a;
             --bg-secondary: rgba(10, 16, 30, 0.8);
             --accent-cyan: #00d4ff;
             --accent-green: #1be187;
@@ -19,7 +18,7 @@
             --card-gradient: linear-gradient(135deg, rgba(0, 212, 255, 0.22), rgba(145, 70, 255, 0.12));
 
             /* Sidebar theme (matches reference screenshots) */
-            --sidebar-bg: #2C2C2C;
+            --sidebar-bg: rgba(10, 12, 18, 0.92);
             --sidebar-border: rgba(255, 255, 255, 0.06);
             --sidebar-text: rgba(255, 255, 255, 0.78);
             --sidebar-muted: rgba(255, 255, 255, 0.42);
@@ -275,7 +274,7 @@
 
         /* Header */
         .header {
-            background: #2C2C2C;
+            background: rgba(8, 13, 25, 0.9);
             backdrop-filter: blur(18px);
             border-bottom: 1px solid rgba(var(--theme-color), 0.18);
             padding: 1rem 2rem;
@@ -857,12 +856,6 @@
             flex-shrink: 0;
         }
 
-        /* Phosphor icons inside sidebar */
-        .sidebar-item-icon i.ph {
-            font-size: 18px;
-            line-height: 1;
-        }
-
         body.light-mode .sidebar-search input {
             background: rgba(15, 20, 30, 0.03);
         }
@@ -1250,7 +1243,7 @@
         }
 
         .form-input {
-            background: #000000;
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(var(--theme-color), 0.2);
             padding: 0.4rem 0.5rem;
             border-radius: 5px;
@@ -1848,7 +1841,7 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            background: #2C2C2C;
+            background: #141e3c;
             border: 1px solid rgba(var(--theme-color), 0.3);
             border-top: none;
             border-radius: 0 0 5px 5px;
@@ -1869,12 +1862,12 @@
             border-bottom: 1px solid rgba(var(--theme-color), 0.1);
             position: sticky;
             top: 0;
-            background: #2C2C2C;
+            background: #141e3c;
             z-index: 1;
         }
         .cms-search input {
             width: 100%;
-            background: #000000;
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(var(--theme-color), 0.15);
             border-radius: 3px;
             padding: 4px 8px;
@@ -2043,8 +2036,8 @@
                     <div class="sidebar-section-title" data-i18n="nav_main">MAIN</div>
                     <ul class="sidebar-menu">
                         <li class="sidebar-item active" data-section="dashboard" onclick="switchSection('dashboard')">
-                            <span class="sidebar-item-icon"><i class="ph-bold ph-chalkboard-simple"></i></span>
-                            <span class="sidebar-item-icon"><i class="ph-bold ph-chalkboard-simple"></i></span><span data-i18n="sidebar_dashboard">Dashboard</span>
+                            <span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+                            <span data-i18n="sidebar_dashboard">Dashboard</span>
                         </li>
                     </ul>
                 </div>
@@ -2052,62 +2045,62 @@
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_core">CORE</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="settings" onclick="switchSection('settings')"><span class="sidebar-item-icon"><i class="ph-bold ph-gear"></i></span><span data-i18n="sidebar_settings">Settings</span></li>
-                        <li class="sidebar-item" data-section="logging" onclick="switchSection('logging')"><span class="sidebar-item-icon"><i class="ph-bold ph-clipboard-text"></i></span><span data-i18n="sidebar_logging">Logging</span></li>
-                        <li class="sidebar-item" data-section="server-guard" onclick="switchSection('server-guard')"><span class="sidebar-item-icon"><i class="ph-bold ph-shield-check"></i></span><span data-i18n="sidebar_serverGuard">Server Guard</span></li>
+                        <li class="sidebar-item" data-section="settings" onclick="switchSection('settings')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m8.48 0l4.24-4.24M1 12h6m6 0h6m-17.78 7.78l4.24-4.24m8.48 0l4.24 4.24"/></svg></span><span data-i18n="sidebar_settings">Settings</span></li>
+                        <li class="sidebar-item" data-section="logging" onclick="switchSection('logging')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2h-2M9 7h6M9 13h6M9 19h2"/></svg></span><span data-i18n="sidebar_logging">Logging</span></li>
+                        <li class="sidebar-item" data-section="server-guard" onclick="switchSection('server-guard')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1l7 3.5v5.5c0 4-7 7-7 7s-7-3-7-7V4.5L12 1z"/></svg></span><span data-i18n="sidebar_serverGuard">Server Guard</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_features">FEATURES</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><i class="ph-bold ph-check-square-offset"></i></span><span data-i18n="sidebar_reactRoles">React Roles</span></li>
-                        <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><i class="ph-bold ph-list"></i></span><span data-i18n="sidebar_roleCategories">Role Categories</span></li>
-                        <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><i class="ph-bold ph-chat-centered-text"></i></span><span data-i18n="sidebar_serverMessages">Server Messages</span></li>
-                        <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><i class="ph-bold ph-terminal"></i></span><span data-i18n="sidebar_commands">Commands</span></li>
-                        <li class="sidebar-item" data-section="components" onclick="switchSection('components')"><span class="sidebar-item-icon"><i class="ph-bold ph-diamonds-four"></i></span><span data-i18n="sidebar_components">Components</span></li>
+                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span data-i18n="sidebar_reactRoles">React Roles</span></li>
+                        <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h5a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_roleCategories">Role Categories</span></li>
+                        <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_serverMessages">Server Messages</span></li>
+                        <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4l6 6m-6-6l-6 6"/></svg></span><span data-i18n="sidebar_commands">Commands</span></li>
+                        <li class="sidebar-item" data-section="components" onclick="switchSection('components')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8.5" y="11.5" width="7" height="7"/></svg></span><span data-i18n="sidebar_components">Components</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_systems">SYSTEMS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><i class="ph-bold ph-lightning"></i></span><span data-i18n="sidebar_xpLevels">XP Levels</span></li>
-                        <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><i class="ph-bold ph-ranking"></i></span><span data-i18n="sidebar_leaderboards">Leaderboards</span></li>
-                        <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><i class="ph-bold ph-gift"></i></span><span data-i18n="sidebar_giveaways">Giveaways</span></li>
+                        <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span data-i18n="sidebar_xpLevels">XP Levels</span></li>
+                        <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6-7 6 7M3 12h18v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z"/></svg></span><span data-i18n="sidebar_leaderboards">Leaderboards</span></li>
+                        <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span data-i18n="sidebar_giveaways">Giveaways</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_monitoring">MONITORING</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><i class="ph-bold ph-pulse"></i></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
-                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><i class="ph-bold ph-notification"></i></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
-                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><i class="ph-bold ph-info"></i></span><span data-i18n="sidebar_invites">Invites</span></li>
-                        <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><i class="ph-bold ph-chat-centered"></i></span><span data-i18n="sidebar_messages">Messages</span></li>
+                        <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
+                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6l3-6z"/></svg></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
+                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><span data-i18n="sidebar_invites">Invites</span></li>
+                        <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_messages">Messages</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_advanced">ADVANCED</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="recordings" onclick="switchSection('recordings')"><span class="sidebar-item-icon"><i class="ph-bold ph-record"></i></span><span data-i18n="sidebar_recordings">Recordings</span></li>
-                        <li class="sidebar-item" data-section="reminders" onclick="switchSection('reminders')"><span class="sidebar-item-icon"><i class="ph-bold ph-note"></i></span><span data-i18n="sidebar_reminders">Reminders</span></li>
-                        <li class="sidebar-item" data-section="statistics-channels" onclick="switchSection('statistics-channels')"><span class="sidebar-item-icon"><i class="ph-bold ph-chart-bar"></i></span><span data-i18n="sidebar_stats">Stats</span></li>
+                        <li class="sidebar-item" data-section="recordings" onclick="switchSection('recordings')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 8v4M4.22 4.22l2.83 2.83m5.9 0l2.83-2.83M1 12h4m8 0h4m-15.78 7.78l2.83-2.83m5.9 0l2.83 2.83"/></svg></span><span data-i18n="sidebar_recordings">Recordings</span></li>
+                        <li class="sidebar-item" data-section="reminders" onclick="switchSection('reminders')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span data-i18n="sidebar_reminders">Reminders</span></li>
+                        <li class="sidebar-item" data-section="statistics-channels" onclick="switchSection('statistics-channels')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="3" height="14"/><rect x="10" y="3" width="3" height="18"/><rect x="17" y="10" width="3" height="11"/></svg></span><span data-i18n="sidebar_stats">Stats</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_subscriptions">SUBSCRIPTIONS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="subscriptions" onclick="switchSection('subscriptions')"><span class="sidebar-item-icon"><i class="ph-bold ph-wallet"></i></span><span data-i18n="sidebar_premium">Premium</span></li>
+                        <li class="sidebar-item" data-section="subscriptions" onclick="switchSection('subscriptions')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span data-i18n="sidebar_premium">Premium</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_tools">TOOLS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="colors" onclick="switchSection('colors')"><span class="sidebar-item-icon"><i class="ph-bold ph-paint-brush-broad"></i></span><span data-i18n="sidebar_colors">Colors</span></li>
+                        <li class="sidebar-item" data-section="colors" onclick="switchSection('colors')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg></span><span data-i18n="sidebar_colors">Colors</span></li>
                     </ul>
                 </div>
             </div>
@@ -2343,7 +2336,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-clipboard-text"></i> Message Logging</div></div>
+                            <div class="panel-header"><div class="panel-title">📝 Message Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label class="toggle-label"><span>Log Deleted Messages</span><label class="toggle-switch"><input type="checkbox" id="log_deleted" checked/><span class="toggle-slider"></span></label></label>
@@ -2363,7 +2356,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-clipboard-text"></i> Moderation Logging</div></div>
+                            <div class="panel-header"><div class="panel-title">👤 Moderation Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label class="toggle-label"><span>Log Bans</span><label class="toggle-switch"><input type="checkbox" id="log_bans" checked/><span class="toggle-slider"></span></label></label>
@@ -2543,7 +2536,7 @@
 
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-shield-check"></i> Audit Logging</div></div>
+                            <div class="panel-header"><div class="panel-title">📝 Audit Logging</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="sg_auditLogEnabled" checked/> Enable Audit Logs</label>
@@ -2620,7 +2613,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-gear"></i> Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">⚙️ Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="rr_allowMultiple" checked/> Allow Multiple Roles</label>
@@ -2638,7 +2631,7 @@
                     <!-- Active Reaction Roles List -->
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel" style="grid-column: 1 / -1;">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-check-square-offset"></i> Active Reaction Roles</div></div>
+                            <div class="panel-header"><div class="panel-title">📋 Active Reaction Roles</div></div>
                             <div class="panel-content" id="rr_activeList">
                                 <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No reaction roles configured yet</div>
                             </div>
@@ -2648,7 +2641,7 @@
                     <!-- Quick Post Section -->
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-check-square-offset"></i> Quick Post Role Selector</div></div>
+                            <div class="panel-header"><div class="panel-title">📨 Quick Post Role Selector</div></div>
                             <div class="panel-content">
                                 <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
                                     💡 <strong>How it works:</strong> Posts an embed message to a channel. Copy the Message ID from the posted message, then use the "Create Reaction Role" form above to attach emoji → role mappings to it.
@@ -2671,7 +2664,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-list"></i> Role Categories</div></div>
+                            <div class="panel-header"><div class="panel-title">📜 Role Categories</div></div>
                             <div class="panel-content" id="rr_categoriesList">
                                 <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading categories...</div>
                             </div>
@@ -2681,7 +2674,7 @@
                     <!-- Create Category + Post Category (side by side) -->
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-list"></i> Create Category</div></div>
+                            <div class="panel-header"><div class="panel-title">📂 Create Category</div></div>
                             <div class="panel-content">
                                 <div style="background:rgba(145,70,255,0.06); border:1px solid rgba(145,70,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
                                     💡 <strong>How it works:</strong> Create a new role category with a name and roles. Same as <code>/create-category [name]</code> + <code>/addrole [category] [name] [id]</code>. After creating, use Post Category to send it to a channel.
@@ -2702,7 +2695,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-list"></i> Post Category Selector</div></div>
+                            <div class="panel-header"><div class="panel-title">📤 Post Category Selector</div></div>
                             <div class="panel-content">
                                 <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
                                     💡 <strong>How it works:</strong> Pick a category and channel, then post a role selector embed with a dropdown. Members use the dropdown to self-assign roles. Same as <code>/setupcategory [name]</code>.
@@ -2724,18 +2717,68 @@
                         </div>
                     </div>
 
+                    <!-- Gaming Roles Section (full width) -->
+                    <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Add game roles here (e.g. Valorant, Minecraft). Members click the 🎮 button posted via Quick Setup → Gaming Roles to choose which games they play. Same as the bot command <code>/addgamerole [name] [roleID]</code>.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Select Roles</div>
+                                    <div id="gr_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
+                                </div>
+                                <button class="btn btn-primary" onclick="addTypedRole('game')" style="width:100%;">➕ Add Selected Gaming Roles</button>
+                                <div id="gr_list" style="margin-top:0.75rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Watch Party + Platform Roles (side by side) -->
+                    <div class="content-grid" style="margin-top: 1rem;">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎬 Watch Party Roles</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(78,205,196,0.06); border:1px solid rgba(78,205,196,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Add streaming/watch party roles. Members click the 🎬 button from Quick Setup → Watch Party to join. Same as <code>/addwatchpartyrole [name] [roleID]</code>.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Select Roles</div>
+                                    <div id="wp_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
+                                </div>
+                                <button class="btn btn-primary" onclick="addTypedRole('watchparty')" style="width:100%;">➕ Add Selected Watch Party Roles</button>
+                                <div id="wp_list" style="margin-top:0.75rem;"></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
+                            <div class="panel-content">
+                                <div style="background:rgba(69,183,209,0.06); border:1px solid rgba(69,183,209,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
+                                    💡 <strong>How it works:</strong> Add platform roles (PC, PlayStation, Xbox, etc). Members pick their platforms via the 💻 button from Quick Setup → Platform Roles. Same as <code>/addplatformrole [name] [roleID]</code>.
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Select Roles</div>
+                                    <div id="pl_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
+                                </div>
+                                <button class="btn btn-primary" onclick="addTypedRole('platform')" style="width:100%;">➕ Add Selected Platform Roles</button>
+                                <div id="pl_list" style="margin-top:0.75rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- How Roles Work -->
                     <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-check-square-offset"></i> How Roles Work</div></div>
+                            <div class="panel-header"><div class="panel-title">📖 How Roles Work</div></div>
                             <div class="panel-content">
                                 <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.7; display:grid; grid-template-columns: 1fr 1fr; gap: 0 2rem;">
-                                    <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in the <strong>Role Categories</strong> section above</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in the sections above (Gaming, Watch Party, Platform)</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>4.</strong> Members click the button → dropdown appears → they pick roles</p>
-                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click Post Category</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click the Post button for each type</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>5.</strong> For <strong>Reaction Roles</strong>: post a message, add emoji→role pairs above</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>3.</strong> The bot posts an embed with a button in your server</p>
-                                    <p style="margin:0;"><strong>6.</strong> Use <strong>Post Category Selector</strong> or <code>/setupcategory [name]</code></p>
+                                    <p style="margin:0;"><strong>6.</strong> For <strong>Role Categories</strong>: create one above, then use Post Category or <code>/setupcategory [name]</code></p>
                                 </div>
                             </div>
                         </div>
@@ -2750,14 +2793,35 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-check-square-offset"></i> Remove Roles</div></div>
+                            <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
+                            <div class="panel-content">
+                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send gaming role selector message with button interaction</p>
+                                <button class="btn btn-primary" onclick="quickSetup('gaming')" style="width: 100%;">Post Gaming Roles Selector</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎬 Watch Party</div></div>
+                            <div class="panel-content">
+                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send watch party role selector message</p>
+                                <button class="btn btn-primary" onclick="quickSetup('watchparty')" style="width: 100%;">Post Watch Party Selector</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
+                            <div class="panel-content">
+                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send platform role selector message</p>
+                                <button class="btn btn-primary" onclick="quickSetup('platform')" style="width: 100%;">Post Platform Selector</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🗑️ Remove Roles</div></div>
                             <div class="panel-content">
                                 <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send role removal message for members</p>
                                 <button class="btn btn-primary" onclick="quickSetup('removeRoles')" style="width: 100%;">Post Remove Roles</button>
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-lightning"></i> Auto Level Roles</div></div>
+                            <div class="panel-header"><div class="panel-title">🎖️ Auto Level Roles</div></div>
                             <div class="panel-content">
                                 <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Create 100 level roles with emoji badges (takes a moment)</p>
                                 <button class="btn btn-primary" onclick="quickSetup('levelRoles')" style="width: 100%;">Create Level Roles 1-100</button>
@@ -2775,7 +2839,7 @@
                     <div class="content-grid">
                         <div class="panel" style="grid-column: 1/-1;">
                             <div class="panel-header">
-                                <div class="panel-title"><i class="ph-bold ph-clipboard-text"></i> Filter Logs</div>
+                                <div class="panel-title">🔍 Filter Logs</div>
                                 <button class="btn btn-primary" onclick="clearActivityLogs()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🗑️ Clear</button>
                             </div>
                             <div class="panel-content">
@@ -2809,7 +2873,7 @@
                         </div>
 
                         <div class="panel" style="grid-column: 1/-1;">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-pulse"></i> Recent Activities</div></div>
+                            <div class="panel-header"><div class="panel-title">📋 Recent Activities</div></div>
                             <div class="panel-content">
                                 <div id="activityLogsList" style="background: rgba(0, 0, 0, 0.3); border-radius: 6px; padding: 1rem; min-height: 300px; max-height: 600px; overflow-y: auto; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6;">
                                     <div style="color: rgba(0, 212, 255, 0.7); text-align: center; padding: 2rem 0;">
@@ -2823,7 +2887,7 @@
                         </div>
 
                         <div class="panel" style="grid-column: 1/-1;">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chart-bar"></i> Log Statistics</div></div>
+                            <div class="panel-header"><div class="panel-title">📊 Log Statistics</div></div>
                             <div class="panel-content">
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
                                     <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; padding: 0.75rem; text-align: center;">
@@ -2856,7 +2920,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chat-centered-text"></i> Welcome Message</div></div>
+                            <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
@@ -2869,7 +2933,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chat-centered-text"></i> Goodbye Message</div></div>
+                            <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
@@ -2892,7 +2956,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-terminal"></i> Create Command</div></div>
+                            <div class="panel-header"><div class="panel-title">⚡ Create Command</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Command Name</div>
@@ -2910,7 +2974,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-terminal"></i> Aliases</div></div>
+                            <div class="panel-header"><div class="panel-title">📝 Aliases</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Command</div>
@@ -2936,7 +3000,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-diamonds-four"></i> Available Components</div></div>
+                            <div class="panel-header"><div class="panel-title">🧩 Available Components</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Music Player</label>
@@ -2963,7 +3027,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-lightning"></i> XP Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">⭐ XP Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">XP per Message</div>
@@ -2981,7 +3045,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-lightning"></i> Level Roles</div></div>
+                            <div class="panel-header"><div class="panel-title">🎯 Level Roles</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Level</div>
@@ -2998,7 +3062,7 @@
 
                     <div class="content-grid" style="margin-top: 1rem;">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-lightning"></i> Leveling Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">🎯 Leveling Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">XP per Message</div>
@@ -3028,7 +3092,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-ranking"></i> Leaderboard Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">🏆 Leaderboard Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Leaderboard</label>
@@ -3062,7 +3126,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-gift"></i> Start New Giveaway</div></div>
+                            <div class="panel-header"><div class="panel-title">🎁 Start New Giveaway</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Prize</div>
@@ -3084,7 +3148,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-gift"></i> Active Giveaways</div></div>
+                            <div class="panel-header"><div class="panel-title">📊 Active Giveaways</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No active giveaways</div>
                             </div>
@@ -3100,7 +3164,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-notification"></i> Add Streamer</div></div>
+                            <div class="panel-header"><div class="panel-title">📡 Add Streamer</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Platform</div>
@@ -3123,7 +3187,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-notification"></i> Monitored Accounts</div></div>
+                            <div class="panel-header"><div class="panel-title">📋 Monitored Accounts</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No monitored accounts yet</div>
                             </div>
@@ -3139,7 +3203,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-info"></i> Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">🔗 Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Invite Tracking</label>
@@ -3154,7 +3218,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-info"></i> Invite Leaderboard</div></div>
+                            <div class="panel-header"><div class="panel-title">📊 Invite Leaderboard</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">Top inviters will appear here</div>
                             </div>
@@ -3170,7 +3234,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chat-centered"></i> Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">💭 Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Message Counting</label>
@@ -3185,7 +3249,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chat-centered"></i> Message Stats</div></div>
+                            <div class="panel-header"><div class="panel-title">📈 Message Stats</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">Message statistics will appear here</div>
                             </div>
@@ -3201,7 +3265,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-record"></i> Recording Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">🎚️ Recording Settings</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox"/> Enable Voice Recording</label>
@@ -3217,7 +3281,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-record"></i> Recording Library</div></div>
+                            <div class="panel-header"><div class="panel-title">📁 Recording Library</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No recordings yet</div>
                             </div>
@@ -3233,7 +3297,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-note"></i> Create Reminder</div></div>
+                            <div class="panel-header"><div class="panel-title">⏱️ Create Reminder</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Reminder Title</div>
@@ -3264,7 +3328,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-note"></i> Scheduled Reminders</div></div>
+                            <div class="panel-header"><div class="panel-title">📅 Scheduled Reminders</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No scheduled reminders</div>
                             </div>
@@ -3280,7 +3344,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chart-bar"></i> Channel Statistics</div></div>
+                            <div class="panel-header"><div class="panel-title">📈 Channel Statistics</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Statistic Type</div>
@@ -3306,7 +3370,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-chart-bar"></i> Active Stats</div></div>
+                            <div class="panel-header"><div class="panel-title">📊 Active Stats</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No stat channels configured</div>
                             </div>
@@ -3322,7 +3386,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-wallet"></i> Current Plan</div></div>
+                            <div class="panel-header"><div class="panel-title">💳 Current Plan</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Status</div>
@@ -3340,7 +3404,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-wallet"></i> Features Included</div></div>
+                            <div class="panel-header"><div class="panel-title">🎯 Features Included</div></div>
                             <div class="panel-content">
                                 <div style="display: flex; flex-direction: column; gap: 0.8rem;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -3369,7 +3433,7 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-paint-brush-broad"></i> Theme Colors</div></div>
+                            <div class="panel-header"><div class="panel-title">🎨 Theme Colors</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Primary Theme Color</div>
@@ -3411,7 +3475,7 @@
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title"><i class="ph-bold ph-paint-brush-broad"></i> Accent Colors</div></div>
+                            <div class="panel-header"><div class="panel-title">🌈 Accent Colors</div></div>
                             <div class="panel-content">
                                 <div style="display: flex; flex-direction: column; gap: 1.2rem;">
                                     <div class="form-group">
@@ -4396,6 +4460,9 @@
 
         async function quickSetup(setupType) {
             const setupNames = {
+                'gaming': 'Gaming Roles',
+                'watchparty': 'Watch Party',
+                'platform': 'Platform Roles',
                 'removeRoles': 'Remove Roles',
                 'levelRoles': 'Level Roles (1-100)'
             };
@@ -4868,10 +4935,10 @@
                     });
                     if (curVal) scSel.value = curVal;
                 }
-                // Typed roles removed (gaming, watchparty, platform)
-                // renderTypedRoles('game', data.gameRoles || []);
-                // renderTypedRoles('watchparty', data.watchPartyRoles || []);
-                // renderTypedRoles('platform', data.platformRoles || []);
+                // Render typed role lists (gaming, watchparty, platform)
+                renderTypedRoles('game', data.gameRoles || []);
+                renderTypedRoles('watchparty', data.watchPartyRoles || []);
+                renderTypedRoles('platform', data.platformRoles || []);
             } catch (e) { console.error('loadReactRoles error:', e); }
         }
 
@@ -5052,10 +5119,9 @@
                 const res = await fetch('/api/config/' + guildId, { credentials: 'include' });
                 if (!res.ok) return;
                 const data = await res.json();
-                // Typed roles removed (gaming, watchparty, platform)
-                // renderTypedRoles('game', data.gameRoles || []);
-                // renderTypedRoles('watchparty', data.watchPartyRoles || []);
-                // renderTypedRoles('platform', data.platformRoles || []);
+                renderTypedRoles('game', data.gameRoles || []);
+                renderTypedRoles('watchparty', data.watchPartyRoles || []);
+                renderTypedRoles('platform', data.platformRoles || []);
             } catch (e) { console.error('loadTypedRoles error:', e); }
         }
 

@@ -1,0 +1,74 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║          SPIDEY BOT - RENDER DISCORD OAUTH QUICK SETUP           ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+📋 CHECKLIST (Do these in order):
+
+1️⃣  CREATE RENDER ACCOUNT
+   - Go to https://dashboard.render.com
+   - Sign up with GitHub (recommended)
+
+2️⃣  DEPLOY BOT TO RENDER
+   - Create New → Web Service
+   - Connect your GitHub repo
+   - Build Command: npm install
+   - Start Command: node index.cjs
+   - Wait for deployment to complete
+   - Copy your Render URL: https://your-app-name.onrender.com
+
+3️⃣  CONFIGURE DISCORD OAUTH
+   - Go to https://discord.com/developers/applications
+   - Select your SPIDEY BOT app
+   - OAuth2 → General
+   - Add Redirect URLs:
+     • https://your-app-name.onrender.com/auth/discord/callback
+     • https://your-app-name.onrender.com/login
+   - Click "Save Changes"
+
+4️⃣  SET ENVIRONMENT VARIABLES ON RENDER
+   - In Render dashboard → Web Service → Environment
+   - Add these variables:
+     
+     TOKEN=your_discord_bot_token
+     CLIENT_ID=your_client_id
+     DISCORD_CLIENT_SECRET=your_client_secret
+     SESSION_SECRET=your_random_32_char_secret
+     OPENAI_API_KEY=your_openai_api_key_if_using
+
+5️⃣  TEST LOGIN
+   - Visit: https://your-app-name.onrender.com/login
+   - Click login → Discord will open
+   - Authorize the app
+   - Should redirect to dashboard with your username
+
+6️⃣  MONITOR BOT
+   - Check Render logs for errors
+   - Use //ping command in Discord to verify bot is running
+   - Visit dashboard URL to verify web server is working
+
+═══════════════════════════════════════════════════════════════════
+
+🚨 COMMON ISSUES:
+
+❌ "Redirect URI mismatch" 
+   ✅ Make sure Discord OAuth redirect URL matches your Render URL exactly
+
+❌ "unsupported_grant_type"
+   ✅ Check that CLIENT_ID and CLIENT_SECRET are correct
+
+❌ Bot not responding in Discord
+   ✅ Check Render logs for errors
+   ✅ Verify TOKEN is set correctly
+   ✅ Make sure bot has necessary Discord permissions
+
+═══════════════════════════════════════════════════════════════════
+
+📚 GENERATE SESSION_SECRET (Run once):
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+🔗 LINKS:
+   - Render Dashboard: https://dashboard.render.com
+   - Discord Developer Portal: https://discord.com/developers/applications
+   - Full Guide: See RENDER_DEPLOYMENT.md
+
+═══════════════════════════════════════════════════════════════════
