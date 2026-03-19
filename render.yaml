@@ -13,14 +13,8 @@ services:
       - key: PORT
         value: 5000
       - key: TOKEN
-        scope: pr
       - key: CLIENT_ID
-        scope: pr
       - key: CLIENT_SECRET
-        scope: pr
       - key: SESSION_SECRET
-        scope: pr
       - key: BASE_URL
-        scope: pr
       - key: FORCE_REDIRECT_URI
-        scope: pr
