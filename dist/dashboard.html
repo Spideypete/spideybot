@@ -526,14 +526,9 @@
         }
 
         #modeIcon {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             object-fit: contain;
-            filter: brightness(0) invert(1);
-        }
-
-        body.light-mode #modeIcon {
-            filter: brightness(0) invert(0);
         }
 
         body.light-mode .mode-toggle {
@@ -2013,7 +2008,7 @@
             
             <div class="header-right">
                 <div class="mode-toggle" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode">
-                    <img id="modeIcon" src="/dashboard-icons/moon.svg" alt="Mode">
+                    <img id="modeIcon" src="/dashboard-icons/sun.svg" alt="Mode">
                 </div>
                 
                 <div class="user-profile" onclick="toggleProfileMenu()">
@@ -4013,11 +4008,11 @@
             
             if (newMode === 'light') {
                 document.body.classList.add('light-mode');
-                document.getElementById('modeIcon').src = '/dashboard-icons/sun.svg';
+                document.getElementById('modeIcon').src = '/dashboard-icons/moon.svg';
                 localStorage.setItem('theme', 'light');
             } else {
                 document.body.classList.remove('light-mode');
-                document.getElementById('modeIcon').src = '/dashboard-icons/moon.svg';
+                document.getElementById('modeIcon').src = '/dashboard-icons/sun.svg';
                 localStorage.setItem('theme', 'dark');
             }
 
@@ -5556,9 +5551,9 @@
             const savedTheme = localStorage.getItem('theme') || 'dark';
             if (savedTheme === 'light') {
                 document.body.classList.add('light-mode');
-                document.getElementById('modeIcon').src = '/dashboard-icons/sun.svg';
-            } else {
                 document.getElementById('modeIcon').src = '/dashboard-icons/moon.svg';
+            } else {
+                document.getElementById('modeIcon').src = '/dashboard-icons/sun.svg';
             }
 
             try {
