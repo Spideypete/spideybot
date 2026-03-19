@@ -5223,6 +5223,8 @@ app.get("/auth/discord", (req, res) => {
 
 app.get("/auth/discord/callback", async (req, res) => {
   console.log("========== CALLBACK HIT ==========");
+  console.log("CLIENT_ID:", process.env.CLIENT_ID);
+  console.log("CLIENT_SECRET:", process.env.CLIENT_SECRET?.slice(0, 5));
   console.log("Query:", req.query);
   console.log("Host:", req.get('host'));
   console.log("==================================");
