@@ -4561,6 +4561,10 @@ client.on("interactionCreate", async (interaction) => {
     const categoryName = interaction.customId.slice(7);
     const member = interaction.member;
     const config = getGuildConfig(interaction.guild.id);
+    const categories = config.roleCategories || {};
+    const catData = categories[categoryName];
+    // Handle both array format and object format with roles property
+    const rolesArray = Array.isArray(catData) ? catData : (catData?.roles || []);
     const addedRoles = [];
     const failedRoles = [];
     for (const roleId of interaction.values) {
@@ -4568,7 +4572,7 @@ client.on("interactionCreate", async (interaction) => {
       if (role) {
         try {
           await member.roles.add(role);
-          const roleData = config.roleCategories?.[categoryName]?.find(r => (r.id || r) === roleId);
+          const roleData = rolesArray.find(r => (r.id || r) === roleId);
           addedRoles.push(roleData ? (roleData.name || roleData) : role.name);
         } catch (error) {
           failedRoles.push(roleId);
@@ -4578,6 +4582,22 @@ client.on("interactionCreate", async (interaction) => {
     }
     let response = addedRoles.length > 0 ? `✅ Added: ${addedRoles.join(", ")}` : "";
     if (failedRoles.length > 0) response += `\n⚠️ Failed: ${failedRoles.length} roles`;
+    
+    // Keep the dropdown visible by re-creating the select menu
+    const roleOptions = rolesArray.map(r => ({ label: `✨ ${r.name}`, value: r.id })) || [];
+    if (roleOptions.length > 0) {
+        const colorMap = { gaming: 0xFF6B6B, streaming: 0x4ECDC4, platform: 0x45B7D1, community: 0x96CEB4, events: 0xFFBD39 };
+        const embedColor = colorMap[categoryName.toLowerCase()] || 0x5865F2;
+        const selectMenu = new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+            .setCustomId(`select_${categoryName}`)
+            .setPlaceholder(`🔍 Select ${categoryName.toLowerCase()} roles...`)
+            .setMinValues(1)
+            .setMaxValues(roleOptions.length)
+            .addOptions(roleOptions)
+        );
+        return interaction.update({ content: response || "No roles added.", components: [selectMenu] });
+    }
     return interaction.update({ content: response || "No roles added.", components: [] });
   }
 
