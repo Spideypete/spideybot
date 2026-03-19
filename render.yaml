@@ -16,7 +16,7 @@ services:
         scope: pr
       - key: CLIENT_ID
         scope: pr
-      - key: DISCORD_CLIENT_SECRET
+      - key: CLIENT_SECRET
         scope: pr
       - key: SESSION_SECRET
         generateValue: true
