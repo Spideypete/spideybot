@@ -5241,8 +5241,8 @@ app.get("/auth/discord/callback", async (req, res) => {
 
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
-        client_id: DISCORD_CLIENT_ID,
-        client_secret: DISCORD_CLIENT_SECRET,
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.DISCORD_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
         redirect_uri: currentRedirectUri,
