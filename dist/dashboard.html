@@ -529,10 +529,11 @@
             width: 20px;
             height: 20px;
             object-fit: contain;
+            filter: brightness(0) invert(1);
         }
 
         body.light-mode #modeIcon {
-            filter: brightness(0) invert(1);
+            filter: brightness(0) invert(0);
         }
 
         body.light-mode .mode-toggle {
