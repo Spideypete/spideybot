@@ -531,6 +531,10 @@
             object-fit: contain;
         }
 
+        body.light-mode #modeIcon {
+            filter: brightness(0) invert(1);
+        }
+
         body.light-mode .mode-toggle {
             background: rgba(var(--theme-color), 0.08);
             border-color: rgba(var(--theme-color), 0.15);
