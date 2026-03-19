@@ -39,11 +39,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(145deg, #070d1f 0%, #040b1a 40%, #0b1832 100%);
-            background-image:
-                radial-gradient(circle at 18% 23%, rgba(0, 212, 255, 0.22), transparent 55%),
-                radial-gradient(circle at 78% 18%, rgba(145, 70, 255, 0.18), transparent 55%),
-                linear-gradient(135deg, rgba(4, 11, 26, 0.85), rgba(7, 12, 29, 0.95));
+            background: linear-gradient(145deg, #000000 0%, #000000 40%, #000000 100%);
             color: var(--text-color);
             overflow-x: hidden;
             transition: background 0.3s ease, color 0.3s ease;
@@ -274,9 +270,9 @@
 
         /* Header */
         .header {
-            background: rgba(8, 13, 25, 0.9);
+            background: #2c2c2c;
             backdrop-filter: blur(18px);
-            border-bottom: 1px solid rgba(var(--theme-color), 0.18);
+            border-bottom: 1px solid rgba(0, 0, 0, 0);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
@@ -759,7 +755,7 @@
         /* Sidebar */
         .sidebar {
             width: 260px;
-            background: var(--sidebar-bg);
+            background: #2c2c2c;
             border-right: 1px solid var(--sidebar-border);
             overflow-y: auto;
             padding: 1rem 0.6rem;
@@ -774,8 +770,8 @@
             width: 100%;
             padding: 0.55rem 0.8rem;
             border-radius: 12px;
-            border: 1px solid var(--sidebar-border);
-            background: rgba(15, 20, 30, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            background: #2c2c2c;
             color: var(--sidebar-text);
             font-size: 0.85rem;
             outline: none;
@@ -852,8 +848,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
-            flex-shrink: 0;
+        }
+
+        .sidebar-item-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        body.light-mode .sidebar-item-icon img {
+            filter: brightness(0) invert(0);
         }
 
         body.light-mode .sidebar-search input {
@@ -944,6 +949,12 @@
             margin-top: 1rem;
             position: relative;
             z-index: 1;
+            overflow: visible;
+        }
+        
+        .content-grid:has(.custom-multiselect.open) {
+            overflow: visible;
+            z-index: 100;
         }
 
         .stats-grid {
@@ -1049,9 +1060,14 @@
             padding: 1rem;
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
             box-shadow: var(--card-shadow);
-            overflow: hidden;
+            overflow: visible;
             position: relative;
             z-index: 1;
+        }
+        
+        .panel:has(.custom-multiselect.open) {
+            overflow: visible;
+            z-index: 100;
         }
 
         #settings-section .panel,
@@ -1397,43 +1413,49 @@
             flex-direction: column;
             gap: 0.6rem;
             pointer-events: none;
-            max-width: 420px;
+            max-width: 380px;
             width: calc(100% - 3rem);
         }
         .toast {
             pointer-events: auto;
             display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.85rem 1rem;
-            border-radius: 14px;
-            background: rgba(20, 20, 35, 0.85);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03) inset;
-            animation: toastIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            align-items: center;
+            gap: 0.85rem;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(30,30,50,0.95), rgba(20,20,35,0.98));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
+            animation: toastIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
             cursor: pointer;
-            transition: opacity 0.25s, transform 0.25s;
+            transition: all 0.25s ease;
         }
         .toast:hover { transform: translateX(-4px); }
         .toast.hiding {
-            animation: toastOut 0.3s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+            animation: toastOut 0.25s cubic-bezier(0.55, 0, 1, 0.45) forwards;
         }
         .toast-icon {
-            font-size: 1.25rem;
+            font-size: 1.4rem;
             flex-shrink: 0;
-            margin-top: 1px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(var(--theme-color), 0.15);
         }
         .toast-body { flex: 1; min-width: 0; }
         .toast-title {
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             margin-bottom: 2px;
         }
         .toast-msg {
             font-size: 0.8rem;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.55);
             line-height: 1.4;
             word-break: break-word;
         }
@@ -1441,20 +1463,24 @@
             position: absolute;
             bottom: 0;
             left: 0;
-            height: 2px;
-            border-radius: 0 0 14px 14px;
+            height: 3px;
+            border-radius: 0 0 12px 12px;
             animation: toastProgress linear forwards;
         }
-        .toast.toast-success { border-color: rgba(0, 212, 130, 0.35); }
+        .toast.toast-success { border-color: rgba(0, 212, 130, 0.25); }
+        .toast.toast-success .toast-icon { background: rgba(0, 212, 130, 0.15); }
         .toast.toast-success .toast-title { color: #00d482; }
         .toast.toast-success .toast-progress { background: linear-gradient(90deg, #00d482, #00d4ff); }
-        .toast.toast-error { border-color: rgba(237, 66, 69, 0.35); }
+        .toast.toast-error { border-color: rgba(237, 66, 69, 0.25); }
+        .toast.toast-error .toast-icon { background: rgba(237, 66, 69, 0.15); }
         .toast.toast-error .toast-title { color: #ed4245; }
         .toast.toast-error .toast-progress { background: linear-gradient(90deg, #ed4245, #ff6b6b); }
-        .toast.toast-info { border-color: rgba(0, 212, 255, 0.35); }
+        .toast.toast-info { border-color: rgba(0, 212, 255, 0.25); }
+        .toast.toast-info .toast-icon { background: rgba(0, 212, 255, 0.15); }
         .toast.toast-info .toast-title { color: #00d4ff; }
         .toast.toast-info .toast-progress { background: linear-gradient(90deg, #00d4ff, #9146ff); }
-        .toast.toast-warning { border-color: rgba(255, 165, 0, 0.35); }
+        .toast.toast-warning { border-color: rgba(255, 165, 0, 0.25); }
+        .toast.toast-warning .toast-icon { background: rgba(255, 165, 0, 0.15); }
         .toast.toast-warning .toast-title { color: #ffa500; }
         .toast.toast-warning .toast-progress { background: linear-gradient(90deg, #ffa500, #ff6b6b); }
 
@@ -1840,13 +1866,13 @@
             top: 100%;
             left: 0;
             right: 0;
-            z-index: 1000;
+            z-index: 10001;
             background: #141e3c;
             border: 1px solid rgba(var(--theme-color), 0.3);
             border-top: none;
-            border-radius: 0 0 5px 5px;
-            max-height: 200px;
-            overflow: hidden;
+            border-radius: 0 0 8px 8px;
+            max-height: 250px;
+            overflow-y: auto;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         }
         .custom-multiselect.open .cms-dropdown {
@@ -1997,7 +2023,16 @@
             
             <div class="header-right">
                 <div class="mode-toggle" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode">
-                    <span id="modeIcon">🌙</span>
+                    <span id="modeIcon">
+                        <!-- Dark mode icon (moon-like) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="20" height="20" style="display:none;">
+                            <rect width="256" height="256" fill="none"/><line x1="208" y1="120" x2="208" y2="72" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="232" y1="96" x2="184" y2="96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="160" y1="32" x2="160" y2="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="176" y1="48" x2="144" y2="48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><path d="M210.69,158.18A96.78,96.78,0,0,1,192,160,96.08,96.08,0,0,1,97.82,45.31,88,88,0,1,0,210.69,158.18Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/>
+                        </svg>
+                        <!-- Light mode icon (sun-like) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="20" height="20">
+                            <rect width="256" height="256" fill="none"/><line x1="128" y1="36" x2="128" y2="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><circle cx="128" cy="128" r="56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="60" y1="60" x2="48" y2="48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="60" y1="196" x2="48" y2="208" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="196" y1="60" x2="208" y2="48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="196" y1="196" x2="208" y2="208" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="36" y1="128" x2="20" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="128" y1="220" x2="128" y2="236" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><line x1="220" y1="128" x2="236" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/>
+                        </svg>
+                    </span>
                 </div>
                 
                 <div class="user-profile" onclick="toggleProfileMenu()">
@@ -2036,7 +2071,7 @@
                     <div class="sidebar-section-title" data-i18n="nav_main">MAIN</div>
                     <ul class="sidebar-menu">
                         <li class="sidebar-item active" data-section="dashboard" onclick="switchSection('dashboard')">
-                            <span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+                            <span class="sidebar-item-icon"><img src="/dashboard-icons/dashboard.svg" alt=""></span>
                             <span data-i18n="sidebar_dashboard">Dashboard</span>
                         </li>
                     </ul>
@@ -2045,62 +2080,62 @@
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_core">CORE</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="settings" onclick="switchSection('settings')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m8.48 0l4.24-4.24M1 12h6m6 0h6m-17.78 7.78l4.24-4.24m8.48 0l4.24 4.24"/></svg></span><span data-i18n="sidebar_settings">Settings</span></li>
-                        <li class="sidebar-item" data-section="logging" onclick="switchSection('logging')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2h-2M9 7h6M9 13h6M9 19h2"/></svg></span><span data-i18n="sidebar_logging">Logging</span></li>
-                        <li class="sidebar-item" data-section="server-guard" onclick="switchSection('server-guard')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1l7 3.5v5.5c0 4-7 7-7 7s-7-3-7-7V4.5L12 1z"/></svg></span><span data-i18n="sidebar_serverGuard">Server Guard</span></li>
+                        <li class="sidebar-item" data-section="settings" onclick="switchSection('settings')"><span class="sidebar-item-icon"><img src="/dashboard-icons/settings.svg" alt=""></span><span data-i18n="sidebar_settings">Settings</span></li>
+                        <li class="sidebar-item" data-section="logging" onclick="switchSection('logging')"><span class="sidebar-item-icon"><img src="/dashboard-icons/logging.svg" alt=""></span><span data-i18n="sidebar_logging">Logging</span></li>
+                        <li class="sidebar-item" data-section="server-guard" onclick="switchSection('server-guard')"><span class="sidebar-item-icon"><img src="/dashboard-icons/server-guard.svg" alt=""></span><span data-i18n="sidebar_serverGuard">Server Guard</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_features">FEATURES</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span data-i18n="sidebar_reactRoles">React Roles</span></li>
-                        <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h5a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_roleCategories">Role Categories</span></li>
-                        <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_serverMessages">Server Messages</span></li>
-                        <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4l6 6m-6-6l-6 6"/></svg></span><span data-i18n="sidebar_commands">Commands</span></li>
-                        <li class="sidebar-item" data-section="components" onclick="switchSection('components')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8.5" y="11.5" width="7" height="7"/></svg></span><span data-i18n="sidebar_components">Components</span></li>
+                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><img src="/dashboard-icons/react-roles.svg" alt=""></span><span data-i18n="sidebar_reactRoles">React Roles</span></li>
+                        <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><img src="/dashboard-icons/role-categories.svg" alt=""></span><span data-i18n="sidebar_roleCategories">Role Categories</span></li>
+                        <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><img src="/dashboard-icons/server-messages.svg" alt=""></span><span data-i18n="sidebar_serverMessages">Server Messages</span></li>
+                        <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><img src="/dashboard-icons/custom-commands.svg" alt=""></span><span data-i18n="sidebar_commands">Commands</span></li>
+                        <li class="sidebar-item" data-section="components" onclick="switchSection('components')"><span class="sidebar-item-icon"><img src="/dashboard-icons/components.svg" alt=""></span><span data-i18n="sidebar_components">Components</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_systems">SYSTEMS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span data-i18n="sidebar_xpLevels">XP Levels</span></li>
-                        <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6-7 6 7M3 12h18v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z"/></svg></span><span data-i18n="sidebar_leaderboards">Leaderboards</span></li>
-                        <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span data-i18n="sidebar_giveaways">Giveaways</span></li>
+                        <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><img src="/dashboard-icons/xp-levels.svg" alt=""></span><span data-i18n="sidebar_xpLevels">XP Levels</span></li>
+                        <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><img src="/dashboard-icons/leaderboards.svg" alt=""></span><span data-i18n="sidebar_leaderboards">Leaderboards</span></li>
+                        <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><img src="/dashboard-icons/giveaways.svg" alt=""></span><span data-i18n="sidebar_giveaways">Giveaways</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_monitoring">MONITORING</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
-                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6l3-6z"/></svg></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
-                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><span data-i18n="sidebar_invites">Invites</span></li>
-                        <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span data-i18n="sidebar_messages">Messages</span></li>
+                        <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><img src="/dashboard-icons/events.svg" alt=""></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
+                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><img src="/dashboard-icons/social-notifs.svg" alt=""></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
+                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><img src="/dashboard-icons/invite-tracking.svg" alt=""></span><span data-i18n="sidebar_invites">Invites</span></li>
+                        <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><img src="/dashboard-icons/message-counting.svg" alt=""></span><span data-i18n="sidebar_messages">Messages</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_advanced">ADVANCED</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="recordings" onclick="switchSection('recordings')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 8v4M4.22 4.22l2.83 2.83m5.9 0l2.83-2.83M1 12h4m8 0h4m-15.78 7.78l2.83-2.83m5.9 0l2.83 2.83"/></svg></span><span data-i18n="sidebar_recordings">Recordings</span></li>
-                        <li class="sidebar-item" data-section="reminders" onclick="switchSection('reminders')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span><span data-i18n="sidebar_reminders">Reminders</span></li>
-                        <li class="sidebar-item" data-section="statistics-channels" onclick="switchSection('statistics-channels')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="3" height="14"/><rect x="10" y="3" width="3" height="18"/><rect x="17" y="10" width="3" height="11"/></svg></span><span data-i18n="sidebar_stats">Stats</span></li>
+                        <li class="sidebar-item" data-section="recordings" onclick="switchSection('recordings')"><span class="sidebar-item-icon"><img src="/dashboard-icons/recordings.svg" alt=""></span><span data-i18n="sidebar_recordings">Recordings</span></li>
+                        <li class="sidebar-item" data-section="reminders" onclick="switchSection('reminders')"><span class="sidebar-item-icon"><img src="/dashboard-icons/reminders.svg" alt=""></span><span data-i18n="sidebar_reminders">Reminders</span></li>
+                        <li class="sidebar-item" data-section="statistics-channels" onclick="switchSection('statistics-channels')"><span class="sidebar-item-icon"><img src="/dashboard-icons/statistics-channels.svg" alt=""></span><span data-i18n="sidebar_stats">Stats</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_subscriptions">SUBSCRIPTIONS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="subscriptions" onclick="switchSection('subscriptions')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M12 11v6M9 14h6"/></svg></span><span data-i18n="sidebar_premium">Premium</span></li>
+                        <li class="sidebar-item" data-section="subscriptions" onclick="switchSection('subscriptions')"><span class="sidebar-item-icon"><img src="/dashboard-icons/subscriptions.svg" alt=""></span><span data-i18n="sidebar_premium">Premium</span></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_tools">TOOLS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="colors" onclick="switchSection('colors')"><span class="sidebar-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg></span><span data-i18n="sidebar_colors">Colors</span></li>
+                        <li class="sidebar-item" data-section="colors" onclick="switchSection('colors')"><span class="sidebar-item-icon"><img src="/dashboard-icons/colors.svg" alt=""></span><span data-i18n="sidebar_colors">Colors</span></li>
                     </ul>
                 </div>
             </div>
@@ -2717,68 +2752,18 @@
                         </div>
                     </div>
 
-                    <!-- Gaming Roles Section (full width) -->
-                    <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
-                            <div class="panel-content">
-                                <div style="background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
-                                    💡 <strong>How it works:</strong> Add game roles here (e.g. Valorant, Minecraft). Members click the 🎮 button posted via Quick Setup → Gaming Roles to choose which games they play. Same as the bot command <code>/addgamerole [name] [roleID]</code>.
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Select Roles</div>
-                                    <div id="gr_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
-                                </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('game')" style="width:100%;">➕ Add Selected Gaming Roles</button>
-                                <div id="gr_list" style="margin-top:0.75rem;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Watch Party + Platform Roles (side by side) -->
-                    <div class="content-grid" style="margin-top: 1rem;">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎬 Watch Party Roles</div></div>
-                            <div class="panel-content">
-                                <div style="background:rgba(78,205,196,0.06); border:1px solid rgba(78,205,196,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
-                                    💡 <strong>How it works:</strong> Add streaming/watch party roles. Members click the 🎬 button from Quick Setup → Watch Party to join. Same as <code>/addwatchpartyrole [name] [roleID]</code>.
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Select Roles</div>
-                                    <div id="wp_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
-                                </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('watchparty')" style="width:100%;">➕ Add Selected Watch Party Roles</button>
-                                <div id="wp_list" style="margin-top:0.75rem;"></div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
-                            <div class="panel-content">
-                                <div style="background:rgba(69,183,209,0.06); border:1px solid rgba(69,183,209,0.15); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:rgba(255,255,255,0.65);">
-                                    💡 <strong>How it works:</strong> Add platform roles (PC, PlayStation, Xbox, etc). Members pick their platforms via the 💻 button from Quick Setup → Platform Roles. Same as <code>/addplatformrole [name] [roleID]</code>.
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Select Roles</div>
-                                    <div id="pl_roleSelect" class="custom-multiselect" data-placeholder="Click to select roles..."></div>
-                                </div>
-                                <button class="btn btn-primary" onclick="addTypedRole('platform')" style="width:100%;">➕ Add Selected Platform Roles</button>
-                                <div id="pl_list" style="margin-top:0.75rem;"></div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- How Roles Work -->
                     <div class="content-grid" style="margin-top: 1rem; grid-template-columns: 1fr;">
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">📖 How Roles Work</div></div>
                             <div class="panel-content">
                                 <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.7; display:grid; grid-template-columns: 1fr 1fr; gap: 0 2rem;">
-                                    <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in the sections above (Gaming, Watch Party, Platform)</p>
-                                    <p style="margin:0 0 0.5rem 0;"><strong>4.</strong> Members click the button → dropdown appears → they pick roles</p>
-                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click the Post button for each type</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>1.</strong> Add roles in <strong>Role Categories</strong> above</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>4.</strong> Members use the dropdown to select roles</p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>2.</strong> Go to <strong>Quick Setup</strong> (below) and click the Post button</p>
                                     <p style="margin:0 0 0.5rem 0;"><strong>5.</strong> For <strong>Reaction Roles</strong>: post a message, add emoji→role pairs above</p>
-                                    <p style="margin:0 0 0.5rem 0;"><strong>3.</strong> The bot posts an embed with a button in your server</p>
-                                    <p style="margin:0;"><strong>6.</strong> For <strong>Role Categories</strong>: create one above, then use Post Category or <code>/setupcategory [name]</code></p>
+                                    <p style="margin:0 0 0.5rem 0;"><strong>3.</strong> The bot posts an embed with a dropdown in your server</p>
+                                    <p style="margin:0;"><strong>6.</strong> Use <code>/setupcategory [name]</code> or Post Category to display</p>
                                 </div>
                             </div>
                         </div>
@@ -2792,27 +2777,6 @@
                         <div class="content-subtitle">One-click setup for popular role features</div>
                     </div>
                     <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎮 Gaming Roles</div></div>
-                            <div class="panel-content">
-                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send gaming role selector message with button interaction</p>
-                                <button class="btn btn-primary" onclick="quickSetup('gaming')" style="width: 100%;">Post Gaming Roles Selector</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎬 Watch Party</div></div>
-                            <div class="panel-content">
-                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send watch party role selector message</p>
-                                <button class="btn btn-primary" onclick="quickSetup('watchparty')" style="width: 100%;">Post Watch Party Selector</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">💻 Platform Roles</div></div>
-                            <div class="panel-content">
-                                <p style="margin: 0 0 1rem 0; color: rgba(255,255,255,0.7);">Send platform role selector message</p>
-                                <button class="btn btn-primary" onclick="quickSetup('platform')" style="width: 100%;">Post Platform Selector</button>
-                            </div>
-                        </div>
                         <div class="panel">
                             <div class="panel-header"><div class="panel-title">🗑️ Remove Roles</div></div>
                             <div class="panel-content">
@@ -3540,7 +3504,7 @@
 
     <script>
         // ========== TOAST NOTIFICATION SYSTEM ==========
-        function showToast(message, type = 'info', duration = 4000) {
+        function showToast(message, type = 'info', duration = 2000) {
             const container = document.getElementById('toastContainer');
             if (!container) { console.log(message); return; }
             // Parse type from message content if not specified
@@ -4065,14 +4029,19 @@
         function toggleDarkMode() {
             const isDarkMode = !document.body.classList.contains('light-mode');
             const newMode = isDarkMode ? 'light' : 'dark';
-            
+            const modeIcon = document.getElementById('modeIcon');
+            const darkIcon = modeIcon.querySelector('svg:nth-child(1)');
+            const lightIcon = modeIcon.querySelector('svg:nth-child(2)');
+
             if (newMode === 'light') {
                 document.body.classList.add('light-mode');
-                document.getElementById('modeIcon').textContent = '☀️';
+                darkIcon.style.display = 'block';
+                lightIcon.style.display = 'none';
                 localStorage.setItem('theme', 'light');
             } else {
                 document.body.classList.remove('light-mode');
-                document.getElementById('modeIcon').textContent = '🌙';
+                darkIcon.style.display = 'none';
+                lightIcon.style.display = 'block';
                 localStorage.setItem('theme', 'dark');
             }
 
@@ -5015,10 +4984,25 @@
             } catch (e) { alert('❌ Error: ' + e.message); }
         }
 
-        async function deleteCategory(categoryName) {
+        let pendingDeleteCategory = null;
+        
+        function showDeleteModal(categoryName) {
+            pendingDeleteCategory = categoryName;
+            document.getElementById('deleteCategoryName').textContent = 'Are you sure you want to delete "' + categoryName + '"? This will remove it from the bot too.';
+            document.getElementById('deleteCategoryModal').style.display = 'flex';
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteCategoryModal').style.display = 'none';
+            pendingDeleteCategory = null;
+        }
+        
+        async function confirmDeleteCategory() {
+            const categoryName = pendingDeleteCategory;
+            if (!categoryName) return;
+            closeDeleteModal();
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return alert('Select a server first');
-            if (!confirm('Delete category "' + categoryName + '"? This will remove it from the bot too.')) return;
             try {
                 const res = await fetch('/api/bot-config/role-category/delete?guildId=' + guildId, {
                     method: 'POST',
@@ -5035,6 +5019,10 @@
                     alert('❌ ' + (data.message || 'Failed'));
                 }
             } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+        
+        async function deleteCategory(categoryName) {
+            showDeleteModal(categoryName);
         }
 
         function renderTypedRoles(type, roles) {
@@ -5611,11 +5599,16 @@
 
             // Load saved theme preference
             const savedTheme = localStorage.getItem('theme') || 'dark';
+            const modeIcon = document.getElementById('modeIcon');
+            const darkIcon = modeIcon.querySelector('svg:nth-child(1)');
+            const lightIcon = modeIcon.querySelector('svg:nth-child(2)');
             if (savedTheme === 'light') {
                 document.body.classList.add('light-mode');
-                document.getElementById('modeIcon').textContent = '☀️';
+                darkIcon.style.display = 'block';
+                lightIcon.style.display = 'none';
             } else {
-                document.getElementById('modeIcon').textContent = '🌙';
+                darkIcon.style.display = 'none';
+                lightIcon.style.display = 'block';
             }
 
             try {
@@ -6306,5 +6299,35 @@
             <button class="btn-save-changes" onclick="saveAllChanges()">Save Changes</button>
         </div>
     </div>
+    
+    <!-- Delete Category Modal -->
+    <div id="deleteCategoryModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content" style="background:linear-gradient(145deg,#1a1a2e,#16213e); border:1px solid rgba(255,107,107,0.3); border-radius:16px; padding:2rem; max-width:400px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+            <div style="width:80px; height:80px; margin:0 auto 1.5rem; background:rgba(255,107,107,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="48" height="48" style="color:#ff6b6b;">
+                    <rect width="256" height="256" fill="none"/>
+                    <line x1="216" y1="60" x2="40" y2="60" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/>
+                    <line x1="104" y1="104" x2="104" y2="168" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/>
+                    <line x1="152" y1="104" x2="152" y2="168" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/>
+                    <path d="M200,60V208a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8V60" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/>
+                    <path d="M168,60V36a16,16,0,0,0-16-16H104A16,16,0,0,0,88,36V60" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/>
+                </svg>
+            </div>
+            <h2 style="color:#fff; margin:0 0 0.5rem; font-size:1.5rem; font-weight:600;">Delete Category</h2>
+            <p id="deleteCategoryName" style="color:rgba(255,255,255,0.7); margin:0 0 1.5rem; font-size:0.95rem; line-height:1.5;"></p>
+            <div style="display:flex; gap:1rem; justify-content:center;">
+                <button onclick="closeDeleteModal()" style="flex:1; padding:0.75rem 1.5rem; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:8px; cursor:pointer; font-size:0.9rem; font-weight:500; transition:all 0.2s;">Cancel</button>
+                <button onclick="confirmDeleteCategory()" style="flex:1; padding:0.75rem 1.5rem; background:linear-gradient(135deg,#ff6b6b,#ee5a5a); border:none; color:#fff; border-radius:8px; cursor:pointer; font-size:0.9rem; font-weight:500; transition:all 0.2s; box-shadow:0 4px 15px rgba(255,107,107,0.3);">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+    .modal-overlay {
+        position:fixed; top:0; left:0; right:0; bottom:0;
+        background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
+        display:flex; align-items:center; justify-content:center; z-index:10000;
+    }
+    </style>
 </body>
 </html>

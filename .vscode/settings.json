@@ -1,0 +1,7 @@
+{
+    "builder.serverUrl": "https://eosinic-keira-partakable.ngrok-free.dev",
+    "builder.command": "npm run dev",
+    "builder.runDevServer": false,
+    "builder.autoDetectDevServer": false,
+    "builder.launchType": "editor"
+}

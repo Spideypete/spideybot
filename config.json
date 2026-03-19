@@ -12,13 +12,94 @@
             {
               "name": "Valorant",
               "id": "1235015410819010638"
+            },
+            {
+              "name": "Minecraft",
+              "id": "1235015410819010637"
+            },
+            {
+              "name": "Call Of Duty",
+              "id": "1235015410819010636"
+            },
+            {
+              "name": "Dying Light",
+              "id": "1235015410819010635"
+            },
+            {
+              "name": "FiveM",
+              "id": "1235015410819010634"
+            },
+            {
+              "name": "Golf With Friends",
+              "id": "1235015410819010633"
+            },
+            {
+              "name": "Need Of Speed",
+              "id": "1235015410819010632"
+            },
+            {
+              "name": "Fortnite",
+              "id": "1235015410819010631"
+            },
+            {
+              "name": "Rust",
+              "id": "1235015410819010630"
+            },
+            {
+              "name": "CarX",
+              "id": "1235015410768810103"
+            },
+            {
+              "name": "HellDivers",
+              "id": "1235285561963581472"
+            },
+            {
+              "name": "Assetto Corsa",
+              "id": "1235313074454659083"
+            },
+            {
+              "name": "Formula 1",
+              "id": "1236766879977177128"
+            },
+            {
+              "name": "Rocket League",
+              "id": "1238537530727596124"
+            },
+            {
+              "name": "Overwatch",
+              "id": "1238537709493030964"
+            },
+            {
+              "name": "Doom",
+              "id": "1238537919082266624"
+            },
+            {
+              "name": "League Of Legends",
+              "id": "1238538002876338217"
+            },
+            {
+              "name": "GTA",
+              "id": "1238538129279811665"
+            },
+            {
+              "name": "CSGO",
+              "id": "1238538369777139833"
+            },
+            {
+              "name": "Apex",
+              "id": "1238538434667085824"
+            },
+            {
+              "name": "Destiny",
+              "id": "1238538513167945759"
+            },
+            {
+              "name": "Sons Of The Forest",
+              "id": "1242152559024668823"
             }
           ],
-          "banner": null
-        },
-        "Console": {
-          "roles": [],
-          "banner": null
+          "channel": "",
+          "message": "Select a role below"
         }
       },
       "modLogChannelId": "1235015413763412063",
@@ -88,7 +169,7 @@
       "antiSpam": {
         "enabled": true,
         "messagesPerLimit": 5,
-        "action": "Warn"
+        "action": "warn"
       },
       "raidProtection": {
         "enabled": true,
@@ -108,6 +189,24 @@
         "goodbyeMessage": ""
       },
       "activities": [
+        {
+          "icon": "📂",
+          "text": "Dashboard",
+          "action": "posted category selector: Gaming → #🪪𝑺𝒆𝒍𝒇-𝑹𝒐𝒍𝒆𝒔",
+          "time": "19/03/2026, 09:44:05"
+        },
+        {
+          "icon": "🗑️",
+          "text": "Dashboard",
+          "action": "deleted category: Console",
+          "time": "19/03/2026, 09:28:59"
+        },
+        {
+          "icon": "🗑️",
+          "text": "Dashboard",
+          "action": "deleted category: Gaming",
+          "time": "19/03/2026, 09:11:24"
+        },
         {
           "icon": "➕",
           "name": "spidey_petee",
@@ -408,7 +507,63 @@
           "action": "69️⃣ Level 69 - 1451124123911847960",
           "timestamp": "8:09:11 AM"
         }
-      ]
+      ],
+      "prefix": "/",
+      "language": "en",
+      "modRole": "",
+      "mutedRole": "",
+      "musicPlayer": true,
+      "economySystem": true,
+      "levelingSystem": true,
+      "welcomeMessages": true,
+      "moderationTools": true,
+      "socialNotifications": true,
+      "themeColor": "#00d4ff",
+      "accentCyan": "#00d4ff",
+      "accentPurple": "#9146ff",
+      "accentPink": "#ff69b4",
+      "textColor": "#ffffff",
+      "antiNuke": {
+        "enabled": true,
+        "mode": "monitor",
+        "maxActions": 10
+      },
+      "linkScanning": {
+        "enabled": true,
+        "detectPhishing": true,
+        "blockScamSites": true,
+        "malwareDetection": true
+      },
+      "joinGate": {
+        "enabled": true,
+        "accountAgeCheck": true,
+        "minAccountAge": 3,
+        "suspiciousAvatars": true,
+        "usernameAnalysis": true
+      },
+      "rateLimiting": {
+        "enabled": true,
+        "requestsPerMin": 100,
+        "dosProtection": true,
+        "action": "throttle"
+      },
+      "auditLog": {
+        "enabled": true,
+        "channel": "",
+        "logApiRequests": true,
+        "ipTracking": true
+      },
+      "backup": {
+        "enabled": true,
+        "frequency": "6h",
+        "retention": 30
+      },
+      "reactRoles": {
+        "entries": [],
+        "allowMultiple": true,
+        "removeOnUnreact": true,
+        "dmConfirm": false
+      }
     },
     "subscriptions": {
       "field_0": "Gold",
