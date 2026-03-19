@@ -19,6 +19,8 @@ services:
       - key: CLIENT_SECRET
         scope: pr
       - key: SESSION_SECRET
-        generateValue: true
+        scope: pr
       - key: BASE_URL
+        scope: pr
+      - key: FORCE_REDIRECT_URI
         scope: pr
