@@ -1,20 +1,20 @@
-═══════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════
 
 YOUR SPIDEY BOT RENDER AUTH IS CONFIGURED FOR:
 
-Domain: https://spideybot-90sr.onrender.com
+Domain: https://spidey-bot-fty1.onrender.com
 Status: ✅ Ready for Discord OAuth Configuration
 
-═══════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════
 
 DISCORD OAUTH REDIRECT URIs TO ADD:
 
-1. https://spideybot-90sr.onrender.com/auth/discord/callback
-2. https://spideybot-90sr.onrender.com/login
+1. https://spidey-bot-fty1.onrender.com/auth/discord/callback
+2. https://spidey-bot-fty1.onrender.com/login
 
 COPY THESE EXACTLY TO YOUR DISCORD DEVELOPER PORTAL
 
-═══════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════
 
 RENDER ENVIRONMENT VARIABLES NEEDED:
 
@@ -22,15 +22,19 @@ TOKEN = Your Discord Bot Token
 CLIENT_ID = Your Discord App Client ID  
 DISCORD_CLIENT_SECRET = Your Discord App Client Secret
 SESSION_SECRET = Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+FORCE_REDIRECT_URI = https://spidey-bot-fty1.onrender.com/auth/discord/callback
 
-═══════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════
 
 QUICK STEPS:
 
 1. Go to Discord Developer Portal
 2. Add the 2 redirect URIs above
 3. Go to Render Dashboard  
-4. Set the 4 environment variables above
-5. Test: https://spideybot-90sr.onrender.com/login
+4. Set the 5 environment variables above (including FORCE_REDIRECT_URI)
+5. Test: https://spidey-bot-fty1.onrender.com/login
 
-═══════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════
+
+NOTE: FORCE_REDIRECT_URI ensures the correct callback URL is used
+even if the dynamic detection fails. This fixes common OAuth issues.

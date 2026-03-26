@@ -670,6 +670,27 @@ client.on("guildMemberAdd", async (member) => {
   config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
 
+  // ============== MEMBER JOIN LOGGING ==============
+  const logging = config.guilds?.[member.guild.id]?.logging?.moderationLogging;
+  if (logging?.logJoins && logging?.modLogChannel) {
+    const logChannel = member.guild.channels.cache.get(logging.modLogChannel);
+    if (logChannel) {
+      const memberCount = member.guild.memberCount;
+      const embed = new EmbedBuilder()
+        .setColor(0x57F287)
+        .setTitle("👤 Member Joined")
+        .addFields(
+          { name: "User", value: `${member.user.tag}`, inline: true },
+          { name: "ID", value: member.user.id, inline: true },
+          { name: "Account Created", value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
+          { name: "Member Count", value: `${memberCount}`, inline: true }
+        )
+        .setThumbnail(member.user.displayAvatarURL())
+        .setTimestamp();
+      logChannel.send({ embeds: [embed] }).catch(() => {});
+    }
+  }
+
   const guildConfig = getGuildConfig(member.guild.id);
 
   // ============== SERVER GUARD: RAID DETECTION ==============
@@ -782,6 +803,26 @@ client.on("guildMemberRemove", async (member) => {
   });
   config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+
+  // ============== MEMBER LEAVE LOGGING ==============
+  const logging = config.guilds?.[member.guild.id]?.logging?.moderationLogging;
+  if (logging?.logLeaves && logging?.modLogChannel) {
+    const logChannel = member.guild.channels.cache.get(logging.modLogChannel);
+    if (logChannel) {
+      const memberCount = member.guild.memberCount;
+      const embed = new EmbedBuilder()
+        .setColor(0xED4245)
+        .setTitle("👋 Member Left")
+        .addFields(
+          { name: "User", value: `${member.user.tag}`, inline: true },
+          { name: "ID", value: member.user.id, inline: true },
+          { name: "Member Count", value: `${memberCount}`, inline: true }
+        )
+        .setThumbnail(member.user.displayAvatarURL())
+        .setTimestamp();
+      logChannel.send({ embeds: [embed] }).catch(() => {});
+    }
+  }
 
   // Send goodbye message if enabled
   const guildConfig = getGuildConfig(member.guild.id);
@@ -980,11 +1021,22 @@ client.on("messageDelete", async (message) => {
   const logChannel = message.guild.channels.cache.get(logging.logChannel);
   if (!logChannel) return;
 
+  // Try to get who deleted the message from audit log
+  let deletedBy = "Unknown";
+  try {
+    const auditLogs = await message.guild.fetchAuditLogs({ type: 72, limit: 1 }); // MESSAGE_DELETE = 72
+    const entry = auditLogs.entries.first();
+    if (entry && entry.target?.id === message.author?.id && entry.extra?.channel?.id === message.channel.id) {
+      deletedBy = entry.executor?.tag || "Unknown";
+    }
+  } catch (e) { /* may fail without audit log permissions */ }
+
   const embed = new EmbedBuilder()
     .setColor(0xFF6B6B)
     .setTitle("🗑️ Message Deleted")
     .addFields(
       { name: "Author", value: message.author?.tag || "Unknown", inline: true },
+      { name: "Deleted By", value: deletedBy, inline: true },
       { name: "Channel", value: `<#${message.channel.id}>`, inline: true },
       { name: "Content", value: (message.content || "*No text content*").substring(0, 1024) }
     )
@@ -1008,6 +1060,7 @@ client.on("messageUpdate", async (oldMessage, newMessage) => {
     .addFields(
       { name: "Author", value: newMessage.author?.tag || "Unknown", inline: true },
       { name: "Channel", value: `<#${newMessage.channel.id}>`, inline: true },
+      { name: "Message", value: `[Jump to message](${newMessage.url})`, inline: true },
       { name: "Before", value: (oldMessage.content || "*empty*").substring(0, 1024) },
       { name: "After", value: (newMessage.content || "*empty*").substring(0, 1024) }
     )
@@ -4810,6 +4863,42 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.reply({ content: "⏹ Music stopped", ephemeral: true });
     }
   }
+
+  // Verification button handler
+  if (interaction.isButton() && interaction.customId.startsWith("verify_")) {
+    const roleId = interaction.customId.replace("verify_", "");
+    const guild = interaction.guild;
+    const member = interaction.member;
+
+    // Check if verification is enabled for this guild
+    const config = loadConfig();
+    const guildConfig = config.guilds[guild.id];
+    if (!guildConfig?.verification?.enabled) {
+      return interaction.reply({ content: "❌ Verification is not enabled", ephemeral: true });
+    }
+
+    // Get the role
+    const role = guild.roles.cache.get(roleId);
+    if (!role) {
+      return interaction.reply({ content: "❌ Role not found", ephemeral: true });
+    }
+
+    // Check if user already has the role
+    if (member.roles.cache.has(roleId)) {
+      return interaction.reply({ content: "✅ You are already verified!", ephemeral: true });
+    }
+
+    // Add the role
+    try {
+      await member.roles.add(role);
+      await interaction.reply({ content: "✅ You have been verified! You now have access to the server.", ephemeral: true });
+      console.log(`✅ User ${member.user.tag} verified in ${guild.name} with role ${role.name}`);
+    } catch (err) {
+      console.error('Error adding verification role:', err);
+      await interaction.reply({ content: "❌ Failed to verify. Contact an admin.", ephemeral: true });
+    }
+    return;
+  }
 });
 
 // ============== WEB SERVER FOR UPTIME & WEBHOOKS ==============
@@ -5845,10 +5934,10 @@ app.post("/api/bot-config/logging", express.json(), (req, res) => {
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId].logging) config.guilds[guildId].logging = {};
 
-    const { logDeleted, logEdited, logBulkDelete, logChannel, logBans, logKicks, logMutes, logWarns, modLogChannel } = req.body;
+    const { logDeleted, logEdited, logBulkDelete, logChannel, logBans, logKicks, logMutes, logWarns, logJoins, logLeaves, modLogChannel } = req.body;
     
     config.guilds[guildId].logging.messageLogging = { logDeleted, logEdited, logBulkDelete, logChannel };
-    config.guilds[guildId].logging.moderationLogging = { logBans, logKicks, logMutes, logWarns, modLogChannel };
+    config.guilds[guildId].logging.moderationLogging = { logBans, logKicks, logMutes, logWarns, logJoins, logLeaves, modLogChannel };
     
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
     console.log(`✅ All logging settings updated (Guild: ${guildId})`);
@@ -6083,6 +6172,67 @@ app.post("/api/bot-config/role-category/delete", express.json(), (req, res) => {
   } catch (err) {
     console.error('❌ Error deleting category:', err);
     res.json({ success: false, message: "Error deleting category" });
+  }
+});
+
+// Post a verification message with button to a channel
+app.post("/api/bot-config/verification/post", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  try {
+    const { channelId, roleId, message } = req.body;
+    if (!channelId) return res.json({ success: false, error: "Channel required" });
+    if (!roleId) return res.json({ success: false, error: "Role required" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.json({ success: false, error: "Channel not found" });
+
+    const role = guild.roles.cache.get(roleId);
+    if (!role) return res.json({ success: false, error: "Role not found" });
+
+    // Build verification embed with button
+    const embed = new EmbedBuilder()
+      .setColor(0x57F287)
+      .setTitle("🛡️ Server Verification")
+      .setDescription(message || "Welcome to the server! Click the button below to verify yourself and get access to the community.")
+      .setFooter({ text: "SPIDEY BOT • Verification" })
+      .setTimestamp();
+
+    // Create button component
+    const button = new ButtonBuilder()
+      .setCustomId(`verify_${roleId}`)
+      .setLabel("Verify")
+      .setStyle(ButtonStyle.Success)
+      .setEmoji("✅");
+
+    const row = new ActionRowBuilder().addComponents(button);
+
+    const msg = await channel.send({ embeds: [embed], components: [row] });
+    
+    // Save verification config
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    config.guilds[guildId].verification = {
+      enabled: true,
+      channelId,
+      roleId,
+      messageId: msg.id,
+      message: message || ""
+    };
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+
+    console.log(`✅ Verification message posted: ${msg.id} in #${channel.name} (Guild: ${guildId})`);
+    addActivity(guildId, "🛡️", "Admin", `posted verification message in #${channel.name}`);
+    res.json({ success: true, messageId: msg.id, message: "Verification message posted" });
+  } catch (err) {
+    console.error('❌ Error posting verification message:', err);
+    res.json({ success: false, message: "Error posting message: " + err.message });
   }
 });
 
