@@ -447,6 +447,7 @@ const client = new Client({
 });
 
 const token = process.env.TOKEN || "";
+console.log("[DEBUG] Token loaded:", token ? `YES (${token.length} chars)` : "NO");
 let botLoggedIn = false;
 
 // ============== MUSIC PLAYER ==============
@@ -7305,8 +7306,11 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // ============== LOGIN ==============
+console.log("[DEBUG] Attempting Discord login...");
 if (token && typeof token === 'string' && token.length > 0) {
-  client.login(token).catch(err => {
+  client.login(token).then(() => {
+    console.log("[DEBUG] Discord login successful!");
+  }).catch(err => {
     console.error('❌ Discord login error:', err);
     console.log('⏰ Retrying login in 10 seconds...');
     setTimeout(() => {
