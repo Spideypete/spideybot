@@ -7319,5 +7319,6 @@ if (token && typeof token === 'string' && token.length > 0) {
     }, 10000);
   });
 } else {
-  console.log('⚠️  No Discord `TOKEN` provided — skipping bot login. Web server remains available.');
+  console.log('⚠️  No Discord TOKEN provided - bot will run in web-only mode (no Discord commands)');
+  console.log('   To fix: Add TOKEN environment variable in Render dashboard');
 }
