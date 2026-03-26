@@ -7273,8 +7273,9 @@ app.get('/status', (req, res) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
+  const baseUrl = process.env.BASE_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
   console.log(`🚀 Web server listening on port ${PORT}`);
-  console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+  console.log(`🔗 Public URL: ${baseUrl}`);
 });
 
 // ============== ERROR & DISCONNECT HANDLERS (KEEP BOT ONLINE) ==============
