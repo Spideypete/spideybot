@@ -2317,29 +2317,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title" data-i18n="panel_featureToggles">✨ Feature Toggles</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <label class="toggle-label"><span data-i18n="toggle_musicPlayer">Music Player</span><label class="toggle-switch"><input type="checkbox" id="toggle_musicPlayer" checked/><span class="toggle-slider"></span></label></label>
-                                </div>
-                                <div class="form-group">
-                                    <label class="toggle-label"><span data-i18n="toggle_economySystem">Economy System</span><label class="toggle-switch"><input type="checkbox" id="toggle_economySystem" checked/><span class="toggle-slider"></span></label></label>
-                                </div>
-                                <div class="form-group">
-                                    <label class="toggle-label"><span data-i18n="toggle_levelingSystem">Leveling System</span><label class="toggle-switch"><input type="checkbox" id="toggle_levelingSystem" checked/><span class="toggle-slider"></span></label></label>
-                                </div>
-                                <div class="form-group">
-                                    <label class="toggle-label"><span data-i18n="toggle_welcomeMessages">Welcome Messages</span><label class="toggle-switch"><input type="checkbox" id="toggle_welcomeMessages" checked/><span class="toggle-slider"></span></label></label>
-                                </div>
-                                <div class="form-group">
-                                    <label class="toggle-label"><span data-i18n="toggle_moderationTools">Moderation Tools</span><label class="toggle-switch"><input type="checkbox" id="toggle_moderationTools" checked/><span class="toggle-slider"></span></label></label>
-                                </div>
-                                <div class="form-group">
-                                    <label class="toggle-label"><span data-i18n="toggle_socialNotifications">Social Notifications</span><label class="toggle-switch"><input type="checkbox" id="toggle_socialNotifications" checked/><span class="toggle-slider"></span></label></label>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                 </div>
@@ -2943,26 +2920,6 @@
                         <div class="content-title" data-i18n="title_components">Components</div>
                         <div class="content-subtitle">Manage bot components and features</div>
                     </div>
-                    <div class="content-grid">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🧩 Available Components</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Music Player</label>
-                                </div>
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Moderation</label>
-                                </div>
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Economy System</label>
-                                </div>
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Leveling/XP</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- XP Levels Section -->
                 <div id="xp-levels-section" class="content-section">
@@ -3994,14 +3951,7 @@
                 if (sel) sel.value = savedLang;
                 currentLanguage = savedLang;
                 localStorage.setItem('dashboardLanguage', savedLang);
-                applyLanguage(savedLang);
-
-                // Restore feature toggles
-                const toggleKeys = ['musicPlayer', 'economySystem', 'levelingSystem', 'welcomeMessages', 'moderationTools', 'socialNotifications'];
-                toggleKeys.forEach(key => {
-                    const cb = document.getElementById('toggle_' + key);
-                    if (cb && config[key] !== undefined) cb.checked = config[key];
-                });
+                applyLanguage(savedLang());
             } catch (e) {
                 console.error('Error loading server settings:', e);
             }
@@ -6047,13 +5997,6 @@
                 announcementsChannel: document.getElementById('announcementsChannelSelect')?.value || '',
                 welcomeChannel: document.getElementById('welcomeChannelSelect')?.value || ''
             };
-
-            // Collect feature toggles by ID
-            const toggleKeys = ['musicPlayer', 'economySystem', 'levelingSystem', 'welcomeMessages', 'moderationTools', 'socialNotifications'];
-            toggleKeys.forEach(key => {
-                const cb = document.getElementById('toggle_' + key);
-                if (cb) settingsData[key] = cb.checked;
-            });
 
             // Save colors
             const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#00d4ff';
