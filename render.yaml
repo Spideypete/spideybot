@@ -15,6 +15,10 @@ services:
       - key: TOKEN
       - key: CLIENT_ID
       - key: CLIENT_SECRET
+        value: wSPfrPcu4PcWytDagD19Qf61I25iFY9g
       - key: SESSION_SECRET
+        value: spidey-bot-session-secret-2026
       - key: BASE_URL
+        value: https://spidey-bot-fty1.onrender.com
       - key: FORCE_REDIRECT_URI
+        value: https://spidey-bot-fty1.onrender.com/auth/discord/callback

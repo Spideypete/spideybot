@@ -147,15 +147,15 @@
         "messageLogging": {
           "logDeleted": true,
           "logEdited": true,
-          "logBulkDelete": false,
-          "logChannel": ""
+          "logBulkDelete": true,
+          "logChannel": "1235055223689711616"
         },
         "moderationLogging": {
           "logBans": true,
           "logKicks": true,
           "logMutes": true,
           "logWarns": true,
-          "modLogChannel": ""
+          "modLogChannel": "1235055223689711616"
         }
       },
       "commandPrefix": "/",
@@ -177,9 +177,9 @@
         "banRaidUsers": false
       },
       "permissions": {
-        "membersOnly": true,
+        "commandRole": "members",
         "adminsBypass": true,
-        "allowDM": false,
+        "allowDM": true,
         "confirmDangerous": true
       },
       "serverMessages": {
@@ -189,6 +189,12 @@
         "goodbyeMessage": ""
       },
       "activities": [
+        {
+          "icon": "📂",
+          "text": "Dashboard",
+          "action": "posted category selector: Gaming → #🪪𝑺𝒆𝒍𝒇-𝑹𝒐𝒍𝒆𝒔",
+          "time": "26/03/2026, 14:52:59"
+        },
         {
           "icon": "📂",
           "text": "Dashboard",
