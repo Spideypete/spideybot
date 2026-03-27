@@ -5410,6 +5410,7 @@ app.get("/auth/discord", (req, res) => {
   res.redirect(authURL);
 });
 
+let usedCodes = new Set();
 app.get("/auth/discord/callback", async (req, res) => {
   console.log("========== CALLBACK HIT ==========");
   console.log("CLIENT_ID:", process.env.CLIENT_ID);
@@ -5423,6 +5424,12 @@ app.get("/auth/discord/callback", async (req, res) => {
     console.log("No code provided!");
     return res.send("No code provided");
   }
+
+  if (usedCodes.has(code)) {
+    return res.send("Code already used");
+  }
+
+  usedCodes.add(code);
 
   try {
     const currentRedirectUri = FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
