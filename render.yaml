@@ -14,7 +14,7 @@ services:
         value: 5000
       - key: TOKEN
       - key: CLIENT_ID
-      - key: CLIENT_SECRET
+      - key: DISCORD_CLIENT_SECRET
         value: I8X9gDXB7hpXY1bbvQuzIX2CAoCay4a3
       - key: SESSION_SECRET
         value: spidey-bot-session-secret-2026
