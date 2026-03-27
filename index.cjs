@@ -5212,78 +5212,59 @@ const REDIRECT_URI_DETECTOR = (req) => {
 
 // Rate limiting for login attempts
 let lastLogin = 0;
-const LOGIN_COOLDOWN = 15000; // 15 seconds
 
 // Track used OAuth codes to prevent reuse
 const usedCodes = new Set();
 
 app.get("/auth/discord", (req, res) => {
   const now = Date.now();
-  
-  // HARD rate limiting - prevent spam clicks
-  if (now - lastLogin < LOGIN_COOLDOWN) {
-    console.log("⚠️ Login rate limited - too many attempts");
-    return res.send(`
-      <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-        <h2 style="color: #00d4ff;">⏳ Please Wait</h2>
-        <p>You're trying to log in too frequently. Please wait 15 seconds before trying again.</p>
-        <a href="/" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Back to Home</a>
-      </div>
-    `);
+
+  // Prevent spam clicking
+  if (now - lastLogin < 15000) {
+    return res.send("⚠️ Please wait 15 seconds before trying again.");
   }
-  
+
   lastLogin = now;
-  const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
-  const scopes = ["identify", "guilds", "guilds.join"];
-  const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(currentRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
-  
+
+  const redirectUri = "https://spidey-bot-fty1.onrender.com/auth/discord/callback";
+
+  const url = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=identify`;
+
   console.log("========== OAUTH LOGIN ==========");
-  console.log("Redirect URI:", currentRedirectUri);
+  console.log("Redirect URI:", redirectUri);
   console.log("==================================");
-  res.redirect(authURL);
+
+  res.redirect(url);
 });
 
 app.get("/auth/discord/callback", async (req, res) => {
   console.log("========== CALLBACK HIT ==========");
-  console.log("CLIENT_ID:", process.env.CLIENT_ID);
-  console.log("CLIENT_SECRET:", process.env.CLIENT_SECRET?.slice(0, 5));
-  console.log("Query:", req.query);
-  console.log("Host:", req.get('host'));
-  console.log("==================================");
-  
-  const code = req.query.code;
+
+  const { code } = req.query;
+
   if (!code) {
-    console.log("No code provided!");
-    return res.status(400).send("No code provided");
+    return res.send("❌ No code provided");
   }
-  
-  // Block repeated callbacks - prevent code reuse
+
+  // Prevent reuse / loops
   if (usedCodes.has(code)) {
-    console.log("⚠️ OAuth code already used:", code.slice(0, 10) + "...");
-    return res.send(`
-      <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-        <h2 style="color: #00d4ff;">❌ Code Already Used</h2>
-        <p>This authorization code has already been used. Please try logging in again.</p>
-        <a href="/login.html" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Try Again</a>
-      </div>
-    `);
+    return res.send("⚠️ Code already used");
   }
-  
-  // Mark code as used immediately
+
   usedCodes.add(code);
 
   try {
-    const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
-    console.log(`🔵 Auth Callback received. Using Redirect URI: ${currentRedirectUri}`);
+    const redirectUri = "https://spidey-bot-fty1.onrender.com/auth/discord/callback";
 
-    const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
+    const response = await axios.post(
+      "https://discord.com/api/oauth2/token",
       new URLSearchParams({
         client_id: process.env.CLIENT_ID,
-        client_secret: process.env.DISCORD_CLIENT_SECRET,
+        client_secret: process.env.CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
-        redirect_uri: currentRedirectUri,
-        scope: "identify guilds guilds.join"
+        redirect_uri: redirectUri,
+        scope: "identify"
       }),
       {
         headers: {
@@ -5292,80 +5273,23 @@ app.get("/auth/discord/callback", async (req, res) => {
       }
     );
 
-    const { access_token } = tokenRes.data;
+    console.log("✅ Token received");
 
-    const userRes = await axios.get("https://discord.com/api/users/@me", {
-      headers: { Authorization: `Bearer ${access_token}` }
-    });
+    return res.send("✅ Login successful!");
 
-    const guildsRes = await axios.get("https://discord.com/api/users/@me/guilds", {
-      headers: { Authorization: `Bearer ${access_token}` }
-    });
-
-    const adminGuilds = guildsRes.data.filter(guild => {
-      const permissions = BigInt(guild.permissions || 0);
-      const ADMINISTRATOR = BigInt(8);
-      return (permissions & ADMINISTRATOR) === ADMINISTRATOR;
-    });
-
-    if (adminGuilds.length === 0) {
-      return res.status(403).send(`
-        <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-          <h2 style="color: #00d4ff;">❌ Access Denied</h2>
-          <p>You must be an <b>Administrator</b> in at least one server with SPIDEY BOT to access this dashboard.</p>
-          <a href="/" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Back to Home</a>
-        </div>
-      `);
-    }
-
-    req.session.authenticated = true;
-    req.session.user = userRes.data;
-    req.session.guilds = adminGuilds;
-    req.session.accessToken = access_token;
-
-    req.session.save((err) => {
-      if (err) {
-        console.error("🔴 Session save error:", err);
-        return res.status(500).send("Login failed: could not save session");
-      }
-      console.log(`✅ User logged in: ${userRes.data.username} | Session ID: ${req.sessionID} | Guilds: ${adminGuilds.length}`);
-      // Ensure we redirect to the full URL to avoid relative path issues in frames
-      const host = req.get('x-forwarded-host') || req.get('host');
-      const forwardedProto = req.get('x-forwarded-proto');
-      const protocol = (forwardedProto === 'https' || host.includes('repl.co') || host.includes('replit.dev') || host.includes('app.github.dev') || host.includes('devtunnels')) ? 'https' : req.protocol;
-      console.log(`🔵 Redirecting to: ${protocol}://${host}/dashboard.html`);
-      res.redirect(`${protocol}://${host}/dashboard.html`);
-    });
   } catch (err) {
-    console.error("❌ OAuth error details:", err.response?.data || err.message);
-    const errorMsg = err.response?.data?.error_description || err.message || "Unknown error";
-    
-    // Handle 429 rate limit properly - NEVER retry automatically
+    // 🔥 HANDLE RATE LIMIT PROPERLY
     if (err.response?.status === 429) {
-      console.log("⚠️ Discord API rate limited (429)");
-      return res.send(`
-        <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-          <h2 style="color: #00d4ff;">⏳ Rate Limited</h2>
-          <p>Discord API is rate limited. Please wait 1-2 minutes and try again.</p>
-          <a href="/login.html" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Try Again Later</a>
-        </div>
-      `);
-    }
-    
-    // Construct debug info
-    const attemptedUri = REDIRECT_URI_DETECTOR(req);
+      const retryAfter = err.response.data?.retry_after || 30;
 
-    res.status(500).send(`
-      <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-        <h2 style="color: #00d4ff;">❌ Authentication Failed</h2>
-        <p>Error: ${errorMsg}</p>
-        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left; max-width: 600px;">
-          <p><b>Attempted Redirect URI:</b><br/><code style="color: #9146ff; word-break: break-all;">${attemptedUri}</code></p>
-          <p style="font-size: 0.9rem; color: #ccc;">If this doesn't match your Discord Dev Portal, add it there.</p>
-        </div>
-        <a href="/login.html" style="color: #ff1493; text-decoration: none;">← Try Again</a>
-      </div>
-    `);
+      console.log(`❌ Rate limited. Retry after ${retryAfter}s`);
+
+      return res.send(`⚠️ Rate limited. Wait ${retryAfter} seconds and try again.`);
+    }
+
+    console.log("❌ OAuth error:", err.response?.data || err.message);
+
+    return res.send("❌ OAuth failed. Try again later.");
   }
 });
 
