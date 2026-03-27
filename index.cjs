@@ -5384,7 +5384,16 @@ const REDIRECT_URI_DETECTOR = (req) => {
   return calculatedUri;
 };
 
+let lastAuth = 0;
 app.get("/auth/discord", (req, res) => {
+  const now = Date.now();
+
+  if (now - lastAuth < 5000) {
+    return res.send("Slow down - too many login attempts");
+  }
+
+  lastAuth = now;
+
   // Set headers to prevent blank page
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.setHeader("Pragma", "no-cache");
@@ -5403,7 +5412,7 @@ app.get("/auth/discord", (req, res) => {
 
 app.get("/auth/discord/callback", async (req, res) => {
   console.log("========== CALLBACK HIT ==========");
-  console.log("CLIENT_ID:", process.env.CLIENT_ID);
+  console.log("CLIENT_ID:", process.env.DISCORD_CLIENT_ID);
   console.log("CLIENT_SECRET:", process.env.DISCORD_CLIENT_SECRET?.slice(0, 5));
   console.log("Query:", req.query);
   console.log("Host:", req.get('host'));
@@ -5481,6 +5490,14 @@ app.get("/auth/discord/callback", async (req, res) => {
       res.redirect("/dashboard.html");
     });
   } catch (err) {
+    if (err.response?.status === 429) {
+      const retryAfter = err.response.data?.retry_after || 30;
+
+      console.log(`Rate limited. Retry after ${retryAfter}s`);
+
+      return res.send(`Rate limited. Wait ${retryAfter} seconds and try again.`);
+    }
+
     console.error("❌ OAuth error details:", err.response?.data || err.message);
     const errorMsg = err.response?.data?.error_description || err.message || "Unknown error";
     
