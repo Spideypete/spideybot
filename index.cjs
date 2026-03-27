@@ -481,7 +481,8 @@ client.once("ready", async () => {
   } catch (err) {
     console.log('🔁 Running commit: unknown');
   }
-  client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
+  client.user.setPresence({ status: 'online', activities: [{ name: 'Monitoring TrackRight', type: 'WATCHING' }] });
+  console.log('✅ Bot status set to online');
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
   });
@@ -7278,6 +7279,13 @@ app.get('/status', (req, res) => {
     discordUser: client.user ? client.user.tag : null,
     timestamp: new Date().toISOString()
   });
+});
+
+// ============== KEEP-ALIVE ENDPOINT FOR UPTIMEROBOT ==============
+// This lightweight endpoint prevents Render from putting the bot to sleep
+console.log('🔧 Registering /ping keep-alive endpoint');
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
 });
 
 app.listen(PORT, "0.0.0.0", () => {
