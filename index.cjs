@@ -20,6 +20,7 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+console.log("CLIENT_SECRET VALUE:", process.env.CLIENT_SECRET);
 console.log("[DEBUG] Dotenv loaded, env vars:");
 console.log("[DEBUG] TOKEN:", process.env.TOKEN ? "set" : "NOT SET");
 console.log("[DEBUG] CLIENT_ID:", process.env.CLIENT_ID ? "set" : "NOT SET");
