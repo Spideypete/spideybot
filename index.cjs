@@ -5210,7 +5210,29 @@ const REDIRECT_URI_DETECTOR = (req) => {
   return `${protocol}://${host}/auth/discord/callback`;
 };
 
+// Rate limiting for login attempts
+let lastLogin = 0;
+const LOGIN_COOLDOWN = 15000; // 15 seconds
+
+// Track used OAuth codes to prevent reuse
+const usedCodes = new Set();
+
 app.get("/auth/discord", (req, res) => {
+  const now = Date.now();
+  
+  // HARD rate limiting - prevent spam clicks
+  if (now - lastLogin < LOGIN_COOLDOWN) {
+    console.log("⚠️ Login rate limited - too many attempts");
+    return res.send(`
+      <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+        <h2 style="color: #00d4ff;">⏳ Please Wait</h2>
+        <p>You're trying to log in too frequently. Please wait 15 seconds before trying again.</p>
+        <a href="/" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Back to Home</a>
+      </div>
+    `);
+  }
+  
+  lastLogin = now;
   const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
   const scopes = ["identify", "guilds", "guilds.join"];
   const authURL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(currentRedirectUri)}&response_type=code&scope=${scopes.join("%20")}`;
@@ -5234,6 +5256,21 @@ app.get("/auth/discord/callback", async (req, res) => {
     console.log("No code provided!");
     return res.status(400).send("No code provided");
   }
+  
+  // Block repeated callbacks - prevent code reuse
+  if (usedCodes.has(code)) {
+    console.log("⚠️ OAuth code already used:", code.slice(0, 10) + "...");
+    return res.send(`
+      <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+        <h2 style="color: #00d4ff;">❌ Code Already Used</h2>
+        <p>This authorization code has already been used. Please try logging in again.</p>
+        <a href="/login.html" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Try Again</a>
+      </div>
+    `);
+  }
+  
+  // Mark code as used immediately
+  usedCodes.add(code);
 
   try {
     const currentRedirectUri = process.env.FORCE_REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
@@ -5302,6 +5339,18 @@ app.get("/auth/discord/callback", async (req, res) => {
   } catch (err) {
     console.error("❌ OAuth error details:", err.response?.data || err.message);
     const errorMsg = err.response?.data?.error_description || err.message || "Unknown error";
+    
+    // Handle 429 rate limit properly - NEVER retry automatically
+    if (err.response?.status === 429) {
+      console.log("⚠️ Discord API rate limited (429)");
+      return res.send(`
+        <div style="background: #1a0a2e; color: #ff6b6b; padding: 2rem; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+          <h2 style="color: #00d4ff;">⏳ Rate Limited</h2>
+          <p>Discord API is rate limited. Please wait 1-2 minutes and try again.</p>
+          <a href="/login.html" style="color: #ff1493; text-decoration: none; border: 1px solid #ff1493; padding: 10px 20px; border-radius: 5px; margin-top: 20px;">Try Again Later</a>
+        </div>
+      `);
+    }
     
     // Construct debug info
     const attemptedUri = REDIRECT_URI_DETECTOR(req);
