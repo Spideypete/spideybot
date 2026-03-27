@@ -20,11 +20,11 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
-console.log("CLIENT_SECRET VALUE:", process.env.DISCORD_CLIENT_SECRET);
+console.log("CLIENT_SECRET VALUE:", process.env.CLIENT_SECRET);
 console.log("[DEBUG] Dotenv loaded, env vars:");
 console.log("[DEBUG] TOKEN:", process.env.TOKEN ? "set" : "NOT SET");
 console.log("[DEBUG] CLIENT_ID:", process.env.CLIENT_ID ? "set" : "NOT SET");
-console.log("[DEBUG] CLIENT_SECRET:", process.env.DISCORD_CLIENT_SECRET ? "set" : "NOT SET");
+console.log("[DEBUG] CLIENT_SECRET:", process.env.CLIENT_SECRET ? "set" : "NOT SET");
 
 // Validate required environment variables (do not log secrets)
 const requiredEnvVars = ["TOKEN", "CLIENT_ID", "CLIENT_SECRET"];
@@ -153,10 +153,10 @@ function sendAuditLog(guild, guildConfig, title, description, color = 0x5865F2) 
 
 // ============== DISCORD OAUTH CONFIG ==============
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID || "";
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "";
+const CLIENT_SECRET = process.env.CLIENT_SECRET || "";
 
 console.log("[DEBUG] CLIENT_ID:", DISCORD_CLIENT_ID ? "set" : "NOT SET");
-console.log("[DEBUG] CLIENT_SECRET:", DISCORD_CLIENT_SECRET ? "set (length: " + DISCORD_CLIENT_SECRET.length + ")" : "NOT SET");
+console.log("[DEBUG] CLIENT_SECRET:", CLIENT_SECRET ? "set (length: " + CLIENT_SECRET.length + ")" : "NOT SET");
 // Prefer explicit BASE_URL in env for Codespaces / production. Keep Render fallback.
 const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || null;
 const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'https://zany-space-guacamole-v696776796573pvgv-5000.app.github.dev');
@@ -5388,8 +5388,8 @@ let lastAuth = 0;
 app.get("/auth/discord", (req, res) => {
   const now = Date.now();
 
-  if (now - lastAuth < 5000) {
-    return res.send("Slow down - too many login attempts");
+  if (now - lastAuth < 10000) {
+    return res.send("Wait before retrying");
   }
 
   lastAuth = now;
@@ -5412,8 +5412,8 @@ app.get("/auth/discord", (req, res) => {
 
 app.get("/auth/discord/callback", async (req, res) => {
   console.log("========== CALLBACK HIT ==========");
-  console.log("CLIENT_ID:", process.env.DISCORD_CLIENT_ID);
-  console.log("CLIENT_SECRET:", process.env.DISCORD_CLIENT_SECRET?.slice(0, 5));
+  console.log("CLIENT_ID:", process.env.CLIENT_ID);
+  console.log("CLIENT_SECRET:", process.env.CLIENT_SECRET?.slice(0, 5));
   console.log("Query:", req.query);
   console.log("Host:", req.get('host'));
   console.log("==================================");
@@ -5432,7 +5432,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     const tokenRes = await axios.post("https://discord.com/api/oauth2/token", 
       new URLSearchParams({
         client_id: process.env.CLIENT_ID,
-        client_secret: process.env.DISCORD_CLIENT_SECRET,
+        client_secret: process.env.CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
         redirect_uri: currentRedirectUri,
@@ -5595,7 +5595,7 @@ app.get('/status', (req, res) => {
     botLoggedIn,
     hasToken: !!process.env.TOKEN,
     hasClientId: !!process.env.CLIENT_ID,
-    hasClientSecret: !!process.env.DISCORD_CLIENT_SECRET,
+    hasClientSecret: !!process.env.CLIENT_SECRET,
     redirectUri: REDIRECT_URI,
     baseRedirectUri: BASE_REDIRECT_URI,
     nodeEnv: process.env.NODE_ENV || 'development',
