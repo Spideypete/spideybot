@@ -5384,16 +5384,7 @@ const REDIRECT_URI_DETECTOR = (req) => {
   return calculatedUri;
 };
 
-let lastAuth = 0;
 app.get("/auth/discord", (req, res) => {
-  const now = Date.now();
-
-  if (now - lastAuth < 10000) {
-    return res.send("Wait before retrying");
-  }
-
-  lastAuth = now;
-
   // Set headers to prevent blank page
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.setHeader("Pragma", "no-cache");
