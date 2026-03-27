@@ -5606,8 +5606,16 @@ app.get("/api/image", async (req, res) => {
 });
 
 // ============== SERVER MANAGEMENT PAGE ==============
+let lastAuthAttempt = 0;
 app.get("/dashboard/server/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
+  if (!req.session.authenticated) {
+    if (Date.now() - lastAuthAttempt < 3000) {
+      return res.send("Too many attempts");
+    }
+    lastAuthAttempt = Date.now();
+    console.log("Auth failed");
+    return res.send("Auth failed"); // stops loop
+  }
   res.redirect("/dashboard.html");
 });
 
