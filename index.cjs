@@ -5495,7 +5495,10 @@ app.get("/auth/discord/callback", async (req, res) => {
 
       console.log(`Rate limited. Retry after ${retryAfter}s`);
 
-      return res.send(`Rate limited. Wait ${retryAfter} seconds and try again.`);
+      return res.send(`
+        <h2>Rate limited</h2>
+        <p>Please wait ${retryAfter} seconds before trying again.</p>
+      `);
     }
 
     console.error("❌ OAuth error details:", err.response?.data || err.message);
