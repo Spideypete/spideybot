@@ -15,7 +15,7 @@ services:
       - key: TOKEN
       - key: CLIENT_ID
       - key: CLIENT_SECRET
-        value: wSPfrPcu4PcWytDagD19Qf61I25iFY9g
+        value: NG2vmnbldo39e19bDJTWIaihV48w05E
       - key: SESSION_SECRET
         value: spidey-bot-session-secret-2026
       - key: BASE_URL
