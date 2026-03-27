@@ -5488,6 +5488,8 @@ app.get("/auth/discord/callback", async (req, res) => {
       res.redirect("/dashboard.html");
     });
   } catch (err) {
+    console.error("❌ OAuth error caught:", err.response?.data || err.message);
+    
     if (err.response?.status === 429) {
       const retryAfter = err.response.data?.retry_after || 30;
 
