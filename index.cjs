@@ -5275,7 +5275,94 @@ app.get("/auth/discord/callback", async (req, res) => {
 
     console.log("✅ Token received");
 
-    return res.send("✅ Login successful!");
+    // Fetch user info from Discord
+    const userResponse = await axios.get("https://discord.com/api/users/@me", {
+      headers: {
+        Authorization: `Bearer ${response.data.access_token}`
+      }
+    });
+
+    const user = userResponse.data;
+    console.log(`✅ User authenticated: ${user.username}#${user.discriminator}`);
+
+    // Fetch user's guilds
+    const guildsResponse = await axios.get("https://discord.com/api/users/@me/guilds", {
+      headers: {
+        Authorization: `Bearer ${response.data.access_token}`
+      }
+    });
+
+    // Filter guilds where user has ADMINISTRATOR permission
+    const adminGuilds = guildsResponse.data.filter(guild => 
+      (BigInt(guild.permissions) & BigInt(0x8)) === BigInt(0x8)
+    );
+
+    console.log(`✅ User has admin access to ${adminGuilds.length} servers`);
+
+    // Store user info in session
+    req.session.authenticated = true;
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      discriminator: user.discriminator,
+      avatar: user.avatar,
+      email: user.email
+    };
+    req.session.guilds = adminGuilds;
+    req.session.accessToken = response.data.access_token;
+
+    // Save session before redirecting
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    console.log("✅ Session saved, redirecting to dashboard");
+
+    // Show success message for 1ms then redirect to dashboard
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Login Successful</title>
+        <style>
+          body {
+            font-family: 'Inter', sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+          }
+          .success-container {
+            text-align: center;
+            padding: 3rem;
+            background: rgba(145, 70, 255, 0.1);
+            border: 2px solid rgba(145, 70, 255, 0.3);
+            border-radius: 15px;
+          }
+          h1 {
+            color: #9146FF;
+            margin-bottom: 1rem;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="success-container">
+          <h1>✅ Login Successful!</h1>
+          <p>Redirecting to dashboard...</p>
+        </div>
+        <script>
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 1);
+        </script>
+      </body>
+      </html>
+    `);
 
   } catch (err) {
     // 🔥 HANDLE RATE LIMIT PROPERLY
