@@ -5216,6 +5216,30 @@ let lastLogin = 0;
 // Track used OAuth codes to prevent reuse
 const usedCodes = new Set();
 
+// Rate limiter for OAuth callback to prevent Discord API rate limits
+const oauthRateLimiter = new Map();
+const OAUTH_RATE_LIMIT_WINDOW = 60000; // 1 minute window
+const OAUTH_MAX_ATTEMPTS = 3; // Max 3 attempts per minute
+
+function checkOAuthRateLimit(ip) {
+  const now = Date.now();
+  const userAttempts = oauthRateLimiter.get(ip) || [];
+  
+  // Remove attempts outside the window
+  const recentAttempts = userAttempts.filter(time => now - time < OAUTH_RATE_LIMIT_WINDOW);
+  
+  if (recentAttempts.length >= OAUTH_MAX_ATTEMPTS) {
+    const oldestAttempt = Math.min(...recentAttempts);
+    const retryAfter = Math.ceil((OAUTH_RATE_LIMIT_WINDOW - (now - oldestAttempt)) / 1000);
+    return { limited: true, retryAfter };
+  }
+  
+  recentAttempts.push(now);
+  oauthRateLimiter.set(ip, recentAttempts);
+  return { limited: false };
+}
+
+
 app.get("/auth/discord", (req, res) => {
   const now = Date.now();
 
@@ -5238,6 +5262,67 @@ app.get("/auth/discord", (req, res) => {
 });
 
 app.get("/auth/discord/callback", async (req, res) => {
+  // Check OAuth rate limit to prevent Discord API rate limits
+  const clientIp = req.ip || req.connection.remoteAddress;
+  const rateCheck = checkOAuthRateLimit(clientIp);
+  
+  if (rateCheck.limited) {
+    console.log(`❌ OAuth rate limited for IP: ${clientIp}. Retry after ${rateCheck.retryAfter}s`);
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Rate Limited</title>
+        <style>
+          body {
+            font-family: 'Inter', sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+          }
+          .rate-limit-container {
+            text-align: center;
+            padding: 3rem;
+            background: rgba(255, 70, 70, 0.1);
+            border: 2px solid rgba(255, 70, 70, 0.3);
+            border-radius: 15px;
+            max-width: 500px;
+          }
+          h1 {
+            color: #FF4646;
+            margin-bottom: 1rem;
+          }
+          p {
+            color: #aaa;
+            margin-bottom: 1rem;
+          }
+          .retry-btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background: #5865F2;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 1rem;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="rate-limit-container">
+          <h1>⚠️ Too Many Login Attempts</h1>
+          <p>You've made too many login attempts. Please wait <strong>${rateCheck.retryAfter} seconds</strong> before trying again.</p>
+          <p>This helps prevent Discord API rate limits.</p>
+          <a href="/login" class="retry-btn">Try Again Later</a>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+
   console.log("========== CALLBACK HIT ==========");
 
   const { code } = req.query;
