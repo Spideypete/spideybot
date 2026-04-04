@@ -158,7 +158,7 @@ console.log("[DEBUG] CLIENT_ID:", DISCORD_CLIENT_ID ? "set" : "NOT SET");
 console.log("[DEBUG] CLIENT_SECRET:", DISCORD_CLIENT_SECRET ? "set (length: " + DISCORD_CLIENT_SECRET.length + ")" : "NOT SET");
 // Prefer explicit BASE_URL in env for Codespaces / production. Keep Render fallback.
 const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || null;
-const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'https://zany-space-guacamole-v696776796573pvgv-5000.app.github.dev');
+const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'http://159.89.103.111:5000');
 
 const REDIRECT_URI = process.env.FORCE_REDIRECT_URI || ((BASE_REDIRECT_URI === 'http://localhost:5000' && (process.env.NODE_ENV === 'production' || process.env.RENDER))
   ? 'https://spideybot-90sr.onrender.com/auth/discord/callback'
@@ -5250,7 +5250,8 @@ app.get("/auth/discord", (req, res) => {
 
   lastLogin = now;
 
-  const redirectUri = "https://spidey-bot-fty1.onrender.com/auth/discord/callback";
+  const oauthBaseUrl = process.env.BASE_URL || 'http://159.89.103.111:5000';
+  const redirectUri = `${oauthBaseUrl}/auth/discord/callback`;
 
   const url = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=identify`;
 
@@ -5338,7 +5339,8 @@ app.get("/auth/discord/callback", async (req, res) => {
 
   usedCodes.add(code);
 
-  const redirectUri = "https://spidey-bot-fty1.onrender.com/auth/discord/callback";
+  const oauthBaseUrl = process.env.BASE_URL || 'http://159.89.103.111:5000';
+  const redirectUri = `${oauthBaseUrl}/auth/discord/callback`;
   const maxRetries = 3;
   const baseDelay = 30000;
 
