@@ -5342,8 +5342,21 @@ app.get("/auth/discord/callback", async (req, res) => {
   const maxRetries = 3;
   const baseDelay = 30000;
 
-  const proxyUrl = process.env.FIXIE_URL || process.env.QUOTAGUARDSTATIC_URL;
-  const proxyConfig = proxyUrl ? { host: new URL(proxyUrl).hostname, port: parseInt(new URL(proxyUrl).port) } : null;
+  let proxyConfig = null;
+  try {
+    const proxyUrl = process.env.FIXIE_URL || process.env.QUOTAGUARDSTATIC_URL;
+    if (proxyUrl) {
+      const proxyUrlObj = new URL(proxyUrl);
+      proxyConfig = {
+        host: proxyUrlObj.hostname,
+        port: parseInt(proxyUrlObj.port),
+        auth: proxyUrlObj.username ? { username: proxyUrlObj.username, password: proxyUrlObj.password } : undefined
+      };
+      console.log("🔐 Using proxy:", proxyConfig.host);
+    }
+  } catch (e) {
+    console.log("⚠️ Proxy config error:", e.message);
+  }
 
   async function oauthRequestWithBackoff(retries = 0) {
     try {
@@ -5362,11 +5375,13 @@ app.get("/auth/discord/callback", async (req, res) => {
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
           },
-          proxy: proxyConfig
+          proxy: proxyConfig,
+          timeout: 10000
         }
       );
       return response;
     } catch (err) {
+      console.log("❌ OAuth request error:", err.message, err.code);
       if (err.response?.status === 429 && retries < maxRetries) {
         const retryAfter = err.response.data?.retry_after || baseDelay / 1000;
         const delay = baseDelay * Math.pow(2, retries);
@@ -5389,7 +5404,8 @@ app.get("/auth/discord/callback", async (req, res) => {
         Authorization: `Bearer ${response.data.access_token}`,
         "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
       },
-      proxy: proxyConfig
+      proxy: proxyConfig,
+      timeout: 10000
     });
 
     const user = userResponse.data;
@@ -5401,7 +5417,8 @@ app.get("/auth/discord/callback", async (req, res) => {
         Authorization: `Bearer ${response.data.access_token}`,
         "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
       },
-      proxy: proxyConfig
+      proxy: proxyConfig,
+      timeout: 10000
     });
 
     // Filter guilds where user has ADMINISTRATOR permission
@@ -5487,8 +5504,9 @@ app.get("/auth/discord/callback", async (req, res) => {
     }
 
     console.log("❌ OAuth error:", err.response?.data || err.message);
+    console.log("❌ Error code:", err.code);
 
-    return res.send("❌ OAuth failed. Try again later.");
+    return res.send(`❌ OAuth failed: ${err.message}`);
   }
 });
 
