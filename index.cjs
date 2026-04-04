@@ -5342,9 +5342,13 @@ app.get("/auth/discord/callback", async (req, res) => {
   const maxRetries = 3;
   const baseDelay = 30000;
 
+  console.log("🔍 FIXIE_URL env:", process.env.FIXIE_URL);
+  console.log("🔍 QUOTAGUARD env:", process.env.QUOTAGUARDSTATIC_URL);
+
   let proxyConfig = null;
   try {
     const proxyUrl = process.env.FIXIE_URL || process.env.QUOTAGUARDSTATIC_URL;
+    console.log("🔍 proxyUrl parsed:", proxyUrl);
     if (proxyUrl) {
       const proxyUrlObj = new URL(proxyUrl);
       proxyConfig = {
@@ -5353,6 +5357,8 @@ app.get("/auth/discord/callback", async (req, res) => {
         auth: proxyUrlObj.username ? { username: proxyUrlObj.username, password: proxyUrlObj.password } : undefined
       };
       console.log("🔐 Using proxy:", proxyConfig.host);
+    } else {
+      console.log("⚠️ No proxy URL found, bypassing proxy");
     }
   } catch (e) {
     console.log("⚠️ Proxy config error:", e.message);
@@ -5505,8 +5511,9 @@ app.get("/auth/discord/callback", async (req, res) => {
 
     console.log("❌ OAuth error:", err.response?.data || err.message);
     console.log("❌ Error code:", err.code);
+    console.log("❌ Full error:", err);
 
-    return res.send(`❌ OAuth failed: ${err.message}`);
+    return res.send(`❌ OAuth failed: ${err.message || err.code || 'Unknown error'}`);
   }
 });
 
