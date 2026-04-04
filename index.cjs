@@ -5543,6 +5543,7 @@ app.post("/logout", (req, res) => {
 app.get("/api/user", (req, res) => {
   console.log("[DEBUG /api/user] Session ID:", req.sessionID);
   console.log("[DEBUG /api/user] Authenticated:", req.session.authenticated);
+  console.log("[DEBUG /api/user] Session cookie:", req.headers.cookie?.substring(0, 50));
   console.log("[DEBUG /api/user] Guilds in session:", req.session.guilds?.length || 0);
   console.log("[DEBUG /api/user] User in session:", req.session.user?.username);
   
