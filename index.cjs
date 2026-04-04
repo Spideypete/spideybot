@@ -5346,17 +5346,22 @@ app.get("/auth/discord/callback", async (req, res) => {
   console.log("🔍 QUOTAGUARD env:", process.env.QUOTAGUARDSTATIC_URL);
 
   let proxyConfig = null;
+  let useProxy = true; // Toggle to disable proxy if needed
+  
   try {
     const proxyUrl = process.env.FIXIE_URL || process.env.QUOTAGUARDSTATIC_URL;
     console.log("🔍 proxyUrl parsed:", proxyUrl);
-    if (proxyUrl) {
+    if (proxyUrl && useProxy) {
       const proxyUrlObj = new URL(proxyUrl);
+      const portStr = proxyUrlObj.port || (proxyUrlObj.protocol === 'https:' ? '443' : '80');
       proxyConfig = {
         host: proxyUrlObj.hostname,
-        port: parseInt(proxyUrlObj.port),
+        port: parseInt(portStr),
         auth: proxyUrlObj.username ? { username: proxyUrlObj.username, password: proxyUrlObj.password } : undefined
       };
-      console.log("🔐 Using proxy:", proxyConfig.host);
+      console.log("🔐 Using proxy:", proxyConfig.host, "port:", proxyConfig.port);
+    } else if (!useProxy) {
+      console.log("⚠️ Proxy disabled, bypassing");
     } else {
       console.log("⚠️ No proxy URL found, bypassing proxy");
     }
