@@ -5344,33 +5344,6 @@ app.get("/auth/discord/callback", async (req, res) => {
   const maxRetries = 3;
   const baseDelay = 30000;
 
-  console.log("🔍 FIXIE_URL env:", process.env.FIXIE_URL);
-  console.log("🔍 QUOTAGUARD env:", process.env.QUOTAGUARDSTATIC_URL);
-
-  let proxyConfig = null;
-  let useProxy = false; // Toggle to disable proxy if needed
-  
-  try {
-    const proxyUrl = process.env.FIXIE_URL || process.env.QUOTAGUARDSTATIC_URL;
-    console.log("🔍 proxyUrl parsed:", proxyUrl);
-    if (proxyUrl && useProxy) {
-      const proxyUrlObj = new URL(proxyUrl);
-      const portStr = proxyUrlObj.port || (proxyUrlObj.protocol === 'https:' ? '443' : '80');
-      proxyConfig = {
-        host: proxyUrlObj.hostname,
-        port: parseInt(portStr),
-        auth: proxyUrlObj.username ? { username: proxyUrlObj.username, password: proxyUrlObj.password } : undefined
-      };
-      console.log("🔐 Using proxy:", proxyConfig.host, "port:", proxyConfig.port);
-    } else if (!useProxy) {
-      console.log("⚠️ Proxy disabled, bypassing");
-    } else {
-      console.log("⚠️ No proxy URL found, bypassing proxy");
-    }
-  } catch (e) {
-    console.log("⚠️ Proxy config error:", e.message);
-  }
-
   async function oauthRequestWithBackoff(retries = 0) {
     try {
       const response = await axios.post(
@@ -5388,7 +5361,6 @@ app.get("/auth/discord/callback", async (req, res) => {
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
           },
-          proxy: proxyConfig,
           timeout: 30000
         }
       );
@@ -5417,7 +5389,6 @@ app.get("/auth/discord/callback", async (req, res) => {
         Authorization: `Bearer ${response.data.access_token}`,
         "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
       },
-      proxy: proxyConfig,
       timeout: 30000
     });
 
@@ -5430,7 +5401,6 @@ app.get("/auth/discord/callback", async (req, res) => {
         Authorization: `Bearer ${response.data.access_token}`,
         "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
       },
-      proxy: proxyConfig,
       timeout: 30000
     });
 
@@ -5541,12 +5511,6 @@ app.post("/logout", (req, res) => {
 // ============== PUBLIC API ==============
 
 app.get("/api/user", (req, res) => {
-  console.log("[DEBUG /api/user] Session ID:", req.sessionID);
-  console.log("[DEBUG /api/user] Authenticated:", req.session.authenticated);
-  console.log("[DEBUG /api/user] Session cookie:", req.headers.cookie?.substring(0, 50));
-  console.log("[DEBUG /api/user] Guilds in session:", req.session.guilds?.length || 0);
-  console.log("[DEBUG /api/user] User in session:", req.session.user?.username);
-  
   if (!req.session.authenticated) {
     return res.status(401).json({ error: "Not authenticated" });
   }
