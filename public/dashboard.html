@@ -5371,6 +5371,9 @@
             const message = document.getElementById('verify_message')?.value?.trim();
             if (!channelId) return alert('Please select a verification channel');
             if (!roleId) return alert('Please select a role to assign on verification');
+            
+            console.log('Posting verification - channel:', channelId, 'role:', roleId);
+            
             try {
                 const res = await fetch('/api/bot-config/verification/post?guildId=' + guildId, {
                     method: 'POST',
@@ -5378,7 +5381,9 @@
                     body: JSON.stringify({ channelId, roleId, message }),
                     credentials: 'include'
                 });
-                const data = await res.json();
+                const text = await res.text();
+                console.log('Verification response:', text);
+                const data = JSON.parse(text);
                 if (data.success) {
                     alert('✅ Verification message posted! Message ID: ' + data.messageId);
                 } else {
