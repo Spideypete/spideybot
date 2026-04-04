@@ -498,53 +498,8 @@ client.once("ready", async () => {
   }
   console.log('📊 Member pre-fetch complete');
 
-  // Auto-deploy to Render every 10 minutes
-  console.log('🔍 Checking auto-deploy conditions...');
-  console.log('  RENDER_API_KEY:', !!process.env.RENDER_API_KEY);
-  console.log('  RENDER_SERVICE_ID:', !!process.env.RENDER_SERVICE_ID);
-  console.log('  NODE_ENV:', process.env.NODE_ENV);
-  
-  if (process.env.RENDER_API_KEY && process.env.RENDER_SERVICE_ID && process.env.NODE_ENV !== 'production') {
-    console.log('🔄 Auto-deploy to Render enabled (every 10 minutes)');
-    
-    setInterval(async () => {
-      try {
-        const https = require('https');
-        const data = JSON.stringify({ clearCache: 'do_not_clear' });
-        
-        const options = {
-          hostname: 'api.render.com',
-          port: 443,
-          path: `/v1/services/${process.env.RENDER_SERVICE_ID}/deploys`,
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.RENDER_API_KEY}`,
-            'Content-Type': 'application/json',
-            'Content-Length': data.length
-          }
-        };
-        
-        const req = https.request(options, (res) => {
-          if (res.statusCode === 202) {
-            console.log('✅ Auto-deployed to Render successfully');
-          } else {
-            console.log(`⚠️ Render auto-deploy returned HTTP ${res.statusCode}`);
-          }
-        });
-        
-        req.on('error', (error) => {
-          console.error('❌ Render auto-deploy failed:', error.message);
-        });
-        
-        req.write(data);
-        req.end();
-      } catch (err) {
-        console.error('❌ Auto-deploy error:', err.message);
-      }
-    }, 10 * 60 * 1000); // 10 minutes
-  } else {
-    console.log('⚠️ Auto-deploy NOT enabled - missing conditions');
-  }
+  // Auto-deploy to Render is disabled - moved to DigitalOcean
+  console.log('ℹ️ Auto-deploy disabled - using DigitalOcean');
 });
 
 // Reusable function to register slash commands
