@@ -4343,11 +4343,20 @@
             ]);
             
             // Load stats in parallel (they don't depend on settings)
-            await Promise.all([
-                loadMemberGraphs(),
-                loadMemberEvents(),
-                loadStaffMembers(serverId)
-            ]);
+            // Only load stats if the stats tab is visible to improve initial load time
+            const statsTab = document.getElementById('dashboard-section');
+            const isStatsVisible = statsTab?.classList.contains('active');
+            
+            if (isStatsVisible) {
+                await Promise.all([
+                    loadMemberGraphs(),
+                    loadMemberEvents(),
+                    loadStaffMembers(serverId)
+                ]);
+            } else {
+                // Just load staff members which is quick
+                await loadStaffMembers(serverId);
+            }
 
             // Re-capture original values now that server data is loaded
             setupUnsavedDetection();
