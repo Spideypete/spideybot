@@ -5346,7 +5346,7 @@ app.get("/auth/discord/callback", async (req, res) => {
   console.log("🔍 QUOTAGUARD env:", process.env.QUOTAGUARDSTATIC_URL);
 
   let proxyConfig = null;
-  let useProxy = true; // Toggle to disable proxy if needed
+  let useProxy = false; // Toggle to disable proxy if needed
   
   try {
     const proxyUrl = process.env.FIXIE_URL || process.env.QUOTAGUARDSTATIC_URL;
