@@ -123,6 +123,14 @@ app.use(express.static(publicDir, {
     res.setHeader('Expires', '0');
   }
 }));
+
+// Protect dashboard.html - must be after static but before routes
+app.use('/dashboard.html', (req, res, next) => {
+  if (!req.session.authenticated) {
+    return res.redirect('/login');
+  }
+  next();
+});
 const auditLogger = new SecurityAuditLogger();
 const antiSpam = new AntiSpamEngine();
 const joinGate = new JoinGateSystem();
@@ -5600,12 +5608,6 @@ app.get("/api/image", async (req, res) => {
 app.get("/dashboard/server/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   res.redirect("/dashboard.html");
-});
-
-// Protected route for dashboard.html
-app.get("/dashboard.html", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
-  res.sendFile(path.join(distDir, 'dashboard.html'));
 });
 
 // ============== API: GET ROLE CATEGORIES (must be before :guildId) ==============
