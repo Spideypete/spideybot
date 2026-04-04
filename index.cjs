@@ -4798,6 +4798,31 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.reply({ content: "⏹ Music stopped", ephemeral: true });
     }
   }
+
+  // Verification button
+  if (interaction.isButton() && interaction.customId.startsWith("verify_")) {
+    const roleId = interaction.customId.replace("verify_", "");
+    const guildConfig = getGuildConfig(interaction.guild.id);
+    const verification = guildConfig.verification;
+    
+    if (!verification || verification.roleId !== roleId) {
+      return interaction.reply({ content: "❌ Verification not configured for this button", ephemeral: true });
+    }
+
+    try {
+      const role = interaction.guild.roles.cache.get(roleId);
+      if (!role) {
+        return interaction.reply({ content: "❌ Role not found", ephemeral: true });
+      }
+
+      await interaction.member.roles.add(role);
+      await interaction.reply({ content: `✅ You have been verified! You've received the **${role.name}** role.`, ephemeral: true });
+      addActivity(interaction.guild.id, "✅", interaction.user.username, "verified themselves");
+    } catch (err) {
+      console.error("Verification error:", err);
+      await interaction.reply({ content: "❌ Error during verification", ephemeral: true });
+    }
+  }
 });
 
 // ============== WEB SERVER FOR UPTIME & WEBHOOKS ==============
@@ -6190,6 +6215,65 @@ app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) =>
     res.json({ success: true, messageId: msg.id, message: "Message posted" });
   } catch (err) {
     console.error('❌ Error posting react role message:', err);
+    res.json({ success: false, message: "Error posting message: " + err.message });
+  }
+});
+
+// Verification message posting endpoint
+app.post("/api/bot-config/verification/post", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, message: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
+  
+  try {
+    const { channelId, roleId, message } = req.body;
+    if (!channelId) return res.json({ success: false, error: "Channel required" });
+    if (!roleId) return res.json({ success: false, error: "Role required" });
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.json({ success: false, error: "Channel not found" });
+
+    const role = guild.roles.cache.get(roleId);
+    if (!role) return res.json({ success: false, error: "Role not found" });
+
+    // Create verification embed with button
+    const embed = new EmbedBuilder()
+      .setColor(0x00D4FF)
+      .setTitle("🔐 Server Verification")
+      .setDescription(message || "Welcome to the server! Click the button below to verify yourself and gain access.")
+      .addFields(
+        { name: "Role to receive", value: role.name, inline: true }
+      )
+      .setFooter({ text: 'SPIDEY BOT • Verification' })
+      .setTimestamp();
+
+    // Create button component
+    const button = new ButtonBuilder()
+      .setCustomId(`verify_${roleId}`)
+      .setLabel("Verify")
+      .setStyle(ButtonStyle.Success)
+      .setEmoji("✅");
+
+    const row = new ActionRowBuilder().addComponents(button);
+
+    const msg = await channel.send({ embeds: [embed], components: [row] });
+    
+    // Save verification config
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    config.guilds[guildId].verification = { channelId, roleId, messageId: msg.id, message };
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    
+    console.log(`✅ Verification message posted: ${msg.id} in #${channel.name} (Guild: ${guildId})`);
+    addActivity(guildId, "🔐", "Admin", `posted verification message in #${channel.name}`);
+    res.json({ success: true, messageId: msg.id, message: "Verification message posted" });
+  } catch (err) {
+    console.error('❌ Error posting verification message:', err);
     res.json({ success: false, message: "Error posting message: " + err.message });
   }
 });
