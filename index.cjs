@@ -5382,7 +5382,7 @@ app.get("/auth/discord/callback", async (req, res) => {
             "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
           },
           proxy: proxyConfig,
-          timeout: 10000
+          timeout: 30000
         }
       );
       return response;
@@ -5411,7 +5411,7 @@ app.get("/auth/discord/callback", async (req, res) => {
         "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
       },
       proxy: proxyConfig,
-      timeout: 10000
+      timeout: 30000
     });
 
     const user = userResponse.data;
@@ -5424,7 +5424,7 @@ app.get("/auth/discord/callback", async (req, res) => {
         "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
       },
       proxy: proxyConfig,
-      timeout: 10000
+      timeout: 30000
     });
 
     // Filter guilds where user has ADMINISTRATOR permission
