@@ -4331,15 +4331,23 @@
             
             console.log('🔄 Server switched to:', serverName, '(' + serverId + ')');
             
-            // Load ALL data for the selected server
+            // Load roles and channels FIRST (required for other loads)
             await loadServerRolesAndChannels(serverId);
-            await loadLogging();
-            await loadServerSettings(serverId);
-            await loadServerGuard();
-            await loadRoleCategories(serverId);
-            await loadMemberGraphs();
-            await loadMemberEvents();
-            await loadStaffMembers(serverId);
+            
+            // Load settings in parallel (they don't depend on each other)
+            await Promise.all([
+                loadLogging(),
+                loadServerSettings(serverId),
+                loadServerGuard(),
+                loadRoleCategories(serverId)
+            ]);
+            
+            // Load stats in parallel (they don't depend on settings)
+            await Promise.all([
+                loadMemberGraphs(),
+                loadMemberEvents(),
+                loadStaffMembers(serverId)
+            ]);
 
             // Re-capture original values now that server data is loaded
             setupUnsavedDetection();
