@@ -4333,8 +4333,8 @@
             
             // Load ALL data for the selected server
             await loadServerRolesAndChannels(serverId);
-            await loadServerSettings(serverId);
             await loadLogging();
+            await loadServerSettings(serverId);
             await loadServerGuard();
             await loadRoleCategories(serverId);
             await loadMemberGraphs();

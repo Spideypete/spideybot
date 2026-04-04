@@ -142,7 +142,7 @@
 
         body:not(.light-mode) .content-title,
         body:not(.light-mode) .dashboard-title {
-            color: #000000 !important;
+            color: #fbfbfb !important;
         }
 
         body:not(.light-mode) .panel-title {
@@ -461,7 +461,7 @@
             position: absolute;
             top: 100%;
             left: 0;
-            background: var(--bg-secondary);
+            background: #2c2c2c;
             border: 1px solid rgba(var(--theme-color), 0.3);
             border-radius: 8px;
             margin-top: 0.5rem;
@@ -4333,8 +4333,8 @@
             
             // Load ALL data for the selected server
             await loadServerRolesAndChannels(serverId);
-            await loadServerSettings(serverId);
             await loadLogging();
+            await loadServerSettings(serverId);
             await loadServerGuard();
             await loadRoleCategories(serverId);
             await loadMemberGraphs();
