@@ -5338,33 +5338,58 @@ app.get("/auth/discord/callback", async (req, res) => {
 
   usedCodes.add(code);
 
-  try {
-    const redirectUri = "https://spidey-bot-fty1.onrender.com/auth/discord/callback";
+  const redirectUri = "https://spidey-bot-fty1.onrender.com/auth/discord/callback";
+  const maxRetries = 3;
+  const baseDelay = 30000;
 
-    const response = await axios.post(
-      "https://discord.com/api/oauth2/token",
-      new URLSearchParams({
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-        code,
-        grant_type: "authorization_code",
-        redirect_uri: redirectUri,
-        scope: "identify"
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
+  const proxyUrl = process.env.FIXIE_URL || process.env.QUOTAGUARDSTATIC_URL;
+  const proxyConfig = proxyUrl ? { host: new URL(proxyUrl).hostname, port: parseInt(new URL(proxyUrl).port) } : null;
+
+  async function oauthRequestWithBackoff(retries = 0) {
+    try {
+      const response = await axios.post(
+        "https://discord.com/api/oauth2/token",
+        new URLSearchParams({
+          client_id: process.env.CLIENT_ID,
+          client_secret: process.env.CLIENT_SECRET,
+          code,
+          grant_type: "authorization_code",
+          redirect_uri: redirectUri,
+          scope: "identify"
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
+          },
+          proxy: proxyConfig
         }
+      );
+      return response;
+    } catch (err) {
+      if (err.response?.status === 429 && retries < maxRetries) {
+        const retryAfter = err.response.data?.retry_after || baseDelay / 1000;
+        const delay = baseDelay * Math.pow(2, retries);
+        console.log(`⚠️ Rate limited. Retrying in ${delay/1000}s (attempt ${retries + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return oauthRequestWithBackoff(retries + 1);
       }
-    );
+      throw err;
+    }
+  }
+
+  try {
+    const response = await oauthRequestWithBackoff();
 
     console.log("✅ Token received");
 
     // Fetch user info from Discord
     const userResponse = await axios.get("https://discord.com/api/users/@me", {
       headers: {
-        Authorization: `Bearer ${response.data.access_token}`
-      }
+        Authorization: `Bearer ${response.data.access_token}`,
+        "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
+      },
+      proxy: proxyConfig
     });
 
     const user = userResponse.data;
@@ -5373,8 +5398,10 @@ app.get("/auth/discord/callback", async (req, res) => {
     // Fetch user's guilds
     const guildsResponse = await axios.get("https://discord.com/api/users/@me/guilds", {
       headers: {
-        Authorization: `Bearer ${response.data.access_token}`
-      }
+        Authorization: `Bearer ${response.data.access_token}`,
+        "User-Agent": "SpideyBot/1.0 (TrackRight Platform)"
+      },
+      proxy: proxyConfig
     });
 
     // Filter guilds where user has ADMINISTRATOR permission
