@@ -433,7 +433,15 @@ app.get('/api/commands', (req, res) => {
 // ============== AI SUPPORT KNOWLEDGE BASE ==============
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
+console.log("[DEBUG] AI API Key loaded:", OPENAI_API_KEY ? "YES" : "NO");
+
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ status: 'ok', time: Date.now() });
+});
+
 app.get('/api/ai-knowledge', (req, res) => {
+  console.log("[AI] /api/ai-knowledge called");
   const isDashboard = req.query.dashboard === 'true';
   const version = process.env.npm_package_version || "1.0.0";
   let commit = "unknown";
