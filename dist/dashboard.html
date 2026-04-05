@@ -2136,6 +2136,7 @@
                     <div class="profile-dropdown-icon">⋮</div>
                     
                     <div class="profile-menu" id="profileMenu">
+                        <div class="profile-menu-item" id="ownersDashLink" style="display: none;" onclick="openOwnersDash()">Owner's Dash</div>
                         <div class="profile-menu-item">Profile Settings</div>
                         <div class="profile-menu-item">Preferences</div>
                         <div class="profile-menu-item logout" onclick="logout()">Log Out</div>
@@ -4222,6 +4223,15 @@
             menu.classList.toggle('active');
         }
 
+        function openOwnersDash() {
+            const pin = prompt('Enter PIN to access Owners Dash:');
+            if (pin === '9468') {
+                window.open('/owner-dash', '_blank');
+            } else if (pin !== null) {
+                alert('Incorrect PIN');
+            }
+        }
+
         function updateServerBtnIcon(serverName, iconUrl, iconProxyUrl) {
             const btnIcon = document.getElementById('serverBtnIcon');
             if (!btnIcon) return;
@@ -5849,7 +5859,13 @@
                     }
                     
                     // Set user role/status
-                    document.getElementById('userRole').textContent = 'Authenticated';
+                    document.getElementById('userRole').textContent = data.isOwner ? 'Owner' : 'Authenticated';
+                    
+                    // Show Owner's Dash link if user is bot owner
+                    const ownersDashLink = document.getElementById('ownersDashLink');
+                    if (ownersDashLink && data.isOwner) {
+                        ownersDashLink.style.display = 'block';
+                    }
                     
                     // Clear any previously saved server — user must choose each session
                     localStorage.removeItem('selectedServerId');

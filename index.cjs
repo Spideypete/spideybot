@@ -5691,13 +5691,99 @@ app.get("/api/user", (req, res) => {
     avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
   }
 
+  const config = loadConfig();
+  const botOwnerId = config.creator?.ownerId || '';
+  const isOwner = user.id === botOwnerId && botOwnerId !== '';
+
   res.json({
     user: {
       ...user,
-      avatarUrl
+      avatarUrl,
+      isOwner
     },
-    guilds: req.session.guilds
+    guilds: req.session.guilds,
+    isOwner
   });
+});
+
+// ============== OWNER DASH API ==============
+app.get('/api/owner/stats', (req, res) => {
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const config = loadConfig();
+  const botOwnerId = config.creator?.ownerId || '';
+  const userId = req.session.user?.id;
+  
+  if (userId !== botOwnerId || !botOwnerId) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  const totalServers = client.guilds.cache.size;
+  const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  let newThisWeek = 0;
+  
+  const servers = [];
+  let premiumCount = 0;
+  
+  for (const [guildId, guildConfig] of Object.entries(config.guilds)) {
+    if (guildId === 'creator' || guildId === 'subscriptions' || guildId === 'settings' || 
+        guildId === 'role-categories' || guildId === 'react-roles' || guildId === 'statistics-channels' ||
+        guildId === 'logging') continue;
+    
+    const discordGuild = client.guilds.cache.get(guildId);
+    if (discordGuild) {
+      const joinedAt = discordGuild.joinedAt?.getTime() || 0;
+      if (joinedAt > oneWeekAgo) newThisWeek++;
+      
+      const isPremium = guildConfig.premium === true;
+      if (isPremium) premiumCount++;
+      
+      servers.push({
+        id: guildId,
+        name: discordGuild.name,
+        icon: discordGuild.icon,
+        memberCount: discordGuild.memberCount,
+        premium: isPremium
+      });
+    }
+  }
+
+  res.json({
+    totalServers,
+    premiumCount,
+    newThisWeek,
+    servers
+  });
+});
+
+app.post('/api/owner/premium', (req, res) => {
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const config = loadConfig();
+  const botOwnerId = config.creator?.ownerId || '';
+  const userId = req.session.user?.id;
+  
+  if (userId !== botOwnerId || !botOwnerId) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  const { guildId, premium } = req.body;
+  if (!guildId) {
+    return res.status(400).json({ error: ' guildId required' });
+  }
+
+  if (!config.guilds[guildId]) {
+    config.guilds[guildId] = {};
+  }
+  
+  config.guilds[guildId].premium = premium;
+  saveConfig(config);
+
+  res.json({ success: true, guildId, premium });
 });
 
 // ============== DASHBOARD DEBUG STATUS ==============

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner's Dash - Spidey Bot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0f1623;
+            color: #fff;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(145, 81, 255, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .header h1 span {
+            color: #9151ff;
+        }
+        
+        .header-badge {
+            background: rgba(145, 81, 255, 0.2);
+            color: #9151ff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #1e1e1e;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .stat-card.total { border-left: 3px solid #00d4ff; }
+        .stat-card.premium { border-left: 3px solid #ffb347; }
+        .stat-card.growth { border-left: 3px solid #1be187; }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-card.total .stat-value { color: #00d4ff; }
+        .stat-card.premium .stat-value { color: #ffb347; }
+        .stat-card.growth .stat-value { color: #1be187; }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .servers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .server-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1e1e1e;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+        }
+        
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .server-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(145, 81, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            overflow: hidden;
+        }
+        
+        .server-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .server-name {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .server-id {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.15);
+            transition: 0.3s ease;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            transition: 0.3s ease;
+            border-radius: 50%;
+        }
+        
+        .toggle-switch input:checked + .toggle-slider {
+            background: rgba(145, 81, 255, 0.8);
+        }
+        
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* PIN Modal */
+        .pin-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .pin-modal.hidden {
+            display: none;
+        }
+        
+        .pin-box {
+            background: #1e1e1e;
+            border: 1px solid rgba(145, 81, 255, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            max-width: 320px;
+        }
+        
+        .pin-box h2 {
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        
+        .pin-box p {
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .pin-input {
+            background: #000;
+            border: 1px solid rgba(145, 81, 255, 0.3);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1.25rem;
+            text-align: center;
+            width: 120px;
+            letter-spacing: 0.5rem;
+        }
+        
+        .pin-input:focus {
+            outline: none;
+            border-color: rgba(145, 81, 255, 0.6);
+        }
+        
+        .pin-error {
+            color: #ff6b6b;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            display: none;
+        }
+        
+        .pin-error.show {
+            display: block;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #9151ff, #00d4ff);
+            border: none;
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: transform 0.2s ease;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- PIN Verification Modal -->
+    <div class="pin-modal" id="pinModal">
+        <div class="pin-box">
+            <h2>🔐 Security Check</h2>
+            <p>Enter the PIN to access Owner's Dash</p>
+            <input type="password" class="pin-input" id="pinInput" maxlength="4" placeholder="****">
+            <div class="pin-error" id="pinError">Incorrect PIN. Please try again.</div>
+            <button class="btn-submit" onclick="verifyPin()">Verify</button>
+        </div>
+    </div>
+    
+    <div class="header">
+        <h1><span>Owner's</span> Dash</h1>
+        <span class="header-badge">Spidey Bot</span>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-value" id="totalServers">-</div>
+            <div class="stat-label">Total Servers</div>
+        </div>
+        <div class="stat-card premium">
+            <div class="stat-value" id="premiumServers">-</div>
+            <div class="stat-label">Premium Servers</div>
+        </div>
+        <div class="stat-card growth">
+            <div class="stat-value" id="growthRate">-</div>
+            <div class="stat-label">New This Week</div>
+        </div>
+    </div>
+    
+    <div class="section-title">Server Premium Management</div>
+    <div class="servers-list" id="serversList">
+        <div class="loading">Loading servers...</div>
+    </div>
+    
+    <script>
+        let isVerified = false;
+        
+        function verifyPin() {
+            const pin = document.getElementById('pinInput').value;
+            if (pin === '9468') {
+                isVerified = true;
+                document.getElementById('pinModal').classList.add('hidden');
+                loadData();
+            } else {
+                document.getElementById('pinError').classList.add('show');
+                document.getElementById('pinInput').value = '';
+            }
+        }
+        
+        document.getElementById('pinInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyPin();
+        });
+        
+        async function loadData() {
+            if (!isVerified) return;
+            
+            try {
+                const res = await fetch('/api/owner/stats', { credentials: 'include' });
+                const stats = await res.json();
+                
+                document.getElementById('totalServers').textContent = stats.totalServers || 0;
+                document.getElementById('premiumServers').textContent = stats.premiumCount || 0;
+                document.getElementById('growthRate').textContent = '+' + (stats.newThisWeek || 0);
+                
+                renderServersList(stats.servers || []);
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+        
+        function renderServersList(servers) {
+            const container = document.getElementById('serversList');
+            
+            if (servers.length === 0) {
+                container.innerHTML = '<div class="loading">No servers found</div>';
+                return;
+            }
+            
+            container.innerHTML = servers.map(server => `
+                <div class="server-item">
+                    <div class="server-info">
+                        <div class="server-icon">
+                            ${server.icon 
+                                ? `<img src="https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png?size=128" alt="">`
+                                : server.name.charAt(0).toUpperCase()
+                            }
+                        </div>
+                        <div>
+                            <div class="server-name">${server.name}</div>
+                            <div class="server-id">${server.id}</div>
+                        </div>
+                    </div>
+                    <label class="toggle-label">
+                        <span>Premium</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" ${server.premium ? 'checked' : ''} 
+                                   onchange="togglePremium('${server.id}', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </label>
+                </div>
+            `).join('');
+        }
+        
+        async function togglePremium(guildId, enabled) {
+            try {
+                await fetch('/api/owner/premium', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ guildId, premium: enabled })
+                });
+            } catch (err) {
+                console.error('Failed to update premium:', err);
+            }
+        }
+    </script>
+</body>
+</html>

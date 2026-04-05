@@ -1,7 +1,8 @@
 {
   "creator": {
     "botNickname": "SPIDEY BOT",
-    "timezone": "GMT"
+    "timezone": "GMT",
+    "ownerId": ""
   },
   "guilds": {
     "1235015410743775294": {
