@@ -5235,6 +5235,12 @@ app.get("/owner-dash", (req, res) => {
   res.redirect("/owner-dash.html");
 });
 
+// Route /premium - standalone pricing page
+app.get("/premium", (req, res) => {
+  if (!req.session.authenticated) return res.redirect("/login");
+  res.sendFile(path.join(publicDir, 'premium.html'));
+});
+
 // Invite route - redirect to Discord OAuth
 app.get("/invite", (req, res) => {
   const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8`;

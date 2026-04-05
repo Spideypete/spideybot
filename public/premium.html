@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Plans - Spidey Bot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f1623 0%, #1a1f2e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #bbb;
+            font-size: 1.1rem;
+        }
+        
+        .period-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .period-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            background: #2c2c3d;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .period-btn.active {
+            background: #6c5ce7;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+        }
+        
+        .plans-grid {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+        
+        .plan-card {
+            background: #2c2c3d;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 320px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .plan-card.free {
+            opacity: 0.7;
+        }
+        
+        .plan-card.premium {
+            border-color: #6c5ce7;
+            box-shadow: 0 0 30px rgba(108, 92, 231, 0.3);
+        }
+        
+        .plan-badge {
+            display: inline-block;
+            background: #f1c40f;
+            color: #000;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-desc {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin: 1.5rem 0;
+            color: #aaa;
+        }
+        
+        .plan-features li {
+            padding: 0.4rem 0;
+        }
+        
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        
+        .plan-price span {
+            font-size: 1rem;
+            color: #888;
+        }
+        
+        .plan-monthly {
+            color: #4cd137;
+            font-size: 0.9rem;
+            margin: 0.5rem 0 1rem 0;
+        }
+        
+        .plan-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            background: #6c5ce7;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .plan-btn:hover {
+            transform: scale(1.02);
+        }
+        
+        .plan-btn:disabled {
+            background: #444;
+            color: #777;
+            cursor: not-allowed;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #666;
+        }
+        
+        .back-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            background: #2c2c3d;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="window.location.href='/dashboard'">← Back to Dashboard</button>
+    
+    <div class="header">
+        <h1>🚀 Upgrade Your Server</h1>
+        <p>Unlock powerful features and grow your community</p>
+    </div>
+    
+    <div class="period-toggle" id="periodToggle">
+        <button class="period-btn" data-period="1" onclick="setPeriod(1)">1 Month</button>
+        <button class="period-btn" data-period="3" onclick="setPeriod(3)">3 Months</button>
+        <button class="period-btn active" data-period="6" onclick="setPeriod(6)">6 Months ⭐</button>
+        <button class="period-btn" data-period="12" onclick="setPeriod(12)">12 Months</button>
+    </div>
+    
+    <div class="plans-grid" id="plansGrid">
+        <!-- Plans rendered by JS -->
+    </div>
+    
+    <div class="footer">
+        <p>Cancel anytime • Instant activation</p>
+    </div>
+    
+    <script>
+        const pricing = {
+            premium: { 1: 8, 3: 21, 6: 36, 12: 60 },
+            pro: { 1: 12, 3: 32, 6: 54, 12: 96 }
+        };
+        
+        let currentPeriod = 6;
+        let selectedServerId = null;
+        let currentTier = 'free';
+        
+        async function init() {
+            // Get selected server from localStorage or URL
+            selectedServerId = localStorage.getItem('selectedServerId');
+            
+            if (selectedServerId) {
+                try {
+                    const res = await fetch('/api/guild/' + selectedServerId + '/tier');
+                    const data = await res.json();
+                    currentTier = data.tier || 'free';
+                } catch (e) {
+                    currentTier = 'free';
+                }
+            }
+            
+            renderPlans();
+        }
+        
+        function setPeriod(p) {
+            currentPeriod = p;
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.period == p);
+            });
+            renderPlans();
+        }
+        
+        function renderPlans() {
+            const grid = document.getElementById('plansGrid');
+            const p = pricing.premium[currentPeriod];
+            const pro = pricing.pro[currentPeriod];
+            const pMonthly = (p / currentPeriod).toFixed(2);
+            const proMonthly = (pro / currentPeriod).toFixed(2);
+            const pSave = Math.round((1 - p / (8 * currentPeriod)) * 100);
+            const proSave = Math.round((1 - pro / (12 * currentPeriod)) * 100);
+            
+            grid.innerHTML = `
+                <div class="plan-card free">
+                    <div class="plan-name">Free</div>
+                    <div class="plan-desc">Basic features</div>
+                    <ul class="plan-features">
+                        <li>✓ Basic logging</li>
+                        <li>✓ Limited server guard</li>
+                        <li>✓ 3 React Roles</li>
+                        <li>✓ Basic commands</li>
+                    </ul>
+                    <div class="plan-price">$0<span>/mo</span></div>
+                    <button class="plan-btn" disabled>Current Plan</button>
+                </div>
+                
+                <div class="plan-card premium">
+                    <div class="plan-badge">Most Popular ⭐</div>
+                    <div class="plan-name">Premium</div>
+                    <div class="plan-desc">Full features unlocked</div>
+                    <ul class="plan-features">
+                        <li>✓ Unlimited React Roles</li>
+                        <li>✓ Full Server Guard</li>
+                        <li>✓ XP + Leaderboards</li>
+                        <li>✓ Giveaways</li>
+                        <li>✓ Custom Commands</li>
+                    </ul>
+                    <div class="plan-price">$${p}<span> total</span></div>
+                    <div class="plan-monthly">$${pMonthly}/mo (${pSave}% OFF)</div>
+                    <button class="plan-btn" onclick="upgrade('premium')" ${currentTier === 'premium' || currentTier === 'pro' ? 'disabled' : ''}>
+                        ${currentTier === 'premium' ? 'Current Plan' : currentTier === 'pro' ? 'Downgrade' : 'Upgrade to Premium'}
+                    </button>
+                </div>
+                
+                <div class="plan-card pro">
+                    <div class="plan-name">Pro</div>
+                    <div class="plan-desc">Advanced features</div>
+                    <ul class="plan-features">
+                        <li>✓ Everything in Premium</li>
+                        <li>✓ Member Analytics</li>
+                        <li>✓ Invite Tracking</li>
+                        <li>✓ Automation Tools</li>
+                        <li>✓ Priority Support</li>
+                    </ul>
+                    <div class="plan-price">$${pro}<span> total</span></div>
+                    <div class="plan-monthly">$${proMonthly}/mo (${proSave}% OFF)</div>
+                    <button class="plan-btn" onclick="upgrade('pro')" ${currentTier === 'pro' ? 'disabled' : ''}>
+                        ${currentTier === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
+                    </button>
+                </div>
+            `;
+        }
+        
+        async function upgrade(tier) {
+            if (!selectedServerId) {
+                alert('Please select a server from the dashboard first');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/owner/tier', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ guildId: selectedServerId, tier: tier })
+                });
+                
+                if (res.ok) {
+                    alert('Successfully upgraded to ' + tier.toUpperCase() + '!');
+                    currentTier = tier;
+                    renderPlans();
+                } else {
+                    alert('Failed to upgrade. Only the bot owner can change tiers.');
+                }
+            } catch (e) {
+                alert('Error upgrading: ' + e.message);
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>
