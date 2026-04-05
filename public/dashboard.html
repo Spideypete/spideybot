@@ -4403,41 +4403,30 @@
         let currentTier = 'free';
         
         async function openPremiumModal() {
-            console.log('Opening premium modal...');
             let modal = document.getElementById('premiumModal');
             if (!modal) {
-                console.log('Modal not found, creating...');
                 createPremiumModal();
                 modal = document.getElementById('premiumModal');
             }
             
-            console.log('Modal:', modal, 'Checking tier...');
             if (selectedServerId) {
                 try {
                     const res = await fetch('/api/guild/' + selectedServerId + '/tier');
                     const data = await res.json();
                     currentTier = data.tier || 'free';
-                    console.log('Current tier:', currentTier);
                 } catch (e) {
                     currentTier = 'free';
                 }
             }
             
             updateTierCards();
-            if (modal) {
-                modal.style.display = 'flex';
-                console.log('Modal displayed');
-            } else {
-                console.log('ERROR: Modal still not found!');
-            }
+            if (modal) modal.style.display = 'flex';
         }
 
         function createPremiumModal() {
-            console.log('Creating premium modal...');
-            try {
-                const modal = document.createElement('div');
-                modal.id = 'premiumModal';
-                modal.className = 'premium-modal-overlay';
+            const modal = document.createElement('div');
+            modal.id = 'premiumModal';
+            modal.className = 'premium-modal-overlay';
                 modal.innerHTML = `
                 <div class="premium-modal">
                     <div class="premium-header">
@@ -4503,17 +4492,11 @@
         }
         
         function updateTierCards() {
-            console.log('Updating tier cards, currentTier:', currentTier);
             const freeCard = document.getElementById('tierFree');
             const premiumCard = document.getElementById('tierPremium');
             const proCard = document.getElementById('tierPro');
             
-            console.log('Cards:', freeCard, premiumCard, proCard);
-            
-            if (!freeCard || !premiumCard || !proCard) {
-                console.log('ERROR: Tier cards not found!');
-                return;
-            }
+            if (!freeCard || !premiumCard || !proCard) return;
             
             freeCard.classList.remove('disabled');
             premiumCard.classList.remove('disabled');
