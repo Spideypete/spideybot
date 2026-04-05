@@ -678,9 +678,11 @@ async function registerSlashCommands() {
 // ============== API ENDPOINTS FOR DASHBOARD ==============
 app.get('/api/config', (req, res) => {
   const config = loadConfig();
+  const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8`;
   res.json({
     clientId: DISCORD_CLIENT_ID,
     botName: "SPIDEY BOT",
+    inviteUrl: inviteUrl,
     guilds: config.guilds || {}
   });
 });
