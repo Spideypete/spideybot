@@ -12,6 +12,7 @@
     "restart": "pm2 restart spidey-bot",
     "logs": "pm2 logs spidey-bot",
     "build": "node build.js",
+    "sync": "node build.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
