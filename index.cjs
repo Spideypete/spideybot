@@ -5237,7 +5237,6 @@ app.get("/owner-dash", (req, res) => {
 
 // Route /premium - standalone pricing page
 app.get("/premium", (req, res) => {
-  if (!req.session.authenticated) return res.redirect("/login");
   res.sendFile(path.join(publicDir, 'premium.html'));
 });
 
