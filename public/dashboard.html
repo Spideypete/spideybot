@@ -2306,7 +2306,7 @@
                     
                     <div class="profile-menu" id="profileMenu">
                         <div class="profile-menu-item" id="ownersDashLink" style="display: none;" onclick="openOwnersDash()">👑 Owner's Dash</div>
-                        <div class="profile-menu-item" onclick="openPremiumModal()">💎 Premium</div>
+                        <div class="profile-menu-item" id="premiumMenuItem" onclick="openPremiumModal()">💎 Premium</div>
                         <div class="profile-menu-item logout" onclick="logout()">Log Out</div>
                     </div>
                 </div>
@@ -4403,31 +4403,42 @@
         let currentTier = 'free';
         
         async function openPremiumModal() {
-            const modal = document.getElementById('premiumModal');
+            console.log('Opening premium modal...');
+            let modal = document.getElementById('premiumModal');
             if (!modal) {
+                console.log('Modal not found, creating...');
                 createPremiumModal();
-                return;
+                modal = document.getElementById('premiumModal');
             }
             
+            console.log('Modal:', modal, 'Checking tier...');
             if (selectedServerId) {
                 try {
                     const res = await fetch('/api/guild/' + selectedServerId + '/tier');
                     const data = await res.json();
                     currentTier = data.tier || 'free';
+                    console.log('Current tier:', currentTier);
                 } catch (e) {
                     currentTier = 'free';
                 }
             }
             
             updateTierCards();
-            modal.style.display = 'flex';
+            if (modal) {
+                modal.style.display = 'flex';
+                console.log('Modal displayed');
+            } else {
+                console.log('ERROR: Modal still not found!');
+            }
         }
 
         function createPremiumModal() {
-            const modal = document.createElement('div');
-            modal.id = 'premiumModal';
-            modal.className = 'premium-modal-overlay';
-            modal.innerHTML = `
+            console.log('Creating premium modal...');
+            try {
+                const modal = document.createElement('div');
+                modal.id = 'premiumModal';
+                modal.className = 'premium-modal-overlay';
+                modal.innerHTML = `
                 <div class="premium-modal">
                     <div class="premium-header">
                         <h2>💎 Choose Your Plan</h2>
@@ -4492,9 +4503,17 @@
         }
         
         function updateTierCards() {
+            console.log('Updating tier cards, currentTier:', currentTier);
             const freeCard = document.getElementById('tierFree');
             const premiumCard = document.getElementById('tierPremium');
             const proCard = document.getElementById('tierPro');
+            
+            console.log('Cards:', freeCard, premiumCard, proCard);
+            
+            if (!freeCard || !premiumCard || !proCard) {
+                console.log('ERROR: Tier cards not found!');
+                return;
+            }
             
             freeCard.classList.remove('disabled');
             premiumCard.classList.remove('disabled');
