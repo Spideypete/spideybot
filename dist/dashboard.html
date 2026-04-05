@@ -4388,6 +4388,7 @@
         }
 
         let currentTier = 'free';
+        let currentTierData = { tier: 'free', remainingMonths: 0 };
         
         async function openPremiumModal() {
             let modal = document.getElementById('premiumModal');
@@ -4401,8 +4402,10 @@
                     const res = await fetch('/api/guild/' + selectedServerId + '/tier');
                     const data = await res.json();
                     currentTier = data.tier || 'free';
+                    currentTierData = data;
                 } catch (e) {
                     currentTier = 'free';
+                    currentTierData = { tier: 'free', remainingMonths: 0 };
                 }
             }
             
@@ -4410,11 +4413,23 @@
             if (modal) modal.style.display = 'flex';
         }
 
-        function showPremiumPopup() {
+        async function showPremiumPopup() {
             // Remove existing modal if any
             const existing = document.getElementById('premiumModal');
             if (existing) existing.remove();
             
+            // Fetch current tier data
+            if (selectedServerId) {
+                try {
+                    const res = await fetch('/api/guild/' + selectedServerId + '/tier');
+                    const data = await res.json();
+                    currentTier = data.tier || 'free';
+                    currentTierData = data;
+                } catch (e) {
+                    currentTier = 'free';
+                    currentTierData = { tier: 'free', remainingMonths: 0 };
+                }
+            }
             // Pricing data
             const pricing = {
                 premium: { 1: 8, 3: 21, 6: 36, 12: 60 },
@@ -4510,10 +4525,51 @@
             });
         }
 
-        // Dummy functions for compatibility
-        function openPremiumModal() { showPremiumPopup(); }
-        function createPremiumModal() {}
-        function updateTierCards() {}
+        // Update tier card buttons based on current tier and remaining months
+        function updateTierCards() {
+            const freeBtn = document.querySelector('button:contains("Current Plan")');
+            if (currentTier === 'free') {
+                // Update Free button
+                const freeCard = document.querySelector('div[style*="Free"]');
+                if (freeCard) {
+                    const btn = freeCard.querySelector('button');
+                    if (btn) btn.textContent = 'Current Plan';
+                }
+            }
+            
+            // Update Premium button
+            const premiumBtns = document.querySelectorAll('button');
+            premiumBtns.forEach(btn => {
+                if (btn.textContent.includes('Upgrade to Premium')) {
+                    if (currentTier === 'premium') {
+                        const monthsText = currentTierData.remainingMonths > 0 ? ' - ' + currentTierData.remainingMonths + ' mo left' : '';
+                        btn.textContent = 'Current Plan' + monthsText;
+                        btn.disabled = true;
+                        btn.style.background = '#444';
+                        btn.style.color = '#777';
+                    } else {
+                        btn.textContent = 'Upgrade to Premium';
+                        btn.disabled = false;
+                        btn.style.background = '#6c5ce7';
+                        btn.style.color = '#fff';
+                    }
+                }
+                if (btn.textContent.includes('Upgrade to Pro')) {
+                    if (currentTier === 'pro') {
+                        const monthsText = currentTierData.remainingMonths > 0 ? ' - ' + currentTierData.remainingMonths + ' mo left' : '';
+                        btn.textContent = 'Current Plan' + monthsText;
+                        btn.disabled = true;
+                        btn.style.background = '#444';
+                        btn.style.color = '#777';
+                    } else {
+                        btn.textContent = 'Upgrade to Pro';
+                        btn.disabled = false;
+                        btn.style.background = '#6c5ce7';
+                        btn.style.color = '#fff';
+                    }
+                }
+            });
+        }
         
         function closePremiumModal() {
             const modal = document.getElementById('premiumModal');
