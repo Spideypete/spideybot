@@ -725,6 +725,155 @@
             color: #ff6b6b;
         }
 
+        /* Premium Modal */
+        .premium-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        }
+
+        .premium-modal {
+            background: #1e1e1e;
+            border: 1px solid rgba(145, 81, 255, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 900px;
+            width: 95%;
+        }
+
+        .premium-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .premium-header h2 {
+            color: #fff;
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .tier-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .tier-card {
+            background: #0f1623;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .tier-card.highlighted {
+            border-color: #9151ff;
+            box-shadow: 0 0 20px rgba(145, 81, 255, 0.3);
+        }
+
+        .tier-card.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .tier-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #9151ff, #00d4ff);
+            color: #fff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tier-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tier-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .tier-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+
+        .tier-price span {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .tier-features {
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+
+        .tier-features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tier-features li {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            padding: 0.25rem 0;
+        }
+
+        .tier-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .tier-btn.upgrade {
+            background: linear-gradient(135deg, #9151ff, #00d4ff);
+            color: #fff;
+        }
+
+        .tier-btn.upgrade:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(145, 81, 255, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .tier-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Server Selection Overlay */
         .server-select-overlay {
             position: absolute;
@@ -2136,9 +2285,8 @@
                     <div class="profile-dropdown-icon">⋮</div>
                     
                     <div class="profile-menu" id="profileMenu">
-                        <div class="profile-menu-item" id="ownersDashLink" style="display: none;" onclick="openOwnersDash()">Owner's Dash</div>
-                        <div class="profile-menu-item">Profile Settings</div>
-                        <div class="profile-menu-item">Preferences</div>
+                        <div class="profile-menu-item" id="ownersDashLink" style="display: none;" onclick="openOwnersDash()">👑 Owner's Dash</div>
+                        <div class="profile-menu-item" onclick="openPremiumModal()">💎 Premium</div>
                         <div class="profile-menu-item logout" onclick="logout()">Log Out</div>
                     </div>
                 </div>
@@ -4229,6 +4377,149 @@
                 window.open('/owner-dash', '_blank');
             } else if (pin !== null) {
                 alert('Incorrect PIN');
+            }
+        }
+
+        let currentTier = 'free';
+        
+        async function openPremiumModal() {
+            const modal = document.getElementById('premiumModal');
+            if (!modal) {
+                createPremiumModal();
+                return;
+            }
+            
+            if (selectedServerId) {
+                try {
+                    const res = await fetch('/api/guild/' + selectedServerId + '/tier');
+                    const data = await res.json();
+                    currentTier = data.tier || 'free';
+                } catch (e) {
+                    currentTier = 'free';
+                }
+            }
+            
+            updateTierCards();
+            modal.style.display = 'flex';
+        }
+
+        function createPremiumModal() {
+            const modal = document.createElement('div');
+            modal.id = 'premiumModal';
+            modal.className = 'premium-modal-overlay';
+            modal.innerHTML = `
+                <div class="premium-modal">
+                    <div class="premium-header">
+                        <h2>💎 Choose Your Plan</h2>
+                        <button class="close-btn" onclick="closePremiumModal()">×</button>
+                    </div>
+                    <div class="tier-cards">
+                        <div class="tier-card" id="tierFree">
+                            <div class="tier-icon">🆓</div>
+                            <div class="tier-name">Free</div>
+                            <div class="tier-price">$0<span>/mo</span></div>
+                            <div class="tier-features">
+                                <ul>
+                                    <li>Basic Logging</li>
+                                    <li>Basic Server Guard</li>
+                                    <li>3 React Roles</li>
+                                    <li>Basic Commands</li>
+                                </ul>
+                            </div>
+                            <button class="tier-btn" disabled>Current Plan</button>
+                        </div>
+                        <div class="tier-card highlighted" id="tierPremium">
+                            <div class="tier-badge">Most Popular</div>
+                            <div class="tier-icon">💎</div>
+                            <div class="tier-name">Premium ⭐</div>
+                            <div class="tier-price">$8<span>/mo</span></div>
+                            <div class="tier-features">
+                                <ul>
+                                    <li>Everything in Free</li>
+                                    <li>Unlimited React Roles</li>
+                                    <li>XP System + Leaderboards</li>
+                                    <li>Giveaways</li>
+                                    <li>Custom Commands</li>
+                                    <li>Advanced Moderation</li>
+                                </ul>
+                            </div>
+                            <button class="tier-btn upgrade" onclick="upgradeTier('premium')">Upgrade to Premium</button>
+                        </div>
+                        <div class="tier-card" id="tierPro">
+                            <div class="tier-icon">🔥</div>
+                            <div class="tier-name">Pro</div>
+                            <div class="tier-price">$12<span>/mo</span></div>
+                            <div class="tier-features">
+                                <ul>
+                                    <li>Everything in Premium</li>
+                                    <li>Member Activity Tracking</li>
+                                    <li>Invite Tracking</li>
+                                    <li>Message Analytics</li>
+                                    <li>Automation Tools</li>
+                                    <li>Priority Performance</li>
+                                </ul>
+                            </div>
+                            <button class="tier-btn upgrade" onclick="upgradeTier('pro')">Upgrade to Pro</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closePremiumModal();
+            });
+        }
+        
+        function updateTierCards() {
+            const freeCard = document.getElementById('tierFree');
+            const premiumCard = document.getElementById('tierPremium');
+            const proCard = document.getElementById('tierPro');
+            
+            freeCard.classList.remove('disabled');
+            premiumCard.classList.remove('disabled');
+            proCard.classList.remove('disabled');
+            
+            if (currentTier === 'free') {
+                freeCard.classList.add('disabled');
+            } else if (currentTier === 'premium') {
+                freeCard.classList.add('disabled');
+                premiumCard.classList.add('disabled');
+            } else if (currentTier === 'pro') {
+                freeCard.classList.add('disabled');
+                premiumCard.classList.add('disabled');
+                proCard.classList.add('disabled');
+            }
+        }
+        
+        function closePremiumModal() {
+            const modal = document.getElementById('premiumModal');
+            if (modal) modal.style.display = 'none';
+        }
+        
+        async function upgradeTier(tier) {
+            if (!selectedServerId) {
+                alert('Please select a server first');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/owner/tier', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ guildId: selectedServerId, tier: tier })
+                });
+                
+                if (res.ok) {
+                    showToast('Successfully upgraded to ' + tier.toUpperCase() + '!', 'success');
+                    currentTier = tier;
+                    updateTierCards();
+                } else {
+                    showToast('Failed to upgrade. Only the bot owner can change tiers.', 'error');
+                }
+            } catch (e) {
+                showToast('Error upgrading plan', 'error');
             }
         }
 
