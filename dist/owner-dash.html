@@ -415,16 +415,47 @@
         
         async function changeTier(guildId, tier) {
             try {
-                await fetch('/api/owner/tier', {
+                const res = await fetch('/api/owner/tier', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ guildId, tier })
                 });
-                loadData();
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast('Tier updated to ' + tier.toUpperCase(), 'success');
+                    loadData();
+                } else {
+                    showToast('Failed to update tier', 'error');
+                }
             } catch (err) {
                 console.error('Failed to update tier:', err);
+                showToast('Error updating tier', 'error');
             }
+        }
+        
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer') || createToastContainer();
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">${type === 'success' ? '✅' : '❌'}</div>
+                <div class="toast-body">
+                    <div class="toast-title">${type === 'success' ? 'Success' : 'Error'}</div>
+                    <div class="toast-msg">${message}</div>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function createToastContainer() {
+            const div = document.createElement('div');
+            div.id = 'toastContainer';
+            div.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem;';
+            document.body.appendChild(div);
+            return div;
         }
     </script>
 </body>

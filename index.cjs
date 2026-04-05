@@ -5784,7 +5784,10 @@ app.get('/api/owner/stats', (req, res) => {
 });
 
 app.post('/api/owner/tier', (req, res) => {
+  console.log('[Tier Update] Request received:', req.body);
+  
   if (!req.session.authenticated) {
+    console.log('[Tier Update] Not authenticated');
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
@@ -5792,11 +5795,16 @@ app.post('/api/owner/tier', (req, res) => {
   const botOwnerId = config.creator?.ownerId || '';
   const userId = req.session.user?.id;
   
+  console.log('[Tier Update] User:', userId, 'Owner:', botOwnerId);
+  
   if (userId !== botOwnerId || !botOwnerId) {
+    console.log('[Tier Update] Access denied');
     return res.status(403).json({ error: 'Access denied' });
   }
 
   const { guildId, tier } = req.body;
+  console.log('[Tier Update] Guild:', guildId, 'Tier:', tier);
+  
   if (!guildId) {
     return res.status(400).json({ error: 'guildId required' });
   }
@@ -5809,7 +5817,9 @@ app.post('/api/owner/tier', (req, res) => {
   }
   
   config.guilds[guildId].tier = newTier;
+  console.log('[Tier Update] Saving config for guild:', guildId, 'tier:', newTier);
   saveConfig(config);
+  console.log('[Tier Update] Config saved successfully');
 
   res.json({ success: true, guildId, tier: newTier });
 });
@@ -5821,7 +5831,6 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
   const tier = config.guilds[guildId]?.tier || 'free';
   res.json({ guildId, tier });
 });
-  }
   
   config.guilds[guildId].premium = premium;
   saveConfig(config);
