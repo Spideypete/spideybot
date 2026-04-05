@@ -5693,8 +5693,9 @@ app.get("/api/user", (req, res) => {
 
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
+  console.log(`[Owner Check] Config loaded, ownerId: "${botOwnerId}"`);
   const isOwner = user.id === botOwnerId && botOwnerId !== '';
-  console.log(`[Owner Check] User: ${user.id}, BotOwner: ${botOwnerId}, IsOwner: ${isOwner}`);
+  console.log(`[Owner Check] User: ${user.id}, IsOwner: ${isOwner}`);
 
   res.json({
     user: {
@@ -5708,6 +5709,15 @@ app.get("/api/user", (req, res) => {
 });
 
 // ============== OWNER DASH API ==============
+app.get('/api/owner/test', (req, res) => {
+  const config = loadConfig();
+  res.json({
+    configOwnerId: config.creator?.ownerId,
+    sessionUserId: req.session.user?.id,
+    authenticated: req.session.authenticated
+  });
+});
+
 app.get('/api/owner/stats', (req, res) => {
   if (!req.session.authenticated) {
     return res.status(401).json({ error: 'Not authenticated' });
