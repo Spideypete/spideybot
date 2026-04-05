@@ -21,6 +21,23 @@ tail -20 bot.log
 
 Always run `pkill -f "node index.cjs"` before starting the bot. Having multiple node processes running on the same port causes "Connection refused" errors and nginx upstream failures.
 
+### Environment Variables
+
+Set these in your startup command or a `.env` file:
+
+```bash
+export TOKEN="your_discord_token"
+export CLIENT_ID="your_client_id"
+export CLIENT_SECRET="your_client_secret"
+export SESSION_SECRET="your_session_secret"
+export KIMI_API_KEY="your_kimi_api_key"
+```
+
+Or add them to your startup script:
+```bash
+nohup node index.cjs > bot.log 2>&1 &
+```
+
 ### Verify Deployment
 
 ```bash

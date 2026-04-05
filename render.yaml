@@ -20,3 +20,5 @@ services:
       - key: FORCE_REDIRECT_URI
       - key: OPENAI_API_KEY
         value: sk-f34jbbyOYG5teUvBpUOGwvzfl8ydSmXbcOEYEnIRlUXb4J7P
+      - key: KIMI_API_KEY
+        value: sk-f34jbbyOYG5teUvBpUOGwvzfl8ydSmXbcOEYEnIRlUXb4J7P

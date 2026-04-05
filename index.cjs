@@ -430,7 +430,7 @@ app.get('/api/commands', (req, res) => {
 });
 
 // ============== AI SUPPORT KNOWLEDGE BASE ==============
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+const KIMI_API_KEY = process.env.KIMI_API_KEY || "";
 
 app.get('/api/ai-knowledge', (req, res) => {
   const isDashboard = req.query.dashboard === 'true';
@@ -441,7 +441,8 @@ app.get('/api/ai-knowledge', (req, res) => {
   const knowledgeBase = {
     version,
     commit,
-    hasAI: !!OPENAI_API_KEY,
+    hasAI: !!KIMI_API_KEY,
+    aiName: "SIMBA",
     timestamp: new Date().toISOString(),
     knownIssues: [
       "Verification button may be hidden - check server guard settings",
@@ -476,6 +477,39 @@ app.get('/api/ai-knowledge', (req, res) => {
   };
   
   res.json(knowledgeBase);
+});
+
+app.post('/api/ai-chat', express.json(), async (req, res) => {
+  const { message, history, isDashboard } = req.body;
+  
+  if (!KIMI_API_KEY) {
+    return res.status(503).json({ error: "AI service not configured" });
+  }
+  
+  const context = isDashboard 
+    ? "You are SIMBA, an AI assistant for Spidey Bot's admin dashboard. Help users with: logs, verification, reaction roles, welcome messages, server configuration, and troubleshooting. Be concise and helpful."
+    : "You are SIMBA, an AI assistant for Spidey Bot. Help users understand: what the bot does, how to invite it, available commands, and features. Be friendly and concise.";
+  
+  const messages = [
+    { role: "system", content: context },
+    ...history.slice(-10).map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.text })),
+    { role: "user", content: message }
+  ];
+  
+  try {
+    const response = await axios.post('https://api.moonshot.cn/v1/chat/completions', {
+      model: "moonshot-v1-8k",
+      messages: messages,
+      max_tokens: 300
+    }, {
+      headers: { 'Authorization': `Bearer ${KIMI_API_KEY}`, 'Content-Type': 'application/json' }
+    });
+    
+    res.json({ reply: response.data.choices[0].message.content });
+  } catch (err) {
+    console.error('SIMBA AI error:', err.message);
+    res.status(500).json({ error: "AI service unavailable" });
+  }
 });
 
 app.post('/api/ai-chat', express.json(), async (req, res) => {
