@@ -5694,6 +5694,7 @@ app.get("/api/user", (req, res) => {
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
   const isOwner = user.id === botOwnerId && botOwnerId !== '';
+  console.log(`[Owner Check] User: ${user.id}, BotOwner: ${botOwnerId}, IsOwner: ${isOwner}`);
 
   res.json({
     user: {
