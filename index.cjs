@@ -5831,12 +5831,6 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
   const tier = config.guilds[guildId]?.tier || 'free';
   res.json({ guildId, tier });
 });
-  
-  config.guilds[guildId].premium = premium;
-  saveConfig(config);
-
-  res.json({ success: true, guildId, premium });
-});
 
 // ============== DASHBOARD DEBUG STATUS ==============
 app.get('/api/dashboard-status', (req, res) => {
