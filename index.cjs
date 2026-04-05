@@ -428,6 +428,52 @@ const COMMANDS_META = {
 app.get('/api/commands', (req, res) => {
   res.json(COMMANDS_META);
 });
+
+// ============== AI SUPPORT KNOWLEDGE BASE ==============
+app.get('/api/ai-knowledge', (req, res) => {
+  const isDashboard = req.query.dashboard === 'true';
+  const version = process.env.npm_package_version || '1.0.0';
+  const commit = require('child_process').execSync('git rev-parse --short HEAD 2>/dev/null || echo "unknown"').toString().trim();
+  
+  const knowledgeBase = {
+    version,
+    commit,
+    timestamp: new Date().toISOString(),
+    knownIssues: [
+      "Verification button may be hidden - check server guard settings",
+      "Logging dropdowns now save correctly (fixed in recent update)",
+      "DigitalOcean migration in progress - some lag may occur"
+    ],
+    mainPage: {
+      focus: [
+        { q: "What is Spidey Bot?", a: "Spidey Bot is a feature-rich Discord bot offering music playback, moderation, economy, leveling, social media monitoring, and 40+ commands. It helps manage your server with auto-moderation, reaction roles, giveaways, and more." },
+        { q: "How do I invite it?", a: "Click the 'Add to Discord' button on the main page. You'll need Manage Server permissions to add it to your server." },
+        { q: "What commands does it have?", a: "Type / in Discord to see all available commands. Use /help for user commands and /adminhelp for admin commands." },
+        { q: "Is it free?", a: "Yes! Spidey Bot is completely free with no premium tiers. All features are available to all servers." },
+        { q: "How do I configure it?", a: "Use the admin dashboard at /dashboard after logging in with Discord. Select your server and configure settings." }
+      ],
+      proactiveWarnings: [
+        "Note: We are currently migrating to DigitalOcean, some lag may occur during peak times."
+      ]
+    },
+    dashboard: {
+      focus: [
+        { q: "How do I fix my logs?", a: "Go to Server Guard → Logging. Make sure 'Enable Logging' is toggled on and select a channel. Changes save automatically." },
+        { q: "Why is the verification button missing?", a: "Verification requires Server Guard to be enabled. Go to Server Guard → Anti-Nuke and enable it. The verification option will appear." },
+        { q: "How do I set up reaction roles?", a: "Go to Reaction Roles in the dashboard. Create a message, add emojis, and assign roles. Users can then click emojis to get roles." },
+        { q: "How do I enable welcome messages?", a: "Go to Server Messages → Welcome. Enable it and select a channel. Use {user}, {server}, {membercount} as placeholders." },
+        { q: "My settings aren't saving?", a: "Changes save automatically. If not, try refreshing the page. Check the console for errors and report to support." }
+      ],
+      proactiveWarnings: [
+        "Tip: Use the search bar in the dashboard to quickly find settings.",
+        "Remember to test your configuration after making changes."
+      ]
+    }
+  };
+  
+  res.json(knowledgeBase);
+});
+
 // ------------------------------------------------------------------
 
 // ============== CLIENT SETUP ==============

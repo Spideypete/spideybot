@@ -6620,5 +6620,50 @@
             <button class="btn-save-changes" onclick="saveAllChanges()">Save Changes</button>
         </div>
     </div>
+
+    <!-- AI Support Widget -->
+    <div id="ai-widget" class="ai-widget">
+        <button id="ai-toggle" class="ai-toggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span>AI Help</span>
+        </button>
+        <div id="ai-chat" class="ai-chat">
+            <div class="ai-header"><span>🤖 Spidey AI Support</span><button id="ai-close">&times;</button></div>
+            <div id="ai-messages" class="ai-messages"></div>
+            <div class="ai-input-area"><input type="text" id="ai-input" placeholder="Ask a question..."><button id="ai-send">Send</button></div>
+        </div>
+    </div>
+    <style>
+    .ai-widget{position:fixed;bottom:20px;right:20px;z-index:10000;font-family:'Inter',sans-serif}
+    .ai-toggle{background:linear-gradient(135deg,#9146FF 0%,#00d4ff 100%);border:none;color:#fff;padding:12px 20px;border-radius:25px;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600;box-shadow:0 4px 15px rgba(145,70,255,.4);transition:transform .2s}
+    .ai-toggle:hover{transform:scale(1.05)}
+    .ai-toggle svg{width:20px;height:20px}
+    .ai-chat{display:none;position:absolute;bottom:60px;right:0;width:350px;height:450px;background:#1a1a2e;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,.5);flex-direction:column;overflow:hidden;border:1px solid rgba(145,70,255,.3)}
+    .ai-chat.open{display:flex}
+    .ai-header{background:linear-gradient(135deg,#9146FF 0%,#00d4ff 100%);padding:15px;display:flex;justify-content:space-between;align-items:center;font-weight:600}
+    .ai-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer}
+    .ai-messages{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}
+    .ai-msg{padding:10px 14px;border-radius:12px;max-width:85%;font-size:14px;line-height:1.5}
+    .ai-msg.bot{background:rgba(145,70,255,.2);color:#fff;align-self:flex-start}
+    .ai-msg.user{background:#00d4ff;color:#000;align-self:flex-end}
+    .ai-msg.system{background:rgba(255,193,7,.2);color:#ffc107;font-size:12px;text-align:center;border:1px solid rgba(255,193,7,.3)}
+    .ai-input-area{padding:15px;display:flex;gap:10px;border-top:1px solid rgba(255,255,255,.1)}
+    .ai-input-area input{flex:1;padding:10px;border-radius:20px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#fff;font-size:14px}
+    .ai-input-area button{background:#9146FF;border:none;color:#fff;padding:10px 20px;border-radius:20px;cursor:pointer;font-weight:600}
+    .ai-input-area button:hover{background:#7a3fd9}
+    </style>
+    <script>
+    (function(){
+      const widget=document.getElementById('ai-widget'),toggle=document.getElementById('ai-toggle'),chat=document.getElementById('ai-chat'),close=document.getElementById('ai-close'),input=document.getElementById('ai-input'),sendBtn=document.getElementById('ai-send'),messages=document.getElementById('ai-messages');
+      let knowledge=null,sessionId=localStorage.getItem('ai-session')||Math.random().toString(36).substr(2,9),conversation=JSON.parse(localStorage.getItem('ai-convo-'+sessionId)||'[]');
+      localStorage.setItem('ai-session',sessionId);
+      async function loadKnowledge(){try{const res=await fetch('/api/ai-knowledge?dashboard=true');knowledge=await res.json()}catch(e){console.error('AI knowledge load failed:',e)}}
+      function saveConversation(){localStorage.setItem('ai-convo-'+sessionId,JSON.stringify(conversation.slice(-20)))}
+      function addMessage(text,type='bot'){const div=document.createElement('div');div.className='ai-msg '+type;div.textContent=text;messages.appendChild(div);messages.scrollTop=messages.scrollHeight;if(type!=='system'){conversation.push({role:type,text});saveConversation()}}
+      function findAnswer(q){q=q.toLowerCase();const faqs=knowledge?(knowledge.dashboard.focus||[]):[];for(const item of faqs){const qq=item.q.toLowerCase();if(qq.split(' ').some(w=>q.includes(w)))return item.a}return null}
+      async function handleAsk(){const question=input.value.trim();if(!question)return;addMessage(question,'user');input.value='';await loadKnowledge();if(!knowledge){addMessage("Sorry, I'm having trouble connecting. Please try again.",'bot');return}const warnings=knowledge.dashboard.proactiveWarnings||[];if(warnings.length>0&&Math.random()<.3)addMessage("💡 "+warnings[Math.floor(Math.random()*warnings.length)],'system');const answer=findAnswer(question);if(answer)setTimeout(()=>addMessage(answer,'bot'),300);else setTimeout(()=>addMessage("Try asking about: logs, verification, reaction roles, welcome messages, or use the dashboard search."),300);if(knowledge.knownIssues&&knowledge.knownIssues.length>0)setTimeout(()=>addMessage("📋 Known issues: "+knowledge.knownIssues.join('; '),'system'),800)}
+      toggle.addEventListener('click',()=>{chat.classList.toggle('open');if(chat.classList.contains('open')&&!knowledge)loadKnowledge()});close.addEventListener('click',()=>chat.classList.remove('open'));sendBtn.addEventListener('click',handleAsk);input.addEventListener('keypress',(e)=>{if(e.key==='Enter')handleAsk()});conversation.forEach(msg=>addMessage(msg.text,msg.role));if(conversation.length===0)setTimeout(()=>addMessage("Hi! I'm Spidey AI. Ask me about dashboard features, logs, verification, or any config questions!",'bot'),500);
+    })();
+    </script>
 </body>
 </html>
