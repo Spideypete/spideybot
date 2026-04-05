@@ -24,6 +24,7 @@ console.log("[DEBUG] Dotenv loaded, env vars:");
 console.log("[DEBUG] TOKEN:", process.env.TOKEN ? "set" : "NOT SET");
 console.log("[DEBUG] CLIENT_ID:", process.env.CLIENT_ID ? "set" : "NOT SET");
 console.log("[DEBUG] CLIENT_SECRET:", process.env.CLIENT_SECRET ? "set" : "NOT SET");
+console.log("[DEBUG] KIMI_API_KEY:", process.env.KIMI_API_KEY ? "set (" + process.env.KIMI_API_KEY.substring(0,10) + "...)" : "NOT SET");
 
 // Validate required environment variables (do not log secrets)
 const requiredEnvVars = ["TOKEN", "CLIENT_ID", "CLIENT_SECRET"];
@@ -503,39 +504,6 @@ app.post('/api/ai-chat', express.json(), async (req, res) => {
       max_tokens: 300
     }, {
       headers: { 'Authorization': `Bearer ${KIMI_API_KEY}`, 'Content-Type': 'application/json' }
-    });
-    
-    res.json({ reply: response.data.choices[0].message.content });
-  } catch (err) {
-    console.error('SIMBA AI error:', err.message);
-    res.status(500).json({ error: "AI service unavailable" });
-  }
-});
-
-app.post('/api/ai-chat', express.json(), async (req, res) => {
-  const { message, history, isDashboard } = req.body;
-  
-  if (!OPENAI_API_KEY) {
-    return res.status(503).json({ error: "AI service not configured" });
-  }
-  
-  const context = isDashboard 
-    ? "You are SIMBA, an AI assistant for Spidey Bot's admin dashboard. Help users with: logs, verification, reaction roles, welcome messages, server configuration, and troubleshooting. Be concise and helpful."
-    : "You are SIMBA, an AI assistant for Spidey Bot. Help users understand: what the bot does, how to invite it, available commands, and features. Be friendly and concise.";
-  
-  const messages = [
-    { role: "system", content: context },
-    ...history.slice(-10).map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.text })),
-    { role: "user", content: message }
-  ];
-  
-  try {
-    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: "gpt-3.5-turbo",
-      messages: messages,
-      max_tokens: 300
-    }, {
-      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' }
     });
     
     res.json({ reply: response.data.choices[0].message.content });
