@@ -5764,10 +5764,11 @@ app.get("/api/config/role-categories", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const config = loadConfig();
-  const guildId = req.query.guildId || client.guilds.cache.first()?.id;
-  if (!guildId) return res.json({});
-
+  const guildId = req.query.guildId;
+  if (!guildId) return res.status(400).json({ error: 'Missing guildId parameter' });
+  if (!config.guilds[guildId]) return res.status(404).json({ error: 'Guild not found' });
   const data = config.guilds[guildId]?.roleCategories || {};
+  res.json(data);
   
   const filtered = {};
   Object.keys(data).forEach(key => {
@@ -5790,7 +5791,7 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
     console.log('   Body:', req.body);
 
     const config = loadConfig();
-    const guildId = req.query.guildId || client.guilds.cache.first()?.id;
+    const guildId = req.query.guildId;
     
     console.log('   Using guildId:', guildId);
     
