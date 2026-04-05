@@ -52,6 +52,13 @@ const {
 const distDir = path.join(__dirname, 'dist');
 const publicDir = path.join(__dirname, 'public');
 const app = express();
+
+// DEBUG - Test endpoint at VERY TOP
+app.get('/api/test', (req, res) => {
+  console.log("✅ /api/test HIT - TOP ROUTE");
+  res.json({ status: 'ok', time: Date.now() });
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
