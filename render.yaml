@@ -19,6 +19,5 @@ services:
       - key: BASE_URL
       - key: FORCE_REDIRECT_URI
       - key: OPENAI_API_KEY
-        value: sk-f34jbbyOYG5teUvBpUOGwvzfl8ydSmXbcOEYEnIRlUXb4J7P
+        value: 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
       - key: KIMI_API_KEY
-        value: sk-f34jbbyOYG5teUvBpUOGwvzfl8ydSmXbcOEYEnIRlUXb4J7P
