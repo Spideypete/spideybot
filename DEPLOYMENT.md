@@ -1,4 +1,41 @@
-# SPIDEY BOT - Render Deployment Guide
+# SPIDEY BOT - Deployment Guide
+
+## DigitalOcean Deployment (Current Production)
+
+### Deployment Commands
+
+SSH into your droplet (`ssh root@159.89.103.111`), then run:
+
+```bash
+cd /root/spideybot
+git pull origin master
+npm install --production
+pkill -f "node index.cjs"  # IMPORTANT: Kill existing processes first
+git log --oneline -1
+nohup node index.cjs > bot.log 2>&1 &
+sleep 3
+tail -20 bot.log
+```
+
+### ⚠️ IMPORTANT: Kill Existing Processes Before Deploying
+
+Always run `pkill -f "node index.cjs"` before starting the bot. Having multiple node processes running on the same port causes "Connection refused" errors and nginx upstream failures.
+
+### Verify Deployment
+
+```bash
+# Check only one node process is running
+ps aux | grep "node index.cjs"
+
+# Check port 5000 is listening
+netstat -tlnp | grep 5000
+
+# Check bot logs
+tail -20 bot.log
+
+# Restart nginx if needed
+sudo systemctl restart nginx
+```
 
 ## Prerequisites
 - Discord bot created in Discord Developer Portal
