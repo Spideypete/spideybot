@@ -318,6 +318,11 @@
         </div>
     </div>
     
+    <div class="section-title">Recent Sales</div>
+    <div id="recentSales" style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.5rem;margin-bottom:1.5rem;max-height:150px;overflow-y:auto;">
+        <div class="loading">Loading...</div>
+    </div>
+    
     <div class="filter-bar">
         <button class="filter-btn active" onclick="setFilter('all')" id="filterAll">All</button>
         <button class="filter-btn" onclick="setFilter('free')" id="filterFree">Free Only</button>
@@ -334,6 +339,7 @@
         let isVerified = false;
         let currentFilter = 'all';
         let allServers = [];
+        let recentSales = [];
         
         function verifyPin() {
             const pin = document.getElementById('pinInput').value;
@@ -370,11 +376,38 @@
                 document.getElementById('premiumServers').textContent = stats.premiumCount || 0;
                 document.getElementById('proServers').textContent = stats.proCount || 0;
                 
+                // Build recent sales from servers with tier + duration
+                recentSales = (stats.servers || []).filter(s => s.tier !== 'free' && s.remainingMonths > 0).map(s => ({
+                    name: s.name,
+                    tier: s.tier,
+                    remaining: s.remainingMonths,
+                    duration: s.tierDurationMonths
+                })).slice(0, 5);
+                
+                renderRecentSales();
                 allServers = stats.servers || [];
                 renderServersList(allServers);
             } catch (err) {
                 console.error('Failed to load stats:', err);
             }
+        }
+        
+        function renderRecentSales() {
+            const container = document.getElementById('recentSales');
+            if (!container) return;
+            
+            if (recentSales.length === 0) {
+                container.innerHTML = '<div style="color:#666;font-size:0.85rem;text-align:center;padding:1rem;">No recent upgrades</div>';
+                return;
+            }
+            
+            container.innerHTML = recentSales.map(sale => `
+                <div style="display:flex;justify-content:space-between;padding:0.5rem;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;">
+                    <span style="color:#fff;">${sale.name}</span>
+                    <span style="color:${sale.tier === 'pro' ? '#9151ff' : '#ffb347'}">${sale.tier === 'pro' ? '🔥' : '💎'} ${sale.duration}mo</span>
+                    <span style="color:#4cd137">${sale.remaining}mo left</span>
+                </div>
+            `).join('');
         }
         
         function renderServersList(servers) {
@@ -401,30 +434,40 @@
                         </div>
                         <div>
                             <div class="server-name">${server.name}</div>
-                            <div class="server-id">${server.id}</div>
+                            <div class="server-id">${server.tier !== 'free' && server.remainingMonths ? server.remainingMonths + ' months left' : ''}</div>
                         </div>
                     </div>
                     <select class="tier-select tier-${server.tier}" onchange="changeTier('${server.id}', this.value)">
                         <option value="free" ${server.tier === 'free' ? 'selected' : ''}>Free</option>
-                        <option value="premium" ${server.tier === 'premium' ? 'selected' : ''}>Premium</option>
-                        <option value="pro" ${server.tier === 'pro' ? 'selected' : ''}>Pro</option>
+                        <option value="premium_1" ${server.tier === 'premium' && server.tierDurationMonths == 1 ? 'selected' : ''}>Premium 1mo</option>
+                        <option value="premium_3" ${server.tier === 'premium' && server.tierDurationMonths == 3 ? 'selected' : ''}>Premium 3mo</option>
+                        <option value="premium_6" ${server.tier === 'premium' && server.tierDurationMonths == 6 ? 'selected' : ''}>Premium 6mo</option>
+                        <option value="premium_12" ${server.tier === 'premium' && server.tierDurationMonths == 12 ? 'selected' : ''}>Premium 12mo</option>
+                        <option value="pro_1" ${server.tier === 'pro' && server.tierDurationMonths == 1 ? 'selected' : ''}>Pro 1mo</option>
+                        <option value="pro_3" ${server.tier === 'pro' && server.tierDurationMonths == 3 ? 'selected' : ''}>Pro 3mo</option>
+                        <option value="pro_6" ${server.tier === 'pro' && server.tierDurationMonths == 6 ? 'selected' : ''}>Pro 6mo</option>
+                        <option value="pro_12" ${server.tier === 'pro' && server.tierDurationMonths == 12 ? 'selected' : ''}>Pro 12mo</option>
                     </select>
                 </div>
             `).join('');
         }
         
-        async function changeTier(guildId, tier) {
+        async function changeTier(guildId, tierValue) {
+            const parts = tierValue.split('_');
+            const tier = parts[0];
+            const durationMonths = parts[1] ? parseInt(parts[1]) : 0;
+            
             try {
                 const res = await fetch('/api/owner/tier', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ guildId, tier })
+                    body: JSON.stringify({ guildId, tier, durationMonths })
                 });
                 
                 if (res.ok) {
                     const data = await res.json();
-                    showToast('Tier updated to ' + tier.toUpperCase(), 'success');
+                    showToast('Tier updated to ' + tier.toUpperCase() + ' ' + durationMonths + 'mo', 'success');
                     loadData();
                 } else {
                     showToast('Failed to update tier', 'error');

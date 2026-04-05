@@ -6213,7 +6213,29 @@
                     }
                     
                     // Set user role/status
-                    document.getElementById('userRole').textContent = data.isOwner ? 'Owner' : 'Authenticated';
+                    const userRoleEl = document.getElementById('userRole');
+                    if (data.isOwner) {
+                        userRoleEl.textContent = 'Owner';
+                    } else if (selectedServerId) {
+                        // Fetch tier info for selected server
+                        try {
+                            const tierRes = await fetch('/api/guild/' + selectedServerId + '/tier');
+                            const tierData = await tierRes.json();
+                            if (tierData.tier === 'premium' && tierData.remainingMonths) {
+                                userRoleEl.innerHTML = '<span style="color:#ffb347">💎 Premium - ' + tierData.remainingMonths + ' mo left</span>';
+                            } else if (tierData.tier === 'pro' && tierData.remainingMonths) {
+                                userRoleEl.innerHTML = '<span style="color:#9151ff">🔥 Pro - ' + tierData.remainingMonths + ' mo left</span>';
+                            } else if (tierData.tier === 'free' || !tierData.tier) {
+                                userRoleEl.textContent = '🆓 Free';
+                            } else {
+                                userRoleEl.textContent = 'Authenticated';
+                            }
+                        } catch (e) {
+                            userRoleEl.textContent = 'Authenticated';
+                        }
+                    } else {
+                        userRoleEl.textContent = 'Authenticated';
+                    }
                     
                     // Show Owner's Dash link if user is bot owner
                     const ownersDashLink = document.getElementById('ownersDashLink');

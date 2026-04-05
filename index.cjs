@@ -5764,6 +5764,17 @@ app.get('/api/owner/stats', (req, res) => {
       
       // Tier: 'free', 'premium', or 'pro'
       const tier = guildConfig.tier || 'free';
+      const tierEndDate = guildConfig.tierEndDate || null;
+      const tierDurationMonths = guildConfig.tierDurationMonths || 0;
+      
+      // Calculate remaining months
+      let remainingMonths = 0;
+      if (tierEndDate && tier !== 'free') {
+        const now = Date.now();
+        const msRemaining = tierEndDate - now;
+        remainingMonths = Math.max(0, Math.ceil(msRemaining / (30 * 24 * 60 * 60 * 1000)));
+      }
+      
       if (tier === 'premium') premiumCount++;
       else if (tier === 'pro') proCount++;
       else freeCount++;
@@ -5773,7 +5784,10 @@ app.get('/api/owner/stats', (req, res) => {
         name: discordGuild.name,
         icon: discordGuild.icon,
         memberCount: discordGuild.memberCount,
-        tier: tier
+        tier: tier,
+        tierEndDate: tierEndDate,
+        tierDurationMonths: tierDurationMonths,
+        remainingMonths: remainingMonths
       });
     }
   }
@@ -5807,8 +5821,8 @@ app.post('/api/owner/tier', (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  const { guildId, tier } = req.body;
-  console.log('[Tier Update] Guild:', guildId, 'Tier:', tier);
+  const { guildId, tier, durationMonths } = req.body;
+  console.log('[Tier Update] Guild:', guildId, 'Tier:', tier, 'Duration:', durationMonths);
   
   if (!guildId) {
     return res.status(400).json({ error: 'guildId required' });
@@ -5816,25 +5830,50 @@ app.post('/api/owner/tier', (req, res) => {
 
   const validTiers = ['free', 'premium', 'pro'];
   const newTier = validTiers.includes(tier) ? tier : 'free';
+  const duration = parseInt(durationMonths) || 0;
 
   if (!config.guilds[guildId]) {
     config.guilds[guildId] = {};
   }
   
   config.guilds[guildId].tier = newTier;
-  console.log('[Tier Update] Saving config for guild:', guildId, 'tier:', newTier);
+  
+  if (newTier !== 'free' && duration > 0) {
+    const now = Date.now();
+    const endDate = now + (duration * 30 * 24 * 60 * 60 * 1000);
+    config.guilds[guildId].tierStartDate = now;
+    config.guilds[guildId].tierEndDate = endDate;
+    config.guilds[guildId].tierDurationMonths = duration;
+  } else {
+    delete config.guilds[guildId].tierStartDate;
+    delete config.guilds[guildId].tierEndDate;
+    delete config.guilds[guildId].tierDurationMonths;
+  }
+  
+  console.log('[Tier Update] Saving config for guild:', guildId, 'tier:', newTier, 'endDate:', config.guilds[guildId].tierEndDate);
   saveConfig(config);
   console.log('[Tier Update] Config saved successfully');
 
-  res.json({ success: true, guildId, tier: newTier });
+  res.json({ success: true, guildId, tier: newTier, endDate: config.guilds[guildId].tierEndDate, durationMonths: duration });
 });
 
 // Get tier for a specific guild (for upsell checks)
 app.get('/api/guild/:guildId/tier', (req, res) => {
   const config = loadConfig();
   const guildId = req.params.guildId;
-  const tier = config.guilds[guildId]?.tier || 'free';
-  res.json({ guildId, tier });
+  const guildConfig = config.guilds[guildId] || {};
+  const tier = guildConfig.tier || 'free';
+  const tierEndDate = guildConfig.tierEndDate || null;
+  const tierDurationMonths = guildConfig.tierDurationMonths || 0;
+  
+  let remainingMonths = 0;
+  if (tierEndDate && tier !== 'free') {
+    const now = Date.now();
+    const msRemaining = tierEndDate - now;
+    remainingMonths = Math.max(0, Math.ceil(msRemaining / (30 * 24 * 60 * 60 * 1000)));
+  }
+  
+  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMonths });
 });
 
 // ============== DASHBOARD DEBUG STATUS ==============
