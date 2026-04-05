@@ -5743,7 +5743,9 @@ app.get('/api/owner/stats', (req, res) => {
   let newThisWeek = 0;
   
   const servers = [];
+  let freeCount = 0;
   let premiumCount = 0;
+  let proCount = 0;
   
   for (const [guildId, guildConfig] of Object.entries(config.guilds)) {
     if (guildId === 'creator' || guildId === 'subscriptions' || guildId === 'settings' || 
@@ -5755,28 +5757,33 @@ app.get('/api/owner/stats', (req, res) => {
       const joinedAt = discordGuild.joinedAt?.getTime() || 0;
       if (joinedAt > oneWeekAgo) newThisWeek++;
       
-      const isPremium = guildConfig.premium === true;
-      if (isPremium) premiumCount++;
+      // Tier: 'free', 'premium', or 'pro'
+      const tier = guildConfig.tier || 'free';
+      if (tier === 'premium') premiumCount++;
+      else if (tier === 'pro') proCount++;
+      else freeCount++;
       
       servers.push({
         id: guildId,
         name: discordGuild.name,
         icon: discordGuild.icon,
         memberCount: discordGuild.memberCount,
-        premium: isPremium
+        tier: tier
       });
     }
   }
 
   res.json({
     totalServers,
+    freeCount,
     premiumCount,
+    proCount,
     newThisWeek,
     servers
   });
 });
 
-app.post('/api/owner/premium', (req, res) => {
+app.post('/api/owner/tier', (req, res) => {
   if (!req.session.authenticated) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -5789,13 +5796,31 @@ app.post('/api/owner/premium', (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  const { guildId, premium } = req.body;
+  const { guildId, tier } = req.body;
   if (!guildId) {
-    return res.status(400).json({ error: ' guildId required' });
+    return res.status(400).json({ error: 'guildId required' });
   }
+
+  const validTiers = ['free', 'premium', 'pro'];
+  const newTier = validTiers.includes(tier) ? tier : 'free';
 
   if (!config.guilds[guildId]) {
     config.guilds[guildId] = {};
+  }
+  
+  config.guilds[guildId].tier = newTier;
+  saveConfig(config);
+
+  res.json({ success: true, guildId, tier: newTier });
+});
+
+// Get tier for a specific guild (for upsell checks)
+app.get('/api/guild/:guildId/tier', (req, res) => {
+  const config = loadConfig();
+  const guildId = req.params.guildId;
+  const tier = config.guilds[guildId]?.tier || 'free';
+  res.json({ guildId, tier });
+});
   }
   
   config.guilds[guildId].premium = premium;

@@ -47,38 +47,68 @@
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 1rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         
         .stat-card {
             background: #1e1e1e;
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 1.5rem;
+            padding: 1.25rem;
             text-align: center;
         }
         
         .stat-card.total { border-left: 3px solid #00d4ff; }
+        .stat-card.free { border-left: 3px solid #888; }
         .stat-card.premium { border-left: 3px solid #ffb347; }
-        .stat-card.growth { border-left: 3px solid #1be187; }
+        .stat-card.pro { border-left: 3px solid #9151ff; }
         
         .stat-value {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.25rem;
         }
         
         .stat-card.total .stat-value { color: #00d4ff; }
+        .stat-card.free .stat-value { color: #888; }
         .stat-card.premium .stat-value { color: #ffb347; }
-        .stat-card.growth .stat-value { color: #1be187; }
+        .stat-card.pro .stat-value { color: #9151ff; }
         
         .stat-label {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.6);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-btn {
+            background: #1e1e1e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-btn:hover {
+            background: rgba(145, 81, 255, 0.2);
+            color: #fff;
+        }
+        
+        .filter-btn.active {
+            background: rgba(145, 81, 255, 0.3);
+            color: #fff;
+            border-color: #9151ff;
         }
         
         .section-title {
@@ -138,55 +168,24 @@
             color: rgba(255, 255, 255, 0.4);
         }
         
-        .toggle-label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-        }
-        
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
+        .tier-select {
+            background: #000;
+            border: 1px solid rgba(145, 81, 255, 0.3);
+            color: #fff;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
             cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.15);
-            transition: 0.3s ease;
-            border-radius: 24px;
         }
         
-        .toggle-slider:before {
-            content: "";
-            position: absolute;
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background: #fff;
-            transition: 0.3s ease;
-            border-radius: 50%;
+        .tier-select:focus {
+            outline: none;
+            border-color: #9151ff;
         }
         
-        .toggle-switch input:checked + .toggle-slider {
-            background: rgba(145, 81, 255, 0.8);
-        }
-        
-        .toggle-switch input:checked + .toggle-slider:before {
-            transform: translateX(20px);
-        }
+        .tier-free { color: #888; }
+        .tier-premium { color: #ffb347; }
+        .tier-pro { color: #9151ff; }
         
         .loading {
             text-align: center;
@@ -278,7 +277,7 @@
         
         @media (max-width: 768px) {
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -305,23 +304,36 @@
             <div class="stat-value" id="totalServers">-</div>
             <div class="stat-label">Total Servers</div>
         </div>
+        <div class="stat-card free">
+            <div class="stat-value" id="freeServers">-</div>
+            <div class="stat-label">Free</div>
+        </div>
         <div class="stat-card premium">
             <div class="stat-value" id="premiumServers">-</div>
-            <div class="stat-label">Premium Servers</div>
+            <div class="stat-label">Premium</div>
         </div>
-        <div class="stat-card growth">
-            <div class="stat-value" id="growthRate">-</div>
-            <div class="stat-label">New This Week</div>
+        <div class="stat-card pro">
+            <div class="stat-value" id="proServers">-</div>
+            <div class="stat-label">Pro</div>
         </div>
     </div>
     
-    <div class="section-title">Server Premium Management</div>
+    <div class="filter-bar">
+        <button class="filter-btn active" onclick="setFilter('all')" id="filterAll">All</button>
+        <button class="filter-btn" onclick="setFilter('free')" id="filterFree">Free Only</button>
+        <button class="filter-btn" onclick="setFilter('premium')" id="filterPremium">Premium Only</button>
+        <button class="filter-btn" onclick="setFilter('pro')" id="filterPro">Pro Only</button>
+    </div>
+    
+    <div class="section-title">Server Tier Management</div>
     <div class="servers-list" id="serversList">
         <div class="loading">Loading servers...</div>
     </div>
     
     <script>
         let isVerified = false;
+        let currentFilter = 'all';
+        let allServers = [];
         
         function verifyPin() {
             const pin = document.getElementById('pinInput').value;
@@ -339,6 +351,13 @@
             if (e.key === 'Enter') verifyPin();
         });
         
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
+            renderServersList(allServers);
+        }
+        
         async function loadData() {
             if (!isVerified) return;
             
@@ -347,10 +366,12 @@
                 const stats = await res.json();
                 
                 document.getElementById('totalServers').textContent = stats.totalServers || 0;
+                document.getElementById('freeServers').textContent = stats.freeCount || 0;
                 document.getElementById('premiumServers').textContent = stats.premiumCount || 0;
-                document.getElementById('growthRate').textContent = '+' + (stats.newThisWeek || 0);
+                document.getElementById('proServers').textContent = stats.proCount || 0;
                 
-                renderServersList(stats.servers || []);
+                allServers = stats.servers || [];
+                renderServersList(allServers);
             } catch (err) {
                 console.error('Failed to load stats:', err);
             }
@@ -359,12 +380,17 @@
         function renderServersList(servers) {
             const container = document.getElementById('serversList');
             
-            if (servers.length === 0) {
+            let filtered = servers;
+            if (currentFilter !== 'all') {
+                filtered = servers.filter(s => s.tier === currentFilter);
+            }
+            
+            if (filtered.length === 0) {
                 container.innerHTML = '<div class="loading">No servers found</div>';
                 return;
             }
             
-            container.innerHTML = servers.map(server => `
+            container.innerHTML = filtered.map(server => `
                 <div class="server-item">
                     <div class="server-info">
                         <div class="server-icon">
@@ -378,28 +404,26 @@
                             <div class="server-id">${server.id}</div>
                         </div>
                     </div>
-                    <label class="toggle-label">
-                        <span>Premium</span>
-                        <div class="toggle-switch">
-                            <input type="checkbox" ${server.premium ? 'checked' : ''} 
-                                   onchange="togglePremium('${server.id}', this.checked)">
-                            <span class="toggle-slider"></span>
-                        </div>
-                    </label>
+                    <select class="tier-select tier-${server.tier}" onchange="changeTier('${server.id}', this.value)">
+                        <option value="free" ${server.tier === 'free' ? 'selected' : ''}>Free</option>
+                        <option value="premium" ${server.tier === 'premium' ? 'selected' : ''}>Premium</option>
+                        <option value="pro" ${server.tier === 'pro' ? 'selected' : ''}>Pro</option>
+                    </select>
                 </div>
             `).join('');
         }
         
-        async function togglePremium(guildId, enabled) {
+        async function changeTier(guildId, tier) {
             try {
-                await fetch('/api/owner/premium', {
+                await fetch('/api/owner/tier', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ guildId, premium: enabled })
+                    body: JSON.stringify({ guildId, tier })
                 });
+                loadData();
             } catch (err) {
-                console.error('Failed to update premium:', err);
+                console.error('Failed to update tier:', err);
             }
         }
     </script>
