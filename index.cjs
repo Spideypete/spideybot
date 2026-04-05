@@ -430,14 +430,18 @@ app.get('/api/commands', (req, res) => {
 });
 
 // ============== AI SUPPORT KNOWLEDGE BASE ==============
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+
 app.get('/api/ai-knowledge', (req, res) => {
   const isDashboard = req.query.dashboard === 'true';
   const version = process.env.npm_package_version || '1.0.0';
-  const commit = require('child_process').execSync('git rev-parse --short HEAD 2>/dev/null || echo "unknown"').toString().trim();
+  let commit = "unknown";
+  try { commit = require('child_process').execSync('git rev-parse --short HEAD 2>/dev/null').toString().trim(); } catch(e) {}
   
   const knowledgeBase = {
     version,
     commit,
+    hasAI: !!OPENAI_API_KEY,
     timestamp: new Date().toISOString(),
     knownIssues: [
       "Verification button may be hidden - check server guard settings",
@@ -472,6 +476,39 @@ app.get('/api/ai-knowledge', (req, res) => {
   };
   
   res.json(knowledgeBase);
+});
+
+app.post('/api/ai-chat', express.json(), async (req, res) => {
+  const { message, history, isDashboard } = req.body;
+  
+  if (!OPENAI_API_KEY) {
+    return res.status(503).json({ error: "AI service not configured" });
+  }
+  
+  const context = isDashboard 
+    ? "You are SIMBA, an AI assistant for Spidey Bot's admin dashboard. Help users with: logs, verification, reaction roles, welcome messages, server configuration, and troubleshooting. Be concise and helpful."
+    : "You are SIMBA, an AI assistant for Spidey Bot. Help users understand: what the bot does, how to invite it, available commands, and features. Be friendly and concise.";
+  
+  const messages = [
+    { role: "system", content: context },
+    ...history.slice(-10).map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.text })),
+    { role: "user", content: message }
+  ];
+  
+  try {
+    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+      model: "gpt-3.5-turbo",
+      messages: messages,
+      max_tokens: 300
+    }, {
+      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' }
+    });
+    
+    res.json({ reply: response.data.choices[0].message.content });
+  } catch (err) {
+    console.error('SIMBA AI error:', err.message);
+    res.status(500).json({ error: "AI service unavailable" });
+  }
 });
 
 // ------------------------------------------------------------------

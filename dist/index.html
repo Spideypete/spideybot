@@ -492,7 +492,7 @@
     </button>
     <div id="ai-chat" class="ai-chat">
       <div class="ai-header">
-        <span>🤖 Spidey AI Support</span>
+        <span>🦁 SIMBA AI Support</span>
         <button id="ai-close">&times;</button>
       </div>
       <div id="ai-messages" class="ai-messages"></div>
@@ -657,33 +657,6 @@
         }
       }
       
-      function findAnswer(query) {
-        query = query.toLowerCase();
-        const faqs = knowledge ? (isDashboard ? knowledge.dashboard.focus : knowledge.mainPage.focus) : [];
-        
-        for (const item of faqs) {
-          const q = item.q.toLowerCase();
-          if (query.includes(q.split(' ')[0]) || q.split(' ').some(w => query.includes(w))) {
-            return item.a;
-          }
-        }
-        
-        if (query.includes('invite') || query.includes('add') || query.includes('add to discord')) {
-          return "Click the 'Add to Discord' button on the main page. You'll need Manage Server permissions to add Spidey Bot to your server.";
-        }
-        if (query.includes('command') || query.includes('help')) {
-          return "Type / in Discord to see all commands. Use /help for user commands and /adminhelp for admin commands.";
-        }
-        if (query.includes('log') || query.includes('logging')) {
-          return "Go to Server Guard → Logging in the dashboard. Enable it and select a channel. Changes save automatically.";
-        }
-        if (query.includes('verification') || query.includes('button')) {
-          return "Verification requires Server Guard to be enabled. Go to Server Guard → Anti-Nuke and enable it first.";
-        }
-        
-        return null;
-      }
-      
       async function handleAsk() {
         const question = input.value.trim();
         if (!question) return;
@@ -698,22 +671,41 @@
           return;
         }
         
-        const warnings = isDashboard ? knowledge.dashboard.proactiveWarnings : knowledge.mainPage.proactiveWarnings;
-        if (warnings && warnings.length > 0 && Math.random() < 0.3) {
-          addMessage("💡 " + warnings[Math.floor(Math.random() * warnings.length)], 'system');
-        }
-        
-        const answer = findAnswer(question);
-        if (answer) {
-          setTimeout(() => addMessage(answer, 'bot'), 300);
+        if (knowledge.hasAI) {
+          try {
+            const res = await fetch('/api/ai-chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: question, history: conversation, isDashboard })
+            });
+            const data = await res.json();
+            if (data.reply) {
+              setTimeout(() => addMessage(data.reply, 'bot'), 300);
+            } else if (data.error) {
+              setTimeout(() => addMessage("SIMBA is having trouble thinking right now. Try again in a moment.", 'bot'), 300);
+            }
+          } catch(e) {
+            setTimeout(() => addMessage("Sorry, SIMBA couldn't respond. Please try again.", 'bot'), 300);
+          }
         } else {
-          setTimeout(() => addMessage("I couldn't find a specific answer. Try asking about: commands, invite, logs, verification, or use the dashboard search.", 'bot'), 300);
+          if (question.toLowerCase().includes('invite') || question.toLowerCase().includes('add')) {
+            setTimeout(() => addMessage("Click the 'Add to Discord' button on the main page. You'll need Manage Server permissions to add Spidey Bot.", 'bot'), 300);
+          } else if (question.toLowerCase().includes('command') || question.toLowerCase().includes('help')) {
+            setTimeout(() => addMessage("Type / in Discord to see all commands. Use /help for user commands and /adminhelp for admin commands.", 'bot'), 300);
+          } else {
+            setTimeout(() => addMessage("I'm SIMBA, your AI assistant! Ask me about Spidey Bot features, commands, or how to configure the dashboard.", 'bot'), 300);
+          }
         }
         
-        if (knowledge.knownIssues && knowledge.knownIssues.length > 0) {
+        const warnings = isDashboard ? knowledge.dashboard.proactiveWarnings : knowledge.mainPage.proactiveWarnings;
+        if (warnings && warnings.length > 0 && Math.random() < 0.25) {
+          setTimeout(() => addMessage("💡 " + warnings[Math.floor(Math.random() * warnings.length)], 'system'), 600);
+        }
+        
+        if (knowledge.knownIssues && knowledge.knownIssues.length > 0 && Math.random() < 0.2) {
           setTimeout(() => {
-            addMessage("📋 Known issues: " + knowledge.knownIssues.join('; '), 'system');
-          }, 800);
+            addMessage("📋 Current notes: " + knowledge.knownIssues.join('; '), 'system');
+          }, 1000);
         }
       }
       
@@ -731,8 +723,8 @@
       
       if (conversation.length === 0) {
         const welcome = isDashboard 
-          ? "Hi! I'm Spidey AI. Ask me about dashboard features, logs, verification, or any config questions!"
-          : "Hi! I'm Spidey AI. Ask me what Spidey Bot is, how to invite it, or what commands are available!";
+          ? "Hi! I'm SIMBA, your AI assistant. Ask me about dashboard features, logs, verification, or any config questions!"
+          : "Hi! I'm SIMBA, your AI assistant. Ask me what Spidey Bot is, how to invite it, or what commands are available!";
         setTimeout(() => addMessage(welcome, 'bot'), 500);
       }
     })();
