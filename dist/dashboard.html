@@ -4408,12 +4408,17 @@
             }
             
             updateTierCards();
+            alert('Setting display flex...');
             if (modal) modal.style.display = 'flex';
+            alert('Done!');
         }
 
         function createPremiumModal() {
+            alert('Creating modal...');
+            try {
             const modal = document.createElement('div');
             modal.id = 'premiumModal';
+            alert('Element created');
             modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:999;';
             modal.innerHTML = `
             <div style="background:#1e1e2f;padding:2rem;border-radius:12px;width:80%;max-width:900px;color:#fff;font-family:sans-serif;position:relative;">
@@ -4474,6 +4479,7 @@
             </div>
             `;
             document.body.appendChild(modal);
+            alert('Modal appended!');
             
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) modal.style.display = 'none';
