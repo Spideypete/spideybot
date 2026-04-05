@@ -4411,71 +4411,60 @@
         }
 
         function createPremiumModal() {
+            alert('Creating modal...');
             const modal = document.createElement('div');
             modal.id = 'premiumModal';
             modal.className = 'premium-modal-overlay';
-                modal.innerHTML = `
-                <div class="premium-modal">
-                    <div class="premium-header">
-                        <h2>💎 Choose Your Plan</h2>
-                        <button class="close-btn" onclick="closePremiumModal()">×</button>
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:99999;';
+            modal.innerHTML = `<div style="background:#1e1e1e;border:1px solid #9151ff;border-radius:16px;padding:2rem;max-width:900px;width:95%;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                    <h2 style="color:#fff;">💎 Choose Your Plan</h2>
+                    <button onclick="document.getElementById('premiumModal').style.display='none'" style="background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;">×</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+                    <div style="background:#0f1623;border:1px solid #333;border-radius:12px;padding:1.5rem;text-align:center;">
+                        <div style="font-size:2.5rem;">🆓</div>
+                        <div style="font-size:1.25rem;font-weight:600;color:#fff;">Free</div>
+                        <div style="font-size:2rem;font-weight:700;color:#00d4ff;">$0<span style="font-size:0.9rem;color:#888;">/mo</span></div>
+                        <ul style="list-style:none;padding:0;text-align:left;color:#aaa;font-size:0.85rem;">
+                            <li>Basic Logging</li>
+                            <li>Basic Server Guard</li>
+                            <li>3 React Roles</li>
+                            <li>Basic Commands</li>
+                        </ul>
+                        <button disabled style="width:100%;padding:0.75rem;border-radius:8px;background:#444;color:#888;border:none;">Current Plan</button>
                     </div>
-                    <div class="tier-cards">
-                        <div class="tier-card" id="tierFree">
-                            <div class="tier-icon">🆓</div>
-                            <div class="tier-name">Free</div>
-                            <div class="tier-price">$0<span>/mo</span></div>
-                            <div class="tier-features">
-                                <ul>
-                                    <li>Basic Logging</li>
-                                    <li>Basic Server Guard</li>
-                                    <li>3 React Roles</li>
-                                    <li>Basic Commands</li>
-                                </ul>
-                            </div>
-                            <button class="tier-btn" disabled>Current Plan</button>
-                        </div>
-                        <div class="tier-card highlighted" id="tierPremium">
-                            <div class="tier-badge">Most Popular</div>
-                            <div class="tier-icon">💎</div>
-                            <div class="tier-name">Premium ⭐</div>
-                            <div class="tier-price">$8<span>/mo</span></div>
-                            <div class="tier-features">
-                                <ul>
-                                    <li>Everything in Free</li>
-                                    <li>Unlimited React Roles</li>
-                                    <li>XP System + Leaderboards</li>
-                                    <li>Giveaways</li>
-                                    <li>Custom Commands</li>
-                                    <li>Advanced Moderation</li>
-                                </ul>
-                            </div>
-                            <button class="tier-btn upgrade" onclick="upgradeTier('premium')">Upgrade to Premium</button>
-                        </div>
-                        <div class="tier-card" id="tierPro">
-                            <div class="tier-icon">🔥</div>
-                            <div class="tier-name">Pro</div>
-                            <div class="tier-price">$12<span>/mo</span></div>
-                            <div class="tier-features">
-                                <ul>
-                                    <li>Everything in Premium</li>
-                                    <li>Member Activity Tracking</li>
-                                    <li>Invite Tracking</li>
-                                    <li>Message Analytics</li>
-                                    <li>Automation Tools</li>
-                                    <li>Priority Performance</li>
-                                </ul>
-                            </div>
-                            <button class="tier-btn upgrade" onclick="upgradeTier('pro')">Upgrade to Pro</button>
-                        </div>
+                    <div style="background:#0f1623;border:2px solid #9151ff;border-radius:12px;padding:1.5rem;text-align:center;box-shadow:0 0 20px rgba(145,81,255,0.3);">
+                        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#9151ff,#00d4ff);color:#fff;padding:0.25rem 0.75rem;border-radius:999px;font-size:0.75rem;">Most Popular</div>
+                        <div style="font-size:2.5rem;">💎</div>
+                        <div style="font-size:1.25rem;font-weight:600;color:#fff;">Premium ⭐</div>
+                        <div style="font-size:2rem;font-weight:700;color:#00d4ff;">$8<span style="font-size:0.9rem;color:#888;">/mo</span></div>
+                        <ul style="list-style:none;padding:0;text-align:left;color:#aaa;font-size:0.85rem;">
+                            <li>Everything in Free</li>
+                            <li>Unlimited React Roles</li>
+                            <li>XP System + Leaderboards</li>
+                            <li>Giveaways</li>
+                            <li>Custom Commands</li>
+                        </ul>
+                        <button onclick="upgradeTier('premium')" style="width:100%;padding:0.75rem;border-radius:8px;background:linear-gradient(135deg,#9151ff,#00d4ff);color:#fff;border:none;cursor:pointer;">Upgrade to Premium</button>
+                    </div>
+                    <div style="background:#0f1623;border:1px solid #333;border-radius:12px;padding:1.5rem;text-align:center;">
+                        <div style="font-size:2.5rem;">🔥</div>
+                        <div style="font-size:1.25rem;font-weight:600;color:#fff;">Pro</div>
+                        <div style="font-size:2rem;font-weight:700;color:#00d4ff;">$12<span style="font-size:0.9rem;color:#888;">/mo</span></div>
+                        <ul style="list-style:none;padding:0;text-align:left;color:#aaa;font-size:0.85rem;">
+                            <li>Everything in Premium</li>
+                            <li>Member Activity Tracking</li>
+                            <li>Invite Tracking</li>
+                            <li>Message Analytics</li>
+                            <li>Automation Tools</li>
+                        </ul>
+                        <button onclick="upgradeTier('pro')" style="width:100%;padding:0.75rem;border-radius:8px;background:linear-gradient(135deg,#9151ff,#00d4ff);color:#fff;border:none;cursor:pointer;">Upgrade to Pro</button>
                     </div>
                 </div>
-            `;
+            </div>`;
             document.body.appendChild(modal);
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) closePremiumModal();
-            });
+            alert('Modal created!');
         }
         
         function updateTierCards() {
