@@ -5692,8 +5692,9 @@ app.get("/api/user", (req, res) => {
   }
 
   const config = loadConfig();
-  const botOwnerId = config.creator?.ownerId || '';
-  console.log(`[Owner Check] Config loaded, ownerId: "${botOwnerId}"`);
+  // Allow override via env var for easy deployment
+  const botOwnerId = process.env.BOT_OWNER_ID || config.creator?.ownerId || '';
+  console.log(`[Owner Check] Config loaded, ownerId from env: "${process.env.BOT_OWNER_ID}", from config: "${config.creator?.ownerId}", final: "${botOwnerId}"`);
   const isOwner = user.id === botOwnerId && botOwnerId !== '';
   console.log(`[Owner Check] User: ${user.id}, IsOwner: ${isOwner}`);
 
