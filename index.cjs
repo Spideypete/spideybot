@@ -71,15 +71,20 @@ app.use(session({
 
 // Inject version timestamp and cache-busting to ALL HTML pages
 app.use((req, res, next) => {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    const isApi = req.path.startsWith('/api/');
+    const isHtml = req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security' || req.path === '/dashboard' || !req.path.includes('.');
+    
+    if (!isApi) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
     
     // Add cache-control headers and a lightweight version cookie for cache-busting
     const timestamp = Date.now();
     res.cookie('v', timestamp, { maxAge: 3600000, httpOnly: false });
 
-    if (req.path.endsWith('.html') || req.path === '/' || req.path === '/commands' || req.path === '/security' || req.path === '/dashboard' || !req.path.includes('.')) {
+    if (isHtml) {
       const originalSend = res.send;
       res.send = function (body) {
         if (typeof body === 'string' && body.includes('</head>')) {
