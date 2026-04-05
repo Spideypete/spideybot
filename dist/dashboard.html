@@ -4413,58 +4413,82 @@
         function createPremiumModal() {
             const modal = document.createElement('div');
             modal.id = 'premiumModal';
-            modal.className = 'premium-modal-overlay';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:99999;';
-            modal.innerHTML = `<div style="background:#1e1e1e;border:1px solid rgba(145,81,255,0.3);border-radius:16px;padding:2rem;max-width:950px;width:95%;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;">
-                    <h2 style="color:#fff;font-size:1.75rem;margin:0;">💎 Choose Your Plan</h2>
-                    <button onclick="document.getElementById('premiumModal').remove()" style="background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;line-height:1;">×</button>
+            modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:999;';
+            modal.innerHTML = `
+            <div style="background:#1e1e2f;padding:2rem;border-radius:12px;width:80%;max-width:900px;color:#fff;font-family:sans-serif;position:relative;">
+                <span onclick="document.getElementById('premiumModal').style.display='none'" style="position:absolute;right:1rem;top:1rem;font-size:1.5rem;cursor:pointer;">&times;</span>
+                <h2 style="margin:0;font-size:2rem;">Upgrade Your Server 🚀</h2>
+                <p style="margin:0.5rem 0 1.5rem 0;color:#bbb;">Unlock powerful features and grow your community faster</p>
+                
+                <div id="billingToggle" style="display:flex;justify-content:center;margin-bottom:1.5rem;gap:0.5rem;">
+                    <button onclick="setBillingPeriod('monthly')" class="billing-btn active" data-period="monthly" style="padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;background:#6c5ce7;color:#fff;">Monthly</button>
+                    <button onclick="setBillingPeriod('6months')" class="billing-btn" data-period="6months" style="padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;background:#2c2c3d;color:#fff;">6 Months ⭐</button>
+                    <button onclick="setBillingPeriod('yearly')" class="billing-btn" data-period="yearly" style="padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;background:#2c2c3d;color:#fff;">Yearly</button>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
-                    <div style="background:linear-gradient(180deg,#0f1623,#1a1f2e);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem 1.5rem;text-align:center;position:relative;">
-                        <div style="font-size:3rem;margin-bottom:0.5rem;">🆓</div>
-                        <div style="font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:0.5rem;">Free</div>
-                        <div style="font-size:2.5rem;font-weight:700;color:#00d4ff;margin-bottom:1rem;">$0<span style="font-size:1rem;color:#888;">/mo</span></div>
-                        <ul style="list-style:none;padding:0;margin:0 0 1.5rem 0;text-align:left;color:#aaa;font-size:0.9rem;line-height:1.8;">
-                            <li>✓ Basic Logging</li>
-                            <li>✓ Basic Server Guard</li>
-                            <li>✓ 3 React Roles</li>
-                            <li>✓ Basic Commands</li>
+                
+                <div style="display:flex;justify-content:space-between;gap:1rem;">
+                    <div style="background:#2c2c3d;flex:1;border-radius:10px;padding:1rem;text-align:center;">
+                        <h3 style="margin-top:0;">Free</h3>
+                        <p style="color:#bbb;font-size:0.9rem;">Basic features, limited usage</p>
+                        <ul style="list-style:none;padding:0;margin:1rem 0;text-align:left;color:#aaa;">
+                            <li>✓ Basic logging</li>
+                            <li>✓ Limited server guard</li>
+                            <li>✓ 3 React Roles max</li>
                         </ul>
-                        <button disabled style="width:100%;padding:1rem;border-radius:10px;background:rgba(255,255,255,0.1);color:#666;border:none;font-weight:600;">Current Plan</button>
+                        <button disabled style="padding:0.5rem 1rem;border:none;border-radius:8px;background:#555;color:#888;cursor:not-allowed;">Current Plan</button>
                     </div>
-                    <div style="background:linear-gradient(180deg,#0f1623,#1a1f2e);border:2px solid #9151ff;border-radius:16px;padding:2rem 1.5rem;text-align:center;position:relative;transform:scale(1.05);box-shadow:0 0 30px rgba(145,81,255,0.4);">
-                        <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#9151ff,#00d4ff);color:#fff;padding:0.4rem 1rem;border-radius:20px;font-size:0.8rem;font-weight:700;white-space:nowrap;">⭐ Most Popular</div>
-                        <div style="font-size:3rem;margin-bottom:0.5rem;">💎</div>
-                        <div style="font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:0.5rem;">Premium</div>
-                        <div style="font-size:2.5rem;font-weight:700;color:#00d4ff;margin-bottom:1rem;">$8<span style="font-size:1rem;color:#888;">/mo</span></div>
-                        <ul style="list-style:none;padding:0;margin:0 0 1.5rem 0;text-align:left;color:#aaa;font-size:0.9rem;line-height:1.8;">
-                            <li>✓ Everything in Free</li>
+                    
+                    <div style="background:#2c2c3d;flex:1;border-radius:10px;padding:1rem;text-align:center;position:relative;border:2px solid #6c5ce7;">
+                        <div style="position:absolute;top:-10px;right:-10px;background:#f1c40f;color:#000;padding:0.3rem 0.5rem;border-radius:8px;font-weight:bold;font-size:0.8rem;">Most Popular ⭐</div>
+                        <h3 style="margin-top:0;">Premium</h3>
+                        <p style="color:#bbb;font-size:0.9rem;">Unlock most features</p>
+                        <ul style="list-style:none;padding:0;margin:1rem 0;text-align:left;color:#aaa;">
                             <li>✓ Unlimited React Roles</li>
-                            <li>✓ XP System + Leaderboards</li>
+                            <li>✓ Full Server Guard</li>
+                            <li>✓ XP + Leaderboards</li>
                             <li>✓ Giveaways</li>
                             <li>✓ Custom Commands</li>
-                            <li>✓ Advanced Moderation</li>
                         </ul>
-                        <button onclick="upgradeTier('premium')" style="width:100%;padding:1rem;border-radius:10px;background:linear-gradient(135deg,#9151ff,#00d4ff);color:#fff;border:none;font-weight:700;cursor:pointer;font-size:1rem;">Upgrade to Premium</button>
+                        <div class="price-display" data-monthly="$8" data-6months="$36" data-yearly="$60" style="font-size:1.5rem;margin:1rem 0;font-weight:bold;">$36</div>
+                        <button onclick="upgradeTier('premium')" style="padding:0.5rem 1rem;border:none;border-radius:8px;background:#6c5ce7;color:#fff;cursor:pointer;width:100%;">Upgrade to Premium</button>
                     </div>
-                    <div style="background:linear-gradient(180deg,#0f1623,#1a1f2e);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem 1.5rem;text-align:center;position:relative;">
-                        <div style="font-size:3rem;margin-bottom:0.5rem;">🔥</div>
-                        <div style="font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:0.5rem;">Pro</div>
-                        <div style="font-size:2.5rem;font-weight:700;color:#00d4ff;margin-bottom:1rem;">$12<span style="font-size:1rem;color:#888;">/mo</span></div>
-                        <ul style="list-style:none;padding:0;margin:0 0 1.5rem 0;text-align:left;color:#aaa;font-size:0.9rem;line-height:1.8;">
-                            <li>✓ Everything in Premium</li>
+                    
+                    <div style="background:#2c2c3d;flex:1;border-radius:10px;padding:1rem;text-align:center;">
+                        <h3 style="margin-top:0;">Pro</h3>
+                        <p style="color:#bbb;font-size:0.9rem;">Advanced features for large servers</p>
+                        <ul style="list-style:none;padding:0;margin:1rem 0;text-align:left;color:#aaa;">
                             <li>✓ Member Analytics</li>
                             <li>✓ Invite Tracking</li>
-                            <li>✓ Message Analytics</li>
                             <li>✓ Automation Tools</li>
                             <li>✓ Priority Performance</li>
                         </ul>
-                        <button onclick="upgradeTier('pro')" style="width:100%;padding:1rem;border-radius:10px;background:linear-gradient(135deg,#9151ff,#00d4ff);color:#fff;border:none;font-weight:700;cursor:pointer;font-size:1rem;">Upgrade to Pro</button>
+                        <div class="price-display" data-monthly="$12" data-6months="$54" data-yearly="$96" style="font-size:1.5rem;margin:1rem 0;font-weight:bold;">$54</div>
+                        <button onclick="upgradeTier('pro')" style="padding:0.5rem 1rem;border:none;border-radius:8px;background:#6c5ce7;color:#fff;cursor:pointer;width:100%;">Upgrade to Pro</button>
                     </div>
                 </div>
-            </div>`;
+                
+                <div style="margin-top:1.5rem;text-align:center;color:#bbb;font-size:0.9rem;">
+                    Cancel anytime • Instant activation
+                </div>
+            </div>
+            `;
             document.body.appendChild(modal);
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+        }
+        
+        let currentBillingPeriod = '6months';
+        
+        function setBillingPeriod(period) {
+            currentBillingPeriod = period;
+            document.querySelectorAll('.billing-btn').forEach(btn => {
+                btn.style.background = btn.getAttribute('data-period') === period ? '#6c5ce7' : '#2c2c3d';
+            });
+            document.querySelectorAll('.price-display').forEach(el => {
+                el.textContent = el.getAttribute('data-' + period);
+            });
         }
         
         function updateTierCards() {
