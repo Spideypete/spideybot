@@ -204,17 +204,16 @@
     </div>
     
     <script>
+        let currentPeriod = 6;
+        let selectedServerId = null;
+        let currentTier = 'free';
+        let tierEndDate = null;
+        let remainingMonths = 0;
+        
         const pricing = {
             premium: { 1: 8, 3: 21, 6: 36, 12: 60 },
             pro: { 1: 12, 3: 32, 6: 54, 12: 96 }
         };
-        
-        let currentPeriod = 6;
-        let selectedServerId = null;
-        let currentTier = 'free';
-        
-        // Pricing with default 6 month
-        const pricing = {
             premium: { 1: 8, 3: 21, 6: 36, 12: 60 },
             pro: { 1: 12, 3: 32, 6: 54, 12: 96 }
         };
@@ -228,6 +227,8 @@
                     const res = await fetch('/api/guild/' + selectedServerId + '/tier');
                     const data = await res.json();
                     currentTier = data.tier || 'free';
+                    tierEndDate = data.tierEndDate;
+                    remainingMonths = data.remainingMonths || 0;
                     if (data.tierDurationMonths) {
                         currentPeriod = data.tierDurationMonths;
                     }
@@ -274,12 +275,12 @@
                         <li>✓ Basic commands</li>
                     </ul>
                     <div class="plan-price">$0<span>/mo</span></div>
-                    <button class="plan-btn" disabled>Current Plan</button>
+                    <button class="plan-btn" disabled>${currentTier === 'free' && remainingMonths > 0 ? 'Expired' : 'Current Plan'}</button>
                 </div>
                 
                 <div class="plan-card premium">
                     <div class="plan-badge">Most Popular ⭐</div>
-                    <div class="plan-name">💎 Premium</div>
+                    <div class="plan-name">💎 Premium${remainingMonths > 0 && currentTier === 'premium' ? ' - ' + remainingMonths + ' mo left' : ''}</div>
                     <div class="plan-desc">Full features unlocked</div>
                     <ul class="plan-features">
                         <li>✓ Unlimited React Roles</li>
@@ -296,7 +297,7 @@
                 </div>
                 
                 <div class="plan-card pro">
-                    <div class="plan-name">🔥 Pro</div>
+                    <div class="plan-name">🔥 Pro${remainingMonths > 0 && currentTier === 'pro' ? ' - ' + remainingMonths + ' mo left' : ''}</div>
                     <div class="plan-desc">Advanced features</div>
                     <ul class="plan-features">
                         <li>✓ Everything in Premium</li>
