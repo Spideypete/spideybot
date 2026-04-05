@@ -4517,47 +4517,7 @@
         
         function closePremiumModal() {
             const modal = document.getElementById('premiumModal');
-            if (modal) modal.style.display = 'none';
-        }
-        
-        let currentBillingPeriod = '6months';
-        
-        function setBillingPeriod(period) {
-            currentBillingPeriod = period;
-            document.querySelectorAll('.billing-btn').forEach(btn => {
-                btn.style.background = btn.getAttribute('data-period') === period ? '#6c5ce7' : '#2c2c3d';
-            });
-            document.querySelectorAll('.price-display').forEach(el => {
-                el.textContent = el.getAttribute('data-' + period);
-            });
-        }
-        
-        function updateTierCards() {
-            const freeCard = document.getElementById('tierFree');
-            const premiumCard = document.getElementById('tierPremium');
-            const proCard = document.getElementById('tierPro');
-            
-            if (!freeCard || !premiumCard || !proCard) return;
-            
-            freeCard.classList.remove('disabled');
-            premiumCard.classList.remove('disabled');
-            proCard.classList.remove('disabled');
-            
-            if (currentTier === 'free') {
-                freeCard.classList.add('disabled');
-            } else if (currentTier === 'premium') {
-                freeCard.classList.add('disabled');
-                premiumCard.classList.add('disabled');
-            } else if (currentTier === 'pro') {
-                freeCard.classList.add('disabled');
-                premiumCard.classList.add('disabled');
-                proCard.classList.add('disabled');
-            }
-        }
-        
-        function closePremiumModal() {
-            const modal = document.getElementById('premiumModal');
-            if (modal) modal.style.display = 'none';
+            if (modal) modal.remove();
         }
         
         async function upgradeTier(tier) {
