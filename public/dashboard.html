@@ -2306,7 +2306,7 @@
                     
                     <div class="profile-menu" id="profileMenu">
                         <div class="profile-menu-item" id="ownersDashLink" style="display: none;" onclick="openOwnersDash()">👑 Owner's Dash</div>
-                        <div class="profile-menu-item" id="premiumMenuItem" onclick="openPremiumModal()">💎 Premium</div>
+                        <div class="profile-menu-item" id="premiumMenuItem" onclick="console.log('Premium clicked'); openPremiumModal()">💎 Premium</div>
                         <div class="profile-menu-item logout" onclick="logout()">Log Out</div>
                     </div>
                 </div>
@@ -4390,6 +4390,7 @@
         let currentTier = 'free';
         
         async function openPremiumModal() {
+            alert('Opening modal...');
             let modal = document.getElementById('premiumModal');
             if (!modal) {
                 createPremiumModal();
