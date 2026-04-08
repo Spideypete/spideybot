@@ -5857,6 +5857,56 @@
             } catch (e) { alert('Error: ' + e.message); }
         }
 
+        async function checkEntitlementsAndLock(sectionName) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            try {
+                const res = await fetch('/api/guild/' + guildId + '/entitlements');
+                const data = await res.json();
+                const ent = data.entitlements || {};
+                
+                // Map sections to features
+                const sectionFeatures = {
+                    'xp-levels': 'hasXP',
+                    'leaderboards': 'hasXP',
+                    'custom-commands': 'hasCustomCommands',
+                    'invite-tracking': 'hasInvites',
+                    'statistics-channels': 'hasAnalytics'
+                };
+                
+                const feature = sectionFeatures[sectionName];
+                if (feature && !ent[feature]) {
+                    // Show locked overlay
+                    const section = document.getElementById(sectionName + '-section');
+                    if (section && !section.querySelector('.locked-overlay')) {
+                        const overlay = document.createElement('div');
+                        overlay.className = 'locked-overlay';
+                        overlay.innerHTML = `
+                            <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;border-radius:8px;">
+                                <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+                                <div style="font-size:1.2rem;font-weight:bold;margin-bottom:0.5rem;color:#fff;">Premium Required</div>
+                                <div style="color:#aaa;margin-bottom:1rem;">This feature is only available on Premium or Pro</div>
+                                <button onclick="window.location.href='/premium'" style="background:linear-gradient(135deg,#ffb347,#ff8c00);border:none;color:#000;padding:0.75rem 1.5rem;border-radius:8px;font-weight:bold;cursor:pointer;">Upgrade Now</button>
+                            </div>
+                        `;
+                        overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;border-radius:8px;';
+                        section.style.position = 'relative';
+                        section.appendChild(overlay);
+                    }
+                } else {
+                    // Remove any existing overlay
+                    const section = document.getElementById(sectionName + '-section');
+                    if (section) {
+                        const overlay = section.querySelector('.locked-overlay');
+                        if (overlay) overlay.remove();
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to check entitlements:', e);
+            }
+        }
+        
         async function loadXPLevels() {
             await loadTabConfig('xp-levels');
         }
@@ -5879,6 +5929,20 @@
         }
 
         async function createGiveaway() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            // Check entitlements
+            try {
+                const entRes = await fetch('/api/guild/' + guildId + '/entitlements');
+                const ent = await entRes.json();
+                if (ent.entitlements && !ent.entitlements.canCreateGiveaway) {
+                    const current = ent.entitlements.currentGiveaways;
+                    alert('🔒 Giveaway Limit Reached!\n\nYour server has ' + current + ' active giveaway(s).\n\nUpgrade to Premium for unlimited giveaways!');
+                    return;
+                }
+            } catch (e) { console.error('Entitlement check failed:', e); }
+            
             const prize = document.querySelector('#giveaways-section input[placeholder*="Discord"]')?.value || '';
             const duration = document.querySelector('#giveaways-section input[placeholder*="minutes"]')?.value || '60';
             if (!prize) return alert('Enter a prize');
@@ -6139,6 +6203,11 @@
                             console.error('Error loading ' + sectionName + ':', e);
                         }
                     }
+                    
+                    // Check entitlements and add lock overlays
+                    checkEntitlementsAndLock(sectionName);
+                } else {
+                    console.warn('   ⚠️ Section not found:', sectionId);
                 } else {
                     console.error('   ❌ Section NOT found:', sectionId);
                 }
