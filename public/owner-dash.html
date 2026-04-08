@@ -664,7 +664,7 @@
                         <span class="toggle-label">${f.label}</span>
                         <select class="toggle-tier-select" onchange="updateFeatureTier('${f.key}', this.value)">
                             <option value="free" ${freeVal === false ? '' : !freeVal || freeVal === 3 ? 'selected' : ''}>Free</option>
-                            <option value="premium" ${premiumVal === true || premVal === Infinity ? 'selected' : ''}>Premium</option>
+                            <option value="premium" ${premVal === true || premVal === Infinity ? 'selected' : ''}>Premium</option>
                             <option value="pro" ${toggles[f.key]?.pro === true ? 'selected' : ''}>Pro</option>
                         </select>
                     </div>
