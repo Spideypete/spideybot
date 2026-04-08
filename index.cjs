@@ -233,6 +233,38 @@ function saveConfig(config) {
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
 }
 
+// ============== DEFAULT FEATURE TOGGLES ==============
+const DEFAULT_FEATURE_TOGGLES = {
+  reactRoles: { free: 3, premium: Infinity, pro: Infinity },
+  giveaways: { free: 1, premium: Infinity, pro: Infinity },
+  xpLeaderboards: { free: false, premium: true, pro: true },
+  customCommands: { free: false, premium: true, pro: true },
+  fullServerGuard: { free: false, premium: true, pro: true },
+  analytics: { free: false, premium: false, pro: true },
+  inviteTracking: { free: false, premium: false, pro: true },
+  automation: { free: false, premium: false, pro: true }
+};
+
+function getFeatureToggles() {
+  const config = loadConfig();
+  return config.global_configs?.featureToggles || DEFAULT_FEATURE_TOGGLES;
+}
+
+function getTierFeatures(tier) {
+  const toggles = getFeatureToggles();
+  const features = {};
+  
+  for (const [feature, tiers] of Object.entries(toggles)) {
+    if (tiers[tier] === true || tiers[tier] === Infinity) {
+      features[feature] = true;
+    } else if (typeof tiers[tier] === 'number') {
+      features[feature] = tiers[tier];
+    }
+  }
+  
+  return features;
+}
+
 // ============== TIER/ENTITLEMENT CHECKS ==============
 const TIER_LIMITS = {
   free: {
@@ -284,7 +316,19 @@ function getGuildTier(guildId) {
 
 function getTierLimits(guildId) {
   const tier = getGuildTier(guildId);
-  return TIER_LIMITS[tier] || TIER_LIMITS.free;
+  const toggles = getFeatureToggles();
+  
+  return {
+    maxReactRoles: toggles.reactRoles?.[tier] ?? 3,
+    maxGiveaways: toggles.giveaways?.[tier] ?? 1,
+    hasXP: toggles.xpLeaderboards?.[tier] ?? false,
+    hasCustomCommands: toggles.customCommands?.[tier] ?? false,
+    hasFullServerGuard: toggles.fullServerGuard?.[tier] ?? false,
+    hasAnalytics: toggles.analytics?.[tier] ?? false,
+    hasInvites: toggles.inviteTracking?.[tier] ?? false,
+    hasAutomation: toggles.automation?.[tier] ?? false
+  };
+}
 }
 
 function checkEntitlement(guildId, feature) {
@@ -5953,6 +5997,47 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
   }
   
   res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMinutes });
+});
+
+// Get/Update feature toggles (Owner only)
+app.get('/api/owner/feature-toggles', (req, res) => {
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  
+  const config = loadConfig();
+  const botOwnerId = config.creator?.ownerId || '';
+  const userId = req.session.user?.id;
+  
+  if (userId !== botOwnerId) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
+  res.json({ featureToggles: getFeatureToggles() });
+});
+
+app.post('/api/owner/feature-toggles', (req, res) => {
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  
+  const config = loadConfig();
+  const botOwnerId = config.creator?.ownerId || '';
+  const userId = req.session.user?.id;
+  
+  if (userId !== botOwnerId) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
+  const { featureToggles } = req.body;
+  
+  if (!config.global_configs) config.global_configs = {};
+  config.global_configs.featureToggles = featureToggles;
+  
+  saveConfig(config);
+  
+  console.log('[Feature Toggles] Updated:', featureToggles);
+  res.json({ success: true, featureToggles });
 });
 
 // Get entitlements for a guild
