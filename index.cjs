@@ -5995,7 +5995,7 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
     remainingMonths = Math.max(0, Math.ceil(msRemaining / (30 * 24 * 60 * 60 * 1000)));
   }
   
-  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMinutes });
+  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMonths });
 });
 
 // Get/Update feature toggles (Owner only)
