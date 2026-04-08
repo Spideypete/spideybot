@@ -5887,6 +5887,12 @@ const PAYPAL_API_BASE = PAYPAL_MODE === 'live'
   : 'https://api-m.sandbox.paypal.com';
 
 async function getPayPalAccessToken() {
+  console.log('[PayPal] Mode:', PAYPAL_MODE, 'Client ID present:', !!PAYPAL_CLIENT_ID, 'Secret present:', !!PAYPAL_CLIENT_SECRET);
+  
+  if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+    throw new Error('PayPal credentials not configured');
+  }
+  
   const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
   const response = await axios.post(`${PAYPAL_API_BASE}/v1/oauth2/token`, 
     'grant_type=client_credentials',
@@ -5958,7 +5964,8 @@ app.post('/api/paypal/create-order', async (req, res) => {
     });
   } catch (error) {
     console.error('[PayPal Create Order Error]', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to create order' });
+    const errorMsg = error.response?.data?.message || error.message || 'Failed to create order';
+    res.status(500).json({ error: errorMsg });
   }
 });
 
