@@ -215,34 +215,40 @@
             pro: { 1: 12, 3: 32, 6: 54, 12: 96 }
         };
         
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('[Premium Page] DOM loaded');
+            init();
+        });
+        
         async function init() {
             console.log('[Premium Page] Starting init...');
             
-            try {
-                selectedServerId = localStorage.getItem('selectedServerId');
-                console.log('[Premium Page] Selected server:', selectedServerId);
-                
-                if (selectedServerId) {
-                    try {
-                        const res = await fetch('/api/guild/' + selectedServerId + '/tier');
-                        const data = await res.json();
-                        console.log('[Premium Page] Tier data:', data);
-                        currentTier = data.tier || 'free';
+            selectedServerId = localStorage.getItem('selectedServerId');
+            console.log('[Premium Page] Selected server from localStorage:', selectedServerId);
+            
+            if (selectedServerId && selectedServerId !== 'undefined') {
+                console.log('[Premium Page] Fetching tier for:', selectedServerId);
+                try {
+                    const res = await fetch('/api/guild/' + selectedServerId + '/tier');
+                    const data = await res.json();
+                    console.log('[Premium Page] API Response:', data);
+                    
+                    if (data && data.tier) {
+                        currentTier = data.tier;
                         tierEndDate = data.tierEndDate;
                         remainingMonths = data.remainingMonths || 0;
                         if (data.tierDurationMonths) {
                             currentPeriod = data.tierDurationMonths;
                         }
-                    } catch (e) {
-                        console.error('[Premium Page] Error fetching tier:', e);
-                        currentTier = 'free';
                     }
+                } catch (e) {
+                    console.error('[Premium Page] API Error:', e);
                 }
-            } catch (err) {
-                console.error('[Premium Page] Init error:', err);
+            } else {
+                console.log('[Premium Page] No server selected');
             }
             
-            console.log('[Premium Page] Rendering with period:', currentPeriod, 'tier:', currentTier);
+            console.log('[Premium Page] Final values - period:', currentPeriod, 'tier:', currentTier, 'remaining:', remainingMonths);
             
             document.querySelectorAll('.period-btn').forEach(btn => {
                 btn.classList.toggle('active', parseInt(btn.dataset.period) === currentPeriod);
@@ -260,8 +266,6 @@
         }
         
         function renderPlans() {
-            console.log('[Premium Page] renderPlans called with period:', currentPeriod, 'tier:', currentTier, 'remaining:', remainingMonths);
-            
             const grid = document.getElementById('plansGrid');
             const p = pricing.premium[currentPeriod];
             const pro = pricing.pro[currentPeriod];
@@ -269,8 +273,6 @@
             const proMonthly = (pro / currentPeriod).toFixed(2);
             const pSave = Math.round((1 - p / (8 * currentPeriod)) * 100);
             const proSave = Math.round((1 - pro / (12 * currentPeriod)) * 100);
-            
-            console.log('[Premium Page] Prices - Premium:', p, 'Pro:', pro);
             
             const isPremiumOrPro = currentTier === 'premium' || currentTier === 'pro';
             
