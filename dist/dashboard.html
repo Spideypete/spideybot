@@ -6215,10 +6215,8 @@
                     
                     // Check entitlements and add lock overlays
                     checkEntitlementsAndLock(sectionName);
-                } else {
+                } else if (!section) {
                     console.warn('   ⚠️ Section not found:', sectionId);
-                } else {
-                    console.error('   ❌ Section NOT found:', sectionId);
                 }
             } catch (err) {
                 console.error('   ❌ ERROR:', err.message);
