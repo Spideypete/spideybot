@@ -5688,6 +5688,19 @@
         async function addReactRole() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return alert('Select a server first');
+            
+            // Check entitlements first
+            try {
+                const entRes = await fetch('/api/guild/' + guildId + '/entitlements');
+                const ent = await entRes.json();
+                if (ent.entitlements && !ent.entitlements.canAddReactRole) {
+                    const current = ent.entitlements.currentReactRoles;
+                    const max = ent.entitlements.maxReactRoles;
+                    alert('🔒 React Role Limit Reached!\n\nYour server has ' + current + '/' + max + ' reaction roles.\n\nUpgrade to Premium for unlimited reaction roles!');
+                    return;
+                }
+            } catch (e) { console.error('Entitlement check failed:', e); }
+            
             const channelId = document.getElementById('rr_channelSelect')?.value;
             const messageId = document.getElementById('rr_messageId')?.value?.trim();
             const emoji = document.getElementById('rr_emoji')?.value?.trim();

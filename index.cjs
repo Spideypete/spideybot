@@ -6793,7 +6793,35 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
     // Verify role exists
     const role = guild.roles.cache.get(roleId);
     if (!role) return res.json({ success: false, error: "Role not found" });
-
+    
+    // Check tier entitlements - limit react roles for free tier
+    const limits = getTierLimits(guildId);
+    const config = loadConfig();
+    const guildConfig = config.guilds[guildId] || {};
+    const roleCategories = guildConfig.roleCategories || {};
+    let totalRoles = 0;
+    Object.values(roleCategories).forEach(cat => {
+      if (cat.roles && Array.isArray(cat.roles)) {
+        totalRoles += cat.roles.length;
+      }
+    });
+    
+    // Also check reactRoles.entries
+    if (guildConfig.reactRoles && guildConfig.reactRoles.entries) {
+      totalRoles += guildConfig.reactRoles.entries.length;
+    }
+    
+    if (totalRoles >= limits.maxReactRoles) {
+      return res.json({ 
+        success: false, 
+        error: "React role limit reached",
+        upgradeRequired: true,
+        currentLimit: limits.maxReactRoles,
+        currentUsage: totalRoles,
+        tier: getGuildTier(guildId)
+      });
+    }
+    
     // Try to add the reaction to the message
     try {
       await message.react(emoji);
