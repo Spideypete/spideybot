@@ -6830,8 +6830,8 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
       return res.json({ success: false, error: "Could not add reaction. Make sure the emoji is valid and the bot has permissions." });
     }
 
-    // Save to config
-    const config = loadConfig();
+    // Save to config - reuse existing config from above
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId].reactRoles) config.guilds[guildId].reactRoles = { entries: [], allowMultiple: true, removeOnUnreact: true, dmConfirm: false };
     if (!Array.isArray(config.guilds[guildId].reactRoles.entries)) config.guilds[guildId].reactRoles.entries = [];
