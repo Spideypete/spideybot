@@ -183,7 +183,7 @@ const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(
 
 const REDIRECT_URI = process.env.FORCE_REDIRECT_URI || ((BASE_REDIRECT_URI === 'http://localhost:5000' && (process.env.NODE_ENV === 'production' || process.env.RENDER))
   ? 'https://spideybot-90sr.onrender.com/auth/discord/callback'
-  : `${BASE_REDIRECT_URI}/auth/discord/callback`);
+  : BASE_REDIRECT_URI.replace('https://', 'http://') + '/auth/discord/callback');
 
 console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
 
