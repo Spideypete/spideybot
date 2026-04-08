@@ -504,6 +504,9 @@
                 renderRecentSales();
                 allServers = stats.servers || [];
                 renderServersList(allServers);
+                
+                // Also load feature toggles
+                loadFeatureToggles();
             } catch (err) {
                 console.error('Failed to load stats:', err);
             }
