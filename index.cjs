@@ -6000,6 +6000,8 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
 
 // Get/Update feature toggles (Owner only)
 app.get('/api/owner/feature-toggles', (req, res) => {
+  console.log('[Feature Toggles] Auth:', req.session.authenticated, 'User ID:', req.session.user?.id);
+  
   if (!req.session.authenticated) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -6007,6 +6009,8 @@ app.get('/api/owner/feature-toggles', (req, res) => {
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
   const userId = req.session.user?.id;
+  
+  console.log('[Feature Toggles] Bot Owner:', botOwnerId, 'Session User:', userId);
   
   if (userId !== botOwnerId) {
     return res.status(403).json({ error: 'Access denied' });
