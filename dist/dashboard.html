@@ -326,6 +326,7 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            z-index: 2000;
         }
 
         .header-logo {
@@ -405,6 +406,7 @@
 
         .server-selector {
             position: relative;
+            z-index: 2000;
         }
 
         .server-dropdown-btn {
@@ -415,12 +417,15 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 0.9rem;
-            display: flex;
+            display: flex !important;
             align-items: center;
             gap: 0.6rem;
             transition: all 0.3s ease;
             max-width: 320px;
             white-space: nowrap;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
             overflow: hidden;
         }
 
@@ -546,6 +551,7 @@
             display: flex;
             align-items: center;
             gap: 2rem;
+            z-index: 2000;
         }
 
         .mode-toggle {
@@ -619,12 +625,15 @@
         }
 
         .user-profile {
-            display: flex;
+            display: flex !important;
             align-items: center;
             gap: 0.5rem;
             cursor: pointer;
             position: relative;
             padding: 0 0.5rem;
+            z-index: 2001;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .user-avatar {
