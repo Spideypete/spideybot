@@ -233,6 +233,85 @@ function saveConfig(config) {
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
 }
 
+// ============== TIER/ENTITLEMENT CHECKS ==============
+const TIER_LIMITS = {
+  free: {
+    maxReactRoles: 3,
+    maxGiveaways: 1,
+    hasXP: false,
+    hasCustomCommands: false,
+    hasFullServerGuard: false,
+    hasAnalytics: false,
+    hasInvites: false,
+    hasAutomation: false
+  },
+  premium: {
+    maxReactRoles: Infinity,
+    maxGiveaways: Infinity,
+    hasXP: true,
+    hasCustomCommands: true,
+    hasFullServerGuard: true,
+    hasAnalytics: false,
+    hasInvites: false,
+    hasAutomation: false
+  },
+  pro: {
+    maxReactRoles: Infinity,
+    maxGiveaways: Infinity,
+    hasXP: true,
+    hasCustomCommands: true,
+    hasFullServerGuard: true,
+    hasAnalytics: true,
+    hasInvites: true,
+    hasAutomation: true
+  }
+};
+
+function getGuildTier(guildId) {
+  const config = loadConfig();
+  const guild = config.guilds[guildId] || {};
+  
+  if (!guild.tier || guild.tier === 'free') return 'free';
+  if (guild.tier === 'premium' || guild.tier === 'pro') return guild.tier;
+  
+  // Check if expired
+  if (guild.tierEndDate && guild.tierEndDate < Date.now()) {
+    return 'free';
+  }
+  
+  return guild.tier || 'free';
+}
+
+function getTierLimits(guildId) {
+  const tier = getGuildTier(guildId);
+  return TIER_LIMITS[tier] || TIER_LIMITS.free;
+}
+
+function checkEntitlement(guildId, feature) {
+  const limits = getTierLimits(guildId);
+  
+  switch (feature) {
+    case 'unlimitedReactRoles':
+      return limits.maxReactRoles !== 3;
+    case 'xpLeaderboards':
+      return limits.hasXP;
+    case 'customCommands':
+      return limits.hasCustomCommands;
+    case 'fullServerGuard':
+      return limits.hasFullServerGuard;
+    case 'analytics':
+      return limits.hasAnalytics;
+    case 'inviteTracking':
+      return limits.hasInvites;
+    case 'automation':
+      return limits.hasAutomation;
+    case 'unlimitedGiveaways':
+      return limits.maxGiveaways === Infinity;
+    default:
+      return false;
+  }
+}
+
 function getGuildConfig(guildId) {
   const config = loadConfig();
   if (!config.guilds[guildId]) {
@@ -5873,7 +5952,46 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
     remainingMonths = Math.max(0, Math.ceil(msRemaining / (30 * 24 * 60 * 60 * 1000)));
   }
   
-  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMonths });
+  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMinutes });
+});
+
+// Get entitlements for a guild
+app.get('/api/guild/:guildId/entitlements', (req, res) => {
+  const guildId = req.params.guildId;
+  const tier = getGuildTier(guildId);
+  const limits = getTierLimits(guildId);
+  const config = loadConfig();
+  const guildConfig = config.guilds[guildId] || {};
+  
+  // Count current usage
+  const roleCategories = guildConfig.roleCategories || {};
+  let totalReactRoles = 0;
+  Object.values(roleCategories).forEach(cat => {
+    if (cat.roles && Array.isArray(cat.roles)) {
+      totalReactRoles += cat.roles.length;
+    }
+  });
+  
+  const giveaways = guildConfig.giveaways || {};
+  const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active').length;
+  
+  res.json({
+    tier,
+    entitlements: {
+      maxReactRoles: limits.maxReactRoles,
+      currentReactRoles: totalReactRoles,
+      canAddReactRole: totalReactRoles < limits.maxReactRoles,
+      maxGiveaways: limits.maxGiveaways,
+      currentGiveaways: activeGiveaways,
+      canCreateGiveaway: activeGiveaways < limits.maxGiveaways,
+      hasXP: limits.hasXP,
+      hasCustomCommands: limits.hasCustomCommands,
+      hasFullServerGuard: limits.hasFullServerGuard,
+      hasAnalytics: limits.hasAnalytics,
+      hasInvites: limits.hasInvites,
+      hasAutomation: limits.hasAutomation
+    }
+  });
 });
 
 // ============== PAYPAL PAYMENT ENDPOINTS ==============
@@ -6177,6 +6295,31 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
     if (!roles || !Array.isArray(roles) || roles.length === 0) {
       console.error('❌ Role category save failed: No roles provided');
       return res.status(400).json({ success: false, error: "At least one role is required" });
+    }
+    
+    // Check tier limits for React Roles
+    const limits = getTierLimits(guildId);
+    const existingCategories = config.guilds[guildId].roleCategories || {};
+    let totalRoles = 0;
+    Object.values(existingCategories).forEach(cat => {
+      if (cat.roles && Array.isArray(cat.roles)) {
+        totalRoles += cat.roles.length;
+      }
+    });
+    
+    // For new categories, check if adding would exceed limit
+    if (oldCategoryName !== categoryName) {
+      const newRolesCount = roles.length;
+      if (totalRoles + newRolesCount > limits.maxReactRoles) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "React role limit reached",
+          upgradeRequired: true,
+          currentLimit: limits.maxReactRoles,
+          currentUsage: totalRoles,
+          tier: getGuildTier(guildId)
+        });
+      }
     }
     
     if (oldCategoryName && oldCategoryName !== categoryName && config.guilds[guildId].roleCategories[oldCategoryName]) {
