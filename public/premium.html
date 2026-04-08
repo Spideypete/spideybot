@@ -312,11 +312,13 @@
                     })
                 });
                 
+                const result = await createRes.json();
+                
                 if (!createRes.ok) {
-                    throw new Error('Failed to create PayPal order');
+                    throw new Error(result.error || 'Failed to create PayPal order');
                 }
                 
-                const { orderId, approvalUrl } = await createRes.json();
+                const { orderId, approvalUrl } = result;
                 
                 localStorage.setItem('pendingPayPalOrder', JSON.stringify({ 
                     orderId, 

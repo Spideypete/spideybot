@@ -6052,6 +6052,18 @@ app.post('/api/paypal/webhook', express.raw({ type: 'application/json' }), async
   res.status(200).send('OK');
 });
 
+// Debug endpoint to check PayPal config
+app.get('/api/paypal/debug', (req, res) => {
+  res.json({
+    mode: PAYPAL_MODE,
+    apiBase: PAYPAL_API_BASE,
+    hasClientId: !!PAYPAL_CLIENT_ID,
+    hasClientSecret: !!PAYPAL_CLIENT_SECRET,
+    clientIdLength: PAYPAL_CLIENT_ID?.length || 0,
+    baseUrl: process.env.BASE_URL
+  });
+});
+
 // ============== DASHBOARD DEBUG STATUS ==============
 app.get('/api/dashboard-status', (req, res) => {
   if (!req.session.authenticated) {
