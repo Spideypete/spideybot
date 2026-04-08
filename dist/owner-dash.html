@@ -280,6 +280,118 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+        
+        .feature-toggles {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .feature-card {
+            background: #1e1e1e;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        
+        .feature-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .feature-card.premium { border-left: 3px solid #ffb347; }
+        .feature-card.premium h3 { color: #ffb347; }
+        
+        .feature-card.pro { border-left: 3px solid #ff4757; }
+        .feature-card.pro h3 { color: #ff4757; }
+        
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.8rem;
+        }
+        
+        .toggle-row:last-child { border-bottom: none; }
+        
+        .toggle-label { color: rgba(255,255,255,0.7); }
+        
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #333;
+            border-radius: 24px;
+            transition: 0.3s;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        
+        .toggle-switch input:checked + .toggle-slider {
+            background: #4cd137;
+        }
+        
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+        
+        .toggle-tier-select {
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        
+        .tier-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        .tier-badge.free { background: #333; color: #888; }
+        .tier-badge.premium { background: rgba(255, 179, 71, 0.2); color: #ffb347; }
+        .tier-badge.pro { background: rgba(255, 71, 87, 0.2); color: #ff4757; }
+        
+        @media (max-width: 768px) {
+            .feature-toggles { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -333,6 +445,11 @@
     <div class="section-title">Server Tier Management</div>
     <div class="servers-list" id="serversList">
         <div class="loading">Loading servers...</div>
+    </div>
+    
+    <div class="section-title">Feature Toggles</div>
+    <div class="feature-toggles" id="featureToggles">
+        <div class="loading">Loading features...</div>
     </div>
     
     <script>
@@ -504,6 +621,110 @@
             document.body.appendChild(div);
             return div;
         }
+        
+        async function loadFeatureToggles() {
+            try {
+                const res = await fetch('/api/owner/feature-toggles', { credentials: 'include' });
+                if (!res.ok) {
+                    document.getElementById('featureToggles').innerHTML = '<div style="color:#666;">Not authorized</div>';
+                    return;
+                }
+                const data = await res.json();
+                renderFeatureToggles(data.featureToggles || {});
+            } catch (err) {
+                console.error('Failed to load feature toggles:', err);
+            }
+        }
+        
+        function renderFeatureToggles(toggles) {
+            const container = document.getElementById('featureToggles');
+            const featureList = [
+                { key: 'reactRoles', label: 'React Roles', premium: true },
+                { key: 'giveaways', label: 'Giveaways', premium: true },
+                { key: 'xpLeaderboards', label: 'XP/Leaderboards', premium: true },
+                { key: 'customCommands', label: 'Custom Commands', premium: true },
+                { key: 'fullServerGuard', label: 'Full Server Guard', premium: true },
+                { key: 'analytics', label: 'Analytics', pro: true },
+                { key: 'inviteTracking', label: 'Invite Tracking', pro: true },
+                { key: 'automation', label: 'Automation', pro: true }
+            ];
+            
+            let html = '';
+            
+            // Premium features
+            html += '<div class="feature-card premium"><h3>💎 Premium Features</h3>';
+            featureList.filter(f => f.premium && !f.pro).forEach(f => {
+                const freeVal = toggles[f.key]?.free;
+                const premVal = toggles[f.key]?.premium;
+                html += `
+                    <div class="toggle-row">
+                        <span class="toggle-label">${f.label}</span>
+                        <select class="toggle-tier-select" onchange="updateFeatureTier('${f.key}', this.value)">
+                            <option value="free" ${freeVal === false ? '' : !freeVal || freeVal === 3 ? 'selected' : ''}>Free</option>
+                            <option value="premium" ${premiumVal === true || premVal === Infinity ? 'selected' : ''}>Premium</option>
+                            <option value="pro" ${toggles[f.key]?.pro === true ? 'selected' : ''}>Pro</option>
+                        </select>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            // Pro features
+            html += '<div class="feature-card pro"><h3>🔥 Pro Features</h3>';
+            featureList.filter(f => f.pro).forEach(f => {
+                html += `
+                    <div class="toggle-row">
+                        <span class="toggle-label">${f.label}</span>
+                        <select class="toggle-tier-select" onchange="updateFeatureTier('${f.key}', this.value)">
+                            <option value="free" ${toggles[f.key]?.free === true ? '' : 'selected'}>Free</option>
+                            <option value="premium" ${toggles[f.key]?.premium === true ? 'selected' : ''}>Premium</option>
+                            <option value="pro" ${toggles[f.key]?.pro === true ? 'selected' : ''}>Pro</option>
+                        </select>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            // Additional premium features
+            html += '<div class="feature-card premium"><h3>💎 More Premium</h3>';
+            featureList.filter(f => f.premium && ['xpLeaderboards','customCommands','fullServerGuard'].includes(f.key)).forEach(f => {
+                html += `
+                    <div class="toggle-row">
+                        <span class="toggle-label">${f.label}</span>
+                        <select class="toggle-tier-select" onchange="updateFeatureTier('${f.key}', this.value)">
+                            <option value="free" ${toggles[f.key]?.free === true ? '' : 'selected'}>Free</option>
+                            <option value="premium" ${toggles[f.key]?.premium === true || toggles[f.key]?.premium === Infinity ? 'selected' : ''}>Premium</option>
+                            <option value="pro" ${toggles[f.key]?.pro === true ? 'selected' : ''}>Pro</option>
+                        </select>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+        }
+        
+        async function updateFeatureTier(feature, tier) {
+            try {
+                const res = await fetch('/api/owner/feature-toggles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ feature, tier })
+                });
+                
+                if (res.ok) {
+                    showToast('Feature updated', 'success');
+                    loadFeatureToggles();
+                } else {
+                    showToast('Failed to update', 'error');
+                }
+            } catch (err) {
+                showToast('Error updating feature', 'error');
+            }
+        }
+        
+        loadFeatureToggles();
     </script>
 </body>
 </html>

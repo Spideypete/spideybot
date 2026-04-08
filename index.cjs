@@ -6029,15 +6029,29 @@ app.post('/api/owner/feature-toggles', (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
   }
   
-  const { featureToggles } = req.body;
+  const { featureToggles, feature, tier } = req.body;
   
   if (!config.global_configs) config.global_configs = {};
-  config.global_configs.featureToggles = featureToggles;
+  
+  if (feature && tier) {
+    // Single feature update
+    if (!config.global_configs.featureToggles) {
+      config.global_configs.featureToggles = { ...DEFAULT_FEATURE_TOGGLES };
+    }
+    config.global_configs.featureToggles[feature] = {
+      free: tier === 'free' ? (feature === 'reactRoles' ? 3 : 1) : (tier === 'premium' ? false : false),
+      premium: tier === 'premium' ? (feature === 'reactRoles' || feature === 'giveaways' ? Infinity : true) : false,
+      pro: tier === 'pro' ? true : false
+    };
+    console.log(`[Feature Toggle] Updated ${feature} to ${tier}`);
+  } else if (featureToggles) {
+    // Full update
+    config.global_configs.featureToggles = featureToggles;
+    console.log('[Feature Toggles] Full update:', featureToggles);
+  }
   
   saveConfig(config);
-  
-  console.log('[Feature Toggles] Updated:', featureToggles);
-  res.json({ success: true, featureToggles });
+  res.json({ success: true, featureToggles: config.global_configs.featureToggles });
 });
 
 // Get entitlements for a guild
