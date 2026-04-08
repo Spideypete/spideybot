@@ -329,7 +329,6 @@ function getTierLimits(guildId) {
     hasAutomation: toggles.automation?.[tier] ?? false
   };
 }
-}
 
 function checkEntitlement(guildId, feature) {
   const limits = getTierLimits(guildId);
