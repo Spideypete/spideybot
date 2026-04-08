@@ -5876,6 +5876,175 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
   res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMonths });
 });
 
+// ============== PAYPAL PAYMENT ENDPOINTS ==============
+
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || '';
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || '';
+const PAYPAL_MODE = process.env.PAYPAL_MODE || 'sandbox';
+
+const PAYPAL_API_BASE = PAYPAL_MODE === 'live' 
+  ? 'https://api-m.paypal.com' 
+  : 'https://api-m.sandbox.paypal.com';
+
+async function getPayPalAccessToken() {
+  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
+  const response = await axios.post(`${PAYPAL_API_BASE}/v1/oauth2/token`, 
+    'grant_type=client_credentials',
+    {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }
+  );
+  return response.data.access_token;
+}
+
+// Create PayPal order for premium upgrade
+app.post('/api/paypal/create-order', async (req, res) => {
+  try {
+    const { guildId, tier, durationMonths } = req.body;
+    
+    if (!guildId || !tier || !durationMonths) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const config = loadConfig();
+    const guildConfig = config.guilds[guildId] || {};
+    const guildName = guildConfig.guildName || 'Server';
+    
+    const pricing = {
+      premium: { 1: 8, 3: 21, 6: 36, 12: 60 },
+      pro: { 1: 12, 3: 32, 6: 54, 12: 96 }
+    };
+    
+    const amount = pricing[tier]?.[durationMonths];
+    if (!amount) {
+      return res.status(400).json({ error: 'Invalid tier or duration' });
+    }
+    
+    const accessToken = await getPayPalAccessToken();
+    
+    const orderData = {
+      intent: 'CAPTURE',
+      purchase_units: [{
+        reference_id: guildId,
+        description: `Spidey Bot ${tier.toUpperCase()} Upgrade - ${durationMonths} Months`,
+        custom_id: JSON.stringify({ guildId, tier, durationMonths }),
+        amount: {
+          currency_code: 'USD',
+          value: amount.toString()
+        }
+      }],
+      application_context: {
+        brand_name: 'Spidey Bot',
+        landing_page: 'NO_PREFERENCE',
+        user_action: 'PAY_NOW',
+        return_url: `${process.env.BASE_URL}/premium?success=true`,
+        cancel_url: `${process.env.BASE_URL}/premium?cancelled=true`
+      }
+    };
+    
+    const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders`, orderData, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    res.json({ 
+      orderId: response.data.id, 
+      approvalUrl: response.data.links.find(l => l.rel === 'approve').href 
+    });
+  } catch (error) {
+    console.error('[PayPal Create Order Error]', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+// Capture PayPal order (called after approval)
+app.post('/api/paypal/capture-order', async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    
+    if (!orderId) {
+      return res.status(400).json({ error: 'Missing orderId' });
+    }
+    
+    const accessToken = await getPayPalAccessToken();
+    
+    const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`, {}, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.data.status === 'COMPLETED') {
+      const customId = response.data.purchase_units[0]?.custom_id;
+      const purchase = response.data.purchase_units[0]?.payments?.captures?.[0];
+      
+      let guildId, tier, durationMonths;
+      try {
+        const customData = JSON.parse(customId);
+        guildId = customData.guildId;
+        tier = customData.tier;
+        durationMonths = customData.durationMonths;
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid custom data' });
+      }
+      
+      const config = loadConfig();
+      if (!config.guilds[guildId]) {
+        config.guilds[guildId] = {};
+      }
+      
+      const msPerMonth = 30 * 24 * 60 * 60 * 1000;
+      const tierEndDate = Date.now() + (durationMonths * msPerMonth);
+      
+      config.guilds[guildId].tier = tier;
+      config.guilds[guildId].tierEndDate = tierEndDate;
+      config.guilds[guildId].tierDurationMonths = durationMonths;
+      
+      saveConfig(config);
+      
+      console.log(`[PayPal] Payment captured: ${tier} ${durationMonths} months for guild ${guildId}, amount: ${purchase.amount.value} ${purchase.amount.currency_code}`);
+      
+      res.json({ success: true, tier, durationMonths, amount: purchase.amount.value });
+    } else {
+      res.status(400).json({ error: 'Order not completed' });
+    }
+  } catch (error) {
+    console.error('[PayPal Capture Error]', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to capture order' });
+  }
+});
+
+// PayPal Webhook handler
+app.post('/api/paypal/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const webhookEvent = req.body;
+  const eventType = req.headers['x-paypal-event-type'];
+  
+  console.log(`[PayPal Webhook] Received: ${eventType}`);
+  
+  // Verify webhook - in production, validate signature with webhook ID
+  // For now, process the event directly
+  
+  if (eventType === 'PAYMENT.SALE.COMPLETED' || eventType === 'CHECKOUT.ORDER.APPROVED') {
+    try {
+      const customId = webhookEvent?.resource?.purchase_units?.[0]?.custom_id;
+      if (customId) {
+        const customData = JSON.parse(customId);
+        console.log('[PayPal Webhook] Processing payment for:', customData);
+      }
+    } catch (e) {
+      console.error('[PayPal Webhook] Error processing:', e.message);
+    }
+  }
+  
+  res.status(200).send('OK');
+});
+
 // ============== DASHBOARD DEBUG STATUS ==============
 app.get('/api/dashboard-status', (req, res) => {
   if (!req.session.authenticated) {

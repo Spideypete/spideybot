@@ -293,23 +293,83 @@
                 return;
             }
             
+            const price = tier === 'premium' ? pricing.premium[duration] : pricing.pro[duration];
+            const confirmMsg = `Upgrade to ${tier.toUpperCase()} for ${duration} month(s) - $${price}?\n\nPayment will be processed via PayPal.`;
+            
+            if (!confirm(confirmMsg)) return;
+            
             try {
-                const res = await fetch('/api/owner/tier', {
+                document.body.style.cursor = 'wait';
+                
+                const createRes = await fetch('/api/paypal/create-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ guildId: selectedServerId, tier: tier, durationMonths: duration })
+                    body: JSON.stringify({ 
+                        guildId: selectedServerId, 
+                        tier: tier, 
+                        durationMonths: duration 
+                    })
                 });
                 
-                if (res.ok) {
-                    alert('Successfully upgraded to ' + tier.toUpperCase() + ' ' + duration + ' months!');
-                    currentTier = tier;
-                    renderPlans();
-                } else {
-                    alert('Failed to upgrade. Only the bot owner can change tiers.');
+                if (!createRes.ok) {
+                    throw new Error('Failed to create PayPal order');
                 }
+                
+                const { orderId, approvalUrl } = await createRes.json();
+                
+                localStorage.setItem('pendingPayPalOrder', JSON.stringify({ 
+                    orderId, 
+                    tier, 
+                    durationMonths: duration,
+                    guildId: selectedServerId 
+                }));
+                
+                window.location.href = approvalUrl;
+                
             } catch (e) {
-                alert('Error upgrading: ' + e.message);
+                console.error('PayPal error:', e);
+                alert('Error: ' + e.message);
+                document.body.style.cursor = 'default';
+            }
+        }
+        
+        async function checkPayPalReturn() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('success') === 'true') {
+                const pendingStr = localStorage.getItem('pendingPayPalOrder');
+                if (pendingStr) {
+                    try {
+                        const pending = JSON.parse(pendingStr);
+                        
+                        const captureRes = await fetch('/api/paypal/capture-order', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ orderId: pending.orderId })
+                        });
+                        
+                        if (captureRes.ok) {
+                            const result = await captureRes.json();
+                            alert(`✅ Payment successful! Upgraded to ${result.tier.toUpperCase()} for ${result.durationMonths} months.`);
+                            
+                            currentTier = result.tier;
+                            remainingMonths = result.durationMonths;
+                            renderPlans();
+                        } else {
+                            alert('Payment capture failed. Please contact support.');
+                        }
+                    } catch (e) {
+                        alert('Error processing payment: ' + e.message);
+                    }
+                    
+                    localStorage.removeItem('pendingPayPalOrder');
+                    window.history.replaceState({}, document.title, '/premium');
+                }
+            } else if (urlParams.get('cancelled') === 'true') {
+                alert('Payment cancelled.');
+                window.history.replaceState({}, document.title, '/premium');
             }
         }
         
@@ -334,6 +394,7 @@
                 }
             }
             
+            await checkPayPalReturn();
             renderPlans();
         }
         

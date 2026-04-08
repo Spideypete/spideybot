@@ -20,6 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "@discord-player/extractor": "^7.1.0",
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "axios": "^1.13.6",
     "discord-player": "^7.1.0",
     "discord.js": "^14.25.0",
