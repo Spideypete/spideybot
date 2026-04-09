@@ -210,20 +210,6 @@ const slashCommands = [
     .addStringOption(option =>
       option.setName('command_name').setDescription('Command name').setRequired(true).setAutocomplete(true)),
 
-  new SlashCommandBuilder()
-    .setName('addcmd')
-    .setDescription('Add a custom command (alias)')
-    .addStringOption(option =>
-      option.setName('command_name').setDescription('Command name').setRequired(true))
-    .addStringOption(option =>
-      option.setName('response').setDescription('Command response').setRequired(true)),
-
-  new SlashCommandBuilder()
-    .setName('delcmd')
-    .setDescription('Delete custom command (alias)')
-    .addStringOption(option =>
-      option.setName('command_name').setDescription('Command name').setRequired(true).setAutocomplete(true)),
-
   // ===================== CONFIGURATION - CHANNELS =====================
   new SlashCommandBuilder()
     .setName('configwelcomechannel')
