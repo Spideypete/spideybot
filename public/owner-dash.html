@@ -642,67 +642,42 @@
         function renderFeatureToggles(toggles) {
             const container = document.getElementById('featureToggles');
             const featureList = [
-                { key: 'reactRoles', label: 'React Roles', premium: true },
-                { key: 'giveaways', label: 'Giveaways', premium: true },
-                { key: 'xpLeaderboards', label: 'XP/Leaderboards', premium: true },
-                { key: 'customCommands', label: 'Custom Commands', premium: true },
-                { key: 'fullServerGuard', label: 'Full Server Guard', premium: true },
-                { key: 'analytics', label: 'Analytics', pro: true },
-                { key: 'inviteTracking', label: 'Invite Tracking', pro: true },
-                { key: 'automation', label: 'Automation', pro: true }
+                { key: 'reactRoles', label: 'React Roles' },
+                { key: 'giveaways', label: 'Giveaways' },
+                { key: 'xpLeaderboards', label: 'XP/Leaderboards' },
+                { key: 'customCommands', label: 'Custom Commands' },
+                { key: 'fullServerGuard', label: 'Full Server Guard' },
+                { key: 'analytics', label: 'Analytics' },
+                { key: 'inviteTracking', label: 'Invite Tracking' },
+                { key: 'automation', label: 'Automation' }
             ];
             
-            let html = '';
+            let html = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">';
             
-            // Premium features
-            html += '<div class="feature-card premium"><h3>💎 Premium Features</h3>';
-            featureList.filter(f => f.premium && !f.pro).forEach(f => {
+            featureList.forEach(f => {
                 const freeVal = toggles[f.key]?.free;
                 const premVal = toggles[f.key]?.premium;
+                const proVal = toggles[f.key]?.pro;
+                
+                let currentTier = 'free';
+                if (proVal === true || proVal === Infinity) currentTier = 'pro';
+                else if (premVal === true || premVal === Infinity) currentTier = 'premium';
+                
                 html += `
-                    <div class="toggle-row">
-                        <span class="toggle-label">${f.label}</span>
-                        <select class="toggle-tier-select" onchange="updateFeatureTier('${f.key}', this.value)">
-                            <option value="free" ${freeVal === false ? '' : !freeVal || freeVal === 3 ? 'selected' : ''}>Free</option>
-                            <option value="premium" ${premVal === true || premVal === Infinity ? 'selected' : ''}>Premium</option>
-                            <option value="pro" ${toggles[f.key]?.pro === true ? 'selected' : ''}>Pro</option>
+                    <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:1rem;">
+                        <div style="font-weight:600;margin-bottom:0.5rem;color:#fff;">${f.label}</div>
+                        <select class="toggle-tier-select" style="width:100%;background:#000;border:1px solid rgba(255,255,255,0.2);color:#fff;padding:0.5rem;border-radius:4px;" onchange="updateFeatureTier('${f.key}', this.value)">
+                            <option value="free" ${currentTier === 'free' ? 'selected' : ''}>Free</option>
+                            <option value="premium" ${currentTier === 'premium' ? 'selected' : ''}>Premium</option>
+                            <option value="pro" ${currentTier === 'pro' ? 'selected' : ''}>Pro</option>
                         </select>
                     </div>
                 `;
             });
-            html += '</div>';
             
-            // Pro features
-            html += '<div class="feature-card pro"><h3>🔥 Pro Features</h3>';
-            featureList.filter(f => f.pro).forEach(f => {
-                html += `
-                    <div class="toggle-row">
-                        <span class="toggle-label">${f.label}</span>
-                        <select class="toggle-tier-select" onchange="updateFeatureTier('${f.key}', this.value)">
-                            <option value="free" ${toggles[f.key]?.free === true ? '' : 'selected'}>Free</option>
-                            <option value="premium" ${toggles[f.key]?.premium === true ? 'selected' : ''}>Premium</option>
-                            <option value="pro" ${toggles[f.key]?.pro === true ? 'selected' : ''}>Pro</option>
-                        </select>
-                    </div>
-                `;
-            });
             html += '</div>';
-            
-            // Additional premium features
-            html += '<div class="feature-card premium"><h3>💎 More Premium</h3>';
-            featureList.filter(f => f.premium && ['xpLeaderboards','customCommands','fullServerGuard'].includes(f.key)).forEach(f => {
-                html += `
-                    <div class="toggle-row">
-                        <span class="toggle-label">${f.label}</span>
-                        <select class="toggle-tier-select" onchange="updateFeatureTier('${f.key}', this.value)">
-                            <option value="free" ${toggles[f.key]?.free === true ? '' : 'selected'}>Free</option>
-                            <option value="premium" ${toggles[f.key]?.premium === true || toggles[f.key]?.premium === Infinity ? 'selected' : ''}>Premium</option>
-                            <option value="pro" ${toggles[f.key]?.pro === true ? 'selected' : ''}>Pro</option>
-                        </select>
-                    </div>
-                `;
-            });
-            html += '</div>';
+            container.innerHTML = html;
+        }
             
             container.innerHTML = html;
         }
