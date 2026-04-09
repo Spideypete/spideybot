@@ -1211,18 +1211,52 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(20, 20, 35, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.1) inset;
+        }
+
+        .locked-overlay.pro {
+            border-color: rgba(255, 68, 68, 0.2);
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.1) inset;
         }
 
         .locked-overlay .lock-icon {
             font-size: 2.5rem;
             margin-bottom: 0.75rem;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+        }
+
+        .locked-overlay.pro .lock-icon {
+            filter: drop-shadow(0 0 10px rgba(255, 68, 68, 0.5));
+        }
+
+        .locked-overlay .premium-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFD700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            margin-bottom: 0.5rem;
+        }
+
+        .locked-overlay.pro .premium-tag {
+            background: rgba(255, 68, 68, 0.15);
+            color: #FF4444;
+            border-color: rgba(255, 68, 68, 0.3);
         }
 
         .locked-overlay .premium-required {
@@ -1230,10 +1264,12 @@
             font-weight: 700;
             margin-bottom: 0.4rem;
             color: #FFD700;
+            text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
         }
 
         .locked-overlay .premium-required.pro {
             color: #FF4444;
+            text-shadow: 0 2px 10px rgba(255, 68, 68, 0.3);
         }
 
         .locked-overlay .upgrade-text {
@@ -1252,20 +1288,22 @@
             cursor: pointer;
             font-size: 0.85rem;
             transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
         }
 
         .locked-overlay .upgrade-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
         }
 
         .locked-overlay .upgrade-btn.pro {
             background: linear-gradient(135deg, #FF4444, #FF6B6B);
             color: #fff;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
         }
 
         .locked-overlay .upgrade-btn.pro:hover {
-            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+            box-shadow: 0 6px 20px rgba(255, 68, 68, 0.5);
         }
 
         .dashboard-subtitle {
@@ -3950,6 +3988,36 @@
             setTimeout(() => toast.remove(), 300);
         }
 
+        function showUpgradeModal(sectionName, lockInfo) {
+            const existing = document.getElementById('upgradeModal');
+            if (existing) existing.remove();
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'upgradeModal';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:99999;display:flex;justify-content:center;align-items:center;';
+            
+            const content = document.createElement('div');
+            content.style.cssText = 'background:#1e1e2f;padding:2.5rem;border-radius:16px;text-align:center;max-width:400px;border:1px solid rgba(255,215,0,0.3);';
+            
+            content.innerHTML = `
+                <div style="font-size:3rem;margin-bottom:1rem;">${lockInfo.icon}</div>
+                <div style="font-size:1.4rem;font-weight:700;color:#FFD700;margin-bottom:0.5rem;">${lockInfo.tier} Required</div>
+                <p style="color:#aaa;margin-bottom:1.5rem;line-height:1.5;">The "${sectionName.replace('-', ' ')}" feature requires a ${lockInfo.tier} subscription.</p>
+                <button onclick="this.closest('[id=upgradeModal]').remove();document.querySelector('[data-section=dashboard]').click();" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;margin-right:0.5rem;">Close</button>
+                <button onclick="window.location.href='/premium'" style="background:linear-gradient(135deg,#FFD700,#FFA500);border:none;color:#000;padding:0.5rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;">View Plans</button>
+            `;
+            
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+            
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                    document.querySelector('[data-section=dashboard]')?.click();
+                }
+            });
+        }
+
         // Override global alert to use toast
         const _origAlert = window.alert;
         window.alert = function(msg) {
@@ -4829,6 +4897,14 @@
             
             // Load roles and channels FIRST (required for other loads)
             await loadServerRolesAndChannels(serverId);
+            
+            // Load entitlements for feature gating
+            try {
+                const entRes = await fetch('/api/guild/' + serverId + '/entitlements');
+                window.currentEntitlements = (await entRes.json()).entitlements || {};
+            } catch (e) {
+                window.currentEntitlements = {};
+            }
             
             // Load settings in parallel (they don't depend on each other)
             await Promise.all([
@@ -5992,12 +6068,14 @@
                     const section = document.getElementById(sectionName + '-section');
                     if (section && !section.querySelector('.locked-overlay')) {
                         const overlay = document.createElement('div');
+                        const tierIcon = '💎';
                         overlay.className = 'locked-overlay';
                         overlay.innerHTML = `
                             <div class="lock-icon">🔒</div>
-                            <div class="premium-required">Premium Required</div>
-                            <div class="upgrade-text">This feature is only available on Premium or Pro</div>
-                            <button class="upgrade-btn" onclick="window.location.href='/premium'">Upgrade Now</button>
+                            <div class="premium-tag">${tierIcon} Premium Required</div>
+                            <div class="premium-required">Upgrade to Unlock</div>
+                            <div class="upgrade-text">This feature is only available on Premium or Pro tier</div>
+                            <button class="upgrade-btn" onclick="window.location.href='/premium'">View Plans</button>
                         `;
                         section.style.position = 'relative';
                         section.appendChild(overlay);
@@ -6267,6 +6345,39 @@
                     activeItem.classList.add('active');
                 }
                 
+                // Check if this category is locked before showing
+                const sectionFeaturesMap = {
+                    'logging': 'hasLogging',
+                    'server-guard': 'hasServerGuard',
+                    'react-roles': 'hasReactRoles',
+                    'xp-levels': 'hasXP',
+                    'leaderboards': 'hasXP',
+                    'giveaways': 'hasGiveaways',
+                    'custom-commands': 'hasCustomCommands',
+                    'invite-tracking': 'hasInvites',
+                    'statistics-channels': 'hasAnalytics'
+                };
+                
+                const lockedSections = {
+                    'logging': { icon: '💎', tier: 'Premium' },
+                    'server-guard': { icon: '💎', tier: 'Premium' },
+                    'react-roles': { icon: '💎', tier: 'Premium' },
+                    'xp-levels': { icon: '💎', tier: 'Premium' },
+                    'leaderboards': { icon: '💎', tier: 'Premium' },
+                    'giveaways': { icon: '💎', tier: 'Premium' },
+                    'custom-commands': { icon: '💎', tier: 'Premium' },
+                    'invite-tracking': { icon: '💎', tier: 'Premium' },
+                    'statistics-channels': { icon: '💎', tier: 'Premium' }
+                };
+                
+                const lockInfo = lockedSections[sectionName];
+                const ent = window.currentEntitlements || {};
+                if (lockInfo && !ent[sectionFeaturesMap[sectionName]]) {
+                    // Show upgrade modal instead of section
+                    showUpgradeModal(sectionName, lockInfo);
+                    return;
+                }
+
                 // 4. SHOW target section - FORCE IT
                 const sectionId = sectionName + '-section';
                 const section = document.getElementById(sectionId);
