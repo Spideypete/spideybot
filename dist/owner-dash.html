@@ -644,41 +644,58 @@
         
         function renderFeatureToggles(toggles) {
             const container = document.getElementById('featureToggles');
-            const featureList = [
-                { key: 'reactRoles', label: 'React Roles' },
-                { key: 'giveaways', label: 'Giveaways' },
-                { key: 'xpLeaderboards', label: 'XP/Leaderboards' },
-                { key: 'customCommands', label: 'Custom Commands' },
-                { key: 'fullServerGuard', label: 'Full Server Guard' },
-                { key: 'analytics', label: 'Analytics' },
-                { key: 'inviteTracking', label: 'Invite Tracking' },
-                { key: 'automation', label: 'Automation' }
-            ];
             
-            let html = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">';
+            const categories = {
+                'React Roles': [
+                    { key: 'reactRoles', label: 'Creation Limit' }
+                ],
+                'Server Guard': [
+                    { key: 'fullServerGuard', label: 'Full Guard Access' },
+                    { key: 'antiRaid', label: 'Anti-Raid / Panic Mode' },
+                    { key: 'antiSpam', label: 'Anti-Spam' }
+                ],
+                'Engagement Tools': [
+                    { key: 'giveaways', label: 'Giveaways' },
+                    { key: 'xpLeaderboards', label: 'XP & Leaderboards' },
+                    { key: 'customCommands', label: 'Custom Commands' }
+                ],
+                'Analytics & Automation': [
+                    { key: 'analytics', label: 'Member Analytics' },
+                    { key: 'inviteTracking', label: 'Invite Tracking' },
+                    { key: 'automation', label: 'Automation Tools' }
+                ]
+            };
             
-            featureList.forEach(f => {
-                const freeVal = toggles[f.key]?.free;
-                const premVal = toggles[f.key]?.premium;
-                const proVal = toggles[f.key]?.pro;
+            let html = '';
+            
+            for (const [category, features] of Object.entries(categories)) {
+                html += `<div style="margin-bottom:2rem;"><h3 style="color:#9151ff;margin-bottom:1rem;border-bottom:1px solid rgba(145,81,255,0.3);padding-bottom:0.5rem;">${category}</h3>`;
+                html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;">';
                 
-                let currentTier = 'free';
-                if (proVal === true || proVal === Infinity) currentTier = 'pro';
-                else if (premVal === true || premVal === Infinity) currentTier = 'premium';
+                features.forEach(f => {
+                    const freeVal = toggles[f.key]?.free;
+                    const premVal = toggles[f.key]?.premium;
+                    const proVal = toggles[f.key]?.pro;
+                    
+                    let currentTier = 'free';
+                    if (proVal === true || proVal === Infinity) currentTier = 'pro';
+                    else if (premVal === true || premVal === Infinity) currentTier = 'premium';
+                    
+                    html += `
+                        <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:1rem;">
+                            <div style="font-weight:600;margin-bottom:0.5rem;color:#fff;">${f.label}</div>
+                            <select class="toggle-tier-select" style="width:100%;background:#000;border:1px solid rgba(255,255,255,0.2);color:#fff;padding:0.5rem;border-radius:4px;" onchange="updateFeatureTier('${f.key}', this.value)">
+                                <option value="free" ${currentTier === 'free' ? 'selected' : ''}>Free</option>
+                                <option value="premium" ${currentTier === 'premium' ? 'selected' : ''}>Premium</option>
+                                <option value="pro" ${currentTier === 'pro' ? 'selected' : ''}>Pro</option>
+                            </select>
+                        </div>
+                    `;
+                });
                 
-                html += `
-                    <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:1rem;">
-                        <div style="font-weight:600;margin-bottom:0.5rem;color:#fff;">${f.label}</div>
-                        <select class="toggle-tier-select" style="width:100%;background:#000;border:1px solid rgba(255,255,255,0.2);color:#fff;padding:0.5rem;border-radius:4px;" onchange="updateFeatureTier('${f.key}', this.value)">
-                            <option value="free" ${currentTier === 'free' ? 'selected' : ''}>Free</option>
-                            <option value="premium" ${currentTier === 'premium' ? 'selected' : ''}>Premium</option>
-                            <option value="pro" ${currentTier === 'pro' ? 'selected' : ''}>Pro</option>
-                        </select>
-                    </div>
-                `;
-            });
+                html += '</div></div>';
+            }
             
-            html += '</div>';
             container.innerHTML = html;
         }
         
