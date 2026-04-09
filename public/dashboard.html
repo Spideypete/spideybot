@@ -4939,9 +4939,12 @@
             // Load entitlements for feature gating
             try {
                 const entRes = await fetch('/api/guild/' + serverId + '/entitlements');
-                window.currentEntitlements = (await entRes.json()).entitlements || {};
+                const entData = await entRes.json();
+                window.currentEntitlements = entData.entitlements || {};
+                console.log('[selectServer] Entitlements:', window.currentEntitlements, 'Tier:', entData.tier);
             } catch (e) {
                 window.currentEntitlements = {};
+                console.error('[selectServer] Failed to load entitlements:', e);
             }
             
             // Update dashboard badge with server tier
@@ -6419,6 +6422,8 @@
                 
                 const lockInfo = lockedSections[sectionName];
                 const ent = window.currentEntitlements || {};
+                console.log('[switchSection] Section:', sectionName, 'LockInfo:', lockInfo, 'Entitlements:', ent);
+                
                 if (lockInfo && !ent[sectionFeaturesMap[sectionName]]) {
                     // Show upgrade modal instead of section
                     showUpgradeModal(sectionName, lockInfo);
