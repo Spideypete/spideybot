@@ -4798,6 +4798,22 @@
             }
         }
 
+        function updateServerBadge(tier, remainingMonths) {
+            const badge = document.querySelector('.dashboard-badge');
+            if (!badge) return;
+            
+            if (tier === 'pro') {
+                badge.className = 'dashboard-badge pro';
+                badge.textContent = '🔥 Pro' + (remainingMonths > 0 ? ' ' + remainingMonths + 'mo' : '');
+            } else if (tier === 'premium') {
+                badge.className = 'dashboard-badge premium';
+                badge.textContent = '💎 Premium' + (remainingMonths > 0 ? ' ' + remainingMonths + 'mo' : '');
+            } else {
+                badge.className = 'dashboard-badge';
+                badge.textContent = 'SPIDEY BOT';
+            }
+        }
+
         function toggleServerDropdown() {
             const menu = document.getElementById('serverDropdownMenu');
             const isActive = menu.classList.contains('active');
@@ -4906,6 +4922,15 @@
                 window.currentEntitlements = {};
             }
             
+            // Update dashboard badge with server tier
+            try {
+                const tierRes = await fetch('/api/guild/' + serverId + '/tier');
+                const tierData = await tierRes.json();
+                updateServerBadge(tierData.tier, tierData.remainingMonths);
+            } catch (e) {
+                updateServerBadge('free', 0);
+            }
+
             // Load settings in parallel (they don't depend on each other)
             await Promise.all([
                 loadLogging(),
