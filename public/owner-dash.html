@@ -460,11 +460,14 @@
         
         function verifyPin() {
             const pin = document.getElementById('pinInput').value;
+            console.log('PIN entered:', pin);
             if (pin === '9468') {
+                console.log('PIN correct, verifying...');
                 isVerified = true;
                 document.getElementById('pinModal').classList.add('hidden');
                 loadData();
             } else {
+                console.log('PIN incorrect');
                 document.getElementById('pinError').classList.add('show');
                 document.getElementById('pinInput').value = '';
             }
