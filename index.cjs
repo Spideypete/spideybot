@@ -6097,7 +6097,7 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
     hasAnalytics: tier === 'pro',
     hasInvites: tier === 'pro',
     hasAutomation: tier === 'pro',
-    hasLogging: tier === 'premium' || tier === 'pro'
+hasLogging: tier === 'premium' || tier === 'pro'
   };
   
   console.log('[Entitlements] Sending:', JSON.stringify(entitlements));
@@ -6105,34 +6105,6 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
   res.json({
     tier,
     entitlements
-  });
-});
-  
-  const giveaways = guildConfig.giveaways || {};
-  const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active').length;
-  
-  res.json({
-    tier,
-    entitlements: {
-      maxReactRoles: limits.maxReactRoles,
-      currentReactRoles: totalReactRoles,
-      canAddReactRole: totalReactRoles < limits.maxReactRoles,
-      maxGiveaways: limits.maxGiveaways,
-      currentGiveaways: activeGiveaways,
-      canCreateGiveaway: activeGiveaways < limits.maxGiveaways,
-      // Premium tier: Unlimited React Roles, Full Server Guard, XP, Giveaways, Custom Commands
-      hasReactRoles: tier !== 'free',
-      hasServerGuard: tier === 'premium' || tier === 'pro',
-      hasGiveaways: tier === 'premium' || tier === 'pro',
-      hasXP: tier === 'premium' || tier === 'pro',
-      hasCustomCommands: tier === 'premium' || tier === 'pro',
-      hasFullServerGuard: tier === 'premium' || tier === 'pro',
-      // Pro only: Analytics, Invite Tracking, Automation
-      hasAnalytics: tier === 'pro',
-      hasInvites: tier === 'pro',
-      hasAutomation: tier === 'pro',
-      hasLogging: tier === 'premium' || tier === 'pro'
-    }
   });
 });
 
