@@ -240,9 +240,9 @@ const DEFAULT_FEATURE_TOGGLES = {
   xpLeaderboards: { free: false, premium: true, pro: true },
   customCommands: { free: false, premium: true, pro: true },
   fullServerGuard: { free: false, premium: true, pro: true },
-  analytics: { free: false, premium: false, pro: true },
-  inviteTracking: { free: false, premium: false, pro: true },
-  automation: { free: false, premium: false, pro: true }
+  analytics: { free: false, premium: true, pro: true },
+  inviteTracking: { free: false, premium: true, pro: true },
+  automation: { free: false, premium: true, pro: true }
 };
 
 function getFeatureToggles() {
@@ -6086,11 +6086,15 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
       maxGiveaways: limits.maxGiveaways,
       currentGiveaways: activeGiveaways,
       canCreateGiveaway: activeGiveaways < limits.maxGiveaways,
+      hasLogging: tier !== 'free',
+      hasReactRoles: true,
+      hasServerGuard: tier !== 'free',
+      hasGiveaways: tier !== 'free',
       hasXP: limits.hasXP,
-      hasCustomCommands: limits.hasCustomCommands,
+      hasCustomCommands: tier !== 'free',
       hasFullServerGuard: limits.hasFullServerGuard,
-      hasAnalytics: limits.hasAnalytics,
-      hasInvites: limits.hasInvites,
+      hasAnalytics: tier !== 'free',
+      hasInvites: tier !== 'free',
       hasAutomation: limits.hasAutomation
     }
   });
