@@ -1205,6 +1205,28 @@
             border: 1px solid rgba(255, 68, 68, 0.3);
         }
 
+        .section-tier-badge {
+            display: none;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.15rem 0.4rem;
+            border-radius: 999px;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .section-tier-badge.premium {
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFD700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .section-tier-badge.pro {
+            background: rgba(255, 68, 68, 0.15);
+            color: #FF4444;
+            border: 1px solid rgba(255, 68, 68, 0.3);
+        }
+
         .locked-overlay {
             position: absolute;
             top: 0;
@@ -2772,7 +2794,7 @@
                 <!-- Logging Section -->
                 <div id="logging-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_logging">Logging</div>
+                        <div class="content-title" data-i18n="title_logging">Logging <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Configure logging channels</div>
                     </div>
                     <div class="content-grid">
@@ -2832,7 +2854,7 @@
                 <!-- Server Guard Section -->
                 <div id="server-guard-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_serverGuard">Server Guard</div>
+                        <div class="content-title" data-i18n="title_serverGuard">Server Guard <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Anti-spam and raid protection</div>
                     </div>
                     <div class="content-grid">
@@ -3064,7 +3086,7 @@
                 <!-- React Roles Section -->
                 <div id="react-roles-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_reactRoles">React Roles</div>
+                        <div class="content-title" data-i18n="title_reactRoles">React Roles <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Reaction-based role assignment — react to a message, get a role</div>
                     </div>
                     <div class="content-grid">
@@ -3362,7 +3384,7 @@
                 <!-- Custom Commands Section -->
                 <div id="custom-commands-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_customCommands">Custom Commands</div>
+                        <div class="content-title" data-i18n="title_customCommands">Custom Commands <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Create custom bot commands</div>
                     </div>
                     <div class="content-grid">
@@ -3422,7 +3444,7 @@
                 <!-- XP Levels Section -->
                 <div id="xp-levels-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_xpLevels">XP Levels</div>
+                        <div class="content-title" data-i18n="title_xpLevels">XP Levels <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Configure leveling system</div>
                     </div>
                     <div class="content-grid">
@@ -3487,7 +3509,7 @@
                 <!-- Leaderboards Section -->
                 <div id="leaderboards-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_leaderboards">Leaderboards</div>
+                        <div class="content-title" data-i18n="title_leaderboards">Leaderboards <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Configure leaderboard display</div>
                     </div>
                     <div class="content-grid">
@@ -3521,7 +3543,7 @@
                 <!-- Giveaways Section -->
                 <div id="giveaways-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_giveaways">Giveaways</div>
+                        <div class="content-title" data-i18n="title_giveaways">Giveaways <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Manage giveaways</div>
                     </div>
                     <div class="content-grid">
@@ -3598,7 +3620,7 @@
                 <!-- Invite Tracking Section -->
                 <div id="invite-tracking-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_inviteTracking">Invite Tracking</div>
+                        <div class="content-title" data-i18n="title_inviteTracking">Invite Tracking <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Track member invites</div>
                     </div>
                     <div class="content-grid">
@@ -3739,7 +3761,7 @@
                 <!-- Statistics Channels Section -->
                 <div id="statistics-channels-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_statsChannels">Statistics Channels</div>
+                        <div class="content-title" data-i18n="title_statsChannels">Statistics Channels <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Display server statistics</div>
                     </div>
                     <div class="content-grid">
@@ -6391,8 +6413,8 @@
                     'leaderboards': { icon: '💎', tier: 'Premium' },
                     'giveaways': { icon: '💎', tier: 'Premium' },
                     'custom-commands': { icon: '💎', tier: 'Premium' },
-                    'invite-tracking': { icon: '💎', tier: 'Premium' },
-                    'statistics-channels': { icon: '💎', tier: 'Premium' }
+                    'invite-tracking': { icon: '🔥', tier: 'Pro' },
+                    'statistics-channels': { icon: '🔥', tier: 'Pro' }
                 };
                 
                 const lockInfo = lockedSections[sectionName];
@@ -6416,6 +6438,20 @@
                     
                     // Scroll to top
                     section.scrollIntoView({ behavior: 'auto', block: 'start' });
+                    
+                    // Add tier indicator to section header
+                    const lockInfo = lockedSections[sectionName];
+                    const ent = window.currentEntitlements || {};
+                    if (lockInfo && ent[sectionFeaturesMap[sectionName]]) {
+                        // User has access - show tier badge
+                        const tierRes = await fetch('/api/guild/' + localStorage.getItem('selectedServerId') + '/tier');
+                        const tierData = await tierRes.json();
+                        const tierBadge = section.querySelector('.section-tier-badge');
+                        if (tierBadge) {
+                            tierBadge.textContent = tierData.tier === 'pro' ? '🔥 Pro' : '💎 Premium';
+                            tierBadge.style.display = 'inline-flex';
+                        }
+                    }
                     
                     // Load tab-specific data
                     const loadMap = {

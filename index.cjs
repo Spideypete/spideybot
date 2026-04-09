@@ -316,17 +316,17 @@ function getGuildTier(guildId) {
 
 function getTierLimits(guildId) {
   const tier = getGuildTier(guildId);
-  const toggles = getFeatureToggles();
   
+  // Tier-based limits (not based on feature toggles)
   return {
-    maxReactRoles: toggles.reactRoles?.[tier] ?? 3,
-    maxGiveaways: toggles.giveaways?.[tier] ?? 1,
-    hasXP: toggles.xpLeaderboards?.[tier] ?? false,
-    hasCustomCommands: toggles.customCommands?.[tier] ?? false,
-    hasFullServerGuard: toggles.fullServerGuard?.[tier] ?? false,
-    hasAnalytics: toggles.analytics?.[tier] ?? false,
-    hasInvites: toggles.inviteTracking?.[tier] ?? false,
-    hasAutomation: toggles.automation?.[tier] ?? false
+    maxReactRoles: tier === 'free' ? 3 : Infinity,
+    maxGiveaways: tier === 'free' ? 1 : Infinity,
+    hasXP: tier !== 'free',
+    hasCustomCommands: tier !== 'free',
+    hasFullServerGuard: tier !== 'free',
+    hasAnalytics: tier === 'pro',
+    hasInvites: tier === 'pro',
+    hasAutomation: tier === 'pro'
   };
 }
 
@@ -6065,6 +6065,8 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
   const config = loadConfig();
   const guildConfig = config.guilds[guildId] || {};
   
+  console.log('[Entitlements] Guild:', guildId, 'Tier:', tier);
+  
   // Count current usage
   const roleCategories = guildConfig.roleCategories || {};
   let totalReactRoles = 0;
@@ -6073,6 +6075,38 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
       totalReactRoles += cat.roles.length;
     }
   });
+  
+  const giveaways = guildConfig.giveaways || {};
+  const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active').length;
+  
+  const entitlements = {
+    maxReactRoles: limits.maxReactRoles,
+    currentReactRoles: totalReactRoles,
+    canAddReactRole: totalReactRoles < limits.maxReactRoles,
+    maxGiveaways: limits.maxGiveaways,
+    currentGiveaways: activeGiveaways,
+    canCreateGiveaway: activeGiveaways < limits.maxGiveaways,
+    // Premium tier: Unlimited React Roles, Full Server Guard, XP, Giveaways, Custom Commands
+    hasReactRoles: tier === 'premium' || tier === 'pro',
+    hasServerGuard: tier === 'premium' || tier === 'pro',
+    hasGiveaways: tier === 'premium' || tier === 'pro',
+    hasXP: tier === 'premium' || tier === 'pro',
+    hasCustomCommands: tier === 'premium' || tier === 'pro',
+    hasFullServerGuard: tier === 'premium' || tier === 'pro',
+    // Pro only: Analytics, Invite Tracking, Automation
+    hasAnalytics: tier === 'pro',
+    hasInvites: tier === 'pro',
+    hasAutomation: tier === 'pro',
+    hasLogging: tier === 'premium' || tier === 'pro'
+  };
+  
+  console.log('[Entitlements] Sending:', JSON.stringify(entitlements));
+  
+  res.json({
+    tier,
+    entitlements
+  });
+});
   
   const giveaways = guildConfig.giveaways || {};
   const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active').length;
@@ -6086,16 +6120,18 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
       maxGiveaways: limits.maxGiveaways,
       currentGiveaways: activeGiveaways,
       canCreateGiveaway: activeGiveaways < limits.maxGiveaways,
-      hasLogging: tier !== 'free',
-      hasReactRoles: true,
-      hasServerGuard: tier !== 'free',
-      hasGiveaways: tier !== 'free',
-      hasXP: limits.hasXP,
-      hasCustomCommands: tier !== 'free',
-      hasFullServerGuard: limits.hasFullServerGuard,
-      hasAnalytics: tier !== 'free',
-      hasInvites: tier !== 'free',
-      hasAutomation: limits.hasAutomation
+      // Premium tier: Unlimited React Roles, Full Server Guard, XP, Giveaways, Custom Commands
+      hasReactRoles: tier !== 'free',
+      hasServerGuard: tier === 'premium' || tier === 'pro',
+      hasGiveaways: tier === 'premium' || tier === 'pro',
+      hasXP: tier === 'premium' || tier === 'pro',
+      hasCustomCommands: tier === 'premium' || tier === 'pro',
+      hasFullServerGuard: tier === 'premium' || tier === 'pro',
+      // Pro only: Analytics, Invite Tracking, Automation
+      hasAnalytics: tier === 'pro',
+      hasInvites: tier === 'pro',
+      hasAutomation: tier === 'pro',
+      hasLogging: tier === 'premium' || tier === 'pro'
     }
   });
 });
