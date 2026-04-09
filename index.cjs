@@ -6079,13 +6079,13 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
   const giveaways = guildConfig.giveaways || {};
   const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active').length;
   
-  const entitlements = {
-    maxReactRoles: limits.maxReactRoles,
+const entitlements = {
+    maxReactRoles: limits.maxReactRoles === Infinity ? 'unlimited' : limits.maxReactRoles,
     currentReactRoles: totalReactRoles,
-    canAddReactRole: totalReactRoles < limits.maxReactRoles,
-    maxGiveaways: limits.maxGiveaways,
+    canAddReactRole: totalReactRoles < (limits.maxReactRoles || 3),
+    maxGiveaways: limits.maxGiveaways === Infinity ? 'unlimited' : limits.maxGiveaways,
     currentGiveaways: activeGiveaways,
-    canCreateGiveaway: activeGiveaways < limits.maxGiveaways,
+    canCreateGiveaway: activeGiveaways < (limits.maxGiveaways || 1),
     // Premium tier: Unlimited React Roles, Full Server Guard, XP, Giveaways, Custom Commands
     hasReactRoles: tier === 'premium' || tier === 'pro',
     hasServerGuard: tier === 'premium' || tier === 'pro',
@@ -6097,7 +6097,7 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
     hasAnalytics: tier === 'pro',
     hasInvites: tier === 'pro',
     hasAutomation: tier === 'pro',
-hasLogging: tier === 'premium' || tier === 'pro'
+    hasLogging: tier === 'premium' || tier === 'pro'
   };
   
   console.log('[Entitlements] Sending:', JSON.stringify(entitlements));
