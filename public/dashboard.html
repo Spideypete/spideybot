@@ -2541,7 +2541,7 @@
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_features">FEATURES</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><img src="/dashboard-icons/react-roles.svg" alt=""></span><span data-i18n="sidebar_reactRoles">React Roles</span></li>
+                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><img src="/dashboard-icons/react-roles.svg" alt=""></span><span data-i18n="sidebar_reactRoles">React Roles</span><span class="sidebar-tier-badge premium">Premium</span></li>
                         <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><img src="/dashboard-icons/role-categories.svg" alt=""></span><span data-i18n="sidebar_roleCategories">Role Categories</span></li>
                         <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><img src="/dashboard-icons/server-messages.svg" alt=""></span><span data-i18n="sidebar_serverMessages">Server Messages</span></li>
                         <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><img src="/dashboard-icons/custom-commands.svg" alt=""></span><span data-i18n="sidebar_commands">Commands</span><span class="sidebar-tier-badge premium">Premium</span></li>
@@ -4859,15 +4859,21 @@
         function updateSidebarBadges(tier) {
             const badges = document.querySelectorAll('.sidebar-tier-badge');
             badges.forEach(badge => {
+                const badgeTier = badge.classList.contains('premium') ? 'premium' : 'pro';
+                
                 if (tier === 'pro') {
-                    badge.textContent = 'Pro';
-                    badge.className = 'sidebar-tier-badge pro';
+                    // Pro has access to everything - hide all badges
+                    badge.style.display = 'none';
                 } else if (tier === 'premium') {
-                    badge.textContent = 'Premium';
-                    badge.className = 'sidebar-tier-badge premium';
+                    // Premium has access to premium features - show Pro badges only
+                    if (badgeTier === 'pro') {
+                        badge.style.display = 'inline-flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
                 } else {
-                    badge.textContent = 'Pro';
-                    badge.className = 'sidebar-tier-badge pro';
+                    // Free tier - show all badges
+                    badge.style.display = 'inline-flex';
                 }
             });
         }
@@ -6449,7 +6455,7 @@
                 const lockedSections = {
                     'logging': { icon: '🔥', tier: 'Pro' },
                     'server-guard': { icon: '💎', tier: 'Premium' },
-                    'react-roles': null, // Available to all (with limits)
+                    'react-roles': { icon: '💎', tier: 'Premium' },
                     'xp-levels': { icon: '💎', tier: 'Premium' },
                     'leaderboards': { icon: '💎', tier: 'Premium' },
                     'giveaways': { icon: '💎', tier: 'Premium' },
