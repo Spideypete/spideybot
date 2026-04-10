@@ -317,13 +317,13 @@ function getGuildTier(guildId) {
 function getTierLimits(guildId) {
   const tier = getGuildTier(guildId);
   
-  // Tier-based limits (not based on feature toggles)
+  // Tier-based limits - only Pro gets everything
   return {
     maxReactRoles: tier === 'free' ? 3 : Infinity,
     maxGiveaways: tier === 'free' ? 1 : Infinity,
-    hasXP: tier !== 'free',
-    hasCustomCommands: tier !== 'free',
-    hasFullServerGuard: tier !== 'free',
+    hasXP: tier === 'pro',
+    hasCustomCommands: tier === 'pro',
+    hasFullServerGuard: tier === 'pro',
     hasAnalytics: tier === 'pro',
     hasInvites: tier === 'pro',
     hasAutomation: tier === 'pro'

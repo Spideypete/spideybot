@@ -1050,9 +1050,10 @@
 
         .sidebar-tier-badge {
             margin-left: auto;
-            font-size: 0.75rem;
-            padding: 0.1rem 0.3rem;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
             border-radius: 4px;
+            font-weight: 600;
             background: rgba(255, 68, 68, 0.2);
             color: #FF4444;
         }
@@ -1060,6 +1061,11 @@
         .sidebar-tier-badge.premium {
             background: rgba(255, 215, 0, 0.2);
             color: #FFD700;
+        }
+
+        .sidebar-tier-badge.pro {
+            background: rgba(255, 68, 68, 0.15);
+            color: #FF4444;
         }
 
         .sidebar-item:hover {
@@ -2527,8 +2533,8 @@
                     <div class="sidebar-section-title" data-i18n="nav_core">CORE</div>
                     <ul class="sidebar-menu">
                         <li class="sidebar-item" data-section="settings" onclick="switchSection('settings')"><span class="sidebar-item-icon"><img src="/dashboard-icons/settings.svg" alt=""></span><span data-i18n="sidebar_settings">Settings</span></li>
-                        <li class="sidebar-item" data-section="logging" onclick="switchSection('logging')"><span class="sidebar-item-icon"><img src="/dashboard-icons/logging.svg" alt=""></span><span data-i18n="sidebar_logging">Logging</span><span class="sidebar-tier-badge">🔥</span></li>
-                        <li class="sidebar-item" data-section="server-guard" onclick="switchSection('server-guard')"><span class="sidebar-item-icon"><img src="/dashboard-icons/server-guard.svg" alt=""></span><span data-i18n="sidebar_serverGuard">Server Guard</span><span class="sidebar-tier-badge pro">🔥</span></li>
+                        <li class="sidebar-item" data-section="logging" onclick="switchSection('logging')"><span class="sidebar-item-icon"><img src="/dashboard-icons/logging.svg" alt=""></span><span data-i18n="sidebar_logging">Logging</span><span class="sidebar-tier-badge">Pro</span></li>
+                        <li class="sidebar-item" data-section="server-guard" onclick="switchSection('server-guard')"><span class="sidebar-item-icon"><img src="/dashboard-icons/server-guard.svg" alt=""></span><span data-i18n="sidebar_serverGuard">Server Guard</span><span class="sidebar-tier-badge pro">Pro</span></li>
                     </ul>
                 </div>
 
@@ -2538,7 +2544,7 @@
                         <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><img src="/dashboard-icons/react-roles.svg" alt=""></span><span data-i18n="sidebar_reactRoles">React Roles</span></li>
                         <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><img src="/dashboard-icons/role-categories.svg" alt=""></span><span data-i18n="sidebar_roleCategories">Role Categories</span></li>
                         <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><img src="/dashboard-icons/server-messages.svg" alt=""></span><span data-i18n="sidebar_serverMessages">Server Messages</span></li>
-                        <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><img src="/dashboard-icons/custom-commands.svg" alt=""></span><span data-i18n="sidebar_commands">Commands</span><span class="sidebar-tier-badge">🔥</span></li>
+                        <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><img src="/dashboard-icons/custom-commands.svg" alt=""></span><span data-i18n="sidebar_commands">Commands</span><span class="sidebar-tier-badge">Pro</span></li>
                         <li class="sidebar-item" data-section="components" onclick="switchSection('components')"><span class="sidebar-item-icon"><img src="/dashboard-icons/components.svg" alt=""></span><span data-i18n="sidebar_components">Components</span></li>
                     </ul>
                 </div>
@@ -2546,9 +2552,9 @@
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_systems">SYSTEMS</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><img src="/dashboard-icons/xp-levels.svg" alt=""></span><span data-i18n="sidebar_xpLevels">XP Levels</span><span class="sidebar-tier-badge">🔥</span></li>
-                        <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><img src="/dashboard-icons/leaderboards.svg" alt=""></span><span data-i18n="sidebar_leaderboards">Leaderboards</span><span class="sidebar-tier-badge">🔥</span></li>
-                        <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><img src="/dashboard-icons/giveaways.svg" alt=""></span><span data-i18n="sidebar_giveaways">Giveaways</span><span class="sidebar-tier-badge">🔥</span></li>
+                        <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><img src="/dashboard-icons/xp-levels.svg" alt=""></span><span data-i18n="sidebar_xpLevels">XP Levels</span><span class="sidebar-tier-badge">Pro</span></li>
+                        <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><img src="/dashboard-icons/leaderboards.svg" alt=""></span><span data-i18n="sidebar_leaderboards">Leaderboards</span><span class="sidebar-tier-badge">Pro</span></li>
+                        <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><img src="/dashboard-icons/giveaways.svg" alt=""></span><span data-i18n="sidebar_giveaways">Giveaways</span><span class="sidebar-tier-badge">Pro</span></li>
                     </ul>
                 </div>
 
@@ -2557,7 +2563,7 @@
                     <ul class="sidebar-menu">
                         <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><img src="/dashboard-icons/events.svg" alt=""></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
                         <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><img src="/dashboard-icons/social-notifs.svg" alt=""></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
-                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><img src="/dashboard-icons/invite-tracking.svg" alt=""></span><span data-i18n="sidebar_invites">Invites</span><span class="sidebar-tier-badge">🔥</span>
+                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><img src="/dashboard-icons/invite-tracking.svg" alt=""></span><span data-i18n="sidebar_invites">Invites</span><span class="sidebar-tier-badge">Pro</span>
                         <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><img src="/dashboard-icons/message-counting.svg" alt=""></span><span data-i18n="sidebar_messages">Messages</span></li>
                     </ul>
                 </div>
@@ -2567,7 +2573,7 @@
                     <ul class="sidebar-menu">
                         <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><img src="/dashboard-icons/events.svg" alt=""></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
                         <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><img src="/dashboard-icons/social-notifs.svg" alt=""></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
-                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><img src="/dashboard-icons/invite-tracking.svg" alt=""></span><span data-i18n="sidebar_invites">Invites</span><span class="sidebar-tier-badge">🔥</span>
+                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><img src="/dashboard-icons/invite-tracking.svg" alt=""></span><span data-i18n="sidebar_invites">Invites</span><span class="sidebar-tier-badge">Pro</span>
                         <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><img src="/dashboard-icons/message-counting.svg" alt=""></span><span data-i18n="sidebar_messages">Messages</span></li>
                     </ul>
                 </div>
@@ -4840,14 +4846,30 @@
             
             if (tier === 'pro') {
                 badge.className = 'dashboard-badge pro';
-                badge.textContent = '🔥 Pro' + (remainingMonths > 0 ? ' ' + remainingMonths + 'mo' : '');
+                badge.textContent = 'Pro' + (remainingMonths > 0 ? ' ' + remainingMonths + 'mo' : '');
             } else if (tier === 'premium') {
                 badge.className = 'dashboard-badge premium';
-                badge.textContent = '💎 Premium' + (remainingMonths > 0 ? ' ' + remainingMonths + 'mo' : '');
+                badge.textContent = 'Premium' + (remainingMonths > 0 ? ' ' + remainingMonths + 'mo' : '');
             } else {
                 badge.className = 'dashboard-badge';
                 badge.textContent = 'SPIDEY BOT';
             }
+        }
+
+        function updateSidebarBadges(tier) {
+            const badges = document.querySelectorAll('.sidebar-tier-badge');
+            badges.forEach(badge => {
+                if (tier === 'pro') {
+                    badge.textContent = 'Pro';
+                    badge.className = 'sidebar-tier-badge pro';
+                } else if (tier === 'premium') {
+                    badge.textContent = 'Premium';
+                    badge.className = 'sidebar-tier-badge premium';
+                } else {
+                    badge.textContent = 'Pro';
+                    badge.className = 'sidebar-tier-badge pro';
+                }
+            });
         }
 
         function toggleServerDropdown() {
@@ -4966,8 +4988,10 @@
                 const tierRes = await fetch('/api/guild/' + serverId + '/tier');
                 const tierData = await tierRes.json();
                 updateServerBadge(tierData.tier, tierData.remainingMonths);
+                updateSidebarBadges(tierData.tier);
             } catch (e) {
                 updateServerBadge('free', 0);
+                updateSidebarBadges('free');
             }
 
             // Load settings in parallel (they don't depend on each other)
