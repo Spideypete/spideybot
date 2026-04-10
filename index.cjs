@@ -6393,9 +6393,10 @@ app.get("/api/config/role-categories", (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.status(400).json({ error: 'Missing guildId parameter' });
   if (!config.guilds[guildId]) return res.status(404).json({ error: 'Guild not found' });
-  const data = config.guilds[guildId]?.roleCategories || {};
-  res.json(data);
   
+  const data = config.guilds[guildId]?.roleCategories || {};
+  
+  // Filter out empty keys
   const filtered = {};
   Object.keys(data).forEach(key => {
     if (key && key.trim() !== '') {
