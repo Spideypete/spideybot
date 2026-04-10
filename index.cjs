@@ -2029,6 +2029,10 @@ client.on("messageCreate", async (msg) => {
   }
 
   if (msg.content.startsWith("/giveaway ")) {
+    const tier = getGuildTier(msg.guild.id);
+    if (tier !== 'premium' && tier !== 'pro') {
+      return msg.reply("❌ Giveaways require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
+    }
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can create giveaways!");
     }
@@ -3122,6 +3126,10 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content.startsWith("/start-giveaway ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can start giveaways!");
+    const tier = getGuildTier(msg.guild.id);
+    if (tier !== 'premium' && tier !== 'pro') {
+      return msg.reply("❌ Giveaways require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
+    }
     const parts = msg.content.split(" | ");
     const prize = parts[0]?.slice(17).trim() || "Mystery Prize";
     const duration = parseInt(parts[1]?.split(" ")[0]) || 60;
@@ -3178,6 +3186,10 @@ client.on("messageCreate", async (msg) => {
   }
 
   if (msg.content.startsWith("/addcustomcommand ")) {
+    const tier = getGuildTier(msg.guild.id);
+    if (tier !== 'premium' && tier !== 'pro') {
+      return msg.reply("❌ Custom commands require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
+    }
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can add commands!");
     const cmdName = msg.content.split(" ")[1];
     const cmdResponse = msg.content.split(" ").slice(2).join(" ");
@@ -3628,6 +3640,11 @@ client.on("interactionCreate", async (interaction) => {
       
       // ========== CUSTOM COMMANDS ==========
       if (commandName === 'addcustomcommand') {
+        const tier = getGuildTier(interaction.guild.id);
+        if (tier !== 'premium' && tier !== 'pro') {
+          return interaction.editReply("❌ Custom commands require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
+        }
+        
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -3647,6 +3664,11 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       if (commandName === 'removecustomcommand') {
+        const tier = getGuildTier(interaction.guild.id);
+        if (tier !== 'premium' && tier !== 'pro') {
+          return interaction.editReply("❌ Custom commands require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
+        }
+        
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -4501,6 +4523,11 @@ client.on("interactionCreate", async (interaction) => {
       
       // ========== GIVEAWAY ==========
       if (commandName === 'giveaway' || commandName === 'startgiveaway') {
+        const tier = getGuildTier(interaction.guild.id);
+        if (tier !== 'premium' && tier !== 'pro') {
+          return interaction.editReply("❌ Giveaways require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
+        }
+        
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can start giveaways!");
         }
