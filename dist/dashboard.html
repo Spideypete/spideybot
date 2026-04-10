@@ -2425,8 +2425,34 @@
         #role-categories-section .panel .panel-content,
         #role-categories-section .content-grid {
             overflow: visible !important;
-            z-index: 1 !important;
+            z-index: 999999 !important;
             isolation: auto;
+        }
+        
+        #role-categories-section .custom-multiselect {
+            z-index: 999999 !important;
+            position: relative;
+        }
+        
+        #role-categories-section .custom-multiselect .cms-dropdown {
+            position: absolute !important;
+            z-index: 999999 !important;
+            top: 100% !important;
+            left: 0 !important;
+            right: auto !important;
+            transform: none !important;
+            width: 100% !important;
+            max-height: 300px !important;
+            overflow-y: auto !important;
+        }
+        
+        /* Force pointer events on dropdown */
+        #role-categories-section .custom-multiselect.open .cms-dropdown {
+            display: block !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
         }
         
         /* Force dropdown to always be on top within role categories section */
