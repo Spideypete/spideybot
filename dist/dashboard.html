@@ -4292,9 +4292,18 @@
             // Toggle open/close
             trigger.addEventListener('click', (e) => {
                 if (e.target.classList.contains('cms-tag-x')) return; // handled separately
+                
+                // Remove any existing body-appended dropdowns first
+                document.querySelectorAll('.cms-dropdown[data-body-append]').forEach(d => d.remove());
+                
                 // Close others
                 document.querySelectorAll('.custom-multiselect.open').forEach(el => {
-                    if (el !== container) el.classList.remove('open');
+                    if (el !== container) {
+                        el.classList.remove('open');
+                        // Remove their body dropdowns too
+                        const oldClone = document.querySelector('.cms-dropdown[data-body-append]');
+                        if (oldClone) oldClone.remove();
+                    }
                 });
                 container.classList.toggle('open');
                 const dropdown = container.querySelector('.cms-dropdown');
@@ -4317,34 +4326,38 @@
                         dropdownClone.style.left = (rect.left + scrollX) + 'px';
                         dropdownClone.style.width = rect.width + 'px';
                         dropdownClone.style.display = 'block';
-                        
-                        // Mark as body-append and store reference
-                        dropdownClone.dataset.bodyAppended = 'true';
-                        container.dataset.dropdownClone = 'true';
+                        dropdownClone.dataset.bodyAppend = 'true';
                         
                         document.body.appendChild(dropdownClone);
                         dropdown.style.display = 'none';
+                        
+                        // Re-attach click handlers to cloned options
+                        const originalOptions = dropdown.querySelectorAll('.cms-option');
+                        const clonedOptions = dropdownClone.querySelectorAll('.cms-option');
+                        originalOptions.forEach((opt, i) => {
+                            if (clonedOptions[i]) {
+                                clonedOptions[i].addEventListener('click', (evt) => {
+                                    evt.stopPropagation();
+                                    opt.click();
+                                });
+                            }
+                        });
+                        
+                        // Add close handler to close when clicking outside
+                        const closeHandler = (evt) => {
+                            if (!dropdownClone.contains(evt.target) && !container.contains(evt.target)) {
+                                dropdownClone.remove();
+                                container.classList.remove('open');
+                                dropdown.style.display = '';
+                                document.removeEventListener('click', closeHandler);
+                            }
+                        };
+                        setTimeout(() => document.addEventListener('click', closeHandler), 100);
                     }
                 } else {
                     // Remove body-appended dropdown
-                    const existingClone = document.querySelector('.cms-dropdown[data-body-appointed="true"]');
-                    if (existingClone) existingClone.remove();
-                    
-                    if (dropdown) {
-                        dropdown.style.display = '';
-                    }
-                }
-            });
-
-            // Close on outside click
-            document.addEventListener('click', (e) => {
-                if (!container.contains(e.target) && !document.querySelector('.cms-dropdown[data-body-appointed="true"]')?.contains(e.target)) {
-                    container.classList.remove('open');
-                    // Also remove the cloned dropdown
-                    const existingClone = document.querySelector('.cms-dropdown[data-body-appointed="true"]');
-                    if (existingClone) existingClone.remove();
-                    // Restore original dropdown display
-                    const dropdown = container.querySelector('.cms-dropdown');
+                    const bodyDropdown = document.querySelector('.cms-dropdown[data-body-append]');
+                    if (bodyDropdown) bodyDropdown.remove();
                     if (dropdown) dropdown.style.display = '';
                 }
             });
