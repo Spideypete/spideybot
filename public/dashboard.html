@@ -6466,9 +6466,13 @@
                 
                 const lockInfo = lockedSections[sectionName];
                 const ent = window.currentEntitlements || {};
+                const featureKey = sectionFeaturesMap[sectionName];
+                const hasAccess = featureKey ? ent[featureKey] : true;
+                
+                console.log('[switchSection] Section:', sectionName, 'Feature:', featureKey, 'HasAccess:', hasAccess, 'Entitlements:', ent);
                 
                 // Skip if lockInfo is null (available to all) or if user has access
-                if (lockInfo && sectionFeaturesMap[sectionName] && !ent[sectionFeaturesMap[sectionName]]) {
+                if (lockInfo && !hasAccess) {
                     // Show upgrade modal instead of section
                     showUpgradeModal(sectionName, lockInfo);
                     return;
