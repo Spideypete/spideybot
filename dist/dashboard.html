@@ -2541,7 +2541,7 @@
                 <div class="sidebar-section">
                     <div class="sidebar-section-title" data-i18n="nav_features">FEATURES</div>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><img src="/dashboard-icons/react-roles.svg" alt=""></span><span data-i18n="sidebar_reactRoles">React Roles</span><span class="sidebar-tier-badge premium">Premium</span></li>
+                        <li class="sidebar-item" data-section="react-roles" onclick="switchSection('react-roles')"><span class="sidebar-item-icon"><img src="/dashboard-icons/react-roles.svg" alt=""></span><span data-i18n="sidebar_reactRoles">React Roles</span></li>
                         <li class="sidebar-item" data-section="role-categories" onclick="switchSection('role-categories')"><span class="sidebar-item-icon"><img src="/dashboard-icons/role-categories.svg" alt=""></span><span data-i18n="sidebar_roleCategories">Role Categories</span></li>
                         <li class="sidebar-item" data-section="server-messages" onclick="switchSection('server-messages')"><span class="sidebar-item-icon"><img src="/dashboard-icons/server-messages.svg" alt=""></span><span data-i18n="sidebar_serverMessages">Server Messages</span></li>
                         <li class="sidebar-item" data-section="custom-commands" onclick="switchSection('custom-commands')"><span class="sidebar-item-icon"><img src="/dashboard-icons/custom-commands.svg" alt=""></span><span data-i18n="sidebar_commands">Commands</span><span class="sidebar-tier-badge premium">Premium</span></li>
@@ -3106,7 +3106,7 @@
                 <!-- React Roles Section -->
                 <div id="react-roles-section" class="content-section">
                     <div class="content-header">
-                        <div class="content-title" data-i18n="title_reactRoles">React Roles <span class="section-tier-badge"></span></div>
+                        <div class="content-title" data-i18n="title_reactRoles">React Roles</div>
                         <div class="content-subtitle">Reaction-based role assignment — react to a message, get a role</div>
                     </div>
                     <div class="content-grid">
@@ -5744,6 +5744,17 @@
         async function loadReactRoles() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
+            
+            // Get entitlements to check role limit
+            let maxRoles = 3;
+            let isPremium = false;
+            try {
+                const entRes = await fetch('/api/guild/' + guildId + '/entitlements');
+                const entData = await entRes.json();
+                maxRoles = entData.entitlements.maxReactRoles === 'unlimited' ? Infinity : (entData.entitlements.maxReactRoles || 3);
+                isPremium = entData.entitlements.hasReactRoles;
+            } catch (e) { console.error('Failed to get entitlements:', e); }
+            
             try {
                 const res = await fetch('/api/config/' + guildId, { credentials: 'include' });
                 if (!res.ok) return;
@@ -5756,10 +5767,12 @@
                 if (am) am.checked = rr.allowMultiple !== false;
                 if (ru) ru.checked = rr.removeOnUnreact !== false;
                 if (dm) dm.checked = !!rr.dmConfirm;
-                // Render active roles
-                renderReactRoles(rr.entries || []);
-                // Render role categories in the categories panel
-                renderRRCategories(data.roleCategories || {});
+                // Render active roles with limits
+                renderReactRoles(rr.entries || [], maxRoles, isPremium);
+                // Render role categories in the categories panel with limits
+                renderRRCategories(data.roleCategories || {}, maxRoles, isPremium);
+                // Update buttons based on limits
+                updateRRButtons(maxRoles, isPremium);
                 // Populate setup category dropdown
                 const scSel = document.getElementById('sc_categorySelect');
                 if (scSel) {
@@ -5775,21 +5788,56 @@
                     });
                     if (curVal) scSel.value = curVal;
                 }
-                // Typed roles removed (gaming, watchparty, platform)
-                // renderTypedRoles('game', data.gameRoles || []);
-                // renderTypedRoles('watchparty', data.watchPartyRoles || []);
-                // renderTypedRoles('platform', data.platformRoles || []);
             } catch (e) { console.error('loadReactRoles error:', e); }
         }
 
-        function renderReactRoles(entries) {
+        function updateRRButtons(maxRoles, isPremium) {
+            const totalRoles = window.currentRoleCount || 0;
+            updateRRButtonsState(totalRoles, maxRoles, isPremium);
+        }
+        
+        function updateButtonByText(btn, maxRoles, isPremium) {
+            const totalRoles = window.currentRoleCount || 0;
+            const atLimit = maxRoles !== Infinity && !isPremium && totalRoles >= maxRoles;
+            
+            if (atLimit) {
+                btn.textContent = '🔒 Upgrade to Premium';
+                btn.className = 'btn btn-primary';
+                btn.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
+                btn.style.color = '#000';
+                btn.onclick = () => window.location.href = '/premium';
+            }
+        }
+        
+        function countTotalRoles() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return 0;
+            // This will be passed from loadReactRoles - simplified for now
+            return window.currentRoleCount || 0;
+        }
+
+        function renderReactRoles(entries, maxRoles = 3, isPremium = false) {
             const container = document.getElementById('rr_activeList');
             if (!container) return;
+            
+            // Store role count globally for button updates
+            window.currentRoleCount = entries.length;
+            
+            const rolesLeft = maxRoles === Infinity ? '∞' : (maxRoles - entries.length);
+            
             if (!entries.length) {
                 container.innerHTML = '<div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No reaction roles configured yet</div>';
                 return;
             }
-            container.innerHTML = '';
+            
+            // Add header with count
+            let headerHtml = `<div style="margin-bottom:1rem; padding:0.5rem; background:rgba(145,81,255,0.1); border-radius:8px; text-align:center; font-size:0.85rem;">
+                📊 Total Roles: <strong>${entries.length}</strong> / ${maxRoles === Infinity ? '∞' : maxRoles} | 
+                Remaining: <strong>${rolesLeft}</strong>
+                ${maxRoles !== Infinity && !isPremium ? `<span style="color:#FFD700; margin-left:0.5rem;">🔒 Free tier limit</span>` : ''}
+            </div>`;
+            
+            container.innerHTML = headerHtml;
             entries.forEach((entry, i) => {
                 const row = document.createElement('div');
                 row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; background:rgba(0,212,255,0.08); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(0,212,255,0.15);';
@@ -5807,15 +5855,38 @@
             });
         }
 
-        function renderRRCategories(categories) {
+        function renderRRCategories(categories, maxRoles = 3, isPremium = false) {
             const container = document.getElementById('rr_categoriesList');
             if (!container) return;
             const keys = Object.keys(categories);
+            
+            // Count total roles across all categories
+            let totalRoles = 0;
+            keys.forEach(name => {
+                const cat = categories[name];
+                const roles = Array.isArray(cat.roles) ? cat.roles : (Array.isArray(cat) ? cat : []);
+                totalRoles += roles.length;
+            });
+            
+            // Store for button updates
+            window.currentRoleCount = totalRoles;
+            
+            const rolesLeft = maxRoles === Infinity ? '∞' : (maxRoles - totalRoles);
+            const atLimit = maxRoles !== Infinity && !isPremium && totalRoles >= maxRoles;
+            
+            // Show header with count and limits
+            let headerHtml = `<div style="margin-bottom:1rem; padding:0.5rem; background:rgba(145,81,255,0.1); border-radius:8px; text-align:center; font-size:0.85rem;">
+                📊 Total Roles: <strong>${totalRoles}</strong> / ${maxRoles === Infinity ? '∞' : maxRoles} | 
+                Remaining: <strong>${rolesLeft}</strong>
+                ${atLimit ? `<span style="color:#FFD700; margin-left:0.5rem;">🔒 Upgrade to Premium to add more</span>` : ''}
+            </div>`;
+            
             if (!keys.length) {
-                container.innerHTML = '<div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No role categories configured</div>';
+                container.innerHTML = headerHtml + '<div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No role categories configured</div>';
                 return;
             }
-            container.innerHTML = '';
+            
+            container.innerHTML = headerHtml;
             keys.forEach(name => {
                 const cat = categories[name];
                 const roles = Array.isArray(cat.roles) ? cat.roles : (Array.isArray(cat) ? cat : []);
@@ -5829,6 +5900,28 @@
                     <button onclick="deleteCategory('${name.replace(/'/g, "\\'")}')" style="background:rgba(255,107,107,0.2); border:1px solid rgba(255,107,107,0.3); color:#ff6b6b; padding:0.3rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;">🗑️ Delete</button>
                 `;
                 container.appendChild(el);
+            });
+            
+            // Update the action buttons based on limits
+            updateRRButtonsState(totalRoles, maxRoles, isPremium);
+        }
+        
+        function updateRRButtonsState(totalRoles, maxRoles, isPremium) {
+            const atLimit = maxRoles !== Infinity && !isPremium && totalRoles >= maxRoles;
+            
+            // Find and update buttons by their onclick content
+            const buttons = document.querySelectorAll('#react-roles-section button');
+            buttons.forEach(btn => {
+                const onclick = btn.getAttribute('onclick') || '';
+                if (onclick.includes('addReactRole') || onclick.includes('postReactRoleMessage') || 
+                    onclick.includes('createRoleCategory') || onclick.includes('setupCategory')) {
+                    if (atLimit) {
+                        btn.textContent = '🔒 Upgrade to Premium';
+                        btn.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
+                        btn.style.color = '#000';
+                        btn.setAttribute('onclick', "window.location.href='/premium'");
+                    }
+                }
             });
         }
 
@@ -6455,7 +6548,7 @@
                 const lockedSections = {
                     'logging': { icon: '🔥', tier: 'Pro' },
                     'server-guard': { icon: '💎', tier: 'Premium' },
-                    'react-roles': { icon: '💎', tier: 'Premium' },
+                    'react-roles': null, // Available to all (with 3 role limit enforced in UI)
                     'xp-levels': { icon: '💎', tier: 'Premium' },
                     'leaderboards': { icon: '💎', tier: 'Premium' },
                     'giveaways': { icon: '💎', tier: 'Premium' },
