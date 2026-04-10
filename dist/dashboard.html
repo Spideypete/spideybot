@@ -2562,17 +2562,7 @@
                     <div class="sidebar-section-title" data-i18n="nav_monitoring">MONITORING</div>
                     <ul class="sidebar-menu">
                         <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><img src="/dashboard-icons/events.svg" alt=""></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
-                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><img src="/dashboard-icons/social-notifs.svg" alt=""></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
-                        <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><img src="/dashboard-icons/invite-tracking.svg" alt=""></span><span data-i18n="sidebar_invites">Invites</span><span class="sidebar-tier-badge pro">Pro</span></li>
-                        <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><img src="/dashboard-icons/message-counting.svg" alt=""></span><span data-i18n="sidebar_messages">Messages</span></li>
-                    </ul>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title" data-i18n="nav_monitoring">MONITORING</div>
-                    <ul class="sidebar-menu">
-                        <li class="sidebar-item" data-section="events" onclick="switchSection('events')"><span class="sidebar-item-icon"><img src="/dashboard-icons/events.svg" alt=""></span><span data-i18n="sidebar_memberActivity">Member Activity</span></li>
-                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><img src="/dashboard-icons/social-notifs.svg" alt=""></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span></li>
+                        <li class="sidebar-item" data-section="social-notifs" onclick="switchSection('social-notifs')"><span class="sidebar-item-icon"><img src="/dashboard-icons/social-notifs.svg" alt=""></span><span data-i18n="sidebar_socialNotifs">Social Notifs</span><span class="sidebar-tier-badge premium">Premium</span></li>
                         <li class="sidebar-item" data-section="invite-tracking" onclick="switchSection('invite-tracking')"><span class="sidebar-item-icon"><img src="/dashboard-icons/invite-tracking.svg" alt=""></span><span data-i18n="sidebar_invites">Invites</span><span class="sidebar-tier-badge pro">Pro</span></li>
                         <li class="sidebar-item" data-section="message-counting" onclick="switchSection('message-counting')"><span class="sidebar-item-icon"><img src="/dashboard-icons/message-counting.svg" alt=""></span><span data-i18n="sidebar_messages">Messages</span></li>
                     </ul>
@@ -4707,6 +4697,7 @@
                                     <li>✓ Full Server Guard</li>
                                     <li>✓ XP + Leaderboards</li>
                                     <li>✓ Giveaways</li>
+                                    <li>✓ Social Notifications</li>
                                 </ul>
                                 <div style="font-size:1.8rem;font-weight:bold;margin:0.5rem 0;">$${p}<span style="font-size:0.9rem;color:#888;"> total</span></div>
                                 <div style="color:#4cd137;font-size:0.85rem;margin-bottom:0.5rem;">$${pMonthly}/mo (${pSave}% OFF)</div>
@@ -6541,6 +6532,7 @@
                     'leaderboards': 'hasXP',
                     'giveaways': 'hasGiveaways',
                     'custom-commands': 'hasCustomCommands',
+                    'social-notifs': 'hasSocialNotifs',
                     'invite-tracking': 'hasInvites',
                     'statistics-channels': 'hasAnalytics'
                 };
@@ -6551,6 +6543,7 @@
                     'react-roles': null, // Available to all (with 3 role limit enforced in UI)
                     'xp-levels': { icon: '💎', tier: 'Premium' },
                     'leaderboards': { icon: '💎', tier: 'Premium' },
+                    'social-notifs': { icon: '💎', tier: 'Premium' },
                     'giveaways': { icon: '💎', tier: 'Premium' },
                     'custom-commands': { icon: '💎', tier: 'Premium' },
                     'invite-tracking': { icon: '🔥', tier: 'Pro' },

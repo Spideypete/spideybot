@@ -2031,7 +2031,7 @@ client.on("messageCreate", async (msg) => {
   if (msg.content.startsWith("/giveaway ")) {
     const tier = getGuildTier(msg.guild.id);
     if (tier !== 'premium' && tier !== 'pro') {
-      return msg.reply("❌ Giveaways require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
+      return msg.reply("❌ Social notifications require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
     }
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can create giveaways!");
@@ -3128,7 +3128,7 @@ client.on("messageCreate", async (msg) => {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can start giveaways!");
     const tier = getGuildTier(msg.guild.id);
     if (tier !== 'premium' && tier !== 'pro') {
-      return msg.reply("❌ Giveaways require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
+      return msg.reply("❌ Social notifications require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
     }
     const parts = msg.content.split(" | ");
     const prize = parts[0]?.slice(17).trim() || "Mystery Prize";
@@ -6116,12 +6116,13 @@ const entitlements = {
     canCreateGiveaway: activeGiveaways < (limits.maxGiveaways || 1),
     // Free: React Roles (max 3)
     hasReactRoles: tier !== 'free',
-    // Premium and Pro: Server Guard, XP, Giveaways, Custom Commands
+    // Premium and Pro: Server Guard, XP, Custom Commands, Social Notifs (giveaways now free)
     hasServerGuard: tier === 'premium' || tier === 'pro',
-    hasGiveaways: tier === 'premium' || tier === 'pro',
+    hasGiveaways: true, // Giveaways now free
     hasXP: tier === 'premium' || tier === 'pro',
     hasCustomCommands: tier === 'premium' || tier === 'pro',
     hasFullServerGuard: tier === 'premium' || tier === 'pro',
+    hasSocialNotifs: tier === 'premium' || tier === 'pro',
     // Pro only: Analytics, Invite Tracking, Automation
     hasAnalytics: tier === 'pro',
     hasInvites: tier === 'pro',
