@@ -5191,6 +5191,17 @@
             currentGuildId = guildId;
             try {
                 console.log('🔵 Fetching categories for guildId:', guildId);
+                
+                // Get entitlements to check role limit
+                let maxRoles = 3;
+                let isPremium = false;
+                try {
+                    const entRes = await fetch('/api/guild/' + guildId + '/entitlements');
+                    const entData = await entRes.json();
+                    maxRoles = entData.entitlements.maxReactRoles === 'unlimited' ? Infinity : (entData.entitlements.maxReactRoles || 3);
+                    isPremium = entData.entitlements.hasReactRoles;
+                } catch (e) { console.error('Failed to get entitlements:', e); }
+                
                 const res = await fetch(`/api/config/role-categories?guildId=${guildId}`, { credentials: 'include' });
                 console.log('🔵 Categories API response status:', res.status);
                 
@@ -5217,6 +5228,9 @@
                             select.value = currentValue;
                         }
                     });
+                    
+                    // Render categories in the panel
+                    renderRRCategories(categories, maxRoles, isPremium);
                     
                     console.log('✅ Loaded categories for server:', categoryOptions);
                 } else {
