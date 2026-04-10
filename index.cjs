@@ -6086,18 +6086,17 @@ const entitlements = {
     maxGiveaways: limits.maxGiveaways === Infinity ? 'unlimited' : limits.maxGiveaways,
     currentGiveaways: activeGiveaways,
     canCreateGiveaway: activeGiveaways < (limits.maxGiveaways || 1),
-    // Premium tier: Unlimited React Roles, Full Server Guard, XP, Giveaways, Custom Commands
-    hasReactRoles: tier === 'premium' || tier === 'pro',
-    hasServerGuard: tier === 'premium' || tier === 'pro',
-    hasGiveaways: tier === 'premium' || tier === 'pro',
-    hasXP: tier === 'premium' || tier === 'pro',
-    hasCustomCommands: tier === 'premium' || tier === 'pro',
-    hasFullServerGuard: tier === 'premium' || tier === 'pro',
-    // Pro only: Analytics, Invite Tracking, Automation
+    // Free: React Roles (max 3), Pro: Everything else
+    hasReactRoles: true, // All tiers can use React Roles (with limits)
+    hasServerGuard: tier === 'pro',
+    hasGiveaways: tier === 'pro',
+    hasXP: tier === 'pro',
+    hasCustomCommands: tier === 'pro',
+    hasFullServerGuard: tier === 'pro',
     hasAnalytics: tier === 'pro',
     hasInvites: tier === 'pro',
     hasAutomation: tier === 'pro',
-    hasLogging: tier === 'premium' || tier === 'pro'
+    hasLogging: tier === 'pro'
   };
   
   console.log('[Entitlements] Sending:', JSON.stringify(entitlements));
