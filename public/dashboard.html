@@ -2441,7 +2441,9 @@
             isolation: isolate;
         }
         
-        #role-categories-section .custom-multiselect .cms-dropdown {
+        #role-categories-section .custom-multiselect .cms-dropdown,
+        #role-categories-section #cc_roleSelect + .cms-dropdown,
+        .custom-multiselect.open .cms-dropdown {
             position: fixed !important;
             z-index: 2147483647 !important;
             top: auto !important;
@@ -2451,12 +2453,19 @@
             isolation: isolate;
             clip: auto;
             filter: none;
+            pointer-events: auto !important;
         }
         
         /* Also handle the grid container for the dropdown */
-        #role-categories-section .content-grid:has(.custom-multiselect) {
+        #role-categories-section .content-grid:has(.custom-multiselect),
+        #role-categories-section:has(#cc_roleSelect) {
             overflow: visible !important;
             z-index: 99998;
+        }
+        
+        /* Ensure dropdown is clickable */
+        .cms-dropdown * {
+            pointer-events: auto !important;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
