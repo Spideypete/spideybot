@@ -317,13 +317,14 @@ function getGuildTier(guildId) {
 function getTierLimits(guildId) {
   const tier = getGuildTier(guildId);
   
-  // Tier-based limits - only Pro gets everything
+  // Premium: Server Guard, XP, Giveaways, Custom Commands (all unlocked)
+  // Pro: Everything in Premium + Analytics, Invites, Automation
   return {
     maxReactRoles: tier === 'free' ? 3 : Infinity,
     maxGiveaways: tier === 'free' ? 1 : Infinity,
-    hasXP: tier === 'pro',
-    hasCustomCommands: tier === 'pro',
-    hasFullServerGuard: tier === 'pro',
+    hasXP: tier === 'premium' || tier === 'pro',
+    hasCustomCommands: tier === 'premium' || tier === 'pro',
+    hasFullServerGuard: tier === 'premium' || tier === 'pro',
     hasAnalytics: tier === 'pro',
     hasInvites: tier === 'pro',
     hasAutomation: tier === 'pro'
@@ -6086,17 +6087,19 @@ const entitlements = {
     maxGiveaways: limits.maxGiveaways === Infinity ? 'unlimited' : limits.maxGiveaways,
     currentGiveaways: activeGiveaways,
     canCreateGiveaway: activeGiveaways < (limits.maxGiveaways || 1),
-    // Free: React Roles (max 3), Pro: Everything else
-    hasReactRoles: true, // All tiers can use React Roles (with limits)
-    hasServerGuard: tier === 'pro',
-    hasGiveaways: tier === 'pro',
-    hasXP: tier === 'pro',
-    hasCustomCommands: tier === 'pro',
-    hasFullServerGuard: tier === 'pro',
+    // Free: React Roles (max 3)
+    hasReactRoles: tier !== 'free',
+    // Premium and Pro: Server Guard, XP, Giveaways, Custom Commands
+    hasServerGuard: tier === 'premium' || tier === 'pro',
+    hasGiveaways: tier === 'premium' || tier === 'pro',
+    hasXP: tier === 'premium' || tier === 'pro',
+    hasCustomCommands: tier === 'premium' || tier === 'pro',
+    hasFullServerGuard: tier === 'premium' || tier === 'pro',
+    // Pro only: Analytics, Invite Tracking, Automation
     hasAnalytics: tier === 'pro',
     hasInvites: tier === 'pro',
     hasAutomation: tier === 'pro',
-    hasLogging: tier === 'pro'
+    hasLogging: tier === 'premium' || tier === 'pro'
   };
   
   console.log('[Entitlements] Sending:', JSON.stringify(entitlements));
