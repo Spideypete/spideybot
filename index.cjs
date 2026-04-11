@@ -371,6 +371,7 @@ function getGuildConfig(guildId) {
       tiktokUsers: [],
       kickChannelId: null,
       kickUsers: [],
+      activities: [],
       musicLoopMode: false,
       musicShuffle: false,
       musicVolume: 100,
@@ -423,22 +424,25 @@ function autoMigrateRoles(guildId, guild, guildConfig) {
   }
 }
 
-// ============== ACTIVITY LOGGING ==============
 function addActivity(guildId, icon, text, action) {
-  const config = loadConfig();
-  if (!config.guilds[guildId]) config.guilds[guildId] = {};
-  if (!config.guilds[guildId].activities) config.guilds[guildId].activities = [];
+  try {
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].activities) config.guilds[guildId].activities = [];
 
-  config.guilds[guildId].activities.unshift({
-    icon,
-    text,
-    action,
-    time: new Date().toLocaleString()
-  });
+    console.log(`📝 addActivity: ${guildId} | ${icon} | ${text} | ${action}`);
+    config.guilds[guildId].activities.unshift({
+      icon,
+      text,
+      action,
+      time: new Date().toLocaleString()
+    });
 
-  // Keep only latest 100 activities
-  config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 100);
-  saveConfig(config);
+    config.guilds[guildId].activities = config.guilds[guildId].activities.slice(0, 100);
+    saveConfig(config);
+  } catch (err) {
+    console.error('❌ addActivity error:', err);
+  }
 }
 
 // ============== CACHE SYSTEM ==============
@@ -7426,11 +7430,16 @@ app.get("/api/dashboard/activity", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guildId = req.query.guildId;
+  console.log('📥 /api/dashboard/activity request, guildId:', guildId);
   const firstGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
-  if (!firstGuild) return res.json({ activities: [] });
+  if (!firstGuild) {
+    console.log('⚠️ No guild found for activity API');
+    return res.json({ activities: [] });
+  }
 
-  const config = getGuildConfig(firstGuild.id);
-  const activities = config.activities || [];
+  const config = loadConfig();
+  const activities = config.guilds[firstGuild.id]?.activities || [];
+  console.log(`📤 Returning ${activities.length} activities for guild ${firstGuild.id}`);
 
   res.json({ activities });
 });
