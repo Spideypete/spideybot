@@ -1,0 +1,21 @@
+name: spidey-bot
+region: nyc
+build:
+  docker:
+    dockerfile: Dockerfile
+    args:
+      - NODE_VERSION=20
+run:
+  dockerfile: {}
+  envs:
+    - KEY: TOKEN
+    - KEY: MONGO_URI
+    - KEY: GUILD_ID
+    - KEY: CLIENT_ID
+    - KEY: SESSION_SECRET
+    - KEY: REDDIT_CLIENT_ID
+    - KEY: REDDIT_CLIENT_SECRET
+    - KEY: YOUTUBE_API_KEY
+    - KEY: OPENWEATHERMAP_API_KEY
+    - KEY: SPOTIFY_CLIENT_ID
+    - KEY: SPOTIFY_CLIENT_SECRET
