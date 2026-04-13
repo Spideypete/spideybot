@@ -392,6 +392,29 @@
         @media (max-width: 768px) {
             .feature-toggles { grid-template-columns: 1fr; }
         }
+        
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            color: #fff;
+            background: rgba(145,81,255,0.1);
+        }
+        
+        .tab-btn.active {
+            color: #fff;
+            background: rgba(145,81,255,0.2);
+            border-bottom: 2px solid #9151ff;
+        }
     </style>
 </head>
 <body>
@@ -430,26 +453,37 @@
         </div>
     </div>
     
-    <div class="section-title">Recent Sales</div>
-    <div id="recentSales" style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.5rem;margin-bottom:1.5rem;max-height:150px;overflow-y:auto;">
-        <div class="loading">Loading...</div>
+    <div class="tab-bar" style="display:flex;gap:0.5rem;margin-bottom:1.5rem;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:0.5rem;">
+        <button class="tab-btn active" onclick="switchTab('servers')" id="tabServers">Servers</button>
+        <button class="tab-btn" onclick="switchTab('features')" id="tabFeatures">Features</button>
     </div>
     
-    <div class="filter-bar">
-        <button class="filter-btn active" onclick="setFilter('all')" id="filterAll">All</button>
-        <button class="filter-btn" onclick="setFilter('free')" id="filterFree">Free Only</button>
-        <button class="filter-btn" onclick="setFilter('premium')" id="filterPremium">Premium Only</button>
-        <button class="filter-btn" onclick="setFilter('pro')" id="filterPro">Pro Only</button>
+    <!-- Servers Tab -->
+    <div class="tab-content" id="serversTab">
+        <div class="section-title">Recent Sales</div>
+        <div id="recentSales" style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.5rem;margin-bottom:1.5rem;max-height:150px;overflow-y:auto;">
+            <div class="loading">Loading...</div>
+        </div>
+        
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setFilter('all')" id="filterAll">All</button>
+            <button class="filter-btn" onclick="setFilter('free')" id="filterFree">Free Only</button>
+            <button class="filter-btn" onclick="setFilter('premium')" id="filterPremium">Premium Only</button>
+            <button class="filter-btn" onclick="setFilter('pro')" id="filterPro">Pro Only</button>
+        </div>
+        
+        <div class="section-title">Server Tier Management</div>
+        <div class="servers-list" id="serversList">
+            <div class="loading">Loading servers...</div>
+        </div>
     </div>
     
-    <div class="section-title">Server Tier Management</div>
-    <div class="servers-list" id="serversList">
-        <div class="loading">Loading servers...</div>
-    </div>
-    
-    <div class="section-title">Feature Toggles</div>
-    <div class="feature-toggles" id="featureToggles">
-        <div class="loading">Loading features...</div>
+    <!-- Features Tab -->
+    <div class="tab-content" id="featuresTab" style="display:none;">
+        <div class="section-title">Feature Toggles</div>
+        <div class="feature-toggles" id="featureToggles">
+            <div class="loading">Loading features...</div>
+        </div>
     </div>
     
     <script>
@@ -482,6 +516,13 @@
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
             renderServersList(allServers);
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+            document.getElementById('serversTab').style.display = tab === 'servers' ? 'block' : 'none';
+            document.getElementById('featuresTab').style.display = tab === 'features' ? 'block' : 'none';
         }
         
         async function loadData() {
