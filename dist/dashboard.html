@@ -6269,6 +6269,13 @@
             
             const config = await loadTabConfig('server-messages');
             
+            const rootConfig = await (async () => {
+                try {
+                    const res = await fetch(`/api/config/${guildId}?guildId=${guildId}`, { credentials: 'include' });
+                    return res.ok ? await res.json() : {};
+                } catch (e) { return {}; }
+            })();
+            
             const wmEnabled = document.getElementById('wm_enabled');
             const wmChannel = document.getElementById('wm_channel');
             const wmMessage = document.getElementById('wm_message');
@@ -6276,10 +6283,10 @@
             const gmChannel = document.getElementById('gm_channel');
             const gmMessage = document.getElementById('gm_message');
             
-            if (wmEnabled) wmEnabled.checked = config.welcomeEnabled !== false;
-            if (wmMessage) wmMessage.value = config.welcomeMessage || '';
-            if (gmEnabled) gmEnabled.checked = config.goodbyeEnabled !== false;
-            if (gmMessage) gmMessage.value = config.goodbyeMessage || '';
+            if (wmEnabled) wmEnabled.checked = (config.welcomeEnabled !== false && rootConfig.welcomeEnabled !== false);
+            if (wmMessage) wmMessage.value = config.welcomeMessage || rootConfig.welcomeMessage || '';
+            if (gmEnabled) gmEnabled.checked = (config.goodbyeEnabled !== false && rootConfig.goodbyeEnabled !== false);
+            if (gmMessage) gmMessage.value = config.goodbyeMessage || rootConfig.goodbyeMessage || '';
             
             const channelSelects = ['wm_channel', 'gm_channel'];
             for (const selectId of channelSelects) {
@@ -6299,11 +6306,13 @@
                     opt.textContent = '#' + ch.name;
                     sel.appendChild(opt);
                 });
-                if (selectId === 'wm_channel' && config.welcomeChannel && sel.querySelector('option[value="' + config.welcomeChannel + '"]')) {
-                    sel.value = config.welcomeChannel;
+                const welcomeChannelId = config.welcomeChannel || rootConfig.welcomeChannel;
+                const goodbyeChannelId = config.goodbyeChannel || rootConfig.goodbyeChannel;
+                if (selectId === 'wm_channel' && welcomeChannelId && sel.querySelector('option[value="' + welcomeChannelId + '"]')) {
+                    sel.value = welcomeChannelId;
                 }
-                if (selectId === 'gm_channel' && config.goodbyeChannel && sel.querySelector('option[value="' + config.goodbyeChannel + '"]')) {
-                    sel.value = config.goodbyeChannel;
+                if (selectId === 'gm_channel' && goodbyeChannelId && sel.querySelector('option[value="' + goodbyeChannelId + '"]')) {
+                    sel.value = goodbyeChannelId;
                 }
             }
         }
@@ -6330,10 +6339,12 @@
             
             await saveTabConfig('server-messages', data);
             
-            const wmCh = document.getElementById('wm_channel');
-            const gmCh = document.getElementById('gm_channel');
-            if (wmCh && wmChannel) wmCh.value = wmChannel;
-            if (gmCh && gmChannel) gmCh.value = gmChannel;
+            fetch(`/api/guild/${guildId}/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ welcomeMessage: wmMessage, goodbyeMessage: gmMessage, welcomeChannel: wmChannel })
+            }).catch(() => {});
             
             alert('✅ Messages saved!');
         }
