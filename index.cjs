@@ -7510,6 +7510,30 @@ app.get("/api/dashboard/statistics", (req, res) => {
   });
 });
 
+app.get("/api/dashboard/log-statistics", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.query.guildId;
+  const targetGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
+  
+  if (!targetGuild) return res.json({ totalLogs: 0, modActions: 0, membersJoined: 0, levelUps: 0 });
+
+  const config = loadConfig();
+  const activities = config.guilds[targetGuild.id]?.activities || [];
+  
+  const totalLogs = activities.length;
+  const modActions = activities.filter(a => ['🛡️', '🔨', '🚫', '✂️', '⛔'].includes(a.icon)).length;
+  const membersJoined = activities.filter(a => a.action?.includes('joined')).length;
+  const levelUps = activities.filter(a => a.action?.includes('leveled up')).length;
+
+  res.json({
+    totalLogs,
+    modActions,
+    membersJoined,
+    levelUps
+  });
+});
+
 app.get("/api/dashboard/top-members", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 

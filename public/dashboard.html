@@ -5222,6 +5222,31 @@
             }
         }
 
+        // Load and display log statistics
+        async function loadLogStatistics(guildId) {
+            try {
+                const res = await fetch(`/api/dashboard/log-statistics?guildId=${guildId}`, { credentials: 'include' });
+                const data = await res.json();
+                
+                const formatNumber = (num) => {
+                    if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+                    return num.toString();
+                };
+                
+                const statTotalLogs = document.getElementById('statTotalLogs');
+                const statModeration = document.getElementById('statModeration');
+                const statMembers = document.getElementById('statMembers');
+                const statLevelUps = document.getElementById('statLevelUps');
+                
+                if (statTotalLogs) statTotalLogs.textContent = formatNumber(data.totalLogs || 0);
+                if (statModeration) statModeration.textContent = formatNumber(data.modActions || 0);
+                if (statMembers) statMembers.textContent = formatNumber(data.membersJoined || 0);
+                if (statLevelUps) statLevelUps.textContent = formatNumber(data.levelUps || 0);
+            } catch (err) {
+                console.error('🔴 Failed to load log statistics:', err);
+            }
+        }
+
         let currentEditingRoles = [];
 
         function loadCategoryDetails() {
@@ -6656,7 +6681,7 @@
                         'recordings': loadRecordings,
                         'reminders': loadReminders,
                         'statistics-channels': loadStatisticChannels,
-                        'role-categories': () => loadRoleCategories(localStorage.getItem('selectedServerId'))
+                        'role-categories': () => { const gid = localStorage.getItem('selectedServerId'); loadRoleCategories(gid); loadLogStatistics(gid); }
                     };
                     
                     if (loadMap[sectionName]) {
