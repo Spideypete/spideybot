@@ -3396,11 +3396,15 @@
                             <div class="panel-header"><div class="panel-title">📨 Welcome Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Welcome Messages</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="wm_enabled" checked/> <span>Enable Welcome Messages</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Channel</div>
+                                    <select id="wm_channel" class="form-input"><option value="">-- Select Channel --</option></select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Welcome Message</div>
-                                    <textarea class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}">Welcome {user}! You are member #{count} in our server. Have fun!</textarea>
+                                    <textarea id="wm_message" class="form-input" rows="3" placeholder="Welcome {user}! You are member #{count}"></textarea>
                                 </div>
                                 <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username, {count} for member number</small>
                             </div>
@@ -3409,14 +3413,21 @@
                             <div class="panel-header"><div class="panel-title">👋 Goodbye Message</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Enable Goodbye Messages</span></label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="gm_enabled" checked/> <span>Enable Goodbye Messages</span></label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Channel</div>
+                                    <select id="gm_channel" class="form-input"><option value="">-- Select Channel --</option></select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Goodbye Message</div>
-                                    <textarea class="form-input" rows="3" placeholder="{user} has left the server...">{user} has left the server. We hope to see you again!</textarea>
+                                    <textarea id="gm_message" class="form-input" rows="3" placeholder="{user} has left the server..."></textarea>
                                 </div>
                                 <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem;">Use {user} for username</small>
                             </div>
+                        </div>
+                        <div style="grid-column: 1/-1; text-align: center; margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="saveServerMessages()">Save Messages</button>
                         </div>
                     </div>
                 </div>
@@ -6253,14 +6264,78 @@
         }
 
         async function loadServerMessages() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
             const config = await loadTabConfig('server-messages');
-            const ta = document.querySelector('#server-messages-section textarea');
-            if (ta && config.welcomeMessage) ta.value = config.welcomeMessage;
+            
+            const wmEnabled = document.getElementById('wm_enabled');
+            const wmChannel = document.getElementById('wm_channel');
+            const wmMessage = document.getElementById('wm_message');
+            const gmEnabled = document.getElementById('gm_enabled');
+            const gmChannel = document.getElementById('gm_channel');
+            const gmMessage = document.getElementById('gm_message');
+            
+            if (wmEnabled) wmEnabled.checked = config.welcomeEnabled !== false;
+            if (wmMessage) wmMessage.value = config.welcomeMessage || '';
+            if (gmEnabled) gmEnabled.checked = config.goodbyeEnabled !== false;
+            if (gmMessage) gmMessage.value = config.goodbyeMessage || '';
+            
+            const channelSelects = ['wm_channel', 'gm_channel'];
+            for (const selectId of channelSelects) {
+                const sel = document.getElementById(selectId);
+                if (!sel) continue;
+                sel.innerHTML = '<option value="">-- Select Channel --</option>';
+                if (!window.cachedChannels?.[guildId]) {
+                    const res = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
+                    const data = await res.json();
+                    window.cachedChannels = window.cachedChannels || {};
+                    window.cachedChannels[guildId] = data.channels || [];
+                }
+                const channels = window.cachedChannels[guildId] || [];
+                channels.forEach(ch => {
+                    const opt = document.createElement('option');
+                    opt.value = ch.id;
+                    opt.textContent = '#' + ch.name;
+                    sel.appendChild(opt);
+                });
+                if (selectId === 'wm_channel' && config.welcomeChannel && sel.querySelector('option[value="' + config.welcomeChannel + '"]')) {
+                    sel.value = config.welcomeChannel;
+                }
+                if (selectId === 'gm_channel' && config.goodbyeChannel && sel.querySelector('option[value="' + config.goodbyeChannel + '"]')) {
+                    sel.value = config.goodbyeChannel;
+                }
+            }
         }
 
         async function saveServerMessages() {
-            const welcomeMsg = document.querySelector('#server-messages-section textarea')?.value || '';
-            await saveTabConfig('server-messages', { welcomeMessage: welcomeMsg });
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const wmEnabled = document.getElementById('wm_enabled')?.checked || false;
+            const wmChannel = document.getElementById('wm_channel')?.value || '';
+            const wmMessage = document.getElementById('wm_message')?.value || '';
+            const gmEnabled = document.getElementById('gm_enabled')?.checked || false;
+            const gmChannel = document.getElementById('gm_channel')?.value || '';
+            const gmMessage = document.getElementById('gm_message')?.value || '';
+            
+            const data = {
+                welcomeEnabled: wmEnabled,
+                welcomeChannel: wmChannel,
+                welcomeMessage: wmMessage,
+                goodbyeEnabled: gmEnabled,
+                goodbyeChannel: gmChannel,
+                goodbyeMessage: gmMessage
+            };
+            
+            await saveTabConfig('server-messages', data);
+            
+            const wmCh = document.getElementById('wm_channel');
+            const gmCh = document.getElementById('gm_channel');
+            if (wmCh && wmChannel) wmCh.value = wmChannel;
+            if (gmCh && gmChannel) gmCh.value = gmChannel;
+            
+            alert('✅ Messages saved!');
         }
 
         async function loadCustomCommands() {

@@ -934,10 +934,11 @@ client.on("guildMemberAdd", async (member) => {
   if (guildConfig.welcomeMessages === false) return;
   
   const serverMessages = guildConfig.serverMessages || {};
+  const welcomeChannelId = serverMessages.welcomeChannel || guildConfig.welcomeChannelId;
   
-  if (!serverMessages.enableWelcome || !guildConfig.welcomeChannelId) return;
+  if (!serverMessages.enableWelcome || !welcomeChannelId) return;
 
-  const welcomeChannel = member.guild.channels.cache.get(guildConfig.welcomeChannelId);
+  const welcomeChannel = member.guild.channels.cache.get(welcomeChannelId);
   if (welcomeChannel) {
     try {
       let message = serverMessages.welcomeMessage || "Welcome to our server! 🎉";
@@ -977,10 +978,11 @@ client.on("guildMemberRemove", async (member) => {
   // Send goodbye message if enabled
   const guildConfig = getGuildConfig(member.guild.id);
   const serverMessages = guildConfig.serverMessages || {};
+  const goodbyeChannelId = serverMessages.goodbyeChannel || serverMessages.welcomeChannel || guildConfig.welcomeChannelId;
   
-  if (!serverMessages.enableGoodbye || !guildConfig.welcomeChannelId) return;
+  if (!serverMessages.enableGoodbye || !goodbyeChannelId) return;
 
-  const goodbyeChannel = member.guild.channels.cache.get(guildConfig.welcomeChannelId);
+  const goodbyeChannel = member.guild.channels.cache.get(goodbyeChannelId);
   if (goodbyeChannel) {
     try {
       let message = serverMessages.goodbyeMessage || "{user} has left the server.";
