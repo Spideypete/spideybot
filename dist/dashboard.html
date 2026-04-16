@@ -3436,7 +3436,7 @@
                 <div id="custom-commands-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title" data-i18n="title_customCommands">Custom Commands <span class="section-tier-badge"></span></div>
-                        <div class="content-subtitle">Create custom bot commands</div>
+                        <div class="content-subtitle">Create and manage custom bot commands</div>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
@@ -3444,33 +3444,25 @@
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Command Name</div>
-                                    <input type="text" class="form-input" placeholder="e.g., rules"/>
+                                    <input type="text" id="cc_commandName" class="form-input" placeholder="e.g., rules"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Response</div>
-                                    <textarea class="form-input" placeholder="Command response" style="height: 80px;"></textarea>
+                                    <textarea id="cc_commandResponse" class="form-input" placeholder="Command response" style="height: 80px;"></textarea>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Require Role</div>
-                                    <input type="text" class="form-input" placeholder="Leave empty for all"/>
-                                </div>
-                                <button class="btn btn-primary" onclick="saveCustomCommands()">Create Command</button>
+                                <button class="btn btn-primary" onclick="createCustomCommand()">Create Command</button>
                             </div>
                         </div>
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📝 Aliases</div></div>
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header"><div class="panel-title">📋 Existing Commands</div></div>
                             <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Command</div>
-                                    <select class="form-input">
-                                        <option>-- Select Command --</option>
-                                    </select>
+                                <div id="commandsList" style="max-height: 300px; overflow-y: auto;">
+                                    <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading commands...</div>
                                 </div>
-                                <div class="form-group">
-                                    <div class="form-label">Alias</div>
-                                    <input type="text" class="form-input" placeholder="e.g., r (for rules)"/>
-                                </div>
-                                <button class="btn btn-primary" onclick="saveCustomCommands()">Add Alias</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                             </div>
                         </div>
                     </div>
@@ -6350,29 +6342,67 @@
         }
 
         async function loadCustomCommands() {
-            await loadTabConfig('custom-commands');
-        }
-
-        async function saveCustomCommands() {
-            const name = document.querySelector('#custom-commands-section input')?.value || '';
-            const response = document.querySelector('#custom-commands-section textarea')?.value || '';
-            if (!name || !response) return alert('Fill in all fields');
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
+            
+            const config = await loadTabConfig('custom-commands');
+            const container = document.getElementById('commandsList');
+            if (!container) return;
+            
+            const commands = config || {};
+            const commandKeys = Object.keys(commands);
+            
+            if (commandKeys.length === 0) {
+                container.innerHTML = '<div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No custom commands created yet</div>';
+                return;
+            }
+            
+            container.innerHTML = commandKeys.map(cmd => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(145,81,255,0.1); border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid rgba(145,81,255,0.2);">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #00d4ff;">/${cmd}</div>
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;">${commands[cmd]}</div>
+                    </div>
+                    <button onclick="deleteCustomCommand('${cmd}')" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        async function createCustomCommand() {
+            const name = document.getElementById('cc_commandName')?.value || '';
+            const response = document.getElementById('cc_commandResponse')?.value || '';
+            if (!name || !response) return alert('Fill in all fields');
+            
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
             try {
-                const res = await fetch(`/api/commands/${guildId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, response }),
-                    credentials: 'include'
-                });
-                if (res.ok) {
-                    alert('✅ Command created');
-                    document.querySelector('#custom-commands-section input').value = '';
-                    document.querySelector('#custom-commands-section textarea').value = '';
-                } else {
-                    alert('❌ Failed to create command');
-                }
+                const currentConfig = await loadTabConfig('custom-commands') || {};
+                currentConfig[name] = response;
+                
+                await saveTabConfig('custom-commands', currentConfig);
+                
+                document.getElementById('cc_commandName').value = '';
+                document.getElementById('cc_commandResponse').value = '';
+                
+                loadCustomCommands();
+                alert('✅ Command created');
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function deleteCustomCommand(cmdName) {
+            if (!confirm(`Delete /${cmdName}?`)) return;
+            
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            try {
+                const currentConfig = await loadTabConfig('custom-commands') || {};
+                delete currentConfig[cmdName];
+                
+                await saveTabConfig('custom-commands', currentConfig);
+                loadCustomCommands();
+                alert('✅ Command deleted');
             } catch (e) { alert('Error: ' + e.message); }
         }
 
