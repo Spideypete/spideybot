@@ -3474,7 +3474,7 @@
                 <div id="xp-levels-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title" data-i18n="title_xpLevels">XP Levels <span class="section-tier-badge"></span></div>
-                        <div class="content-subtitle">Configure leveling system</div>
+                        <div class="content-subtitle">Configure leveling system and level roles</div>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
@@ -3482,53 +3482,41 @@
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">XP per Message</div>
-                                    <input type="number" class="form-input" placeholder="10-30" value="15"/>
+                                    <input type="number" id="xp_perMessage" class="form-input" placeholder="10-30" value="15"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">XP for Voice (per minute)</div>
-                                    <input type="number" class="form-input" placeholder="1-5" value="2"/>
+                                    <input type="number" id="xp_perVoice" class="form-input" placeholder="1-5" value="2"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">XP per Level</div>
-                                    <input type="number" class="form-input" placeholder="500" value="500"/>
+                                    <input type="number" id="xp_perLevel" class="form-input" placeholder="500" value="500"/>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveXPLevels()">Update</button>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="xp_autoRoles" checked/> <span>Auto-assign level roles</span></label>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveXPLevels()">Save Settings</button>
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎯 Level Roles</div></div>
+                            <div class="panel-header"><div class="panel-title">🎯 Add Level Role</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Level</div>
-                                    <input type="number" class="form-input" placeholder="e.g., 10"/>
+                                    <input type="number" id="lr_level" class="form-input" placeholder="e.g., 10"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Role</div>
-                                    <input type="text" class="form-input" placeholder="Select role"/>
+                                    <select id="lr_role" class="form-input"><option value="">-- Select Role --</option></select>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveXPLevels()">Add Level Role</button>
+                                <button class="btn btn-primary" onclick="addLevelRole()">Add Level Role</button>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="content-grid" style="margin-top: 1rem;">
-                        <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🎯 Leveling Settings</div></div>
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header"><div class="panel-title">🎯 Level Roles List</div></div>
                             <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">XP per Message</div>
-                                    <input type="number" class="form-input" placeholder="10-30" value="10"/>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">XP to Level Up</div>
-                                    <input type="number" class="form-input" placeholder="500" value="500"/>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Max Level</div>
-                                    <input type="number" class="form-input" placeholder="100" value="100"/>
-                                </div>
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> <span>Auto-assign level roles</span></label>
+                                <div id="levelRolesList" style="max-height: 250px; overflow-y: auto;">
+                                    <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading...</div>
                                 </div>
                             </div>
                         </div>
@@ -6456,12 +6444,125 @@
         }
         
         async function loadXPLevels() {
-            await loadTabConfig('xp-levels');
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            const config = await loadTabConfig('xp-levels');
+            
+            const xpPerMessage = document.getElementById('xp_perMessage');
+            const xpPerVoice = document.getElementById('xp_perVoice');
+            const xpPerLevel = document.getElementById('xp_perLevel');
+            const xpAutoRoles = document.getElementById('xp_autoRoles');
+            
+            if (xpPerMessage) xpPerMessage.value = config.xpPerMessage || 15;
+            if (xpPerVoice) xpPerVoice.value = config.xpPerVoice || 2;
+            if (xpPerLevel) xpPerLevel.value = config.xpPerLevel || 500;
+            if (xpAutoRoles) xpAutoRoles.checked = config.autoAssignRoles !== false;
+            
+            const lrRole = document.getElementById('lr_role');
+            if (lrRole) {
+                lrRole.innerHTML = '<option value="">-- Select Role --</option>';
+                if (!window.cachedRoles?.[guildId]) {
+                    try {
+                        const res = await fetch('/api/guild/' + guildId + '/roles', { credentials: 'include' });
+                        const data = await res.json();
+                        window.cachedRoles = window.cachedRoles || {};
+                        window.cachedRoles[guildId] = data.roles || [];
+                    } catch (e) { window.cachedRoles[guildId] = []; }
+                }
+                const roles = window.cachedRoles[guildId] || [];
+                roles.forEach(role => {
+                    const opt = document.createElement('option');
+                    opt.value = role.id;
+                    opt.textContent = '@' + role.name;
+                    lrRole.appendChild(opt);
+                });
+            }
+            
+            renderLevelRoles(config.levelRoles || {});
+        }
+
+        function renderLevelRoles(levelRoles) {
+            const container = document.getElementById('levelRolesList');
+            if (!container) return;
+            
+            const entries = Object.entries(levelRoles);
+            if (entries.length === 0) {
+                container.innerHTML = '<div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No level roles configured yet</div>';
+                return;
+            }
+            
+            container.innerHTML = entries.map(([key, roleId]) => {
+                const level = key.replace('level_', '');
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(0,212,255,0.1); border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid rgba(0,212,255,0.2);">
+                        <span style="color: #00d4ff; font-weight: 600;">Level ${level}</span>
+                        <span style="color: rgba(255,255,255,0.7);">Role ID: ${roleId}</span>
+                        <button onclick="deleteLevelRole('${key}')" style="background: rgba(255,107,107,0.2); border: none; color: #ff6b6b; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">🗑️</button>
+                    </div>
+                `;
+            }).join('');
         }
 
         async function saveXPLevels() {
-            const xpPerLevel = document.querySelector('#xp-levels-section input[placeholder="500"]')?.value || '500';
-            await saveTabConfig('xp-levels', { xpPerLevel: parseInt(xpPerLevel) });
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const xpPerMessage = parseInt(document.getElementById('xp_perMessage')?.value) || 15;
+            const xpPerVoice = parseInt(document.getElementById('xp_perVoice')?.value) || 2;
+            const xpPerLevel = parseInt(document.getElementById('xp_perLevel')?.value) || 500;
+            const autoAssignRoles = document.getElementById('xp_autoRoles')?.checked !== false;
+            
+            const currentConfig = await loadTabConfig('xp-levels') || {};
+            
+            await saveTabConfig('xp-levels', {
+                xpPerMessage,
+                xpPerVoice,
+                xpPerLevel,
+                autoAssignRoles,
+                levelRoles: currentConfig.levelRoles || {}
+            });
+            
+            alert('✅ XP Settings saved!');
+        }
+
+        async function addLevelRole() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const level = parseInt(document.getElementById('lr_level')?.value);
+            const roleId = document.getElementById('lr_role')?.value;
+            
+            if (!level || !roleId) return alert('Enter level and select a role');
+            
+            const currentConfig = await loadTabConfig('xp-levels') || {};
+            const levelRoles = currentConfig.levelRoles || {};
+            levelRoles['level_' + level] = roleId;
+            
+            await saveTabConfig('xp-levels', {
+                ...currentConfig,
+                levelRoles
+            });
+            
+            document.getElementById('lr_level').value = '';
+            renderLevelRoles(levelRoles);
+            alert('✅ Level role added!');
+        }
+
+        async function deleteLevelRole(key) {
+            if (!confirm(`Delete level role for ${key.replace('level_', '')}?`)) return;
+            
+            const currentConfig = await loadTabConfig('xp-levels') || {};
+            const levelRoles = currentConfig.levelRoles || {};
+            delete levelRoles[key];
+            
+            await saveTabConfig('xp-levels', {
+                ...currentConfig,
+                levelRoles
+            });
+            
+            renderLevelRoles(levelRoles);
+            alert('✅ Level role deleted');
         }
 
         async function loadLeaderboards() {
