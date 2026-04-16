@@ -6271,7 +6271,7 @@
             
             const rootConfig = await (async () => {
                 try {
-                    const res = await fetch(`/api/config/${guildId}?guildId=${guildId}`, { credentials: 'include' });
+                    const res = await fetch(`/api/config/${guildId}`, { credentials: 'include' });
                     return res.ok ? await res.json() : {};
                 } catch (e) { return {}; }
             })();
