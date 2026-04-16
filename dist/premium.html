@@ -211,8 +211,8 @@
         let remainingMonths = 0;
         
         const pricing = {
-            premium: { 1: 8, 3: 21, 6: 36, 12: 60 },
-            pro: { 1: 12, 3: 32, 6: 54, 12: 96 }
+            premium: { 1: 5, 3: 13, 6: 24, 12: 42 },
+            pro: { 1: 8, 3: 21, 6: 36, 12: 60 }
         };
         
         function setPeriod(p) {
@@ -231,8 +231,8 @@
             const pro = pricing.pro[currentPeriod];
             const pMonthly = (p / currentPeriod).toFixed(2);
             const proMonthly = (pro / currentPeriod).toFixed(2);
-            const pSave = Math.round((1 - p / (8 * currentPeriod)) * 100);
-            const proSave = Math.round((1 - pro / (12 * currentPeriod)) * 100);
+            const pSave = Math.round((1 - p / (5 * currentPeriod)) * 100);
+            const proSave = Math.round((1 - pro / (8 * currentPeriod)) * 100);
             
             const isPremiumOrPro = currentTier === 'premium' || currentTier === 'pro';
             
@@ -244,6 +244,7 @@
                         <li>✓ Basic logging</li>
                         <li>✓ Limited server guard</li>
                         <li>✓ 3 React Roles</li>
+                        <li>✓ Giveaways</li>
                         <li>✓ Basic commands</li>
                     </ul>
                     <div class="plan-price">$0<span>/mo</span></div>
@@ -258,7 +259,7 @@
                         <li>✓ Unlimited React Roles</li>
                         <li>✓ Full Server Guard</li>
                         <li>✓ XP + Leaderboards</li>
-                        <li>✓ Giveaways</li>
+                        <li>✓ Social Notifications</li>
                         <li>✓ Custom Commands</li>
                     </ul>
                     <div class="plan-price">$${p}<span> total</span></div>
