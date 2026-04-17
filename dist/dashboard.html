@@ -7409,10 +7409,16 @@
             if (!channel) return alert('Select a channel');
             
             try {
+                const body = { 
+                    channel: channel, 
+                    title: title, 
+                    description: desc, 
+                    buttonLabel: btnLabel 
+                };
                 const res = await fetch('/api/ticket/message?guildId=' + guildId, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ channel, title, description: desc, buttonLabel }),
+                    body: JSON.stringify(body),
                     credentials: 'include'
                 });
                 const data = await res.json();
