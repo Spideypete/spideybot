@@ -6426,11 +6426,12 @@
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
             
+            let config = {};
             try {
                 const res = await fetch(`/api/config/${guildId}`, { credentials: 'include' });
                 const guildConfig = res.ok ? await res.json() : {};
-                const config = guildConfig['xp-levels'] || {};
-            } catch(e) { const config = {}; }
+                config = guildConfig['xp-levels'] || {};
+            } catch(e) { console.error('Error loading XP config:', e); }
             
             const xpPerMessage = document.getElementById('xp_perMessage');
             const xpPerVoice = document.getElementById('xp_perVoice');
