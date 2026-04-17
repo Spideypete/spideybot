@@ -8011,6 +8011,24 @@ app.get("/api/guild/:guildId/roles", (req, res) => {
   res.json({ roles });
 });
 
+// Get text channels in a guild
+app.get("/api/guild/:guildId/channels", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const channels = guild.channels.cache
+    .filter(ch => ch.type === 0) // text channels only
+    .map(ch => ({
+      id: ch.id,
+      name: ch.name
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json({ channels });
+});
+
 // Get all roles in a guild
 app.get("/api/roles/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });

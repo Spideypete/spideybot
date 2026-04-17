@@ -7009,6 +7009,41 @@
         }
 
         async function loadLeaderboards() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            // Load channels for leaderboard dropdowns
+            const lbChannels = ['lb_xp_channel', 'lb_gambling_channel', 'lb_trivia_channel', 'lb_combined_channel'];
+            for (const selId of lbChannels) {
+                const sel = document.getElementById(selId);
+                if (sel) {
+                    const currentVal = sel.value;
+                    sel.innerHTML = '<option value="">Loading...</option>';
+                    try {
+                        const res = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
+                        const data = await res.json();
+                        sel.innerHTML = '<option value="">-- Select Channel --</option>';
+                        (data.channels || []).forEach(ch => {
+                            sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
+                        });
+                        sel.value = currentVal;
+                    } catch(e) {
+                        sel.innerHTML = '<option value="">Error loading</option>';
+                    }
+                }
+            }
+            
+            // Load saved leaderboard config
+            const config = loadConfig();
+            const lbConfig = config.guilds[guildId]?.leaderboards || {};
+            
+            if (lbConfig.xp?.channel) document.getElementById('lb_xp_channel').value = lbConfig.xp.channel;
+            if (lbConfig.xp?.enabled) document.getElementById('lb_xp_enabled').checked = true;
+            if (lbConfig.xp?.count) document.getElementById('lb_xp_count').value = lbConfig.xp.count;
+            
+            if (lbConfig.gambling?.channel) document.getElementById('lb_gambling_channel').value = lbConfig.gambling.channel;
+            if (lbConfig.trivia?.channel) document.getElementById('lb_trivia_channel').value = lbConfig.trivia.channel;
+            
             await loadTabConfig('leaderboards');
         }
 
@@ -7085,7 +7120,34 @@
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
             
+            // Load channels for dropdown
+            const channelDropdowns = ['giveaway_channel', 'giveaway_channel_select'];
+            for (const selId of channelDropdowns) {
+                const sel = document.getElementById(selId);
+                if (sel) {
+                    const currentVal = sel.value;
+                    sel.innerHTML = '<option value="">Loading...</option>';
+                    try {
+                        const res = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
+                        const data = await res.json();
+                        sel.innerHTML = '<option value="">-- Select Channel --</option>';
+                        (data.channels || []).forEach(ch => {
+                            sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
+                        });
+                        sel.value = currentVal;
+                    } catch(e) {
+                        sel.innerHTML = '<option value="">Error loading</option>';
+                    }
+                }
+            }
+            
+            // Load saved settings
             const config = loadConfig();
+            const settings = config.guilds[guildId]?.['giveaway-settings'] || {};
+            if (settings.defaultChannel) {
+                document.getElementById('giveaway_channel').value = settings.defaultChannel;
+            }
+            
             const giveaways = config.guilds[guildId]?.giveaways || {};
             
             // Count active giveaways
