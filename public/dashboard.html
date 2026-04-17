@@ -3503,6 +3503,13 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="xp_autoRoles" checked/> <span>Auto-assign level roles</span></label>
                                 </div>
+                                <div class="form-group">
+                                    <div class="form-label">Level-Up Channel</div>
+                                    <select id="xp_announceChannel" class="form-input"><option value="">-- Select Channel --</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="xp_announceLevelUps" checked/> <span>Announce Level-Ups</span></label>
+                                </div>
                                 <button class="btn btn-primary" onclick="saveXPLevels()">Save Settings</button>
                             </div>
                         </div>
@@ -6462,6 +6469,29 @@
                 }
             }
             
+            const announceChannel = document.getElementById('xp_announceChannel');
+            const announceLevelUps = document.getElementById('xp_announceLevelUps');
+            if (announceChannel) {
+                announceChannel.innerHTML = '<option value="">-- Select Channel --</option>';
+                if (!window.cachedChannels?.[guildId]) {
+                    try {
+                        const res = await fetch('/api/channels/' + guildId, { credentials: 'include' });
+                        const data = await res.json();
+                        window.cachedChannels = window.cachedChannels || {};
+                        window.cachedChannels[guildId] = data.channels || [];
+                    } catch (e) { window.cachedChannels[guildId] = []; }
+                }
+                const channels = window.cachedChannels[guildId] || [];
+                channels.forEach(ch => {
+                    const opt = document.createElement('option');
+                    opt.value = ch.id;
+                    opt.textContent = '#' + ch.name;
+                    announceChannel.appendChild(opt);
+                });
+                if (config.announcementChannel) announceChannel.value = config.announcementChannel;
+            }
+            if (announceLevelUps) announceLevelUps.checked = config.announceLevelUps !== false;
+            
             renderLevelRoles(config.levelRoles || {});
         }
 
@@ -6495,6 +6525,8 @@
             const xpPerVoice = parseInt(document.getElementById('xp_perVoice')?.value) || 2;
             const xpPerLevel = parseInt(document.getElementById('xp_perLevel')?.value) || 500;
             const autoAssignRoles = document.getElementById('xp_autoRoles')?.checked !== false;
+            const announcementChannel = document.getElementById('xp_announceChannel')?.value || '';
+            const announceLevelUps = document.getElementById('xp_announceLevelUps')?.checked !== false;
             
             const currentConfig = await loadTabConfig('xp-levels') || {};
             
@@ -6503,6 +6535,8 @@
                 xpPerVoice,
                 xpPerLevel,
                 autoAssignRoles,
+                announcementChannel,
+                announceLevelUps,
                 levelRoles: currentConfig.levelRoles || {}
             });
             
