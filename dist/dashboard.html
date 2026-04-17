@@ -3148,10 +3148,18 @@
                                     <input type="text" id="rr_emoji" class="form-input" placeholder="e.g. 🎮 or a custom emoji name"/>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Role to Assign</div>
-                                    <select id="rr_roleSelect" class="form-input role-select">
-                                        <option value="">Select role...</option>
-                                    </select>
+                                    <div class="form-label">Roles to Assign (search & multi-select)</div>
+                                    <input type="text" id="rr_roleSearch" class="form-input" placeholder="Search for roles..." list="rr_roleList" oninput="filterRolesRR(this.value)"/>
+                                    <datalist id="rr_roleList"></datalist>
+                                    <input type="hidden" id="rr_roleSelect" value=""/>
+                                    <div id="rr_selectedRoles" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;"></div>
+                                </div>
+                                <div class="form-group" style="margin-top:0.5rem;">
+                                    <div class="form-label">Required Roles <span style="font-size:0.7rem;color:rgba(255,255,255,0.4);">(users need ONE of these to claim)</span></div>
+                                    <input type="text" id="rr_requiredRoleSearch" class="form-input" placeholder="Search for required roles..." list="rr_requiredRoleList" oninput="filterRequiredRolesRR(this.value)"/>
+                                    <datalist id="rr_requiredRoleList"></datalist>
+                                    <input type="hidden" id="rr_requiredRoleSelect" value=""/>
+                                    <div id="rr_selectedRequiredRoles" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;"></div>
                                 </div>
                                 <button class="btn btn-primary" onclick="addReactRole()" style="width:100%;">➕ Add Reaction Role</button>
                             </div>
@@ -5902,14 +5910,17 @@
             
             container.innerHTML = headerHtml;
             entries.forEach((entry, i) => {
+                const requiredRoles = entry.requiredRoleNames || entry.requiredRoleIds;
+                const hasRequired = requiredRoles && Array.isArray(requiredRoles) && requiredRoles.length > 0;
                 const row = document.createElement('div');
                 row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; background:rgba(0,212,255,0.08); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(0,212,255,0.15);';
                 row.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="display:flex; align-items:center; gap:0.75rem; flex:1;">
                         <span style="font-size:1.3rem;">${entry.emoji || '❓'}</span>
-                        <div>
+                        <div style="flex:1;">
                             <div style="font-weight:600; color:#fff;">@${entry.roleName || entry.roleId}</div>
                             <div style="font-size:0.75rem; color:rgba(255,255,255,0.5);">Channel: #${entry.channelName || entry.channelId} &bull; Msg: ${entry.messageId}</div>
+                            ${hasRequired ? `<div style="font-size:0.75rem; color:rgba(255,68,68,0.8); margin-top:0.25rem;">⚠️ Requires: @${requiredRoles.join(', @')}</div>` : ''}
                         </div>
                     </div>
                     <button onclick="deleteReactRole(${i})" style="background:rgba(255,107,107,0.2); border:1px solid rgba(255,107,107,0.3); color:#ff6b6b; padding:0.3rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;">🗑️ Remove</button>
@@ -6142,12 +6153,13 @@
             const messageId = document.getElementById('rr_messageId')?.value?.trim();
             const emoji = document.getElementById('rr_emoji')?.value?.trim();
             const roleId = document.getElementById('rr_roleSelect')?.value;
+            const requiredRoleIds = document.getElementById('rr_requiredRoleSelect')?.value || '';
             if (!channelId || !messageId || !emoji || !roleId) return alert('Please fill in all fields: Channel, Message ID, Emoji, and Role');
             try {
                 const res = await fetch('/api/bot-config/react-roles/add?guildId=' + guildId, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ channelId, messageId, emoji, roleId }),
+                    body: JSON.stringify({ channelId, messageId, emoji, roleId, requiredRoleIds }),
                     credentials: 'include'
                 });
                 const data = await res.json();
@@ -6155,6 +6167,12 @@
                     alert('✅ Reaction role added! The bot will now add the reaction to the message.');
                     document.getElementById('rr_messageId').value = '';
                     document.getElementById('rr_emoji').value = '';
+                    selectedReactRoles = [];
+                    selectedRequiredRoles = [];
+                    document.getElementById('rr_selectedRoles').innerHTML = '';
+                    document.getElementById('rr_selectedRequiredRoles').innerHTML = '';
+                    document.getElementById('rr_roleSelect').value = '';
+                    document.getElementById('rr_requiredRoleSelect').value = '';
                     loadReactRoles();
                 } else {
                     alert('❌ ' + (data.error || data.message || 'Failed to add reaction role'));
@@ -7563,7 +7581,98 @@
                                                 borderColor: memberColors[context.dataIndex],
                                                 backgroundColor: memberColors[context.dataIndex]
                                             };
-                                        }
+// Load roles for dropdown
+            const roleSelect = document.getElementById('rr_roleSelect');
+            const roleDatalist = document.getElementById('rr_roleList');
+            const rrSelected = document.getElementById('rr_selectedRoles');
+            const requiredRoleDatalist = document.getElementById('rr_requiredRoleList');
+            if (roleSelect && roleDatalist && roleDatalist.options.length <= 1) {
+                try {
+                    const res = await fetch('/api/guild/' + guildId + '/roles', { credentials: 'include' });
+                    const data = await res.json();
+                    const roles = data.roles || [];
+                    roles.forEach(role => {
+                        const opt = document.createElement('option');
+                        opt.value = role.id;
+                        opt.textContent = '@' + role.name;
+                        opt.dataset.name = role.name;
+                        roleSelect.appendChild(opt);
+                        
+                        const dOpt = document.createElement('option');
+                        dOpt.value = role.name;
+                        dOpt.dataset.id = role.id;
+                        roleDatalist.appendChild(dOpt);
+                        
+                        // Also add to required roles datalist
+                        if (requiredRoleDatalist) {
+                            const rOpt = document.createElement('option');
+                            rOpt.value = role.name;
+                            rOpt.dataset.id = role.id;
+                            requiredRoleDatalist.appendChild(rOpt);
+                        }
+                    });
+                } catch(e) {}
+            }
+        }
+
+        let selectedReactRoles = [];
+        let selectedRequiredRoles = [];
+        
+function filterRolesRR(term) {
+            const roleDatalist = document.getElementById('rr_roleList');
+            const opts = roleDatalist.querySelectorAll('option');
+            let found = null;
+            opts.forEach(opt => {
+                if (opt.value.toLowerCase().includes(term.toLowerCase())) {
+                    found = opt;
+                }
+            });
+            if (found && found.dataset.id) {
+                if (!selectedReactRoles.includes(found.dataset.id)) {
+                    selectedReactRoles.push(found.dataset.id);
+                    const rrSelected = document.getElementById('rr_selectedRoles');
+                    const chip = document.createElement('span');
+                    chip.style.cssText = 'background:rgba(145,81,255,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
+                    chip.textContent = '@' + found.value;
+                    chip.dataset.id = found.dataset.id;
+                    chip.onclick = function() {
+                        selectedReactRoles = selectedReactRoles.filter(id => id !== this.dataset.id);
+                        this.remove();
+                    };
+                    rrSelected.appendChild(chip);
+                    document.getElementById('rr_roleSelect').value = selectedReactRoles.join(',');
+                }
+                document.getElementById('rr_roleSearch').value = '';
+            }
+        }
+        
+        function filterRequiredRolesRR(term) {
+            const roleDatalist = document.getElementById('rr_requiredRoleList');
+            const opts = roleDatalist.querySelectorAll('option');
+            let found = null;
+            opts.forEach(opt => {
+                if (opt.value.toLowerCase().includes(term.toLowerCase())) {
+                    found = opt;
+                }
+            });
+            if (found && found.dataset.id) {
+                if (!selectedRequiredRoles.includes(found.dataset.id)) {
+                    selectedRequiredRoles.push(found.dataset.id);
+                    const rrSelected = document.getElementById('rr_selectedRequiredRoles');
+                    const chip = document.createElement('span');
+                    chip.style.cssText = 'background:rgba(255,68,68,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
+                    chip.textContent = '@' + found.value;
+                    chip.dataset.id = found.dataset.id;
+                    chip.onclick = function() {
+                        selectedRequiredRoles = selectedRequiredRoles.filter(id => id !== this.dataset.id);
+                        this.remove();
+                    };
+                    rrSelected.appendChild(chip);
+                    document.getElementById('rr_requiredRoleSelect').value = selectedRequiredRoles.join(',');
+                }
+                document.getElementById('rr_requiredRoleSearch').value = '';
+            }
+        }
                                     }
                                 }
                             },

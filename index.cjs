@@ -1295,6 +1295,30 @@ client.on("messageReactionAdd", async (reaction, user) => {
   // Find matching entry
   const entry = rr.entries.find(e => e.messageId === messageId && (e.emoji === emojiStr || e.emoji === reaction.emoji.name));
   if (!entry) return;
+  
+  // Check required roles if specified
+  const requiredRoles = entry.requiredRoleIds;
+  if (requiredRoles && Array.isArray(requiredRoles) && requiredRoles.length > 0) {
+    const member = await guild.members.fetch(user.id).catch(() => null);
+    if (!member) return;
+    const hasRequired = requiredRoles.some(reqRoleId => member.roles.cache.has(reqRoleId));
+    if (!hasRequired) {
+      // User doesn't have required role - remove their reaction and warn them
+      try {
+        await reaction.users.remove(user.id).catch(() => {});
+        try {
+          await user.send({ embeds: [
+            new EmbedBuilder()
+              .setColor(0xFF4444)
+              .setTitle('❌ Role Unavailable')
+              .setDescription(`You need one of the required roles to claim this reaction role. Contact an admin for access.`)
+              .setTimestamp()
+          ]});
+        } catch (e) { /* DMs may be disabled */ }
+      } catch (e) {}
+      return;
+    }
+  }
 
   try {
     const guild = reaction.message.guild;
@@ -6823,8 +6847,26 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
-    const { channelId, messageId, emoji, roleId } = req.body;
+    const { channelId, messageId, emoji, roleId, requiredRoleIds } = req.body;
     if (!channelId || !messageId || !emoji || !roleId) return res.json({ success: false, error: "Missing fields" });
+    
+    // Parse requiredRoleIds from comma-separated string or array
+    let requiredRoles = [];
+    let requiredRoleNames = [];
+    if (requiredRoleIds) {
+      const roleIdArray = typeof requiredRoleIds === 'string' 
+        ? requiredRoleIds.split(',').filter(r => r.trim())
+        : (Array.isArray(requiredRoleIds) ? requiredRoleIds.filter(r => r) : []);
+      
+      // Verify required roles exist and collect names
+      for (const reqRoleId of roleIdArray) {
+        const reqRole = guild.roles.cache.get(reqRoleId);
+        if (!reqRole) {
+          return res.json({ success: false, error: "Required role not found: " + reqRoleId });
+        requiredRoles.push(reqRoleId);
+        requiredRoleNames.push(reqRole.name);
+      }
+    }
 
     const guild = client.guilds.cache.get(guildId);
     if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
@@ -6898,12 +6940,14 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
       emoji,
       roleId,
       roleName: role.name,
+      requiredRoleIds: requiredRoles,
+      requiredRoleNames: requiredRoleNames,
       createdAt: new Date().toISOString()
     });
 
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log(`✅ React role added: ${emoji} → @${role.name} on message ${messageId} (Guild: ${guildId})`);
-    addActivity(guildId, "🎭", "Admin", `added reaction role: ${emoji} → @${role.name}`);
+    console.log(`✅ React role added: ${emoji} → @${role.name} on message ${messageId}${requiredRoles.length ? ' (requires: ' + requiredRoleNames.join(', ') + ')' : ''} (Guild: ${guildId})`);
+    addActivity(guildId, "🎭", "Admin", `added reaction role: ${emoji} → @${role.name}${requiredRoles.length ? ' (requires: ' + requiredRoleNames.join(', ') + ')' : ''}`);
     res.json({ success: true, message: "Reaction role added" });
   } catch (err) {
     console.error('❌ Error adding react role:', err);
