@@ -469,6 +469,12 @@ function setCachedMemberStats(guildId, data) {
 const COMMANDS_META = {
   help: { category: 'info', description: 'Show full command list', usage: '/help' },
   adminhelp: { category: 'info', description: 'Show admin-only commands', usage: '/adminhelp', adminOnly: true },
+  
+  // Leveling & XP
+  xp: { category: 'leveling', subsection: 'Status', description: 'Check your XP and level', usage: '/xp' },
+  level: { category: 'leveling', subsection: 'Status', description: 'Check your level and XP', usage: '/level' },
+  leaderboard: { category: 'leveling', subsection: 'Status', description: 'View server leaderboard', usage: '/leaderboard' },
+  
   kick: { category: 'moderation', subsection: 'Core', description: 'Remove member from server', usage: '/kick @user [reason]' },
   ban: { category: 'moderation', subsection: 'Core', description: 'Permanently ban member', usage: '/ban @user [reason]' },
   warn: { category: 'moderation', subsection: 'Core', description: 'Warn member (tracked & logged)', usage: '/warn @user [reason]' },
