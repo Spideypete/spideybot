@@ -6563,11 +6563,20 @@
             if (!level || !roleId) return alert('Enter level and select a role');
             
             try {
+                // First load existing config to preserve other level roles
+                const loadRes = await fetch(`/api/config/${guildId}`, { credentials: 'include' });
+                const guildConfig = loadRes.ok ? await loadRes.json() : {};
+                const existingXp = guildConfig['xp-levels'] || {};
+                const existingLevelRoles = existingXp.levelRoles || {};
+                
+                // Merge with new level role
+                existingLevelRoles['level_' + level] = roleId;
+                
                 const res = await fetch(`/api/config/${guildId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        'xp-levels': { levelRoles: { ['level_' + level]: roleId } }
+                        'xp-levels': { ...existingXp, levelRoles: existingLevelRoles }
                     }),
                     credentials: 'include'
                 });
