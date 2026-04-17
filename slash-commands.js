@@ -158,6 +158,14 @@ const slashCommands = [
     .setName('setuplevelroles')
     .setDescription('Auto-create level roles'),
 
+  new SlashCommandBuilder()
+    .setName('xp')
+    .setDescription('Check your XP and level status'),
+    
+  new SlashCommandBuilder()
+    .setName('level')
+    .setDescription('Check your XP and level status'),
+
   // ===================== STREAMER MONITORING =====================
   new SlashCommandBuilder()
     .setName('addtwitchuser')

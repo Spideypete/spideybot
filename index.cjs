@@ -3029,25 +3029,7 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== LEVELING COMMANDS ==============
-  if (msg.content === "/level") {
-    const levels = guildConfig.levels || {};
-    const userXp = levels[msg.author.id] || 0;
-    const level = Math.floor(userXp / 500) + 1;
-    const xpInLevel = userXp % 500;
-    const nextLevelXp = 500;
-
-    const levelEmbed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle(`📊 ${msg.author.username}'s Level`)
-      .addFields(
-        { name: "Level", value: `${level}`, inline: true },
-        { name: "Total XP", value: `${userXp}`, inline: true },
-        { name: "Progress", value: `${xpInLevel}/${nextLevelXp} XP`, inline: false }
-      )
-      .setThumbnail(msg.author.displayAvatarURL());
-
-    return msg.reply({ embeds: [levelEmbed] });
-  }
+  // /level and /xp handled above
 
   if (msg.content === "/xpleaderboard") {
     const levels = guildConfig.levels || {};
