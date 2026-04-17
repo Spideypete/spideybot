@@ -6519,6 +6519,8 @@ app.post("/api/config/:guildId", (req, res) => {
 
   Object.assign(config.guilds[guildId], req.body);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  
+  console.log('[CONFIG SAVE] Guild:', guildId, 'Data:', req.body);
   res.json({ success: true });
 });
 
