@@ -3515,7 +3515,9 @@
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Role</div>
-                                    <select id="lr_role" class="form-input"><option value="">-- Select Role --</option></select>
+                                    <input type="text" id="lr_roleSearch" class="form-input" placeholder="Search for a role..." list="roleListOptions" oninput="filterRoles(this.value)"/>
+                                    <datalist id="roleListOptions"></datalist>
+                                    <select id="lr_role" class="form-input" style="display:none;"><option value="">-- Select Role --</option></select>
                                 </div>
                                 <button class="btn btn-primary" onclick="addLevelRole()">Add Level Role</button>
                             </div>
@@ -6447,6 +6449,17 @@
                     opt.textContent = '@' + role.name;
                     lrRole.appendChild(opt);
                 });
+                
+                const datalist = document.getElementById('roleListOptions');
+                if (datalist) {
+                    datalist.innerHTML = '';
+                    roles.forEach(role => {
+                        const dOpt = document.createElement('option');
+                        dOpt.value = role.name;
+                        dOpt.dataset.id = role.id;
+                        datalist.appendChild(dOpt);
+                    });
+                }
             }
             
             renderLevelRoles(config.levelRoles || {});
@@ -6501,7 +6514,7 @@
             if (!guildId) return alert('Select a server first');
             
             const level = parseInt(document.getElementById('lr_level')?.value);
-            const roleId = document.getElementById('lr_role')?.value;
+            const roleId = document.getElementById('lr_role')?.value || document.getElementById('lr_roleSearch')?.dataset?.selectedId;
             
             if (!level || !roleId) return alert('Enter level and select a role');
             
@@ -6515,8 +6528,28 @@
             });
             
             document.getElementById('lr_level').value = '';
+            document.getElementById('lr_roleSearch').value = '';
             renderLevelRoles(levelRoles);
             alert('✅ Level role added!');
+        }
+
+        function filterRoles(searchTerm) {
+            const datalist = document.getElementById('roleListOptions');
+            const select = document.getElementById('lr_role');
+            if (!datalist || !select) return;
+            
+            const term = searchTerm.toLowerCase();
+            let foundRole = null;
+            
+            Array.from(select.options).forEach(opt => {
+                if (opt.value && opt.textContent.toLowerCase().includes(term)) {
+                    foundRole = opt;
+                }
+            });
+            
+            if (foundRole) {
+                document.getElementById('lr_roleSearch').dataset.selectedId = foundRole.value;
+            }
         }
 
         async function deleteLevelRole(key) {

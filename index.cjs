@@ -1865,10 +1865,13 @@ client.on("messageCreate", async (msg) => {
   // Gain XP on message (every message)
   if (!guildConfig.levels) guildConfig.levels = {};
   const levels = guildConfig.levels;
-  const xpGain = Math.floor(Math.random() * 25) + 5;
+  const xpSettings = guildConfig.xpSettings || {};
+  const xpPerMsg = xpSettings.perMessage || 15;
+  const xpGain = xpPerMsg;
   levels[msg.author.id + "_xp"] = (levels[msg.author.id + "_xp"] || 0) + xpGain;
   const currentLevel = levels[msg.author.id] || 0;
-  const xpNeeded = (currentLevel + 1) * 100;
+  const xpPerLevel = xpSettings.perLevel || 500;
+  const xpNeeded = (currentLevel + 1) * xpPerLevel;
   if (levels[msg.author.id + "_xp"] >= xpNeeded) {
     levels[msg.author.id] = currentLevel + 1;
     levels[msg.author.id + "_xp"] = 0;
