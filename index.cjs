@@ -1876,6 +1876,14 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [levelEmbed] });
   }
 
+  function awardGameXp(userId, gameType) {
+    const gameXpConfig = guildConfig['game-xp'] || {};
+    const xpAmount = gameXpConfig[gameType] || 25;
+    if (!guildConfig.levels) guildConfig.levels = {};
+    guildConfig.levels[userId + "_xp"] = (guildConfig.levels[userId + "_xp"] || 0) + xpAmount;
+    return xpAmount;
+  }
+
   if (msg.content === "/leaderboard") {
     const levels = guildConfig.levels || {};
     const sorted = Object.entries(levels)
@@ -2133,12 +2141,14 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content === "/dice") {
     const roll = Math.floor(Math.random() * 6) + 1;
-    return msg.reply(`🎲 You rolled a **${roll}**!`);
+    const xpGain = awardGameXp(msg.author.id, 'dice');
+    return msg.reply(`🎲 You rolled a **${roll}**! (+${xpGain} XP)`);
   }
 
   if (msg.content === "/coin") {
     const flip = Math.random() < 0.5 ? "Heads" : "Tails";
-    return msg.reply(`🪙 **${flip}**!`);
+    const xpGain = awardGameXp(msg.author.id, 'coinflip');
+    return msg.reply(`🪙 **${flip}**! (+${xpGain} XP)`);
   }
 
   if (msg.content === "/trivia") {
@@ -2148,9 +2158,10 @@ client.on("messageCreate", async (msg) => {
       { question: "What is the largest planet?", answer: "Jupiter" }
     ];
     const q = trivia[Math.floor(Math.random() * trivia.length)];
+    const xpGain = awardGameXp(msg.author.id, 'trivia');
     const triviaEmbed = new EmbedBuilder()
       .setColor('#004B87')
-      .setTitle("🧠 Trivia Question")
+      .setTitle("🧠 Trivia Question (+" + xpGain + " XP)")
       .setDescription(q.question)
       .setFooter({ text: `Answer: ${q.answer}` });
     return msg.reply({ embeds: [triviaEmbed] });

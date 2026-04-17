@@ -3530,6 +3530,31 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header"><div class="panel-title">🎮 Game XP</div></div>
+                            <div class="panel-content">
+                                <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-bottom:0.75rem;">Set XP rewards for playing bot games</div>
+                                <div id="gameXpList">
+                                    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;">
+                                        <span>🎰 Gambling</span>
+                                        <input type="number" id="gameXp_gambling" class="form-input" style="width:80px;" placeholder="50" value="50"/>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;">
+                                        <span>❓ Trivia</span>
+                                        <input type="number" id="gameXp_trivia" class="form-input" style="width:80px;" placeholder="100" value="100"/>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;">
+                                        <span>🎲 Dice</span>
+                                        <input type="number" id="gameXp_dice" class="form-input" style="width:80px;" placeholder="25" value="25"/>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;">
+                                        <span>🪙 Coin Flip</span>
+                                        <input type="number" id="gameXp_coinflip" class="form-input" style="width:80px;" placeholder="30" value="30"/>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveGameXp()" style="margin-top:0.5rem;">Save Game XP</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -6740,6 +6765,34 @@
                 }
             } catch(e) {
                 console.error(e);
+                alert('❌ Error: ' + e.message);
+            }
+        }
+
+        async function saveGameXp() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const gameXp = {
+                gambling: parseInt(document.getElementById('gameXp_gambling')?.value) || 50,
+                trivia: parseInt(document.getElementById('gameXp_trivia')?.value) || 100,
+                dice: parseInt(document.getElementById('gameXp_dice')?.value) || 25,
+                coinflip: parseInt(document.getElementById('gameXp_coinflip')?.value) || 30
+            };
+            
+            try {
+                const res = await fetch(`/api/config/${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 'game-xp': gameXp }),
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    alert('✅ Game XP saved!');
+                } else {
+                    alert('❌ Failed to save Game XP');
+                }
+            } catch(e) {
                 alert('❌ Error: ' + e.message);
             }
         }
