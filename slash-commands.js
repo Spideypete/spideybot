@@ -465,6 +465,22 @@ const slashCommands = [
     .setDescription('Change command prefix')
     .addStringOption(option =>
       option.setName('prefix').setDescription('New prefix').setRequired(true)),
+
+  // Leveling Commands
+  new SlashCommandBuilder()
+    .setName('xp')
+    .setDescription('Check your XP and level')
+    .setDMPermission(true),
+
+  new SlashCommandBuilder()
+    .setName('level')
+    .setDescription('Check your level and XP')
+    .setDMPermission(true),
+
+  new SlashCommandBuilder()
+    .setName('leaderboard')
+    .setDescription('View the server leaderboard')
+    .setDMPermission(true),
 ];
 
 module.exports = { slashCommands };
