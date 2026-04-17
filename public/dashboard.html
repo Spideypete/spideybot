@@ -6518,19 +6518,35 @@
             
             if (!level || !roleId) return alert('Enter level and select a role');
             
+            console.log('[addLevelRole] Loading config...');
             const currentConfig = await loadTabConfig('xp-levels') || {};
+            console.log('[addLevelRole] Current config:', currentConfig);
+            
             const levelRoles = currentConfig.levelRoles || {};
+            console.log('[addLevelRole] Adding level_' + level + ' = ' + roleId);
             levelRoles['level_' + level] = roleId;
             
-            await saveTabConfig('xp-levels', {
+            const saveData = {
                 ...currentConfig,
                 levelRoles
+            };
+            console.log('[addLevelRole] Saving:', saveData);
+            
+            const res = await fetch(`/api/config/xp-levels?guildId=${guildId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(saveData),
+                credentials: 'include'
             });
             
-            document.getElementById('lr_level').value = '';
-            document.getElementById('lr_roleSearch').value = '';
-            renderLevelRoles(levelRoles);
-            alert('✅ Level role added!');
+            if (res.ok) {
+                document.getElementById('lr_level').value = '';
+                document.getElementById('lr_roleSearch').value = '';
+                renderLevelRoles(levelRoles);
+                alert('✅ Level role added!');
+            } else {
+                alert('❌ Failed to save level role');
+            }
         }
 
         function filterRoles(searchTerm) {
