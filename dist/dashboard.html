@@ -3678,31 +3678,41 @@
                     </div>
                     <div class="content-grid">
                         <div class="panel">
+                            <div class="panel-header"><div class="panel-title">⚙️ Giveaway Settings</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Default Channel</div>
+                                    <select id="giveaway_channel" class="form-input"><option value="">-- Select Channel --</option></select>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveGiveawaySettings()">Save Channel</button>
+                            </div>
+                        </div>
+                        <div class="panel">
                             <div class="panel-header"><div class="panel-title">🎁 Start New Giveaway</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Prize</div>
-                                    <input type="text" class="form-input" placeholder="e.g., Discord Nitro"/>
+                                    <input type="text" id="giveaway_prize" class="form-input" placeholder="e.g., Discord Nitro"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                    <select id="giveaway_channel_select" class="form-input"><option value="">-- Select Channel --</option></select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Duration (minutes)</div>
-                                    <input type="number" class="form-input" placeholder="60"/>
+                                    <input type="number" id="giveaway_duration" class="form-input" placeholder="60" value="60"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Winners</div>
-                                    <input type="number" class="form-input" placeholder="1" value="1"/>
+                                    <input type="number" id="giveaway_winners" class="form-input" placeholder="1" value="1"/>
                                 </div>
                                 <button class="btn btn-primary" onclick="createGiveaway()">Start Giveaway</button>
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📊 Active Giveaways</div></div>
-                            <div class="panel-content">
-                                <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No active giveaways</div>
+                            <div class="panel-header"><div class="panel-title">📊 Active Giveaways <span id="activeGiveawayCount" style="font-size:0.8rem;font-weight:normal;">(0)</span></div></div>
+                            <div class="panel-content" id="activeGiveawaysList">
+                                <div style="color: rgba(255, 255, 255, 0.5); text-align: center; padding: 1rem;">Loading...</div>
                             </div>
                         </div>
                     </div>
@@ -7020,15 +7030,103 @@
                 const ent = await entRes.json();
                 if (ent.entitlements && !ent.entitlements.canCreateGiveaway) {
                     const current = ent.entitlements.currentGiveaways;
-                    alert('🔒 Giveaway Limit Reached!\n\nYour server has ' + current + ' active giveaway(s).\n\nUpgrade to Premium for unlimited giveaways!');
+                    alert('🔒 Giveaway Limit Reached!\n\nYour server has ' + current + ' active giveaway(s).\n\nUpgrade to Premium for more!');
                     return;
                 }
             } catch (e) { console.error('Entitlement check failed:', e); }
             
-            const prize = document.querySelector('#giveaways-section input[placeholder*="Discord"]')?.value || '';
-            const duration = document.querySelector('#giveaways-section input[placeholder*="minutes"]')?.value || '60';
+            const prize = document.getElementById('giveaway_prize')?.value || '';
+            const channel = document.getElementById('giveaway_channel_select')?.value || '';
+            const duration = parseInt(document.getElementById('giveaway_duration')?.value) || 60;
+            const winners = parseInt(document.getElementById('giveaway_winners')?.value) || 1;
+            
             if (!prize) return alert('Enter a prize');
-            await saveTabConfig('giveaways', { prize, duration: parseInt(duration), active: true });
+            
+            try {
+                const res = await fetch('/api/giveaway/create?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prize, channel, duration, winners }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Giveaway started!');
+                    document.getElementById('giveaway_prize').value = '';
+                    loadGiveaways();
+                } else {
+                    alert('❌ ' + (data.error || 'Failed to start giveaway'));
+                }
+            } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+
+        async function saveGiveawaySettings() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const channel = document.getElementById('giveaway_channel')?.value;
+            
+            try {
+                const res = await fetch(`/api/config/${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 'giveaway-settings': { defaultChannel: channel } }),
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    alert('✅ Settings saved!');
+                } else {
+                    alert('❌ Failed to save');
+                }
+            } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+
+        async function loadGiveaways() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            const config = loadConfig();
+            const giveaways = config.guilds[guildId]?.giveaways || {};
+            
+            // Count active giveaways
+            const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active' || g.status === 'open');
+            const count = activeGiveaways.length;
+            
+            document.getElementById('activeGiveawayCount').textContent = '(' + count + ')';
+            
+            const list = document.getElementById('activeGiveawaysList');
+            if (count === 0) {
+                list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">No active giveaways</div>';
+                return;
+            }
+            
+            let html = '';
+            Object.keys(giveaways).forEach((name, i) => {
+                const g = giveaways[name];
+                if (g.status === 'active' || g.status === 'open') {
+                    html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
+                        <div><strong>${g.prize}</strong><br><span style="font-size:0.75rem;color:#888;">${g.winners} winner(s) • ${g.endsAt ? new Date(g.endsAt).toLocaleString() : 'Rolling...'}</span></div>
+                        <button onclick="endGiveaway('${name}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">End</button>
+                    </div>`;
+                }
+            });
+            list.innerHTML = html || '<div style="color:rgba(255,255,255,0.5);text-align:center;">No active giveaways</div>';
+        }
+
+        async function endGiveaway(name) {
+            if (!confirm('End this giveaway?')) return;
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            try {
+                const res = await fetch('/api/giveaway/end?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                    credentials: 'include'
+                });
+                loadGiveaways();
+            } catch (e) { console.error(e); }
         }
 
         async function loadSocialNotifs() {

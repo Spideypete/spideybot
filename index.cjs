@@ -6594,6 +6594,81 @@ app.post("/api/config/:guildId", (req, res) => {
   res.json({ success: true });
 });
 
+// Giveaway API
+app.post("/api/giveaway/create", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, error: "No guild" });
+  
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
+  
+  const { prize, channel, duration, winners } = req.body;
+  if (!prize) return res.json({ success: false, error: "Prize required" });
+  
+  const config = loadConfig();
+  const tiers = getTierLimits(guildId);
+  const giveaways = config.guilds[guildId]?.giveaways || {};
+  const activeCount = Object.values(giveaways).filter(g => g.status === 'active').length;
+  
+  if (tiers.maxGiveaways !== Infinity && activeCount >= tiers.maxGiveaways) {
+    return res.json({ success: false, error: `Giveaway limit reached (${tiers.maxGiveaways}). Upgrade for more!` });
+  }
+  
+  const name = prize.toLowerCase().replace(/\s+/g, '_');
+  const endsAt = Date.now() + (duration * 60 * 1000);
+  
+  config.guilds[guildId].giveaways = giveaways;
+  config.guilds[guildId].giveaways[name] = {
+    prize,
+    channel,
+    duration,
+    winners: winners || 1,
+    status: 'active',
+    endsAt,
+    createdAt: new Date().toISOString()
+  };
+  
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  
+  // Try to post in channel
+  const guild = client.guilds.cache.get(guildId);
+  if (guild && channel) {
+    const ch = guild.channels.cache.get(channel);
+    if (ch) {
+      ch.send({ embeds: [new EmbedBuilder()
+        .setColor('#9151ff')
+        .setTitle('🎁 Giveaway Started!')
+        .setDescription(`**${prize}**\n\nWinners: ${winners || 1}\nDuration: ${duration} minutes\n\nReact with 🎁 to enter!`)
+        .setFooter({ text: 'SPIDEY BOT' })
+      ]}).catch(() => {});
+    }
+  }
+  
+  res.json({ success: true });
+});
+
+app.post("/api/giveaway/end", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, error: "No guild" });
+  
+  const { name } = req.body;
+  
+  const config = loadConfig();
+  const giveaways = config.guilds[guildId]?.giveaways || {};
+  
+  if (giveaways[name]) {
+    giveaways[name].status = 'ended';
+    delete giveaways[name];
+    config.guilds[guildId].giveaways = giveaways;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    res.json({ success: true });
+  } else {
+    res.json({ success: false, error: "Giveaway not found" });
+  }
+});
+
 // Post leaderboard to channel
 app.post("/api/leaderboard/post", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
