@@ -6853,6 +6853,10 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
     // Parse requiredRoleIds from comma-separated string or array
     let requiredRoles = [];
     let requiredRoleNames = [];
+    
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
+    
     if (requiredRoleIds) {
       const roleIdArray = typeof requiredRoleIds === 'string' 
         ? requiredRoleIds.split(',').filter(r => r.trim())
@@ -6863,12 +6867,11 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
         const reqRole = guild.roles.cache.get(reqRoleId);
         if (!reqRole) {
           return res.json({ success: false, error: "Required role not found: " + reqRoleId });
+        }
         requiredRoles.push(reqRoleId);
         requiredRoleNames.push(reqRole.name);
       }
     }
-
-    const guild = client.guilds.cache.get(guildId);
     if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
 
     // Verify channel exists
