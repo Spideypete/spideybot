@@ -3436,7 +3436,7 @@
                 <div id="custom-commands-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title" data-i18n="title_customCommands">Custom Commands <span class="section-tier-badge"></span></div>
-                        <div class="content-subtitle">Create custom bot commands</div>
+                        <div class="content-subtitle">Create custom bot commands with role-based access control</div>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
@@ -3444,33 +3444,26 @@
                             <div class="panel-content">
                                 <div class="form-group">
                                     <div class="form-label">Command Name</div>
-                                    <input type="text" class="form-input" placeholder="e.g., rules"/>
+                                    <input type="text" id="cc_commandName" class="form-input" placeholder="e.g., rules"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Response</div>
-                                    <textarea class="form-input" placeholder="Command response" style="height: 80px;"></textarea>
+                                    <textarea id="cc_response" class="form-input" placeholder="Command response" style="height: 80px;"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Require Role</div>
-                                    <input type="text" class="form-input" placeholder="Leave empty for all"/>
+                                    <div class="form-label">Allowed Roles <span style="font-size:0.7rem;color:rgba(255,255,255,0.4);">(leave empty for everyone)</span></div>
+                                    <input type="text" id="cc_allowedRolesSearch" class="form-input" placeholder="Search roles..." list="cc_roleList" oninput="filterCCRoles(this.value)"/>
+                                    <datalist id="cc_roleList"></datalist>
+                                    <input type="hidden" id="cc_allowedRolesSelect" value=""/>
+                                    <div id="cc_selectedRoles" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;"></div>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveCustomCommands()">Create Command</button>
+                                <button class="btn btn-primary" onclick="saveCustomCommand()">Save Command</button>
                             </div>
                         </div>
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">📝 Aliases</div></div>
-                            <div class="panel-content">
-                                <div class="form-group">
-                                    <div class="form-label">Command</div>
-                                    <select class="form-input">
-                                        <option>-- Select Command --</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <div class="form-label">Alias</div>
-                                    <input type="text" class="form-input" placeholder="e.g., r (for rules)"/>
-                                </div>
-                                <button class="btn btn-primary" onclick="saveCustomCommands()">Add Alias</button>
+                            <div class="panel-header"><div class="panel-title">📋 Saved Commands</div></div>
+                            <div class="panel-content" id="cc_commandsList">
+                                <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading commands...</div>
                             </div>
                         </div>
                     </div>
@@ -6347,7 +6340,25 @@
         }
 
         async function loadCustomCommands() {
-            await loadTabConfig('custom-commands');
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            const roleDatalist = document.getElementById('cc_roleList');
+            if (roleDatalist && roleDatalist.options.length <= 1) {
+                try {
+                    const res = await fetch('/api/guild/' + guildId + '/roles', { credentials: 'include' });
+                    const data = await res.json();
+                    const roles = data.roles || [];
+                    roles.forEach(role => {
+                        const opt = document.createElement('option');
+                        opt.value = role.name;
+                        opt.dataset.id = role.id;
+                        roleDatalist.appendChild(opt);
+                    });
+                } catch(e) {}
+            }
+            
+            await loadCustomCommandsList();
         }
 
         async function saveCustomCommands() {
@@ -6369,6 +6380,184 @@
                     document.querySelector('#custom-commands-section textarea').value = '';
                 } else {
                     alert('❌ Failed to create command');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        let selectedCCRoles = [];
+        
+        function filterCCRoles(term) {
+            const roleDatalist = document.getElementById('cc_roleList');
+            const opts = roleDatalist.querySelectorAll('option');
+            let found = null;
+            opts.forEach(opt => {
+                if (opt.value.toLowerCase().includes(term.toLowerCase())) {
+                    found = opt;
+                }
+            });
+            if (found && found.dataset.id) {
+                if (!selectedCCRoles.includes(found.dataset.id)) {
+                    selectedCCRoles.push(found.dataset.id);
+                    const rrSelected = document.getElementById('cc_selectedRoles');
+                    const chip = document.createElement('span');
+                    chip.style.cssText = 'background:rgba(145,81,255,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
+                    chip.textContent = '@' + found.value;
+                    chip.dataset.id = found.dataset.id;
+                    chip.onclick = function() {
+                        selectedCCRoles = selectedCCRoles.filter(id => id !== this.dataset.id);
+                        this.remove();
+                    };
+                    rrSelected.appendChild(chip);
+                    document.getElementById('cc_allowedRolesSelect').value = selectedCCRoles.join(',');
+                }
+                document.getElementById('cc_allowedRolesSearch').value = '';
+            }
+        }
+
+        async function loadCustomCommandsList() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            const listCont = document.getElementById('cc_commandsList');
+            try {
+                const res = await fetch('/api/bot-config/custom-commands?guildId=' + guildId, { credentials: 'include' });
+                const data = await res.json();
+                
+                if (!data.commands || Object.keys(data.commands).length === 0) {
+                    listCont.innerHTML = '<div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No custom commands yet. Create one above!</div>';
+                    return;
+                }
+                
+                const maxCmds = data.maxCommands || 5;
+                const tier = data.tier || 'free';
+                const canAdd = data.canAddCustomCommands;
+                
+                let html = `<div style="margin-bottom:0.75rem; padding:0.5rem; background:rgba(145,81,255,0.1); border-radius:8px; text-align:center; font-size:0.8rem;">
+                    📊 Commands: <strong>${data.currentCount}</strong> / ${maxCmds === Infinity ? '∞' : maxCmds}
+                    ${!canAdd ? '<span style="color:#FFD700; margin-left:0.5rem;">💎 Premium required for more</span>' : ''}
+                </div>`;
+                
+                const commands = data.commands;
+                Object.keys(commands).forEach((cmdName, idx) => {
+                    const cmd = commands[cmdName];
+                    const allowedRoles = cmd.allowedRoles || [];
+                    const aliases = cmd.aliases || [];
+                    const hasAccess = allowedRoles.length === 0;
+                    
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; background:rgba(0,212,255,0.08); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(0,212,255,0.15);">
+                        <div style="flex:1;">
+                            <div style="font-weight:600; color:#fff;">/${cmdName}</div>
+                            <div style="font-size:0.75rem; color:rgba(255,255,255,0.5); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cmd.response?.substring(0, 50)}${cmd.response?.length > 50 ? '...' : ''}</div>
+                            <div style="font-size:0.7rem; margin-top:0.25rem;">${hasAccess ? '<span style="color:#1be187;">🌎 Everyone</span>' : '<span style="color:#ffb347;">🔒 ' + allowedRoles.length + ' role(s)</span>'}</div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button onclick="editCustomCommand('${cmdName}')" style="background:rgba(145,81,255,0.2); border:1px solid rgba(145,81,255,0.3); color:#fff; padding:0.3rem 0.6rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">✏️ Edit</button>
+                            <button onclick="deleteCustomCommand('${cmdName}')" style="background:rgba(255,107,107,0.2); border:1px solid rgba(255,107,107,0.3); color:#ff6b6b; padding:0.3rem 0.6rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">🗑️</button>
+                        </div>
+                    </div>`;
+                });
+                
+                listCont.innerHTML = html;
+            } catch (e) {
+                listCont.innerHTML = '<div style="color:#ff6b6b; text-align:center; padding:1rem;">Error loading commands</div>';
+            }
+        }
+
+        async function saveCustomCommand() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const name = document.getElementById('cc_commandName')?.value?.trim();
+            const response = document.getElementById('cc_response')?.value?.trim();
+            const allowedRoles = document.getElementById('cc_allowedRolesSelect')?.value?.split(',').filter(r => r) || [];
+            
+            if (!name || !response) return alert('Please fill in command name and response');
+            
+            // Clean name - remove leading slash if present
+            const cleanName = name.replace(/^\//, '').toLowerCase();
+            
+            try {
+                const res = await fetch('/api/bot-config/custom-commands/save?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: cleanName, response, allowedRoles }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Command saved!');
+                    document.getElementById('cc_commandName').value = '';
+                    document.getElementById('cc_response').value = '';
+                    selectedCCRoles = [];
+                    document.getElementById('cc_selectedRoles').innerHTML = '';
+                    document.getElementById('cc_allowedRolesSelect').value = '';
+                    loadCustomCommandsList();
+                } else {
+                    alert('❌ ' + (data.error || 'Failed to save command'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function editCustomCommand(cmdName) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            // Get command data from display
+            try {
+                const res = await fetch('/api/bot-config/custom-commands?guildId=' + guildId, { credentials: 'include' });
+                const data = await res.json();
+                const cmd = data.commands[cmdName];
+                if (!cmd) return;
+                
+                document.getElementById('cc_commandName').value = cmdName;
+                document.getElementById('cc_response').value = cmd.response || '';
+                
+                // Set allowed roles
+                selectedCCRoles = cmd.allowedRoles || [];
+                const roleCont = document.getElementById('cc_selectedRoles');
+                roleCont.innerHTML = '';
+                
+                if (selectedCCRoles.length > 0) {
+                    // Try to get role names from the role datalist
+                    const roleOpts = document.getElementById('cc_roleList').querySelectorAll('option');
+                    selectedCCRoles.forEach(roleId => {
+                        let roleName = roleId;
+                        roleOpts.forEach(opt => {
+                            if (opt.dataset.id === roleId) roleName = opt.value;
+                        });
+                        const chip = document.createElement('span');
+                        chip.style.cssText = 'background:rgba(145,81,255,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
+                        chip.textContent = '@' + roleName;
+                        chip.dataset.id = roleId;
+                        chip.onclick = function() {
+                            selectedCCRoles = selectedCCRoles.filter(id => id !== this.dataset.id);
+                            this.remove();
+                        };
+                        roleCont.appendChild(chip);
+                    });
+                }
+                document.getElementById('cc_allowedRolesSelect').value = selectedCCRoles.join(',');
+                document.getElementById('cc_commandName').scrollIntoView({ behavior: 'smooth' });
+            } catch (e) { console.error(e); }
+        }
+
+        async function deleteCustomCommand(cmdName) {
+            if (!confirm('Delete command /' + cmdName + '?')) return;
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            try {
+                const res = await fetch('/api/bot-config/custom-commands/delete?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: cmdName }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadCustomCommandsList();
+                } else {
+                    alert('❌ ' + (data.error || 'Failed to delete'));
                 }
             } catch (e) { alert('Error: ' + e.message); }
         }

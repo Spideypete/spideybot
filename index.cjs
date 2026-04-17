@@ -322,6 +322,7 @@ function getTierLimits(guildId) {
   return {
     maxReactRoles: tier === 'free' ? 3 : Infinity,
     maxGiveaways: tier === 'free' ? 1 : Infinity,
+    maxCustomCommands: tier === 'free' ? 5 : (tier === 'premium' ? 50 : Infinity),
     hasXP: tier === 'premium' || tier === 'pro',
     hasCustomCommands: tier === 'premium' || tier === 'pro',
     hasFullServerGuard: tier === 'premium' || tier === 'pro',
@@ -2037,8 +2038,21 @@ client.on("messageCreate", async (msg) => {
   const customCmds = guildConfig.customCommands || {};
   if (msg.content.startsWith("/") && msg.content.length > 2) {
     const cmdName = msg.content.slice(2).split(" ")[0];
-    if (customCmds[cmdName]) {
-      return msg.reply(customCmds[cmdName]);
+    let command = customCmds[cmdName];
+    if (command) {
+      // Handle legacy string format
+      const response = typeof command === 'string' ? command : command.response;
+      const allowedRoles = typeof command === 'object' ? (command.allowedRoles || []) : [];
+      
+      // Check role access
+      if (allowedRoles.length > 0) {
+        const member = msg.member;
+        const hasRole = allowedRoles.some(roleId => member.roles.cache.has(roleId));
+        if (!hasRole) {
+          return msg.reply("❌ You don't have permission to use this command.").then(m => setTimeout(() => m.delete().catch(() => {}), 5000));
+        }
+      }
+      return msg.reply(response);
     }
   }
 
@@ -6578,6 +6592,111 @@ app.post("/api/commands/:guildId", (req, res) => {
   console.log(`✨ Custom command created: ${name}`);
   addActivity(guildId, "💬", "Admin", `created custom command: ${name}`);
   res.json({ success: true });
+});
+
+// GET custom commands with RBAC
+app.get("/api/bot-config/custom-commands", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ error: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
+  
+  try {
+    const config = loadConfig();
+    const commands = config.guilds[guildId]?.customCommands || {};
+    const tier = getGuildTier(guildId);
+    const limits = getTierLimits(guildId);
+    
+    // Convert legacy format to new format
+    const formatted = {};
+    Object.keys(commands).forEach(name => {
+      if (typeof commands[name] === 'string') {
+        formatted[name] = { response: commands[name], allowedRoles: [], aliases: [] };
+      } else {
+        formatted[name] = commands[name];
+      }
+    });
+    
+    res.json({ 
+      commands: formatted, 
+      maxCommands: limits.maxCustomCommands || 5,
+      currentCount: Object.keys(formatted).length,
+      tier,
+      canAddCustomCommands: limits.hasCustomCommands
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST - Create or update custom command with RBAC
+app.post("/api/bot-config/custom-commands/save", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ error: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
+  
+  try {
+    const { name, response, allowedRoles, aliases } = req.body;
+    if (!name || !response) return res.json({ error: "Name and response required" });
+    
+    const config = loadConfig();
+    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    if (!config.guilds[guildId].customCommands) config.guilds[guildId].customCommands = {};
+    
+    const commands = config.guilds[guildId].customCommands;
+    const tier = getGuildTier(guildId);
+    const limits = getTierLimits(guildId);
+    
+    // Check limit
+    if (!commands[name] && Object.keys(commands).length >= (limits.maxCustomCommands || 5)) {
+      return res.json({ error: `Command limit reached (${limits.maxCustomCommands || 5}). Upgrade to add more!` });
+    }
+    
+    // Save with extended format
+    commands[name] = { 
+      response, 
+      allowedRoles: allowedRoles || [],
+      aliases: aliases || [],
+      createdAt: commands[name]?.createdAt || new Date().toISOString()
+    };
+    
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`✨ Custom command saved: ${name} (roles: ${(allowedRoles || []).join(', ')})`);
+    addActivity(guildId, "💬", "Admin", `saved custom command: ${name}`);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST - Delete custom command
+app.post("/api/bot-config/custom-commands/delete", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ error: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
+  
+  try {
+    const { name } = req.body;
+    if (!name) return res.json({ error: "Command name required" });
+    
+    const config = loadConfig();
+    if (!config.guilds[guildId]?.customCommands?.[name]) {
+      return res.json({ error: "Command not found" });
+    }
+    
+    delete config.guilds[guildId].customCommands[name];
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log(`🗑️ Custom command deleted: ${name}`);
+    addActivity(guildId, "💬", "Admin", `deleted custom command: ${name}`);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ============== ADMIN PANEL CONFIG ENDPOINTS ==============
