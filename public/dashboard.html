@@ -3774,7 +3774,7 @@
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Staff Roles <span style="font-size:0.7rem;color:rgba(255,255,255,0.4);">(who can see tickets)</span></div>
-                                    <input type="text" id="ticket_staffSearch" class="form-input" placeholder="Search roles..." list="ticket_staffList" onfilter="filterTicketStaff(this.value)"/>
+                                    <input type="text" id="ticket_staffSearch" class="form-input" placeholder="Search roles..." list="ticket_staffList" oninput="filterTicketStaff(this.value)"/>
                                     <datalist id="ticket_staffList"></datalist>
                                     <input type="hidden" id="ticket_staffRoles" value=""/>
                                     <div id="ticket_selectedStaff" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;"></div>
@@ -7374,8 +7374,14 @@
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return alert('Select a server first');
             
+            // Get staff roles from hidden field or use selected array
+            let staffRoles = document.getElementById('ticket_staffRoles')?.value || '';
+            if (!staffRoles && selectedTicketStaff.length > 0) {
+                staffRoles = selectedTicketStaff.join(',');
+            }
+            staffRoles = staffRoles.split(',').filter(r => r && r.trim());
+            
             const category = document.getElementById('ticket_category')?.value;
-            const staffRoles = (document.getElementById('ticket_staffRoles')?.value || '').split(',').filter(r => r);
             
             try {
                 const res = await fetch(`/api/config/${guildId}`, {
@@ -7384,9 +7390,9 @@
                     body: JSON.stringify({ 'tickets': { category, staffRoles } }),
                     credentials: 'include'
                 });
-                if (res.ok) alert('✅ Settings saved!');
-                else alert('❌ Failed to save');
-            } catch(e) { alert('❌ Error: ' + e.message); }
+                if (res.ok) console.log('✅ Ticket settings saved');
+                else console.log('❌ Failed to save');
+            } catch(e) { console.error('Error:', e); }
         }
 
         async function sendTicketMessage() {
