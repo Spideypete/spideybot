@@ -1832,16 +1832,20 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== LEVELING SYSTEM ==============
-  if (msg.content === "/level") {
+  if (msg.content === "/level" || msg.content === "/xp") {
     const levels = guildConfig.levels || {};
     const level = levels[msg.author.id] || 0;
     const xp = levels[msg.author.id + "_xp"] || 0;
+    const xpLevelConfig = guildConfig['xp-levels'] || {};
+    const xpPerLevel = xpLevelConfig.xpPerLevel || 500;
+    const nextLevelXp = (level + 1) * xpPerLevel;
     const levelEmbed = new EmbedBuilder()
-      .setColor('#004B87')
-      .setTitle("📊 Your Level")
+      .setColor('#9151ff')
+      .setTitle("💎 Your XP Status")
       .addFields(
         { name: "Level", value: `${level}`, inline: true },
-        { name: "XP", value: `${xp} / ${(level + 1) * 100}`, inline: true }
+        { name: "XP", value: `${xp} XP`, inline: true },
+        { name: "Next Level", value: `${nextLevelXp} XP to Level ${level + 1}`, inline: false }
       )
       .setFooter({ text: "SPIDEY BOT Leveling" });
     return msg.reply({ embeds: [levelEmbed] });
@@ -1879,6 +1883,15 @@ client.on("messageCreate", async (msg) => {
     levels[msg.author.id + "_xp"] = 0;
     updateGuildConfig(msg.guild.id, { levels });
     msg.reply(`🎉 ${msg.author} leveled up to **Level ${currentLevel + 1}**!`).catch(() => {});
+    
+    // Send level-up announcement if channel is configured
+    const xpLevelConfig = guildConfig['xp-levels'] || {};
+    if (xpLevelConfig.announcementChannel) {
+      const announceChannel = msg.guild.channels.cache.get(xpLevelConfig.announcementChannel);
+      if (announceChannel && xpLevelConfig.announceLevelUps !== false) {
+        announceChannel.send(`🎉 Congratulations ${msg.author}! You reached **Level ${currentLevel + 1}**!`).catch(() => {});
+      }
+    }
   } else {
     updateGuildConfig(msg.guild.id, { levels });
   }
