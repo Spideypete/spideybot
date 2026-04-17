@@ -2585,6 +2585,7 @@
                         <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><img src="/dashboard-icons/xp-levels.svg" alt=""></span><span data-i18n="sidebar_xpLevels">XP Levels</span><span class="sidebar-tier-badge premium">Premium</span></li>
                         <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><img src="/dashboard-icons/leaderboards.svg" alt=""></span><span data-i18n="sidebar_leaderboards">Leaderboards</span><span class="sidebar-tier-badge premium">Premium</span></li>
                         <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><img src="/dashboard-icons/giveaways.svg" alt=""></span><span data-i18n="sidebar_giveaways">Giveaways</span></li>
+                        <li class="sidebar-item" data-section="tickets" onclick="switchSection('tickets')"><span class="sidebar-item-icon">🎫</span><span>Tickets</span></li>
                     </ul>
                 </div>
 
@@ -3752,6 +3753,60 @@
                             <div class="panel-header"><div class="panel-title">📋 Monitored Accounts</div></div>
                             <div class="panel-content">
                                 <div style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 2rem;">No monitored accounts yet</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tickets Section -->
+                <div id="tickets-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title" data-i18n="title_tickets">Tickets <span class="section-tier-badge"></span></div>
+                        <div class="content-subtitle">Manage support tickets</div>
+                    </div>
+                    <div class="content-grid">
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎫 Ticket Settings</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Ticket Category</div>
+                                    <select id="ticket_category" class="form-input"><option value="">-- Select Category --</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Staff Roles <span style="font-size:0.7rem;color:rgba(255,255,255,0.4);">(who can see tickets)</span></div>
+                                    <input type="text" id="ticket_staffSearch" class="form-input" placeholder="Search roles..." list="ticket_staffList" onfilter="filterTicketStaff(this.value)"/>
+                                    <datalist id="ticket_staffList"></datalist>
+                                    <input type="hidden" id="ticket_staffRoles" value=""/>
+                                    <div id="ticket_selectedStaff" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">📨 Ticket Starter Message</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <div class="form-label">Title</div>
+                                    <input type="text" id="ticket_title" class="form-input" placeholder="Need Help?" value="Need Support?"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Description</div>
+                                    <textarea id="ticket_description" class="form-input" placeholder="Describe your issue..." style="height:60px;">Click the button below to open a ticket. We'll help you as soon as possible!</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Button Label</div>
+                                    <input type="text" id="ticket_buttonLabel" class="form-input" placeholder="Open Ticket" value="🎫 Open Ticket"/>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Post Channel</div>
+                                    <select id="ticket_channel" class="form-input"><option value="">-- Select Channel --</option></select>
+                                </div>
+                                <button class="btn btn-primary" onclick="sendTicketMessage()">Send Ticket Message</button>
+                            </div>
+                        </div>
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header"><div class="panel-title">📋 Active Tickets <span id="activeTicketCount">(0)</span></div>
+                            <div class="panel-content" id="activeTicketsList">
+                                <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading...</div>
                             </div>
                         </div>
                     </div>
@@ -7199,6 +7254,183 @@
             await saveTabConfig('social-notifs', { enabled: true });
         }
 
+        async function loadTickets() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            // Load channels and categories
+            const catSel = document.getElementById('ticket_category');
+            const chSel = document.getElementById('ticket_channel');
+            if (catSel) {
+                catSel.innerHTML = '<option value="">Loading...</option>';
+                try {
+                    const res = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
+                    const data = await res.json();
+                    catSel.innerHTML = '<option value="">-- Select Category --</option>';
+                    (data.channels || []).forEach(ch => {
+                        catSel.innerHTML += `<option value="${ch.id}">📁 ${ch.name}</option>`;
+                    });
+                } catch(e) { catSel.innerHTML = '<option value="">Error</option>'; }
+            }
+            if (chSel) {
+                chSel.innerHTML = '<option value="">Loading...</option>';
+                try {
+                    const res = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
+                    const data = await res.json();
+                    chSel.innerHTML = '<option value="">-- Select Channel --</option>';
+                    (data.channels || []).forEach(ch => {
+                        chSel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
+                    });
+                } catch(e) { chSel.innerHTML = '<option value="">Error</option>'; }
+            }
+            
+            // Load roles for staff
+            const staffDatalist = document.getElementById('ticket_staffList');
+            if (staffDatalist && staffDatalist.options.length <= 1) {
+                try {
+                    const res = await fetch('/api/guild/' + guildId + '/roles', { credentials: 'include' });
+                    const data = await res.json();
+                    (data.roles || []).forEach(role => {
+                        const opt = document.createElement('option');
+                        opt.value = role.name;
+                        opt.dataset.id = role.id;
+                        staffDatalist.appendChild(opt);
+                    });
+                } catch(e) {}
+            }
+            
+            // Load saved config
+            const config = loadConfig();
+            const ticketConfig = config.guilds[guildId]?.tickets || {};
+            if (ticketConfig.category) document.getElementById('ticket_category').value = ticketConfig.category;
+            if (ticketConfig.staffRoles) {
+                document.getElementById('ticket_staffRoles').value = ticketConfig.staffRoles.join(',');
+                // Show selected roles
+                const staffCont = document.getElementById('ticket_selectedStaff');
+                staffCont.innerHTML = '';
+                ticketConfig.staffRoles.forEach(roleId => {
+                    const chip = document.createElement('span');
+                    chip.style.cssText = 'background:rgba(145,81,255,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
+                    chip.textContent = '@' + roleId;
+                    chip.dataset.id = roleId;
+                    chip.onclick = function() {
+                        const roles = (document.getElementById('ticket_staffRoles').value || '').split(',').filter(r => r !== this.dataset.id);
+                        document.getElementById('ticket_staffRoles').value = roles.join(',');
+                        this.remove();
+                    };
+                    staffCont.appendChild(chip);
+                });
+            }
+            
+            // Show active tickets
+            const tickets = config.guilds[guildId]?.tickets || {};
+            const activeTickets = Object.keys(tickets).filter(t => tickets[t]?.status === 'open');
+            document.getElementById('activeTicketCount').textContent = '(' + activeTickets.length + ')';
+            const list = document.getElementById('activeTicketsList');
+            if (activeTickets.length === 0) {
+                list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">No active tickets</div>';
+            } else {
+                let html = '';
+                activeTickets.forEach(ticketId => {
+                    const t = tickets[ticketId];
+                    html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
+                        <div><strong>#${ticketId}</strong><br><span style="font-size:0.75rem;color:#888;">${t.user ? '<@' + t.user + '>' : 'Unknown'} • ${new Date(t.createdAt).toLocaleString()}</span></div>
+                        <button onclick="closeTicket('${ticketId}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">Close</button>
+                    </div>`;
+                });
+                list.innerHTML = html;
+            }
+        }
+
+        let selectedTicketStaff = [];
+        
+        function filterTicketStaff(term) {
+            const roleDatalist = document.getElementById('ticket_staffList');
+            const opts = roleDatalist.querySelectorAll('option');
+            let found = null;
+            opts.forEach(opt => {
+                if (opt.value.toLowerCase().includes(term.toLowerCase())) found = opt;
+            });
+            if (found && found.dataset.id) {
+                if (!selectedTicketStaff.includes(found.dataset.id)) {
+                    selectedTicketStaff.push(found.dataset.id);
+                    document.getElementById('ticket_staffRoles').value = selectedTicketStaff.join(',');
+                    const chip = document.createElement('span');
+                    chip.style.cssText = 'background:rgba(145,81,255,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
+                    chip.textContent = '@' + found.value;
+                    chip.dataset.id = found.dataset.id;
+                    chip.onclick = function() {
+                        selectedTicketStaff = selectedTicketStaff.filter(id => id !== this.dataset.id);
+                        document.getElementById('ticket_staffRoles').value = selectedTicketStaff.join(',');
+                        this.remove();
+                    };
+                    document.getElementById('ticket_selectedStaff').appendChild(chip);
+                }
+                document.getElementById('ticket_staffSearch').value = '';
+            }
+        }
+
+        async function saveTicketSettings() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const category = document.getElementById('ticket_category')?.value;
+            const staffRoles = (document.getElementById('ticket_staffRoles')?.value || '').split(',').filter(r => r);
+            
+            try {
+                const res = await fetch(`/api/config/${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 'tickets': { category, staffRoles } }),
+                    credentials: 'include'
+                });
+                if (res.ok) alert('✅ Settings saved!');
+                else alert('❌ Failed to save');
+            } catch(e) { alert('❌ Error: ' + e.message); }
+        }
+
+        async function sendTicketMessage() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            await saveTicketSettings();
+            
+            const channel = document.getElementById('ticket_channel')?.value;
+            const title = document.getElementById('ticket_title')?.value || 'Need Help?';
+            const desc = document.getElementById('ticket_description')?.value || 'Click below to open a ticket';
+            const btnLabel = document.getElementById('ticket_buttonLabel')?.value || '🎫 Open Ticket';
+            
+            if (!channel) return alert('Select a channel');
+            
+            try {
+                const res = await fetch('/api/ticket/message?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel, title, description: desc, buttonLabel }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) alert('✅ Ticket message sent!');
+                else alert('❌ ' + (data.error || 'Failed'));
+            } catch(e) { alert('❌ Error: ' + e.message); }
+        }
+
+        async function closeTicket(ticketId) {
+            if (!confirm('Close this ticket?')) return;
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            try {
+                await fetch('/api/ticket/close?guildId=' + guildId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticketId }),
+                    credentials: 'include'
+                });
+                loadTickets();
+            } catch(e) { console.error(e); }
+        }
+
         async function loadInviteTracking() {
             await loadTabConfig('invite-tracking');
         }
@@ -7414,7 +7646,8 @@
                     'custom-commands': 'hasCustomCommands',
                     'social-notifs': 'hasSocialNotifs',
                     'invite-tracking': 'hasInvites',
-                    'statistics-channels': 'hasAnalytics'
+                    'statistics-channels': 'hasAnalytics',
+                    'tickets': null
                 };
                 
                 const lockedSections = {
@@ -7427,7 +7660,8 @@
                     'giveaways': null, // Free for all
                     'custom-commands': { icon: '💎', tier: 'Premium' },
                     'invite-tracking': { icon: '🔥', tier: 'Pro' },
-                    'statistics-channels': { icon: '🔥', tier: 'Pro' }
+                    'statistics-channels': { icon: '🔥', tier: 'Pro' },
+                    'tickets': null // Free for all
                 };
                 
                 const lockInfo = lockedSections[sectionName];
@@ -7485,6 +7719,7 @@
                         'xp-levels': loadXPLevels,
                         'leaderboards': loadLeaderboards,
                         'giveaways': loadGiveaways,
+                        'tickets': loadTickets,
                         'social-notifs': loadSocialNotifs,
                         'invite-tracking': loadInviteTracking,
                         'message-counting': loadMessageCounting,

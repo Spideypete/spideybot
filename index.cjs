@@ -6669,6 +6669,140 @@ app.post("/api/giveaway/end", express.json(), async (req, res) => {
   }
 });
 
+// Ticket API
+app.post("/api/ticket/message", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ success: false, error: "No guild" });
+  
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
+  
+  const { channel, title, description, buttonLabel } = req.body;
+  
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.json({ success: false, error: "Guild not found" });
+  
+  const ch = guild.channels.cache.get(channel);
+  if (!ch) return res.json({ success: false, error: "Channel not found" });
+  
+  try {
+    const btn = new ButtonBuilder()
+      .setCustomId('ticket_create')
+      .setLabel(buttonLabel || '🎫 Open Ticket')
+      .setStyle(ButtonStyle.Primary);
+    
+    const row = new ActionRowBuilder().addComponents(btn);
+    
+    await ch.send({
+      embeds: [new EmbedBuilder()
+        .setColor('#9151ff')
+        .setTitle(title || 'Need Support?')
+        .setDescription(description || 'Click the button below to create a ticket')
+        .setFooter({ text: 'SPIDEY BOT Tickets' })
+      ],
+      components: [row]
+    });
+    
+    res.json({ success: true });
+  } catch(e) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+app.post("/api/ticket/close", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  const { ticketId } = req.body;
+  
+  const config = loadConfig();
+  const tickets = config.guilds[guildId]?.tickets || {};
+  
+  if (tickets[ticketId]) {
+    const ticket = tickets[ticketId];
+    const guild = client.guilds.cache.get(guildId);
+    
+    // Delete channel if exists
+    if (ticket.channelId) {
+      const ch = guild.channels.cache.get(ticket.channelId);
+      if (ch) ch.delete().catch(() => {});
+    }
+    
+    delete tickets[ticketId];
+    config.guilds[guildId].tickets = tickets;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    res.json({ success: true });
+  } else {
+    res.json({ success: false, error: "Ticket not found" });
+  }
+});
+
+// Ticket button handler
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isButton()) return;
+  if (interaction.customId !== 'ticket_create') return;
+  
+  const guild = interaction.guild;
+  const user = interaction.user;
+  const config = loadConfig();
+  const ticketConfig = config.guilds[guild.id]?.tickets || {};
+  
+  const ticketId = 'ticket-' + user.username.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  
+  // Check if ticket already exists
+  if (config.guilds[guild.id]?.tickets?.[ticketId]) {
+    const existing = config.guilds[guild.id].tickets[ticketId];
+    if (existing.channelId) {
+      const ch = guild.channels.cache.get(existing.channelId);
+      if (ch) {
+        return interaction.reply({ content: 'You already have a ticket: ' + ch, ephemeral: true });
+      }
+    }
+  }
+  
+  // Create ticket channel
+  try {
+    const category = ticketConfig.category ? guild.channels.cache.get(ticketConfig.category) : null;
+    const channel = await guild.channels.create({
+      name: ticketId,
+      type: 0,
+      parent: category,
+      permissionOverwrites: [
+        { id: guild.id, deny: ['ViewChannel'] },
+        { id: user.id, allow: ['ViewChannel', 'ManageMessages'] },
+        ...(ticketConfig.staffRoles || []).map(roleId => ({
+          id: roleId, allow: ['ViewChannel', 'ManageMessages']
+        }))
+      ]
+    });
+    
+    // Save ticket
+    if (!config.guilds[guild.id]) config.guilds[guild.id] = {};
+    if (!config.guilds[guild.id].tickets) config.guilds[guild.id].tickets = {};
+    config.guilds[guild.id].tickets[ticketId] = {
+      user: user.id,
+      channelId: channel.id,
+      status: 'open',
+      createdAt: new Date().toISOString()
+    };
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    
+    await channel.send({ embeds: [new EmbedBuilder()
+      .setColor('#9151ff')
+      .setTitle('🎫 Support Ticket')
+      .setDescription('Hello ' + user + ', describe your issue and we\'ll help you!')
+      .addFields(
+        { name: 'Staff', value: 'Staff will be with you shortly', inline: true },
+        { name: 'Actions', value: 'Use /close-ticket to close this ticket', inline: true }
+      )
+    ]});
+    
+    interaction.reply({ content: 'Ticket created: ' + channel, ephemeral: true });
+  } catch(e) {
+    interaction.reply({ content: 'Error creating ticket: ' + e.message, ephemeral: true });
+  }
+});
+
 // Post leaderboard to channel
 app.post("/api/leaderboard/post", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
