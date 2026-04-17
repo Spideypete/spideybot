@@ -2139,15 +2139,29 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(responses[Math.floor(Math.random() * responses.length)]);
   }
 
+  function trackGameWin(userId, gameType, amount = 1) {
+    if (!guildConfig.levels) guildConfig.levels = {};
+    const key = userId + "_" + gameType;
+    guildConfig.levels[key] = (guildConfig.levels[key] || 0) + amount;
+  }
+
+  // Track gambling wins
+  if (msg.content.startsWith("/gamble ") || msg.content.startsWith("/bet ")) {
+    // This would be where gambling win tracking happens
+    // For now just track the game as played
+  }
+
   if (msg.content === "/dice") {
     const roll = Math.floor(Math.random() * 6) + 1;
     const xpGain = awardGameXp(msg.author.id, 'dice');
+    trackGameWin(msg.author.id, 'dice', 1);
     return msg.reply(`🎲 You rolled a **${roll}**! (+${xpGain} XP)`);
   }
 
   if (msg.content === "/coin") {
     const flip = Math.random() < 0.5 ? "Heads" : "Tails";
     const xpGain = awardGameXp(msg.author.id, 'coinflip');
+    trackGameWin(msg.author.id, 'coinflip', 1);
     return msg.reply(`🪙 **${flip}**! (+${xpGain} XP)`);
   }
 
@@ -2159,6 +2173,7 @@ client.on("messageCreate", async (msg) => {
     ];
     const q = trivia[Math.floor(Math.random() * trivia.length)];
     const xpGain = awardGameXp(msg.author.id, 'trivia');
+    trackGameWin(msg.author.id, 'trivia', 1);
     const triviaEmbed = new EmbedBuilder()
       .setColor('#004B87')
       .setTitle("🧠 Trivia Question (+" + xpGain + " XP)")
@@ -6571,6 +6586,68 @@ app.post("/api/config/:guildId", (req, res) => {
   
   console.log('[CONFIG SAVE] Guild:', guildId, 'Data:', req.body);
   res.json({ success: true });
+});
+
+// Post leaderboard to channel
+app.post("/api/leaderboard/post", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  const { type } = req.body;
+  if (!guildId) return res.json({ success: false, error: "No guild" });
+  
+  const config = loadConfig();
+  const lbConfig = config.guilds[guildId]?.leaderboards?.[type];
+  if (!lbConfig?.enabled || !lbConfig.channel) {
+    return res.json({ success: false, error: "Leaderboard not configured" });
+  }
+  
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.json({ success: false, error: "Guild not found" });
+  
+  const channel = guild.channels.cache.get(lbConfig.channel);
+  if (!channel) return res.json({ success: false, error: "Channel not found" });
+  
+  const levels = config.guilds[guildId].levels || {};
+  
+  let sorted = [];
+  if (type === 'xp') {
+    sorted = Object.entries(levels)
+      .filter(([k]) => !k.includes("_"))
+      .map(([userId, level]) => ({ userId, xp: levels[userId + "_xp"] || 0, level }))
+      .sort((a, b) => b.xp - a.xp)
+      .slice(0, lbConfig.count || 10);
+  } else if (type === 'gambling') {
+    sorted = Object.entries(levels)
+      .filter(([k]) => k.includes("_gamble"))
+      .map(([k, v]) => ({ userId: k.replace("_gamble", ""), balance: v }))
+      .sort((a, b) => b.balance - a.balance)
+      .slice(0, lbConfig.count || 10);
+  } else if (type === 'trivia') {
+    sorted = Object.entries(levels)
+      .filter(([k]) => k.includes("_trivia"))
+      .map(([k, v]) => ({ userId: k.replace("_trivia", ""), score: v }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, lbConfig.count || 10);
+  }
+  
+  const titles = { xp: "💎 XP Leaderboard", gambling: "🎰 Gambling Leaderboard", trivia: "❓ Trivia Leaderboard", combined: "🏆 Overall Leaderboard" };
+  const embed = new EmbedBuilder()
+    .setColor('#9151ff')
+    .setTitle(titles[type] || "Leaderboard")
+    .setDescription(sorted.length === 0 ? "No data yet!" : sorted.map((e, i) => {
+      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`;
+      const value = type === 'xp' ? `Level ${e.level} (${e.xp} XP)` : type === 'gambling' ? `${e.balance} coins` : `${e.score} pts`;
+      return `${medal} <@${e.userId}> - ${value}`;
+    }).join("\n"))
+    .setFooter({ text: "SPIDEY BOT" })
+    .setTimestamp();
+  
+  try {
+    await channel.send({ embeds: [embed] });
+    res.json({ success: true });
+  } catch(e) {
+    res.json({ success: false, error: e.message });
+  }
 });
 
 app.post("/api/moderation/:guildId", (req, res) => {

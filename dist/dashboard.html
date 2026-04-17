@@ -3562,31 +3562,109 @@
                 <div id="leaderboards-section" class="content-section">
                     <div class="content-header">
                         <div class="content-title" data-i18n="title_leaderboards">Leaderboards <span class="section-tier-badge"></span></div>
-                        <div class="content-subtitle">Configure leaderboard display</div>
+                        <div class="content-subtitle">Configure leaderboard display for XP and games</div>
                     </div>
                     <div class="content-grid">
+                        <!-- XP Leaderboard -->
                         <div class="panel">
-                            <div class="panel-header"><div class="panel-title">🏆 Leaderboard Settings</div></div>
+                            <div class="panel-header"><div class="panel-title">💎 XP Leaderboard</div></div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" checked/> Enable Leaderboard</label>
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="lb_xp_enabled" checked/> Enable</label>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Display Channel</div>
-                                    <input type="text" class="form-input" placeholder="Select channel"/>
+                                    <select id="lb_xp_channel" class="form-input"><option value="">-- Select Channel --</option></select>
                                 </div>
                                 <div class="form-group">
                                     <div class="form-label">Update Frequency</div>
-                                    <select class="form-input">
-                                        <option>Every Hour</option>
-                                        <option>Every 6 Hours</option>
-                                        <option>Daily</option>
+                                    <select id="lb_xp_interval" class="form-input">
+                                        <option value="hourly">Every Hour</option>
+                                        <option value="6h">Every 6 Hours</option>
+                                        <option value="daily">Daily</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <div class="form-label">Top Users to Show</div>
-                                    <input type="number" class="form-input" placeholder="10" value="10"/>
+                                    <div class="form-label">Top Users</div>
+                                    <select id="lb_xp_count" class="form-input">
+                                        <option value="3">Top 3</option>
+                                        <option value="5">Top 5</option>
+                                        <option value="10" selected>Top 10</option>
+                                    </select>
                                 </div>
+                            </div>
+                        </div>
+                        <!-- Gambling Leaderboard -->
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">🎰 Gambling Leaderboard</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="lb_gambling_enabled"/> Enable</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Display Channel</div>
+                                    <select id="lb_gambling_channel" class="form-input"><option value="">-- Select Channel --</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Update Frequency</div>
+                                    <select id="lb_gambling_interval" class="form-input">
+                                        <option value="hourly">Every Hour</option>
+                                        <option value="6h">Every 6 Hours</option>
+                                        <option value="daily">Daily</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Top Users</div>
+                                    <select id="lb_gambling_count" class="form-input">
+                                        <option value="3">Top 3</option>
+                                        <option value="5">Top 5</option>
+                                        <option value="10" selected>Top 10</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Trivia Leaderboard -->
+                        <div class="panel">
+                            <div class="panel-header"><div class="panel-title">❓ Trivia Leaderboard</div></div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="lb_trivia_enabled"/> Enable</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Display Channel</div>
+                                    <select id="lb_trivia_channel" class="form-input"><option value="">-- Select Channel --</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Update Frequency</div>
+                                    <select id="lb_trivia_interval" class="form-input">
+                                        <option value="hourly">Every Hour</option>
+                                        <option value="6h">Every 6 Hours</option>
+                                        <option value="daily">Daily</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Top Users</div>
+                                    <select id="lb_trivia_count" class="form-input">
+                                        <option value="3">Top 3</option>
+                                        <option value="5">Top 5</option>
+                                        <option value="10" selected>Top 10</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Overall Stats -->
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header"><div class="panel-title">📊 Combined Leaderboard</div></div>
+                            <div class="panel-content">
+                                <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-bottom:0.75rem;">Shows top users across all activities</div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="lb_combined_enabled"/> Enable Combined View</label>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-label">Display Channel</div>
+                                    <select id="lb_combined_channel" class="form-input"><option value="">-- Select Channel --</option></select>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveLeaderboards()">Save All Leaderboards</button>
                             </div>
                         </div>
                     </div>
@@ -6791,6 +6869,52 @@
                     alert('✅ Game XP saved!');
                 } else {
                     alert('❌ Failed to save Game XP');
+                }
+            } catch(e) {
+                alert('❌ Error: ' + e.message);
+            }
+        }
+
+        async function saveLeaderboards() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const leaderboards = {
+                xp: {
+                    enabled: document.getElementById('lb_xp_enabled')?.checked !== false,
+                    channel: document.getElementById('lb_xp_channel')?.value || '',
+                    interval: document.getElementById('lb_xp_interval')?.value || 'hourly',
+                    count: parseInt(document.getElementById('lb_xp_count')?.value) || 10
+                },
+                gambling: {
+                    enabled: document.getElementById('lb_gambling_enabled')?.checked === true,
+                    channel: document.getElementById('lb_gambling_channel')?.value || '',
+                    interval: document.getElementById('lb_gambling_interval')?.value || 'hourly',
+                    count: parseInt(document.getElementById('lb_gambling_count')?.value) || 10
+                },
+                trivia: {
+                    enabled: document.getElementById('lb_trivia_enabled')?.checked === true,
+                    channel: document.getElementById('lb_trivia_channel')?.value || '',
+                    interval: document.getElementById('lb_trivia_interval')?.value || 'hourly',
+                    count: parseInt(document.getElementById('lb_trivia_count')?.value) || 10
+                },
+                combined: {
+                    enabled: document.getElementById('lb_combined_enabled')?.checked === true,
+                    channel: document.getElementById('lb_combined_channel')?.value || ''
+                }
+            };
+            
+            try {
+                const res = await fetch(`/api/config/${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 'leaderboards': leaderboards }),
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    alert('✅ Leaderboards saved!');
+                } else {
+                    alert('❌ Failed to save leaderboards');
                 }
             } catch(e) {
                 alert('❌ Error: ' + e.message);
