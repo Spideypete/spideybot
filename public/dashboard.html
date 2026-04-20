@@ -7205,6 +7205,47 @@
             } catch (e) { alert('❌ Error: ' + e.message); }
         }
 
+        async function fetchDashboardChannels(guildId) {
+            // Primary endpoint: returns both categories and text channels
+            try {
+                const primaryRes = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
+                if (primaryRes.ok) {
+                    const primaryData = await primaryRes.json();
+                    return Array.isArray(primaryData.channels) ? primaryData.channels : [];
+                }
+            } catch (e) {
+                console.warn('Primary channel endpoint failed:', e);
+            }
+
+            // Fallback endpoint: text-based channels only
+            try {
+                const fallbackRes = await fetch('/api/channels/' + guildId, { credentials: 'include' });
+                if (fallbackRes.ok) {
+                    const fallbackData = await fallbackRes.json();
+                    return Array.isArray(fallbackData.channels) ? fallbackData.channels : [];
+                }
+            } catch (e) {
+                console.warn('Fallback channel endpoint failed:', e);
+            }
+
+            return [];
+        }
+
+        function channelTypeValue(ch) {
+            return (ch && ch.type !== undefined && ch.type !== null) ? String(ch.type) : '';
+        }
+
+        function isCategoryChannel(ch) {
+            const t = channelTypeValue(ch);
+            return t === 'category' || t === '4';
+        }
+
+        function isTextChannel(ch) {
+            const t = channelTypeValue(ch);
+            // text=0, announcement=5
+            return t === 'text' || t === '0' || t === '5';
+        }
+
         async function loadGiveaways() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
@@ -7212,10 +7253,8 @@
             // Load channels for giveaway dropdowns (text channels only)
             const channelDropdowns = ['giveaway_channel', 'giveaway_channel_select'];
             try {
-                const channelsRes = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
-                const channelsData = await channelsRes.json();
-                const allChannels = channelsData.channels || [];
-                const textChannels = allChannels.filter(ch => ch.type === 'text' || ch.type === 0 || ch.type === '0');
+                const allChannels = await fetchDashboardChannels(guildId);
+                const textChannels = allChannels.filter(isTextChannel);
 
                 channelDropdowns.forEach(selId => {
                     const sel = document.getElementById(selId);
@@ -7312,11 +7351,9 @@
             const catSel = document.getElementById('ticket_category');
             const chSel = document.getElementById('ticket_channel');
             try {
-                const res = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
-                const data = await res.json();
-                const channels = data.channels || [];
-                const categories = channels.filter(ch => ch.type === 'category' || ch.type === 4 || ch.type === '4');
-                const textChannels = channels.filter(ch => ch.type === 'text' || ch.type === 0 || ch.type === '0');
+                const channels = await fetchDashboardChannels(guildId);
+                const categories = channels.filter(isCategoryChannel);
+                const textChannels = channels.filter(isTextChannel);
                 
                 if (catSel) {
                     catSel.innerHTML = '<option value="">-- Select Category --</option>';

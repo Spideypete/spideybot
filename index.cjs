@@ -8235,7 +8235,7 @@ app.get("/api/guild/:guildId/roles", (req, res) => {
   res.json({ roles });
 });
 
-// Get text channels in a guild
+// Get channels in a guild for dashboard selectors
 app.get("/api/guild/:guildId/channels", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
@@ -8243,7 +8243,8 @@ app.get("/api/guild/:guildId/channels", (req, res) => {
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
   const textChannels = guild.channels.cache
-    .filter(ch => ch.type === 0) // text channels only
+    // Include both regular text channels and announcement channels
+    .filter(ch => ch.type === 0 || ch.type === 5)
     .map(ch => ({
       id: ch.id,
       name: ch.name,
