@@ -6626,22 +6626,34 @@ app.post("/api/giveaway/create", express.json(), async (req, res) => {
     winners: winners || 1,
     status: 'active',
     endsAt,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    entries: []
   };
   
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   
-  // Try to post in channel
+  // Try to post in channel with reaction
   const guild = client.guilds.cache.get(guildId);
   if (guild && channel) {
     const ch = guild.channels.cache.get(channel);
     if (ch) {
-      ch.send({ embeds: [new EmbedBuilder()
-        .setColor('#9151ff')
-        .setTitle('🎁 Giveaway Started!')
-        .setDescription(`**${prize}**\n\nWinners: ${winners || 1}\nDuration: ${duration} minutes\n\nReact with 🎁 to enter!`)
-        .setFooter({ text: 'SPIDEY BOT' })
-      ]}).catch(() => {});
+      try {
+        const msg = await ch.send({ embeds: [new EmbedBuilder()
+          .setColor('#9151ff')
+          .setTitle('🎁 Giveaway Started!')
+          .setDescription(`**${prize}**\n\nWinners: ${winners || 1}\nDuration: ${duration} minutes\n\nReact with 🎁 to enter!`)
+          .setFooter({ text: 'SPIDEY BOT • Ends: ' + new Date(endsAt).toLocaleString() })
+        ]});
+        
+        // Save message ID and add reaction
+        config.guilds[guildId].giveaways[name].messageId = msg.id;
+        config.guilds[guildId].giveaways[name].channelId = channel;
+        fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+        
+        await msg.react('🎁');
+      } catch(e) {
+        console.error('Giveaway post error:', e);
+      }
     }
   }
   
@@ -6659,13 +6671,49 @@ app.post("/api/giveaway/end", express.json(), async (req, res) => {
   const giveaways = config.guilds[guildId]?.giveaways || {};
   
   if (giveaways[name]) {
-    giveaways[name].status = 'ended';
+    const giveaway = giveaways[name];
+    
+    // Delete message in Discord if exists
+    if (giveaway.messageId && giveaway.channelId) {
+      const guild = client.guilds.cache.get(guildId);
+      if (guild) {
+        const ch = guild.channels.cache.get(giveaway.channelId);
+        if (ch) {
+          try {
+            const msg = await ch.messages.fetch(giveaway.messageId);
+            await msg.delete();
+          } catch(e) {}
+        }
+      }
+    }
+    
     delete giveaways[name];
     config.guilds[guildId].giveaways = giveaways;
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
     res.json({ success: true });
   } else {
     res.json({ success: false, error: "Giveaway not found" });
+  }
+});
+
+// Giveaway reaction handler
+client.on('messageReactionAdd', async (reaction, user) => {
+  if (user.bot) return;
+  if (reaction.emoji.name !== '🎁') return;
+  
+  const config = loadConfig();
+  for (const [guildId, guildData] of Object.entries(config.guilds)) {
+    const giveaways = guildData.giveaways || {};
+    for (const [name, giveaway] of Object.entries(giveaways)) {
+      if (giveaway.messageId === reaction.message.id && giveaway.status === 'active') {
+        if (!giveaway.entries) giveaway.entries = [];
+        if (!giveaway.entries.includes(user.id)) {
+          giveaway.entries.push(user.id);
+          fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+        }
+        return;
+      }
+    }
   }
 });
 
@@ -8152,15 +8200,25 @@ app.get("/api/guild/:guildId/channels", (req, res) => {
   const guild = client.guilds.cache.get(req.params.guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
-  const channels = guild.channels.cache
+  const textChannels = guild.channels.cache
     .filter(ch => ch.type === 0) // text channels only
     .map(ch => ({
       id: ch.id,
-      name: ch.name
+      name: ch.name,
+      type: 'text'
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+    
+  const categories = guild.channels.cache
+    .filter(ch => ch.type === 4) // categories
+    .map(ch => ({
+      id: ch.id,
+      name: ch.name,
+      type: 'category'
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  res.json({ channels });
+  res.json({ channels: [...categories, ...textChannels] });
 });
 
 // Get all roles in a guild

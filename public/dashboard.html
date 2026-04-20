@@ -7103,11 +7103,44 @@
         }
 
         async function saveLeaderboards() {
-            await saveTabConfig('leaderboards', { enabled: true });
-        }
-
-        async function loadGiveaways() {
-            await loadTabConfig('giveaways');
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            
+            const leaderboards = {
+                xp: {
+                    enabled: document.getElementById('lb_xp_enabled')?.checked === true,
+                    channel: document.getElementById('lb_xp_channel')?.value || '',
+                    interval: document.getElementById('lb_xp_interval')?.value || 'hourly',
+                    count: parseInt(document.getElementById('lb_xp_count')?.value) || 10
+                },
+                gambling: {
+                    enabled: document.getElementById('lb_gambling_enabled')?.checked === true,
+                    channel: document.getElementById('lb_gambling_channel')?.value || '',
+                    interval: document.getElementById('lb_gambling_interval')?.value || 'hourly',
+                    count: parseInt(document.getElementById('lb_gambling_count')?.value) || 10
+                },
+                trivia: {
+                    enabled: document.getElementById('lb_trivia_enabled')?.checked === true,
+                    channel: document.getElementById('lb_trivia_channel')?.value || '',
+                    interval: document.getElementById('lb_trivia_interval')?.value || 'hourly',
+                    count: parseInt(document.getElementById('lb_trivia_count')?.value) || 10
+                },
+                combined: {
+                    enabled: document.getElementById('lb_combined_enabled')?.checked === true,
+                    channel: document.getElementById('lb_combined_channel')?.value || ''
+                }
+            };
+            
+            try {
+                const res = await fetch(`/api/config/${guildId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 'leaderboards': leaderboards }),
+                    credentials: 'include'
+                });
+                if (res.ok) alert('✅ Leaderboards saved!');
+                else alert('❌ Failed to save');
+            } catch(e) { alert('❌ Error: ' + e.message); }
         }
 
         async function createGiveaway() {
@@ -7175,7 +7208,7 @@
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
             
-            // Load channels for dropdown
+            // Load channels for dropdown (text only for giveaways)
             const channelDropdowns = ['giveaway_channel', 'giveaway_channel_select'];
             for (const selId of channelDropdowns) {
                 const sel = document.getElementById(selId);
@@ -7187,7 +7220,9 @@
                         const data = await res.json();
                         sel.innerHTML = '<option value="">-- Select Channel --</option>';
                         (data.channels || []).forEach(ch => {
-                            sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
+                            if (ch.type === 'text') {
+                                sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
+                            }
                         });
                         sel.value = currentVal;
                     } catch(e) {
