@@ -6836,11 +6836,9 @@ client.on('interactionCreate', async interaction => {
   
   // Create ticket channel
   try {
-    const category = ticketConfig.category ? guild.channels.cache.get(ticketConfig.category) : null;
-    const channel = await guild.channels.create({
+    const channelOptions = {
       name: ticketId,
       type: 0,
-      parent: category,
       permissionOverwrites: [
         { id: guild.id, deny: ['ViewChannel'] },
         { id: user.id, allow: ['ViewChannel', 'ManageMessages'] },
@@ -6848,7 +6846,17 @@ client.on('interactionCreate', async interaction => {
           id: roleId, allow: ['ViewChannel', 'ManageMessages']
         }))
       ]
-    });
+    };
+    
+    // Only set parent if category is selected and is actually a category
+    if (ticketConfig.category) {
+      const cat = guild.channels.cache.get(ticketConfig.category);
+      if (cat && cat.type === 4) {
+        channelOptions.parent = ticketConfig.category;
+      }
+    }
+    
+    const channel = await guild.channels.create(channelOptions);
     
     // Save ticket
     if (!config.guilds[guild.id]) config.guilds[guild.id] = {};
