@@ -6589,6 +6589,19 @@ app.get("/api/config/tickets", (req, res) => {
   res.json(config.guilds[guildId]?.tickets || {});
 });
 
+// Get giveaways config
+app.get("/api/config/giveaways", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({});
+  
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
+  const config = loadConfig();
+  res.json(config.guilds[guildId]?.giveaways || {});
+});
+
 app.post("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
 

@@ -7226,43 +7226,47 @@
                         });
                         sel.value = currentVal;
                     } catch(e) {
+                        console.error('Channel load error:', e);
                         sel.innerHTML = '<option value="">Error loading</option>';
                     }
                 }
             }
             
-            // Load saved settings
-            const config = loadConfig();
-            const settings = config.guilds[guildId]?.['giveaway-settings'] || {};
-            if (settings.defaultChannel) {
-                document.getElementById('giveaway_channel').value = settings.defaultChannel;
-            }
-            
-            const giveaways = config.guilds[guildId]?.giveaways || {};
-            
-            // Count active giveaways
-            const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active' || g.status === 'open');
-            const count = activeGiveaways.length;
-            
-            document.getElementById('activeGiveawayCount').textContent = '(' + count + ')';
-            
-            const list = document.getElementById('activeGiveawaysList');
-            if (count === 0) {
-                list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">No active giveaways</div>';
-                return;
-            }
-            
-            let html = '';
-            Object.keys(giveaways).forEach((name, i) => {
-                const g = giveaways[name];
-                if (g.status === 'active' || g.status === 'open') {
-                    html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
-                        <div><strong>${g.prize}</strong><br><span style="font-size:0.75rem;color:#888;">${g.winners} winner(s) • ${g.endsAt ? new Date(g.endsAt).toLocaleString() : 'Rolling...'}</span></div>
-                        <button onclick="endGiveaway('${name}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">End</button>
-                    </div>`;
+            // Load saved settings and giveaways from API
+            try {
+                const res = await fetch('/api/config/giveaways?guildId=' + guildId, { credentials: 'include' });
+                const data = await res.json();
+                const settings = data?.['giveaway-settings'] || {};
+                if (settings.defaultChannel) {
+                    document.getElementById('giveaway_channel').value = settings.defaultChannel;
                 }
-            });
-            list.innerHTML = html || '<div style="color:rgba(255,255,255,0.5);text-align:center;">No active giveaways</div>';
+                
+                const giveaways = data || {};
+                const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active' || g.status === 'open');
+                const count = activeGiveaways.length;
+                
+                document.getElementById('activeGiveawayCount').textContent = '(' + count + ')';
+                
+                const list = document.getElementById('activeGiveawaysList');
+                if (count === 0) {
+                    list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">No active giveaways</div>';
+                } else {
+                    let html = '';
+                    Object.keys(giveaways).forEach((name) => {
+                        const g = giveaways[name];
+                        if (g.status === 'active' || g.status === 'open') {
+                            html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
+                                <div><strong>${g.prize}</strong><br><span style="font-size:0.75rem;color:#888;">${g.winners} winner(s) • ${g.endsAt ? new Date(g.endsAt).toLocaleString() : 'Rolling...'}</span></div>
+                                <button onclick="endGiveaway('${name}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">End</button>
+                            </div>`;
+                        }
+                    });
+                    list.innerHTML = html || '<div style="color:rgba(255,255,255,0.5);text-align:center;">No active giveaways</div>';
+                }
+            } catch(e) {
+                console.error('Load giveaways error:', e);
+                document.getElementById('activeGiveawaysList').innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">Error loading</div>';
+            }
         }
 
         async function endGiveaway(name) {
