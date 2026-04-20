@@ -7207,6 +7207,7 @@
 
         async function fetchDashboardResources(guildId, forceRefresh = false) {
             const refreshQuery = forceRefresh ? '?refresh=1' : '';
+            let lastError = '';
             try {
                 const primaryRes = await fetch('/api/guild/' + guildId + '/dashboard-resources' + refreshQuery, { credentials: 'include' });
                 if (primaryRes.ok) {
@@ -7217,8 +7218,11 @@
                         permissions: primaryData.permissions || {}
                     };
                 }
+                const errData = await primaryRes.json().catch(() => ({}));
+                lastError = errData.error || ('Primary endpoint failed (' + primaryRes.status + ')');
             } catch (e) {
                 console.warn('Primary dashboard resources endpoint failed:', e);
+                lastError = e.message || 'Primary endpoint request failed';
             }
 
             // Fallback: stitch together legacy endpoints
@@ -7227,6 +7231,12 @@
                     fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' }),
                     fetch('/api/guild/' + guildId + '/roles', { credentials: 'include' })
                 ]);
+                if (!channelsRes.ok || !rolesRes.ok) {
+                    const chErr = channelsRes.ok ? '' : ('channels=' + channelsRes.status);
+                    const rlErr = rolesRes.ok ? '' : ('roles=' + rolesRes.status);
+                    lastError = 'Fallback endpoint failed (' + [chErr, rlErr].filter(Boolean).join(', ') + ')';
+                    return { channels: [], roles: [], permissions: {}, error: lastError };
+                }
                 const channelsData = channelsRes.ok ? await channelsRes.json() : { channels: [] };
                 const rolesData = rolesRes.ok ? await rolesRes.json() : { roles: [] };
                 return {
@@ -7236,9 +7246,10 @@
                 };
             } catch (e) {
                 console.warn('Fallback dashboard resources failed:', e);
+                lastError = e.message || 'Fallback endpoint request failed';
             }
 
-            return { channels: [], roles: [], permissions: {} };
+            return { channels: [], roles: [], permissions: {}, error: lastError || 'Unable to fetch server resources' };
         }
 
         async function fetchDashboardChannels(guildId, forceRefresh = false) {
@@ -7261,9 +7272,27 @@
             return t === 'text' || t === '0' || t === '5';
         }
 
+        function renderPermissionsHelp(containerId, show) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            let help = container.querySelector('.permissions-help');
+            if (show) {
+                if (!help) {
+                    help = document.createElement('div');
+                    help.className = 'permissions-help';
+                    help.style.cssText = 'margin-top:0.5rem;font-size:0.75rem;color:#ffb347;';
+                    help.innerHTML = 'Unable to fetch Discord channels/roles. Please re-authorize bot permissions (View Channels, Manage Roles) and refresh.';
+                    container.appendChild(help);
+                }
+            } else if (help) {
+                help.remove();
+            }
+        }
+
         async function loadGiveaways() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
+            renderPermissionsHelp('giveaways-section', false);
             
             // Load channels for giveaway dropdowns (text channels only)
             const channelDropdowns = ['giveaway_channel', 'giveaway_channel_select'];
@@ -7272,7 +7301,8 @@
                 if (sel) sel.innerHTML = '<option value="">Fetching channels...</option>';
             });
             try {
-                const allChannels = await fetchDashboardChannels(guildId);
+                const resources = await fetchDashboardResources(guildId);
+                const allChannels = resources.channels || [];
                 const textChannels = allChannels.filter(isTextChannel);
 
                 channelDropdowns.forEach(selId => {
@@ -7284,16 +7314,19 @@
                         sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
                     });
                     if (textChannels.length === 0) {
-                        sel.innerHTML = '<option value="">No text channels found</option>';
+                        const errorText = resources.error ? 'Unable to fetch data, please check bot permissions' : 'No text channels found';
+                        sel.innerHTML = `<option value="">${errorText}</option>`;
                     }
                     if (currentVal) sel.value = currentVal;
                 });
+                renderPermissionsHelp('giveaways-section', !!resources.error);
             } catch(e) {
                 console.error('Channel load error:', e);
                 channelDropdowns.forEach(selId => {
                     const sel = document.getElementById(selId);
                     if (sel) sel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
                 });
+                renderPermissionsHelp('giveaways-section', true);
             }
             
             // Load saved settings and giveaways from API
@@ -7368,6 +7401,7 @@
         async function loadTickets() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
+            renderPermissionsHelp('tickets-section', false);
             
             // Load channels once, then split by type for each dropdown
             const catSel = document.getElementById('ticket_category');
@@ -7386,7 +7420,8 @@
                         catSel.innerHTML += `<option value="${ch.id}">📁 ${ch.name}</option>`;
                     });
                     if (categories.length === 0) {
-                        catSel.innerHTML = '<option value="">No categories found</option>';
+                        const errorText = resources.error ? 'Unable to fetch data, please check bot permissions' : 'No categories found';
+                        catSel.innerHTML = `<option value="">${errorText}</option>`;
                     }
                 }
                 
@@ -7396,7 +7431,8 @@
                         chSel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
                     });
                     if (textChannels.length === 0) {
-                        chSel.innerHTML = '<option value="">No text channels found</option>';
+                        const errorText = resources.error ? 'Unable to fetch data, please check bot permissions' : 'No text channels found';
+                        chSel.innerHTML = `<option value="">${errorText}</option>`;
                     }
                 }
 
@@ -7404,9 +7440,11 @@
                     if (catSel) catSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
                     if (chSel) chSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
                 }
+                renderPermissionsHelp('tickets-section', !!resources.error || resources.permissions?.canViewChannels === false);
             } catch(e) {
                 if (catSel) catSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
                 if (chSel) chSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
+                renderPermissionsHelp('tickets-section', true);
             }
             
             // Load roles for staff

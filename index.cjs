@@ -8353,27 +8353,36 @@ app.get("/api/guild/:guildId/dashboard-resources", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guildId = req.params.guildId;
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ error: "No access" });
-
   const guild = client.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
-  const shouldRefresh = req.query.refresh === "1" || req.query.force === "1";
-  if (shouldRefresh) {
+  // Primary access check from OAuth session guild list
+  let hasAccess = req.session.guilds?.some(g => g.id === guildId);
+
+  // Fallback access check when session guild cache is stale
+  if (!hasAccess && req.session.user?.id) {
     try {
-      await Promise.allSettled([
-        guild.channels.fetch(),
-        guild.roles.fetch()
-      ]);
+      const member = await guild.members.fetch(req.session.user.id);
+      hasAccess = !!member && (member.permissions.has(PermissionFlagsBits.Administrator) || member.permissions.has(PermissionFlagsBits.ManageGuild));
     } catch (e) {
-      console.warn("[dashboard-resources] refresh failed:", e.message);
+      hasAccess = false;
     }
+  }
+  if (!hasAccess) return res.status(403).json({ error: "No access to this guild" });
+
+  // Always refresh to prevent stale/empty cache payloads
+  try {
+    await Promise.allSettled([
+      guild.channels.fetch(),
+      guild.roles.fetch()
+    ]);
+  } catch (e) {
+    console.warn("[dashboard-resources] refresh failed:", e.message);
   }
 
   const botMember = guild.members.me || guild.members.cache.get(client.user?.id);
   const canViewChannels = !!botMember?.permissions?.has(PermissionFlagsBits.ViewChannel);
-  const canViewRoles = !!botMember?.permissions?.has(PermissionFlagsBits.ManageRoles) || !!botMember;
+  const canViewRoles = !!botMember;
 
   const channels = guild.channels.cache
     .filter(ch => ch.type === 4 || ch.type === 0 || ch.type === 5)
@@ -8397,6 +8406,10 @@ app.get("/api/guild/:guildId/dashboard-resources", async (req, res) => {
   res.json({
     channels,
     roles,
+    meta: {
+      channelCount: channels.length,
+      roleCount: roles.length
+    },
     permissions: {
       canViewChannels,
       canViewRoles
