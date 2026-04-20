@@ -7205,30 +7205,45 @@
             } catch (e) { alert('❌ Error: ' + e.message); }
         }
 
-        async function fetchDashboardChannels(guildId) {
-            // Primary endpoint: returns both categories and text channels
+        async function fetchDashboardResources(guildId, forceRefresh = false) {
+            const refreshQuery = forceRefresh ? '?refresh=1' : '';
             try {
-                const primaryRes = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
+                const primaryRes = await fetch('/api/guild/' + guildId + '/dashboard-resources' + refreshQuery, { credentials: 'include' });
                 if (primaryRes.ok) {
                     const primaryData = await primaryRes.json();
-                    return Array.isArray(primaryData.channels) ? primaryData.channels : [];
+                    return {
+                        channels: Array.isArray(primaryData.channels) ? primaryData.channels : [],
+                        roles: Array.isArray(primaryData.roles) ? primaryData.roles : [],
+                        permissions: primaryData.permissions || {}
+                    };
                 }
             } catch (e) {
-                console.warn('Primary channel endpoint failed:', e);
+                console.warn('Primary dashboard resources endpoint failed:', e);
             }
 
-            // Fallback endpoint: text-based channels only
+            // Fallback: stitch together legacy endpoints
             try {
-                const fallbackRes = await fetch('/api/channels/' + guildId, { credentials: 'include' });
-                if (fallbackRes.ok) {
-                    const fallbackData = await fallbackRes.json();
-                    return Array.isArray(fallbackData.channels) ? fallbackData.channels : [];
-                }
+                const [channelsRes, rolesRes] = await Promise.all([
+                    fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' }),
+                    fetch('/api/guild/' + guildId + '/roles', { credentials: 'include' })
+                ]);
+                const channelsData = channelsRes.ok ? await channelsRes.json() : { channels: [] };
+                const rolesData = rolesRes.ok ? await rolesRes.json() : { roles: [] };
+                return {
+                    channels: Array.isArray(channelsData.channels) ? channelsData.channels : [],
+                    roles: Array.isArray(rolesData.roles) ? rolesData.roles : [],
+                    permissions: {}
+                };
             } catch (e) {
-                console.warn('Fallback channel endpoint failed:', e);
+                console.warn('Fallback dashboard resources failed:', e);
             }
 
-            return [];
+            return { channels: [], roles: [], permissions: {} };
+        }
+
+        async function fetchDashboardChannels(guildId, forceRefresh = false) {
+            const resources = await fetchDashboardResources(guildId, forceRefresh);
+            return resources.channels || [];
         }
 
         function channelTypeValue(ch) {
@@ -7252,6 +7267,10 @@
             
             // Load channels for giveaway dropdowns (text channels only)
             const channelDropdowns = ['giveaway_channel', 'giveaway_channel_select'];
+            channelDropdowns.forEach(selId => {
+                const sel = document.getElementById(selId);
+                if (sel) sel.innerHTML = '<option value="">Fetching channels...</option>';
+            });
             try {
                 const allChannels = await fetchDashboardChannels(guildId);
                 const textChannels = allChannels.filter(isTextChannel);
@@ -7264,13 +7283,16 @@
                     textChannels.forEach(ch => {
                         sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
                     });
+                    if (textChannels.length === 0) {
+                        sel.innerHTML = '<option value="">No text channels found</option>';
+                    }
                     if (currentVal) sel.value = currentVal;
                 });
             } catch(e) {
                 console.error('Channel load error:', e);
                 channelDropdowns.forEach(selId => {
                     const sel = document.getElementById(selId);
-                    if (sel) sel.innerHTML = '<option value="">Error loading</option>';
+                    if (sel) sel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
                 });
             }
             
@@ -7350,8 +7372,11 @@
             // Load channels once, then split by type for each dropdown
             const catSel = document.getElementById('ticket_category');
             const chSel = document.getElementById('ticket_channel');
+            if (catSel) catSel.innerHTML = '<option value="">Fetching categories...</option>';
+            if (chSel) chSel.innerHTML = '<option value="">Fetching channels...</option>';
             try {
-                const channels = await fetchDashboardChannels(guildId);
+                const resources = await fetchDashboardResources(guildId);
+                const channels = resources.channels || [];
                 const categories = channels.filter(isCategoryChannel);
                 const textChannels = channels.filter(isTextChannel);
                 
@@ -7360,6 +7385,9 @@
                     categories.forEach(ch => {
                         catSel.innerHTML += `<option value="${ch.id}">📁 ${ch.name}</option>`;
                     });
+                    if (categories.length === 0) {
+                        catSel.innerHTML = '<option value="">No categories found</option>';
+                    }
                 }
                 
                 if (chSel) {
@@ -7367,32 +7395,50 @@
                     textChannels.forEach(ch => {
                         chSel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
                     });
+                    if (textChannels.length === 0) {
+                        chSel.innerHTML = '<option value="">No text channels found</option>';
+                    }
+                }
+
+                if (resources.permissions && resources.permissions.canViewChannels === false) {
+                    if (catSel) catSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
+                    if (chSel) chSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
                 }
             } catch(e) {
-                if (catSel) catSel.innerHTML = '<option value="">Error</option>';
-                if (chSel) chSel.innerHTML = '<option value="">Error</option>';
+                if (catSel) catSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
+                if (chSel) chSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
             }
             
             // Load roles for staff
             const staffDatalist = document.getElementById('ticket_staffList');
-            if (staffDatalist && staffDatalist.options.length <= 1) {
+            if (staffDatalist) {
+                staffDatalist.innerHTML = '';
                 try {
-                    const res = await fetch('/api/guild/' + guildId + '/roles', { credentials: 'include' });
-                    const data = await res.json();
-                    (data.roles || []).forEach(role => {
+                    const resources = await fetchDashboardResources(guildId);
+                    const roles = resources.roles || [];
+                    (roles || []).forEach(role => {
                         const opt = document.createElement('option');
                         opt.value = role.name;
                         opt.dataset.id = role.id;
                         staffDatalist.appendChild(opt);
                     });
-                } catch(e) {}
+                    if (resources.permissions && resources.permissions.canViewRoles === false) {
+                        console.warn('Bot may be missing role visibility permissions');
+                    }
+                } catch(e) {
+                    console.error('Failed to load staff roles:', e);
+                }
             }
             
             // Load saved config from API
             try {
                 const res = await fetch('/api/config/tickets?guildId=' + guildId, { credentials: 'include' });
                 const config = await res.json();
-                const ticketConfig = config || {};
+                const ticketConfig = config?.settings || config || {};
+                const roleNameMap = {};
+                Array.from(document.getElementById('ticket_staffList')?.options || []).forEach(opt => {
+                    if (opt.dataset.id) roleNameMap[opt.dataset.id] = opt.value;
+                });
                 
                 if (ticketConfig.category) {
                     const catSel = document.getElementById('ticket_category');
@@ -7407,7 +7453,7 @@
                     ticketConfig.staffRoles.forEach(roleId => {
                         const chip = document.createElement('span');
                         chip.style.cssText = 'background:rgba(145,81,255,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
-                        chip.textContent = '@' + roleId;
+                        chip.textContent = '@' + (roleNameMap[roleId] || roleId);
                         chip.dataset.id = roleId;
                         chip.onclick = function() {
                             const roles = (document.getElementById('ticket_staffRoles').value || '').split(',').filter(r => r !== this.dataset.id);
@@ -7423,7 +7469,7 @@
             try {
                 const res = await fetch('/api/config/tickets?guildId=' + guildId, { credentials: 'include' });
                 const data = await res.json();
-                const tickets = data || {};
+                const tickets = data?.activeTickets || data || {};
                 const activeTickets = Object.keys(tickets).filter(t => tickets[t]?.status === 'open');
                 document.getElementById('activeTicketCount').textContent = '(' + activeTickets.length + ')';
                 const list = document.getElementById('activeTicketsList');
@@ -7487,22 +7533,32 @@
             const category = document.getElementById('ticket_category')?.value;
             
             try {
-                const res = await fetch(`/api/config/${guildId}`, {
+                const res = await fetch('/api/config/tickets?guildId=' + guildId, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 'tickets': { category, staffRoles } }),
+                    body: JSON.stringify({ category, staffRoles }),
                     credentials: 'include'
                 });
-                if (res.ok) console.log('✅ Ticket settings saved');
-                else console.log('❌ Failed to save');
-            } catch(e) { console.error('Error:', e); }
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success) {
+                    alert('✅ Configuration saved');
+                    return true;
+                }
+                alert('❌ ' + (data.error || 'Failed to save ticket settings'));
+                return false;
+            } catch(e) {
+                console.error('Error:', e);
+                alert('❌ Failed to save ticket settings');
+                return false;
+            }
         }
 
         async function sendTicketMessage() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return alert('Select a server first');
             
-            await saveTicketSettings();
+            const saved = await saveTicketSettings();
+            if (!saved) return;
             
             const channel = document.getElementById('ticket_channel')?.value;
             const title = document.getElementById('ticket_title')?.value || 'Need Help?';

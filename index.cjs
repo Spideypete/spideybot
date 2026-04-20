@@ -6028,6 +6028,38 @@ app.get('/api/owner/stats', (req, res) => {
   });
 });
 
+app.post('/api/owner/force-refresh', async (req, res) => {
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const config = loadConfig();
+  const botOwnerId = config.creator?.ownerId || '';
+  const userId = req.session.user?.id;
+  if (userId !== botOwnerId || !botOwnerId) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  const guildId = req.body?.guildId;
+  try {
+    if (guildId) {
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) return res.status(404).json({ error: 'Guild not found' });
+      await Promise.allSettled([guild.channels.fetch(), guild.roles.fetch(), guild.members.fetch()]);
+      return res.json({ success: true, refreshedGuilds: 1 });
+    }
+
+    const refreshPromises = [];
+    for (const guild of client.guilds.cache.values()) {
+      refreshPromises.push(Promise.allSettled([guild.channels.fetch(), guild.roles.fetch()]));
+    }
+    await Promise.allSettled(refreshPromises);
+    return res.json({ success: true, refreshedGuilds: client.guilds.cache.size });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Force refresh failed' });
+  }
+});
+
 app.post('/api/owner/tier', (req, res) => {
   console.log('[Tier Update] Request received:', req.body);
   
@@ -6586,7 +6618,59 @@ app.get("/api/config/tickets", (req, res) => {
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const config = loadConfig();
-  res.json(config.guilds[guildId]?.tickets || {});
+  const ticketsObj = config.guilds[guildId]?.tickets || {};
+  const settings = {
+    category: ticketsObj.category || "",
+    staffRoles: Array.isArray(ticketsObj.staffRoles) ? ticketsObj.staffRoles : []
+  };
+  const activeTickets = Object.fromEntries(
+    Object.entries(ticketsObj).filter(([key, value]) => {
+      if (key === "category" || key === "staffRoles") return false;
+      return value && typeof value === "object";
+    })
+  );
+  res.json({ settings, activeTickets });
+});
+
+// Save ticket settings without overwriting active tickets
+app.post("/api/config/tickets", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.status(400).json({ success: false, error: "No guildId provided" });
+
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
+  const category = req.body?.category || "";
+  const staffRoles = Array.isArray(req.body?.staffRoles)
+    ? req.body.staffRoles.filter(id => typeof id === "string" && id.trim())
+    : [];
+
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ success: false, error: "Guild not found" });
+
+  // Validate selected category if provided
+  if (category) {
+    const cat = guild.channels.cache.get(category);
+    if (!cat || cat.type !== 4) {
+      return res.status(400).json({ success: false, error: "Selected ticket category is invalid" });
+    }
+  }
+
+  const config = loadConfig();
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  const existingTickets = config.guilds[guildId].tickets && typeof config.guilds[guildId].tickets === "object"
+    ? config.guilds[guildId].tickets
+    : {};
+
+  config.guilds[guildId].tickets = {
+    ...existingTickets,
+    category,
+    staffRoles
+  };
+
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  res.json({ success: true, settings: { category, staffRoles } });
 });
 
 // Get giveaways config
@@ -8262,6 +8346,62 @@ app.get("/api/guild/:guildId/channels", (req, res) => {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   res.json({ channels: [...categories, ...textChannels] });
+});
+
+// Combined resources endpoint for dashboard dropdowns (with optional forced refresh)
+app.get("/api/guild/:guildId/dashboard-resources", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ error: "No access" });
+
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const shouldRefresh = req.query.refresh === "1" || req.query.force === "1";
+  if (shouldRefresh) {
+    try {
+      await Promise.allSettled([
+        guild.channels.fetch(),
+        guild.roles.fetch()
+      ]);
+    } catch (e) {
+      console.warn("[dashboard-resources] refresh failed:", e.message);
+    }
+  }
+
+  const botMember = guild.members.me || guild.members.cache.get(client.user?.id);
+  const canViewChannels = !!botMember?.permissions?.has(PermissionFlagsBits.ViewChannel);
+  const canViewRoles = !!botMember?.permissions?.has(PermissionFlagsBits.ManageRoles) || !!botMember;
+
+  const channels = guild.channels.cache
+    .filter(ch => ch.type === 4 || ch.type === 0 || ch.type === 5)
+    .map(ch => ({
+      id: ch.id,
+      name: ch.name,
+      type: ch.type === 4 ? 'category' : 'text'
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const roles = guild.roles.cache
+    .filter(role => role.name !== "@everyone")
+    .map(role => ({
+      id: role.id,
+      name: role.name,
+      color: role.hexColor,
+      position: role.position
+    }))
+    .sort((a, b) => b.position - a.position);
+
+  res.json({
+    channels,
+    roles,
+    permissions: {
+      canViewChannels,
+      canViewRoles
+    }
+  });
 });
 
 // Get all roles in a guild
