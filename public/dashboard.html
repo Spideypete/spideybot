@@ -7334,46 +7334,60 @@
                 } catch(e) {}
             }
             
-            // Load saved config
-            const config = loadConfig();
-            const ticketConfig = config.guilds[guildId]?.tickets || {};
-            if (ticketConfig.category) document.getElementById('ticket_category').value = ticketConfig.category;
-            if (ticketConfig.staffRoles) {
-                document.getElementById('ticket_staffRoles').value = ticketConfig.staffRoles.join(',');
-                // Show selected roles
-                const staffCont = document.getElementById('ticket_selectedStaff');
-                staffCont.innerHTML = '';
-                ticketConfig.staffRoles.forEach(roleId => {
-                    const chip = document.createElement('span');
-                    chip.style.cssText = 'background:rgba(145,81,255,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
-                    chip.textContent = '@' + roleId;
-                    chip.dataset.id = roleId;
-                    chip.onclick = function() {
-                        const roles = (document.getElementById('ticket_staffRoles').value || '').split(',').filter(r => r !== this.dataset.id);
-                        document.getElementById('ticket_staffRoles').value = roles.join(',');
-                        this.remove();
-                    };
-                    staffCont.appendChild(chip);
-                });
-            }
+            // Load saved config from API
+            try {
+                const res = await fetch('/api/config/tickets?guildId=' + guildId, { credentials: 'include' });
+                const config = await res.json();
+                const ticketConfig = config || {};
+                
+                if (ticketConfig.category) {
+                    const catSel = document.getElementById('ticket_category');
+                    if (catSel) catSel.value = ticketConfig.category;
+                }
+                if (ticketConfig.staffRoles) {
+                    document.getElementById('ticket_staffRoles').value = ticketConfig.staffRoles.join(',');
+                    // Show selected roles
+                    const staffCont = document.getElementById('ticket_selectedStaff');
+                    staffCont.innerHTML = '';
+                    selectedTicketStaff = ticketConfig.staffRoles;
+                    ticketConfig.staffRoles.forEach(roleId => {
+                        const chip = document.createElement('span');
+                        chip.style.cssText = 'background:rgba(145,81,255,0.3);padding:2px 8px;border-radius:4px;font-size:0.8rem;';
+                        chip.textContent = '@' + roleId;
+                        chip.dataset.id = roleId;
+                        chip.onclick = function() {
+                            const roles = (document.getElementById('ticket_staffRoles').value || '').split(',').filter(r => r !== this.dataset.id);
+                            document.getElementById('ticket_staffRoles').value = roles.join(',');
+                            this.remove();
+                        };
+                        staffCont.appendChild(chip);
+                    });
+                }
+            } catch(e) { console.error('Load tickets config error:', e); }
             
-            // Show active tickets
-            const tickets = config.guilds[guildId]?.tickets || {};
-            const activeTickets = Object.keys(tickets).filter(t => tickets[t]?.status === 'open');
-            document.getElementById('activeTicketCount').textContent = '(' + activeTickets.length + ')';
-            const list = document.getElementById('activeTicketsList');
-            if (activeTickets.length === 0) {
-                list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">No active tickets</div>';
-            } else {
-                let html = '';
-                activeTickets.forEach(ticketId => {
-                    const t = tickets[ticketId];
-                    html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
-                        <div><strong>#${ticketId}</strong><br><span style="font-size:0.75rem;color:#888;">${t.user ? '<@' + t.user + '>' : 'Unknown'} • ${new Date(t.createdAt).toLocaleString()}</span></div>
-                        <button onclick="closeTicket('${ticketId}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">Close</button>
-                    </div>`;
-                });
-                list.innerHTML = html;
+            // Show active tickets - fetch from API
+            try {
+                const res = await fetch('/api/config/tickets?guildId=' + guildId, { credentials: 'include' });
+                const data = await res.json();
+                const tickets = data || {};
+                const activeTickets = Object.keys(tickets).filter(t => tickets[t]?.status === 'open');
+                document.getElementById('activeTicketCount').textContent = '(' + activeTickets.length + ')';
+                const list = document.getElementById('activeTicketsList');
+                if (activeTickets.length === 0) {
+                    list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">No active tickets</div>';
+                } else {
+                    let html = '';
+                    activeTickets.forEach(ticketId => {
+                        const t = tickets[ticketId];
+                        html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
+                            <div><strong>#${ticketId}</strong><br><span style="font-size:0.75rem;color:#888;">${t.user ? '<@' + t.user + '>' : 'Unknown'} • ${new Date(t.createdAt).toLocaleString()}</span></div>
+                            <button onclick="closeTicket('${ticketId}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">Close</button>
+                        </div>`;
+                    });
+                    list.innerHTML = html;
+                }
+            } catch(e) {
+                console.error('Load tickets error:', e);
             }
         }
 
