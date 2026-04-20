@@ -6612,8 +6612,16 @@ app.post("/api/config/:guildId", (req, res) => {
 
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
+  const guildConfig = config.guilds[guildId];
 
-  Object.assign(config.guilds[guildId], req.body);
+  // Preserve active tickets when dashboard updates only ticket settings.
+  if (req.body && typeof req.body === 'object' && req.body.tickets && typeof req.body.tickets === 'object') {
+    const existingTickets = guildConfig.tickets && typeof guildConfig.tickets === 'object' ? guildConfig.tickets : {};
+    const incomingTickets = req.body.tickets;
+    req.body.tickets = { ...existingTickets, ...incomingTickets };
+  }
+
+  Object.assign(guildConfig, req.body);
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   
   console.log('[CONFIG SAVE] Guild:', guildId, 'Data:', req.body);
