@@ -6750,30 +6750,30 @@ app.post("/api/giveaway/create", express.json(), async (req, res) => {
   
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   
-  // Try to post in channel with reaction
-  const guild = client.guilds.cache.get(guildId);
-  if (guild && channel) {
-    const ch = guild.channels.cache.get(channel);
-    if (ch) {
-      try {
-        const msg = await ch.send({ embeds: [new EmbedBuilder()
-          .setColor('#9151ff')
-          .setTitle('🎁 Giveaway Started!')
-          .setDescription(`**${prize}**\n\nWinners: ${winners || 1}\nDuration: ${duration} minutes\n\nReact with 🎁 to enter!`)
-          .setFooter({ text: 'SPIDEY BOT • Ends: ' + new Date(endsAt).toLocaleString() })
-        ]});
-        
-        // Save message ID and add reaction
-        config.guilds[guildId].giveaways[name].messageId = msg.id;
-        config.guilds[guildId].giveaways[name].channelId = channel;
-        fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-        
-        await msg.react('🎁');
-      } catch(e) {
-        console.error('Giveaway post error:', e);
-      }
-    }
-  }
+// Try to post in channel with reaction
+   const guild = client.guilds.cache.get(guildId);
+   if (guild && channel) {
+     const ch = guild.channels.cache.get(channel);
+     if (ch) {
+       try {
+         const msg = await ch.send({ embeds: [new EmbedBuilder()
+           .setColor('#9151ff')
+           .setTitle('🎁 Giveaway Started!')
+           .setDescription(`**${prize}**\n\nWinners: ${winners || 1}\nDuration: ${duration} minutes\n\nReact with 🎁 to enter!\n\n0 entered`)
+           .setFooter({ text: 'SPIDEY BOT • Ends: ' + new Date(endsAt).toLocaleString() })
+         ]});
+         
+         // Save message ID and add reaction
+         config.guilds[guildId].giveaways[name].messageId = msg.id;
+         config.guilds[guildId].giveaways[name].channelId = channel;
+         fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+         
+         await msg.react('🎁');
+       } catch(e) {
+         console.error('Giveaway post error:', e);
+       }
+     }
+   }
   
   res.json({ success: true });
 });
@@ -6828,6 +6828,62 @@ client.on('messageReactionAdd', async (reaction, user) => {
         if (!giveaway.entries.includes(user.id)) {
           giveaway.entries.push(user.id);
           fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+          
+          // Update the embed with current participant count
+          try {
+            const channel = client.guilds.cache.get(guildId)?.channels.cache.get(giveaway.channelId);
+            if (channel) {
+              const message = await channel.messages.fetch(giveaway.messageId);
+              if (message) {
+                const embed = message.embeds[0];
+                if (embed) {
+                  const newDescription = embed.description
+                    .replace(/\\d+ entered/, `${giveaway.entries.length} entered`);
+                  await message.edit({ embeds: [new EmbedBuilder(embed).setDescription(newDescription)] });
+                }
+              }
+            }
+          } catch(e) {
+            console.error('Failed to update giveaway embed:', e);
+          }
+        }
+        return;
+      }
+    }
+  }
+});
+
+// Giveaway reaction removal handler
+client.on('messageReactionRemove', async (reaction, user) => {
+  if (user.bot) return;
+  if (reaction.emoji.name !== '🎁') return;
+  
+  const config = loadConfig();
+  for (const [guildId, guildData] of Object.entries(config.guilds)) {
+    const giveaways = guildData.giveaways || {};
+    for (const [name, giveaway] of Object.entries(giveaways)) {
+      if (giveaway.messageId === reaction.message.id && giveaway.status === 'active') {
+        if (giveaway.entries) {
+          giveaway.entries = giveaway.entries.filter(id => id !== user.id);
+          fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+          
+          // Update the embed with current participant count
+          try {
+            const channel = client.guilds.cache.get(guildId)?.channels.cache.get(giveaway.channelId);
+            if (channel) {
+              const message = await channel.messages.fetch(giveaway.messageId);
+              if (message) {
+                const embed = message.embeds[0];
+                if (embed) {
+                  const newDescription = embed.description
+                    .replace(/\\d+ entered/, `${giveaway.entries.length} entered`);
+                  await message.edit({ embeds: [new EmbedBuilder(embed).setDescription(newDescription)] });
+                }
+              }
+            }
+          } catch(e) {
+            console.error('Failed to update giveaway embed on reaction remove:', e);
+          }
         }
         return;
       }
