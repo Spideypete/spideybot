@@ -487,7 +487,7 @@ const slashCommands = [
 const commandNames = slashCommands.map(cmd => cmd.name);
 const duplicates = commandNames.filter((name, index) => commandNames.indexOf(name) !== index);
 if (duplicates.length > 0) {
-    console.error('❌ Duplicate command names found:', [...new Set(duplicates)];
+    console.error('Duplicate command names found:', [...new Set(duplicates)]);
     process.exit(1);
 }
 
