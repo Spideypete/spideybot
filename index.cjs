@@ -6896,7 +6896,8 @@ app.post("/api/giveaway/end", express.json(), async (req, res) => {
 // Giveaway reaction handler
 client.on('messageReactionAdd', async (reaction, user) => {
   if (user.bot) return;
-  if (reaction.emoji.name !== '🎁') return;
+  // Support both '🎁' and '🎉' emojis for entering giveaways
+  if (reaction.emoji.name !== '🎁' && reaction.emoji.name !== '🎉') return;
   
   const config = loadConfig();
   for (const [guildId, guildData] of Object.entries(config.guilds)) {
@@ -6917,7 +6918,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
                 const embed = message.embeds[0];
                 if (embed) {
                   const newDescription = embed.description
-                    .replace(/\\d+ entered/, `${giveaway.entries.length} entered`);
+                    .replace(/\d+ entered/, `${giveaway.entries.length} entered`);
                   await message.edit({ embeds: [new EmbedBuilder(embed).setDescription(newDescription)] });
                 }
               }
@@ -6935,7 +6936,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
 // Giveaway reaction removal handler
 client.on('messageReactionRemove', async (reaction, user) => {
   if (user.bot) return;
-  if (reaction.emoji.name !== '🎁') return;
+  // Support both '🎁' and '🎉' emojis
+  if (reaction.emoji.name !== '🎁' && reaction.emoji.name !== '🎉') return;
   
   const config = loadConfig();
   for (const [guildId, guildData] of Object.entries(config.guilds)) {
@@ -6955,7 +6957,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
                 const embed = message.embeds[0];
                 if (embed) {
                   const newDescription = embed.description
-                    .replace(/\\d+ entered/, `${giveaway.entries.length} entered`);
+                    .replace(/\d+ entered/, `${giveaway.entries.length} entered`);
                   await message.edit({ embeds: [new EmbedBuilder(embed).setDescription(newDescription)] });
                 }
               }
