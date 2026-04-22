@@ -728,17 +728,20 @@ client.once("ready", async () => {
 
   // Register ALL slash commands using blank update to prevent duplicates
   try {
-    console.log('📝 Clearing and re-registering slash commands...');
+    console.log('📝 Starting command registration...');
     const rest = new REST({ version: '10' }).setToken(token);
+    console.log('➡️ Sending blank update to clear...');
     // Blank update to clear
     await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
-    await new Promise(r => setTimeout(r, 300));
+    console.log('🗑️ Cleared all commands');
+    await new Promise(r => setTimeout(r, 500));
     // Register master list
     const commands = slashCommands.map(cmd => cmd.toJSON());
+    console.log(`➡️ Registering ${commands.length} commands...`);
     const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log(`✅ Registered ${data.length} slash commands`);
+    console.log(`✅ SUCCESS: Registered ${data.length || commands.length} slash commands`);
   } catch (error) {
-    console.error("Error registering commands:", error);
+    console.error("❌ Error registering commands:", error.message || error);
   }
 
   // Pre-fetch members for all guilds so dashboard stats work immediately
