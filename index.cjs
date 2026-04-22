@@ -2454,11 +2454,33 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can register commands!");
     }
     const replyMsg = await msg.reply("🔁 Registering slash commands, please wait...");
-    const result = await registerSlashCommands();
+    const result = await registerSlashCommands(true); // true = delete existing first
     if (result && result.success) {
       return replyMsg.edit(`✅ Registered ${result.count} slash commands.`).catch(() => {});
     }
     return replyMsg.edit(`❌ Registration failed: ${result && result.error ? result.error : 'unknown error'}`).catch(() => {});
+  }
+  
+  // Admin command to CLEAR all slash commands (reset)
+  if (msg.content === "/clear-commands") {
+    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return msg.reply("❌ Only admins can clear commands!");
+    }
+    const replyMsg = await msg.reply("🗑️ Clearing all slash commands...");
+    try {
+      const rest = new REST({ version: '10' }).setToken(token);
+      const existing = await rest.get(Routes.applicationCommands(client.user.id));
+      if (Array.isArray(existing)) {
+        for (let i = 0; i < existing.length; i++) {
+          await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
+          if (i > 0 && i % 5 === 0) await new Promise(r => setTimeout(r, 250));
+        }
+        return replyMsg.edit(`✅ Cleared ${existing.length} commands. Use /register-commands to add fresh ones.`).catch(() => {});
+      }
+      return replyMsg.edit(`No commands to clear.`).catch(() => {});
+    } catch(e) {
+      return replyMsg.edit(`❌ Error: ${e.message}`).catch(() => {});
+    }
   }
 
   // ============== CONFIG COMMANDS ==============
