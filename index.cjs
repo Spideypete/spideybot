@@ -726,10 +726,10 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Register ALL slash commands
+  // Register ALL slash commands (clear duplicates on startup)
   try {
     // Use shared COMMANDS_META defined at top-level
-    await registerSlashCommands();
+    await registerSlashCommands(true); // true = force overwrite/clear existing
     console.log('🎯 Slash command registration completed');
   } catch (error) {
     console.error("Error registering commands:", error);
@@ -752,7 +752,7 @@ client.once("ready", async () => {
 });
 
 // Reusable function to register slash commands
-async function registerSlashCommands() {
+async function registerSlashCommands(forceOverwrite = false) {
   if (!token) {
     console.warn('No Discord TOKEN provided — cannot register slash commands');
     return;
@@ -773,6 +773,20 @@ async function registerSlashCommands() {
 
       const results = [];
       for (const guildId of guildIds) {
+        // First fetch and delete existing commands
+        if (forceOverwrite) {
+          try {
+            const existing = await rest.get(Routes.applicationGuildCommands(client.user.id, guildId));
+            if (Array.isArray(existing)) {
+              for (const cmd of existing) {
+                try {
+                  await rest.delete(Routes.applicationGuildCommand(client.user.id, guildId, cmd.id));
+                } catch(e) {}
+              }
+            }
+          } catch(e) {}
+        }
+        
         const startTime = Date.now();
         const data = await rest.put(
           Routes.applicationGuildCommands(client.user.id, guildId),
@@ -789,6 +803,25 @@ async function registerSlashCommands() {
 
     console.log(`📝 Registering ${commands.length} modern slash commands globally...`);
     console.log('⏳ Global registration can take up to 1 hour to appear everywhere.');
+
+    // First delete existing global commands if forceOverwrite
+    if (forceOverwrite) {
+      try {
+        const existing = await rest.get(Routes.applicationCommands(client.user.id));
+        if (Array.isArray(existing)) {
+          console.log(`🗑️ Deleting ${existing.length} existing commands before re-registration...`);
+          for (const cmd of existing) {
+            try {
+              await rest.delete(Routes.applicationCommand(client.user.id, cmd.id));
+            } catch(e) {
+              // Ignore individual delete errors
+            }
+          }
+        }
+      } catch(e) {
+        console.warn('Could not fetch existing commands to delete:', e.message);
+      }
+    }
 
     // Register commands globally
     const startTime = Date.now();
