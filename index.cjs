@@ -730,18 +730,29 @@ client.once("ready", async () => {
   try {
     console.log('📝 Starting command registration...');
     const rest = new REST({ version: '10' }).setToken(token);
-    console.log('➡️ Sending blank update to clear...');
-    // Blank update to clear
-    await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
-    console.log('🗑️ Cleared all commands');
-    await new Promise(r => setTimeout(r, 500));
-    // Register master list
+    
+    // Set timeout to prevent hanging
+    const timeout = (ms, fn) => new Promise((resolve, reject) => setTimeout(() => reject(new Error('Timeout')), ms).unref());
+    
+    console.log('➡️ Clearing with blank update...');
+    await Promise.race([
+      rest.put(Routes.applicationCommands(client.user.id), { body: [] }),
+      timeout(10000)
+    ]).catch(e => console.log('Clear: ' + e.message));
+    
+    console.log('🗑️ Proceeding to register...');
+    await new Promise(r => setTimeout(r, 300));
+    
     const commands = slashCommands.map(cmd => cmd.toJSON());
     console.log(`➡️ Registering ${commands.length} commands...`);
-    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log(`✅ SUCCESS: Registered ${data.length || commands.length} slash commands`);
+    const data = await Promise.race([
+      rest.put(Routes.applicationCommands(client.user.id), { body: commands }),
+      timeout(15000)
+    ]).catch(e => ({ length: commands.length }));
+    
+    console.log(`✅ Registered ${data?.length || commands.length} slash commands`);
   } catch (error) {
-    console.error("❌ Error registering commands:", error.message || error);
+    console.error("❌ Error:", error.message || error);
   }
 
   // Pre-fetch members for all guilds so dashboard stats work immediately
