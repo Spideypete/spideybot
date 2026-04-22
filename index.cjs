@@ -6755,19 +6755,30 @@ app.post("/api/config/tickets", express.json(), (req, res) => {
 // Get giveaways config
 app.get("/api/config/giveaways", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
-  const guildId = req.query.guildId;
+  let guildId = req.query.guildId;
   if (!guildId) return res.json({});
   
   const config = loadConfig();
-  // Allow access if user is authenticated and config exists for this guild
-  if (config.guilds[guildId]) {
-    return res.json(config.guilds[guildId].giveaways || {});
-  }
-  // Check session for access
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.json({});
   
-  res.json(config.guilds[guildId]?.giveaways || {});
+  // Try direct match first
+  if (config.guilds[guildId]?.giveaways) {
+    return res.json(config.guilds[guildId].giveaways);
+  }
+  
+  // Try to find matching guild ID (case insensitive)
+  const foundGuildId = Object.keys(config.guilds).find(id => id === guildId || id.replace('_', '') === guildId.replace('_', ''));
+  if (foundGuildId && config.guilds[foundGuildId]?.giveaways) {
+    return res.json(config.guilds[foundGuildId].giveaways);
+  }
+  
+  // Search across all guilds for giveaways (for debugging)
+  for (const [gid, gData] of Object.entries(config.guilds)) {
+    if (gData.giveaways && Object.keys(gData.giveaways).length > 0) {
+      console.log('Found giveaways in guild:', gid, Object.keys(gData.giveaways));
+    }
+  }
+  
+  res.json({});
 });
 
 app.post("/api/config/:guildId", (req, res) => {
