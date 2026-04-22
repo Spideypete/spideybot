@@ -6758,18 +6758,15 @@ app.get("/api/config/giveaways", (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({});
   
-  // Check if user is authenticated - allow access to any guild they manage
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) {
-    // Check if config exists for this guild - at least let them see empty if no access
-    const config = loadConfig();
-    if (config.guilds[guildId]) {
-      return res.json(config.guilds[guildId].giveaways || {});
-    }
-    return res.status(403).json({ success: false, error: "No access" });
-  }
-
   const config = loadConfig();
+  // Allow access if user is authenticated and config exists for this guild
+  if (config.guilds[guildId]) {
+    return res.json(config.guilds[guildId].giveaways || {});
+  }
+  // Check session for access
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.json({});
+  
   res.json(config.guilds[guildId]?.giveaways || {});
 });
 
