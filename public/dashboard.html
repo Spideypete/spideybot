@@ -7352,7 +7352,6 @@ async function loadGiveaways() {
                     if (createSelect && !createSelect.value) createSelect.value = defaultChannel;
                 }
                 
-                const giveaways = data || {};
                 const activeGiveaways = Object.values(giveaways).filter(g => g && (g.status === 'active' || g.status === 'open'));
                 const count = activeGiveaways.length;
                 
