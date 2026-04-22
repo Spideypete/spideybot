@@ -726,31 +726,14 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Register ALL slash commands using blank update to prevent duplicates
+  // Register ALL slash commands - skip duplicate check on startup for speed
   try {
-    console.log('📝 Starting command registration...');
+    console.log('📝 Registering slash commands...');
     const rest = new REST({ version: '10' }).setToken(token);
-    
-    // Set timeout to prevent hanging
-    const timeout = (ms, fn) => new Promise((resolve, reject) => setTimeout(() => reject(new Error('Timeout')), ms).unref());
-    
-    console.log('➡️ Clearing with blank update...');
-    await Promise.race([
-      rest.put(Routes.applicationCommands(client.user.id), { body: [] }),
-      timeout(10000)
-    ]).catch(e => console.log('Clear: ' + e.message));
-    
-    console.log('🗑️ Proceeding to register...');
-    await new Promise(r => setTimeout(r, 300));
-    
     const commands = slashCommands.map(cmd => cmd.toJSON());
-    console.log(`➡️ Registering ${commands.length} commands...`);
-    const data = await Promise.race([
-      rest.put(Routes.applicationCommands(client.user.id), { body: commands }),
-      timeout(15000)
-    ]).catch(e => ({ length: commands.length }));
-    
-    console.log(`✅ Registered ${data?.length || commands.length} slash commands`);
+    console.log(`➡️ Pushing ${commands.length} commands...`);
+    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    console.log(`✅ Registered ${data.length} slash commands`);
   } catch (error) {
     console.error("❌ Error:", error.message || error);
   }
@@ -2468,23 +2451,14 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [adminEmbed] });
   }
 
-  // Admin command to force re-register slash commands (in case of new entries added to COMMANDS_META)
+  // Admin command to force re-register slash commands
   if (msg.content === "/register-commands") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can register commands!");
     }
-    const replyMsg = await msg.reply("🔁 Clearing all commands then registering fresh...");
+    const replyMsg = await msg.reply("🔁 Registering slash commands...");
     try {
       const rest = new REST({ version: '10' }).setToken(token);
-      
-      // BLANK UPDATE - Clear all commands at once
-      await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
-      await replyMsg.edit("🗑️ Cleared all commands. Now registering...").catch(() => {});
-      
-      // Wait a moment
-      await new Promise(r => setTimeout(r, 500));
-      
-      // Now register fresh with the master list
       const commands = slashCommands.map(cmd => cmd.toJSON());
       const startTime = Date.now();
       const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
