@@ -2466,16 +2466,25 @@ client.on("messageCreate", async (msg) => {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can clear commands!");
     }
-    const replyMsg = await msg.reply("🗑️ Clearing all slash commands...");
+    const replyMsg = await msg.reply("🗑️ Clearing all slash commands (may take a few minutes)...");
     try {
       const rest = new REST({ version: '10' }).setToken(token);
       const existing = await rest.get(Routes.applicationCommands(client.user.id));
-      if (Array.isArray(existing)) {
+      if (Array.isArray(existing) && existing.length > 0) {
+        let cleared = 0;
         for (let i = 0; i < existing.length; i++) {
-          await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
-          if (i > 0 && i % 5 === 0) await new Promise(r => setTimeout(r, 250));
+          try {
+            await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
+            cleared++;
+            if (i > 0 && i % 3 === 0) {
+              await new Promise(r => setTimeout(r, 1000)); // 1 sec delay every 3 to avoid rate limits
+              await replyMsg.edit(`🗑️ Cleared ${cleared}/${existing.length}...`).catch(() => {});
+            }
+          } catch(e) {
+            // Continue on individual delete errors
+          }
         }
-        return replyMsg.edit(`✅ Cleared ${existing.length} commands. Use /register-commands to add fresh ones.`).catch(() => {});
+        return replyMsg.edit(`✅ Cleared ${cleared} commands. Run /register-commands to add fresh ones.`).catch(() => {});
       }
       return replyMsg.edit(`No commands to clear.`).catch(() => {});
     } catch(e) {
