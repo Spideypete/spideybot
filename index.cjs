@@ -6936,7 +6936,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
 // Giveaway reaction removal handler
 client.on('messageReactionRemove', async (reaction, user) => {
   if (user.bot) return;
-  // Support both '🎁' and '🎉' emojis
   if (reaction.emoji.name !== '🎁' && reaction.emoji.name !== '🎉') return;
   
   const config = loadConfig();
@@ -6944,12 +6943,9 @@ client.on('messageReactionRemove', async (reaction, user) => {
     const giveaways = guildData.giveaways || {};
     for (const [name, giveaway] of Object.entries(giveaways)) {
       if (giveaway.messageId === reaction.message.id && giveaway.status === 'active') {
-if (giveaway.entries) {
+        if (giveaway.entries) {
           giveaway.entries = giveaway.entries.filter(id => id !== user.id);
           fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-        }
-            console.error('Failed to update giveaway embed on reaction remove:', e);
-          }
         }
         return;
       }
