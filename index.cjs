@@ -2462,7 +2462,7 @@ client.on("messageCreate", async (msg) => {
   }
   
   // Admin command to CLEAR all slash commands (reset)
-  if (msg.content === "/clear-commands") {
+  if (msg.content === "/reset-commands") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can clear commands!");
     }
