@@ -726,10 +726,10 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Register ALL slash commands (clear duplicates on startup)
+  // Register ALL slash commands
   try {
-    // Use shared COMMANDS_META defined at top-level
-    await registerSlashCommands(true); // true = force overwrite/clear existing
+    // Skip deletion on startup to avoid long wait - use command to clear duplicates manually
+    await registerSlashCommands(false); // false = don't delete existing, just add new
     console.log('🎯 Slash command registration completed');
   } catch (error) {
     console.error("Error registering commands:", error);
