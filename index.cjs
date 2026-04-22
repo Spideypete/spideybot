@@ -778,9 +778,13 @@ async function registerSlashCommands(forceOverwrite = false) {
           try {
             const existing = await rest.get(Routes.applicationGuildCommands(client.user.id, guildId));
             if (Array.isArray(existing)) {
-              for (const cmd of existing) {
+              for (let i = 0; i < existing.length; i++) {
+                const cmd = existing[i];
                 try {
                   await rest.delete(Routes.applicationGuildCommand(client.user.id, guildId, cmd.id));
+                  if (i > 0 && i % 5 === 0) {
+                    await new Promise(r => setTimeout(r, 250));
+                  }
                 } catch(e) {}
               }
             }
@@ -810,9 +814,14 @@ async function registerSlashCommands(forceOverwrite = false) {
         const existing = await rest.get(Routes.applicationCommands(client.user.id));
         if (Array.isArray(existing)) {
           console.log(`🗑️ Deleting ${existing.length} existing commands before re-registration...`);
-          for (const cmd of existing) {
+          for (let i = 0; i < existing.length; i++) {
+            const cmd = existing[i];
             try {
               await rest.delete(Routes.applicationCommand(client.user.id, cmd.id));
+              // Add small delay every 5 deletions to avoid rate limiting
+              if (i > 0 && i % 5 === 0) {
+                await new Promise(r => setTimeout(r, 250));
+              }
             } catch(e) {
               // Ignore individual delete errors
             }
