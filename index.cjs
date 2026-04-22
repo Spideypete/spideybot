@@ -2454,11 +2454,28 @@ client.on("messageCreate", async (msg) => {
       return msg.reply("❌ Only admins can register commands!");
     }
     const replyMsg = await msg.reply("🔁 Registering slash commands, please wait...");
-    const result = await registerSlashCommands(true); // true = delete existing first
-    if (result && result.success) {
-      return replyMsg.edit(`✅ Registered ${result.count} slash commands.`).catch(() => {});
-    }
-    return replyMsg.edit(`❌ Registration failed: ${result && result.error ? result.error : 'unknown error'}`).catch(() => {});
+    // First clear all existing commands to avoid duplicates
+    try {
+      const rest = new REST({ version: '10' }).setToken(token);
+      const existing = await rest.get(Routes.applicationCommands(client.user.id));
+      if (Array.isArray(existing) && existing.length > 0) {
+        for (let i = 0; i < existing.length; i++) {
+          await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
+          if (i > 0 && i % 3 === 0) {
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+        await replyMsg.edit(`🗑️ Cleared ${existing.length} old commands. Now registering fresh...`).catch(() => {});
+      }
+    } catch(e) {}
+    
+    // Now register fresh
+    const commands = slashCommands.map(cmd => cmd.toJSON());
+    const startTime = Date.now();
+    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    const duration = Date.now() - startTime;
+    const count = Array.isArray(data) ? data.length : commands.length;
+    return replyMsg.edit(`✅ Registered ${count} slash commands (took ${duration}ms).`).catch(() => {});
   }
   
   // Admin command to CLEAR all slash commands (reset)
