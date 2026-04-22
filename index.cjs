@@ -509,7 +509,7 @@ const COMMANDS_META = {
   suggest: { category: 'info', description: 'Send a suggestion', usage: '/suggest [message]' },
   ticketsetup: { category: 'tickets', subsection: 'Setup', description: 'Setup ticket system', usage: '/ticketsetup #channel', adminOnly: true },
   ticket: { category: 'tickets', subsection: 'User', description: 'Create a support ticket', usage: '/ticket' },
-  closeticket: { category: 'tickets', subsection: 'User', description: 'Close an active ticket', usage: '/closeticket', adminOnly: true },
+  closeTicket: { category: 'tickets', subsection: 'User', description: 'Close an active ticket', usage: '/close-ticket', adminOnly: true },
 
   configmodlog: { category: 'config', subsection: 'Channels', description: 'Set moderation log channel', usage: '/configmodlog #channel' },
   configwelcomechannel: { category: 'config', subsection: 'Channels', description: 'Set welcome channel', usage: '/configwelcomechannel #channel' },
@@ -2008,6 +2008,44 @@ client.on("messageCreate", async (msg) => {
     msg.channel.delete().catch(() => {});
   }
 
+  if (msg.content === "/activetickets" || msg.content === "/list-tickets") {
+    const ticketsData = guildConfig.tickets || {};
+    const category = ticketsData.category;
+    const staffRoles = ticketsData.staffRoles || [];
+    
+    const activeTickets = Object.entries(ticketsData).filter(([key, value]) => {
+      if (key === 'category' || key === 'staffRoles') return false;
+      return value && typeof value === 'object' && !Array.isArray(value) && (value.status === 'open' || value.status === 'active');
+    });
+    
+    if (activeTickets.length === 0) {
+      return msg.reply("🎫 **Active Tickets**\n\nNo active tickets!\nUse `/ticket` to create one.");
+    }
+    
+    const embed = new EmbedBuilder()
+      .setColor('#9151ff')
+      .setTitle('🎫 Active Tickets')
+      .setDescription(`${activeTickets.length} open ticket(s)`);
+    
+    activeTickets.forEach(([id, ticket], i) => {
+      const user = ticket.user ? `<@${ticket.user}>` : 'Unknown';
+      const created = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'Unknown';
+      embed.addFields({
+        name: `${i + 1}. ${id}`,
+        value: `User: ${user} | Created: ${created}`,
+        inline: false
+      });
+    });
+    
+    embed.addFields({
+      name: 'Settings',
+      value: `Category: ${category || 'Not set'} | Staff Roles: ${staffRoles.length}`,
+      inline: false
+    });
+    
+    return msg.reply({ embeds: [embed] });
+  }
+
   if (msg.content.startsWith("/ticket-setup ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can setup tickets!");
@@ -3211,9 +3249,19 @@ client.on("messageCreate", async (msg) => {
     const duration = parseInt(parts[1]?.split(" ")[0]) || 60;
     const winners = parseInt(parts[2]?.split(" ")[0]) || 1;
 
-    const giveaway = { prize, duration, winners, startTime: Date.now(), endTime: Date.now() + (duration * 60000), entries: [] };
-    const giveaways = guildConfig.giveaways || [];
-    giveaways.push(giveaway);
+    const name = prize.toLowerCase().replace(/\s+/g, '_');
+    const endsAt = Date.now() + (duration * 60000);
+    const giveaways = guildConfig.giveaways || {};
+    giveaways[name] = {
+      prize,
+      duration,
+      winners,
+      status: 'active',
+      endsAt,
+      startTime: Date.now(),
+      endTime: endsAt,
+      entries: []
+    };
     updateGuildConfig(msg.guild.id, { giveaways });
 
     msg.reply(`🎁 **GIVEAWAY STARTED!**\n**Prize:** ${prize}\n**Duration:** ${duration} minutes\n**Winners:** ${winners}\n\nReact with 🎉 to enter!`);
@@ -3221,11 +3269,42 @@ client.on("messageCreate", async (msg) => {
 
   if (msg.content === "/end-giveaway") {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can end giveaways!");
-    const giveaways = guildConfig.giveaways || [];
-    if (giveaways.length === 0) return msg.reply("❌ No active giveaway!");
-    const giveaway = giveaways.pop();
+    const giveaways = guildConfig.giveaways || {};
+    const activeKeys = Object.keys(giveaways).filter(k => giveaways[k] && (giveaways[k].status === 'active' || giveaways[k].status === 'open'));
+    if (activeKeys.length === 0) return msg.reply("❌ No active giveaway!");
+    const keyToRemove = activeKeys[0];
+    const giveaway = giveaways[keyToRemove];
+    delete giveaways[keyToRemove];
     updateGuildConfig(msg.guild.id, { giveaways });
-    return msg.reply(`✅ Giveaway ended! Selected ${giveaway.winners} winner(s) from ${giveaway.entries.length} entries! 🎊`);
+    const entryCount = giveaway.entries ? giveaway.entries.length : 0;
+    return msg.reply(`✅ Giveaway ended! Selected ${giveaway.winners} winner(s) from ${entryCount} entries! 🎊`);
+  }
+
+  if (msg.content === "/activegiveaways" || msg.content === "/list-giveaways") {
+    const giveawaysConfig = guildConfig.giveaways || {};
+    const activeGiveaways = Object.entries(giveawaysConfig).filter(([name, g]) => g && (g.status === 'active' || g.status === 'open'));
+    
+    if (activeGiveaways.length === 0) {
+      return msg.reply("🎁 **Active Giveaways**\n\nNo active giveaways running! Create one with `/giveaway [prize] [duration]` from the dashboard.");
+    }
+    
+    const embed = new EmbedBuilder()
+      .setColor('#9B59B6')
+      .setTitle('🎁 Active Giveaways')
+      .setDescription(`**${activeGiveaways.length}** active giveaway(s)`)
+      .setFooter({ text: 'SPIDEY BOT' });
+    
+    activeGiveaways.forEach(([name, g], i) => {
+      const endsAt = g.endsAt ? new Date(g.endsAt).toLocaleString() : 'Unknown';
+      const participants = g.entries ? g.entries.length : 0;
+      embed.addFields({
+        name: `${i + 1}. ${g.prize || name}`,
+        value: `Winners: ${g.winners || 1} | Entries: ${participants} | Ends: ${endsAt}`,
+        inline: false
+      });
+    });
+    
+    return msg.reply({ embeds: [embed] });
   }
 
   if (msg.content.startsWith("/config-social-notifs ")) {
@@ -4565,7 +4644,7 @@ client.on("interactionCreate", async (interaction) => {
         }
       }
       
-      if (commandName === 'closeticket') {
+      if (commandName === 'close-ticket') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can close tickets!");
         }
@@ -4722,7 +4801,7 @@ client.on("interactionCreate", async (interaction) => {
             },
             {
               name: '🎫 Tickets Admin',
-              value: '`/ticketsetup` - Setup the ticket system!\n`/closeticket` - Close a support ticket!',
+              value: '`/ticketsetup` - Setup the ticket system!\n`/close-ticket` - Close a support ticket!',
               inline: false
             },
             {
@@ -6626,7 +6705,7 @@ app.get("/api/config/tickets", (req, res) => {
   const activeTickets = Object.fromEntries(
     Object.entries(ticketsObj).filter(([key, value]) => {
       if (key === "category" || key === "staffRoles") return false;
-      return value && typeof value === "object";
+      return value && typeof value === "object" && !Array.isArray(value);
     })
   );
   res.json({ settings, activeTickets });

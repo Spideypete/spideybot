@@ -404,7 +404,7 @@ const slashCommands = [
       option.setName('topic').setDescription('What is your ticket about?').setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName('closeticket')
+    .setName('close-ticket')
     .setDescription('Close an active ticket'),
 
   // ===================== GIVEAWAY =====================
@@ -482,5 +482,13 @@ const slashCommands = [
     .setDescription('View the server leaderboard')
     .setDMPermission(true),
 ];
+
+// Check for duplicate command names
+const commandNames = slashCommands.map(cmd => cmd.name);
+const duplicates = commandNames.filter((name, index) => commandNames.indexOf(name) !== index);
+if (duplicates.length > 0) {
+    console.error('❌ Duplicate command names found:', [...new Set(duplicates)];
+    process.exit(1);
+}
 
 module.exports = { slashCommands };
