@@ -2460,12 +2460,21 @@ client.on("messageCreate", async (msg) => {
     try {
       const rest = new REST({ version: '10' }).setToken(token);
       const commands = slashCommands.map(cmd => cmd.toJSON());
+      console.log(`📝 Pushing ${commands.length} commands...`);
       const startTime = Date.now();
-      const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+      
+      // Add timeout
+      const data = await Promise.race([
+        rest.put(Routes.applicationCommands(client.user.id), { body: commands }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000))
+      ]);
+      
       const duration = Date.now() - startTime;
       const count = Array.isArray(data) ? data.length : commands.length;
+      console.log(`✅ Registered ${count} commands`);
       return replyMsg.edit(`✅ Registered ${count} slash commands (${duration}ms).`).catch(() => {});
     } catch(e) {
+      console.error('Register error:', e.message);
       return replyMsg.edit(`❌ Error: ${e.message}`).catch(() => {});
     }
   }
