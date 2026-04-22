@@ -7330,8 +7330,17 @@ async function loadGiveaways() {
             }
             
             // Load saved settings and giveaways from API
+            if (!guildId) {
+                console.error('No guildId for giveaways');
+                return;
+            }
             try {
                 const res = await fetch('/api/config/giveaways?guildId=' + guildId, { credentials: 'include' });
+                if (!res.ok) {
+                    console.error('Giveaways API error:', res.status, res.statusText);
+                    document.getElementById('activeGiveawaysList').innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">Error loading giveaways</div>';
+                    return;
+                }
                 const data = await res.json();
                 
                 // giveaway-settings are stored at guild root, not in giveaways object
