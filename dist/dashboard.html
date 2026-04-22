@@ -7347,7 +7347,7 @@ async function loadGiveaways() {
                 }
                 
                 const giveaways = data || {};
-                const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active' || g.status === 'open');
+                const activeGiveaways = Object.values(giveaways).filter(g => g && (g.status === 'active' || g.status === 'open'));
                 const count = activeGiveaways.length;
                 
                 document.getElementById('activeGiveawayCount').textContent = '(' + count + ')';
@@ -7359,10 +7359,9 @@ async function loadGiveaways() {
                     let html = '';
                     Object.keys(giveaways).forEach((name) => {
                         const g = giveaways[name];
-                        if (g.status === 'active' || g.status === 'open') {
-                            const participants = g.entries ? g.entries.length : 0;
+                        if (g && (g.status === 'active' || g.status === 'open')) {
                             html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
-                                <div><strong>${g.prize}</strong><br><span style="font-size:0.75rem;color:#888;">${g.winners} winner(s) • ${participants} entered • ${g.endsAt ? new Date(g.endsAt).toLocaleString() : 'Rolling...'}</span></div>
+                                <div><strong>${g.prize}</strong><br><span style="font-size:0.75rem;color:#888;">${g.winners} winner(s) • Ends: ${g.endsAt ? new Date(g.endsAt).toLocaleString() : 'Unknown'}</span></div>
                                 <button onclick="endGiveaway('${name}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">End</button>
                             </div>`;
                         }
