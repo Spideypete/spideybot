@@ -726,12 +726,34 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Register ALL slash commands - skip duplicate check on startup for speed
+  // Auto-clear and re-register on startup
   try {
-    console.log('📝 Registering slash commands...');
+    console.log('📝 Auto-clearing and registering slash commands...');
     const rest = new REST({ version: '10' }).setToken(token);
+    
+    // First clear all (one by one with delays)
+    const existing = await rest.get(Routes.applicationCommands(client.user.id));
+    if (Array.isArray(existing) && existing.length > 0) {
+      console.log(`🗑️ Found ${existing.length} existing commands, clearing...`);
+      for (let i = 0; i < existing.length; i++) {
+        try {
+          await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
+          // 1 second delay every 5 deletions
+          if (i > 0 && i % 5 === 0) {
+            await new Promise(r => setTimeout(r, 1000));
+            console.log(`🗑️ Cleared ${i+1}...`);
+          }
+        } catch(e) {}
+      }
+      console.log('🗑️ All cleared');
+    } else {
+      console.log('📝 No existing commands to clear');
+    }
+    
+    // Now register fresh
     const commands = slashCommands.map(cmd => cmd.toJSON());
-    console.log(`➡️ Pushing ${commands.length} commands...`);
+    console.log(`➡️ Registering ${commands.length} commands...`);
+    await new Promise(r => setTimeout(r, 500));
     const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
     console.log(`✅ Registered ${data.length} slash commands`);
   } catch (error) {
