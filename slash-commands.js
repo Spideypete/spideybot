@@ -475,11 +475,13 @@ const slashCommands = [
 
 // Check for duplicate command names
 const commandNames = slashCommands.map(cmd => cmd.name);
-// Debug: log all command names to see duplicates
-console.log('All command names (' + commandNames.length + '):', commandNames.join(', '));
+// Debug: show each index
+console.log('Command list:');
+commandNames.forEach((name, i) => console.log(`  [${i}] ${name}`));
 const duplicates = commandNames.filter((name, index) => commandNames.indexOf(name) !== index);
 if (duplicates.length > 0) {
     console.error('Duplicate command names found:', [...new Set(duplicates)]);
+    console.error('Duplicate indices:', duplicates.map((d, i) => commandNames.indexOf(d)));
     process.exit(1);
 }
 
