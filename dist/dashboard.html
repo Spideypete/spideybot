@@ -7167,7 +7167,7 @@
                 members.forEach((member, index) => {
                     const levelColor = member.isAdmin ? '#ff6b6b' : '#00ff88'; // Admins red, others green
                     html += `
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <tr data-user-id="${member.userId}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                             <td style="padding: 0.75rem; color: #888;">${index + 1}</td>
                             <td style="padding: 0.75rem;">
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -7249,12 +7249,21 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    // Update level display
-                    const row = event.target.closest('tr');
-                    const levelCell = row.cells[3];
-                    levelCell.textContent = data.level;
-                    levelCell.style.color = '#00ff88';
+                    // Update level display - find the row containing this userId
+                    const rows = document.querySelectorAll('#leaderboardBody tr');
+                    let levelCell = null;
+                    rows.forEach(row => {
+                        if (row.dataset.userId === userId) {
+                            levelCell = row.cells[3];
+                        }
+                    });
+                    if (levelCell) {
+                        levelCell.textContent = data.level;
+                        levelCell.style.color = '#00ff88';
+                    }
                     alert(`✅ XP updated. New level: ${data.level}`);
+                    // Reload the leaderboard to refresh all values
+                    await loadCombinedLeaderboard();
                 } else {
                     alert('❌ ' + (data.error || 'Failed'));
                 }
