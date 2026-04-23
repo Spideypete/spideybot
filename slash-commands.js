@@ -468,6 +468,16 @@ const slashCommands = [
 
   // Leveling Commands
   new SlashCommandBuilder()
+    .setName('xp')
+    .setDescription('Check your XP and level')
+    .setDMPermission(true),
+
+  new SlashCommandBuilder()
+    .setName('level')
+    .setDescription('Check your level and XP')
+    .setDMPermission(true),
+
+  new SlashCommandBuilder()
     .setName('leaderboard')
     .setDescription('View the server leaderboard')
     .setDMPermission(true),
