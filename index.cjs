@@ -1622,25 +1622,47 @@ client.on("messageCreate", async (msg) => {
     const levels = guildConfig.levels || {};
     const userId = msg.author.id;
     const lastXpTime = levels[`${userId}_xp_time`] || 0;
-    const now = Date.now();
-
-    if (now - lastXpTime > 60000) {
-       const xpGain = Math.floor(Math.random() * 20) + 10;
-       const oldXp = levels[userId + "_xp"] || 0;
-       const oldLevel = Math.floor(oldXp / 500);
-       levels[userId + "_xp"] = oldXp + xpGain;
-       levels[`${userId}_xp_time`] = now;
-       
-       const newXp = levels[userId + "_xp"];
-       const newLevel = Math.floor(newXp / 500);
-       if (newLevel > oldLevel) {
-         const level = newLevel;
-         msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
-         addActivity(msg.guild.id, "⬆️", msg.author.username, `leveled up to Level ${level}`);
-
-        const xpLevelConfig = guildConfig['xp-levels'] || {};
-        const levelRoles = xpLevelConfig.levelRoles || guildConfig.levelRoles || {};
-        const newRoleId = levelRoles[`level_${level}`];
+       const now = Date.now();
+ 
+       if (now - lastXpTime > 60000) {
+          const xpGain = Math.floor(Math.random() * 20) + 10;
+          const oldXp = levels[userId + "_xp"] || 0;
+          const xpLevelConfig = guildConfig['xp-levels'] || {};
+          const xpPerLevel = xpLevelConfig.xpPerLevel || guildConfig.xpSettings?.perLevel || 500;
+          const oldLevel = Math.floor(oldXp / xpPerLevel);
+          levels[userId + "_xp"] = oldXp + xpGain;
+          levels[`${userId}_xp_time`] = now;
+          
+          const newXp = levels[userId + "_xp"];
+          const newLevel = Math.floor(newXp / xpPerLevel);
+          if (newLevel > oldLevel) {
+            const level = newLevel;
+            msg.reply(`🎉 **${msg.author.tag}** just reached Level ${level}!`);
+            addActivity(msg.guild.id, "⬆️", msg.author.username, `reached Level ${level}`);
+ 
+           const xpLevelConfig = guildConfig['xp-levels'] || {};
+           const levelRoles = xpLevelConfig.levelRoles || guildConfig.levelRoles || {};
+           const newRoleId = levelRoles[`level_${level}`];
+           
+           // Give level role
+           try {
+               if (newRoleId) {
+                   const role = msg.guild.roles.cache.get(newRoleId);
+                   if (role) {
+                       await msg.member.roles.add(role);
+                   }
+               }
+           } catch(e) {
+               console.error(`Failed to give level role: ${e.message}`);
+           }
+           
+           // Set nickname
+           try {
+               const nick = `@spidey {${level}}`;
+               await msg.member.setNickname(nick);
+           } catch(e) {
+               console.error(`Failed to set nickname: ${e.message}`);
+           }
 
         try {
           // Remove all old level roles (1-99)
