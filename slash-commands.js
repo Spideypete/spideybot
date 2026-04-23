@@ -468,16 +468,6 @@ const slashCommands = [
 
   // Leveling Commands
   new SlashCommandBuilder()
-    .setName('xp')
-    .setDescription('Check your XP and level')
-    .setDMPermission(true),
-
-  new SlashCommandBuilder()
-    .setName('level')
-    .setDescription('Check your level and XP')
-    .setDMPermission(true),
-
-  new SlashCommandBuilder()
     .setName('leaderboard')
     .setDescription('View the server leaderboard')
     .setDMPermission(true),
@@ -485,6 +475,8 @@ const slashCommands = [
 
 // Check for duplicate command names
 const commandNames = slashCommands.map(cmd => cmd.name);
+// Debug: log all command names to see duplicates
+console.log('All command names (' + commandNames.length + '):', commandNames.join(', '));
 const duplicates = commandNames.filter((name, index) => commandNames.indexOf(name) !== index);
 if (duplicates.length > 0) {
     console.error('Duplicate command names found:', [...new Set(duplicates)]);
