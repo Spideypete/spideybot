@@ -8371,9 +8371,13 @@ app.post("/api/admin/set-xp", express.json(), async (req, res) => {
   const guild = client.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ success: false, error: "Guild not found" });
   
-  const member = await guild.members.fetch(req.session.user.id).catch(() => null);
-  if (!member || !member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return res.status(403).json({ success: false, error: "Admin access required" });
+  try {
+    const member = await guild.members.fetch(req.session.user.id);
+    if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return res.status(403).json({ success: false, error: "Admin access required" });
+    }
+  } catch(e) {
+    return res.status(403).json({ success: false, error: "Failed to verify permissions" });
   }
   
   try {
@@ -8389,8 +8393,7 @@ app.post("/api/admin/set-xp", express.json(), async (req, res) => {
     levels[userId + "_xp"] = newXp;
     guildConfig.levels = levels;
     
-// Log the change
-    const guild = client.guilds.cache.get(guildId);
+    // Log the change
     const adminName = req.session.user?.username || 'Unknown';
     console.log(`[XP OVERRIDE] Guild: ${guild.name} (${guildId}), User: ${userId}, Old XP: ${oldXp}, New XP: ${newXp}, By: ${adminName}`);
     
