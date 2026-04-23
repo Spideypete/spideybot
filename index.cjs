@@ -1625,16 +1625,18 @@ client.on("messageCreate", async (msg) => {
     const now = Date.now();
 
     if (now - lastXpTime > 60000) {
-      const xpGain = Math.floor(Math.random() * 20) + 10;
-      levels[userId] = (levels[userId] || 0) + xpGain;
-      levels[`${userId}_xp_time`] = now;
-
-      const currentXp = levels[userId];
-      const nextLevelXp = (Math.floor(currentXp / 500) + 1) * 500;
-      if (currentXp >= nextLevelXp) {
-        const level = Math.floor(currentXp / 500) + 1;
-        msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
-        addActivity(msg.guild.id, "⬆️", msg.author.username, `leveled up to Level ${level}`);
+       const xpGain = Math.floor(Math.random() * 20) + 10;
+       const oldXp = levels[userId + "_xp"] || 0;
+       const oldLevel = Math.floor(oldXp / 500);
+       levels[userId + "_xp"] = oldXp + xpGain;
+       levels[`${userId}_xp_time`] = now;
+       
+       const newXp = levels[userId + "_xp"];
+       const newLevel = Math.floor(newXp / 500);
+       if (newLevel > oldLevel) {
+         const level = newLevel;
+         msg.reply(`🎉 **${msg.author.username}** leveled up to **Level ${level}**! 🎉`);
+         addActivity(msg.guild.id, "⬆️", msg.author.username, `leveled up to Level ${level}`);
 
         const xpLevelConfig = guildConfig['xp-levels'] || {};
         const levelRoles = xpLevelConfig.levelRoles || guildConfig.levelRoles || {};
