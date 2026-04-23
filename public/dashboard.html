@@ -2584,6 +2584,7 @@
                     <ul class="sidebar-menu">
                         <li class="sidebar-item" data-section="xp-levels" onclick="switchSection('xp-levels')"><span class="sidebar-item-icon"><img src="/dashboard-icons/xp-levels.svg" alt=""></span><span data-i18n="sidebar_xpLevels">XP Levels</span><span class="sidebar-tier-badge premium">Premium</span></li>
                         <li class="sidebar-item" data-section="leaderboards" onclick="switchSection('leaderboards')"><span class="sidebar-item-icon"><img src="/dashboard-icons/leaderboards.svg" alt=""></span><span data-i18n="sidebar_leaderboards">Leaderboards</span><span class="sidebar-tier-badge premium">Premium</span></li>
+                        <li class="sidebar-item" data-section="combined-leaderboard" onclick="switchSection('combined-leaderboard')"><span class="sidebar-item-icon">📊</span><span>Combined Leaderboard</span><span class="sidebar-tier-badge premium">Premium</span></li>
                         <li class="sidebar-item" data-section="giveaways" onclick="switchSection('giveaways')"><span class="sidebar-item-icon"><img src="/dashboard-icons/giveaways.svg" alt=""></span><span data-i18n="sidebar_giveaways">Giveaways</span></li>
                         <li class="sidebar-item" data-section="tickets" onclick="switchSection('tickets')"><span class="sidebar-item-icon">🎫</span><span>Tickets</span></li>
                     </ul>
@@ -3666,6 +3667,46 @@
                                     <select id="lb_combined_channel" class="form-input"><option value="">-- Select Channel --</option></select>
                                 </div>
                                 <button class="btn btn-primary" onclick="saveLeaderboards()">Save All Leaderboards</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Combined Leaderboard Section -->
+                <div id="combined-leaderboard-section" class="content-section">
+                    <div class="content-header">
+                        <div class="content-title">📊 Combined Leaderboard</div>
+                        <div class="content-subtitle">Full server member XP overview with admin controls</div>
+                    </div>
+                    
+                    <div class="content-action-bar" style="margin-bottom: 1rem;">
+                        <input type="text" id="memberSearch" class="form-input" placeholder="Search members..." style="max-width: 300px; margin-right: 1rem;" onkeyup="filterMembers()">
+                        <button class="btn btn-primary" onclick="loadCombinedLeaderboard()">Refresh</button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">👥 All Members</div>
+                            <div class="panel-actions">
+                                <span id="totalMembers" style="font-size: 0.85rem; color: #888;"></span>
+                            </div>
+                        </div>
+                        <div class="panel-content" style="padding: 0;">
+                            <div style="overflow-x: auto;">
+                                <table id="combinedLeaderboardTable" style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: rgba(255,255,255,0.05);">
+                                            <th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1);">#</th>
+                                            <th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1);">Member</th>
+                                            <th style="padding: 0.75rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="sortBy('xp')">XP ↓</th>
+                                            <th style="padding: 0.75rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="sortBy('level')">Level <span style="color: #00ff88;">●</span></th>
+                                            <th style="padding: 0.75rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1);">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboardBody">
+                                        <tr><td colspan="5" style="padding: 2rem; text-align: center; color: #888;">Loading...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -7102,6 +7143,131 @@
             await loadTabConfig('leaderboards');
         }
 
+        // Combined Leaderboard - Full member list with XP editing
+        async function loadCombinedLeaderboard() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return;
+            
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: #888;">Loading...</td></tr>';
+            
+            try {
+                const res = await fetch('/api/dashboard/combined-leaderboard?guildId=' + guildId, { credentials: 'include' });
+                const data = await res.json();
+                
+                const members = data.members || [];
+                document.getElementById('totalMembers').textContent = `${members.length} members`;
+                
+                if (members.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: #888;">No members found</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                members.forEach((member, index) => {
+                    const levelColor = member.isAdmin ? '#ff6b6b' : '#00ff88'; // Admins red, others green
+                    html += `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 0.75rem; color: #888;">${index + 1}</td>
+                            <td style="padding: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <img src="${member.avatar}" style="width: 32px; height: 32px; border-radius: 50%;" onerror="this.style.display='none'">
+                                    <div>
+                                        <div style="font-weight: 500;">${member.displayName || member.username}</div>
+                                        <div style="font-size: 0.75rem; color: #888;">@${member.username}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding: 0.75rem; text-align: center;">
+                                <input type="number" value="${member.xp}" min="0" 
+                                    style="width: 80px; padding: 0.25rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; text-align: center; border-radius: 4px;"
+                                    onchange="updateXP('${member.userId}', this.value, ${member.level})"
+                                />
+                            </td>
+                            <td style="padding: 0.75rem; text-align: center; font-weight: bold; color: ${levelColor};">
+                                ${member.level}
+                            </td>
+                            <td style="padding: 0.75rem; text-align: right;">
+                                <button class="btn btn-sm" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;" 
+                                    onclick="resetXP('${member.userId}')">Reset</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+            } catch(e) {
+                console.error('Combined leaderboard error:', e);
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: #ff6b6b;">Error loading data</td></tr>';
+            }
+        }
+
+        var currentSort = { field: 'xp', order: 'desc' };
+        function sortBy(field) {
+            if (currentSort.field === field) {
+                currentSort.order = currentSort.order === 'desc' ? 'asc' : 'desc';
+            } else {
+                currentSort.field = field;
+                currentSort.order = 'desc';
+            }
+            // Re-sort the table rows
+            const tbody = document.getElementById('leaderboardBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                let aVal, bVal;
+                if (field === 'xp') {
+                    aVal = parseInt(a.cells[2].querySelector('input').value);
+                    bVal = parseInt(b.cells[2].querySelector('input').value);
+                } else {
+                    aVal = parseInt(a.cells[3].textContent);
+                    bVal = parseInt(b.cells[3].textContent);
+                }
+                return currentSort.order === 'desc' ? bVal - aVal : aVal - bVal;
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function filterMembers() {
+            const search = document.getElementById('memberSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#leaderboardBody tr');
+            rows.forEach(row => {
+                const name = row.cells[1].textContent.toLowerCase();
+                row.style.display = name.includes(search) ? '' : 'none';
+            });
+        }
+
+        async function updateXP(userId, newXp, oldLevel) {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId || !confirm('Set XP to ' + newXp + '?')) return;
+            
+            try {
+                const res = await fetch('/api/admin/set-xp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ guildId, userId, newXp: parseInt(newXp) }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Update level display
+                    const row = event.target.closest('tr');
+                    const levelCell = row.cells[3];
+                    levelCell.textContent = data.level;
+                    levelCell.style.color = '#00ff88';
+                    alert(`✅ XP updated. New level: ${data.level}`);
+                } else {
+                    alert('❌ ' + (data.error || 'Failed'));
+                }
+            } catch(e) {
+                alert('❌ Error: ' + e.message);
+            }
+        }
+
+        async function resetXP(userId) {
+            if (!confirm('Reset XP to 0?')) return;
+            await updateXP(userId, 0, 0);
+        }
+
         async function saveLeaderboards() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return alert('Select a server first');
@@ -7856,6 +8022,7 @@ async function loadGiveaways() {
                     'react-roles': 'hasReactRoles',
                     'xp-levels': 'hasXP',
                     'leaderboards': 'hasXP',
+                    'combined-leaderboard': 'hasXP',
                     'giveaways': 'hasGiveaways',
                     'custom-commands': 'hasCustomCommands',
                     'social-notifs': 'hasSocialNotifs',
@@ -7870,6 +8037,7 @@ async function loadGiveaways() {
                     'react-roles': null, // Available to all (with 3 role limit enforced in UI)
                     'xp-levels': { icon: '💎', tier: 'Premium' },
                     'leaderboards': { icon: '💎', tier: 'Premium' },
+                    'combined-leaderboard': { icon: '💎', tier: 'Premium' },
                     'social-notifs': { icon: '💎', tier: 'Premium' },
                     'giveaways': null, // Free for all
                     'custom-commands': { icon: '💎', tier: 'Premium' },
@@ -7932,6 +8100,7 @@ async function loadGiveaways() {
                         'custom-commands': loadCustomCommands,
                         'xp-levels': loadXPLevels,
                         'leaderboards': loadLeaderboards,
+                        'combined-leaderboard': loadCombinedLeaderboard,
                         'giveaways': loadGiveaways,
                         'tickets': loadTickets,
                         'social-notifs': loadSocialNotifs,

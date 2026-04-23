@@ -8320,6 +8320,94 @@ app.get("/api/dashboard/members", (req, res) => {
   res.json({ members });
 });
 
+// Combined Leaderboard - ALL members with XP
+app.get("/api/dashboard/combined-leaderboard", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  
+  const guildId = req.query.guildId;
+  const guild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
+  if (!guild) return res.json({ members: [] });
+
+  const config = loadConfig();
+  const guildConfig = config.guilds[guild.id] || {};
+  const levels = guildConfig.levels || {};
+  
+  // Get all members from guild
+  const membersList = [];
+  guild.members.cache.forEach(member => {
+    if (member.user.bot) return; // Skip bots
+    
+    const userId = member.id;
+    const xp = levels[userId + "_xp"] || 0;
+    const level = Math.floor(xp / 500) + 1;
+    
+    membersList.push({
+      userId,
+      username: member.user.username,
+      displayName: member.displayName,
+      avatar: member.user.displayAvatarURL(),
+      xp,
+      level,
+      isAdmin: member.permissions.has(PermissionFlagsBits.Administrator)
+    });
+  });
+  
+  // Sort by XP descending
+  membersList.sort((a, b) => b.xp - a.xp);
+  
+  res.json({ members: membersList });
+});
+
+// Admin: Set user XP
+app.post("/api/admin/set-xp", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  
+  const { guildId, userId, newXp } = req.body;
+  if (!guildId || !userId || newXp === undefined) {
+    return res.status(400).json({ success: false, error: "Missing required fields" });
+  }
+  
+  // Verify user is admin in the guild
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ success: false, error: "Guild not found" });
+  
+  const member = await guild.members.fetch(req.session.user.id).catch(() => null);
+  if (!member || !member.permissions.has(PermissionFlagsBits.Administrator)) {
+    return res.status(403).json({ success: false, error: "Admin access required" });
+  }
+  
+  try {
+    const config = loadConfig();
+    const guildConfig = config.guilds[guildId];
+    if (!guildConfig) return res.status(404).json({ success: false, error: "Guild not found" });
+    
+    const levels = guildConfig.levels || {};
+    const oldXp = levels[userId + "_xp"] || 0;
+    const newLevel = Math.floor(newXp / 500) + 1;
+    
+    // Update XP
+    levels[userId + "_xp"] = newXp;
+    guildConfig.levels = levels;
+    
+// Log the change
+    const guild = client.guilds.cache.get(guildId);
+    const adminName = req.session.user?.username || 'Unknown';
+    console.log(`[XP OVERRIDE] Guild: ${guild.name} (${guildId}), User: ${userId}, Old XP: ${oldXp}, New XP: ${newXp}, By: ${adminName}`);
+    
+    // Also log to a file for audit
+    const logEntry = `[${new Date().toISOString()}] Guild: ${guild.name} (${guildId}), Admin: ${adminName}, Target: ${userId}, Old XP: ${oldXp}, New XP: ${newXp}\n`;
+    try { fs.appendFileSync('xp_overrides.log', logEntry); } catch(e) {}
+    
+    // Save config
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    
+    res.json({ success: true, xp: newXp, level: newLevel, oldXp });
+  } catch (e) {
+    console.error('XP override error:', e);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
 app.get("/api/dashboard/activity", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
