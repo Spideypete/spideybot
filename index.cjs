@@ -377,17 +377,18 @@ function getGuildConfig(guildId) {
       musicShuffle: false,
       musicVolume: 100,
       warnings: {},
-      economy: {},
-      levels: {},
-      profanityFilterEnabled: true,
-      suggestionsChannelId: null,
-      giveaways: {},
-      badWords: ["badword1", "badword2"],
-      linkFilterEnabled: true,
-      ticketsEnabled: false,
-      ticketChannelId: null,
-      customCommands: {},
-      levelRoles: {}
+       economy: {},
+       levels: {},
+       'xp-levels': {
+         xpPerLevel: 500,
+         xpPerMessage: 15,
+         levelRoles: {},
+         announcementChannel: null,
+         announceLevelUps: true,
+         autoNickname: false,
+         nicknameTemplate: "{name} {level}"
+       },
+       keepOldLevelRoles: true,
     };
     saveConfig(config);
   }
@@ -1618,77 +1619,86 @@ client.on("messageCreate", async (msg) => {
   }
 
   // ============== AUTO XP GAIN ==============
-  if (!msg.content.startsWith("/") && guildConfig.levelingSystem !== false) {
-    const levels = guildConfig.levels || {};
-    const userId = msg.author.id;
-    const lastXpTime = levels[`${userId}_xp_time`] || 0;
-       const now = Date.now();
- 
-       if (now - lastXpTime > 60000) {
-          const xpGain = Math.floor(Math.random() * 20) + 10;
-          const oldXp = levels[userId + "_xp"] || 0;
-          const xpLevelConfig = guildConfig['xp-levels'] || {};
-          const xpPerLevel = xpLevelConfig.xpPerLevel || guildConfig.xpSettings?.perLevel || 500;
-          const oldLevel = Math.floor(oldXp / xpPerLevel);
-          levels[userId + "_xp"] = oldXp + xpGain;
-          levels[`${userId}_xp_time`] = now;
-          
-          const newXp = levels[userId + "_xp"];
-          const newLevel = Math.floor(newXp / xpPerLevel);
-          if (newLevel > oldLevel) {
-            const level = newLevel;
-            msg.reply(`🎉 **${msg.author.tag}** just reached Level ${level}!`);
-            addActivity(msg.guild.id, "⬆️", msg.author.username, `reached Level ${level}`);
- 
+       if (!msg.content.startsWith("/") && guildConfig.levelingSystem !== false) {
+     const levels = guildConfig.levels || {};
+     const userId = msg.author.id;
+     const lastXpTime = levels[`${userId}_xp_time`] || 0;
+        const now = Date.now();
+  
+        if (now - lastXpTime > 60000) {
+           const xpGain = Math.floor(Math.random() * 20) + 10;
+           const oldXp = levels[userId + "_xp"] || 0;
            const xpLevelConfig = guildConfig['xp-levels'] || {};
-           const levelRoles = xpLevelConfig.levelRoles || guildConfig.levelRoles || {};
-           const newRoleId = levelRoles[`level_${level}`];
+           const xpPerLevel = xpLevelConfig.xpPerLevel || guildConfig.xpSettings?.perLevel || 500;
+           const oldLevel = Math.floor(oldXp / xpPerLevel);
+           levels[userId + "_xp"] = oldXp + xpGain;
+           levels[`${userId}_xp_time`] = now;
            
-           // Give level role
-           try {
-               if (newRoleId) {
-                   const role = msg.guild.roles.cache.get(newRoleId);
-                   if (role) {
-                       await msg.member.roles.add(role);
-                   }
+           const newXp = levels[userId + "_xp"];
+           const newLevel = Math.floor(newXp / xpPerLevel);
+           if (newLevel > oldLevel) {
+             const level = newLevel;
+             
+             // Check for notification channel and send level-up message
+             const announceChannelId = xpLevelConfig.announcementChannel;
+             if (announceChannelId) {
+               const announceChannel = msg.guild.channels.cache.get(announceChannelId);
+               if (announceChannel && xpLevelConfig.announceLevelUps !== false) {
+                 await announceChannel.send(`${msg.author} just reached Level ${level}!`).catch(() => {});
                }
-           } catch(e) {
-               console.error(`Failed to give level role: ${e.message}`);
-           }
-           
-           // Set nickname
-           try {
-               const nick = `@spidey {${level}}`;
-               await msg.member.setNickname(nick);
-           } catch(e) {
-               console.error(`Failed to set nickname: ${e.message}`);
-           }
-
-        try {
-          // Remove all old level roles (1-99)
-          for (let oldLevel = 1; oldLevel < level; oldLevel++) {
-            const oldRoleId = levelRoles[`level_${oldLevel}`];
-            if (oldRoleId) {
-              const oldRole = msg.guild.roles.cache.get(oldRoleId);
-              if (oldRole && msg.member.roles.cache.has(oldRoleId)) {
-                await msg.member.roles.remove(oldRole);
+             } else if (xpLevelConfig.announceLevelUps !== false) {
+               // Fallback to message reply if no channel configured
+               await msg.reply(`🎉 **${msg.author.tag}** just reached Level ${level}!`).catch(() => {});
+             }
+             
+             addActivity(msg.guild.id, "⬆️", msg.author.username, `reached Level ${level}`);
+  
+            const levelRoles = xpLevelConfig.levelRoles || guildConfig.levelRoles || {};
+            const newRoleId = levelRoles[`level_${level}`];
+            const keepOldRoles = guildConfig.keepOldLevelRoles !== false; // default true
+            
+            try {
+              // Remove old level roles only if keepOldRoles is false
+              if (!keepOldRoles) {
+                for (let oldLvl = 1; oldLvl < level; oldLvl++) {
+                  const oldRoleId = levelRoles[`level_${oldLvl}`];
+                  if (oldRoleId) {
+                    const oldRole = msg.guild.roles.cache.get(oldRoleId);
+                    if (oldRole && msg.member.roles.cache.has(oldRoleId)) {
+                      await msg.member.roles.remove(oldRole).catch(() => {});
+                    }
+                  }
+                }
+              }
+              
+              // Add new level role
+              if (newRoleId) {
+                const newRole = msg.guild.roles.cache.get(newRoleId);
+                if (newRole) await msg.member.roles.add(newRole).catch(() => {});
+              }
+            } catch (err) {
+              console.error(`❌ Failed to manage level roles: ${err.message}`);
+            }
+            
+            // Auto-update nickname if enabled
+            if (xpLevelConfig.autoNickname === true) {
+              try {
+                const nickTemplate = xpLevelConfig.nicknameTemplate || "{name} {level}";
+                const nick = nickTemplate
+                  .replace(/{name}/g, msg.member.displayName || msg.author.username)
+                  .replace(/{level}/g, level.toString());
+                if (msg.member.manageable) {
+                  await msg.member.setNickname(nick).catch(() => {});
+                }
+              } catch(e) {
+                console.error(`Failed to set nickname: ${e.message}`);
               }
             }
-          }
-
-          // Add new level role
-          if (newRoleId) {
-            const newRole = msg.guild.roles.cache.get(newRoleId);
-            if (newRole) await msg.member.roles.add(newRole);
-          }
-        } catch (err) {
-          console.error(`❌ Failed to manage level roles: ${err.message}`);
-        }
-      }
-
-      updateGuildConfig(msg.guild.id, { levels });
-    }
-  }
+           }
+ 
+       updateGuildConfig(msg.guild.id, { levels });
+     }
+   }
 
   // Message Statistics
   if (msg.content === "/stats") {
@@ -1953,23 +1963,23 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Transferred **${amount} coins** to ${target.toString()}! 🪙`);
   }
 
-  // ============== LEVELING SYSTEM ==============
-  if (msg.content === "/level" || msg.content === "/xp") {
-    const levels = guildConfig.levels || {};
-    const level = levels[msg.author.id] || 0;
-    const xp = levels[msg.author.id + "_xp"] || 0;
-    const xpLevelConfig = guildConfig['xp-levels'] || {};
-    const xpPerLevel = xpLevelConfig.xpPerLevel || 500;
-    const nextLevelXp = (level + 1) * xpPerLevel;
-    const levelEmbed = new EmbedBuilder()
-      .setColor('#9151ff')
-      .setTitle("💎 Your XP Status")
-      .addFields(
-        { name: "Level", value: `${level}`, inline: true },
-        { name: "XP", value: `${xp} XP`, inline: true },
-        { name: "Next Level", value: `${nextLevelXp} XP to Level ${level + 1}`, inline: false }
-      )
-      .setFooter({ text: "SPIDEY BOT Leveling" });
+   // ============== LEVELING SYSTEM ==============
+   if (msg.content === "/level" || msg.content === "/xp") {
+     const levels = guildConfig.levels || {};
+     const xp = levels[msg.author.id + "_xp"] || 0;
+     const xpLevelConfig = guildConfig['xp-levels'] || {};
+     const xpPerLevel = xpLevelConfig.xpPerLevel || 500;
+     const level = Math.floor(xp / xpPerLevel);
+     const nextLevelXp = (level + 1) * xpPerLevel;
+     const levelEmbed = new EmbedBuilder()
+       .setColor('#9151ff')
+       .setTitle("💎 Your XP Status")
+       .addFields(
+         { name: "Level", value: `${level}`, inline: true },
+         { name: "XP", value: `${xp} XP`, inline: true },
+         { name: "Next Level", value: `${nextLevelXp} XP to Level ${level + 1}`, inline: false }
+       )
+       .setFooter({ text: "SPIDEY BOT Leveling" });
     return msg.reply({ embeds: [levelEmbed] });
   }
 
@@ -1997,36 +2007,75 @@ client.on("messageCreate", async (msg) => {
     return msg.reply({ embeds: [leaderboardEmbed] });
   }
 
-  // Gain XP on message (every message)
-  if (!guildConfig.levels) guildConfig.levels = {};
-  const levels = guildConfig.levels;
-  const xpLevelConfig = guildConfig['xp-levels'] || {};
-  const xpSettings = guildConfig.xpSettings || {};
-  const xpPerMsg = xpLevelConfig.xpPerMessage || xpSettings.perMessage || 15;
-  const xpGain = xpPerMsg;
-  levels[msg.author.id + "_xp"] = (levels[msg.author.id + "_xp"] || 0) + xpGain;
-  const currentLevel = levels[msg.author.id] || 0;
-  const xpPerLevel = xpLevelConfig.xpPerLevel || xpSettings.perLevel || 500;
-  const xpNeeded = (currentLevel + 1) * xpPerLevel;
-  if (levels[msg.author.id + "_xp"] >= xpNeeded) {
-    levels[msg.author.id] = currentLevel + 1;
-    levels[msg.author.id + "_xp"] = 0;
-    updateGuildConfig(msg.guild.id, { levels });
-    msg.reply(`🎉 ${msg.author} leveled up to **Level ${currentLevel + 1}**!`).catch(() => {});
-    
-    // Send level-up announcement if channel is configured
-    const xpLevelConfig = guildConfig['xp-levels'] || {};
-    if (xpLevelConfig.announcementChannel) {
-      const announceChannel = msg.guild.channels.cache.get(xpLevelConfig.announcementChannel);
-      if (announceChannel && xpLevelConfig.announceLevelUps !== false) {
-        announceChannel.send(`🎉 Congratulations ${msg.author}! You reached **Level ${currentLevel + 1}**!`).catch(() => {});
-      }
+   // Gain XP on message (every message)
+   if (!guildConfig.levels) guildConfig.levels = {};
+   const levels = guildConfig.levels;
+   const xpLevelConfig = guildConfig['xp-levels'] || {};
+   const xpSettings = guildConfig.xpSettings || {};
+   const xpPerMsg = xpLevelConfig.xpPerMessage || xpSettings.perMessage || 15;
+   const xpGain = xpPerMsg;
+   levels[msg.author.id + "_xp"] = (levels[msg.author.id + "_xp"] || 0) + xpGain;
+   const currentLevel = levels[msg.author.id] || 0;
+   const xpPerLevel = xpLevelConfig.xpPerLevel || xpSettings.perLevel || 500;
+   const xpNeeded = (currentLevel + 1) * xpPerLevel;
+   if (levels[msg.author.id + "_xp"] >= xpNeeded) {
+     levels[msg.author.id] = currentLevel + 1;
+     levels[msg.author.id + "_xp"] = 0;
+     updateGuildConfig(msg.guild.id, { levels });
+     msg.reply(`🎉 ${msg.author} leveled up to **Level ${currentLevel + 1}**!`).catch(() => {});
+     
+     // Send level-up announcement if channel is configured
+     if (xpLevelConfig.announcementChannel) {
+       const announceChannel = msg.guild.channels.cache.get(xpLevelConfig.announcementChannel);
+       if (announceChannel && xpLevelConfig.announceLevelUps !== false) {
+         announceChannel.send(`${msg.author} just reached Level ${currentLevel + 1}!`).catch(() => {});
+       }
+     }
+     
+     // Handle level roles
+     const levelRoles = xpLevelConfig.levelRoles || guildConfig.levelRoles || {};
+     const newRoleId = levelRoles[`level_${currentLevel + 1}`];
+     const keepOldRoles = guildConfig.keepOldLevelRoles !== false;
+     
+     try {
+       if (!keepOldRoles) {
+         for (let oldLvl = 1; oldLvl <= currentLevel; oldLvl++) {
+           const oldRoleId = levelRoles[`level_${oldLvl}`];
+           if (oldRoleId) {
+             const oldRole = msg.guild.roles.cache.get(oldRoleId);
+             if (oldRole && msg.member && msg.member.roles.cache.has(oldRoleId)) {
+               await msg.member.roles.remove(oldRole).catch(() => {});
+             }
+           }
+         }
+       }
+       if (newRoleId && msg.member) {
+         const newRole = msg.guild.roles.cache.get(newRoleId);
+         if (newRole) await msg.member.roles.add(newRole).catch(() => {});
+       }
+     } catch (err) {
+       console.error(`❌ Failed to manage level roles: ${err.message}`);
+     }
+     
+     // Auto-update nickname if enabled
+     if (xpLevelConfig.autoNickname === true && msg.member) {
+       try {
+         const nickTemplate = xpLevelConfig.nicknameTemplate || "{name} {level}";
+         const nick = nickTemplate
+           .replace(/{name}/g, msg.member.displayName || msg.author.username)
+           .replace(/{level}/g, (currentLevel + 1).toString());
+         if (msg.member.manageable) {
+           await msg.member.setNickname(nick).catch(() => {});
+         }
+       } catch(e) {
+         console.error(`Failed to set nickname: ${e.message}`);
+       }
+     }
+    } else {
+      updateGuildConfig(msg.guild.id, { levels });
     }
-  } else {
-    updateGuildConfig(msg.guild.id, { levels });
-  }
 
-  // ============== SERVER PROTECTION ==============
+
   if (msg.content.startsWith("/filter-toggle")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return msg.reply("❌ Only admins can toggle the filter!");
@@ -3273,25 +3322,27 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`🏆 **Top 10 Richest Members:**\n${leaderboard}`);
   }
 
-  // ============== LEVELING COMMANDS ==============
-  // /level and /xp handled above
-
-  if (msg.content === "/xpleaderboard") {
-    const levels = guildConfig.levels || {};
-    const members = Object.entries(levels)
-      .filter(([key]) => !key.includes("_"))
-      .map(([userId, xp]) => ({ userId, xp }))
-      .sort((a, b) => b.xp - a.xp)
-      .slice(0, 10);
-
-    if (members.length === 0) return msg.reply("📊 No leveling data yet! Send messages to gain XP!");
-
-    const leaderboard = members.map((m, i) => {
-      const user = msg.guild.members.cache.get(m.userId)?.user;
-      const name = user?.username || "Unknown";
-      const level = Math.floor(m.xp / 500) + 1;
-      return `**${i+1}.** ${name} - **Level ${level}** (${m.xp} XP)`;
-    }).join("\n");
+   // ============== LEVELING COMMANDS ==============
+   // /level and /xp handled above
+ 
+   if (msg.content === "/xpleaderboard") {
+     const levels = guildConfig.levels || {};
+     const xpLevelConfig = guildConfig['xp-levels'] || {};
+     const xpPerLevel = xpLevelConfig.xpPerLevel || guildConfig.xpSettings?.perLevel || 500;
+     const members = Object.entries(levels)
+       .filter(([key]) => !key.includes("_"))
+       .map(([userId, xp]) => ({ userId, xp }))
+       .sort((a, b) => b.xp - a.xp)
+       .slice(0, 10);
+ 
+     if (members.length === 0) return msg.reply("📊 No leveling data yet! Send messages to gain XP!");
+ 
+     const leaderboard = members.map((m, i) => {
+       const user = msg.guild.members.cache.get(m.userId)?.user;
+       const name = user?.username || "Unknown";
+       const level = Math.floor(m.xp / xpPerLevel);
+       return `**${i+1}.** ${name} - **Level ${level}** (${m.xp} XP)`;
+     }).join("\n");
 
     return msg.reply(`🏆 **Top 10 Members by Level:**\n${leaderboard}`);
   }
@@ -4368,8 +4419,40 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`✅ Deleted command **/${cmdName}**`);
       }
       
-      // ========== CONFIGURATION (ADDITIONAL) ==========
-      if (commandName === 'configsuggestions') {
+       // ========== CONFIGURATION ==========
+       if (commandName === 'configxp') {
+         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+           return interaction.editReply("❌ Only admins can configure!");
+         }
+         
+         const xpLevelConfig = guildConfig['xp-levels'] || {};
+         const xpPerMessage = options.getInteger('xp_per_message');
+         const xpPerLevel = options.getInteger('xp_per_level');
+         const announcementChannel = options.getChannel('announcement_channel');
+         const announceLevelUps = options.getBoolean('announce_level_ups');
+         const autoNickname = options.getBoolean('auto_nickname');
+         const keepOldRoles = options.getBoolean('keep_old_roles');
+         const nicknameTemplate = options.getString('nickname_template');
+         const autoAssignRoles = options.getBoolean('auto_assign_roles');
+         
+         if (xpPerMessage !== null) xpLevelConfig.xpPerMessage = xpPerMessage;
+         if (xpPerLevel !== null) xpLevelConfig.xpPerLevel = xpPerLevel;
+         if (announcementChannel !== null) xpLevelConfig.announcementChannel = announcementChannel.id;
+         if (announceLevelUps !== null) xpLevelConfig.announceLevelUps = announceLevelUps;
+         if (autoNickname !== null) xpLevelConfig.autoNickname = autoNickname;
+         if (keepOldRoles !== null) guildConfig.keepOldLevelRoles = keepOldRoles;
+         if (nicknameTemplate !== null) xpLevelConfig.nicknameTemplate = nicknameTemplate;
+         if (autoAssignRoles !== null) xpLevelConfig.autoAssignRoles = autoAssignRoles;
+         
+         updateGuildConfig(interaction.guild.id, { 'xp-levels': xpLevelConfig });
+         if (keepOldRoles !== null) {
+           updateGuildConfig(interaction.guild.id, { keepOldLevelRoles: keepOldRoles });
+         }
+         return interaction.editReply("✅ XP settings updated!");
+       }
+
+       // ========== CONFIGURATION (ADDITIONAL) ==========
+       if (commandName === 'configsuggestions') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
           return interaction.editReply("❌ Only admins can configure!");
         }
@@ -8356,25 +8439,27 @@ app.get("/api/dashboard/combined-leaderboard", (req, res) => {
   const guildConfig = config.guilds[guild.id] || {};
   const levels = guildConfig.levels || {};
   
-  // Get all members from guild
-  const membersList = [];
-  guild.members.cache.forEach(member => {
-    if (member.user.bot) return; // Skip bots
-    
-    const userId = member.id;
-    const xp = levels[userId + "_xp"] || 0;
-    const level = Math.floor(xp / 500) + 1;
-    
-    membersList.push({
-      userId,
-      username: member.user.username,
-      displayName: member.displayName,
-      avatar: member.user.displayAvatarURL(),
-      xp,
-      level,
-      isAdmin: member.permissions.has(PermissionFlagsBits.Administrator)
-    });
-  });
+   // Get all members from guild
+   const xpLevelConfig = guildConfig['xp-levels'] || {};
+   const xpPerLevel = xpLevelConfig.xpPerLevel || guildConfig.xpSettings?.perLevel || 500;
+   const membersList = [];
+   guild.members.cache.forEach(member => {
+     if (member.user.bot) return; // Skip bots
+     
+     const userId = member.id;
+     const xp = levels[userId + "_xp"] || 0;
+     const level = Math.floor(xp / xpPerLevel);
+     
+     membersList.push({
+       userId,
+       username: member.user.username,
+       displayName: member.displayName,
+       avatar: member.user.displayAvatarURL(),
+       xp,
+       level,
+       isAdmin: member.permissions.has(PermissionFlagsBits.Administrator)
+     });
+   });
   
   // Sort by XP descending
   membersList.sort((a, b) => b.xp - a.xp);
@@ -8405,13 +8490,18 @@ app.post("/api/admin/set-xp", express.json(), async (req, res) => {
   }
   
   try {
-    const config = loadConfig();
-    const guildConfig = config.guilds[guildId];
-    if (!guildConfig) return res.status(404).json({ success: false, error: "Guild not found" });
-    
-    const levels = guildConfig.levels || {};
-    const oldXp = levels[userId + "_xp"] || 0;
-    const newLevel = Math.floor(newXp / 500) + 1;
+     const config = loadConfig();
+     const guild = client.guilds.cache.get(guildId);
+     if (!guild) return res.status(404).json({ success: false, error: "Guild not found" });
+     const guildConfig = config.guilds[guildId];
+     if (!guildConfig) return res.status(404).json({ success: false, error: "Guild not found" });
+     
+     const levels = guildConfig.levels || {};
+     const xpLevelConfig = guildConfig['xp-levels'] || {};
+     const xpPerLevel = xpLevelConfig.xpPerLevel || guildConfig.xpSettings?.perLevel || 500;
+     const oldXp = levels[userId + "_xp"] || 0;
+     const newLevel = Math.floor(newXp / xpPerLevel);
+     
     
     // Update XP
     levels[userId + "_xp"] = newXp;
@@ -8551,12 +8641,14 @@ app.get("/api/dashboard/top-members", (req, res) => {
 
   const config = getGuildConfig(firstGuild.id);
   const levels = config.levels || {};
+  const xpLevelConfig = config['xp-levels'] || {};
+  const xpPerLevel = xpLevelConfig.xpPerLevel || config.xpSettings?.perLevel || 500;
 
   const memberXP = Object.keys(levels)
     .filter(k => !k.includes("_"))
     .map(userId => {
       const xp = levels[userId] || 0;
-      const level = Math.floor(xp / 500) + 1;
+      const level = Math.floor(xp / xpPerLevel);
       return { userId, xp, level };
     })
     .sort((a, b) => b.xp - a.xp)
