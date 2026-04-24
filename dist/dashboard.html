@@ -3546,6 +3546,27 @@
                                         <input type="number" id="gameXp_coinflip" class="form-input" style="width:80px;" placeholder="30" value="30"/>
                                     </div>
                                 </div>
+                                <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid rgba(255,255,255,0.1);">
+                                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:0.5rem;">Cooldown Settings (seconds)</div>
+                                    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:rgba(255,215,0,0.05);border-radius:6px;margin-bottom:0.5rem;">
+                                        <span style="color:#FFD700">Gambling</span>
+                                        <input type="number" id="gameCool_gambling" class="form-input" style="width:80px;" placeholder="300" value="300"/>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:rgba(255,215,0,0.05);border-radius:6px;margin-bottom:0.5rem;">
+                                        <span style="color:#FFD700">Trivia</span>
+                                        <input type="number" id="gameCool_trivia" class="form-input" style="width:80px;" placeholder="60" value="60"/>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:rgba(255,215,0,0.05);border-radius:6px;margin-bottom:0.5rem;">
+                                        <span style="color:#FFD700">Dice</span>
+                                        <input type="number" id="gameCool_dice" class="form-input" style="width:80px;" placeholder="30" value="30"/>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:rgba(255,215,0,0.05);border-radius:6px;margin-bottom:0.5rem;">
+                                        <span style="color:#FFD700">Coin</span>
+                                        <input type="number" id="gameCool_coinflip" class="form-input" style="width:80px;" placeholder="30" value="30"/>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveGameXp()" style="margin-top:0.5rem;">Save Game XP & Cooldowns</button>
+                                </div>
                                 <button class="btn btn-primary" onclick="saveGameXp()" style="margin-top:0.5rem;">Save Game XP</button>
                             </div>
                         </div>
@@ -6932,13 +6953,23 @@
             const autoAssignRoles = document.getElementById('xp_autoRoles')?.checked !== false;
             const announcementChannel = document.getElementById('xp_announceChannel')?.value || '';
             const announceLevelUps = document.getElementById('xp_announceLevelUps')?.checked !== false;
+            const autoNickname = document.getElementById('xp_autoNickname')?.checked === true;
+            const nicknameTemplate = document.getElementById('xp_nicknameTemplate')?.value || '{name} {level}';
+            const keepOldRoles = document.getElementById('xp_keepOldRoles')?.checked !== false;
             
             try {
                 const res = await fetch(`/api/config/${guildId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        'xp-levels': { xpPerMessage, xpPerVoice, xpPerLevel, autoAssignRoles, announcementChannel, announceLevelUps }
+                        'xp-levels': { 
+                            xpPerMessage, xpPerVoice, xpPerLevel, autoAssignRoles, 
+                            announcementChannel, announceLevelUps,
+                            autoNickname, nicknameTemplate,
+                            gameXp: window._gameXpCache,
+                            gameCooldowns: window._gameCoolCache
+                        },
+                        keepOldLevelRoles: keepOldRoles
                     }),
                     credentials: 'include'
                 });
