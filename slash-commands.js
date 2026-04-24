@@ -418,6 +418,47 @@ const slashCommands = [
     .addIntegerOption(option =>
       option.setName('duration').setDescription('Duration (minutes)').setRequired(true)),
 
+  // ===================== CONFIGURATION - LEVELING =====================
+  new SlashCommandBuilder()
+    .setName('configxp')
+    .setDescription('Configure XP and leveling settings')
+    .addIntegerOption(option =>
+      option.setName('xp_per_message')
+        .setDescription('XP gained per message')
+        .setRequired(false)
+        .setMinValue(1)
+        .setMaxValue(100))
+    .addIntegerOption(option =>
+      option.setName('xp_per_level')
+        .setDescription('XP required for each level')
+        .setRequired(false)
+        .setMinValue(100)
+        .setMaxValue(10000))
+    .addChannelOption(option =>
+      option.setName('announcement_channel')
+        .setDescription('Channel for level-up announcements')
+        .setRequired(false))
+    .addBooleanOption(option =>
+      option.setName('announce_level_ups')
+        .setDescription('Whether to announce level ups')
+        .setRequired(false))
+    .addBooleanOption(option =>
+      option.setName('auto_nickname')
+        .setDescription('Auto-update nicknames on level up')
+        .setRequired(false))
+    .addBooleanOption(option =>
+      option.setName('keep_old_roles')
+        .setDescription('Keep old level roles when leveling up')
+        .setRequired(false))
+    .addStringOption(option =>
+      option.setName('nickname_template')
+        .setDescription('Template for auto nicknames (use {name} and {level})')
+        .setRequired(false))
+    .addBooleanOption(option =>
+      option.setName('auto_assign_roles')
+        .setDescription('Auto-assign level roles')
+        .setRequired(false)),
+
   // ===================== UTILITY =====================
   new SlashCommandBuilder()
     .setName('ping')
