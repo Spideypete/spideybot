@@ -3505,6 +3505,16 @@
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="xp_announceLevelUps" checked/> <span>Announce Level-Ups</span></label>
                                 </div>
+                                 <div class="form-group">
+                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="xp_autoNickname"/> <span>Auto-Update Nicknames</span></label>
+                                 </div>
+                                 <div class="form-group">
+                                     <div class="form-label">Nickname Template</div>
+                                     <input type="text" id="xp_nicknameTemplate" class="form-input" placeholder="{name} {level}" value="{name} {level}"/>
+                                 </div>
+                                 <div class="form-group">
+                                     <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="xp_keepOldRoles" checked/> <span>Keep Old Level Roles</span></label>
+                                 </div>
                                 <button class="btn btn-primary" onclick="saveXPLevels()">Save Settings</button>
                             </div>
                         </div>
@@ -3567,7 +3577,6 @@
                                 </div>
                                 <button class="btn btn-primary" onclick="saveGameXp()" style="margin-top:0.5rem;">Save Game XP & Cooldowns</button>
                                 </div>
-                                <button class="btn btn-primary" onclick="saveGameXp()" style="margin-top:0.5rem;">Save Game XP</button>
                             </div>
                         </div>
                         <div class="panel" style="grid-column: 1/-1;">
