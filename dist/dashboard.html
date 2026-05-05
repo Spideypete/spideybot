@@ -1500,6 +1500,8 @@
         #custom-commands-section .content-grid,
         #xp-levels-section .content-grid,
         #leaderboards-section .content-grid,
+        #combined-leaderboard-section .content-grid,
+        #tickets-section .content-grid,
         #invite-tracking-section .content-grid,
         #message-counting-section .content-grid,
         #statistics-channels-section .content-grid,
@@ -3709,20 +3711,18 @@
                         <div class="content-subtitle">Full server member XP overview with admin controls</div>
                     </div>
                     
-                    <div class="content-action-bar" style="margin-bottom: 1rem;">
-                        <input type="text" id="memberSearch" class="form-input" placeholder="Search members..." style="max-width: 300px; margin-right: 1rem;" onkeyup="filterMembers()">
-                        <button class="btn btn-primary" onclick="loadCombinedLeaderboard()">Refresh</button>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-header">
-                            <div class="panel-title">👥 All Members</div>
-                            <div class="panel-actions">
-                                <span id="totalMembers" style="font-size: 0.85rem; color: #888;"></span>
+                    <div class="content-grid">
+                        <div class="panel" style="grid-column: 1/-1;">
+                            <div class="panel-header">
+                                <div class="panel-title">👥 All Members</div>
+                                <div class="panel-actions" style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="text" id="memberSearch" class="form-input" placeholder="Search members..." style="max-width: 300px;" onkeyup="filterMembers()">
+                                    <button class="btn btn-primary" onclick="loadCombinedLeaderboard()">Refresh</button>
+                                    <span id="totalMembers" style="font-size: 0.85rem; color: #888;"></span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="panel-content" style="padding: 0;">
-                            <div style="overflow-x: auto;">
+                            <div class="panel-content" style="padding: 0;">
+                                <div style="overflow-x: auto;">
                                 <table id="combinedLeaderboardTable" style="width: 100%; border-collapse: collapse;">
                                     <thead>
                                         <tr style="background: rgba(255,255,255,0.05);">
