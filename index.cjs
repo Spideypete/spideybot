@@ -49,6 +49,69 @@ const {
   BackupSystem
 } = require("./security");
 
+// ============== SINGLE INSTANCE LOCK (prevents duplicate welcome/join handlers) ==============
+const INSTANCE_LOCK_FILE = path.join(__dirname, ".bot.instance.lock");
+
+function acquireSingleInstanceLock() {
+  if (fs.existsSync(INSTANCE_LOCK_FILE)) {
+    try {
+      const existingPid = parseInt(fs.readFileSync(INSTANCE_LOCK_FILE, "utf8"), 10);
+      if (existingPid && !Number.isNaN(existingPid)) {
+        try {
+          process.kill(existingPid, 0);
+          console.error(`❌ Another Spidey Bot instance is already running (PID ${existingPid}). Exiting to prevent duplicate welcome messages.`);
+          process.exit(1);
+        } catch (e) {
+          // Stale lock file — process is not running
+        }
+      }
+    } catch (e) {
+      console.warn("⚠️ Could not read instance lock file:", e.message);
+    }
+  }
+
+  fs.writeFileSync(INSTANCE_LOCK_FILE, String(process.pid));
+  const releaseLock = () => {
+    try {
+      if (fs.existsSync(INSTANCE_LOCK_FILE)) {
+        const lockPid = parseInt(fs.readFileSync(INSTANCE_LOCK_FILE, "utf8"), 10);
+        if (lockPid === process.pid) fs.unlinkSync(INSTANCE_LOCK_FILE);
+      }
+    } catch (e) { /* ignore */ }
+  };
+  process.on("exit", releaseLock);
+  process.on("SIGINT", () => { releaseLock(); process.exit(0); });
+  process.on("SIGTERM", () => { releaseLock(); process.exit(0); });
+  console.log(`🔒 Instance lock acquired (PID ${process.pid})`);
+}
+
+acquireSingleInstanceLock();
+
+const recentWelcomeSends = new Map();
+const WELCOME_DEDUPE_MS = 60 * 1000;
+
+function getWelcomeSettings(guildConfig) {
+  const serverMessages = guildConfig.serverMessages || {};
+  const tabMessages = guildConfig["server-messages"] || {};
+  const enableWelcome =
+    serverMessages.enableWelcome ??
+    tabMessages.welcomeEnabled ??
+    tabMessages.enableWelcome ??
+    guildConfig.welcomeEnabled;
+  const welcomeChannelId =
+    serverMessages.welcomeChannel ||
+    tabMessages.welcomeChannel ||
+    guildConfig.welcomeChannelId ||
+    guildConfig.welcomeChannel ||
+    null;
+  const welcomeMessage =
+    serverMessages.welcomeMessage ||
+    tabMessages.welcomeMessage ||
+    guildConfig.welcomeMessage ||
+    "Welcome to our server! 🎉";
+  return { enableWelcome, welcomeChannelId, welcomeMessage };
+}
+
 // ============== SETUP EXPRESS APP ==============
 const distDir = path.join(__dirname, 'dist');
 const publicDir = path.join(__dirname, 'public');
@@ -57,7 +120,13 @@ const app = express();
 // DEBUG - Test endpoint at VERY TOP
 app.get('/api/test', (req, res) => {
   console.log("✅ /api/test HIT - TOP ROUTE");
-  res.json({ status: 'ok', time: Date.now() });
+  res.json({
+    status: 'ok',
+    time: Date.now(),
+    pid: process.pid,
+    botLoggedIn,
+    guildMemberAddListeners: client.listenerCount("guildMemberAdd")
+  });
 });
 
 app.use(express.json());
@@ -724,6 +793,7 @@ client.once("ready", async () => {
     console.log('🔁 Running commit: unknown');
   }
   client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
+  console.log(`📡 guildMemberAdd listeners registered: ${client.listenerCount("guildMemberAdd")} (pid ${process.pid})`);
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
   });
@@ -919,8 +989,8 @@ app.get('/api/guilds', async (req, res) => {
 });
 
 
-// ============== WELCOME NEW MEMBERS ==============
-client.on("guildMemberAdd", async (member) => {
+// ============== WELCOME NEW MEMBERS (single listener registration) ==============
+async function handleGuildMemberAdd(member) {
   addActivity(member.guild.id, "👤", member.user.username, "joined the server");
   
   // Track new member joins
@@ -1009,15 +1079,23 @@ client.on("guildMemberAdd", async (member) => {
   // Check if welcome messages are disabled via dashboard toggle
   if (guildConfig.welcomeMessages === false) return;
   
-  const serverMessages = guildConfig.serverMessages || {};
-  const welcomeChannelId = serverMessages.welcomeChannel || guildConfig.welcomeChannelId;
+  const welcomeSettings = getWelcomeSettings(guildConfig);
+  const { enableWelcome, welcomeChannelId, welcomeMessage } = welcomeSettings;
   
-  if (!serverMessages.enableWelcome || !welcomeChannelId) return;
+  if (!enableWelcome || !welcomeChannelId) return;
+
+  const dedupeKey = `${member.guild.id}:${member.id}`;
+  const lastWelcomeAt = recentWelcomeSends.get(dedupeKey);
+  const now = Date.now();
+  if (lastWelcomeAt && now - lastWelcomeAt < WELCOME_DEDUPE_MS) {
+    console.warn(`⚠️ Suppressed duplicate welcome for ${member.user.tag} in ${member.guild.name} (pid ${process.pid})`);
+    return;
+  }
 
   const welcomeChannel = member.guild.channels.cache.get(welcomeChannelId);
   if (welcomeChannel) {
     try {
-      let message = serverMessages.welcomeMessage || "Welcome to our server! 🎉";
+      let message = welcomeMessage;
       message = message
         .replace(/{user}/g, member.toString())
         .replace(/{username}/g, member.user.username)
@@ -1026,12 +1104,16 @@ client.on("guildMemberAdd", async (member) => {
         .replace(/{membercount}/g, member.guild.memberCount);
 
       await welcomeChannel.send(message);
-      console.log(`✅ Welcome message sent to ${member.user.tag}`);
+      recentWelcomeSends.set(dedupeKey, now);
+      console.log(`✅ Welcome message sent to ${member.user.tag} (pid ${process.pid}, listeners=${client.listenerCount("guildMemberAdd")})`);
     } catch (error) {
       console.error(`❌ Failed to send welcome: ${error.message}`);
     }
   }
-});
+}
+
+client.removeAllListeners("guildMemberAdd");
+client.on("guildMemberAdd", handleGuildMemberAdd);
 
 // ============== MEMBER LEAVES ==============
 client.on("guildMemberRemove", async (member) => {
@@ -7573,6 +7655,22 @@ adminConfigs.forEach(configName => {
     if (!config.guilds[guildId][configName]) config.guilds[guildId][configName] = {};
 
     Object.assign(config.guilds[guildId][configName], req.body);
+
+    // Keep dashboard "server-messages" tab and runtime serverMessages in sync
+    if (configName === 'server-messages') {
+      if (!config.guilds[guildId].serverMessages) config.guilds[guildId].serverMessages = {};
+      const body = req.body || {};
+      Object.assign(config.guilds[guildId].serverMessages, {
+        enableWelcome: body.welcomeEnabled ?? body.enableWelcome ?? config.guilds[guildId].serverMessages.enableWelcome,
+        welcomeChannel: body.welcomeChannel || config.guilds[guildId].serverMessages.welcomeChannel,
+        welcomeMessage: body.welcomeMessage ?? config.guilds[guildId].serverMessages.welcomeMessage,
+        enableGoodbye: body.goodbyeEnabled ?? body.enableGoodbye ?? config.guilds[guildId].serverMessages.enableGoodbye,
+        goodbyeChannel: body.goodbyeChannel || config.guilds[guildId].serverMessages.goodbyeChannel,
+        goodbyeMessage: body.goodbyeMessage ?? config.guilds[guildId].serverMessages.goodbyeMessage
+      });
+      if (body.welcomeChannel) config.guilds[guildId].welcomeChannelId = body.welcomeChannel;
+    }
+
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
     console.log(`✅ Config saved by ${req.session.user?.username}: ${configName} for guild ${guildId}`);
     res.json({ success: true, message: `${configName} saved successfully` });
@@ -9402,15 +9500,26 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't exit - keep process alive
 });
 
-// ============== LOGIN ==============
+// ============== LOGIN (single attempt — avoid duplicate gateway sessions) ==============
+let discordLoginStarted = false;
 if (token && typeof token === 'string' && token.length > 0) {
-  client.login(token).catch(err => {
-    console.error('❌ Discord login error:', err);
-    console.log('⏰ Retrying login in 10 seconds...');
-    setTimeout(() => {
-      client.login(token).catch(err => console.error('Second login attempt failed:', err));
-    }, 10000);
-  });
+  if (!discordLoginStarted) {
+    discordLoginStarted = true;
+    client.login(token).catch(err => {
+      console.error('❌ Discord login error:', err);
+      discordLoginStarted = false;
+      console.log('⏰ Retrying login in 10 seconds...');
+      setTimeout(() => {
+        if (!client.isReady() && !discordLoginStarted) {
+          discordLoginStarted = true;
+          client.login(token).catch(e => {
+            discordLoginStarted = false;
+            console.error('Second login attempt failed:', e);
+          });
+        }
+      }, 10000);
+    });
+  }
 } else {
   console.log('⚠️  No Discord `TOKEN` provided — skipping bot login. Web server remains available.');
 }
