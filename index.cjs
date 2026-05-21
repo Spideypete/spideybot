@@ -10,6 +10,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
   PermissionFlagsBits,
+  ChannelType,
   SlashCommandBuilder,
   REST,
   Routes
@@ -8735,14 +8736,20 @@ app.get("/api/creator/servers", async (req, res) => {
 });
 
 // Get all channels in a guild
-app.get("/api/channels/:guildId", (req, res) => {
+app.get("/api/channels/:guildId", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guild = client.guilds.cache.get(req.params.guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
+  try {
+    await guild.channels.fetch();
+  } catch (e) {
+    console.warn("[api/channels] fetch failed:", e.message);
+  }
+
   const channels = guild.channels.cache
-    .filter(channel => channel.isTextBased())
+    .filter(channel => channel.isTextBased?.() && !channel.isThread?.())
     .map(channel => ({
       id: channel.id,
       name: channel.name,
@@ -8774,15 +8781,20 @@ app.get("/api/guild/:guildId/roles", (req, res) => {
 });
 
 // Get channels in a guild for dashboard selectors
-app.get("/api/guild/:guildId/channels", (req, res) => {
+app.get("/api/guild/:guildId/channels", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
   const guild = client.guilds.cache.get(req.params.guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
+  try {
+    await guild.channels.fetch();
+  } catch (e) {
+    console.warn("[api/guild/channels] fetch failed:", e.message);
+  }
+
   const textChannels = guild.channels.cache
-    // Include both regular text channels and announcement channels
-    .filter(ch => ch.type === 0 || ch.type === 5)
+    .filter(ch => ch.isTextBased?.() && !ch.isThread?.() && ch.type !== ChannelType.GuildCategory)
     .map(ch => ({
       id: ch.id,
       name: ch.name,
@@ -8791,7 +8803,7 @@ app.get("/api/guild/:guildId/channels", (req, res) => {
     .sort((a, b) => a.name.localeCompare(b.name));
     
   const categories = guild.channels.cache
-    .filter(ch => ch.type === 4) // categories
+    .filter(ch => ch.type === ChannelType.GuildCategory)
     .map(ch => ({
       id: ch.id,
       name: ch.name,
@@ -8839,11 +8851,14 @@ app.get("/api/guild/:guildId/dashboard-resources", async (req, res) => {
   const canViewRoles = !!botMember;
 
   const channels = guild.channels.cache
-    .filter(ch => ch.type === 4 || ch.type === 0 || ch.type === 5)
+    .filter(ch => {
+      if (ch.type === ChannelType.GuildCategory) return true;
+      return ch.isTextBased?.() && !ch.isThread?.();
+    })
     .map(ch => ({
       id: ch.id,
       name: ch.name,
-      type: ch.type === 4 ? 'category' : 'text'
+      type: ch.type === ChannelType.GuildCategory ? 'category' : 'text'
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -8857,17 +8872,27 @@ app.get("/api/guild/:guildId/dashboard-resources", async (req, res) => {
     }))
     .sort((a, b) => b.position - a.position);
 
+  const textCount = channels.filter(ch => ch.type === 'text').length;
+  const categoryCount = channels.filter(ch => ch.type === 'category').length;
+
   res.json({
     channels,
     roles,
     meta: {
       channelCount: channels.length,
+      textChannelCount: textCount,
+      categoryCount,
       roleCount: roles.length
     },
     permissions: {
       canViewChannels,
       canViewRoles
-    }
+    },
+    error: channels.length === 0
+      ? (canViewChannels
+        ? "No channels returned from Discord. Re-invite the bot with View Channels permission."
+        : "Bot is missing View Channels permission in this server.")
+      : null
   });
 });
 

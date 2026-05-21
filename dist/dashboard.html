@@ -1639,30 +1639,7 @@
             border-color: rgba(var(--theme-color), 0.5);
         }
 
-        .panel-content {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-
-        #settings-section .panel-content,
-        #logging-section .panel-content,
-        #server-guard-section .panel-content,
-        #react-roles-section .panel-content,
-        #role-categories-section .panel-content,
-        #server-messages-section .panel-content,
-        #custom-commands-section .panel-content,
-        #xp-levels-section .panel-content,
-        #leaderboards-section .panel-content,
-        #invite-tracking-section .panel-content,
-        #message-counting-section .panel-content,
-        #statistics-channels-section .panel-content,
-        #giveaways-section .panel-content,
-        #social-notifs-section .panel-content,
-        #reminders-section .panel-content,
-        #recordings-section .panel-content {
-            gap: 0.5rem;
-        }
+        .panel-content{display:flex;flex-direction:column;gap:0.6rem;max-height:100%;overflow:visible;position:relative;z-index:auto}
 
         /* Form Elements */
         .form-group {
@@ -1777,12 +1754,6 @@
             box-shadow: 0 0 12px rgba(0, 212, 255, 0.2) !important;
         }
 
-        .panel-content {
-            max-height: 100%;
-            overflow: visible;
-            position: relative;
-            z-index: auto;
-        }
 
         /* Buttons */
         .btn {
@@ -2049,17 +2020,37 @@
         }
 
         .content-section {
-            /* display: none !important; */
-            /* visibility: hidden !important; */
-            min-height: 100vh;
+            display: none;
+            min-height: auto;
             position: relative;
-            /* z-index: 0 !important; */
+            width: 100%;
         }
 
         .content-section.active {
             display: block !important;
             visibility: visible !important;
             z-index: 1 !important;
+        }
+
+        /* Systems pages: same layout shell as XP Levels */
+        #xp-levels-section .content-header,
+        #leaderboards-section .content-header,
+        #combined-leaderboard-section .content-header,
+        #giveaways-section .content-header,
+        #tickets-section .content-header {
+            margin-bottom: 1rem;
+        }
+
+        #xp-levels-section .content-grid,
+        #leaderboards-section .content-grid,
+        #combined-leaderboard-section .content-grid,
+        #giveaways-section .content-grid,
+        #tickets-section .content-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            width: 100%;
+            align-items: start;
         }
 
         ::-webkit-scrollbar {
@@ -3578,7 +3569,6 @@
                                     </div>
                                 </div>
                                 <button class="btn btn-primary" onclick="saveGameXp()" style="margin-top:0.5rem;">Save Game XP & Cooldowns</button>
-                                </div>
                             </div>
                         </div>
                         <div class="panel" style="grid-column: 1/-1;">
@@ -3737,6 +3727,7 @@
                                         <tr><td colspan="5" style="padding: 2rem; text-align: center; color: #888;">Loading...</td></tr>
                                     </tbody>
                                 </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3747,6 +3738,7 @@
                     <div class="content-header">
                         <div class="content-title" data-i18n="title_giveaways">Giveaways</div>
                         <div class="content-subtitle">Manage giveaways</div>
+                        <button type="button" class="btn btn-secondary" style="margin-top:0.5rem;" onclick="refreshDashboardResources()">↻ Refresh Discord Data</button>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
@@ -3834,6 +3826,8 @@
                     <div class="content-header">
                         <div class="content-title" data-i18n="title_tickets">Tickets <span class="section-tier-badge"></span></div>
                         <div class="content-subtitle">Manage support tickets</div>
+                        <button type="button" class="btn btn-secondary" style="margin-top:0.5rem;" onclick="saveTicketSettings()">Save Ticket Settings</button>
+                        <button type="button" class="btn btn-secondary" style="margin-top:0.5rem;margin-left:0.5rem;" onclick="refreshDashboardResources()">↻ Refresh Discord Data</button>
                     </div>
                     <div class="content-grid">
                         <div class="panel">
@@ -3875,7 +3869,7 @@
                             </div>
                         </div>
                         <div class="panel" style="grid-column: 1/-1;">
-                            <div class="panel-header"><div class="panel-title">📋 Active Tickets <span id="activeTicketCount">(0)</span></div>
+                            <div class="panel-header"><div class="panel-title">📋 Active Tickets <span id="activeTicketCount">(0)</span></div></div>
                             <div class="panel-content" id="activeTicketsList">
                                 <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">Loading...</div>
                             </div>
@@ -7148,25 +7142,34 @@
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
             
-            // Load channels for leaderboard dropdowns
             const lbChannels = ['lb_xp_channel', 'lb_gambling_channel', 'lb_trivia_channel', 'lb_combined_channel'];
-            for (const selId of lbChannels) {
+            lbChannels.forEach(selId => {
                 const sel = document.getElementById(selId);
-                if (sel) {
+                if (sel) sel.innerHTML = '<option value="">Fetching channels...</option>';
+            });
+
+            try {
+                const resources = await fetchDashboardResources(guildId);
+                const textChannels = (resources.channels || []).filter(isTextChannel);
+                lbChannels.forEach(selId => {
+                    const sel = document.getElementById(selId);
+                    if (!sel) return;
                     const currentVal = sel.value;
-                    sel.innerHTML = '<option value="">Loading...</option>';
-                    try {
-                        const res = await fetch('/api/guild/' + guildId + '/channels', { credentials: 'include' });
-                        const data = await res.json();
-                        sel.innerHTML = '<option value="">-- Select Channel --</option>';
-                        (data.channels || []).forEach(ch => {
-                            sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
-                        });
-                        sel.value = currentVal;
-                    } catch(e) {
-                        sel.innerHTML = '<option value="">Error loading</option>';
+                    sel.innerHTML = '<option value="">-- Select Channel --</option>';
+                    textChannels.forEach(ch => {
+                        sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
+                    });
+                    if (textChannels.length === 0) {
+                        sel.innerHTML = `<option value="">${getDropdownErrorMessage(resources, 'text')}</option>`;
                     }
-                }
+                    if (currentVal) sel.value = currentVal;
+                });
+            } catch (e) {
+                console.error('Leaderboard channel load error:', e);
+                lbChannels.forEach(selId => {
+                    const sel = document.getElementById(selId);
+                    if (sel) sel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
+                });
             }
             
             // Load saved leaderboard config
@@ -7420,7 +7423,7 @@
             } catch (e) { alert('❌ Error: ' + e.message); }
         }
 
-        async function fetchDashboardResources(guildId, forceRefresh = false) {
+        async function fetchDashboardResources(guildId, forceRefresh = true) {
             const refreshQuery = forceRefresh ? '?refresh=1' : '';
             let lastError = '';
             try {
@@ -7487,7 +7490,15 @@
             return t === 'text' || t === '0' || t === '5';
         }
 
-        function renderPermissionsHelp(containerId, show) {
+        function getDropdownErrorMessage(resources, kind) {
+            if (resources?.error) return resources.error;
+            if (resources?.permissions?.canViewChannels === false) {
+                return 'Bot missing View Channels permission — re-authorize bot permissions';
+            }
+            return kind === 'category' ? 'No categories found' : 'No text channels found';
+        }
+
+        function renderPermissionsHelp(containerId, show, message) {
             const container = document.getElementById(containerId);
             if (!container) return;
             let help = container.querySelector('.permissions-help');
@@ -7496,12 +7507,30 @@
                     help = document.createElement('div');
                     help.className = 'permissions-help';
                     help.style.cssText = 'margin-top:0.5rem;font-size:0.75rem;color:#ffb347;';
-                    help.innerHTML = 'Unable to fetch Discord channels/roles. Please re-authorize bot permissions (View Channels, Manage Roles) and refresh.';
+                    help.innerHTML = message || 'Unable to fetch Discord channels/roles. Please re-authorize bot permissions (View Channels, View Roles) and refresh.';
                     container.appendChild(help);
+                } else if (message) {
+                    help.innerHTML = message;
                 }
             } else if (help) {
                 help.remove();
             }
+        }
+
+        async function refreshDashboardResources() {
+            const guildId = localStorage.getItem('selectedServerId');
+            if (!guildId) return alert('Select a server first');
+            window.dashboardResourcesCache = window.dashboardResourcesCache || {};
+            delete window.dashboardResourcesCache[guildId];
+            const section = document.querySelector('.content-section.active')?.id || '';
+            if (section === 'giveaways-section') await loadGiveaways();
+            else if (section === 'tickets-section') await loadTickets();
+            else if (section === 'leaderboards-section') await loadLeaderboards();
+            else {
+                await loadGiveaways();
+                await loadTickets();
+            }
+            alert('✅ Discord data refreshed');
         }
 
 async function loadGiveaways() {
@@ -7529,12 +7558,11 @@ async function loadGiveaways() {
                         sel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
                     });
                     if (textChannels.length === 0) {
-                        const errorText = resources.error ? 'Unable to fetch data, please check bot permissions' : 'No text channels found';
-                        sel.innerHTML = `<option value="">${errorText}</option>`;
+                        sel.innerHTML = `<option value="">${getDropdownErrorMessage(resources, 'text')}</option>`;
                     }
                     if (currentVal) sel.value = currentVal;
                 });
-                renderPermissionsHelp('giveaways-section', !!resources.error);
+                renderPermissionsHelp('giveaways-section', !!resources.error || textChannels.length === 0, resources.error);
             } catch(e) {
                 console.error('Channel load error:', e);
                 channelDropdowns.forEach(selId => {
@@ -7640,8 +7668,7 @@ async function loadGiveaways() {
                         catSel.innerHTML += `<option value="${ch.id}">📁 ${ch.name}</option>`;
                     });
                     if (categories.length === 0) {
-                        const errorText = resources.error ? 'Unable to fetch data, please check bot permissions' : 'No categories found';
-                        catSel.innerHTML = `<option value="">${errorText}</option>`;
+                        catSel.innerHTML = `<option value="">${getDropdownErrorMessage(resources, 'category')}</option>`;
                     }
                 }
                 
@@ -7651,16 +7678,15 @@ async function loadGiveaways() {
                         chSel.innerHTML += `<option value="${ch.id}">#${ch.name}</option>`;
                     });
                     if (textChannels.length === 0) {
-                        const errorText = resources.error ? 'Unable to fetch data, please check bot permissions' : 'No text channels found';
-                        chSel.innerHTML = `<option value="">${errorText}</option>`;
+                        chSel.innerHTML = `<option value="">${getDropdownErrorMessage(resources, 'text')}</option>`;
                     }
                 }
 
-                if (resources.permissions && resources.permissions.canViewChannels === false) {
-                    if (catSel) catSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
-                    if (chSel) chSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
-                }
-                renderPermissionsHelp('tickets-section', !!resources.error || resources.permissions?.canViewChannels === false);
+                renderPermissionsHelp(
+                    'tickets-section',
+                    !!resources.error || resources.permissions?.canViewChannels === false || (categories.length === 0 && textChannels.length === 0),
+                    resources.error
+                );
             } catch(e) {
                 if (catSel) catSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
                 if (chSel) chSel.innerHTML = '<option value="">Unable to fetch data, please check bot permissions</option>';
