@@ -7395,7 +7395,14 @@
                 if (data.success) {
                     alert('✅ Giveaway started!');
                     document.getElementById('giveaway_prize').value = '';
-                    loadGiveaways();
+                    if (data.activeGiveaways) {
+                        const count = typeof data.activeCount === 'number'
+                            ? data.activeCount
+                            : Object.keys(data.activeGiveaways).length;
+                        renderActiveGiveawaysList(data.activeGiveaways, count);
+                    } else {
+                        loadGiveaways();
+                    }
                 } else {
                     alert('❌ ' + (data.error || 'Failed to start giveaway'));
                 }
@@ -7533,7 +7540,56 @@
             alert('✅ Discord data refreshed');
         }
 
-async function loadGiveaways() {
+        function isActiveGiveawayStatus(g) {
+            if (!g || typeof g !== 'object') return false;
+            const s = String(g.status || '').toLowerCase();
+            return s === 'active' || s === 'open' || s === 'running';
+        }
+
+        function parseGiveawaysApiPayload(data) {
+            if (!data || typeof data !== 'object') return { giveaways: {}, activeCount: 0 };
+            if (data.activeGiveaways && typeof data.activeGiveaways === 'object') {
+                return {
+                    giveaways: data.activeGiveaways,
+                    activeCount: typeof data.activeCount === 'number'
+                        ? data.activeCount
+                        : Object.keys(data.activeGiveaways).length
+                };
+            }
+            const raw = data.giveaways || data;
+            if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+                const active = {};
+                Object.keys(raw).forEach(name => {
+                    if (isActiveGiveawayStatus(raw[name])) active[name] = raw[name];
+                });
+                return { giveaways: active, activeCount: Object.keys(active).length };
+            }
+            return { giveaways: {}, activeCount: 0 };
+        }
+
+        function renderActiveGiveawaysList(giveaways, activeCount) {
+            const countEl = document.getElementById('activeGiveawayCount');
+            const list = document.getElementById('activeGiveawaysList');
+            if (countEl) countEl.textContent = '(' + activeCount + ')';
+            if (!list) return;
+            if (activeCount === 0) {
+                list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">No active giveaways</div>';
+                return;
+            }
+            let html = '';
+            Object.keys(giveaways).forEach((name) => {
+                const g = giveaways[name];
+                if (!isActiveGiveawayStatus(g)) return;
+                const escapedName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
+                    <div><strong>${g.prize || name}</strong><br><span style="font-size:0.75rem;color:#888;">${g.winners || 1} winner(s) • Ends: ${g.endsAt ? new Date(g.endsAt).toLocaleString() : 'Unknown'}</span></div>
+                    <button onclick="endGiveaway('${escapedName}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">End Early</button>
+                </div>`;
+            });
+            list.innerHTML = html || '<div style="color:rgba(255,255,255,0.5);text-align:center;">No active giveaways</div>';
+        }
+
+        async function loadGiveaways() {
             const guildId = localStorage.getItem('selectedServerId');
             if (!guildId) return;
             renderPermissionsHelp('giveaways-section', false);
@@ -7581,8 +7637,8 @@ async function loadGiveaways() {
                 const res = await fetch('/api/config/giveaways?guildId=' + guildId, { credentials: 'include' });
                 const data = await res.json();
                 
-                const giveaways = data || {};
-                
+                const { giveaways, activeCount } = parseGiveawaysApiPayload(data);
+
                 // giveaway-settings are stored at guild root, not in giveaways object
                 const guildCfgRes = await fetch('/api/config/' + guildId, { credentials: 'include' });
                 const guildCfg = guildCfgRes.ok ? await guildCfgRes.json() : {};
@@ -7594,28 +7650,8 @@ async function loadGiveaways() {
                     if (settingsSelect) settingsSelect.value = defaultChannel;
                     if (createSelect && !createSelect.value) createSelect.value = defaultChannel;
                 }
-                
-                const activeGiveaways = Object.values(giveaways).filter(g => g && (g.status === 'active' || g.status === 'open'));
-                const count = activeGiveaways.length;
-                
-                document.getElementById('activeGiveawayCount').textContent = '(' + count + ')';
-                
-                const list = document.getElementById('activeGiveawaysList');
-                if (count === 0) {
-                    list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">No active giveaways</div>';
-                } else {
-                    let html = '';
-                    Object.keys(giveaways).forEach((name) => {
-                        const g = giveaways[name];
-                        if (g && (g.status === 'active' || g.status === 'open')) {
-                            html += `<div style="padding:0.5rem;background:rgba(0,212,255,0.08);border-radius:6px;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
-                                <div><strong>${g.prize}</strong><br><span style="font-size:0.75rem;color:#888;">${g.winners} winner(s) • Ends: ${g.endsAt ? new Date(g.endsAt).toLocaleString() : 'Unknown'}</span></div>
-                                <button onclick="endGiveaway('${name}')" style="background:rgba(255,107,107,0.2);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">End</button>
-                            </div>`;
-                        }
-                    });
-                    list.innerHTML = html || '<div style="color:rgba(255,255,255,0.5);text-align:center;">No active giveaways</div>';
-                }
+
+                renderActiveGiveawaysList(giveaways, activeCount);
             } catch(e) {
                 console.error('Load giveaways error:', e);
                 document.getElementById('activeGiveawaysList').innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem;">Error loading</div>';

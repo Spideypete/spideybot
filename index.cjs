@@ -6595,7 +6595,7 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
   });
   
   const giveaways = guildConfig.giveaways || {};
-  const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active').length;
+  const activeGiveaways = getActiveGiveawaysMap(giveaways).activeCount;
   
 const entitlements = {
     maxReactRoles: limits.maxReactRoles === Infinity ? 'unlimited' : limits.maxReactRoles,
@@ -6978,17 +6978,31 @@ app.post("/api/config/role-categories", express.json(), (req, res) => {
 });
 
 // ============== API ENDPOINTS ==============
-app.get("/api/config/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false });
+// NOTE: /api/config/:guildId must be registered AFTER /api/config/tickets and
+// /api/config/giveaways — otherwise Express treats "tickets"/"giveaways" as a guild id.
 
-  const guildId = req.params.guildId;
-  const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+function resolveConfigGuildId(config, guildId) {
+  if (!guildId) return null;
+  if (config.guilds[guildId]) return guildId;
+  return Object.keys(config.guilds).find(
+    id => id === guildId || id.replace(/_/g, '') === String(guildId).replace(/_/g, '')
+  ) || null;
+}
 
-  const config = loadConfig();
-  res.json(config.guilds[guildId] || {});
-});
+function isActiveGiveaway(g) {
+  if (!g || typeof g !== 'object' || Array.isArray(g)) return false;
+  const status = String(g.status || '').toLowerCase();
+  return status === 'active' || status === 'open' || status === 'running';
+}
+
+function getActiveGiveawaysMap(giveawaysObj) {
+  const all = giveawaysObj && typeof giveawaysObj === 'object' ? giveawaysObj : {};
+  const active = {};
+  for (const [key, g] of Object.entries(all)) {
+    if (isActiveGiveaway(g)) active[key] = g;
+  }
+  return { all, active, activeCount: Object.keys(active).length };
+}
 
 // Get tickets config
 app.get("/api/config/tickets", (req, res) => {
@@ -7055,33 +7069,25 @@ app.post("/api/config/tickets", express.json(), (req, res) => {
   res.json({ success: true, settings: { category, staffRoles } });
 });
 
-// Get giveaways config
+// Get giveaways config (active list + counter for dashboard)
 app.get("/api/config/giveaways", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
-  let guildId = req.query.guildId;
-  if (!guildId) return res.json({});
-  
+  const guildId = req.query.guildId;
+  if (!guildId) return res.json({ giveaways: {}, activeGiveaways: {}, activeCount: 0 });
+
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
   const config = loadConfig();
-  
-  // Try direct match first
-  if (config.guilds[guildId]?.giveaways) {
-    return res.json(config.guilds[guildId].giveaways);
-  }
-  
-  // Try to find matching guild ID (case insensitive)
-  const foundGuildId = Object.keys(config.guilds).find(id => id === guildId || id.replace('_', '') === guildId.replace('_', ''));
-  if (foundGuildId && config.guilds[foundGuildId]?.giveaways) {
-    return res.json(config.guilds[foundGuildId].giveaways);
-  }
-  
-  // Search across all guilds for giveaways (for debugging)
-  for (const [gid, gData] of Object.entries(config.guilds)) {
-    if (gData.giveaways && Object.keys(gData.giveaways).length > 0) {
-      console.log('Found giveaways in guild:', gid, Object.keys(gData.giveaways));
-    }
-  }
-  
-  res.json({});
+  const resolvedId = resolveConfigGuildId(config, guildId);
+  const giveawaysObj = resolvedId ? (config.guilds[resolvedId]?.giveaways || {}) : {};
+  const { all, active, activeCount } = getActiveGiveawaysMap(giveawaysObj);
+
+  res.json({
+    giveaways: all,
+    activeGiveaways: active,
+    activeCount
+  });
 });
 
 app.post("/api/config/:guildId", (req, res) => {
@@ -7123,17 +7129,18 @@ app.post("/api/giveaway/create", express.json(), async (req, res) => {
   if (!prize) return res.json({ success: false, error: "Prize required" });
   
   const config = loadConfig();
+  if (!config.guilds[guildId]) config.guilds[guildId] = {};
   const tiers = getTierLimits(guildId);
-  const giveaways = config.guilds[guildId]?.giveaways || {};
-  const activeCount = Object.values(giveaways).filter(g => g.status === 'active').length;
-  
+  const giveaways = config.guilds[guildId].giveaways || {};
+  const { activeCount } = getActiveGiveawaysMap(giveaways);
+
   if (tiers.maxGiveaways !== Infinity && activeCount >= tiers.maxGiveaways) {
     return res.json({ success: false, error: `Giveaway limit reached (${tiers.maxGiveaways}). Upgrade for more!` });
   }
-  
-  const name = prize.toLowerCase().replace(/\s+/g, '_');
+
+  const name = `${prize.toLowerCase().replace(/\s+/g, '_')}_${Date.now().toString(36)}`;
   const endsAt = Date.now() + (duration * 60 * 1000);
-  
+
   config.guilds[guildId].giveaways = giveaways;
   config.guilds[guildId].giveaways[name] = {
     prize,
@@ -7172,8 +7179,16 @@ if (ch) {
        }
      }
    }
-  
-  res.json({ success: true });
+
+  const { active, activeCount: liveCount } = getActiveGiveawaysMap(config.guilds[guildId].giveaways);
+  console.log(`🎁 Giveaway created for guild ${guildId}: ${name} (active: ${liveCount})`);
+  res.json({
+    success: true,
+    name,
+    giveaway: config.guilds[guildId].giveaways[name],
+    activeGiveaways: active,
+    activeCount: liveCount
+  });
 });
 
 app.post("/api/giveaway/end", express.json(), async (req, res) => {
@@ -7614,7 +7629,25 @@ app.post("/api/bot-config/custom-commands/delete", express.json(), async (req, r
 });
 
 // ============== ADMIN PANEL CONFIG ENDPOINTS ==============
-const adminConfigs = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'giveaways', 'social-notifs'];
+const adminConfigs = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'social-notifs'];
+
+// Full guild config blob (must be after named /api/config/* routes)
+app.get("/api/config/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false });
+
+  const guildId = req.params.guildId;
+  const reserved = new Set(['tickets', 'giveaways', 'role-categories']);
+  if (reserved.has(guildId)) {
+    return res.status(400).json({ success: false, error: 'Use the dedicated config endpoint for this resource' });
+  }
+
+  const userGuilds = req.session.guilds || [];
+  const hasAccess = userGuilds.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+
+  const config = loadConfig();
+  res.json(config.guilds[guildId] || {});
+});
 
 adminConfigs.forEach(configName => {
   // GET endpoint to load config
