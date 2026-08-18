@@ -1,5 +1,11 @@
 node_modules/
 .env
+.env.*
+.env.local
+.env.development
+.env.production
 *.log
+*.tar.gz
+site.tar.gz
 .bot.instance.lock
 .DS_Store
