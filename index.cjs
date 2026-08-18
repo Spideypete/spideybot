@@ -5853,6 +5853,11 @@ app.get("/premium", (req, res) => {
   res.sendFile(path.join(publicDir, 'premium.html'));
 });
 
+// Test dashboard - no auth required for design template
+app.get("/testownerdashboard.html", (req, res) => {
+  res.sendFile(path.join(publicDir, 'testownerdashboard.html'));
+});
+
 // Invite route - redirect to Discord OAuth
 app.get("/invite", (req, res) => {
   const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8`;

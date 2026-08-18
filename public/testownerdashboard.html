@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPIDEY BOT - Test Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Navigation */
+    nav {
+      background: rgba(10, 10, 10, 0.95);
+      border-bottom: 1px solid #1f1f1f;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .logo span { color: #9146FF; }
+    nav a {
+      color: #999;
+      text-decoration: none;
+      margin: 0 1rem;
+      transition: color 0.2s;
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+    nav a:hover { color: #9146FF; }
+    .nav-cta {
+      padding: 0.4rem 1rem;
+      background: #9146FF;
+      color: #fff !important;
+      border-radius: 6px;
+      font-weight: 600;
+      margin: 0;
+      font-size: 0.85rem;
+    }
+    .nav-cta:hover { background: #7a35cc; }
+
+    /* Layout */
+    .dashboard-wrapper {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 240px;
+      background: #111111;
+      border-right: 1px solid #1f1f1f;
+      overflow-y: auto;
+      flex-shrink: 0;
+      padding: 1rem 0;
+    }
+    .sidebar-section {
+      padding: 0.75rem 0;
+    }
+    .sidebar-section-title {
+      padding: 0.4rem 1.25rem;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      font-weight: 600;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.6rem 1.25rem;
+      color: #999;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .sidebar-item:hover {
+      color: #fff;
+      background: rgba(145, 70, 255, 0.08);
+    }
+    .sidebar-item.active {
+      color: #9146FF;
+      background: rgba(145, 70, 255, 0.12);
+      border-right: 2px solid #9146FF;
+    }
+    .sidebar-item-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+    .sidebar-tier-badge {
+      margin-left: auto;
+      background: rgba(145, 70, 255, 0.15);
+      color: #9146FF;
+      padding: 0.2rem 0.5rem;
+      border-radius: 10px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      border: 1px solid rgba(145, 70, 255, 0.25);
+    }
+
+    /* Main Content */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+      background: #0a0a0a;
+    }
+    #network-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .content-area > *:not(#network-canvas) {
+      position: relative;
+      z-index: 1;
+    }
+    .content-inner {
+      padding: 1.5rem;
+      max-width: 1400px;
+    }
+    .page-header {
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+    .page-subtitle {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    /* Stats */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: #111111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
+      padding: 1rem;
+      transition: all 0.2s;
+    }
+    .stat-card:hover {
+      border-color: rgba(145, 70, 255, 0.4);
+      box-shadow: 0 4px 24px rgba(145, 70, 255, 0.08);
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .stat-title {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.25rem;
+    }
+
+    /* Cards */
+    .card {
+      background: #111111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+    }
+    .card:hover {
+      border-color: rgba(145, 70, 255, 0.4);
+      box-shadow: 0 4px 24px rgba(145, 70, 255, 0.08);
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+    .card-text {
+      font-size: 0.85rem;
+      color: #888;
+      line-height: 1.5;
+    }
+
+    /* Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 0.75rem;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      color: #999;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+    .form-input, .form-select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: #0a0a0a;
+      border: 1px solid #1f1f1f;
+      border-radius: 6px;
+      color: #e5e5e5;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: rgba(145, 70, 255, 0.5);
+      box-shadow: 0 0 15px rgba(145, 70, 255, 0.1);
+    }
+    .form-input::placeholder {
+      color: #555;
+    }
+    .form-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239146FF' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.6rem 1.25rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-primary {
+      background: #9146FF;
+      color: #fff;
+      border-color: #9146FF;
+    }
+    .btn-primary:hover {
+      background: #7a35cc;
+      border-color: #7a35cc;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(145, 70, 255, 0.25);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #e5e5e5;
+      border-color: #333;
+    }
+    .btn-secondary:hover {
+      border-color: #9146FF;
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .btn-sm {
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+    }
+
+    /* Toggle */
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #333;
+      border-radius: 22px;
+      transition: 0.3s;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background: #9146FF;
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(18px);
+    }
+
+    /* Footer */
+    footer {
+      background: #000000;
+      border-top: 1px solid #1f1f1f;
+      padding: 2rem 1.5rem 1.5rem;
+      margin-top: auto;
+    }
+    footer .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    footer .footer-section h3 {
+      color: #9146FF;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    footer .footer-section ul {
+      list-style: none;
+    }
+    footer .footer-section ul li {
+      margin-bottom: 0.6rem;
+    }
+    footer .footer-section a {
+      color: #777;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    footer .footer-section a:hover { color: #9146FF; }
+    footer .footer-bottom {
+      text-align: center;
+      color: #555;
+      font-size: 0.8rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #1f1f1f;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .dashboard-wrapper { flex-direction: column; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #1f1f1f; max-height: 200px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      nav { flex-direction: column; gap: 0.75rem; padding: 0.75rem 1rem; }
+      nav a { margin: 0 0.5rem; }
+      .content-inner { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">SPIDEY <span>BOT</span></div>
+    <div>
+      <a href="/">Home</a>
+      <a href="/commands">Features</a>
+      <a href="/login" class="nav-cta">Admin</a>
+    </div>
+  </nav>
+
+  <div class="dashboard-wrapper">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Main</div>
+        <div class="sidebar-item active"><span class="sidebar-item-icon">📊</span> Dashboard</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Core</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">⚙️</span> Settings</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">📋</span> Logging <span class="sidebar-tier-badge">Pro</span></div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">🛡️</span> Server Guard <span class="sidebar-tier-badge">Premium</span></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Features</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">🎭</span> React Roles</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">📈</span> Log Statistics</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">💬</span> Server Messages</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">⌨️</span> Commands <span class="sidebar-tier-badge">Premium</span></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Systems</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">⭐</span> XP Levels <span class="sidebar-tier-badge">Premium</span></div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">🏆</span> Leaderboards <span class="sidebar-tier-badge">Premium</span></div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">🎉</span> Giveaways</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">🎫</span> Tickets</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Monitoring</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">👥</span> Member Activity</div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">📢</span> Social Notifs <span class="sidebar-tier-badge">Premium</span></div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">📨</span> Invites <span class="sidebar-tier-badge">Pro</span></div>
+        <div class="sidebar-item"><span class="sidebar-item-icon">💬</span> Messages</div>
+      </div>
+    </aside>
+
+    <main class="content-area">
+      <canvas id="network-canvas" aria-hidden="true"></canvas>
+      <div class="content-inner">
+        <div class="page-header">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Test design template — no auth required</p>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">1,247</div>
+            <div class="stat-title">Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">384</div>
+            <div class="stat-title">Commands Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">56</div>
+            <div class="stat-title">Active Tickets</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">12</div>
+            <div class="stat-title">Giveaways</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Analytics Overview</div>
+            <div class="card-text">Command usage, member growth, and engagement metrics for the selected server.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Member Activity</div>
+            <div class="card-text">Track joins, leaves, and activity patterns across your Discord server.</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 1rem;">
+          <div class="card-title">Server Configuration</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Server Name</label>
+              <input type="text" class="form-input" placeholder="My Discord Server">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prefix</label>
+              <input type="text" class="form-input" placeholder="!" value="!">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Language</label>
+              <select class="form-select">
+                <option>English</option>
+                <option>Spanish</option>
+                <option>French</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Timezone</label>
+              <select class="form-select">
+                <option>UTC</option>
+                <option>EST</option>
+                <option>PST</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm">Save Changes</button>
+            <button class="btn btn-secondary btn-sm">Reset</button>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 1rem;">
+          <div class="card">
+            <div class="card-title">Logging</div>
+            <div class="card-text">Configure message, moderation, and audit logging channels.</div>
+            <div style="margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 0.8rem; color: #999;">Enable Logging</span>
+              <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Server Guard</div>
+            <div class="card-text">Anti-nuke, anti-spam, raid protection, and link scanning.</div>
+            <div style="margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 0.8rem; color: #999;">Enable Guard</span>
+              <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Reaction Roles</div>
+            <div class="card-text">Create role assignment menus with emoji reactions.</div>
+            <div style="margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 0.8rem; color: #999;">Enable Roles</span>
+              <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 1rem;">
+          <div class="card">
+            <div class="card-title">XP & Leaderboards</div>
+            <div class="card-text">Configure XP rates, level roles, and leaderboard display.</div>
+            <div class="form-group" style="margin-top: 0.75rem;">
+              <label class="form-label">XP Multiplier</label>
+              <input type="number" class="form-input" value="1.0" step="0.1">
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Giveaways</div>
+            <div class="card-text">Manage active giveaways, requirements, and winners.</div>
+            <div style="margin-top: 0.75rem;">
+              <button class="btn btn-primary btn-sm">Create Giveaway</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 1rem;">
+          <div class="card-title">Command Restrictions</div>
+          <div class="card-text">Limit commands to specific channels, roles, or users.</div>
+          <div class="grid-2" style="margin-top: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Allowed Channels</label>
+              <select class="form-select" multiple style="min-height: 80px;">
+                <option>#general</option>
+                <option>#music</option>
+                <option>#bot-commands</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Blocked Roles</label>
+              <select class="form-select" multiple style="min-height: 80px;">
+                <option>@Muted</option>
+                <option>@Restricted</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/commands">Features</a></li>
+          <li><a href="/login">Admin</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <ul>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Community</h3>
+        <ul>
+          <li><a href="https://discord.com/invite/spideybot" target="_blank">Discord Server</a></li>
+          <li><a href="#" onclick="return false;">Twitter</a></li>
+          <li><a href="#" onclick="return false;">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>About</h3>
+        <ul>
+          <li style="color: #777; font-size: 0.85rem; line-height: 1.5;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      const canvas = document.getElementById('network-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let nodes = [];
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const nodeCount = isMobile ? 50 : 110;
+      const connectionDistance = isMobile ? 100 : 140;
+      const baseRadius = isMobile ? 1.2 : 1.8;
+      const glowColor = '145, 70, 255';
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        width = rect.width;
+        height = rect.height;
+        canvas.width = width * (window.devicePixelRatio || 1);
+        canvas.height = height * (window.devicePixelRatio || 1);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+      }
+
+      function createNodes() {
+        nodes = [];
+        for (let i = 0; i < nodeCount; i++) {
+          nodes.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.25,
+            vy: (Math.random() - 0.5) * 0.25,
+            radius: baseRadius + Math.random() * 1.8,
+            alpha: 0.25 + Math.random() * 0.55,
+            pulse: Math.random() * Math.PI * 2,
+            pulseSpeed: 0.01 + Math.random() * 0.02
+          });
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+        for (let i = 0; i < nodes.length; i++) {
+          const node = nodes[i];
+          node.x += node.vx;
+          node.y += node.vy;
+          node.pulse += node.pulseSpeed;
+          if (node.x < -20) node.x = width + 20;
+          if (node.x > width + 20) node.x = -20;
+          if (node.y < -20) node.y = height + 20;
+          if (node.y > height + 20) node.y = -20;
+          const pulseAlpha = node.alpha + Math.sin(node.pulse) * 0.15;
+          const cx = width / 2;
+          const cy = height / 2;
+          const maxDist = Math.sqrt(cx * cx + cy * cy);
+          const dist = Math.sqrt((node.x - cx) ** 2 + (node.y - cy) ** 2);
+          const edgeFade = 1 - Math.min(1, dist / maxDist);
+          const finalAlpha = Math.max(0, Math.min(1, pulseAlpha * (0.4 + edgeFade * 0.6)));
+          for (let j = i + 1; j < nodes.length; j++) {
+            const other = nodes[j];
+            const dx = node.x - other.x;
+            const dy = node.y - other.y;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < connectionDistance * connectionDistance) {
+              const d = Math.sqrt(distSq);
+              const lineAlpha = (1 - d / connectionDistance) * 0.18 * edgeFade;
+              ctx.beginPath();
+              ctx.moveTo(node.x, node.y);
+              ctx.lineTo(other.x, other.y);
+              ctx.strokeStyle = 'rgba(' + glowColor + ', ' + lineAlpha.toFixed(3) + ')';
+              ctx.lineWidth = 0.6;
+              ctx.stroke();
+            }
+          }
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + glowColor + ', ' + finalAlpha.toFixed(3) + ')';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.radius * 2.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + glowColor + ', ' + (finalAlpha * 0.18).toFixed(3) + ')';
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+      resize();
+      createNodes();
+      draw();
+      window.addEventListener('resize', () => { resize(); createNodes(); });
+    })();
+  </script>
+</body>
+</html>
