@@ -4,200 +4,236 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SPIDEY BOT - Complete Discord Bot</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', sans-serif;
-      background: #000000;
-      color: #fff;
+      background: #0a0a0a;
+      color: #e5e5e5;
       line-height: 1.6;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
     }
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background:#00000000
-      pointer-events: none;
-      z-index: 1;
-      animation: spiderVersePulse 8s ease-in-out infinite;
-    }
-    @keyframes spiderVersePulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 1.2; }
-    }
-    main {
-      flex: 1;
-      position: relative;
-      z-index: 2;
-    }
-    .logo {
-      font-weight: 700;
-      font-size: 1.4rem;
-      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 1px;
-    }
+    main { flex: 1; }
+
+    /* Navigation */
     nav {
-      background: rgba(15, 15, 15, 0.7);
-      border-bottom: 1px solid rgba(0, 212, 255, 0.1);
-      padding: 1rem 2rem;
+      background: rgba(10, 10, 10, 0.95);
+      border-bottom: 1px solid #1f1f1f;
+      padding: 1.25rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
       z-index: 100;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(12px);
     }
-    nav img { height: 40px; }
+    .logo {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .logo span { color: #9146FF; }
     nav a {
       color: #999;
       text-decoration: none;
-      margin: 0 1.5rem;
-      transition: color 0.3s;
+      margin: 0 1.25rem;
+      transition: color 0.2s;
       font-weight: 500;
+      font-size: 0.95rem;
     }
     nav a:hover { color: #9146FF; }
+    .nav-cta {
+      padding: 0.5rem 1.25rem;
+      background: #9146FF;
+      color: #fff !important;
+      border-radius: 6px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .nav-cta:hover { background: #7a35cc; }
+
+    /* Hero */
     .hero {
-      background: #ffffff00;
-      padding: 6rem 2rem;
+      background: #0a0a0a;
+      padding: 7rem 2rem 6rem;
       text-align: center;
       position: relative;
       overflow: hidden;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-bottom: 3px solid rgba(220, 80, 50, 0.3);
-      box-shadow: inset 0 0 60px rgba(220, 80, 50, 0.2), inset 0 0 120px rgba(145, 70, 255, 0.1);
     }
     .hero::before {
       content: '';
       position: absolute;
-      top: -30%;
-      left: -30%;
-      right: -30%;
-      bottom: -30%;
-      background: #000000;
-      filter: blur(60px);
-    }
-    @keyframes spiderBg {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-15px, 15px) scale(1.08); }
-    }
-    .hero::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: 
-        repeating-linear-gradient(0deg, transparent 0px, transparent 15px, rgba(0, 212, 255, 0.06) 15px, rgba(0, 212, 255, 0.06) 16px),
-        repeating-linear-gradient(90deg, transparent 0px, transparent 15px, rgba(145, 70, 255, 0.06) 15px, rgba(145, 70, 255, 0.06) 16px);
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(145, 70, 255, 0.08) 0%, transparent 60%);
       pointer-events: none;
     }
-    .hero > * { position: relative; z-index: 3; }
+    .hero > * { position: relative; z-index: 2; }
     .hero h1 {
-      font-size: 3.5rem;
+      font-size: 3.25rem;
       font-weight: 700;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #FF4500 0%, #DC5032 35%, #FF6347 70%, #FFD700 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 0 40px rgba(220, 80, 50, 0.5), 0 0 80px rgba(255, 69, 0, 0.3);
-      filter: drop-shadow(0 0 20px rgba(220, 80, 50, 0.4));
+      margin-bottom: 1.25rem;
+      color: #fff;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
     }
+    .hero h1 span { color: #9146FF; }
     .hero p {
-      font-size: 1.25rem;
-      color: #ccc;
-      margin-bottom: 2rem;
-      max-width: 600px;
+      font-size: 1.15rem;
+      color: #999;
+      margin-bottom: 2.5rem;
+      max-width: 620px;
       margin-left: auto;
       margin-right: auto;
+      line-height: 1.7;
     }
     .btn-group { margin: 2rem 0; }
     .btn {
       display: inline-block;
-      padding: 0.9rem 2.5rem;
+      padding: 0.85rem 2rem;
       margin: 0.5rem;
-      border-radius: 15px;
+      border-radius: 6px;
       text-decoration: none;
       font-weight: 600;
-      transition: all 0.3s;
-      border: 2px solid transparent;
+      transition: all 0.2s;
+      border: 1px solid transparent;
       cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
     .btn-primary {
-      background: rgba(220, 80, 50, 0.15);
-      color: #FF6347;
-      border: 2px solid rgba(220, 80, 50, 0.4);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: #9146FF;
+      color: #fff;
+      border-color: #9146FF;
     }
     .btn-primary:hover {
-      background: rgba(220, 80, 50, 0.25);
-      border-color: rgba(220, 80, 50, 0.7);
-      transform: translateY(-2px);
-      box-shadow: 0 0 30px rgba(220, 80, 50, 0.6), inset 0 0 20px rgba(220, 80, 50, 0.15);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+      background: #7a35cc;
+      border-color: #7a35cc;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(145, 70, 255, 0.25);
     }
     .btn-secondary {
-      background: rgba(15, 15, 15, 0.4);
-      color: #fff;
-      border: 2px solid rgba(220, 80, 50, 0.3);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: transparent;
+      color: #e5e5e5;
+      border-color: #333;
     }
     .btn-secondary:hover {
-      background: rgba(220, 80, 50, 0.15);
-      border-color: rgba(220, 80, 50, 0.6);
-      transform: translateY(-2px);
-      box-shadow: 0 0 30px rgba(220, 80, 50, 0.5), inset 0 0 15px rgba(220, 80, 50, 0.1);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+      border-color: #9146FF;
+      color: #fff;
+      transform: translateY(-1px);
     }
+
+    /* Sections */
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem;
     }
-    footer {
-      background: rgba(0, 0, 0, 0.5);
-      border-top: 1px solid rgba(0, 212, 255, 0.1);
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+      margin: 4rem 0 3rem;
+      letter-spacing: -0.01em;
+    }
+
+    /* Feature Cards */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 4rem;
+    }
+    .feature-card {
+      background: #111111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
+      padding: 2rem;
+      transition: all 0.2s;
+    }
+    .feature-card:hover {
+      border-color: rgba(145, 70, 255, 0.4);
+      box-shadow: 0 4px 24px rgba(145, 70, 255, 0.08);
+      transform: translateY(-2px);
+    }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(145, 70, 255, 0.1);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      color: #9146FF;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    .feature-card h3 {
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .feature-card p {
+      color: #888;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* CTA Sections */
+    .cta-section {
+      background: #111111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
       padding: 3rem 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .cta-section h2 {
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    .cta-section p {
+      color: #888;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Footer */
+    footer {
+      background: #000000;
+      border-top: 1px solid #1f1f1f;
+      padding: 3rem 2rem 2rem;
       margin-top: 4rem;
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
     }
     footer .footer-content {
       max-width: 1200px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 2.5rem;
+      margin-bottom: 2.5rem;
     }
     footer .footer-section h3 {
-      color: #00d4ff;
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
+      color: #9146FF;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
@@ -208,240 +244,114 @@
       margin-bottom: 0.75rem;
     }
     footer .footer-section a {
-      color: #999;
+      color: #777;
       text-decoration: none;
       font-size: 0.9rem;
-      transition: color 0.3s;
+      transition: color 0.2s;
     }
-    footer .footer-section a:hover {
-      color: #00d4ff;
-    }
+    footer .footer-section a:hover { color: #9146FF; }
     footer .footer-bottom {
       text-align: center;
-      color: #666;
+      color: #555;
       font-size: 0.85rem;
       padding-top: 2rem;
-      border-top: 1px solid #222;
+      border-top: 1px solid #1f1f1f;
       max-width: 1200px;
       margin: 0 auto;
     }
-    .spidey-team {
-      text-align: center;
-      padding: 3rem 2rem;
-      border-bottom: 2px solid rgba(0, 212, 255, 0.2);
-      margin-bottom: 2rem;
-      background: #00000000;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 15px;
-      margin: 0 2rem 2rem 2rem;
-      max-width: calc(100% - 4rem);
-      margin-left: 2rem;
-      margin-right: 2rem;
-    }
-    .spidey-team-logo {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 15px;
-      padding: 0.5rem;
-      border: 2px solid rgba(0, 212, 255, 0.3);
-      box-shadow: 0 0 30px rgba(145, 70, 255, 0.4);
-      transition: all 0.3s;
-    }
-    .spidey-team-logo:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 50px rgba(0, 212, 255, 0.6);
-      border-color: rgba(0, 212, 255, 0.6);
-    }
-    .spidey-team-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .spidey-team h2 {
-      color: #fff;
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #00d4ff 0%, #9146FF 50%, #FF1493 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .spidey-team p {
-      color: #ccc;
-      font-size: 0.95rem;
-      max-width: 600px;
-      margin: 0 auto;
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero { padding: 5rem 1.5rem 4rem; }
+      .hero h1 { font-size: 2.25rem; }
+      .hero p { font-size: 1rem; }
+      nav { flex-direction: column; gap: 1rem; padding: 1rem 1.5rem; }
+      nav a { margin: 0 0.75rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      footer .footer-content { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
   <nav>
-    <div class="logo">SPIDEY BOT</div>
+    <div class="logo">SPIDEY <span>BOT</span></div>
     <div>
       <a href="/">Home</a>
       <a href="/commands">Features</a>
-      <a href="/security">Security</a>
-      <a href="/login" class="btn btn-primary" style="padding: 0.6rem 1.5rem; margin: 0;">Admin</a>
+      <a href="/login" class="nav-cta">Admin</a>
     </div>
   </nav>
 
   <main>
-
-  <div class="hero">
-    <h1>Meet SPIDEY BOT – Your Server's Ultimate Tech Guardian</h1>
-    <p>SPIDEY BOT blends powerful intelligence with mystical powers to bring order, fun, and automation to your Discord server. Music, moderation, economy, leveling, and 40+ commands to manage and entertain your community.</p>
-    <div class="btn-group">
-      <a id="addToDiscord" class="btn btn-primary">Invite To Guild →</a>
-      <a href="/commands" class="btn btn-secondary">Documentation →</a>
-    </div>
-  </div>
-
-  <div class="container">
-    <h2 style="margin-top: 4rem; margin-bottom: 3rem; font-size: 2.2rem; text-align: center; color: #fff;">✨ Core Features</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(145, 70, 255, 0.03) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.15); display: flex; gap: 1rem; transition: all 0.3s;">
-        <div style="font-size: 2rem;">✓</div>
-        <div>
-          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎵 Music Playback</h3>
-          <p style="color: #aaa; font-size: 0.9rem;">Plays high-quality music in voice channels from YouTube with queue management, looping, and shuffle</p>
-        </div>
-      </div>
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
-        <div style="font-size: 2rem;">✓</div>
-        <div>
-          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🛡️ Auto Moderation</h3>
-          <p style="color: #aaa; font-size: 0.9rem;">Detects and removes spam, bad words, and raids automatically with intelligent filtering</p>
-        </div>
-      </div>
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
-        <div style="font-size: 2rem;">✓</div>
-        <div>
-          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">👋 Welcome Messages</h3>
-          <p style="color: #aaa; font-size: 0.9rem;">Greets new members with customizable messages and automatically assigns welcome roles</p>
-        </div>
-      </div>
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
-        <div style="font-size: 2rem;">✓</div>
-        <div>
-          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎭 Reaction Roles</h3>
-          <p style="color: #aaa; font-size: 0.9rem;">Assigns roles to users when they click reaction emojis on messages</p>
-        </div>
-      </div>
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
-        <div style="font-size: 2rem;">✓</div>
-        <div>
-          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">📈 Leveling System</h3>
-          <p style="color: #aaa; font-size: 0.9rem;">Tracks user activity and rewards XP with level-based roles and emoji badges</p>
-        </div>
-      </div>
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
-        <div style="font-size: 2rem;">✓</div>
-        <div>
-          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">🎫 Ticket Support</h3>
-          <p style="color: #aaa; font-size: 0.9rem;">Creates private support channels for members to ask questions and get help</p>
-        </div>
-      </div>
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
-        <div style="font-size: 2rem;">✓</div>
-        <div>
-          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">📝 Logging System</h3>
-          <p style="color: #aaa; font-size: 0.9rem;">Logs server events like joins, bans, edits, and deletes for audit trails</p>
-        </div>
-      </div>
-      <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.05) 100%); padding: 2rem; border-radius: 12px; border: 1px solid rgba(145, 70, 255, 0.2); display: flex; gap: 1rem;">
-        <div style="font-size: 2rem;">✓</div>
-        <div>
-          <h3 style="color: #9146FF; margin-bottom: 0.5rem;">💰 Economy System</h3>
-          <p style="color: #aaa; font-size: 0.9rem;">Daily rewards, work commands, transfers, and leaderboards for competitive fun</p>
-        </div>
+    <div class="hero">
+      <h1>Your Server's <span>Ultimate</span> Discord Bot</h1>
+      <p>SPIDEY BOT delivers powerful automation, moderation, music, economy, and 40+ commands to manage and entertain your Discord community.</p>
+      <div class="btn-group">
+        <a id="addToDiscord" class="btn btn-primary">Invite To Server</a>
+        <a href="/commands" class="btn btn-secondary">View Features</a>
       </div>
     </div>
 
-    <!-- And So Much More Section -->
-    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.12) 0%, rgba(145, 70, 255, 0.05) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 2px solid rgba(145, 70, 255, 0.2); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
-      <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 2rem;">💎 And So Much More! 💎</h2>
-      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">From seamless integrations to advanced settings, we've got everything you need and more! Need help or have questions? Explore our full command documentation!</p>
-    </div>
-
-    <!-- Tutorials Section -->
-    <div style="margin-bottom: 4rem;">
-      <h2 style="margin-bottom: 3rem; font-size: 2.2rem; text-align: center; color: #fff;">📚 Tutorials & Guides</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
-        <!-- Card 1 -->
-        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
-          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">🎭 Reaction Roles Preview</div>
-          <div style="padding: 2rem;">
-            <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">Allow Users to Self Assign Roles in Discord with Reaction Roles</h3>
-            <a href="/tutorials/create-reaction-roles-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
-          </div>
+    <div class="container">
+      <h2 class="section-title">Core Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">01</div>
+          <h3>Music Playback</h3>
+          <p>High-quality music playback in voice channels with queue management, looping, and shuffle support.</p>
         </div>
-
-        <!-- Card 2 -->
-        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
-          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">🛡️ Moderation Setup Preview</div>
-          <div style="padding: 2rem;">
-            <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">How to Configure Auto-Moderation for Your Discord Server</h3>
-            <a href="/tutorials/create-moderation-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
-          </div>
+        <div class="feature-card">
+          <div class="feature-icon">02</div>
+          <h3>Auto Moderation</h3>
+          <p>Detects and removes spam, bad words, and raids automatically with intelligent filtering.</p>
         </div>
-
-        <!-- Card 3 -->
-        <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(145, 70, 255, 0.15); border-radius: 12px; overflow: hidden; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='rgba(145, 70, 255, 0.4)'; this.style.boxShadow='0 15px 40px rgba(145, 70, 255, 0.25)'; this.style.backdropFilter='blur(15px)'; this.style.webkitBackdropFilter='blur(15px)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(145, 70, 255, 0.15)'; this.style.boxShadow='none'; this.style.backdropFilter='blur(12px)'; this.style.webkitBackdropFilter='blur(12px)'">
-          <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(15, 52, 96, 0.6)); height: 180px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">📊 Dashboard Guide Preview</div>
-          <div style="padding: 2rem;">
-            <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.4;">How to Use the Admin Dashboard and Manage Your Server</h3>
-            <a href="/tutorials/create-dashboard-preview.html" style="color: #00d4ff; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#00ffff'" onmouseout="this.style.color='#00d4ff'">Keep reading →</a>
-          </div>
+        <div class="feature-card">
+          <div class="feature-icon">03</div>
+          <h3>Welcome Messages</h3>
+          <p>Greets new members with customizable messages and automatically assigns welcome roles.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">04</div>
+          <h3>Reaction Roles</h3>
+          <p>Assigns roles to users when they click reaction emojis on messages.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">05</div>
+          <h3>Leveling System</h3>
+          <p>Tracks user activity and rewards XP with level-based roles and emoji badges.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">06</div>
+          <h3>Ticket Support</h3>
+          <p>Creates private support channels for members to ask questions and get help.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">07</div>
+          <h3>Logging System</h3>
+          <p>Logs server events like joins, bans, edits, and deletes for complete audit trails.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">08</div>
+          <h3>Economy System</h3>
+          <p>Daily rewards, work commands, transfers, and leaderboards for competitive fun.</p>
         </div>
       </div>
-      <div style="text-align: center;">
-        <a href="/tutorials/create-reaction-roles-preview.html" class="btn btn-primary">Learn More →</a>
+
+      <div class="cta-section">
+        <h2>And So Much More</h2>
+        <p>From seamless integrations to advanced settings, we have everything you need. Need help or have questions? Join our community Discord.</p>
+        <a href="https://discord.com/invite/spideybot" target="_blank" class="btn btn-primary">Join Our Discord</a>
+      </div>
+
+      <div class="cta-section">
+        <h2>We Are Here For You</h2>
+        <p>Whether you are just getting started or managing a massive community, we offer real support and powerful features that scale with you.</p>
+        <a href="/login" class="btn btn-primary">Access Dashboard</a>
       </div>
     </div>
-
-    <!-- Support Section -->
-    <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.12) 0%, rgba(145, 70, 255, 0.05) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 2px solid rgba(145, 70, 255, 0.2); border-radius: 15px; padding: 3rem 2rem; text-align: center; margin-bottom: 4rem;">
-      <h2 style="color: #fff; margin-bottom: 1rem; font-size: 2rem;">🚀 We Are Here For You!</h2>
-      <p style="color: #ccc; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;">Whether you're just getting started or managing a massive community, we're here to offer real support and powerful features that scale with you. Need a hand? Reach out through our support hub or connect with others in our Discord server anytime!</p>
-      <a href="/login" class="btn btn-primary">Access Dashboard →</a>
-    </div>
-  </div>
-
-  <script>
-    let clientId = null;
-
-    // Fetch client ID from backend
-    async function loadClientId() {
-      try {
-        const res = await fetch('/api/config');
-        const data = await res.json();
-        clientId = data.clientId;
-      } catch (err) {
-        console.error('Failed to load client ID:', err);
-      }
-    }
-
-    // Load client ID on page load
-    window.addEventListener('load', loadClientId);
-  </script>
   </main>
 
   <footer>
-    <!-- SPIDEY TEAM Section -->
-    <div class="spidey-team">
-      <div class="spidey-team-logo">
-        <img src="/assets/spidey-team-logo.png" alt="SPIDEY TEAM Logo">
-      </div>
-      <h2>SPIDEY TEAM</h2>
-      <p>Built with passion to bring the ultimate Discord bot experience. Powered by innovation and creativity.</p>
-    </div>
-
     <div class="footer-content">
       <div class="footer-section">
         <h3>Quick Links</h3>
@@ -459,267 +369,42 @@
         </ul>
       </div>
       <div class="footer-section">
+        <h3>Community</h3>
+        <ul>
+          <li><a href="https://discord.com/invite/spideybot" target="_blank">Discord Server</a></li>
+          <li><a href="#" onclick="return false;">Twitter</a></li>
+          <li><a href="#" onclick="return false;">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
         <h3>About</h3>
         <ul>
-          <li style="color: #999; font-size: 0.9rem;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
+          <li style="color: #777; font-size: 0.9rem; line-height: 1.6;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2025 SPIDEY BOT - All rights reserved | Proudly created by SPIDEY TEAM | Est. 2019</p>
+      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
     </div>
   </footer>
 
-  <!-- AI Support Widget -->
-  <div id="ai-widget" class="ai-widget">
-    <button id="ai-toggle" class="ai-toggle">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-      </svg>
-      <span>AI Help</span>
-    </button>
-    <div id="ai-chat" class="ai-chat">
-      <div class="ai-header">
-        <span>🦁 SIMBA AI Support</span>
-        <button id="ai-close">&times;</button>
-      </div>
-      <div id="ai-messages" class="ai-messages"></div>
-      <div class="ai-input-area">
-        <input type="text" id="ai-input" placeholder="Ask a question...">
-        <button id="ai-send">Send</button>
-      </div>
-    </div>
-  </div>
-
-  <style>
-    .ai-widget {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 10000;
-      font-family: 'Inter', sans-serif;
-    }
-    .ai-toggle {
-      background: linear-gradient(135deg, #9146FF 0%, #00d4ff 100%);
-      border: none;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 25px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 600;
-      box-shadow: 0 4px 15px rgba(145, 70, 255, 0.4);
-      transition: transform 0.2s;
-    }
-    .ai-toggle:hover { transform: scale(1.05); }
-    .ai-toggle svg { width: 20px; height: 20px; }
-    .ai-chat {
-      display: none;
-      position: absolute;
-      bottom: 60px;
-      right: 0;
-      width: 350px;
-      height: 450px;
-      background: #1a1a2e;
-      border-radius: 15px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-      flex-direction: column;
-      overflow: hidden;
-      border: 1px solid rgba(145, 70, 255, 0.3);
-    }
-    .ai-chat.open { display: flex; }
-    .ai-header {
-      background: linear-gradient(135deg, #9146FF 0%, #00d4ff 100%);
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 600;
-    }
-    .ai-close {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-    }
-    .ai-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .ai-msg {
-      padding: 10px 14px;
-      border-radius: 12px;
-      max-width: 85%;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    .ai-msg.bot {
-      background: rgba(145, 70, 255, 0.2);
-      color: #fff;
-      align-self: flex-start;
-    }
-    .ai-msg.user {
-      background: #00d4ff;
-      color: #000;
-      align-self: flex-end;
-    }
-    .ai-msg.system {
-      background: rgba(255, 193, 7, 0.2);
-      color: #ffc107;
-      font-size: 12px;
-      text-align: center;
-      border: 1px solid rgba(255, 193, 7, 0.3);
-    }
-    .ai-input-area {
-      padding: 15px;
-      display: flex;
-      gap: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .ai-input-area input {
-      flex: 1;
-      padding: 10px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(0, 0, 0, 0.3);
-      color: #fff;
-      font-size: 14px;
-    }
-    .ai-input-area button {
-      background: #9146FF;
-      border: none;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .ai-input-area button:hover { background: #7a3fd9; }
-  </style>
-
   <script>
-    (function() {
-      const widget = document.getElementById('ai-widget');
-      const toggle = document.getElementById('ai-toggle');
-      const chat = document.getElementById('ai-chat');
-      const close = document.getElementById('ai-close');
-      const input = document.getElementById('ai-input');
-      const sendBtn = document.getElementById('ai-send');
-      const messages = document.getElementById('ai-messages');
-      
-      let knowledge = null;
-      let sessionId = localStorage.getItem('ai-session') || Math.random().toString(36).substr(2, 9);
-      let conversation = JSON.parse(localStorage.getItem('ai-convo-' + sessionId) || '[]');
-      
-      localStorage.setItem('ai-session', sessionId);
-      
-      const isDashboard = window.location.pathname.includes('dashboard');
-      
-      async function loadKnowledge() {
-        try {
-          const res = await fetch('/api/ai-knowledge?dashboard=' + isDashboard);
-          knowledge = await res.json();
-        } catch(e) { console.error('AI knowledge load failed:', e); }
+    let clientId = null;
+
+    async function loadClientId() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        clientId = data.clientId;
+      } catch (err) {
+        console.error('Failed to load client ID:', err);
       }
-      
-      function saveConversation() {
-        localStorage.setItem('ai-convo-' + sessionId, JSON.stringify(conversation.slice(-20)));
-      }
-      
-      function addMessage(text, type = 'bot') {
-        const div = document.createElement('div');
-        div.className = 'ai-msg ' + type;
-        div.textContent = text;
-        messages.appendChild(div);
-        messages.scrollTop = messages.scrollHeight;
-        if (type !== 'system') {
-          conversation.push({ role: type, text });
-          saveConversation();
-        }
-      }
-      
-      async function handleAsk() {
-        const question = input.value.trim();
-        if (!question) return;
-        
-        addMessage(question, 'user');
-        input.value = '';
-        
-        await loadKnowledge();
-        
-        if (!knowledge) {
-          addMessage("Sorry, I'm having trouble connecting. Please try again.", 'bot');
-          return;
-        }
-        
-        if (knowledge.hasAI) {
-          try {
-            const res = await fetch('/api/ai-chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message: question, history: conversation, isDashboard })
-            });
-            const data = await res.json();
-            if (data.reply) {
-              setTimeout(() => addMessage(data.reply, 'bot'), 300);
-            } else if (data.error) {
-              setTimeout(() => addMessage("SIMBA is having trouble thinking right now. Try again in a moment.", 'bot'), 300);
-            }
-          } catch(e) {
-            setTimeout(() => addMessage("Sorry, SIMBA couldn't respond. Please try again.", 'bot'), 300);
-          }
-        } else {
-          if (question.toLowerCase().includes('invite') || question.toLowerCase().includes('add')) {
-            setTimeout(() => addMessage("Click the 'Add to Discord' button on the main page. You'll need Manage Server permissions to add Spidey Bot.", 'bot'), 300);
-          } else if (question.toLowerCase().includes('command') || question.toLowerCase().includes('help')) {
-            setTimeout(() => addMessage("Type / in Discord to see all commands. Use /help for user commands and /adminhelp for admin commands.", 'bot'), 300);
-          } else {
-            setTimeout(() => addMessage("I'm SIMBA, your AI assistant! Ask me about Spidey Bot features, commands, or how to configure the dashboard.", 'bot'), 300);
-          }
-        }
-        
-        const warnings = isDashboard ? knowledge.dashboard.proactiveWarnings : knowledge.mainPage.proactiveWarnings;
-        if (warnings && warnings.length > 0 && Math.random() < 0.25) {
-          setTimeout(() => addMessage("💡 " + warnings[Math.floor(Math.random() * warnings.length)], 'system'), 600);
-        }
-        
-        if (knowledge.knownIssues && knowledge.knownIssues.length > 0 && Math.random() < 0.2) {
-          setTimeout(() => {
-            addMessage("📋 Current notes: " + knowledge.knownIssues.join('; '), 'system');
-          }, 1000);
-        }
-      }
-      
-      toggle.addEventListener('click', () => {
-        chat.classList.toggle('open');
-        if (chat.classList.contains('open') && !knowledge) loadKnowledge();
-      });
-      
-      close.addEventListener('click', () => chat.classList.remove('open'));
-      
-      sendBtn.addEventListener('click', handleAsk);
-      input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAsk(); });
-      
-      conversation.forEach(msg => addMessage(msg.text, msg.role));
-      
-      if (conversation.length === 0) {
-        const welcome = isDashboard 
-          ? "Hi! I'm SIMBA, your AI assistant. Ask me about dashboard features, logs, verification, or any config questions!"
-          : "Hi! I'm SIMBA, your AI assistant. Ask me what Spidey Bot is, how to invite it, or what commands are available!";
-        setTimeout(() => addMessage(welcome, 'bot'), 500);
-      }
-    })();
+    }
+
+    window.addEventListener('load', loadClientId);
   </script>
 
   <script>
-    // Use server-provided invite URL (avoids 'undefined' client_id when env missing)
     document.getElementById('addToDiscord').addEventListener('click', async function(e) {
       e.preventDefault();
       try {
@@ -729,7 +414,6 @@
           window.location.href = cfg.inviteUrl;
           return;
         }
-        // Fallback to server-side invite redirect which will 503 if not configured
         window.location.href = '/invite';
       } catch (err) {
         console.error('Invite error:', err);
