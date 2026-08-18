@@ -247,15 +247,20 @@ const DISCORD_CLIENT_SECRET = process.env.CLIENT_SECRET || "";
 
 console.log("[DEBUG] CLIENT_ID:", DISCORD_CLIENT_ID ? "set" : "NOT SET");
 console.log("[DEBUG] CLIENT_SECRET:", DISCORD_CLIENT_SECRET ? "set (length: " + DISCORD_CLIENT_SECRET.length + ")" : "NOT SET");
-// Prefer explicit BASE_URL in env for Codespaces / production. Keep Render fallback.
-const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || null;
-const BASE_REDIRECT_URI = (process.env.BASE_URL && process.env.BASE_URL.replace(/\/$/, '')) || (RENDER_EXTERNAL_URL ? RENDER_EXTERNAL_URL.replace(/\/$/, '') : 'http://159.89.103.111:5000');
+// Prefer explicit BASE_URL / FORCE_REDIRECT_URI in env for production.
+// Do NOT fall back to obsolete hardcoded IPs or domains.
+const BASE_REDIRECT_URI = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/$/, '') : null;
+const REDIRECT_URI = process.env.FORCE_REDIRECT_URI || (BASE_REDIRECT_URI ? `${BASE_REDIRECT_URI}/auth/discord/callback` : null);
 
-const REDIRECT_URI = process.env.FORCE_REDIRECT_URI || ((BASE_REDIRECT_URI === 'http://localhost:5000' && (process.env.NODE_ENV === 'production' || process.env.RENDER))
-  ? 'https://spideybot-90sr.onrender.com/auth/discord/callback'
-  : BASE_REDIRECT_URI.replace('https://', 'http://') + '/auth/discord/callback');
+const getPublicBaseUrl = (req) => {
+  if (process.env.BASE_URL) return process.env.BASE_URL.replace(/\/$/, '');
+  if (req && typeof REDIRECT_URI_DETECTOR === 'function') {
+    return REDIRECT_URI_DETECTOR(req).replace('/auth/discord/callback', '');
+  }
+  return null;
+};
 
-console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI}`);
+console.log(`🔐 OAuth Redirect URI: ${REDIRECT_URI || 'dynamic per-request'}`);
 
 // ============== CONFIG MANAGEMENT ==============
 const configFile = path.join(__dirname, "config.json");
@@ -6027,8 +6032,7 @@ app.get("/auth/discord", (req, res) => {
 
   lastLogin = now;
 
-  const oauthBaseUrl = process.env.BASE_URL || 'http://159.89.103.111:5000';
-  const redirectUri = `${oauthBaseUrl}/auth/discord/callback`;
+  const redirectUri = REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
 
   const url = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=identify`;
 
@@ -6116,8 +6120,7 @@ app.get("/auth/discord/callback", async (req, res) => {
 
   usedCodes.add(code);
 
-  const oauthBaseUrl = process.env.BASE_URL || 'http://159.89.103.111:5000';
-  const redirectUri = `${oauthBaseUrl}/auth/discord/callback`;
+  const redirectUri = REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
   const maxRetries = 3;
   const baseDelay = 30000;
 
@@ -6698,8 +6701,8 @@ app.post('/api/paypal/create-order', async (req, res) => {
         brand_name: 'Spidey Bot',
         landing_page: 'NO_PREFERENCE',
         user_action: 'PAY_NOW',
-        return_url: `${process.env.BASE_URL}/premium?success=true`,
-        cancel_url: `${process.env.BASE_URL}/premium?cancelled=true`
+        return_url: `${getPublicBaseUrl(req)}/premium?success=true`,
+        cancel_url: `${getPublicBaseUrl(req)}/premium?cancelled=true`
       }
     };
     
@@ -9502,7 +9505,6 @@ app.get('/status', (req, res) => {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Web server listening on port ${PORT}`);
-  console.log(`🔗 Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
 });
 
 // ============== ERROR & DISCONNECT HANDLERS (KEEP BOT ONLINE) ==============
