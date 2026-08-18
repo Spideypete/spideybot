@@ -4,113 +4,93 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SPIDEY BOT - All Commands</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 50%, #0f0a1f 100%);
-      color: #fff;
+      background: #0a0a0a;
+      color: #e5e5e5;
       line-height: 1.6;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
     }
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: 
-        repeating-linear-gradient(0deg, rgba(0, 212, 255, 0.08) 0px, rgba(0, 212, 255, 0.08) 2px, transparent 2px, transparent 4px),
-        repeating-linear-gradient(90deg, rgba(0, 212, 255, 0.08) 0px, rgba(0, 212, 255, 0.08) 2px, transparent 2px, transparent 4px);
-      pointer-events: none;
-      z-index: 1;
-    }
-    main {
-      flex: 1;
-      position: relative;
-      z-index: 2;
-    }
-    .subsection {
-      margin-bottom: 2rem;
-    }
-    .subsection-header {
-      font-size: 1.1rem;
-      color: #00d4ff;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(0, 212, 255, 0.3);
-      font-weight: 600;
-    }
+    main { flex: 1; position: relative; }
+
+    /* Navigation */
     nav {
-      background: rgba(15, 15, 15, 0.7);
-      border-bottom: 1px solid rgba(0, 212, 255, 0.1);
-      padding: 1rem 2rem;
+      background: rgba(10, 10, 10, 0.95);
+      border-bottom: 1px solid #1f1f1f;
+      padding: 1.25rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
       z-index: 100;
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(12px);
     }
     .logo {
       font-weight: 700;
-      font-size: 1.4rem;
-      background: linear-gradient(135deg, #9146FF 0%, #FF1493 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 1px;
+      font-size: 1.25rem;
+      color: #fff;
+      letter-spacing: 0.5px;
     }
+    .logo span { color: #9146FF; }
     nav a {
       color: #999;
       text-decoration: none;
-      margin: 0 1.5rem;
-      transition: color 0.3s;
+      margin: 0 1.25rem;
+      transition: color 0.2s;
       font-weight: 500;
+      font-size: 0.95rem;
     }
     nav a:hover { color: #9146FF; }
+    .nav-cta {
+      padding: 0.5rem 1.25rem;
+      background: #9146FF;
+      color: #fff !important;
+      border-radius: 6px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .nav-cta:hover { background: #7a35cc; }
+
+    /* Sections */
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem;
     }
-    h1 {
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #fff;
       text-align: center;
-      font-size: 2.5rem;
-      margin: 2rem 0;
-      background: linear-gradient(135deg, #FF4500 0%, #DC5032 35%, #FF6347 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin: 4rem 0 3rem;
+      letter-spacing: -0.01em;
     }
+
+    /* Command sections */
     .command-section {
       margin: 3rem 0;
-      background: linear-gradient(135deg, rgba(145, 70, 255, 0.08) 0%, rgba(145, 70, 255, 0.02) 100%);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(145, 70, 255, 0.15);
-      border-radius: 12px;
+      background: #111111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
       padding: 2rem;
-      transition: all 0.3s;
+      transition: all 0.2s;
     }
     .command-section:hover {
       border-color: rgba(145, 70, 255, 0.4);
-      box-shadow: 0 0 30px rgba(145, 70, 255, 0.15);
+      box-shadow: 0 4px 24px rgba(145, 70, 255, 0.08);
     }
     .command-section h2 {
       color: #9146FF;
       margin-bottom: 1.5rem;
-      font-size: 1.8rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 600;
     }
     .command-grid {
       display: grid;
@@ -118,87 +98,110 @@
       gap: 1.5rem;
     }
     .command-card {
-      background: rgba(20, 20, 35, 0.5);
-      border: 1px solid rgba(0, 212, 255, 0.2);
+      background: #111111;
+      border: 1px solid #1f1f1f;
       border-radius: 8px;
       padding: 1.5rem;
-      transition: all 0.3s;
+      transition: all 0.2s;
     }
     .command-card:hover {
-      background: rgba(20, 20, 35, 0.8);
-      border-color: rgba(0, 212, 255, 0.5);
-      transform: translateY(-3px);
-      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+      border-color: rgba(145, 70, 255, 0.4);
+      box-shadow: 0 4px 24px rgba(145, 70, 255, 0.08);
+      transform: translateY(-2px);
     }
     .command-card h3 {
-      color: #00d4ff;
-      font-size: 1.1rem;
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 600;
       margin-bottom: 0.5rem;
       font-family: 'Monaco', monospace;
       word-break: break-all;
     }
     .command-card p {
-      color: #bbb;
+      color: #888;
       font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
     }
     .command-usage {
       background: rgba(0, 0, 0, 0.3);
-      border-left: 2px solid #00d4ff;
+      border-left: 2px solid #9146FF;
       padding: 0.8rem;
       border-radius: 4px;
       font-family: 'Monaco', monospace;
       font-size: 0.85rem;
-      color: #00ffff;
+      color: #e5e5e5;
       margin-top: 0.8rem;
     }
     .badge {
       display: inline-block;
-      background: rgba(220, 80, 50, 0.3);
-      color: #FF6347;
+      background: rgba(145, 70, 255, 0.15);
+      color: #9146FF;
       padding: 0.3rem 0.8rem;
       border-radius: 12px;
       font-size: 0.75rem;
-      margin-top: 0.8rem;
       text-transform: uppercase;
       font-weight: 600;
+      border: 1px solid rgba(145, 70, 255, 0.25);
     }
     .badge.admin {
-      background: rgba(220, 80, 50, 0.4);
-      color: #FFD700;
-    }
-    .badge.public {
-      background: rgba(0, 212, 255, 0.2);
-      color: #00d4ff;
-    }
-    footer {
-      background: rgba(0, 0, 0, 0.5);
-      border-top: 1px solid rgba(0, 212, 255, 0.1);
-      padding: 2rem;
-      text-align: center;
-      color: #666;
-      font-size: 0.9rem;
-      margin-top: 3rem;
-    }
-    .btn {
-      display: inline-block;
-      padding: 0.8rem 2rem;
       background: rgba(220, 80, 50, 0.15);
       color: #FF6347;
-      border: 2px solid rgba(220, 80, 50, 0.4);
-      border-radius: 8px;
+      border-color: rgba(220, 80, 50, 0.3);
+    }
+    .badge.public {
+      background: rgba(145, 70, 255, 0.15);
+      color: #9146FF;
+      border-color: rgba(145, 70, 255, 0.25);
+    }
+    .subsection-header {
+      font-size: 1rem;
+      color: #fff;
+      margin: 1.5rem 0 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #1f1f1f;
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-block;
+      padding: 0.85rem 2rem;
+      margin: 0.5rem;
+      border-radius: 6px;
       text-decoration: none;
-      transition: all 0.3s;
-      margin: 1rem 0.5rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 0.95rem;
     }
-    .btn:hover {
-      background: rgba(220, 80, 50, 0.25);
-      border-color: rgba(220, 80, 50, 0.7);
+    .btn-primary {
+      background: #9146FF;
+      color: #fff;
+      border-color: #9146FF;
     }
+    .btn-primary:hover {
+      background: #7a35cc;
+      border-color: #7a35cc;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(145, 70, 255, 0.25);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #e5e5e5;
+      border-color: #333;
+    }
+    .btn-secondary:hover {
+      border-color: #9146FF;
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* Search */
     .search-box {
-      background: rgba(20, 20, 35, 0.7);
-      border: 1px solid rgba(0, 212, 255, 0.3);
+      background: #111111;
+      border: 1px solid #1f1f1f;
       color: #fff;
       padding: 1rem;
       border-radius: 8px;
@@ -208,45 +211,172 @@
     }
     .search-box:focus {
       outline: none;
-      border-color: rgba(0, 212, 255, 0.8);
-      background: rgba(20, 20, 35, 0.9);
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+      border-color: rgba(145, 70, 255, 0.5);
+      box-shadow: 0 0 20px rgba(145, 70, 255, 0.1);
+    }
+    .search-box::placeholder {
+      color: #666;
+    }
+
+    /* CTA */
+    .cta-section {
+      background: #111111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
+      padding: 3rem 2rem;
+      text-align: center;
+      margin: 4rem 0 2rem;
+    }
+    .cta-section h2 {
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    .cta-section p {
+      color: #888;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Footer */
+    footer {
+      background: #000000;
+      border-top: 1px solid #1f1f1f;
+      padding: 3rem 2rem 2rem;
+      margin-top: 4rem;
+    }
+    footer .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 2.5rem;
+      margin-bottom: 2.5rem;
+    }
+    footer .footer-section h3 {
+      color: #9146FF;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    footer .footer-section ul {
+      list-style: none;
+    }
+    footer .footer-section ul li {
+      margin-bottom: 0.75rem;
+    }
+    footer .footer-section a {
+      color: #777;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    footer .footer-section a:hover { color: #9146FF; }
+    footer .footer-bottom {
+      text-align: center;
+      color: #555;
+      font-size: 0.85rem;
+      padding-top: 2rem;
+      border-top: 1px solid #1f1f1f;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Network background canvas */
+    #network-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    main > *:not(#network-canvas) {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      nav { flex-direction: column; gap: 1rem; padding: 1rem 1.5rem; }
+      nav a { margin: 0 0.75rem; }
+      .command-grid { grid-template-columns: 1fr; }
+      footer .footer-content { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
   <nav>
-    <div class="logo">SPIDEY BOT</div>
+    <div class="logo">SPIDEY <span>BOT</span></div>
     <div>
       <a href="/">Home</a>
-      <a href="/commands">Commands</a>
-      <a href="/login">Admin</a>
+      <a href="/commands">Features</a>
+      <a href="/login" class="nav-cta">Admin</a>
     </div>
   </nav>
 
   <main>
+    <canvas id="network-canvas" aria-hidden="true"></canvas>
     <div class="container">
-      <h1>🎮 Discord Commands</h1>
+      <h1 class="section-title">Discord Commands</h1>
 
       <input type="text" class="search-box" placeholder="Search commands... (e.g., /play, /ban, /daily)" id="searchBox">
 
       <div id="dynamicCommands"></div>
 
-      <div style="text-align: center; margin: 3rem 0;">
-        <h2 style="color: #fff; margin-bottom: 1rem;">🚀 Ready to Get Started?</h2>
-        <p style="color: #bbb; margin-bottom: 2rem;">Invite SPIDEY BOT to your Discord server and start using these amazing commands!</p>
-        <a href="/" class="btn">← Back Home</a>
-        <a href="/login" class="btn">Admin Dashboard →</a>
+      <div class="cta-section">
+        <h2>Ready to Get Started?</h2>
+        <p>Invite SPIDEY BOT to your Discord server and start using these amazing commands!</p>
+        <a href="/" class="btn btn-secondary">Back Home</a>
+        <a href="/login" class="btn btn-primary">Admin Dashboard</a>
       </div>
     </div>
   </main>
 
   <footer>
-    <p>&copy; 2025 SPIDEY BOT - All rights reserved | Proudly created by SPIDEY TEAM</p>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/commands">Features</a></li>
+          <li><a href="/login">Admin</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <ul>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Community</h3>
+        <ul>
+          <li><a href="https://discord.com/invite/spideybot" target="_blank">Discord Server</a></li>
+          <li><a href="#" onclick="return false;">Twitter</a></li>
+          <li><a href="#" onclick="return false;">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>About</h3>
+        <ul>
+          <li style="color: #777; font-size: 0.9rem; line-height: 1.6;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
+    </div>
   </footer>
 
   <script>
-    // Search functionality
     const searchBox = document.getElementById('searchBox');
     const dynamicContainer = document.getElementById('dynamicCommands');
 
@@ -266,7 +396,6 @@
         const items = groups[cat];
         if (!items) return;
         
-        // Count commands
         const cmdCount = items.length;
         
         const section = document.createElement('div');
@@ -275,7 +404,6 @@
         section.innerHTML = `<h2>${cat.charAt(0).toUpperCase()+cat.slice(1)} (${cmdCount} commands)</h2><div class="subsections-container"></div>`;
         const subsectionsContainer = section.querySelector('.subsections-container');
         
-        // Group by subsection
         const subsections = {};
         items.forEach(cmd => {
           const subsec = cmd.subsection || 'Other';
@@ -283,10 +411,8 @@
           subsections[subsec].push(cmd);
         });
         
-        // Render subsections
         Object.keys(subsections).sort().forEach(subsecName => {
           const subsecDiv = document.createElement('div');
-          subsecDiv.className = 'subsection';
           const header = document.createElement('h3');
           header.className = 'subsection-header';
           header.textContent = subsecName;
@@ -309,7 +435,6 @@
         dynamicContainer.appendChild(section);
       });
 
-      // Wire search
       searchBox.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
         const sections = document.querySelectorAll('.command-section');
@@ -325,11 +450,113 @@
       });
     }
 
-    // Fetch metadata from server
     fetch('/api/commands').then(r=>r.json()).then(data=> buildSections(data)).catch(err=>{
       console.error('Failed to load commands metadata', err);
       dynamicContainer.innerHTML = '<p style="color:#bbb;">Unable to load commands metadata.</p>';
     });
+  </script>
+
+  <script>
+    (function() {
+      const canvas = document.getElementById('network-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let nodes = [];
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const nodeCount = isMobile ? 50 : 110;
+      const connectionDistance = isMobile ? 100 : 140;
+      const baseRadius = isMobile ? 1.2 : 1.8;
+      const glowColor = '145, 70, 255';
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        width = rect.width;
+        height = rect.height;
+        canvas.width = width * (window.devicePixelRatio || 1);
+        canvas.height = height * (window.devicePixelRatio || 1);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+      }
+
+      function createNodes() {
+        nodes = [];
+        for (let i = 0; i < nodeCount; i++) {
+          nodes.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.25,
+            vy: (Math.random() - 0.5) * 0.25,
+            radius: baseRadius + Math.random() * 1.8,
+            alpha: 0.25 + Math.random() * 0.55,
+            pulse: Math.random() * Math.PI * 2,
+            pulseSpeed: 0.01 + Math.random() * 0.02
+          });
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        for (let i = 0; i < nodes.length; i++) {
+          const node = nodes[i];
+          node.x += node.vx;
+          node.y += node.vy;
+          node.pulse += node.pulseSpeed;
+
+          if (node.x < -20) node.x = width + 20;
+          if (node.x > width + 20) node.x = -20;
+          if (node.y < -20) node.y = height + 20;
+          if (node.y > height + 20) node.y = -20;
+
+          const pulseAlpha = node.alpha + Math.sin(node.pulse) * 0.15;
+          const cx = width / 2;
+          const cy = height / 2;
+          const maxDist = Math.sqrt(cx * cx + cy * cy);
+          const dist = Math.sqrt((node.x - cx) ** 2 + (node.y - cy) ** 2);
+          const edgeFade = 1 - Math.min(1, dist / maxDist);
+          const finalAlpha = Math.max(0, Math.min(1, pulseAlpha * (0.4 + edgeFade * 0.6)));
+
+          for (let j = i + 1; j < nodes.length; j++) {
+            const other = nodes[j];
+            const dx = node.x - other.x;
+            const dy = node.y - other.y;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < connectionDistance * connectionDistance) {
+              const d = Math.sqrt(distSq);
+              const lineAlpha = (1 - d / connectionDistance) * 0.18 * edgeFade;
+              ctx.beginPath();
+              ctx.moveTo(node.x, node.y);
+              ctx.lineTo(other.x, other.y);
+              ctx.strokeStyle = 'rgba(' + glowColor + ', ' + lineAlpha.toFixed(3) + ')';
+              ctx.lineWidth = 0.6;
+              ctx.stroke();
+            }
+          }
+
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + glowColor + ', ' + finalAlpha.toFixed(3) + ')';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.radius * 2.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + glowColor + ', ' + (finalAlpha * 0.18).toFixed(3) + ')';
+          ctx.fill();
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      resize();
+      createNodes();
+      draw();
+      window.addEventListener('resize', () => {
+        resize();
+        createNodes();
+      });
+    })();
   </script>
 </body>
 </html>
