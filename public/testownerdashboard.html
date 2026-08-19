@@ -174,7 +174,8 @@ footer .footer-section ul li{margin-bottom:0.6rem}
 footer .footer-section a{color:#777;text-decoration:none;font-size:0.85rem;transition:color 0.2s}
 footer .footer-section a:hover{color:#9146FF}
 footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:1.5rem;border-top:1px solid #1f1f1f;max-width:1200px;margin:0 auto}
-@media(max-width:768px){.dash-sidebar{width:200px}.dash-stats-grid{grid-template-columns:repeat(2,1fr)}.dash-grid{grid-template-columns:1fr}.server-hero h1{font-size:1.8rem}.server-grid{grid-template-columns:1fr}.dash-header{flex-direction:column;height:auto;padding:1rem}.dash-main{flex-direction:column}.dash-sidebar{width:100%;max-height:200px;border-right:none;border-bottom:1px solid rgba(255,255,255,0.08)}}
+@media(max-width:1024px){.dash-sidebar{width:200px}.dash-stats-grid{grid-template-columns:repeat(2,1fr)}.dash-grid{grid-template-columns:1fr}.dash-header{padding:0 1rem}}
+@media(max-width:768px){.dash-stats-grid{grid-template-columns:repeat(2,1fr)}.dash-grid{grid-template-columns:1fr}.server-hero h1{font-size:1.8rem}.server-grid{grid-template-columns:1fr}.dash-header{flex-direction:column;height:auto;padding:1rem}.dash-main{flex-direction:column}.dash-sidebar{width:100%;max-height:200px;border-right:none;border-bottom:1px solid rgba(255,255,255,0.08)}.dash-sidebar-search{padding:0.2rem 0.3rem 0.5rem}.dash-content{padding:1rem}}
 </style>
 </head>
 <body>
@@ -431,6 +432,23 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 </div>
 </div>
 </div>
+<div class="dash-panel">
+<div class="dash-panel-header">Messages</div>
+<div class="dash-panel-body">
+<div class="dash-toggle">
+<input type="checkbox" id="settingWelcome" checked><span class="dash-toggle-track"></span>
+<span>Welcome messages</span>
+</div>
+<div class="dash-toggle" style="margin-top:0.8rem">
+<input type="checkbox" id="settingGoodbye" checked><span class="dash-toggle-track"></span>
+<span>Goodbye messages</span>
+</div>
+<div class="dash-toggle" style="margin-top:0.8rem">
+<input type="checkbox" id="settingBoost"><span class="dash-toggle-track"></span>
+<span>Boost messages</span>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="dash-content-section" id="sec-logging">
@@ -545,13 +563,13 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-panel-body">
 <div class="dash-form-group">
 <label class="dash-form-label">Channel</label>
-<select class="dash-form-select"><option>#welcome</option><option>#general</option></select>
+<select class="dash-form-select" id="settingWelcomeChannel"><option>#welcome</option><option>#general</option><option>#bot-commands</option></select>
 </div>
 <div class="dash-form-group">
 <label class="dash-form-label">Message</label>
-<textarea class="dash-form-input" rows="3" placeholder="Welcome {user} to {server}!"></textarea>
+<textarea class="dash-form-input" id="settingWelcomeMsg" rows="3" placeholder="Welcome {user} to {server}!"></textarea>
 </div>
-<button class="dash-btn primary">Save Welcome</button>
+<button class="dash-btn primary" onclick="saveServerMessage('welcome')">Save Welcome</button>
 </div>
 </div>
 <div class="dash-panel">
@@ -559,13 +577,13 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-panel-body">
 <div class="dash-form-group">
 <label class="dash-form-label">Channel</label>
-<select class="dash-form-select"><option>#goodbye</option><option>#general</option></select>
+<select class="dash-form-select" id="settingGoodbyeChannel"><option>#goodbye</option><option>#general</option><option>#bot-commands</option></select>
 </div>
 <div class="dash-form-group">
 <label class="dash-form-label">Message</label>
-<textarea class="dash-form-input" rows="3" placeholder="{user} has left {server}"></textarea>
+<textarea class="dash-form-input" id="settingGoodbyeMsg" rows="3" placeholder="{user} has left {server}"></textarea>
 </div>
-<button class="dash-btn primary">Save Goodbye</button>
+<button class="dash-btn primary" onclick="saveServerMessage('goodbye')">Save Goodbye</button>
 </div>
 </div>
 </div>
@@ -647,10 +665,12 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-panel-body">
 <table class="dash-table">
 <thead><tr><th>Rank</th><th>Member</th><th>XP</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>UserA</td><td>2,450</td></tr>
-<tr><td>2</td><td>UserB</td><td>2,100</td></tr>
-<tr><td>3</td><td>UserC</td><td>1,850</td></tr>
+<tbody id="leaderboardBody">
+<tr><td>1</td><td>SpideyKing</td><td>12,450</td></tr>
+<tr><td>2</td><td>WebSlinger42</td><td>11,200</td></tr>
+<tr><td>3</td><td>PeterParker</td><td>9,850</td></tr>
+<tr><td>4</td><td>MilesMorales</td><td>8,100</td></tr>
+<tr><td>5</td><td>GwenStacy</td><td>7,600</td></tr>
 </tbody>
 </table>
 </div>
@@ -695,10 +715,11 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-panel-header">Open Tickets</div>
 <div class="dash-panel-body">
 <table class="dash-table">
-<thead><tr><th>ID</th><th>User</th><th>Status</th></tr></thead>
+<thead><tr><th>ID</th><th>User</th><th>Subject</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td>#1001</td><td>UserA</td><td><span class="dash-badge success">Open</span></td></tr>
-<tr><td>#1002</td><td>UserB</td><td><span class="dash-badge warning">Pending</span></td></tr>
+<tr><td>#1001</td><td>SpideyFan99</td><td>Bot not responding</td><td><span class="dash-badge success">Open</span></td></tr>
+<tr><td>#1002</td><td>WebHead</td><td>Role assignment issue</td><td><span class="dash-badge warning">Pending</span></td></tr>
+<tr><td>#1003</td><td>Neighborly</td><td>Music player bug</td><td><span class="dash-badge info">Resolved</span></td></tr>
 </tbody>
 </table>
 </div>
@@ -714,7 +735,15 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-panel">
 <div class="dash-panel-header">Recent Activity</div>
 <div class="dash-panel-body" id="eventsBody">
-<p style="color:rgba(255,255,255,0.4);font-size:0.85rem">No recent events.</p>
+<div class="dash-table-wrap"><table class="dash-table">
+<thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+<tbody>
+<tr><td>2 min ago</td><td>SpideyFan99</td><td><span class="dash-badge success">Joined</span></td><td>Invited by WebSlinger42</td></tr>
+<tr><td>15 min ago</td><td>MilesMorales</td><td><span class="dash-badge info">Role Updated</span></td><td>Promoted to Moderator</td></tr>
+<tr><td>1 hour ago</td><td>Neighborly</td><td><span class="dash-badge warning">Left</span></td><td>Voluntary leave</td></tr>
+<tr><td>3 hours ago</td><td>GwenStacy</td><td><span class="dash-badge success">Joined</span></td><td>Invited by SpideyKing</td></tr>
+</tbody>
+</table></div>
 </div>
 </div>
 </div>
@@ -731,7 +760,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-form-group">
 <label class="dash-form-label">Platform</label>
 <select class="dash-form-select" id="socialPlatform">
-<option>YouTube</option><option>Twitter</option><option>Twitch</option>
+<option>YouTube</option><option>Twitter</option><option>Twitch</option><option>TikTok</option><option>Kick</option>
 </select>
 </div>
 <div class="dash-form-group">
@@ -743,7 +772,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 </div>
 <div class="dash-panel">
 <div class="dash-panel-header">Active Notifications</div>
-<div class="dash-panel-body">
+<div class="dash-panel-body" id="socialNotifsBody">
 <p style="color:rgba(255,255,255,0.4);font-size:0.85rem">No social notifications configured.</p>
 </div>
 </div>
@@ -759,10 +788,11 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-panel-header">Recent Invites</div>
 <div class="dash-panel-body">
 <table class="dash-table">
-<thead><tr><th>Invitee</th><th>Inviter</th><th>Date</th></tr></thead>
+<thead><tr><th>Invitee</th><th>Inviter</th><th>Uses</th><th>Joins</th><th>Leaves</th></tr></thead>
 <tbody>
-<tr><td>UserA</td><td>UserB</td><td>2024-01-15</td></tr>
-<tr><td>UserC</td><td>UserA</td><td>2024-01-14</td></tr>
+<tr><td>SpideyFan99</td><td>WebSlinger42</td><td>12</td><td>10</td><td>2</td></tr>
+<tr><td>Miles Morales</td><td>PeterParker</td><td>8</td><td>7</td><td>1</td></tr>
+<tr><td>GwenStacy</td><td>SpideyKing</td><td>5</td><td>5</td><td>0</td></tr>
 </tbody>
 </table>
 </div>
@@ -779,18 +809,20 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-panel-header">Top Channels</div>
 <div class="dash-panel-body">
 <table class="dash-table">
-<thead><tr><th>Channel</th><th>Messages</th><th>Active Users</th></tr></thead>
+<thead><tr><th>Channel</th><th>Messages</th><th>Active Users</th><th>Peak</th></tr></thead>
 <tbody>
-<tr><td>#general</td><td>1,245</td><td>89</td></tr>
-<tr><td>#memes</td><td>876</td><td>45</td></tr>
-<tr><td>#gaming</td><td>654</td><td>32</td></tr>
+<tr><td>#general</td><td>1,245</td><td>89</td><td>142</td></tr>
+<tr><td>#memes</td><td>876</td><td>45</td><td>67</td></tr>
+<tr><td>#gaming</td><td>654</td><td>32</td><td>54</td></tr>
+<tr><td>#music</td><td>432</td><td>28</td><td>41</td></tr>
+<tr><td>#bot-commands</td><td>321</td><td>56</td><td>78</td></tr>
 </tbody>
 </table>
 </div>
 </div>
 </div>
 </div>
-</div>
+
 <footer>
 <div class="footer-content">
 <div class="footer-section">
@@ -829,7 +861,9 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="footer-bottom">
  SPIDEY BOT - Test Dashboard. Built for simulation purposes.
 </div>
-</footer><script>
+</footer>
+</div>
+</div><script>
 let servers = JSON.parse(localStorage.getItem('sb_servers') || '[]');
 let currentServer = localStorage.getItem('sb_current') || null;
 let chartInstance = null;
@@ -888,6 +922,7 @@ function loadDashboard(){
 const s=getCurrentServer();if(!s)return;
 $('dashServerName').textContent=s.name;$('dashServerIcon').textContent=(s.name[0]||'?').toUpperCase();
 renderDashServerList();updateDashboardStats(s);initChart();initNetworkCanvas();
+loadSettings();loadReactRoles();loadCommands();loadGiveaways();loadRoleCategories();loadServerMessages();
 }
 function renderDashServerList(){
 const list=$('dashServerList');list.innerHTML='';
@@ -914,7 +949,7 @@ const text=i.textContent.toLowerCase();i.style.display=text.includes(term)?'':'n
 }
 function updateDashboardStats(s){
 $('testTotalMembers').textContent=(s.members||0).toLocaleString();$('testVerified').textContent=(s.verified||0).toLocaleString();$('testBots').textContent=(s.bots||0).toLocaleString();$('testAdmins').textContent=(s.admins||0).toLocaleString();$('testMods').textContent=(s.mods||0).toLocaleString();
-$('testTotalGrowth').textContent='+'+(Math.floor(Math.random()*50)+5);$('testVerifiedGrowth').textContent='+'+(Math.floor(Math.random()*20)+2);$('testBotsGrowth').textContent='+'+(Math.floor(Math.random()*10)+1);$('testAdminsGrowth').textContent='+'+(Math.floor(Math.random()*5)+1);$('testModsGrowth').textContent='+'+(Math.floor(Math.random()*5)+1);
+$('testTotalGrowth').textContent='+'+Math.floor((s.members||0)*0.05);$('testVerifiedGrowth').textContent='+'+Math.floor((s.verified||0)*0.03);$('testBotsGrowth').textContent='+'+Math.floor((s.bots||0)*0.08);$('testAdminsGrowth').textContent='+'+Math.floor((s.admins||0)*0.1);$('testModsGrowth').textContent='+'+Math.floor((s.mods||0)*0.12);
 const staff=$('testStaffPanel');if(staff.querySelector('p'))staff.innerHTML='';
 const staffList=[{name:'Admin1',role:'Admin'},{name:'Mod1',role:'Moderator'},{name:'Admin2',role:'Admin'}];
 staffList.forEach(m=>{
@@ -927,6 +962,7 @@ const ctx=$('testMembersChart');if(!ctx)return;if(chartInstance)chartInstance.de
 chartInstance=new Chart(ctx,{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Members',data:[220,235,248,260,255,270,280],borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,0.1)',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(255,255,255,0.5)'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'rgba(255,255,255,0.5)'},grid:{color:'rgba(255,255,255,0.05)'}}}}});
 }
 function initNetworkCanvas(){
+if(canvasAnimId){cancelAnimationFrame(canvasAnimId);canvasAnimId=null;}
 const canvas=$('network-canvas');if(!canvas)return;
 const ctx=canvas.getContext('2d');
 let w=canvas.width=canvas.offsetWidth;let h=canvas.height=canvas.offsetHeight;
@@ -944,38 +980,143 @@ function resetTestData(){
 if(!confirm('Reset all test data? This cannot be undone.'))return;
 servers=[{...defaultServer}];currentServer=defaultServer.id;saveServers();loadDashboard();showToast('Reset','Test data has been reset','success');
 }
-function saveSetting(key,value){showToast('Saved',key+' updated','success')}
+function saveSetting(key,value){
+const server=getCurrentServer();if(!server)return;
+const settings=JSON.parse(localStorage.getItem('sb_settings_'+server.id)||'{}');
+settings[key]=value;
+localStorage.setItem('sb_settings_'+server.id,JSON.stringify(settings));
+showToast('Saved',key+' updated','success');
+}
+function loadSettings(){
+const server=getCurrentServer();if(!server)return;
+const settings=JSON.parse(localStorage.getItem('sb_settings_'+server.id)||'{}');
+Object.keys(settings).forEach(key=>{
+const el=$('setting'+key.charAt(0).toUpperCase()+key.slice(1));
+if(!el)return;
+if(el.type==='checkbox')el.checked=settings[key];
+else if(el.tagName==='SELECT')el.value=settings[key];
+else el.value=settings[key];
+});
+}
 function addReactRole(){
 const msgId=$('reactMsgId').value;const emoji=$('reactEmoji').value;const role=$('reactRole').value;if(!emoji||!role){showToast('Error','Emoji and role required','error');return}
 const body=$('reactRolesBody');if(body.querySelector('p'))body.innerHTML='';
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
 div.innerHTML='<span>'+emoji+' '+role+'</span><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
-body.appendChild(div);$('reactMsgId').value='';$('reactEmoji').value='';$('reactRole').value='';showToast('Added','Reaction role added','success');
+body.appendChild(div);$('reactMsgId').value='';$('reactEmoji').value='';$('reactRole').value='';
+const server=getCurrentServer();if(server){
+const roles=JSON.parse(localStorage.getItem('sb_reactroles_'+server.id)||'[]');
+roles.push({msgId,emoji,role});localStorage.setItem('sb_reactroles_'+server.id,JSON.stringify(roles));
+}
+showToast('Added','Reaction role added','success');
+}
+function loadReactRoles(){
+const server=getCurrentServer();if(!server)return;
+const roles=JSON.parse(localStorage.getItem('sb_reactroles_'+server.id)||'[]');
+const body=$('reactRolesBody');if(body.querySelector('p'))body.innerHTML='';
+roles.forEach(r=>{
+const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+div.innerHTML='<span>'+r.emoji+' '+r.role+'</span><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
+body.appendChild(div);
+});
 }
 function addCommand(){
 const name=$('cmdName').value;const response=$('cmdResponse').value;if(!name||!response){showToast('Error','Name and response required','error');return}
 const body=$('commandsBody');if(body.querySelector('p'))body.innerHTML='';
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
 div.innerHTML='<div><strong>'+name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+response+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
-body.appendChild(div);$('cmdName').value='';$('cmdResponse').value='';showToast('Added','Command added','success');
+body.appendChild(div);$('cmdName').value='';$('cmdResponse').value='';
+const server=getCurrentServer();if(server){
+const cmds=JSON.parse(localStorage.getItem('sb_commands_'+server.id)||'[]');
+cmds.push({name,response});localStorage.setItem('sb_commands_'+server.id,JSON.stringify(cmds));
+}
+showToast('Added','Command added','success');
+}
+function loadCommands(){
+const server=getCurrentServer();if(!server)return;
+const cmds=JSON.parse(localStorage.getItem('sb_commands_'+server.id)||'[]');
+const body=$('commandsBody');if(body.querySelector('p'))body.innerHTML='';
+cmds.forEach(c=>{
+const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+div.innerHTML='<div><strong>'+c.name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+c.response+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
+body.appendChild(div);
+});
 }
 function createGiveaway(){
 const prize=$('giveawayPrize').value;const duration=$('giveawayDuration').value;if(!prize){showToast('Error','Enter a prize','error');return}
 const body=$('giveawaysBody');if(body.querySelector('p'))body.innerHTML='';
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-div.innerHTML='<div><strong>'+prize+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">Duration: '+duration+' min</p></div><button class="dash-btn danger">End</button>';
-body.appendChild(div);$('giveawayPrize').value='';showToast('Created','Giveaway started','success');
+div.innerHTML='<div><strong>'+prize+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">Duration: '+duration+' min</p></div><button class="dash-btn danger" onclick="endGiveaway(this)">End</button>';
+body.appendChild(div);$('giveawayPrize').value='';
+const server=getCurrentServer();if(server){
+const gws=JSON.parse(localStorage.getItem('sb_giveaways_'+server.id)||'[]');
+gws.push({prize,duration:parseInt(duration),active:true});localStorage.setItem('sb_giveaways_'+server.id,JSON.stringify(gws));
+}
+showToast('Created','Giveaway started','success');
+}
+function endGiveaway(btn){
+btn.disabled=true;btn.textContent='Ended';btn.style.opacity='0.5';
+const item=btn.closest('[style*="display:flex"]');if(item){item.style.opacity='0.5';}
+showToast('Ended','Giveaway has ended','success');
+}
+function loadGiveaways(){
+const server=getCurrentServer();if(!server)return;
+const gws=JSON.parse(localStorage.getItem('sb_giveaways_'+server.id)||'[]');
+const body=$('giveawaysBody');if(body.querySelector('p'))body.innerHTML='';
+gws.forEach(g=>{
+const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+div.innerHTML='<div><strong>'+g.prize+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">Duration: '+g.duration+' min</p></div><button class="dash-btn danger" '+(g.active?'onclick="endGiveaway(this)"':'disabled style="opacity:0.5"')+'>'+(g.active?'End':'Ended')+'</button>';
+body.appendChild(div);
+});
+}
+function saveServerMessage(type){
+const channel=type==='welcome'?$('settingWelcomeChannel'):$('settingGoodbyeChannel');
+const msg=type==='welcome'?$('settingWelcomeMsg'):$('settingGoodbyeMsg');
+if(!channel||!msg){showToast('Error','Please fill all fields','error');return}
+const key='sb_'+type+'_'+getCurrentServer().id;
+localStorage.setItem(key,JSON.stringify({channel:channel.value,message:msg.value}));
+showToast('Saved',type.charAt(0).toUpperCase()+type.slice(1)+' message saved','success');
+}
+function loadServerMessages(){
+const server=getCurrentServer();if(!server)return;
+['welcome','goodbye'].forEach(type=>{
+const key='sb_'+type+'_'+server.id;
+const data=localStorage.getItem(key);
+if(data){
+const parsed=JSON.parse(data);
+if(type==='welcome'){$('settingWelcomeChannel').value=parsed.channel||'';$('settingWelcomeMsg').value=parsed.message||'';}
+else{$('settingGoodbyeChannel').value=parsed.channel||'';$('settingGoodbyeMsg').value=parsed.message||'';}
+}
+});
 }
 function addSocialNotif(){
 const platform=$('socialPlatform').value;const user=$('socialUser').value;if(!user){showToast('Error','Enter username','error');return}
-showToast('Added','Notification added for '+platform,'success');$('socialUser').value='';
+const body=$('socialNotifsBody');if(body.querySelector('p'))body.innerHTML='';
+const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+item.innerHTML='<div><strong>'+platform+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">@'+user+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Remove</button>';
+body.appendChild(item);$('socialUser').value='';showToast('Added','Notification added for '+platform,'success');
 }
 function addRoleCategory(){
 const name=$('roleCatName').value.trim();if(!name){showToast('Error','Enter category name','error');return}
 const list=$('roleCategoriesList');if(list.querySelector('p'))list.innerHTML='';
 const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
 item.innerHTML='<div><strong>'+name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">0 roles</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Delete</button>';
-list.appendChild(item);$('roleCatName').value='';showToast('Added','Category created','success');
+list.appendChild(item);$('roleCatName').value='';
+const server=getCurrentServer();if(server){
+const cats=JSON.parse(localStorage.getItem('sb_categories_'+server.id)||'[]');
+cats.push({name,roles:0});localStorage.setItem('sb_categories_'+server.id,JSON.stringify(cats));
+}
+showToast('Added','Category created','success');
+}
+function loadRoleCategories(){
+const server=getCurrentServer();if(!server)return;
+const cats=JSON.parse(localStorage.getItem('sb_categories_'+server.id)||'[]');
+const list=$('roleCategoriesList');if(list.querySelector('p'))list.innerHTML='';
+cats.forEach(c=>{
+const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+item.innerHTML='<div><strong>'+c.name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+c.roles+' roles</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Delete</button>';
+list.appendChild(item);
+});
 }
 function showLogin(){
 if(servers.length>0 && currentServer){
