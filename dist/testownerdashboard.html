@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SPIDEY BOT - Test Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{--theme-color:145,70,255;--accent-cyan:#00d4ff;--accent-purple:#9146ff;--bg-primary:#0f1623;--bg-secondary:#1a1a2e;--sidebar-bg:#1A1A1A;--sidebar-border:rgba(255,255,255,0.08);--sidebar-text:rgba(255,255,255,0.85);--sidebar-muted:rgba(255,255,255,0.45);--sidebar-hover-bg:rgba(255,255,255,0.08);--sidebar-active-bg:rgba(145,70,255,0.15);--sidebar-accent:#9146ff;--card-bg:rgba(30,30,30,0.95);--card-border:rgba(255,255,255,0.08);--card-radius:12px;--text-color:rgba(255,255,255,0.9);--text-muted:rgba(255,255,255,0.5)}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -226,7 +226,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <button class="dash-server-btn" id="dashServerBtn" onclick="toggleDashServerDropdown()">
 <div class="dash-server-icon" id="dashServerIcon">?</div>
 <span id="dashServerName">Select Server</span>
-<span style="font-size:0.7rem;opacity:0.7;">▼</span>
+<span style="font-size:0.7rem;opacity:0.7;">â–¼</span>
 </button>
 <div class="dash-server-dropdown" id="dashServerDropdown">
 <div id="dashServerList"></div>
@@ -234,7 +234,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 </div>
 </div>
 <div class="dash-header-right">
-<button class="back-btn" onclick="goToServers()">← Back to Servers</button>
+<button class="back-btn" onclick="goToServers()">â† Back to Servers</button>
 <button class="dash-btn danger" onclick="resetTestData()" style="padding:0.4rem 0.8rem;font-size:0.85rem">Reset Test Data</button>
 <div class="dash-user" onclick="toggleDashProfileMenu()">
 <div class="dash-avatar" id="dashAvatar">S</div>
@@ -243,7 +243,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-user-role">Owner (Test)</div>
 </div>
 <div class="dash-profile-menu" id="dashProfileMenu">
-<div class="dash-profile-menu-item" onclick="goToServers()">🔄 Switch Server</div>
+<div class="dash-profile-menu-item" onclick="goToServers()">ðŸ”„ Switch Server</div>
 <div class="dash-profile-menu-item logout" onclick="logout()">Log Out</div>
 </div>
 </div>
@@ -257,23 +257,23 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-sidebar-section">
 <div class="dash-sidebar-section-title">MAIN</div>
 <div class="dash-sidebar-item active" data-section="dashboard" onclick="switchDashSection('dashboard')">
-<div class="dash-sidebar-item-icon">📊</div>
+<div class="dash-sidebar-item-icon">ðŸ“Š</div>
 <span>Dashboard</span>
 </div>
 </div>
 <div class="dash-sidebar-section">
 <div class="dash-sidebar-section-title">CORE</div>
 <div class="dash-sidebar-item" data-section="settings" onclick="switchDashSection('settings')">
-<div class="dash-sidebar-item-icon">⚙️</div>
+<div class="dash-sidebar-item-icon">âš™ï¸</div>
 <span>Settings</span>
 </div>
 <div class="dash-sidebar-item" data-section="logging" onclick="switchDashSection('logging')">
-<div class="dash-sidebar-item-icon">📝</div>
+<div class="dash-sidebar-item-icon">ðŸ“</div>
 <span>Logging</span>
 <span class="dash-sidebar-badge">Pro</span>
 </div>
 <div class="dash-sidebar-item" data-section="server-guard" onclick="switchDashSection('server-guard')">
-<div class="dash-sidebar-item-icon">🛡️</div>
+<div class="dash-sidebar-item-icon">ðŸ›¡ï¸</div>
 <span>Server Guard</span>
 <span class="dash-sidebar-badge">Premium</span>
 </div>
@@ -281,19 +281,19 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-sidebar-section">
 <div class="dash-sidebar-section-title">FEATURES</div>
 <div class="dash-sidebar-item" data-section="react-roles" onclick="switchDashSection('react-roles')">
-<div class="dash-sidebar-item-icon">🎭</div>
+<div class="dash-sidebar-item-icon">ðŸŽ­</div>
 <span>React Roles</span>
 </div>
 <div class="dash-sidebar-item" data-section="role-categories" onclick="switchDashSection('role-categories')">
-<div class="dash-sidebar-item-icon">📁</div>
+<div class="dash-sidebar-item-icon">ðŸ“</div>
 <span>Role Categories</span>
 </div>
 <div class="dash-sidebar-item" data-section="server-messages" onclick="switchDashSection('server-messages')">
-<div class="dash-sidebar-item-icon">💬</div>
+<div class="dash-sidebar-item-icon">ðŸ’¬</div>
 <span>Server Messages</span>
 </div>
 <div class="dash-sidebar-item" data-section="custom-commands" onclick="switchDashSection('custom-commands')">
-<div class="dash-sidebar-item-icon">⌨️</div>
+<div class="dash-sidebar-item-icon">âŒ¨ï¸</div>
 <span>Commands</span>
 <span class="dash-sidebar-badge">Premium</span>
 </div>
@@ -301,42 +301,42 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-sidebar-section">
 <div class="dash-sidebar-section-title">SYSTEMS</div>
 <div class="dash-sidebar-item" data-section="xp-levels" onclick="switchDashSection('xp-levels')">
-<div class="dash-sidebar-item-icon">⭐</div>
+<div class="dash-sidebar-item-icon">â­</div>
 <span>XP Levels</span>
 <span class="dash-sidebar-badge">Premium</span>
 </div>
 <div class="dash-sidebar-item" data-section="leaderboards" onclick="switchDashSection('leaderboards')">
-<div class="dash-sidebar-item-icon">🏆</div>
+<div class="dash-sidebar-item-icon">ðŸ†</div>
 <span>Leaderboards</span>
 <span class="dash-sidebar-badge">Premium</span>
 </div>
 <div class="dash-sidebar-item" data-section="giveaways" onclick="switchDashSection('giveaways')">
-<div class="dash-sidebar-item-icon">🎉</div>
+<div class="dash-sidebar-item-icon">ðŸŽ‰</div>
 <span>Giveaways</span>
 </div>
 <div class="dash-sidebar-item" data-section="tickets" onclick="switchDashSection('tickets')">
-<div class="dash-sidebar-item-icon">🎫</div>
+<div class="dash-sidebar-item-icon">ðŸŽ«</div>
 <span>Tickets</span>
 </div>
 </div>
 <div class="dash-sidebar-section">
 <div class="dash-sidebar-section-title">MONITORING</div>
 <div class="dash-sidebar-item" data-section="events" onclick="switchDashSection('events')">
-<div class="dash-sidebar-item-icon">👤</div>
+<div class="dash-sidebar-item-icon">ðŸ‘¤</div>
 <span>Member Activity</span>
 </div>
 <div class="dash-sidebar-item" data-section="social-notifs" onclick="switchDashSection('social-notifs')">
-<div class="dash-sidebar-item-icon">🔔</div>
+<div class="dash-sidebar-item-icon">ðŸ””</div>
 <span>Social Notifs</span>
 <span class="dash-sidebar-badge">Premium</span>
 </div>
 <div class="dash-sidebar-item" data-section="invite-tracking" onclick="switchDashSection('invite-tracking')">
-<div class="dash-sidebar-item-icon">📨</div>
+<div class="dash-sidebar-item-icon">ðŸ“¨</div>
 <span>Invites</span>
 <span class="dash-sidebar-badge">Pro</span>
 </div>
 <div class="dash-sidebar-item" data-section="message-counting" onclick="switchDashSection('message-counting')">
-<div class="dash-sidebar-item-icon">💬</div>
+<div class="dash-sidebar-item-icon">ðŸ’¬</div>
 <span>Messages</span>
 </div>
 </div>
@@ -498,7 +498,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 </div>
 <div class="dash-form-group">
 <label class="dash-form-label">Emoji</label>
-<input type="text" class="dash-form-input" id="reactEmoji" placeholder="👍" />
+<input type="text" class="dash-form-input" id="reactEmoji" placeholder="ðŸ‘" />
 </div>
 <div class="dash-form-group">
 <label class="dash-form-label">Role</label>
@@ -838,7 +838,7 @@ const defaultServer = {name:'Spidey Test Server',id:'123456789',members:284,veri
 function saveServers(){localStorage.setItem('sb_servers',JSON.stringify(servers));localStorage.setItem('sb_current',currentServer)}
 function $(id){return document.getElementById(id)}
 function showToast(title,msg,type='info'){
-const c=$('toastContainer');const t=document.createElement('div');t.className='toast toast-'+type;const icons={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};t.innerHTML='<div class=toast-icon>'+(icons[type]||'ℹ️')+'</div><div class=toast-body><div class=toast-title>'+title+'</div><div class=toast-msg>'+msg+'</div></div>';c.prepend(t);setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),300)},4000);
+const c=$('toastContainer');const t=document.createElement('div');t.className='toast toast-'+type;const icons={success:'âœ…',error:'âŒ',warning:'âš ï¸',info:'â„¹ï¸'};t.innerHTML='<div class=toast-icon>'+(icons[type]||'â„¹ï¸')+'</div><div class=toast-body><div class=toast-title>'+title+'</div><div class=toast-msg>'+msg+'</div></div>';c.prepend(t);setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),300)},4000);
 }
 function fakeLogin(){
 $('loginOverlay').classList.add('hidden');
@@ -861,7 +861,7 @@ renderServers();
 function renderServers(){
 const g=$('serverGrid');g.innerHTML='';
 servers.forEach(s=>{
-const card=document.createElement('div');card.className='ss-card';card.innerHTML='<div class=ss-card-icon>'+(s.name[0]||'?').toUpperCase()+'</div><div class=ss-card-info><div class=ss-card-name>'+s.name+'</div><div class=ss-card-meta>'+(s.members||0)+' members · ID: '+s.id+'</div></div><button class=ss-go-btn onclick="event.stopPropagation();selectServer('''+s.id+''')">Go →</button>';
+const card=document.createElement('div');card.className='ss-card';card.innerHTML='<div class=ss-card-icon>'+(s.name[0]||'?').toUpperCase()+'</div><div class=ss-card-info><div class=ss-card-name>'+s.name+'</div><div class=ss-card-meta>'+(s.members||0)+' members Â· ID: '+s.id+'</div></div><button class=ss-go-btn onclick="event.stopPropagation();selectServer(\''+s.id+'\')">Go â†’</button>';
 card.onclick=()=>selectServer(s.id);g.appendChild(card);
 });
 const add=document.createElement('div');add.className='ss-card ss-add-card';add.onclick=openAddServerModal;add.innerHTML='<div class=plus>+</div><span>Add Server</span>';g.appendChild(add);
@@ -991,5 +991,7 @@ if(!e.target.closest('.dash-server-btn')&&!e.target.closest('.dash-server-dropdo
 if(!e.target.closest('.dash-user')&&!e.target.closest('.dash-profile-menu'))$('dashProfileMenu').classList.remove('active');
 });
 window.addEventListener('resize',()=>{if(canvasAnimId){const c=$('network-canvas');if(c){c.width=c.offsetWidth;c.height=c.offsetHeight}}});
-</script></body>
+</script><div id="toastContainer"></div>
+</body>
 </html>
+
