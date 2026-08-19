@@ -52,17 +52,49 @@ const {
 // ============== SINGLE INSTANCE LOCK (prevents duplicate welcome/join handlers) ==============
 const INSTANCE_LOCK_FILE = path.join(__dirname, ".bot.instance.lock");
 
+function isSpideyBotProcess(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    const cmdline = fs.readFileSync(path.join('/proc', String(pid), 'cmdline'), 'utf8');
+    const cmd = cmdline.replace(/\0/g, ' ').trim();
+    return cmd.includes('node') && (cmd.includes('index.cjs') || cmd.includes('index.js'));
+  } catch (e) {
+    return false;
+  }
+}
+
+function isProcessRunning(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 function acquireSingleInstanceLock() {
   if (fs.existsSync(INSTANCE_LOCK_FILE)) {
     try {
       const existingPid = parseInt(fs.readFileSync(INSTANCE_LOCK_FILE, "utf8"), 10);
       if (existingPid && !Number.isNaN(existingPid)) {
-        try {
-          process.kill(existingPid, 0);
-          console.error(`❌ Another Spidey Bot instance is already running (PID ${existingPid}). Exiting to prevent duplicate welcome messages.`);
-          process.exit(1);
-        } catch (e) {
-          // Stale lock file — process is not running
+        const isLinux = fs.existsSync('/proc');
+        if (isLinux) {
+          if (isSpideyBotProcess(existingPid)) {
+            console.error(`❌ Another Spidey Bot instance is already running (PID ${existingPid}). Exiting to prevent duplicate welcome messages.`);
+            process.exit(1);
+          } else {
+            console.warn(`⚠️ Stale lock file found (PID ${existingPid} is not a Spidey Bot process). Removing stale lock.`);
+            try { fs.unlinkSync(INSTANCE_LOCK_FILE); } catch (e) { /* ignore */ }
+          }
+        } else {
+          if (isProcessRunning(existingPid)) {
+            console.error(`❌ Another Spidey Bot instance is already running (PID ${existingPid}). Exiting to prevent duplicate welcome messages.`);
+            process.exit(1);
+          } else {
+            console.warn(`⚠️ Stale lock file found (PID ${existingPid} is not running). Removing stale lock.`);
+            try { fs.unlinkSync(INSTANCE_LOCK_FILE); } catch (e) { /* ignore */ }
+          }
         }
       }
     } catch (e) {
