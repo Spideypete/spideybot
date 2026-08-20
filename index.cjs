@@ -49,6 +49,26 @@ const {
   BackupSystem
 } = require("./security");
 
+// ============== MODULAR FEATURE IMPORTS ==============
+const { ConfigManager } = require("./src/config/config-manager.cjs");
+const { createFeaturesRouter } = require("./src/routes/features.cjs");
+
+// Feature services and handlers
+const { ServerMessagesService } = require("./src/features/server-messages/server-messages.service.cjs");
+const { initializeServerMessages } = require("./src/features/server-messages/server-messages.handler.cjs");
+
+// Initialize config manager
+const configManager = new ConfigManager();
+
+
+// ============== MODULAR FEATURE IMPORTS ==============
+const { ConfigManager } = require("./src/config/config-manager.cjs");
+const { createFeaturesRouter } = require("./src/routes/features.cjs");
+
+// Feature services and handlers
+const { ServerMessagesService } = require("./src/features/server-messages/server-messages.service.cjs");
+const { initializeServerMessages } = require("./src/features/server-messages/server-messages.handler.cjs");
+
 // ============== SINGLE INSTANCE LOCK (prevents duplicate welcome/join handlers) ==============
 const INSTANCE_LOCK_FILE = path.join(__dirname, ".bot.instance.lock");
 
@@ -880,9 +900,6 @@ client.once("ready", async () => {
     }
   }
   console.log('📊 Member pre-fetch complete');
-
-  // Auto-deploy to Render is disabled - moved to DigitalOcean
-  console.log('ℹ️ Auto-deploy disabled - using DigitalOcean');
 });
 
 // Reusable function to register slash commands
@@ -9524,6 +9541,10 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ============== MODULAR FEATURE ROUTES ==============
+const featuresRouter = createFeaturesRouter(client, configManager);
+app.use('/api/features', featuresRouter);
 
 const PORT = process.env.PORT || 5000;
 

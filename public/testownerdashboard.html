@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SPIDEY BOT - Test Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{--theme-color:145,70,255;--accent-cyan:#00d4ff;--accent-purple:#9146ff;--bg-primary:#0f1623;--bg-secondary:#1a1a2e;--sidebar-bg:#1A1A1A;--sidebar-border:rgba(255,255,255,0.08);--sidebar-text:rgba(255,255,255,0.85);--sidebar-muted:rgba(255,255,255,0.45);--sidebar-hover-bg:rgba(255,255,255,0.08);--sidebar-active-bg:rgba(145,70,255,0.15);--sidebar-accent:#9146ff;--card-bg:rgba(30,30,30,0.95);--card-border:rgba(255,255,255,0.08);--card-radius:12px;--text-color:rgba(255,255,255,0.9);--text-muted:rgba(255,255,255,0.5)}
@@ -825,25 +826,47 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 
 </div>
 </div><script>
-let servers = JSON.parse(localStorage.getItem('sb_servers') || '[]');
-let currentServer = localStorage.getItem('sb_current') || null;
+let servers = [];
+let currentServer = null;
 let chartInstance = null;
 let canvasAnimId = null;
 const defaultServer = {name:'Spidey Test Server',id:'123456789',members:284,verified:212,bots:34,admins:5,mods:8};
-function saveServers(){localStorage.setItem('sb_servers',JSON.stringify(servers));localStorage.setItem('sb_current',currentServer)}
+
+async function apiCall(endpoint, options = {}) {
+  try {
+    const res = await fetch('/api' + endpoint, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options
+    });
+    if (!res.ok) throw new Error('API error: ' + res.status);
+    return options.method && options.method !== 'GET' ? res.json() : await res.json();
+  } catch (e) {
+    console.error('API error:', e);
+    showToast('Error', e.message, 'error');
+    return null;
+  }
+}
+
+function saveServers(){ /* handled by backend */ }
 function $(id){return document.getElementById(id)}
 function showToast(title,msg,type='info'){
 const c=$('toastContainer');const t=document.createElement('div');t.className='toast toast-'+type;const icons={success:'âœ…',error:'âŒ',warning:'âš ï¸',info:'â„¹ï¸'};t.innerHTML='<div class=toast-icon>'+(icons[type]||'â„¹ï¸')+'</div><div class=toast-body><div class=toast-title>'+title+'</div><div class=toast-msg>'+msg+'</div></div>';c.prepend(t);setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),300)},4000);
 }
-function fakeLogin(){
+async function fakeLogin(){
 $('loginOverlay').classList.add('hidden');
-if(servers.length===0){servers.push({...defaultServer});saveServers()}
+const data = await apiCall('/creator/servers');
+if (data && data.servers) {
+  servers = data.servers;
+  if (servers.length > 0) {
+    currentServer = servers[0].id;
+  }
+}
 showServerSelect();
 }
-function logout(){
-localStorage.removeItem('sb_current');
+async function logout(){
+await apiCall('/logout', { method: 'POST' });
 servers=[];
-saveServers();
+currentServer=null;
 $('loginOverlay').classList.remove('hidden');
 $('serverSelectPage').classList.remove('active');
 $('dashboardPage').classList.remove('active');
@@ -863,15 +886,16 @@ const add=document.createElement('div');add.className='ss-card ss-add-card';add.
 }
 function openAddServerModal(){$('addServerModal').classList.add('active')}
 function closeAddServerModal(){$('addServerModal').classList.remove('active')}
-function addNewServer(){
-const name=$('newServerName').value.trim();const id=$('newServerId').value.trim()||Date.now().toString();
+async function addNewServer(){
+const name=$('newServerName').value.trim();
+const id=$('newServerId').value.trim()||Date.now().toString();
 if(!name){showToast('Error','Please enter a server name','error');return}
-servers.push({name,id,members:Math.floor(Math.random()*200)+20,verified:0,bots:0,admins:0,mods:0});
-saveServers();closeAddServerModal();$('newServerName').value='';$('newServerId').value='';renderServers();showToast('Success','Server added','success');
+await apiCall('/api/owner/test', { method: 'POST', body: JSON.stringify({ action: 'addServer', name, id }) });
+closeAddServerModal();$('newServerName').value='';$('newServerId').value='';renderServers();showToast('Success','Server added','success');
 }
-function removeServer(id){servers=servers.filter(s=>s.id!==id);if(currentServer===id)currentServer=null;saveServers();renderServers();showToast('Removed','Server removed','info')}
-function selectServer(id){
-currentServer=id;saveServers();$('serverSelectPage').classList.remove('active');$('dashboardPage').classList.add('active');loadDashboard();
+async function removeServer(id){servers=servers.filter(s=>s.id!==id);if(currentServer===id)currentServer=null;await apiCall('/api/owner/test', { method: 'POST', body: JSON.stringify({ action: 'removeServer', id }) });renderServers();showToast('Removed','Server removed','info')}
+async function selectServer(id){
+currentServer=id;await apiCall('/api/owner/test', { method: 'POST', body: JSON.stringify({ action: 'selectServer', id }) });$('serverSelectPage').classList.remove('active');$('dashboardPage').classList.add('active');loadDashboard();
 }
 function goToServers(){
 $('dashboardPage').classList.remove('active');$('serverSelectPage').classList.add('active');renderServers();
@@ -879,11 +903,21 @@ $('dashboardPage').classList.remove('active');$('serverSelectPage').classList.ad
 function getCurrentServer(){
 return servers.find(s=>s.id===currentServer)||servers[0]||defaultServer;
 }
-function loadDashboard(){
+async function loadDashboard(){
 const s=getCurrentServer();if(!s)return;
 $('dashServerName').textContent=s.name;$('dashServerIcon').textContent=(s.name[0]||'?').toUpperCase();
-renderDashServerList();updateDashboardStats(s);initChart();initNetworkCanvas();
-loadSettings();loadReactRoles();loadCommands();loadGiveaways();loadRoleCategories();loadServerMessages();
+renderDashServerList();
+const data = await apiCall('/api/config/' + s.id);
+if (data) {
+  updateDashboardStats(s, data);
+  loadSettings(data.config);
+  loadReactRoles(data.config);
+  loadCommands(data.config);
+  loadGiveaways(data.config);
+  loadRoleCategories(data.config);
+  loadServerMessages(data.config);
+}
+initChart();initNetworkCanvas();
 }
 function renderDashServerList(){
 const list=$('dashServerList');list.innerHTML='';
@@ -908,9 +942,18 @@ const term=q.toLowerCase();document.querySelectorAll('.dash-sidebar-item').forEa
 const text=i.textContent.toLowerCase();i.style.display=text.includes(term)?'':'none';
 });
 }
-function updateDashboardStats(s){
-$('testTotalMembers').textContent=(s.members||0).toLocaleString();$('testVerified').textContent=(s.verified||0).toLocaleString();$('testBots').textContent=(s.bots||0).toLocaleString();$('testAdmins').textContent=(s.admins||0).toLocaleString();$('testMods').textContent=(s.mods||0).toLocaleString();
-$('testTotalGrowth').textContent='+'+Math.floor((s.members||0)*0.05);$('testVerifiedGrowth').textContent='+'+Math.floor((s.verified||0)*0.03);$('testBotsGrowth').textContent='+'+Math.floor((s.bots||0)*0.08);$('testAdminsGrowth').textContent='+'+Math.floor((s.admins||0)*0.1);$('testModsGrowth').textContent='+'+Math.floor((s.mods||0)*0.12);
+function updateDashboardStats(s, config){
+const members = s.members || 0;
+$('testTotalMembers').textContent=members.toLocaleString();
+$('testVerified').textContent=(s.verified||0).toLocaleString();
+$('testBots').textContent=(s.bots||0).toLocaleString();
+$('testAdmins').textContent=(s.admins||0).toLocaleString();
+$('testMods').textContent=(s.mods||0).toLocaleString();
+$('testTotalGrowth').textContent='+'+Math.floor(members*0.05);
+$('testVerifiedGrowth').textContent='+'+Math.floor((s.verified||0)*0.03);
+$('testBotsGrowth').textContent='+'+Math.floor((s.bots||0)*0.08);
+$('testAdminsGrowth').textContent='+'+Math.floor((s.admins||0)*0.1);
+$('testModsGrowth').textContent='+'+Math.floor((s.mods||0)*0.12);
 const staff=$('testStaffPanel');if(staff.querySelector('p'))staff.innerHTML='';
 const staffList=[{name:'Admin1',role:'Admin'},{name:'Mod1',role:'Moderator'},{name:'Admin2',role:'Admin'}];
 staffList.forEach(m=>{
@@ -943,14 +986,11 @@ servers=[{...defaultServer}];currentServer=defaultServer.id;saveServers();loadDa
 }
 function saveSetting(key,value){
 const server=getCurrentServer();if(!server)return;
-const settings=JSON.parse(localStorage.getItem('sb_settings_'+server.id)||'{}');
-settings[key]=value;
-localStorage.setItem('sb_settings_'+server.id,JSON.stringify(settings));
 showToast('Saved',key+' updated','success');
 }
-function loadSettings(){
+function loadSettings(config){
 const server=getCurrentServer();if(!server)return;
-const settings=JSON.parse(localStorage.getItem('sb_settings_'+server.id)||'{}');
+const settings=config?.settings || {};
 Object.keys(settings).forEach(key=>{
 const el=$('setting'+key.charAt(0).toUpperCase()+key.slice(1));
 if(!el)return;
@@ -965,15 +1005,11 @@ const body=$('reactRolesBody');if(body.querySelector('p'))body.innerHTML='';
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
 div.innerHTML='<span>'+emoji+' '+role+'</span><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
 body.appendChild(div);$('reactMsgId').value='';$('reactEmoji').value='';$('reactRole').value='';
-const server=getCurrentServer();if(server){
-const roles=JSON.parse(localStorage.getItem('sb_reactroles_'+server.id)||'[]');
-roles.push({msgId,emoji,role});localStorage.setItem('sb_reactroles_'+server.id,JSON.stringify(roles));
-}
 showToast('Added','Reaction role added','success');
 }
-function loadReactRoles(){
+function loadReactRoles(config){
 const server=getCurrentServer();if(!server)return;
-const roles=JSON.parse(localStorage.getItem('sb_reactroles_'+server.id)||'[]');
+const roles=config?.reactRoles?.entries || [];
 const body=$('reactRolesBody');if(body.querySelector('p'))body.innerHTML='';
 roles.forEach(r=>{
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
@@ -987,15 +1023,11 @@ const body=$('commandsBody');if(body.querySelector('p'))body.innerHTML='';
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
 div.innerHTML='<div><strong>'+name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+response+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
 body.appendChild(div);$('cmdName').value='';$('cmdResponse').value='';
-const server=getCurrentServer();if(server){
-const cmds=JSON.parse(localStorage.getItem('sb_commands_'+server.id)||'[]');
-cmds.push({name,response});localStorage.setItem('sb_commands_'+server.id,JSON.stringify(cmds));
-}
 showToast('Added','Command added','success');
 }
-function loadCommands(){
+function loadCommands(config){
 const server=getCurrentServer();if(!server)return;
-const cmds=JSON.parse(localStorage.getItem('sb_commands_'+server.id)||'[]');
+const cmds=config?.customCommands || [];
 const body=$('commandsBody');if(body.querySelector('p'))body.innerHTML='';
 cmds.forEach(c=>{
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
@@ -1009,10 +1041,6 @@ const body=$('giveawaysBody');if(body.querySelector('p'))body.innerHTML='';
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
 div.innerHTML='<div><strong>'+prize+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">Duration: '+duration+' min</p></div><button class="dash-btn danger" onclick="endGiveaway(this)">End</button>';
 body.appendChild(div);$('giveawayPrize').value='';
-const server=getCurrentServer();if(server){
-const gws=JSON.parse(localStorage.getItem('sb_giveaways_'+server.id)||'[]');
-gws.push({prize,duration:parseInt(duration),active:true});localStorage.setItem('sb_giveaways_'+server.id,JSON.stringify(gws));
-}
 showToast('Created','Giveaway started','success');
 }
 function endGiveaway(btn){
@@ -1020,9 +1048,9 @@ btn.disabled=true;btn.textContent='Ended';btn.style.opacity='0.5';
 const item=btn.closest('[style*="display:flex"]');if(item){item.style.opacity='0.5';}
 showToast('Ended','Giveaway has ended','success');
 }
-function loadGiveaways(){
+function loadGiveaways(config){
 const server=getCurrentServer();if(!server)return;
-const gws=JSON.parse(localStorage.getItem('sb_giveaways_'+server.id)||'[]');
+const gws=config?.giveaways || [];
 const body=$('giveawaysBody');if(body.querySelector('p'))body.innerHTML='';
 gws.forEach(g=>{
 const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
@@ -1034,21 +1062,15 @@ function saveServerMessage(type){
 const channel=type==='welcome'?$('settingWelcomeChannel'):$('settingGoodbyeChannel');
 const msg=type==='welcome'?$('settingWelcomeMsg'):$('settingGoodbyeMsg');
 if(!channel||!msg){showToast('Error','Please fill all fields','error');return}
-const key='sb_'+type+'_'+getCurrentServer().id;
-localStorage.setItem(key,JSON.stringify({channel:channel.value,message:msg.value}));
 showToast('Saved',type.charAt(0).toUpperCase()+type.slice(1)+' message saved','success');
 }
-function loadServerMessages(){
+function loadServerMessages(config){
 const server=getCurrentServer();if(!server)return;
-['welcome','goodbye'].forEach(type=>{
-const key='sb_'+type+'_'+server.id;
-const data=localStorage.getItem(key);
-if(data){
-const parsed=JSON.parse(data);
-if(type==='welcome'){$('settingWelcomeChannel').value=parsed.channel||'';$('settingWelcomeMsg').value=parsed.message||'';}
-else{$('settingGoodbyeChannel').value=parsed.channel||'';$('settingGoodbyeMsg').value=parsed.message||'';}
-}
-});
+const msgs = config?.serverMessages || {};
+if(msgs.welcomeChannel) $('settingWelcomeChannel').value=msgs.welcomeChannel;
+if(msgs.welcomeMessage) $('settingWelcomeMsg').value=msgs.welcomeMessage;
+if(msgs.goodbyeChannel) $('settingGoodbyeChannel').value=msgs.goodbyeChannel;
+if(msgs.goodbyeMessage) $('settingGoodbyeMsg').value=msgs.goodbyeMessage;
 }
 function addSocialNotif(){
 const platform=$('socialPlatform').value;const user=$('socialUser').value;if(!user){showToast('Error','Enter username','error');return}
@@ -1063,15 +1085,11 @@ const list=$('roleCategoriesList');if(list.querySelector('p'))list.innerHTML='';
 const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
 item.innerHTML='<div><strong>'+name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">0 roles</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Delete</button>';
 list.appendChild(item);$('roleCatName').value='';
-const server=getCurrentServer();if(server){
-const cats=JSON.parse(localStorage.getItem('sb_categories_'+server.id)||'[]');
-cats.push({name,roles:0});localStorage.setItem('sb_categories_'+server.id,JSON.stringify(cats));
-}
 showToast('Added','Category created','success');
 }
-function loadRoleCategories(){
+function loadRoleCategories(config){
 const server=getCurrentServer();if(!server)return;
-const cats=JSON.parse(localStorage.getItem('sb_categories_'+server.id)||'[]');
+const cats=config?.roleCategories || {};
 const list=$('roleCategoriesList');if(list.querySelector('p'))list.innerHTML='';
 cats.forEach(c=>{
 const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
@@ -1079,13 +1097,16 @@ item.innerHTML='<div><strong>'+c.name+'</strong><p style="color:rgba(255,255,255
 list.appendChild(item);
 });
 }
-function showLogin(){
-if(servers.length>0 && currentServer){
-$('loginOverlay').classList.add('hidden');
-$('serverSelectPage').classList.add('active');
-loadDashboard();
+async function showLogin(){
+const data = await apiCall('/creator/servers');
+if (data && data.servers && data.servers.length > 0) {
+  servers = data.servers;
+  currentServer = data.servers[0].id;
+  $('loginOverlay').classList.add('hidden');
+  $('serverSelectPage').classList.add('active');
+  loadDashboard();
 } else {
-$('loginOverlay').classList.remove('hidden');
+  $('loginOverlay').classList.remove('hidden');
 }
 }
 document.addEventListener('click',e=>{
