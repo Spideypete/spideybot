@@ -95,12 +95,39 @@ function readLock() {
 
 function isSpideyBotProcess(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
+  const procPath = path.join('/proc', String(pid));
+
   try {
-    const cmdlinePath = path.join('/proc', String(pid), 'cmdline');
+    const stat = fs.readFileSync(path.join(procPath, 'stat'), 'utf8');
+    if (stat.includes(' (defunct)')) return false;
+  } catch (e) {
+    return false;
+  }
+
+  try {
+    const cmdlinePath = path.join(procPath, 'cmdline');
     if (!fs.existsSync(cmdlinePath)) return false;
     const cmdline = fs.readFileSync(cmdlinePath, 'utf8');
     const cmd = cmdline.replace(/\0/g, ' ').trim();
-    return cmd.includes('node') && (cmd.includes('index.cjs') || cmd.includes('index.js'));
+
+    if (!cmd.includes('node')) return false;
+
+    const ourEntry = path.resolve(__dirname, 'index.cjs');
+    const ourEntryAlt = path.resolve(__dirname, 'index.js');
+    const ourCwd = process.cwd();
+
+    if (cmd.includes(ourEntry) || cmd.includes(ourEntryAlt)) return true;
+
+    if ((cmd.includes('index.cjs') || cmd.includes('index.js'))) {
+      try {
+        const cwd = fs.readlinkSync(path.join(procPath, 'cwd'));
+        return cwd === ourCwd;
+      } catch (e) {
+        return cmd.includes('index.cjs') && !cmd.includes('node_modules');
+      }
+    }
+
+    return false;
   } catch (e) {
     return false;
   }
@@ -129,6 +156,11 @@ function validateLock(lock) {
 }
 
 function acquireSingleInstanceLock() {
+  const oldLockFile = path.join(__dirname, '.instance.lock');
+  if (fs.existsSync(oldLockFile)) {
+    try { fs.unlinkSync(oldLockFile); } catch (e) { /* ignore */ }
+  }
+
   const existingLock = readLock();
   if (existingLock && validateLock(existingLock)) {
     console.error(`❌ Another Spidey Bot instance is already running (PID ${existingLock.pid}). Exiting to prevent duplicate welcome messages.`);
