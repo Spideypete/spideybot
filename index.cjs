@@ -72,10 +72,33 @@ const configManager = new ConfigManager();
 // ============== SINGLE INSTANCE LOCK (prevents duplicate welcome/join handlers) ==============
 const INSTANCE_LOCK_FILE = path.join(__dirname, ".bot.instance.lock");
 
+function createLockData() {
+  return {
+    pid: process.pid,
+    app: "spideybot",
+    entry: path.basename(process.argv[1] || "index.cjs"),
+    startedAt: new Date().toISOString()
+  };
+}
+
+function readLock() {
+  try {
+    const raw = fs.readFileSync(INSTANCE_LOCK_FILE, "utf8").trim();
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== "object") return null;
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
 function isSpideyBotProcess(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
-    const cmdline = fs.readFileSync(path.join('/proc', String(pid), 'cmdline'), 'utf8');
+    const cmdlinePath = path.join('/proc', String(pid), 'cmdline');
+    if (!fs.existsSync(cmdlinePath)) return false;
+    const cmdline = fs.readFileSync(cmdlinePath, 'utf8');
     const cmd = cmdline.replace(/\0/g, ' ').trim();
     return cmd.includes('node') && (cmd.includes('index.cjs') || cmd.includes('index.js'));
   } catch (e) {
@@ -83,7 +106,7 @@ function isSpideyBotProcess(pid) {
   }
 }
 
-function isProcessRunning(pid) {
+function isProcessAlive(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
     process.kill(pid, 0);
@@ -93,41 +116,84 @@ function isProcessRunning(pid) {
   }
 }
 
+function validateLock(lock) {
+  if (!lock || typeof lock !== "object") return false;
+  if (lock.app !== "spideybot") return false;
+  if (!Number.isInteger(lock.pid) || lock.pid <= 0) return false;
+  if (!lock.entry || !lock.startedAt) return false;
+
+  if (!isProcessAlive(lock.pid)) return false;
+  if (!isSpideyBotProcess(lock.pid)) return false;
+
+  return true;
+}
+
 function acquireSingleInstanceLock() {
+  const existingLock = readLock();
+  if (existingLock && validateLock(existingLock)) {
+    console.error(`❌ Another Spidey Bot instance is already running (PID ${existingLock.pid}). Exiting to prevent duplicate welcome messages.`);
+    process.exit(1);
+  }
+
+  if (existingLock) {
+    console.warn(`⚠️ Stale or invalid lock file found (PID ${existingLock.pid} is not a valid Spidey Bot process). Removing stale lock.`);
+  }
+
   if (fs.existsSync(INSTANCE_LOCK_FILE)) {
-    try {
-      const existingPid = parseInt(fs.readFileSync(INSTANCE_LOCK_FILE, "utf8"), 10);
-      if (existingPid && !Number.isNaN(existingPid)) {
-        const isLinux = fs.existsSync('/proc');
-        if (isLinux) {
-          if (isSpideyBotProcess(existingPid)) {
-            console.error(`❌ Another Spidey Bot instance is already running (PID ${existingPid}). Exiting to prevent duplicate welcome messages.`);
-            process.exit(1);
-          } else {
-            console.warn(`⚠️ Stale lock file found (PID ${existingPid} is not a Spidey Bot process). Removing stale lock.`);
-            try { fs.unlinkSync(INSTANCE_LOCK_FILE); } catch (e) { /* ignore */ }
-          }
-        } else {
-          if (isProcessRunning(existingPid)) {
-            console.error(`❌ Another Spidey Bot instance is already running (PID ${existingPid}). Exiting to prevent duplicate welcome messages.`);
-            process.exit(1);
-          } else {
-            console.warn(`⚠️ Stale lock file found (PID ${existingPid} is not running). Removing stale lock.`);
-            try { fs.unlinkSync(INSTANCE_LOCK_FILE); } catch (e) { /* ignore */ }
-          }
+    try { fs.unlinkSync(INSTANCE_LOCK_FILE); } catch (e) { /* ignore */ }
+  }
+
+  const lockData = createLockData();
+  let lockCreated = false;
+
+  try {
+    const fd = fs.openSync(INSTANCE_LOCK_FILE, 'wx');
+    fs.writeFileSync(fd, JSON.stringify(lockData, null, 2));
+    fs.closeSync(fd);
+    lockCreated = true;
+  } catch (e) {
+    if (e.code === 'EEXIST') {
+      lockCreated = false;
+    } else if (e.code === 'ENOSYS' || e.code === 'EINVAL') {
+      lockCreated = !fs.existsSync(INSTANCE_LOCK_FILE);
+      if (lockCreated) {
+        try {
+          fs.writeFileSync(INSTANCE_LOCK_FILE, JSON.stringify(lockData, null, 2));
+        } catch (e2) {
+          console.error("❌ Could not acquire instance lock:", e2.message);
+          process.exit(1);
         }
       }
-    } catch (e) {
-      console.warn("⚠️ Could not read instance lock file:", e.message);
+    } else {
+      console.error("❌ Could not acquire instance lock:", e.message);
+      process.exit(1);
     }
   }
 
-  fs.writeFileSync(INSTANCE_LOCK_FILE, String(process.pid));
+  if (!lockCreated) {
+    const newLock = readLock();
+    if (newLock && validateLock(newLock)) {
+      console.error(`❌ Another Spidey Bot instance is already running (PID ${newLock.pid}). Exiting to prevent duplicate welcome messages.`);
+      process.exit(1);
+    }
+    console.warn(`⚠️ Stale or invalid lock file found. Removing stale lock.`);
+    try { fs.unlinkSync(INSTANCE_LOCK_FILE); } catch (e) { /* ignore */ }
+    try {
+      const fd = fs.openSync(INSTANCE_LOCK_FILE, 'wx');
+      fs.writeFileSync(fd, JSON.stringify(lockData, null, 2));
+      fs.closeSync(fd);
+      lockCreated = true;
+    } catch (e) {
+      console.error("❌ Could not acquire instance lock:", e.message);
+      process.exit(1);
+    }
+  }
+
   const releaseLock = () => {
     try {
-      if (fs.existsSync(INSTANCE_LOCK_FILE)) {
-        const lockPid = parseInt(fs.readFileSync(INSTANCE_LOCK_FILE, "utf8"), 10);
-        if (lockPid === process.pid) fs.unlinkSync(INSTANCE_LOCK_FILE);
+      const currentLock = readLock();
+      if (currentLock && currentLock.pid === process.pid) {
+        fs.unlinkSync(INSTANCE_LOCK_FILE);
       }
     } catch (e) { /* ignore */ }
   };
