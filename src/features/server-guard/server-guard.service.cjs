@@ -60,9 +60,16 @@ function getServerGuardConfig(guildId) {
   
   if (!guildConfig.serverGuard) {
     guildConfig.serverGuard = { ...DEFAULT_SERVER_GUARD_CONFIG };
-    if (!Array.isArray(guildConfig.serverGuard.badWords)) {
-      guildConfig.serverGuard.badWords = [];
+    if (Array.isArray(guildConfig.badWords)) {
+      guildConfig.serverGuard.badWords = guildConfig.badWords;
     }
+    if (guildConfig.antiSpam) guildConfig.serverGuard.antiSpam = guildConfig.antiSpam;
+    if (guildConfig.linkScanning) guildConfig.serverGuard.linkScanning = guildConfig.linkScanning;
+    if (guildConfig.rateLimiting) guildConfig.serverGuard.rateLimiting = guildConfig.rateLimiting;
+    if (guildConfig.profanityFilterEnabled !== undefined) guildConfig.serverGuard.profanityFilter = { enabled: guildConfig.profanityFilterEnabled, action: 'delete' };
+    if (guildConfig.antiNuke) guildConfig.serverGuard.antiNuke = guildConfig.antiNuke;
+    if (guildConfig.joinGate) guildConfig.serverGuard.joinGate = guildConfig.joinGate;
+    if (guildConfig.raidProtection) guildConfig.serverGuard.raidProtection = guildConfig.raidProtection;
     updateGuildConfig(guildId, { serverGuard: guildConfig.serverGuard });
   }
   

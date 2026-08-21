@@ -6507,30 +6507,22 @@ app.get("/api/bot-config/custom-commands", async (req, res) => {
   if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
   
   try {
-    const config = loadConfig();
-    const commands = config.guilds[guildId]?.customCommands || {};
+    const { CustomCommandsService } = require('./src/features/custom-commands/custom-commands.service.cjs');
+    const service = new CustomCommandsService();
+    const commands = await service.getAll(guildId);
     const tier = getGuildTier(guildId);
     const limits = getTierLimits(guildId);
     
-    // Convert legacy format to new format
-    const formatted = {};
-    Object.keys(commands).forEach(name => {
-      if (typeof commands[name] === 'string') {
-        formatted[name] = { response: commands[name], allowedRoles: [], aliases: [] };
-      } else {
-        formatted[name] = commands[name];
-      }
-    });
-    
     res.json({ 
-      commands: formatted, 
+      commands: commands.reduce((acc, cmd) => { acc[cmd.name] = cmd; return acc; }, {}), 
       maxCommands: limits.maxCustomCommands || 5,
-      currentCount: Object.keys(formatted).length,
+      currentCount: commands.length,
       tier,
       canAddCustomCommands: limits.hasCustomCommands
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error loading custom commands:', err);
+    res.json({ commands: {}, maxCommands: 5, currentCount: 0, tier: 'free', canAddCustomCommands: true });
   }
 });
 
@@ -6543,34 +6535,32 @@ app.post("/api/bot-config/custom-commands/save", express.json(), async (req, res
   if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
   
   try {
+    const { CustomCommandsService } = require('./src/features/custom-commands/custom-commands.service.cjs');
+    const service = new CustomCommandsService();
     const { name, response, allowedRoles, aliases } = req.body;
     if (!name || !response) return res.json({ error: "Name and response required" });
     
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    if (!config.guilds[guildId].customCommands) config.guilds[guildId].customCommands = {};
-    
-    const commands = config.guilds[guildId].customCommands;
     const tier = getGuildTier(guildId);
     const limits = getTierLimits(guildId);
+    const existing = await service.getAll(guildId);
     
-    // Check limit
-    if (!commands[name] && Object.keys(commands).length >= (limits.maxCustomCommands || 5)) {
+    if (!existing.find(c => c.name === name) && existing.length >= (limits.maxCustomCommands || 5)) {
       return res.json({ error: `Command limit reached (${limits.maxCustomCommands || 5}). Upgrade to add more!` });
     }
     
-    // Save with extended format
-    commands[name] = { 
-      response, 
+    const command = await service.create(guildId, {
+      name,
+      response,
+      enabled: true,
       allowedRoles: allowedRoles || [],
+      cooldown: 0,
       aliases: aliases || [],
-      createdAt: commands[name]?.createdAt || new Date().toISOString()
-    };
+      description: '',
+      category: 'general'
+    });
     
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log(`✨ Custom command saved: ${name} (roles: ${(allowedRoles || []).join(', ')})`);
     addActivity(guildId, "💬", "Admin", `saved custom command: ${name}`);
-    res.json({ success: true });
+    res.json({ success: true, command });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -6588,14 +6578,14 @@ app.post("/api/bot-config/custom-commands/delete", express.json(), async (req, r
     const { name } = req.body;
     if (!name) return res.json({ error: "Command name required" });
     
-    const config = loadConfig();
-    if (!config.guilds[guildId]?.customCommands?.[name]) {
+    const { CustomCommandsService } = require('./src/features/custom-commands/custom-commands.service.cjs');
+    const service = new CustomCommandsService();
+    const existing = await service.get(guildId, name);
+    if (!existing) {
       return res.json({ error: "Command not found" });
     }
     
-    delete config.guilds[guildId].customCommands[name];
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log(`🗑️ Custom command deleted: ${name}`);
+    await service.delete(guildId, name);
     addActivity(guildId, "💬", "Admin", `deleted custom command: ${name}`);
     res.json({ success: true });
   } catch (err) {
@@ -6821,25 +6811,17 @@ app.post("/api/bot-config/logging", express.json(), (req, res) => {
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    if (!config.guilds[guildId].logging) config.guilds[guildId].logging = {};
-
-    const { logDeleted, logEdited, logBulkDelete, logChannel, logBans, logKicks, logMutes, logWarns, modLogChannel } = req.body;
-    
-    config.guilds[guildId].logging.messageLogging = { logDeleted, logEdited, logBulkDelete, logChannel };
-    config.guilds[guildId].logging.moderationLogging = { logBans, logKicks, logMutes, logWarns, modLogChannel };
-    
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log(`✅ All logging settings updated (Guild: ${guildId})`);
-    res.json({ success: true, message: "Logging updated successfully" });
+    const { LoggingService } = require('./src/features/logging/logging.service.cjs');
+    const service = new LoggingService();
+    const config = service.setConfig(guildId, req.body);
+    res.json(config);
   } catch (err) {
     console.error('❌ Error updating logging:', err);
     res.json({ success: false, message: "Error updating logging" });
   }
 });
 
-app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
+app.post("/api/bot-config/server-guard", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
@@ -6847,22 +6829,22 @@ app.post("/api/bot-config/server-guard", express.json(), (req, res) => {
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
+    const { serverGuard, permissions, auditLog, backup } = req.body;
     
-    const { antiSpam, raidProtection, permissions, antiNuke, linkScanning, joinGate, rateLimiting, auditLog, backup } = req.body;
+    if (serverGuard) {
+      const { setServerGuardConfig } = require('./src/features/server-guard/server-guard.service.cjs');
+      setServerGuardConfig(guildId, serverGuard);
+    }
+    if (permissions) {
+      updateGuildConfig(guildId, { permissions });
+    }
+    if (auditLog) {
+      updateGuildConfig(guildId, { auditLog });
+    }
+    if (backup) {
+      updateGuildConfig(guildId, { backup });
+    }
     
-    if (antiSpam) config.guilds[guildId].antiSpam = antiSpam;
-    if (raidProtection) config.guilds[guildId].raidProtection = raidProtection;
-    if (permissions) config.guilds[guildId].permissions = permissions;
-    if (antiNuke) config.guilds[guildId].antiNuke = antiNuke;
-    if (linkScanning) config.guilds[guildId].linkScanning = linkScanning;
-    if (joinGate) config.guilds[guildId].joinGate = joinGate;
-    if (rateLimiting) config.guilds[guildId].rateLimiting = rateLimiting;
-    if (auditLog) config.guilds[guildId].auditLog = auditLog;
-    if (backup) config.guilds[guildId].backup = backup;
-    
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
     console.log(`✅ All Server Guard settings updated (Guild: ${guildId})`);
     res.json({ success: true, message: "Server Guard updated successfully" });
   } catch (err) {
@@ -6880,14 +6862,12 @@ app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
-    const config = loadConfig();
-    if (!config.guilds[guildId]) config.guilds[guildId] = {};
-    if (!config.guilds[guildId].reactRoles) config.guilds[guildId].reactRoles = { entries: [] };
+    const { ReactionRolesService } = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+    const service = new ReactionRolesService();
     const { allowMultiple, removeOnUnreact, dmConfirm } = req.body;
-    config.guilds[guildId].reactRoles.allowMultiple = allowMultiple;
-    config.guilds[guildId].reactRoles.removeOnUnreact = removeOnUnreact;
-    config.guilds[guildId].reactRoles.dmConfirm = dmConfirm;
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    const config = service.getConfig(guildId);
+    const updated = { ...config, allowMultiple, removeOnUnreact, dmConfirm };
+    service.setConfig(guildId, updated);
     console.log(`✅ React roles settings saved (Guild: ${guildId})`);
     res.json({ success: true, message: "React roles settings saved" });
   } catch (err) {
