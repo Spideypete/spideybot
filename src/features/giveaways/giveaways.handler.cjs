@@ -6,7 +6,7 @@ let checkInterval = null;
 
 async function checkExpiredGiveaways() {
   try {
-    const config = require('../../config.json');
+    const config = require('../../../config.json');
     const guildIds = Object.keys(config.guilds || {});
 
     for (const guildId of guildIds) {
@@ -80,7 +80,7 @@ async function handleReactionAdd(reaction, user) {
   const guildId = message.guild?.id;
   if (!guildId) return;
 
-  const config = require('../../config.json');
+  const config = require('../../../config.json');
   const giveaways = config.guilds[guildId]?.giveaways || {};
 
   for (const [id, giveaway] of Object.entries(giveaways)) {
@@ -102,7 +102,7 @@ async function handleReactionRemove(reaction, user) {
   const guildId = message.guild?.id;
   if (!guildId) return;
 
-  const config = require('../../config.json');
+  const config = require('../../../config.json');
   const giveaways = config.guilds[guildId]?.giveaways || {};
 
   for (const [id, giveaway] of Object.entries(giveaways)) {

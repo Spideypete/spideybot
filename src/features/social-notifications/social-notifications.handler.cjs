@@ -167,7 +167,7 @@ async function pollGuild(guildId, client) {
 }
 
 async function pollAllGuilds(client) {
-  const config = require('../../config.json');
+  const config = require('../../../config.json');
   const guildIds = Object.keys(config.guilds || {});
 
   const results = await Promise.allSettled(guildIds.map(guildId => pollGuild(guildId, client)));
