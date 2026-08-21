@@ -37,53 +37,52 @@ const DEFAULT_GUILD_CONFIG = {
   keepOldLevelRoles: true
 };
 
-function loadConfig() {
-  if (fs.existsSync(CONFIG_FILE)) {
-    try {
-      return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-    } catch (err) {
-      console.error('Config load error:', err.message);
-      return { guilds: {} };
+class ConfigManager {
+  constructor() {
+    this.configPath = CONFIG_FILE;
+  }
+
+  loadConfig() {
+    if (fs.existsSync(CONFIG_FILE)) {
+      try {
+        return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+      } catch (err) {
+        console.error('Config load error:', err.message);
+        return { guilds: {} };
+      }
     }
+    return { guilds: {} };
   }
-  return { guilds: {} };
-}
 
-function saveConfig(config) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
-}
-
-function getGuildConfig(guildId) {
-  const config = loadConfig();
-  if (!config.guilds[guildId]) {
-    config.guilds[guildId] = { ...DEFAULT_GUILD_CONFIG };
-    saveConfig(config);
+  saveConfig(config) {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
   }
-  return config.guilds[guildId];
-}
 
-function setGuildConfig(guildId, guildConfig) {
-  const config = loadConfig();
-  config.guilds[guildId] = guildConfig;
-  saveConfig(config);
-  return guildConfig;
-}
-
-function updateGuildConfig(guildId, updates) {
-  const config = loadConfig();
-  if (!config.guilds[guildId]) {
-    config.guilds[guildId] = { ...DEFAULT_GUILD_CONFIG };
+  getGuildConfig(guildId) {
+    const config = this.loadConfig();
+    if (!config.guilds[guildId]) {
+      config.guilds[guildId] = { ...DEFAULT_GUILD_CONFIG };
+      this.saveConfig(config);
+    }
+    return config.guilds[guildId];
   }
-  config.guilds[guildId] = { ...config.guilds[guildId], ...updates };
-  saveConfig(config);
-  return config.guilds[guildId];
+
+  setGuildConfig(guildId, guildConfig) {
+    const config = this.loadConfig();
+    config.guilds[guildId] = guildConfig;
+    this.saveConfig(config);
+    return guildConfig;
+  }
+
+  updateGuildConfig(guildId, updates) {
+    const config = this.loadConfig();
+    if (!config.guilds[guildId]) {
+      config.guilds[guildId] = { ...DEFAULT_GUILD_CONFIG };
+    }
+    config.guilds[guildId] = { ...config.guilds[guildId], ...updates };
+    this.saveConfig(config);
+    return config.guilds[guildId];
+  }
 }
 
-module.exports = {
-  loadConfig,
-  saveConfig,
-  getGuildConfig,
-  setGuildConfig,
-  updateGuildConfig,
-  DEFAULT_GUILD_CONFIG
-};
+module.exports = { ConfigManager };
