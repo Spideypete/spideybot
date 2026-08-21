@@ -463,15 +463,19 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-panel-body">
 <div class="dash-form-group">
 <label class="dash-form-label">Message Logs</label>
-<select class="dash-form-select"><option>#message-logs</option><option>#logs</option></select>
+<select class="dash-form-select" id="logMessageChannel"><option>#message-logs</option><option>#logs</option></select>
 </div>
 <div class="dash-form-group">
 <label class="dash-form-label">Member Logs</label>
-<select class="dash-form-select"><option>#member-logs</option><option>#logs</option></select>
+<select class="dash-form-select" id="logMemberChannel"><option>#member-logs</option><option>#logs</option></select>
 </div>
 <div class="dash-form-group">
 <label class="dash-form-label">Moderation Logs</label>
-<select class="dash-form-select"><option>#mod-logs</option><option>#logs</option></select>
+<select class="dash-form-select" id="logModChannel"><option>#mod-logs</option><option>#logs</option></select>
+</div>
+<div class="dash-toggle" style="margin-top:0.8rem">
+<input type="checkbox" id="logEnabled" checked><span class="dash-toggle-track"></span>
+<span>Enable logging</span>
 </div>
 </div>
 </div>
@@ -497,6 +501,14 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-toggle" style="margin-top:0.8rem">
 <input type="checkbox" id="sgNewAccounts"><span class="dash-toggle-track"></span>
 <span>Flag new accounts</span>
+</div>
+<div class="dash-toggle" style="margin-top:0.8rem">
+<input type="checkbox" id="sgAntiNuke" checked><span class="dash-toggle-track"></span>
+<span>Anti-nuke protection</span>
+</div>
+<div class="dash-toggle" style="margin-top:0.8rem">
+<input type="checkbox" id="sgJoinGate" checked><span class="dash-toggle-track"></span>
+<span>Join gate</span>
 </div>
 </div>
 </div>
@@ -714,7 +726,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-grid single">
 <div class="dash-panel">
 <div class="dash-panel-header">Open Tickets</div>
-<div class="dash-panel-body">
+<div class="dash-panel-body" id="ticketsBody">
 <table class="dash-table">
 <thead><tr><th>ID</th><th>User</th><th>Subject</th><th>Status</th></tr></thead>
 <tbody>
@@ -779,6 +791,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 </div>
 </div>
 </div>
+</div>
 <div class="dash-content-section" id="sec-invite-tracking">
 <div class="dash-content-header">
 <div class="dash-content-title">Invite Tracking</div>
@@ -787,7 +800,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-grid single">
 <div class="dash-panel">
 <div class="dash-panel-header">Recent Invites</div>
-<div class="dash-panel-body">
+<div class="dash-panel-body" id="invitesBody">
 <table class="dash-table">
 <thead><tr><th>Invitee</th><th>Inviter</th><th>Uses</th><th>Joins</th><th>Leaves</th></tr></thead>
 <tbody>
@@ -808,7 +821,7 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 <div class="dash-grid single">
 <div class="dash-panel">
 <div class="dash-panel-header">Top Channels</div>
-<div class="dash-panel-body">
+<div class="dash-panel-body" id="messagesBody">
 <table class="dash-table">
 <thead><tr><th>Channel</th><th>Messages</th><th>Active Users</th><th>Peak</th></tr></thead>
 <tbody>
@@ -826,11 +839,141 @@ footer .footer-bottom{text-align:center;color:#555;font-size:0.8rem;padding-top:
 
 </div>
 </div><script>
+const TEST_DATA_KEY = 'spideybot_test_data';
 let servers = [];
 let currentServer = null;
 let chartInstance = null;
 let canvasAnimId = null;
-const defaultServer = {name:'Spidey Test Server',id:'123456789',members:284,verified:212,bots:34,admins:5,mods:8};
+
+function createDefaultServer(id, name, members, verified, bots, admins, mods, icon) {
+  const guildId = 'test-' + id;
+  return {
+    id: guildId,
+    name: name,
+    members: members,
+    verified: verified,
+    bots: bots,
+    admins: admins,
+    mods: mods,
+    icon: icon || name[0].toUpperCase(),
+    config: {
+      settings: { prefix: '!', language: 'English', welcome: true, autoRole: false, autoMod: true, logging: true, antiSpam: true },
+      logging: {
+        channels: { messageLogs: '#message-logs', memberLogs: '#member-logs', moderationLogs: '#mod-logs' },
+        enabled: true
+      },
+      serverGuard: {
+        raids: true, links: false, newAccounts: false, antiNuke: true, joinGate: true
+      },
+      reactRoles: [
+        { emoji: '👍', role: 'Member' },
+        { emoji: '🎮', role: 'Gamer' }
+      ],
+      roleCategories: [
+        { name: 'Gaming Roles', roles: 5 },
+        { name: 'Moderation', roles: 3 }
+      ],
+      serverMessages: {
+        welcomeChannel: '#welcome',
+        welcomeMessage: 'Welcome {user} to {server}! 🎉',
+        goodbyeChannel: '#goodbye',
+        goodbyeMessage: '{user} has left {server}. We will miss you!'
+      },
+      customCommands: [
+        { name: '!hello', response: 'Hello there! Welcome to the server.' },
+        { name: '!rules', response: '1. Be respectful\n2. No spam\n3. Have fun!' }
+      ],
+      xpLevels: {
+        xpPerMessage: 15,
+        xpPerLevel: 500,
+        announceLevelUps: true,
+        levelRoles: { 5: 'Regular', 10: 'Veteran', 25: 'Elite' }
+      },
+      giveaways: [
+        { prize: 'Nitro Classic', duration: 60, active: true },
+        { prize: 'Game Key', duration: 120, active: false }
+      ],
+      tickets: [
+        { id: '#1001', user: 'SpideyFan99', subject: 'Bot not responding', status: 'Open' },
+        { id: '#1002', user: 'WebHead', subject: 'Role assignment issue', status: 'Pending' }
+      ],
+      socialNotifs: [
+        { platform: 'YouTube', user: 'SpideyOfficial' },
+        { platform: 'Twitch', user: 'SpideyLive' }
+      ],
+      invites: [
+        { inviter: 'WebSlinger42', uses: 12, joins: 10, leaves: 2 },
+        { inviter: 'PeterParker', uses: 8, joins: 7, leaves: 1 }
+      ],
+      messageCounting: [
+        { channel: '#general', messages: 1245, users: 89, peak: 142 },
+        { channel: '#memes', messages: 876, users: 45, peak: 67 },
+        { channel: '#gaming', messages: 654, users: 32, peak: 54 }
+      ],
+      events: [
+        { time: '2 min ago', user: 'SpideyFan99', action: 'Joined', details: 'Invited by WebSlinger42' },
+        { time: '15 min ago', user: 'MilesMorales', action: 'Role Updated', details: 'Promoted to Moderator' },
+        { time: '1 hour ago', user: 'Neighborly', action: 'Left', details: 'Voluntary leave' },
+        { time: '3 hours ago', user: 'GwenStacy', action: 'Joined', details: 'Invited by SpideyKing' }
+      ],
+      leaderboard: [
+        { rank: 1, member: 'SpideyKing', xp: 12450 },
+        { rank: 2, member: 'WebSlinger42', xp: 11200 },
+        { rank: 3, member: 'PeterParker', xp: 9850 },
+        { rank: 4, member: 'MilesMorales', xp: 8100 },
+        { rank: 5, member: 'GwenStacy', xp: 7600 }
+      ]
+    }
+  };
+}
+
+function createDefaultTestData() {
+  return {
+    servers: [
+      createDefaultServer('spidey-dev', 'Spidey Development', 142, 98, 24, 4, 6, 'SD'),
+      createDefaultServer('spidey-main', 'Spidey Test Server', 284, 212, 34, 5, 8, 'ST'),
+      createDefaultServer('fivem', 'FiveM Testing', 89, 67, 12, 3, 4, 'FT'),
+      createDefaultServer('gaming', 'Gaming Community', 512, 389, 45, 7, 12, 'GC'),
+      createDefaultServer('blue-devine', 'Blue Devine Test', 56, 41, 8, 2, 3, 'BD')
+    ],
+    currentServer: 'test-spidey-dev'
+  };
+}
+
+function loadTestData() {
+  try {
+    const raw = localStorage.getItem(TEST_DATA_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.servers) && data.servers.length > 0) {
+        return data;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load test data:', e);
+  }
+  const defaults = createDefaultTestData();
+  saveTestData(defaults);
+  return defaults;
+}
+
+function saveTestData(data) {
+  try {
+    localStorage.setItem(TEST_DATA_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('Failed to save test data:', e);
+  }
+}
+
+function getCurrentServerData() {
+  if (!currentServer) return null;
+  return servers.find(s => s.id === currentServer) || servers[0] || null;
+}
+
+function getCurrentServerConfig() {
+  const server = getCurrentServerData();
+  return server ? server.config : {};
+}
 
 async function apiCall(endpoint, options = {}) {
   try {
@@ -847,274 +990,457 @@ async function apiCall(endpoint, options = {}) {
   }
 }
 
-function saveServers(){ /* handled by backend */ }
+function saveServers() {
+  const data = loadTestData();
+  data.servers = servers;
+  data.currentServer = currentServer;
+  saveTestData(data);
+}
+
 function $(id){return document.getElementById(id)}
 function showToast(title,msg,type='info'){
-const c=$('toastContainer');const t=document.createElement('div');t.className='toast toast-'+type;const icons={success:'âœ…',error:'âŒ',warning:'âš ï¸',info:'â„¹ï¸'};t.innerHTML='<div class=toast-icon>'+(icons[type]||'â„¹ï¸')+'</div><div class=toast-body><div class=toast-title>'+title+'</div><div class=toast-msg>'+msg+'</div></div>';c.prepend(t);setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),300)},4000);
+const c=$('toastContainer');const t=document.createElement('div');t.className='toast toast-'+type;const icons={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};t.innerHTML='<div class=toast-icon>'+(icons[type]||'ℹ️')+'</div><div class=toast-body><div class=toast-title>'+title+'</div><div class=toast-msg>'+msg+'</div></div>';c.prepend(t);setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),300)},4000);
 }
+
 async function fakeLogin(){
-$('loginOverlay').classList.add('hidden');
-const data = await apiCall('/creator/servers');
-if (data && data.servers) {
+  $('loginOverlay').classList.add('hidden');
+  const data = loadTestData();
   servers = data.servers;
-  if (servers.length > 0) {
-    currentServer = servers[0].id;
-  }
+  currentServer = data.currentServer;
+  showServerSelect();
 }
-showServerSelect();
-}
+
 async function logout(){
-await apiCall('/logout', { method: 'POST' });
-servers=[];
-currentServer=null;
-$('loginOverlay').classList.remove('hidden');
-$('serverSelectPage').classList.remove('active');
-$('dashboardPage').classList.remove('active');
-if(canvasAnimId)cancelAnimationFrame(canvasAnimId);
+  await apiCall('/logout', { method: 'POST' });
+  servers=[];
+  currentServer=null;
+  $('loginOverlay').classList.remove('hidden');
+  $('serverSelectPage').classList.remove('active');
+  $('dashboardPage').classList.remove('active');
+  if(canvasAnimId)cancelAnimationFrame(canvasAnimId);
 }
+
 function showServerSelect(){
-$('serverSelectPage').classList.add('active');
-renderServers();
+  $('serverSelectPage').classList.add('active');
+  renderServers();
 }
+
 function renderServers(){
-const g=$('serverGrid');g.innerHTML='';
-servers.forEach(s=>{
-const card=document.createElement('div');card.className='ss-card';card.innerHTML='<div class=ss-card-icon>'+(s.name[0]||'?').toUpperCase()+'</div><div class=ss-card-info><div class=ss-card-name>'+s.name+'</div><div class=ss-card-meta>'+(s.members||0)+' members Â· ID: '+s.id+'</div></div><button class=ss-go-btn onclick="event.stopPropagation();selectServer(\''+s.id+'\')">Go â†’</button>';
-card.onclick=()=>selectServer(s.id);g.appendChild(card);
-});
-const add=document.createElement('div');add.className='ss-card ss-add-card';add.onclick=openAddServerModal;add.innerHTML='<div class=plus>+</div><span>Add Server</span>';g.appendChild(add);
+  const g=$('serverGrid');g.innerHTML='';
+  servers.forEach(s=>{
+    const card=document.createElement('div');card.className='ss-card';card.innerHTML='<div class=ss-card-icon>'+(s.icon||'?')+'</div><div class=ss-card-info><div class=ss-card-name>'+s.name+'</div><div class=ss-card-meta>'+(s.members||0)+' members · ID: '+s.id+'</div></div><button class=ss-go-btn onclick="event.stopPropagation();selectServer(\''+s.id+'\')">Go →</button>';
+    card.onclick=()=>selectServer(s.id);g.appendChild(card);
+  });
+  const add=document.createElement('div');add.className='ss-card ss-add-card';add.onclick=openAddServerModal;add.innerHTML='<div class=plus>+</div><span>Add Server</span>';g.appendChild(add);
 }
+
 function openAddServerModal(){$('addServerModal').classList.add('active')}
 function closeAddServerModal(){$('addServerModal').classList.remove('active')}
 async function addNewServer(){
-const name=$('newServerName').value.trim();
-const id=$('newServerId').value.trim()||Date.now().toString();
-if(!name){showToast('Error','Please enter a server name','error');return}
-await apiCall('/api/owner/test', { method: 'POST', body: JSON.stringify({ action: 'addServer', name, id }) });
-closeAddServerModal();$('newServerName').value='';$('newServerId').value='';renderServers();showToast('Success','Server added','success');
+  const name=$('newServerName').value.trim();
+  const id=$('newServerId').value.trim()||('test-'+Date.now());
+  if(!name){showToast('Error','Please enter a server name','error');return}
+  const newServer = createDefaultServer(id.replace('test-',''), name, 50, 30, 5, 1, 2, name[0].toUpperCase());
+  newServer.id = id;
+  servers.push(newServer);
+  saveServers();
+  closeAddServerModal();$('newServerName').value='';$('newServerId').value='';renderServers();showToast('Success','Server added','success');
 }
-async function removeServer(id){servers=servers.filter(s=>s.id!==id);if(currentServer===id)currentServer=null;await apiCall('/api/owner/test', { method: 'POST', body: JSON.stringify({ action: 'removeServer', id }) });renderServers();showToast('Removed','Server removed','info')}
+
+async function removeServer(id){
+  servers=servers.filter(s=>s.id!==id);
+  if(currentServer===id)currentServer=servers[0]?.id||null;
+  saveServers();renderServers();showToast('Removed','Server removed','info');
+}
+
 async function selectServer(id){
-currentServer=id;await apiCall('/api/owner/test', { method: 'POST', body: JSON.stringify({ action: 'selectServer', id }) });$('serverSelectPage').classList.remove('active');$('dashboardPage').classList.add('active');loadDashboard();
+  currentServer=id;
+  const data = loadTestData();
+  data.currentServer = id;
+  saveTestData(data);
+  $('serverSelectPage').classList.remove('active');
+  $('dashboardPage').classList.add('active');
+  loadDashboard();
 }
+
 function goToServers(){
-$('dashboardPage').classList.remove('active');$('serverSelectPage').classList.add('active');renderServers();
+  $('dashboardPage').classList.remove('active');
+  $('serverSelectPage').classList.add('active');
+  renderServers();
 }
+
 function getCurrentServer(){
-return servers.find(s=>s.id===currentServer)||servers[0]||defaultServer;
+  return servers.find(s=>s.id===currentServer)||servers[0]||null;
 }
+
 async function loadDashboard(){
-const s=getCurrentServer();if(!s)return;
-$('dashServerName').textContent=s.name;$('dashServerIcon').textContent=(s.name[0]||'?').toUpperCase();
-renderDashServerList();
-const data = await apiCall('/api/config/' + s.id);
-if (data) {
-  updateDashboardStats(s, data);
-  loadSettings(data.config);
-  loadReactRoles(data.config);
-  loadCommands(data.config);
-  loadGiveaways(data.config);
-  loadRoleCategories(data.config);
-  loadServerMessages(data.config);
+  const s=getCurrentServer();if(!s)return;
+  $('dashServerName').textContent=s.name;
+  $('dashServerIcon').textContent=s.icon||(s.name[0]||'?').toUpperCase();
+  renderDashServerList();
+  const config = getCurrentServerConfig();
+  updateDashboardStats(s, config);
+  loadSettings(config);
+  loadReactRoles(config);
+  loadCommands(config);
+  loadGiveaways(config);
+  loadRoleCategories(config);
+  loadServerMessages(config);
+  loadLogging(config);
+  loadServerGuard(config);
+  loadTickets(config);
+  loadSocialNotifs(config);
+  loadInvites(config);
+  loadMessageCounting(config);
+  loadEvents(config);
+  loadLeaderboard(config);
+  initChart();initNetworkCanvas();
 }
-initChart();initNetworkCanvas();
-}
+
 function renderDashServerList(){
-const list=$('dashServerList');list.innerHTML='';
-servers.forEach(s=>{
-const item=document.createElement('div');item.className='dash-server-dropdown-item'+(s.id===currentServer?' active':'');
-item.innerHTML='<div class=ssd-icon>'+(s.name[0]||'?').toUpperCase()+'</div><div class=ssd-info><div class=ssd-name>'+s.name+'</div><div class=ssd-meta>'+(s.members||0)+' members</div></div>';
-item.onclick=()=>{currentServer=s.id;saveServers();$('dashServerDropdown').classList.remove('active');loadDashboard()};
-list.appendChild(item);
-});
+  const list=$('dashServerList');list.innerHTML='';
+  servers.forEach(s=>{
+    const item=document.createElement('div');item.className='dash-server-dropdown-item'+(s.id===currentServer?' active':'');
+    item.innerHTML='<div class=ssd-icon>'+(s.icon||(s.name[0]||'?').toUpperCase())+'</div><div class=ssd-info><div class=ssd-name>'+s.name+'</div><div class=ssd-meta>'+(s.members||0)+' members</div></div>';
+    item.onclick=()=>{currentServer=s.id;saveServers();$('dashServerDropdown').classList.remove('active');loadDashboard()};
+    list.appendChild(item);
+  });
 }
+
 function toggleDashServerDropdown(){$('dashServerDropdown').classList.toggle('active')}
 function toggleDashProfileMenu(){$('dashProfileMenu').classList.toggle('active')}
 function switchDashSection(id){
-document.querySelectorAll('.dash-content-section').forEach(s=>s.classList.remove('active'));
-$('sec-'+id).classList.add('active');
-document.querySelectorAll('.dash-sidebar-item').forEach(i=>i.classList.remove('active'));
-document.querySelector('.dash-sidebar-item[data-section="'+id+'"]').classList.add('active');
-document.title='SPIDEY BOT - '+(id.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
+  document.querySelectorAll('.dash-content-section').forEach(s=>s.classList.remove('active'));
+  $('sec-'+id).classList.add('active');
+  document.querySelectorAll('.dash-sidebar-item').forEach(i=>i.classList.remove('active'));
+  document.querySelector('.dash-sidebar-item[data-section="'+id+'"]').classList.add('active');
+  document.title='SPIDEY BOT - '+(id.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
 }
 function filterDashSidebar(q){
-const term=q.toLowerCase();document.querySelectorAll('.dash-sidebar-item').forEach(i=>{
-const text=i.textContent.toLowerCase();i.style.display=text.includes(term)?'':'none';
-});
+  const term=q.toLowerCase();document.querySelectorAll('.dash-sidebar-item').forEach(i=>{
+    const text=i.textContent.toLowerCase();i.style.display=text.includes(term)?'':'none';
+  });
 }
+
 function updateDashboardStats(s, config){
-const members = s.members || 0;
-$('testTotalMembers').textContent=members.toLocaleString();
-$('testVerified').textContent=(s.verified||0).toLocaleString();
-$('testBots').textContent=(s.bots||0).toLocaleString();
-$('testAdmins').textContent=(s.admins||0).toLocaleString();
-$('testMods').textContent=(s.mods||0).toLocaleString();
-$('testTotalGrowth').textContent='+'+Math.floor(members*0.05);
-$('testVerifiedGrowth').textContent='+'+Math.floor((s.verified||0)*0.03);
-$('testBotsGrowth').textContent='+'+Math.floor((s.bots||0)*0.08);
-$('testAdminsGrowth').textContent='+'+Math.floor((s.admins||0)*0.1);
-$('testModsGrowth').textContent='+'+Math.floor((s.mods||0)*0.12);
-const staff=$('testStaffPanel');if(staff.querySelector('p'))staff.innerHTML='';
-const staffList=[{name:'Admin1',role:'Admin'},{name:'Mod1',role:'Moderator'},{name:'Admin2',role:'Admin'}];
-staffList.forEach(m=>{
-const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;border-bottom:1px solid rgba(255,255,255,0.05)';
-row.innerHTML='<div><div style=font-weight:600;font-size:0.9rem;color:rgba(255,255,255,0.9)>'+m.name+'</div><div style=font-size:0.75rem;color:rgba(255,255,255,0.5)>'+m.role+'</div></div><span class=dash-badge '+(m.role==='Admin'?'warning':'info')+'>'+m.role+'</span>';staff.appendChild(row);
-});
+  const members = s.members || 0;
+  $('testTotalMembers').textContent=members.toLocaleString();
+  $('testVerified').textContent=(s.verified||0).toLocaleString();
+  $('testBots').textContent=(s.bots||0).toLocaleString();
+  $('testAdmins').textContent=(s.admins||0).toLocaleString();
+  $('testMods').textContent=(s.mods||0).toLocaleString();
+  $('testTotalGrowth').textContent='+'+Math.floor(members*0.05);
+  $('testVerifiedGrowth').textContent='+'+Math.floor((s.verified||0)*0.03);
+  $('testBotsGrowth').textContent='+'+Math.floor((s.bots||0)*0.08);
+  $('testAdminsGrowth').textContent='+'+Math.floor((s.admins||0)*0.1);
+  $('testModsGrowth').textContent='+'+Math.floor((s.mods||0)*0.12);
+  const staff=$('testStaffPanel');if(staff.querySelector('p'))staff.innerHTML='';
+  const staffList=[{name:'Admin1',role:'Admin'},{name:'Mod1',role:'Moderator'},{name:'Admin2',role:'Admin'}];
+  staffList.forEach(m=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;border-bottom:1px solid rgba(255,255,255,0.05)';
+    row.innerHTML='<div><div style=font-weight:600;font-size:0.9rem;color:rgba(255,255,255,0.9)>'+m.name+'</div><div style=font-size:0.75rem;color:rgba(255,255,255,0.5)>'+m.role+'</div></div><span class=dash-badge '+(m.role==='Admin'?'warning':'info')+'>'+m.role+'</span>';staff.appendChild(row);
+  });
 }
+
 function initChart(){
-const ctx=$('testMembersChart');if(!ctx)return;if(chartInstance)chartInstance.destroy();
-chartInstance=new Chart(ctx,{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Members',data:[220,235,248,260,255,270,280],borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,0.1)',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(255,255,255,0.5)'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'rgba(255,255,255,0.5)'},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+  const ctx=$('testMembersChart');if(!ctx)return;if(chartInstance)chartInstance.destroy();
+  chartInstance=new Chart(ctx,{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Members',data:[220,235,248,260,255,270,280],borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,0.1)',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(255,255,255,0.5)'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'rgba(255,255,255,0.5)'},grid:{color:'rgba(255,255,255,0.05)'}}}}});
 }
+
 function initNetworkCanvas(){
-if(canvasAnimId){cancelAnimationFrame(canvasAnimId);canvasAnimId=null;}
-const canvas=$('network-canvas');if(!canvas)return;
-const ctx=canvas.getContext('2d');
-let w=canvas.width=canvas.offsetWidth;let h=canvas.height=canvas.offsetHeight;
-const nodes=[];for(let i=0;i<40;i++){nodes.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-0.5)*0.6,vy:(Math.random()-0.5)*0.6,r:Math.random()*2+1})}
-function draw(){
-ctx.clearRect(0,0,w,h);
-nodes.forEach((a,i)=>{a.x+=a.vx;a.y+=a.vy;if(a.x<0||a.x>w)a.vx*=-1;if(a.y<0||a.y>h)a.vy*=-1;
-for(let j=i+1;j<nodes.length;j++){const b=nodes[j];const dx=a.x-b.x;const dy=a.y-b.y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<140){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(145,70,255,'+(1-dist/140)*0.25+')';ctx.lineWidth=0.8;ctx.stroke()}}
-ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fillStyle='rgba(0,212,255,0.7)';ctx.fill()});
-canvasAnimId=requestAnimationFrame(draw);
+  if(canvasAnimId){cancelAnimationFrame(canvasAnimId);canvasAnimId=null;}
+  const canvas=$('network-canvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let w=canvas.width=canvas.offsetWidth;let h=canvas.height=canvas.offsetHeight;
+  const nodes=[];for(let i=0;i<40;i++){nodes.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-0.5)*0.6,vy:(Math.random()-0.5)*0.6,r:Math.random()*2+1})}
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    nodes.forEach((a,i)=>{a.x+=a.vx;a.y+=a.vy;if(a.x<0||a.x>w)a.vx*=-1;if(a.y<0||a.y>h)a.vy*=-1;
+    for(let j=i+1;j<nodes.length;j++){const b=nodes[j];const dx=a.x-b.x;const dy=a.y-b.y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<140){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(145,70,255,'+(1-dist/140)*0.25+')';ctx.lineWidth=0.8;ctx.stroke()}}
+    ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fillStyle='rgba(0,212,255,0.7)';ctx.fill()});
+    canvasAnimId=requestAnimationFrame(draw);
+  }
+  draw();
 }
-draw();
-}
+
 function resetTestData(){
-if(!confirm('Reset all test data? This cannot be undone.'))return;
-servers=[{...defaultServer}];currentServer=defaultServer.id;saveServers();loadDashboard();showToast('Reset','Test data has been reset','success');
-}
-function saveSetting(key,value){
-const server=getCurrentServer();if(!server)return;
-showToast('Saved',key+' updated','success');
-}
-function loadSettings(config){
-const server=getCurrentServer();if(!server)return;
-const settings=config?.settings || {};
-Object.keys(settings).forEach(key=>{
-const el=$('setting'+key.charAt(0).toUpperCase()+key.slice(1));
-if(!el)return;
-if(el.type==='checkbox')el.checked=settings[key];
-else if(el.tagName==='SELECT')el.value=settings[key];
-else el.value=settings[key];
-});
-}
-function addReactRole(){
-const msgId=$('reactMsgId').value;const emoji=$('reactEmoji').value;const role=$('reactRole').value;if(!emoji||!role){showToast('Error','Emoji and role required','error');return}
-const body=$('reactRolesBody');if(body.querySelector('p'))body.innerHTML='';
-const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-div.innerHTML='<span>'+emoji+' '+role+'</span><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
-body.appendChild(div);$('reactMsgId').value='';$('reactEmoji').value='';$('reactRole').value='';
-showToast('Added','Reaction role added','success');
-}
-function loadReactRoles(config){
-const server=getCurrentServer();if(!server)return;
-const roles=config?.reactRoles?.entries || [];
-const body=$('reactRolesBody');if(body.querySelector('p'))body.innerHTML='';
-roles.forEach(r=>{
-const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-div.innerHTML='<span>'+r.emoji+' '+r.role+'</span><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
-body.appendChild(div);
-});
-}
-function addCommand(){
-const name=$('cmdName').value;const response=$('cmdResponse').value;if(!name||!response){showToast('Error','Name and response required','error');return}
-const body=$('commandsBody');if(body.querySelector('p'))body.innerHTML='';
-const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-div.innerHTML='<div><strong>'+name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+response+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
-body.appendChild(div);$('cmdName').value='';$('cmdResponse').value='';
-showToast('Added','Command added','success');
-}
-function loadCommands(config){
-const server=getCurrentServer();if(!server)return;
-const cmds=config?.customCommands || [];
-const body=$('commandsBody');if(body.querySelector('p'))body.innerHTML='';
-cmds.forEach(c=>{
-const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-div.innerHTML='<div><strong>'+c.name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+c.response+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
-body.appendChild(div);
-});
-}
-function createGiveaway(){
-const prize=$('giveawayPrize').value;const duration=$('giveawayDuration').value;if(!prize){showToast('Error','Enter a prize','error');return}
-const body=$('giveawaysBody');if(body.querySelector('p'))body.innerHTML='';
-const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-div.innerHTML='<div><strong>'+prize+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">Duration: '+duration+' min</p></div><button class="dash-btn danger" onclick="endGiveaway(this)">End</button>';
-body.appendChild(div);$('giveawayPrize').value='';
-showToast('Created','Giveaway started','success');
-}
-function endGiveaway(btn){
-btn.disabled=true;btn.textContent='Ended';btn.style.opacity='0.5';
-const item=btn.closest('[style*="display:flex"]');if(item){item.style.opacity='0.5';}
-showToast('Ended','Giveaway has ended','success');
-}
-function loadGiveaways(config){
-const server=getCurrentServer();if(!server)return;
-const gws=config?.giveaways || [];
-const body=$('giveawaysBody');if(body.querySelector('p'))body.innerHTML='';
-gws.forEach(g=>{
-const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-div.innerHTML='<div><strong>'+g.prize+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">Duration: '+g.duration+' min</p></div><button class="dash-btn danger" '+(g.active?'onclick="endGiveaway(this)"':'disabled style="opacity:0.5"')+'>'+(g.active?'End':'Ended')+'</button>';
-body.appendChild(div);
-});
-}
-function saveServerMessage(type){
-const channel=type==='welcome'?$('settingWelcomeChannel'):$('settingGoodbyeChannel');
-const msg=type==='welcome'?$('settingWelcomeMsg'):$('settingGoodbyeMsg');
-if(!channel||!msg){showToast('Error','Please fill all fields','error');return}
-showToast('Saved',type.charAt(0).toUpperCase()+type.slice(1)+' message saved','success');
-}
-function loadServerMessages(config){
-const server=getCurrentServer();if(!server)return;
-const msgs = config?.serverMessages || {};
-if(msgs.welcomeChannel) $('settingWelcomeChannel').value=msgs.welcomeChannel;
-if(msgs.welcomeMessage) $('settingWelcomeMsg').value=msgs.welcomeMessage;
-if(msgs.goodbyeChannel) $('settingGoodbyeChannel').value=msgs.goodbyeChannel;
-if(msgs.goodbyeMessage) $('settingGoodbyeMsg').value=msgs.goodbyeMessage;
-}
-function addSocialNotif(){
-const platform=$('socialPlatform').value;const user=$('socialUser').value;if(!user){showToast('Error','Enter username','error');return}
-const body=$('socialNotifsBody');if(body.querySelector('p'))body.innerHTML='';
-const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-item.innerHTML='<div><strong>'+platform+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">@'+user+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Remove</button>';
-body.appendChild(item);$('socialUser').value='';showToast('Added','Notification added for '+platform,'success');
-}
-function addRoleCategory(){
-const name=$('roleCatName').value.trim();if(!name){showToast('Error','Enter category name','error');return}
-const list=$('roleCategoriesList');if(list.querySelector('p'))list.innerHTML='';
-const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-item.innerHTML='<div><strong>'+name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">0 roles</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Delete</button>';
-list.appendChild(item);$('roleCatName').value='';
-showToast('Added','Category created','success');
-}
-function loadRoleCategories(config){
-const server=getCurrentServer();if(!server)return;
-const cats=config?.roleCategories || {};
-const list=$('roleCategoriesList');if(list.querySelector('p'))list.innerHTML='';
-cats.forEach(c=>{
-const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
-item.innerHTML='<div><strong>'+c.name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+c.roles+' roles</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Delete</button>';
-list.appendChild(item);
-});
-}
-async function showLogin(){
-const data = await apiCall('/creator/servers');
-if (data && data.servers && data.servers.length > 0) {
-  servers = data.servers;
-  currentServer = data.servers[0].id;
-  $('loginOverlay').classList.add('hidden');
-  $('serverSelectPage').classList.add('active');
+  if(!confirm('Reset all test data? This cannot be undone.'))return;
+  const defaults = createDefaultTestData();
+  servers = defaults.servers;
+  currentServer = defaults.currentServer;
+  saveTestData(defaults);
   loadDashboard();
-} else {
-  $('loginOverlay').classList.remove('hidden');
+  showToast('Reset','Test data has been reset','success');
 }
+
+function saveSetting(key,value){
+  const server=getCurrentServer();if(!server)return;
+  if(!server.config.settings)server.config.settings={};
+  server.config.settings[key]=value;
+  saveServers();
+  showToast('Saved',key+' updated','success');
 }
+
+function loadSettings(config){
+  const server=getCurrentServer();if(!server)return;
+  const settings=config?.settings || {};
+  Object.keys(settings).forEach(key=>{
+    const el=$('setting'+key.charAt(0).toUpperCase()+key.slice(1));
+    if(!el)return;
+    if(el.type==='checkbox')el.checked=settings[key];
+    else if(el.tagName==='SELECT')el.value=settings[key];
+    else el.value=settings[key];
+  });
+}
+
+function loadLogging(config){
+  const lg = config?.logging;
+  if(!lg) return;
+  const ch = lg.channels || {};
+  const set = (id, val) => { const el = $(id); if(el) el.value = val; };
+  set('logMessageChannel', ch.messageLogs || '#message-logs');
+  set('logMemberChannel', ch.memberLogs || '#member-logs');
+  set('logModChannel', ch.moderationLogs || '#mod-logs');
+  const en = $('logEnabled'); if(en) en.checked = !!lg.enabled;
+}
+
+function loadServerGuard(config){
+  const sg = config?.serverGuard;
+  if(!sg) return;
+  const set = (id, val) => { const el = $(id); if(el) el.checked = !!val; };
+  set('sgRaids', sg.raids);
+  set('sgLinks', sg.links);
+  set('sgNewAccounts', sg.newAccounts);
+  set('sgAntiNuke', sg.antiNuke);
+  set('sgJoinGate', sg.joinGate);
+}
+
+function loadTickets(config){
+  const tickets = config?.tickets || [];
+  const body=$('ticketsBody');if(body.querySelector('p'))body.innerHTML='';
+  if(tickets.length===0){body.innerHTML='<p style="color:rgba(255,255,255,0.4);font-size:0.85rem">No tickets.</p>';return}
+  tickets.forEach(t=>{
+    const tr=document.createElement('tr');
+    const statusClass = t.status==='Open'?'success':t.status==='Pending'?'warning':'info';
+    tr.innerHTML='<td>'+t.id+'</td><td>'+t.user+'</td><td>'+t.subject+'</td><td><span class="dash-badge '+statusClass+'">'+t.status+'</span></td>';
+    body.appendChild(tr);
+  });
+}
+
+function loadSocialNotifs(config){
+  const notifs = config?.socialNotifs || [];
+  const body=$('socialNotifsBody');if(body.querySelector('p'))body.innerHTML='';
+  if(notifs.length===0){body.innerHTML='<p style="color:rgba(255,255,255,0.4);font-size:0.85rem">No social notifications configured.</p>';return}
+  notifs.forEach(n=>{
+    const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+    div.innerHTML='<div><strong>'+n.platform+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">@'+n.user+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Remove</button>';
+    body.appendChild(div);
+  });
+}
+
+function loadInvites(config){
+  const invites = config?.invites || [];
+  const body=$('invitesBody');if(body.querySelector('p'))body.innerHTML='';
+  if(invites.length===0){body.innerHTML='<p style="color:rgba(255,255,255,0.4);font-size:0.85rem">No invite data.</p>';return}
+  invites.forEach(inv=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+inv.inviter+'</td><td>'+inv.uses+'</td><td>'+inv.joins+'</td><td>'+inv.leaves+'</td>';
+    body.appendChild(tr);
+  });
+}
+
+function loadMessageCounting(config){
+  const channels = config?.messageCounting || [];
+  const body=$('messagesBody');if(body.querySelector('p'))body.innerHTML='';
+  if(channels.length===0){body.innerHTML='<p style="color:rgba(255,255,255,0.4);font-size:0.85rem">No message data.</p>';return}
+  channels.forEach(ch=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+ch.channel+'</td><td>'+ch.messages.toLocaleString()+'</td><td>'+ch.users+'</td><td>'+ch.peak+'</td>';
+    body.appendChild(tr);
+  });
+}
+
+function loadEvents(config){
+  const events = config?.events || [];
+  const body=$('eventsBody');if(body.querySelector('p'))body.innerHTML='';
+  if(events.length===0){body.innerHTML='<p style="color:rgba(255,255,255,0.4);font-size:0.85rem">No recent activity.</p>';return}
+  events.forEach(ev=>{
+    const tr=document.createElement('tr');
+    const badgeClass = ev.action==='Joined'?'success':ev.action==='Left'?'warning':'info';
+    tr.innerHTML='<td>'+ev.time+'</td><td>'+ev.user+'</td><td><span class="dash-badge '+badgeClass+'">'+ev.action+'</span></td><td>'+ev.details+'</td>';
+    body.appendChild(tr);
+  });
+}
+
+function loadLeaderboard(config){
+  const lb = config?.leaderboard || [];
+  const body=$('leaderboardBody');
+  if(!body) return;
+  body.innerHTML='';
+  lb.forEach(entry=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+entry.rank+'</td><td>'+entry.member+'</td><td>'+entry.xp.toLocaleString()+'</td>';
+    body.appendChild(tr);
+  });
+}
+
+function addReactRole(){
+  const msgId=$('reactMsgId').value;const emoji=$('reactEmoji').value;const role=$('reactRole').value;if(!emoji||!role){showToast('Error','Emoji and role required','error');return}
+  const server=getCurrentServer();if(!server)return;
+  if(!server.config.reactRoles)server.config.reactRoles=[];
+  server.config.reactRoles.push({emoji, role});
+  saveServers();
+  const body=$('reactRolesBody');if(body.querySelector('p'))body.innerHTML='';
+  const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+  div.innerHTML='<span>'+emoji+' '+role+'</span><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
+  body.appendChild(div);$('reactMsgId').value='';$('reactEmoji').value='';$('reactRole').value='';
+  showToast('Added','Reaction role added','success');
+}
+
+function loadReactRoles(config){
+  const server=getCurrentServer();if(!server)return;
+  const roles=config?.reactRoles || [];
+  const body=$('reactRolesBody');if(body.querySelector('p'))body.innerHTML='';
+  roles.forEach(r=>{
+    const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+    div.innerHTML='<span>'+r.emoji+' '+r.role+'</span><button class="dash-btn danger" onclick="this.parentElement.remove()" style="padding:0.25rem 0.75rem;font-size:0.8rem">Remove</button>';
+    body.appendChild(div);
+  });
+}
+
+function addCommand(){
+  const name=$('cmdName').value;const response=$('cmdResponse').value;if(!name||!response){showToast('Error','Name and response required','error');return}
+  const server=getCurrentServer();if(!server)return;
+  if(!server.config.customCommands)server.config.customCommands=[];
+  server.config.customCommands.push({name, response});
+  saveServers();
+  const body=$('commandsBody');if(body.querySelector('p'))body.innerHTML='';
+  const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+  div.innerHTML='<div><strong>'+name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+response+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Remove</button>';
+  body.appendChild(div);$('cmdName').value='';$('cmdResponse').value='';
+  showToast('Added','Command added','success');
+}
+
+function loadCommands(config){
+  const server=getCurrentServer();if(!server)return;
+  const cmds=config?.customCommands || [];
+  const body=$('commandsBody');if(body.querySelector('p'))body.innerHTML='';
+  cmds.forEach(c=>{
+    const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+    div.innerHTML='<div><strong>'+c.name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+c.response+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Remove</button>';
+    body.appendChild(div);
+  });
+}
+
+function createGiveaway(){
+  const prize=$('giveawayPrize').value;const duration=$('giveawayDuration').value;if(!prize){showToast('Error','Enter a prize','error');return}
+  const server=getCurrentServer();if(!server)return;
+  if(!server.config.giveaways)server.config.giveaways=[];
+  server.config.giveaways.push({prize, duration: parseInt(duration)||60, active:true});
+  saveServers();
+  const body=$('giveawaysBody');if(body.querySelector('p'))body.innerHTML='';
+  const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+  div.innerHTML='<div><strong>'+prize+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">Duration: '+duration+' min</p></div><button class="dash-btn danger" onclick="endGiveaway(this)">End</button>';
+  body.appendChild(div);$('giveawayPrize').value='';
+  showToast('Created','Giveaway started','success');
+}
+
+function endGiveaway(btn){
+  btn.disabled=true;btn.textContent='Ended';btn.style.opacity='0.5';
+  const item=btn.closest('[style*="display:flex"]');if(item){item.style.opacity='0.5';}
+  showToast('Ended','Giveaway has ended','success');
+}
+
+function loadGiveaways(config){
+  const server=getCurrentServer();if(!server)return;
+  const gws=config?.giveaways || [];
+  const body=$('giveawaysBody');if(body.querySelector('p'))body.innerHTML='';
+  gws.forEach(g=>{
+    const div=document.createElement('div');div.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+    div.innerHTML='<div><strong>'+g.prize+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">Duration: '+g.duration+' min</p></div><button class="dash-btn danger" '+(g.active?'onclick="endGiveaway(this)"':'disabled style="opacity:0.5"')+'>'+(g.active?'End':'Ended')+'</button>';
+    body.appendChild(div);
+  });
+}
+
+function saveServerMessage(type){
+  const server=getCurrentServer();if(!server)return;
+  if(!server.config.serverMessages)server.config.serverMessages={};
+  if(type==='welcome'){
+    server.config.serverMessages.welcomeChannel=$('settingWelcomeChannel').value;
+    server.config.serverMessages.welcomeMessage=$('settingWelcomeMsg').value;
+  }else{
+    server.config.serverMessages.goodbyeChannel=$('settingGoodbyeChannel').value;
+    server.config.serverMessages.goodbyeMessage=$('settingGoodbyeMsg').value;
+  }
+  saveServers();
+  showToast('Saved',type.charAt(0).toUpperCase()+type.slice(1)+' message saved','success');
+}
+
+function loadServerMessages(config){
+  const server=getCurrentServer();if(!server)return;
+  const msgs = config?.serverMessages || {};
+  if(msgs.welcomeChannel) $('settingWelcomeChannel').value=msgs.welcomeChannel;
+  if(msgs.welcomeMessage) $('settingWelcomeMsg').value=msgs.welcomeMessage;
+  if(msgs.goodbyeChannel) $('settingGoodbyeChannel').value=msgs.goodbyeChannel;
+  if(msgs.goodbyeMessage) $('settingGoodbyeMsg').value=msgs.goodbyeMessage;
+}
+
+function addSocialNotif(){
+  const platform=$('socialPlatform').value;const user=$('socialUser').value;if(!user){showToast('Error','Enter username','error');return}
+  const server=getCurrentServer();if(!server)return;
+  if(!server.config.socialNotifs)server.config.socialNotifs=[];
+  server.config.socialNotifs.push({platform, user});
+  saveServers();
+  const body=$('socialNotifsBody');if(body.querySelector('p'))body.innerHTML='';
+  const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+  item.innerHTML='<div><strong>'+platform+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">@'+user+'</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Remove</button>';
+  body.appendChild(item);$('socialUser').value='';showToast('Added','Notification added for '+platform,'success');
+}
+
+function addRoleCategory(){
+  const name=$('roleCatName').value.trim();if(!name){showToast('Error','Enter category name','error');return}
+  const server=getCurrentServer();if(!server)return;
+  if(!server.config.roleCategories)server.config.roleCategories=[];
+  server.config.roleCategories.push({name, roles:0});
+  saveServers();
+  const list=$('roleCategoriesList');if(list.querySelector('p'))list.innerHTML='';
+  const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+  item.innerHTML='<div><strong>'+name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">0 roles</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Delete</button>';
+  list.appendChild(item);$('roleCatName').value='';
+  showToast('Added','Category created','success');
+}
+
+function loadRoleCategories(config){
+  const server=getCurrentServer();if(!server)return;
+  const cats=config?.roleCategories || [];
+  const list=$('roleCategoriesList');if(list.querySelector('p'))list.innerHTML='';
+  cats.forEach(c=>{
+    const item=document.createElement('div');item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.05)';
+    item.innerHTML='<div><strong>'+c.name+'</strong><p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.25rem">'+c.roles+' roles</p></div><button class="dash-btn danger" onclick="this.parentElement.remove()">Delete</button>';
+    list.appendChild(item);
+  });
+}
+
+function showLogin(){
+  const data = loadTestData();
+  if (data && data.servers && data.servers.length > 0) {
+    servers = data.servers;
+    currentServer = data.currentServer;
+    $('loginOverlay').classList.add('hidden');
+    $('serverSelectPage').classList.add('active');
+    loadDashboard();
+  } else {
+    $('loginOverlay').classList.remove('hidden');
+  }
+}
+
 document.addEventListener('click',e=>{
-if(!e.target.closest('.dash-server-btn')&&!e.target.closest('.dash-server-dropdown'))$('dashServerDropdown').classList.remove('active');
-if(!e.target.closest('.dash-user')&&!e.target.closest('.dash-profile-menu'))$('dashProfileMenu').classList.remove('active');
+  if(!e.target.closest('.dash-server-btn')&&!e.target.closest('.dash-server-dropdown'))$('dashServerDropdown').classList.remove('active');
+  if(!e.target.closest('.dash-user')&&!e.target.closest('.dash-profile-menu'))$('dashProfileMenu').classList.remove('active');
 });
 window.addEventListener('resize',()=>{if(canvasAnimId){const c=$('network-canvas');if(c){c.width=c.offsetWidth;c.height=c.offsetHeight}}});
 </script><div id="toastContainer"></div>
+<div id="toastContainer"></div>
 </body>
 </html>
 
