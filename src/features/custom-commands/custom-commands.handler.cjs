@@ -5,10 +5,9 @@ const { EmbedBuilder } = require('discord.js');
 let service = null;
 
 function initialize(client, configPath, reservedNames = []) {
-  service = new CustomCommandsService(reservedNames);
+  service = new CustomCommandsService(reservedNames)
 
-  client.removeAllListeners('messageCreate');
-  client.on('messageCreate', handleMessageCreate);
+  client.on('messageCreate', handleMessageCreate)
 }
 
 async function handleMessageCreate(message) {

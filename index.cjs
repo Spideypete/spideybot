@@ -51,23 +51,23 @@ const {
 
 // ============== MODULAR FEATURE IMPORTS ==============
 const { ConfigManager } = require("./src/config/config-manager.cjs");
-const { createFeaturesRouter } = require("./src/routes/features.cjs");
+const { createFeaturesRouter } = require("./src/routes/features.js");
 
 // Feature services and handlers
 const { ServerMessagesService } = require("./src/features/server-messages/server-messages.service.cjs");
-const { initializeServerMessages } = require("./src/features/server-messages/server-messages.handler.cjs");
+const { initialize: initializeServerMessages } = require("./src/features/server-messages/server-messages.handler.cjs");
+const { initialize: initializeServerGuard } = require("./src/features/server-guard/server-guard.handler.cjs");
+const { registerReactionRolesHandler } = require("./src/features/reaction-roles/reaction-roles.handler.cjs");
+const { registerHandlers: registerLevelsHandlers } = require("./src/features/levels/levels.handler.cjs");
+const { registerHandlers: registerGiveawaysHandlers, startChecker: startGiveawaysChecker } = require("./src/features/giveaways/giveaways.handler.cjs");
+const { registerHandlers: registerTicketsHandlers } = require("./src/features/tickets/tickets.handler.cjs");
+const { initialize: initializeCustomCommands } = require("./src/features/custom-commands/custom-commands.handler.cjs");
+const { registerHandlers: registerInvitesHandlers } = require("./src/features/invites/invites.handler.cjs");
+const { startPolling: startSocialNotifications } = require("./src/features/social-notifications/social-notifications.handler.cjs");
+const { registerHandlers: registerLoggingHandlers } = require("./src/features/logging/logging.handler.cjs");
 
 // Initialize config manager
 const configManager = new ConfigManager();
-
-
-// ============== MODULAR FEATURE IMPORTS ==============
-const { ConfigManager } = require("./src/config/config-manager.cjs");
-const { createFeaturesRouter } = require("./src/routes/features.cjs");
-
-// Feature services and handlers
-const { ServerMessagesService } = require("./src/features/server-messages/server-messages.service.cjs");
-const { initializeServerMessages } = require("./src/features/server-messages/server-messages.handler.cjs");
 
 // ============== SINGLE INSTANCE LOCK (prevents duplicate welcome/join handlers) ==============
 const INSTANCE_LOCK_FILE = path.join(__dirname, ".bot.instance.lock");
@@ -1043,581 +1043,29 @@ app.get('/api/guilds', async (req, res) => {
 });
 
 
-// ============== WELCOME NEW MEMBERS (single listener registration) ==============
-async function handleGuildMemberAdd(member) {
-  addActivity(member.guild.id, "👤", member.user.username, "joined the server");
-  
-  // Track new member joins
-  const config = loadConfig();
-  if (!config.guilds[member.guild.id]) config.guilds[member.guild.id] = {};
-  if (!config.guilds[member.guild.id].memberEvents) config.guilds[member.guild.id].memberEvents = [];
-  
-  config.guilds[member.guild.id].memberEvents.unshift({
-    type: "join",
-    user: member.user.username,
-    userId: member.user.id,
-    timestamp: new Date().toLocaleString()
-  });
-  config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-
-  const guildConfig = getGuildConfig(member.guild.id);
-
-  // ============== SERVER GUARD: RAID DETECTION ==============
-  const rpConfig = guildConfig.raidProtection || {};
-  if (rpConfig.enabled !== false) {
-    const rKey = member.guild.id;
-    const now = Date.now();
-    if (!raidTracker.has(rKey)) raidTracker.set(rKey, { joins: [] });
-    const rt = raidTracker.get(rKey);
-    rt.joins.push(now);
-    rt.joins = rt.joins.filter(t => now - t < 10000); // last 10 seconds
-    const raidLimit = rpConfig.usersPerLimit || 10;
-
-    if (rt.joins.length >= raidLimit) {
-      sendAuditLog(member.guild, guildConfig, '🚨 RAID DETECTED', `**${rt.joins.length} joins in 10 seconds!**\nRaid threshold: ${raidLimit}\nLatest: ${member.user.tag}`, 0xED4245);
-
-      if (rpConfig.banRaidUsers) {
-        try {
-          await member.ban({ reason: 'SpideyBot Raid Protection: mass join detected' });
-          logModAction(member.guild, 'BAN', client.user, member.user.tag, 'Raid Protection: mass join');
-        } catch (e) { console.error('Raid ban failed:', e.message); }
-      }
-      rt.joins = [];
-    }
-  }
-
-  // ============== SERVER GUARD: JOIN GATE ==============
-  const jgConfig = guildConfig.joinGate || {};
-  if (jgConfig.enabled !== false) {
-    const accountAgeDays = (Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24);
-    const minAge = jgConfig.minAccountAge || 3;
-    let kicked = false;
-    let reason = '';
-
-    // Account age check
-    if (jgConfig.accountAgeCheck !== false && accountAgeDays < minAge) {
-      kicked = true;
-      reason = `Account too new (${Math.floor(accountAgeDays)} days old, minimum: ${minAge})`;
-    }
-
-    // Suspicious avatar check (no avatar)
-    if (!kicked && jgConfig.suspiciousAvatars !== false && !member.user.avatar) {
-      // Only flag very new accounts with no avatar
-      if (accountAgeDays < 7) {
-        kicked = true;
-        reason = 'Suspicious: new account with no avatar';
-      }
-    }
-
-    // Username analysis: contains invite links, mass numbers, or known spam patterns
-    if (!kicked && jgConfig.usernameAnalysis !== false) {
-      const uname = member.user.username.toLowerCase();
-      if (uname.includes('discord.gg') || uname.includes('http') || /^[a-z]{1,2}\d{6,}$/.test(uname) || uname.includes('free nitro')) {
-        kicked = true;
-        reason = 'Suspicious username pattern: ' + member.user.username;
-      }
-    }
-
-    if (kicked) {
-      try {
-        await member.send(`🚪 You were kicked from **${member.guild.name}** — ${reason}. Please contact an admin if this was a mistake.`).catch(() => {});
-        await member.kick('SpideyBot Join Gate: ' + reason);
-        logModAction(member.guild, 'KICK', client.user, member.user.tag, 'Join Gate: ' + reason);
-        sendAuditLog(member.guild, guildConfig, '🚪 Join Gate KICK', `**User:** ${member.user.tag}\n**Reason:** ${reason}\n**Account Age:** ${Math.floor(accountAgeDays)} days`, 0xFF6B6B);
-      } catch (e) { console.error('Join gate action failed:', e.message); }
-      return; // Don't send welcome message to kicked user
-    }
-  }
-
-  // Check if welcome messages are disabled via dashboard toggle
-  if (guildConfig.welcomeMessages === false) return;
-  
-  const welcomeSettings = getWelcomeSettings(guildConfig);
-  const { enableWelcome, welcomeChannelId, welcomeMessage } = welcomeSettings;
-  
-  if (!enableWelcome || !welcomeChannelId) return;
-
-  const dedupeKey = `${member.guild.id}:${member.id}`;
-  const lastWelcomeAt = recentWelcomeSends.get(dedupeKey);
-  const now = Date.now();
-  if (lastWelcomeAt && now - lastWelcomeAt < WELCOME_DEDUPE_MS) {
-    console.warn(`⚠️ Suppressed duplicate welcome for ${member.user.tag} in ${member.guild.name} (pid ${process.pid})`);
-    return;
-  }
-
-  const welcomeChannel = member.guild.channels.cache.get(welcomeChannelId);
-  if (welcomeChannel) {
-    try {
-      let message = welcomeMessage;
-      message = message
-        .replace(/{user}/g, member.toString())
-        .replace(/{username}/g, member.user.username)
-        .replace(/{displayname}/g, member.displayName)
-        .replace(/{server}/g, member.guild.name)
-        .replace(/{membercount}/g, member.guild.memberCount);
-
-      await welcomeChannel.send(message);
-      recentWelcomeSends.set(dedupeKey, now);
-      console.log(`✅ Welcome message sent to ${member.user.tag} (pid ${process.pid}, listeners=${client.listenerCount("guildMemberAdd")})`);
-    } catch (error) {
-      console.error(`❌ Failed to send welcome: ${error.message}`);
-    }
-  }
-}
-
-client.removeAllListeners("guildMemberAdd");
-client.on("guildMemberAdd", handleGuildMemberAdd);
+// ============== WELCOME NEW MEMBERS ==============
+// Handled by modular server-messages and invites handlers
 
 // ============== MEMBER LEAVES ==============
-client.on("guildMemberRemove", async (member) => {
-  addActivity(member.guild.id, "👋", member.user.username, "left the server");
-  
-  // Track member leaves
-  const config = loadConfig();
-  if (!config.guilds[member.guild.id]) config.guilds[member.guild.id] = {};
-  if (!config.guilds[member.guild.id].memberEvents) config.guilds[member.guild.id].memberEvents = [];
-  
-  config.guilds[member.guild.id].memberEvents.unshift({
-    type: "leave",
-    user: member.user.username,
-    userId: member.user.id,
-    timestamp: new Date().toLocaleString()
-  });
-  config.guilds[member.guild.id].memberEvents = config.guilds[member.guild.id].memberEvents.slice(0, 50);
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-
-  // Send goodbye message if enabled
-  const guildConfig = getGuildConfig(member.guild.id);
-  const serverMessages = guildConfig.serverMessages || {};
-  const goodbyeChannelId = serverMessages.goodbyeChannel || serverMessages.welcomeChannel || guildConfig.welcomeChannelId;
-  
-  if (!serverMessages.enableGoodbye || !goodbyeChannelId) return;
-
-  const goodbyeChannel = member.guild.channels.cache.get(goodbyeChannelId);
-  if (goodbyeChannel) {
-    try {
-      let message = serverMessages.goodbyeMessage || "{user} has left the server.";
-      message = message
-        .replace(/{user}/g, member.user.username)
-        .replace(/{username}/g, member.user.username)
-        .replace(/{server}/g, member.guild.name);
-
-      await goodbyeChannel.send(message);
-      console.log(`✅ Goodbye message sent for ${member.user.tag}`);
-    } catch (error) {
-      console.error(`❌ Failed to send goodbye: ${error.message}`);
-    }
-  }
-});
+// Handled by modular server-messages and invites handlers
 
 // ============== MEMBER UPDATES (BOOSTS, ROLES) ==============
-client.on("guildMemberUpdate", async (oldMember, newMember) => {
-  // Check if member got a boost role
-  const oldBoostRole = oldMember.roles.cache.some(r => r.name === "Server Booster" || r.name === "Nitro Booster");
-  const newBoostRole = newMember.roles.cache.some(r => r.name === "Server Booster" || r.name === "Nitro Booster");
-  
-  if (!oldBoostRole && newBoostRole) {
-    addActivity(newMember.guild.id, "💎", newMember.user.username, "boosted the server");
-    
-    // Track boosts
-    const config = loadConfig();
-    if (!config.guilds[newMember.guild.id]) config.guilds[newMember.guild.id] = {};
-    if (!config.guilds[newMember.guild.id].memberEvents) config.guilds[newMember.guild.id].memberEvents = [];
-    
-    config.guilds[newMember.guild.id].memberEvents.unshift({
-      type: "boost",
-      user: newMember.user.username,
-      userId: newMember.user.id,
-      timestamp: new Date().toLocaleString()
-    });
-    config.guilds[newMember.guild.id].memberEvents = config.guilds[newMember.guild.id].memberEvents.slice(0, 50);
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-  }
-});
+// Handled by modular server-messages handler
 
 // ============== ROLE EVENTS ==============
-client.on("roleCreate", async (role) => {
-  addActivity(role.guild.id, "🏷️", "Role created", `${role.name} - ${role.id}`);
-});
-
-client.on("roleDelete", async (role) => {
-  addActivity(role.guild.id, "🗑️", "Role deleted", `${role.name} - ${role.id}`);
-});
-
-client.on("roleUpdate", async (oldRole, newRole) => {
-  let changes = [];
-  if (oldRole.name !== newRole.name) changes.push(`name: ${oldRole.name} → ${newRole.name}`);
-  if (oldRole.color !== newRole.color) changes.push("color changed");
-  if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) changes.push("permissions changed");
-  
-  if (changes.length > 0) {
-    addActivity(newRole.guild.id, "✏️", "Role updated", `${newRole.name} - ${changes.join(", ")}`);
-  }
-});
+// Tracked by modular server-guard handler
 
 // ============== CHANNEL EVENTS ==============
-client.on("channelCreate", async (channel) => {
-  if (channel.isDMBased()) return;
-  addActivity(channel.guild.id, "📝", "Channel created", `#${channel.name} - ${channel.id}`);
-});
+// Tracked by modular server-guard handler
 
-client.on("channelDelete", async (channel) => {
-  if (channel.isDMBased()) return;
-  addActivity(channel.guild.id, "🗑️", "Channel deleted", `#${channel.name} - ${channel.id}`);
-
-  // Anti-nuke: track channel deletions by audit log executor
-  const guildConfig = getGuildConfig(channel.guild.id);
-  const anConfig = guildConfig.antiNuke || {};
-  if (anConfig.enabled !== false) {
-    try {
-      const auditLogs = await channel.guild.fetchAuditLogs({ type: 12, limit: 1 }); // CHANNEL_DELETE = 12
-      const entry = auditLogs.entries.first();
-      if (entry && entry.executor && !entry.executor.bot) {
-        const key = `${channel.guild.id}:${entry.executor.id}`;
-        const now = Date.now();
-        if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
-        const nt = nukeTracker.get(key);
-        nt.actions.push(now);
-        nt.actions = nt.actions.filter(t => now - t < 30000);
-        const maxActions = anConfig.maxActions || 10;
-
-        if (nt.actions.length >= maxActions) {
-          sendAuditLog(channel.guild, guildConfig, '🚨 ANTI-NUKE TRIGGERED', `**${entry.executor.tag}** performed ${nt.actions.length} destructive actions in 30s!\nAction: Channel deletion`, 0xED4245);
-          if (anConfig.mode === 'lockdown') {
-            try {
-              const member = channel.guild.members.cache.get(entry.executor.id);
-              if (member && member.manageable) {
-                await member.roles.set([], 'SpideyBot Anti-Nuke: lockdown');
-                await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass destructive actions');
-              }
-            } catch (e) { console.error('Anti-nuke lockdown failed:', e.message); }
-          }
-          nt.actions = [];
-        }
-      }
-    } catch (e) { /* audit log fetch may fail without permissions */ }
-  }
-});
-
-client.on("channelUpdate", async (oldChannel, newChannel) => {
-  if (oldChannel.isDMBased()) return;
-  let changes = [];
-  if (oldChannel.name !== newChannel.name) changes.push(`name: ${oldChannel.name} → ${newChannel.name}`);
-  if (oldChannel.topic !== newChannel.topic) changes.push("topic changed");
-  if (oldChannel.type !== newChannel.type) changes.push("type changed");
-  
-  if (changes.length > 0) {
-    addActivity(newChannel.guild.id, "✏️", "Channel updated", `#${newChannel.name} - ${changes.join(", ")}`);
-  }
-});
-
-// ============== ANTI-NUKE: ROLE DELETE ==============
-client.on("roleDelete", async (role) => {
-  const guildConfig = getGuildConfig(role.guild.id);
-  const anConfig = guildConfig.antiNuke || {};
-  if (anConfig.enabled === false) return;
-  try {
-    const auditLogs = await role.guild.fetchAuditLogs({ type: 32, limit: 1 }); // ROLE_DELETE = 32
-    const entry = auditLogs.entries.first();
-    if (entry && entry.executor && !entry.executor.bot) {
-      const key = `${role.guild.id}:${entry.executor.id}`;
-      const now = Date.now();
-      if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
-      const nt = nukeTracker.get(key);
-      nt.actions.push(now);
-      nt.actions = nt.actions.filter(t => now - t < 30000);
-      const maxActions = anConfig.maxActions || 10;
-      if (nt.actions.length >= maxActions) {
-        sendAuditLog(role.guild, guildConfig, '🚨 ANTI-NUKE TRIGGERED', `**${entry.executor.tag}** deleted ${nt.actions.length} roles in 30s!`, 0xED4245);
-        if (anConfig.mode === 'lockdown') {
-          const member = role.guild.members.cache.get(entry.executor.id);
-          if (member && member.manageable) {
-            await member.roles.set([], 'Anti-Nuke: mass role deletion').catch(() => {});
-            await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass role deletion').catch(() => {});
-          }
-        }
-        nt.actions = [];
-      }
-    }
-  } catch (e) { /* permissions may prevent audit log access */ }
-});
-
-// ============== ANTI-NUKE: MASS BAN DETECTION ==============
-client.on("guildBanAdd", async (ban) => {
-  addActivity(ban.guild.id, "🔨", ban.user.username, "was banned");
-  const guildConfig = getGuildConfig(ban.guild.id);
-  const anConfig = guildConfig.antiNuke || {};
-  if (anConfig.enabled === false) return;
-  try {
-    const auditLogs = await ban.guild.fetchAuditLogs({ type: 22, limit: 1 }); // MEMBER_BAN_ADD = 22
-    const entry = auditLogs.entries.first();
-    if (entry && entry.executor && !entry.executor.bot) {
-      const key = `${ban.guild.id}:${entry.executor.id}`;
-      const now = Date.now();
-      if (!nukeTracker.has(key)) nukeTracker.set(key, { actions: [] });
-      const nt = nukeTracker.get(key);
-      nt.actions.push(now);
-      nt.actions = nt.actions.filter(t => now - t < 30000);
-      const maxActions = anConfig.maxActions || 10;
-      if (nt.actions.length >= maxActions) {
-        sendAuditLog(ban.guild, guildConfig, '🚨 ANTI-NUKE: MASS BAN', `**${entry.executor.tag}** banned ${nt.actions.length} users in 30s!`, 0xED4245);
-        if (anConfig.mode === 'lockdown') {
-          const member = ban.guild.members.cache.get(entry.executor.id);
-          if (member && member.manageable) {
-            await member.roles.set([], 'Anti-Nuke: mass banning').catch(() => {});
-            await member.timeout(24 * 60 * 60 * 1000, 'Anti-Nuke: mass banning').catch(() => {});
-          }
-        }
-        nt.actions = [];
-      }
-    }
-  } catch (e) { /* permissions may prevent audit log access */ }
-});
+// ============== ANTI-NUKE ==============
+// Handled by modular server-guard handler
 
 // ============== MESSAGE LOGGING ==============
-client.on("messageDelete", async (message) => {
-  if (!message.guild || message.author?.bot) return;
-  const config = loadConfig();
-  const logging = config.guilds?.[message.guild.id]?.logging?.messageLogging;
-  if (!logging?.logDeleted || !logging?.logChannel) return;
-
-  const logChannel = message.guild.channels.cache.get(logging.logChannel);
-  if (!logChannel) return;
-
-  // Try to get audit log info for who deleted the message
-  let deleter = "Unknown";
-  try {
-    const auditLogs = await message.guild.fetchAuditLogs({ type: 'MESSAGE_DELETE', limit: 1 });
-    const deleteEntry = auditLogs.entries.first();
-    if (deleteEntry && deleteEntry.target.id === message.author.id) {
-      deleter = deleteEntry.executor.tag;
-    }
-  } catch (e) { /* Audit log may not be available */ }
-
-  const content = message.content || "*No text content*";
-  const attachmentCount = message.attachments?.size || 0;
-  
-  const embed = new EmbedBuilder()
-    .setColor(0xFF6B6B)
-    .setTitle("🗑️ Message Deleted")
-    .addFields(
-      { name: "Author", value: message.author?.tag || "Unknown", inline: true },
-      { name: "Deleted By", value: deleter, inline: true },
-      { name: "Channel", value: `<#${message.channel.id}>`, inline: true },
-      { name: "Message ID", value: message.id, inline: true },
-      { name: "Content", value: content.substring(0, 1000) }
-    )
-    .setFooter({ text: attachmentCount > 0 ? `Attachments: ${attachmentCount}` : "" })
-    .setTimestamp();
-  
-  // Add jump link
-  const jumpLink = `[Jump to message](https://discord.com/channels/${message.guild.id}/${message.channel.id}/${message.id})`;
-  embed.addFields({ name: "Link", value: jumpLink });
-  
-  logChannel.send({ embeds: [embed] }).catch(() => {});
-});
-
-client.on("messageUpdate", async (oldMessage, newMessage) => {
-  if (!newMessage.guild || newMessage.author?.bot) return;
-  if (oldMessage.content === newMessage.content) return;
-  const config = loadConfig();
-  const logging = config.guilds?.[newMessage.guild.id]?.logging?.messageLogging;
-  if (!logging?.logEdited || !logging?.logChannel) return;
-
-  const logChannel = newMessage.guild.channels.cache.get(logging.logChannel);
-  if (!logChannel) return;
-
-  const embed = new EmbedBuilder()
-    .setColor(0xFFBD39)
-    .setTitle("✏️ Message Edited")
-    .addFields(
-      { name: "Author", value: newMessage.author?.tag || "Unknown", inline: true },
-      { name: "Channel", value: `<#${newMessage.channel.id}>`, inline: true },
-      { name: "Message ID", value: newMessage.id, inline: true },
-      { name: "Before", value: (oldMessage.content || "*empty*").substring(0, 500) },
-      { name: "After", value: (newMessage.content || "*empty*").substring(0, 500) }
-    )
-    .setTimestamp();
-  
-  const jumpLink = `[Jump to message](https://discord.com/channels/${newMessage.guild.id}/${newMessage.channel.id}/${newMessage.id})`;
-  embed.addFields({ name: "Link", value: jumpLink });
-  
-  logChannel.send({ embeds: [embed] }).catch(() => {});
-});
-
-client.on("messageDeleteBulk", async (messages) => {
-  const first = messages.first();
-  if (!first?.guild) return;
-  const config = loadConfig();
-  const logging = config.guilds?.[first.guild.id]?.logging?.messageLogging;
-  if (!logging?.logBulkDelete || !logging?.logChannel) return;
-
-  const logChannel = first.guild.channels.cache.get(logging.logChannel);
-  if (!logChannel) return;
-
-  // Try to get who performed the bulk delete
-  let deleter = "Unknown";
-  try {
-    const auditLogs = await first.guild.fetchAuditLogs({ type: 'MESSAGE_BULK_DELETE', limit: 1 });
-    const deleteEntry = auditLogs.entries.first();
-    if (deleteEntry) {
-      deleter = deleteEntry.executor.tag;
-    }
-  } catch (e) { /* Audit log may not be available */ }
-
-  // Collect a few message previews
-  const msgPreviews = messages.first(5).map(m => m.content?.substring(0, 100) || "*image/attachment*").join('\n');
-  
-  const embed = new EmbedBuilder()
-    .setColor(0xED4245)
-    .setTitle("🗑️ Bulk Message Delete")
-    .addFields(
-      { name: "Deleted By", value: deleter, inline: true },
-      { name: "Channel", value: `<#${first.channel.id}>`, inline: true },
-      { name: "Total Messages", value: `${messages.size}`, inline: true },
-      { name: "Message IDs", value: messages.map(m => m.id).slice(0, 5).join('\n'), inline: false }
-    )
-    .setTimestamp();
-
-  if (msgPreviews) {
-    embed.addFields({ name: "Recent Messages (preview)", value: msgPreviews.substring(0, 500) });
-  }
-  
-  logChannel.send({ embeds: [embed] }).catch(() => {});
-});
+// Handled by modular logging handler
 
 // ============== REACTION ROLE HANDLERS ==============
-client.on("messageReactionAdd", async (reaction, user) => {
-  if (user.bot) return;
-  // Partial handling — fetch full data if needed
-  if (reaction.partial) { try { await reaction.fetch(); } catch (e) { return; } }
-  if (reaction.message.partial) { try { await reaction.message.fetch(); } catch (e) { return; } }
-
-  const guildId = reaction.message.guild?.id;
-  if (!guildId) return;
-
-  const config = loadConfig();
-  const rr = config.guilds[guildId]?.reactRoles;
-  if (!rr || !Array.isArray(rr.entries) || rr.entries.length === 0) return;
-
-  const messageId = reaction.message.id;
-  const emojiStr = reaction.emoji.id ? `<:${reaction.emoji.name}:${reaction.emoji.id}>` : reaction.emoji.name;
-
-  // Find matching entry
-  const entry = rr.entries.find(e => e.messageId === messageId && (e.emoji === emojiStr || e.emoji === reaction.emoji.name));
-  if (!entry) return;
-  
-  // Check required roles if specified
-  const requiredRoles = entry.requiredRoleIds;
-  if (requiredRoles && Array.isArray(requiredRoles) && requiredRoles.length > 0) {
-    const member = await guild.members.fetch(user.id).catch(() => null);
-    if (!member) return;
-    const hasRequired = requiredRoles.some(reqRoleId => member.roles.cache.has(reqRoleId));
-    if (!hasRequired) {
-      // User doesn't have required role - remove their reaction and warn them
-      try {
-        await reaction.users.remove(user.id).catch(() => {});
-        try {
-          await user.send({ embeds: [
-            new EmbedBuilder()
-              .setColor(0xFF4444)
-              .setTitle('❌ Role Unavailable')
-              .setDescription(`You need one of the required roles to claim this reaction role. Contact an admin for access.`)
-              .setTimestamp()
-          ]});
-        } catch (e) { /* DMs may be disabled */ }
-      } catch (e) {}
-      return;
-    }
-  }
-
-  try {
-    const guild = reaction.message.guild;
-    const member = await guild.members.fetch(user.id);
-    const role = guild.roles.cache.get(entry.roleId);
-    if (!role) return;
-
-    // If allowMultiple is false, check if user already has a reaction role from this message
-    if (rr.allowMultiple === false) {
-      const messageEntries = rr.entries.filter(e => e.messageId === messageId);
-      for (const me of messageEntries) {
-        if (me.roleId !== entry.roleId && member.roles.cache.has(me.roleId)) {
-          const oldRole = guild.roles.cache.get(me.roleId);
-          if (oldRole) await member.roles.remove(oldRole).catch(() => {});
-          // Remove their reaction on the old emoji
-          try {
-            const oldReaction = reaction.message.reactions.cache.find(r => r.emoji.name === me.emoji || r.emoji.toString() === me.emoji);
-            if (oldReaction) await oldReaction.users.remove(user.id).catch(() => {});
-          } catch (e) { /* ignore */ }
-        }
-      }
-    }
-
-    await member.roles.add(role);
-    console.log(`🎭 Reaction role: +@${role.name} to ${user.tag} (${guildId})`);
-
-    // DM confirmation
-    if (rr.dmConfirm) {
-      try {
-        await user.send({ embeds: [
-          new EmbedBuilder()
-            .setColor(0x00D4FF)
-            .setTitle('✅ Role Added')
-            .setDescription(`You've been given the **@${role.name}** role in **${guild.name}**!`)
-            .setTimestamp()
-        ]});
-      } catch (e) { /* DMs may be disabled */ }
-    }
-  } catch (err) {
-    console.error('❌ Reaction role add error:', err.message);
-  }
-});
-
-client.on("messageReactionRemove", async (reaction, user) => {
-  if (user.bot) return;
-  if (reaction.partial) { try { await reaction.fetch(); } catch (e) { return; } }
-  if (reaction.message.partial) { try { await reaction.message.fetch(); } catch (e) { return; } }
-
-  const guildId = reaction.message.guild?.id;
-  if (!guildId) return;
-
-  const config = loadConfig();
-  const rr = config.guilds[guildId]?.reactRoles;
-  if (!rr || !Array.isArray(rr.entries) || rr.entries.length === 0) return;
-  if (rr.removeOnUnreact === false) return; // Setting: don't remove on unreact
-
-  const messageId = reaction.message.id;
-  const emojiStr = reaction.emoji.id ? `<:${reaction.emoji.name}:${reaction.emoji.id}>` : reaction.emoji.name;
-
-  const entry = rr.entries.find(e => e.messageId === messageId && (e.emoji === emojiStr || e.emoji === reaction.emoji.name));
-  if (!entry) return;
-
-  try {
-    const guild = reaction.message.guild;
-    const member = await guild.members.fetch(user.id);
-    const role = guild.roles.cache.get(entry.roleId);
-    if (!role) return;
-
-    await member.roles.remove(role);
-    console.log(`🎭 Reaction role: -@${role.name} from ${user.tag} (${guildId})`);
-
-    // DM confirmation
-    if (rr.dmConfirm) {
-      try {
-        await user.send({ embeds: [
-          new EmbedBuilder()
-            .setColor(0xED4245)
-            .setTitle('❌ Role Removed')
-            .setDescription(`The **@${role.name}** role has been removed in **${guild.name}**.`)
-            .setTimestamp()
-        ]});
-      } catch (e) { /* DMs may be disabled */ }
-    }
-  } catch (err) {
-    console.error('❌ Reaction role remove error:', err.message);
-  }
-});
+// Handled by modular reaction-roles handler
 
 // ============== MESSAGE COMMANDS ==============
 client.on("messageCreate", async (msg) => {
@@ -1626,61 +1074,6 @@ client.on("messageCreate", async (msg) => {
   
   // LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
   const guildConfig = getGuildConfig(msg.guild.id);
-
-  // ============== MESSAGE COUNTING ==============
-  const messageCounting = guildConfig.messageCounting || {};
-  if (messageCounting.enabled !== false) {
-    const ignoredChannels = messageCounting.ignoredChannels || [];
-    if (!ignoredChannels.includes(msg.channelId)) {
-      messageCounting.totalMessages = (messageCounting.totalMessages || 0) + 1;
-      messageCounting.byUser = messageCounting.byUser || {};
-      messageCounting.byChannel = messageCounting.byChannel || {};
-      messageCounting.byUser[msg.author.id] = (messageCounting.byUser[msg.author.id] || 0) + 1;
-      messageCounting.byChannel[msg.channelId] = (messageCounting.byChannel[msg.channelId] || 0) + 1;
-      guildConfig.messageCounting = messageCounting;
-      updateGuildConfig(msg.guild.id, { messageCounting });
-    }
-  }
-
-  // ============== SERVER GUARD: ANTI-SPAM ==============
-  const asConfig = guildConfig.antiSpam || {};
-  if (asConfig.enabled !== false && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    const key = `${msg.guild.id}:${msg.author.id}`;
-    const now = Date.now();
-    if (!spamTracker.has(key)) spamTracker.set(key, { timestamps: [], warned: false });
-    const tracker = spamTracker.get(key);
-    tracker.timestamps.push(now);
-    // Keep only messages within the last 5 seconds
-    tracker.timestamps = tracker.timestamps.filter(t => now - t < 5000);
-    const limit = asConfig.messagesPerLimit || 5;
-
-    if (tracker.timestamps.length > limit) {
-      const action = (asConfig.action || 'warn').toLowerCase();
-      try {
-        if (action === 'ban') {
-          await msg.member.ban({ reason: 'SpideyBot Anti-Spam: exceeded message limit' });
-          logModAction(msg.guild, 'BAN', client.user, msg.author.tag, 'Anti-Spam: exceeded message limit');
-          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam BAN', `${msg.author.tag} was banned for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xED4245);
-        } else if (action === 'kick') {
-          await msg.member.kick('SpideyBot Anti-Spam: exceeded message limit');
-          logModAction(msg.guild, 'KICK', client.user, msg.author.tag, 'Anti-Spam: exceeded message limit');
-          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam KICK', `${msg.author.tag} was kicked for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFF6B6B);
-        } else if (action === 'mute') {
-          await msg.member.timeout(5 * 60 * 1000, 'SpideyBot Anti-Spam: exceeded message limit');
-          logModAction(msg.guild, 'MUTE', client.user, msg.author.tag, 'Anti-Spam: 5min timeout');
-          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam MUTE', `${msg.author.tag} was timed out for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFFBD39);
-        } else if (!tracker.warned) {
-          await msg.reply('⚠️ **Slow down!** You are sending messages too fast.');
-          tracker.warned = true;
-          logModAction(msg.guild, 'WARN', client.user, msg.author.tag, 'Anti-Spam: sending messages too fast');
-          sendAuditLog(msg.guild, guildConfig, '🛡️ Anti-Spam WARN', `${msg.author.tag} warned for spamming (${tracker.timestamps.length} msgs in 5s)`, 0xFFBD39);
-          setTimeout(() => { tracker.warned = false; }, 10000);
-        }
-      } catch (e) { console.error('Anti-spam action failed:', e.message); }
-      tracker.timestamps = [];
-      return;
-    }
-  }
 
   // ============== SERVER GUARD: LINK SCANNING ==============
   const lsConfig = guildConfig.linkScanning || {};
@@ -1755,87 +1148,7 @@ client.on("messageCreate", async (msg) => {
     }
   }
 
-  // ============== AUTO XP GAIN ==============
-       if (!msg.content.startsWith("/") && guildConfig.levelingSystem !== false) {
-     const levels = guildConfig.levels || {};
-     const userId = msg.author.id;
-     const lastXpTime = levels[`${userId}_xp_time`] || 0;
-        const now = Date.now();
-  
-        if (now - lastXpTime > 60000) {
-           const xpGain = Math.floor(Math.random() * 20) + 10;
-           const oldXp = levels[userId + "_xp"] || 0;
-           const xpLevelConfig = guildConfig['xp-levels'] || {};
-           const xpPerLevel = xpLevelConfig.xpPerLevel || guildConfig.xpSettings?.perLevel || 500;
-           const oldLevel = Math.floor(oldXp / xpPerLevel);
-           levels[userId + "_xp"] = oldXp + xpGain;
-           levels[`${userId}_xp_time`] = now;
-           
-           const newXp = levels[userId + "_xp"];
-           const newLevel = Math.floor(newXp / xpPerLevel);
-           if (newLevel > oldLevel) {
-             const level = newLevel;
-             
-             // Check for notification channel and send level-up message
-             const announceChannelId = xpLevelConfig.announcementChannel;
-             if (announceChannelId) {
-               const announceChannel = msg.guild.channels.cache.get(announceChannelId);
-               if (announceChannel && xpLevelConfig.announceLevelUps !== false) {
-                 await announceChannel.send(`${msg.author} just reached Level ${level}!`).catch(() => {});
-               }
-             } else if (xpLevelConfig.announceLevelUps !== false) {
-               // Fallback to message reply if no channel configured
-               await msg.reply(`🎉 **${msg.author.tag}** just reached Level ${level}!`).catch(() => {});
-             }
-             
-             addActivity(msg.guild.id, "⬆️", msg.author.username, `reached Level ${level}`);
-  
-            const levelRoles = xpLevelConfig.levelRoles || guildConfig.levelRoles || {};
-            const newRoleId = levelRoles[`level_${level}`];
-            const keepOldRoles = guildConfig.keepOldLevelRoles !== false; // default true
-            
-            try {
-              // Remove old level roles only if keepOldRoles is false
-              if (!keepOldRoles) {
-                for (let oldLvl = 1; oldLvl < level; oldLvl++) {
-                  const oldRoleId = levelRoles[`level_${oldLvl}`];
-                  if (oldRoleId) {
-                    const oldRole = msg.guild.roles.cache.get(oldRoleId);
-                    if (oldRole && msg.member.roles.cache.has(oldRoleId)) {
-                      await msg.member.roles.remove(oldRole).catch(() => {});
-                    }
-                  }
-                }
-              }
-              
-              // Add new level role
-              if (newRoleId) {
-                const newRole = msg.guild.roles.cache.get(newRoleId);
-                if (newRole) await msg.member.roles.add(newRole).catch(() => {});
-              }
-            } catch (err) {
-              console.error(`❌ Failed to manage level roles: ${err.message}`);
-            }
-            
-            // Auto-update nickname if enabled
-            if (xpLevelConfig.autoNickname === true) {
-              try {
-                const nickTemplate = xpLevelConfig.nicknameTemplate || "{name} {level}";
-                const nick = nickTemplate
-                  .replace(/{name}/g, msg.member.displayName || msg.author.username)
-                  .replace(/{level}/g, level.toString());
-                if (msg.member.manageable) {
-                  await msg.member.setNickname(nick).catch(() => {});
-                }
-              } catch(e) {
-                console.error(`Failed to set nickname: ${e.message}`);
-              }
-            }
-           }
- 
-       updateGuildConfig(msg.guild.id, { levels });
-     }
-   }
+  // ============== PERMISSIONS FROM DASHBOARD ==============
 
   // Message Statistics
   if (msg.content === "/stats") {
@@ -2222,15 +1535,6 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Profanity filter is now **${newState ? "ON" : "OFF"}**`);
   }
 
-  // Auto-delete messages with profanity
-  if (guildConfig.profanityFilterEnabled && guildConfig.badWords) {
-    const hasSwearing = guildConfig.badWords.some(word => msg.content.toLowerCase().includes(word.toLowerCase()));
-    if (hasSwearing && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      msg.delete().catch(() => {});
-      return msg.author.send("⚠️ Your message was deleted because it contains profanity.").catch(() => {});
-    }
-  }
-
   // ============== LINK FILTERING ==============
   if (msg.content.startsWith("/link-filter ")) {
     if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
@@ -2241,149 +1545,11 @@ client.on("messageCreate", async (msg) => {
     return msg.reply(`✅ Link filter is now **${newState ? "ON" : "OFF"}**`);
   }
 
-  // Auto-delete messages with links/invites
-  if (guildConfig.linkFilterEnabled && !msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    const linkRegex = /(https?:\/\/[^\s]+|discord\.(gg|io|me)\/[^\s]+)/gi;
-    if (linkRegex.test(msg.content)) {
-      msg.delete().catch(() => {});
-      return msg.author.send("🔗 Links are not allowed in this server!").catch(() => {});
-    }
-  }
-
   // ============== TICKET SYSTEM ==============
-  if (msg.content === "/ticket") {
-    if (!guildConfig.ticketsEnabled) return msg.reply("❌ Ticket system is not enabled! Admin use: `/ticket-setup #channel`");
-    const userId = msg.author.id;
-    const ticketChannelName = `ticket-${msg.author.username.slice(0, 10)}`;
-
-    try {
-      const ticketChannel = await msg.guild.channels.create({
-        name: ticketChannelName,
-        type: 0,
-        permissionOverwrites: [
-          { id: msg.guild.id, deny: ["ViewChannel"] },
-          { id: userId, allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"] }
-        ]
-      });
-
-      const ticketEmbed = new EmbedBuilder()
-        .setColor('#004B87')
-        .setTitle("🎫 Support Ticket Created")
-        .setDescription(`Support team will be with you shortly!`)
-        .addFields({ name: "User", value: msg.author.toString(), inline: true });
-
-      ticketChannel.send({ embeds: [ticketEmbed] });
-      return msg.reply(`✅ Ticket created: ${ticketChannel.toString()}`);
-    } catch (error) {
-      return msg.reply("❌ Failed to create ticket!");
-    }
-  }
-
-  if (msg.content === "/close-ticket") {
-    if (!msg.channel.name.startsWith("ticket-")) return msg.reply("❌ This is not a ticket channel!");
-    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) return msg.reply("❌ Only admins can close tickets!");
-    msg.channel.delete().catch(() => {});
-  }
-
-  if (msg.content === "/activetickets" || msg.content === "/list-tickets") {
-    const ticketsData = guildConfig.tickets || {};
-    const category = ticketsData.category;
-    const staffRoles = ticketsData.staffRoles || [];
-    
-    const activeTickets = Object.entries(ticketsData).filter(([key, value]) => {
-      if (key === 'category' || key === 'staffRoles') return false;
-      return value && typeof value === 'object' && !Array.isArray(value) && (value.status === 'open' || value.status === 'active');
-    });
-    
-    if (activeTickets.length === 0) {
-      return msg.reply("🎫 **Active Tickets**\n\nNo active tickets!\nUse `/ticket` to create one.");
-    }
-    
-    const embed = new EmbedBuilder()
-      .setColor('#9151ff')
-      .setTitle('🎫 Active Tickets')
-      .setDescription(`${activeTickets.length} open ticket(s)`);
-    
-    activeTickets.forEach(([id, ticket], i) => {
-      const user = ticket.user ? `<@${ticket.user}>` : 'Unknown';
-      const created = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'Unknown';
-      embed.addFields({
-        name: `${i + 1}. ${id}`,
-        value: `User: ${user} | Created: ${created}`,
-        inline: false
-      });
-    });
-    
-    embed.addFields({
-      name: 'Settings',
-      value: `Category: ${category || 'Not set'} | Staff Roles: ${staffRoles.length}`,
-      inline: false
-    });
-    
-    return msg.reply({ embeds: [embed] });
-  }
-
-  if (msg.content.startsWith("/ticket-setup ")) {
-    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return msg.reply("❌ Only admins can setup tickets!");
-    }
-    const channel = msg.mentions.channels.first();
-    if (!channel) return msg.reply("Usage: /ticket-setup #channel");
-    updateGuildConfig(msg.guild.id, { ticketsEnabled: true, ticketChannelId: channel.id });
-    return msg.reply(`✅ Ticket system enabled! Users can create tickets with \`/ticket\``);
-  }
+  // Handled by modular tickets handler
 
   // ============== CUSTOM COMMANDS ==============
-  if (msg.content.startsWith("/addcmd ")) {
-    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return msg.reply("❌ Only admins can create custom commands!");
-    }
-    const args = msg.content.slice(9).trim().split("|");
-    const cmdName = args[0]?.trim();
-    const cmdResponse = args[1]?.trim();
-    if (!cmdName || !cmdResponse) return msg.reply("Usage: /addcmd [command] | [response]\nExample: /addcmd hello | Hey there!");
-
-    const customCmds = guildConfig.customCommands || {};
-    customCmds[cmdName] = cmdResponse;
-    updateGuildConfig(msg.guild.id, { customCommands: customCmds });
-    return msg.reply(`✅ Custom command **${cmdName}** created! Use \`/${cmdName}\` to trigger it.`);
-  }
-
-  if (msg.content.startsWith("/delcmd ")) {
-    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return msg.reply("❌ Only admins can delete custom commands!");
-    }
-    const cmdName = msg.content.slice(9).trim();
-    if (!cmdName) return msg.reply("Usage: /delcmd [command]");
-
-    const customCmds = guildConfig.customCommands || {};
-    if (!customCmds[cmdName]) return msg.reply(`❌ Custom command **${cmdName}** not found!`);
-    delete customCmds[cmdName];
-    updateGuildConfig(msg.guild.id, { customCommands: customCmds });
-    return msg.reply(`✅ Custom command **${cmdName}** deleted!`);
-  }
-
-  // Trigger custom commands
-  const customCmds = guildConfig.customCommands || {};
-  if (msg.content.startsWith("/") && msg.content.length > 2) {
-    const cmdName = msg.content.slice(2).split(" ")[0];
-    let command = customCmds[cmdName];
-    if (command) {
-      // Handle legacy string format
-      const response = typeof command === 'string' ? command : command.response;
-      const allowedRoles = typeof command === 'object' ? (command.allowedRoles || []) : [];
-      
-      // Check role access
-      if (allowedRoles.length > 0) {
-        const member = msg.member;
-        const hasRole = allowedRoles.some(roleId => member.roles.cache.has(roleId));
-        if (!hasRole) {
-          return msg.reply("❌ You don't have permission to use this command.").then(m => setTimeout(() => m.delete().catch(() => {}), 5000));
-        }
-      }
-      return msg.reply(response);
-    }
-  }
+  // Handled by modular custom-commands handler
 
   // ============== COMMUNITY TOOLS ==============
   if (msg.content === "/suggest") {
@@ -2417,41 +1583,6 @@ client.on("messageCreate", async (msg) => {
     if (!channel) return msg.reply("Usage: /config-suggestions #channel");
     updateGuildConfig(msg.guild.id, { suggestionsChannelId: channel.id });
     return msg.reply(`✅ Suggestions channel set to ${channel}`);
-  }
-
-  if (msg.content.startsWith("/giveaway ")) {
-    const tier = getGuildTier(msg.guild.id);
-    if (tier !== 'premium' && tier !== 'pro') {
-      return msg.reply("❌ Social notifications require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
-    }
-    if (!msg.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return msg.reply("❌ Only admins can create giveaways!");
-    }
-    const args = msg.content.slice(11).trim().split(" ");
-    const prize = args[0];
-    const duration = parseInt(args[1]) || 60;
-    if (!prize) return msg.reply("Usage: /giveaway [prize] [duration in seconds]");
-
-    const giveawayEmbed = new EmbedBuilder()
-      .setColor('#9B59B6')
-      .setTitle("🎁 GIVEAWAY!")
-      .setDescription(`**Prize:** ${prize}\n**Duration:** ${duration} seconds\n\nReact with 🎉 to enter!`)
-      .setFooter({ text: "SPIDEY BOT Giveaway" });
-
-    const giveawayMsg = await msg.channel.send({ embeds: [giveawayEmbed] });
-    await giveawayMsg.react("🎉");
-
-    setTimeout(async () => {
-      const reactions = giveawayMsg.reactions.cache.get("🎉");
-      if (!reactions) return;
-      const users = await reactions.users.fetch();
-      const filteredUsers = users.filter(u => !u.bot).map(u => u.id);
-      const winner = filteredUsers[Math.floor(Math.random() * filteredUsers.length)];
-      if (!winner) return msg.channel.send("❌ No valid entries!");
-      msg.channel.send(`🎉 Winner: <@${winner}> won **${prize}**!`);
-    }, duration * 1000);
-
-    return msg.reply("✅ Giveaway started!");
   }
 
   // ============== FUN COMMANDS ==============
@@ -3753,14 +2884,6 @@ client.on("messageCreate", async (msg) => {
     msg.reply(`✅ Message counting and XP per message now enabled! 📊`);
   }
 
-  // Custom command execution
-  if (msg.content.startsWith(guildConfig.prefix || "//")) {
-    const cmdName = msg.content.slice((guildConfig.prefix || "//").length).split(" ")[0];
-    const customCmds = guildConfig.customCommands || {};
-    if (customCmds[cmdName]) {
-      return msg.reply(customCmds[cmdName]);
-    }
-  }
 });
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS & SLASH COMMANDS) ==============
@@ -4119,52 +3242,8 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== CUSTOM COMMANDS ==========
-      if (commandName === 'addcustomcommand') {
-        const tier = getGuildTier(interaction.guild.id);
-        if (tier !== 'premium' && tier !== 'pro') {
-          return interaction.editReply("❌ Custom commands require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
-        }
-        
-        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-          return interaction.editReply("❌ Only admins can configure!");
-        }
-        
-        const cmdName = options.getString('command_name');
-        const response = options.getString('response');
-        const commands = guildConfig.customCommands || {};
-        
-        if (commands[cmdName]) {
-          return interaction.editReply(`❌ Command **${cmdName}** already exists!`);
-        }
-        
-        commands[cmdName] = response;
-        updateGuildConfig(interaction.guild.id, { customCommands: commands });
-        addActivity(interaction.guild.id, "➕", interaction.user.username, `added command: /${cmdName}`);
-        return interaction.editReply(`✅ Created custom command **/${cmdName}**`);
-      }
-      
-      if (commandName === 'removecustomcommand') {
-        const tier = getGuildTier(interaction.guild.id);
-        if (tier !== 'premium' && tier !== 'pro') {
-          return interaction.editReply("❌ Custom commands require **Premium** tier. Upgrade at: https://spideybot.ddns.net/premium");
-        }
-        
-        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-          return interaction.editReply("❌ Only admins can configure!");
-        }
-        
-        const cmdName = options.getString('command_name');
-        const commands = guildConfig.customCommands || {};
-        
-        if (!commands[cmdName]) {
-          return interaction.editReply(`❌ Command **${cmdName}** doesn't exist!`);
-        }
-        
-        delete commands[cmdName];
-        updateGuildConfig(interaction.guild.id, { customCommands: commands });
-        return interaction.editReply(`✅ Deleted command **/${cmdName}**`);
-      }
-      
+      // Handled by modular custom-commands handler
+
       // ========== CONFIGURATION ==========
       if (commandName === 'configwelcomechannel') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
@@ -4521,41 +3600,8 @@ client.on("interactionCreate", async (interaction) => {
       }
       
       // ========== CUSTOM COMMANDS (ALIASES) ==========
-      if (commandName === 'addcmd') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-          return interaction.editReply("❌ Only admins can add commands!");
-        }
-        
-        const cmdName = options.getString('command_name');
-        const response = options.getString('response');
-        const commands = guildConfig.customCommands || {};
-        
-        if (commands[cmdName]) {
-          return interaction.editReply(`❌ Command **${cmdName}** already exists!`);
-        }
-        
-        commands[cmdName] = response;
-        updateGuildConfig(interaction.guild.id, { customCommands: commands });
-        return interaction.editReply(`✅ Created command **/${cmdName}**`);
-      }
-      
-      if (commandName === 'delcmd') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-          return interaction.editReply("❌ Only admins can delete commands!");
-        }
-        
-        const cmdName = options.getString('command_name');
-        const commands = guildConfig.customCommands || {};
-        
-        if (!commands[cmdName]) {
-          return interaction.editReply(`❌ Command **${cmdName}** doesn't exist!`);
-        }
-        
-        delete commands[cmdName];
-        updateGuildConfig(interaction.guild.id, { customCommands: commands });
-        return interaction.editReply(`✅ Deleted command **/${cmdName}**`);
-      }
-      
+      // Handled by modular custom-commands handler
+
        // ========== CONFIGURATION ==========
        if (commandName === 'configxp') {
          if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
@@ -7285,64 +6331,7 @@ app.post("/api/giveaway/end", express.json(), async (req, res) => {
 });
 
 // Giveaway reaction handler
-client.on('messageReactionAdd', async (reaction, user) => {
-  if (user.bot) return;
-  // Support both '🎁' and '🎉' emojis for entering giveaways
-  if (reaction.emoji.name !== '🎁' && reaction.emoji.name !== '🎉') return;
-  
-  const config = loadConfig();
-  for (const [guildId, guildData] of Object.entries(config.guilds)) {
-    const giveaways = guildData.giveaways || {};
-    for (const [name, giveaway] of Object.entries(giveaways)) {
-      if (giveaway.messageId === reaction.message.id && giveaway.status === 'active') {
-        if (!giveaway.entries) giveaway.entries = [];
-        if (!giveaway.entries.includes(user.id)) {
-          giveaway.entries.push(user.id);
-          fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-          
-          // Update the embed with current participant count
-          try {
-            const channel = client.guilds.cache.get(guildId)?.channels.cache.get(giveaway.channelId);
-            if (channel) {
-              const message = await channel.messages.fetch(giveaway.messageId);
-              if (message) {
-                const embed = message.embeds[0];
-                if (embed) {
-                  const newDescription = embed.description
-                    .replace(/\d+ entered/, `${giveaway.entries.length} entered`);
-                  await message.edit({ embeds: [new EmbedBuilder(embed).setDescription(newDescription)] });
-                }
-              }
-            }
-          } catch(e) {
-            console.error('Failed to update giveaway embed:', e);
-          }
-        }
-        return;
-      }
-    }
-  }
-});
-
-// Giveaway reaction removal handler
-client.on('messageReactionRemove', async (reaction, user) => {
-  if (user.bot) return;
-  if (reaction.emoji.name !== '🎁' && reaction.emoji.name !== '🎉') return;
-  
-  const config = loadConfig();
-  for (const [guildId, guildData] of Object.entries(config.guilds)) {
-    const giveaways = guildData.giveaways || {};
-    for (const [name, giveaway] of Object.entries(giveaways)) {
-      if (giveaway.messageId === reaction.message.id && giveaway.status === 'active') {
-        if (giveaway.entries) {
-          giveaway.entries = giveaway.entries.filter(id => id !== user.id);
-          fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-        }
-        return;
-      }
-    }
-  }
-});
+// Handled by modular giveaways handler
 
 // Ticket API
 app.post("/api/ticket/message", express.json(), async (req, res) => {
@@ -7413,78 +6402,7 @@ app.post("/api/ticket/close", express.json(), async (req, res) => {
 });
 
 // Ticket button handler
-client.on('interactionCreate', async interaction => {
-  if (!interaction.isButton()) return;
-  if (interaction.customId !== 'ticket_create') return;
-  
-  const guild = interaction.guild;
-  const user = interaction.user;
-  const config = loadConfig();
-  const ticketConfig = config.guilds[guild.id]?.tickets || {};
-  
-  const ticketId = 'ticket-' + user.username.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  
-  // Check if ticket already exists
-  if (config.guilds[guild.id]?.tickets?.[ticketId]) {
-    const existing = config.guilds[guild.id].tickets[ticketId];
-    if (existing.channelId) {
-      const ch = guild.channels.cache.get(existing.channelId);
-      if (ch) {
-        return interaction.reply({ content: 'You already have a ticket: ' + ch, ephemeral: true });
-      }
-    }
-  }
-  
-  // Create ticket channel
-  try {
-    const channelOptions = {
-      name: ticketId,
-      type: 0,
-      permissionOverwrites: [
-        { id: guild.id, deny: ['ViewChannel'] },
-        { id: user.id, allow: ['ViewChannel', 'ManageMessages'] },
-        ...(ticketConfig.staffRoles || []).map(roleId => ({
-          id: roleId, allow: ['ViewChannel', 'ManageMessages']
-        }))
-      ]
-    };
-    
-    // Only set parent if category is selected and is actually a category
-    if (ticketConfig.category) {
-      const cat = guild.channels.cache.get(ticketConfig.category);
-      if (cat && cat.type === 4) {
-        channelOptions.parent = ticketConfig.category;
-      }
-    }
-    
-    const channel = await guild.channels.create(channelOptions);
-    
-    // Save ticket
-    if (!config.guilds[guild.id]) config.guilds[guild.id] = {};
-    if (!config.guilds[guild.id].tickets) config.guilds[guild.id].tickets = {};
-    config.guilds[guild.id].tickets[ticketId] = {
-      user: user.id,
-      channelId: channel.id,
-      status: 'open',
-      createdAt: new Date().toISOString()
-    };
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    
-    await channel.send({ embeds: [new EmbedBuilder()
-      .setColor('#9151ff')
-      .setTitle('🎫 Support Ticket')
-      .setDescription('Hello ' + user + ', describe your issue and we\'ll help you!')
-      .addFields(
-        { name: 'Staff', value: 'Staff will be with you shortly', inline: true },
-        { name: 'Actions', value: 'Use /close-ticket to close this ticket', inline: true }
-      )
-    ]});
-    
-    interaction.reply({ content: 'Ticket created: ' + channel, ephemeral: true });
-  } catch(e) {
-    interaction.reply({ content: 'Error creating ticket: ' + e.message, ephemeral: true });
-  }
-});
+// Handled by modular tickets handler
 
 // Post leaderboard to channel
 app.post("/api/leaderboard/post", express.json(), async (req, res) => {
@@ -9591,6 +8509,151 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   // Don't exit - keep process alive
+});
+
+// ============== REGISTER MODULAR FEATURE HANDLERS ==============
+client.once('ready', () => {
+  console.log('🔧 Running backward compatibility migration...');
+  
+  try {
+    const config = loadConfig();
+    let hasChanges = false;
+    
+    for (const [guildId, guildConfig] of Object.entries(config.guilds || {})) {
+      const updates = {};
+      
+      if (guildConfig.welcomeChannelId && !guildConfig.serverMessages?.welcomeChannel) {
+        updates.serverMessages = { ...guildConfig.serverMessages, welcomeChannel: guildConfig.welcomeChannelId };
+        hasChanges = true;
+      }
+      if (guildConfig.welcomeMessage && !guildConfig.serverMessages?.welcomeMessage) {
+        updates.serverMessages = { ...(updates.serverMessages || guildConfig.serverMessages), welcomeMessage: guildConfig.welcomeMessage };
+        hasChanges = true;
+      }
+      if (guildConfig.customCommands && Object.keys(guildConfig.customCommands).length > 0 && !guildConfig.customCommandsData) {
+        const customCommandsData = {};
+        for (const [name, response] of Object.entries(guildConfig.customCommands)) {
+          customCommandsData[name] = {
+            name,
+            response: typeof response === 'string' ? response : response.response || '',
+            enabled: true,
+            allowedRoles: [],
+            cooldown: 0,
+            aliases: [],
+            description: '',
+            category: 'general',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lastUsedAt: null,
+            useCount: 0
+          };
+        }
+        updates.customCommandsData = customCommandsData;
+        hasChanges = true;
+      }
+      if ((guildConfig.antiSpam || guildConfig.linkScanning || guildConfig.rateLimiting || guildConfig.profanityFilterEnabled || guildConfig.badWords || guildConfig.antiNuke || guildConfig.joinGate || guildConfig.raidProtection) && !guildConfig.serverGuard) {
+        updates.serverGuard = {
+          antiSpam: guildConfig.antiSpam || { enabled: true, messagesPerLimit: 5, action: 'warn' },
+          linkScanning: guildConfig.linkScanning || { enabled: true, detectPhishing: true, blockScamSites: true, malwareDetection: true },
+          rateLimiting: guildConfig.rateLimiting || { enabled: true, requestsPerMin: 100, dosProtection: true, action: 'throttle' },
+          profanityFilter: { enabled: guildConfig.profanityFilterEnabled || false, action: 'delete' },
+          badWords: guildConfig.badWords || [],
+          antiNuke: guildConfig.antiNuke || { enabled: true, mode: 'monitor', maxActions: 10 },
+          joinGate: guildConfig.joinGate || { enabled: true, accountAgeCheck: true, minAccountAge: 3, suspiciousAvatars: true, usernameAnalysis: true },
+          raidProtection: guildConfig.raidProtection || { enabled: true, usersPerLimit: 10, banRaidUsers: false }
+        };
+        hasChanges = true;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        config.guilds[guildId] = { ...guildConfig, ...updates };
+      }
+    }
+    
+    if (hasChanges) {
+      saveConfig(config);
+      console.log('✅ Backward compatibility migration completed');
+    } else {
+      console.log('✅ No migration needed');
+    }
+  } catch (err) {
+    console.error('❌ Migration error:', err.message);
+  }
+
+  console.log('🔧 Registering modular feature handlers...');
+  
+  try {
+    initializeServerGuard(client);
+    console.log('✅ Server Guard handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Server Guard handler:', err.message);
+  }
+  
+  try {
+    registerReactionRolesHandler(client);
+    console.log('✅ Reaction Roles handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Reaction Roles handler:', err.message);
+  }
+  
+  try {
+    registerLevelsHandlers(client);
+    console.log('✅ Levels handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Levels handler:', err.message);
+  }
+  
+  try {
+    registerGiveawaysHandlers(client);
+    startGiveawaysChecker();
+    console.log('✅ Giveaways handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Giveaways handler:', err.message);
+  }
+  
+  try {
+    registerTicketsHandlers(client);
+    console.log('✅ Tickets handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Tickets handler:', err.message);
+  }
+  
+  try {
+    initializeCustomCommands(client);
+    console.log('✅ Custom Commands handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Custom Commands handler:', err.message);
+  }
+  
+  try {
+    registerInvitesHandlers(client);
+    console.log('✅ Invites handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Invites handler:', err.message);
+  }
+  
+  try {
+    startSocialNotifications(client);
+    console.log('✅ Social Notifications polling started');
+  } catch (err) {
+    console.error('❌ Failed to start Social Notifications:', err.message);
+  }
+  
+  try {
+    registerLoggingHandlers(client);
+    console.log('✅ Logging handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Logging handler:', err.message);
+  }
+  
+  try {
+    initializeServerMessages(client);
+    console.log('✅ Server Messages handler registered');
+  } catch (err) {
+    console.error('❌ Failed to register Server Messages handler:', err.message);
+  }
+  
+  console.log('🔧 Modular feature handlers registration complete');
 });
 
 // ============== LOGIN (single attempt — avoid duplicate gateway sessions) ==============

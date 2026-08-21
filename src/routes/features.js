@@ -17,7 +17,7 @@ function createFeaturesRouter(client, configManager) {
   const router = express.Router();
 
   // Mount all feature routes
-  router.use('/logging', loggingRoutes(client, configManager));
+  router.use('/logging', createLoggingRouter(client));
   router.use('/server-guard', serverGuardRoutes(client, configManager));
   router.use('/reaction-roles', reactionRolesRoutes(client, configManager));
   router.use('/role-categories', roleCategoriesRoutes(client, configManager));

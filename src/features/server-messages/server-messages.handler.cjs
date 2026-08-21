@@ -5,13 +5,10 @@ let service = null
 function initialize(client, configPath) {
   service = new ServerMessagesService(configPath)
 
-  client.removeAllListeners('guildMemberAdd')
   client.on('guildMemberAdd', handleGuildMemberAdd)
 
-  client.removeAllListeners('guildMemberRemove')
   client.on('guildMemberRemove', handleGuildMemberRemove)
 
-  client.removeAllListeners('guildMemberUpdate')
   client.on('guildMemberUpdate', handleGuildMemberUpdate)
 }
 
