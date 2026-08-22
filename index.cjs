@@ -108,26 +108,41 @@ function isSpideyBotProcess(pid) {
     const cmdlinePath = path.join(procPath, 'cmdline');
     if (!fs.existsSync(cmdlinePath)) return false;
     const cmdline = fs.readFileSync(cmdlinePath, 'utf8');
-    const cmd = cmdline.replace(/\0/g, ' ').trim();
+    const args = cmdline.split('\0').filter(Boolean);
+    if (args.length < 2) return false;
 
-    if (!cmd.includes('node')) return false;
+    const exe = args[0];
+    if (!exe.endsWith('node') && !exe.endsWith('node.exe')) return false;
 
     const ourEntry = path.resolve(__dirname, 'index.cjs');
     const ourEntryAlt = path.resolve(__dirname, 'index.js');
-    const ourCwd = process.cwd();
 
-    if (cmd.includes(ourEntry) || cmd.includes(ourEntryAlt)) return true;
-
-    if ((cmd.includes('index.cjs') || cmd.includes('index.js'))) {
+    const hasExactEntry = args.some(arg => {
       try {
-        const cwd = fs.readlinkSync(path.join(procPath, 'cwd'));
-        return cwd === ourCwd;
+        const abs = path.isAbsolute(arg) ? arg : path.resolve(process.cwd(), arg);
+        return abs === ourEntry || abs === ourEntryAlt;
       } catch (e) {
-        return cmd.includes('index.cjs') && !cmd.includes('node_modules');
+        return false;
       }
-    }
+    });
 
-    return false;
+    if (hasExactEntry) return true;
+
+    const ourBasename = path.basename(ourEntry);
+    const ourAltBasename = path.basename(ourEntryAlt);
+    const hasBasenameMatch = args.some(arg => {
+      const base = path.basename(arg);
+      return base === ourBasename || base === ourAltBasename;
+    });
+
+    if (!hasBasenameMatch) return false;
+
+    try {
+      const cwd = fs.readlinkSync(path.join(procPath, 'cwd'));
+      return cwd === process.cwd();
+    } catch (e) {
+      return false;
+    }
   } catch (e) {
     return false;
   }
@@ -232,6 +247,16 @@ function acquireSingleInstanceLock() {
   process.on("exit", releaseLock);
   process.on("SIGINT", () => { releaseLock(); process.exit(0); });
   process.on("SIGTERM", () => { releaseLock(); process.exit(0); });
+  process.on("uncaughtException", (err) => {
+    console.error("❌ Uncaught exception:", err);
+    releaseLock();
+    process.exit(1);
+  });
+  process.on("unhandledRejection", (reason) => {
+    console.error("❌ Unhandled rejection:", reason);
+    releaseLock();
+    process.exit(1);
+  });
   console.log(`🔒 Instance lock acquired (PID ${process.pid})`);
 }
 
