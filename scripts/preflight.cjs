@@ -35,6 +35,16 @@ const modules = [
 
 const failures = [];
 
+try {
+  const { ConfigManager } = require('../src/config/config-manager.cjs');
+  const { createFeaturesRouter } = require('../src/routes/features.js');
+  createFeaturesRouter({}, new ConfigManager());
+  console.log('OK feature router construction');
+} catch (error) {
+  failures.push({ modulePath: 'src/routes/features.js', error: error.message });
+  console.error('FAIL feature router construction -', error.message);
+}
+
 for (const modulePath of modules) {
   try {
     require(modulePath);
