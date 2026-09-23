@@ -1,4 +1,5 @@
 const express = require('express');
+const { requireFeatureAuth } = require('./feature-auth.cjs');
 
 // Feature routers - all paths relative to src/routes/features.js
 const { createLoggingRouter } = require('../features/logging/logging.routes.cjs');
@@ -15,6 +16,11 @@ const invitesRoutes = require('../features/invites/invites.routes.cjs');
 
 function createFeaturesRouter(client, configManager) {
   const router = express.Router();
+
+  // All modular feature APIs require an authenticated Discord administrator.
+  // This closes the gaps where individual feature routers previously only
+  // checked authentication (or had no authorization check at all).
+  router.use(requireFeatureAuth);
 
   router.use('/logging', createLoggingRouter(client));
   router.use('/server-guard', serverGuardRoutes);
