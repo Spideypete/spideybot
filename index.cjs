@@ -25,7 +25,7 @@ console.log("[DEBUG] Dotenv loaded, env vars:");
 console.log("[DEBUG] TOKEN:", process.env.TOKEN ? "set" : "NOT SET");
 console.log("[DEBUG] CLIENT_ID:", process.env.CLIENT_ID ? "set" : "NOT SET");
 console.log("[DEBUG] CLIENT_SECRET:", process.env.CLIENT_SECRET ? "set" : "NOT SET");
-console.log("[DEBUG] OPENAI_API_KEY:", process.env.OPENAI_API_KEY ? "set (" + process.env.OPENAI_API_KEY.substring(0,15) + "...)" : "NOT SET");
+console.log("[DEBUG] OPENAI_API_KEY:", process.env.OPENAI_API_KEY ? "set" : "NOT SET");
 
 // Validate required environment variables (do not log secrets)
 const requiredEnvVars = ["TOKEN", "CLIENT_ID", "CLIENT_SECRET"];
@@ -171,11 +171,8 @@ function validateLock(lock) {
 }
 
 function acquireSingleInstanceLock() {
-  const oldLockFile = path.join(__dirname, '.instance.lock');
-  if (fs.existsSync(oldLockFile)) {
-    try { fs.unlinkSync(oldLockFile); } catch (e) { /* ignore */ }
-  }
-
+  // Validate the existing lock before touching it. Never delete a live lock
+  // before checking it, otherwise two bot processes can start simultaneously.
   const existingLock = readLock();
   if (existingLock && validateLock(existingLock)) {
     console.error(`❌ Another Spidey Bot instance is already running (PID ${existingLock.pid}). Exiting to prevent duplicate welcome messages.`);
@@ -311,9 +308,14 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'spidey-bot-secret-dev',
-  resave: true,
-  saveUninitialized: true,
+  secret: process.env.SESSION_SECRET || (() => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SESSION_SECRET must be set in production');
+    }
+    return 'spidey-bot-local-dev-secret';
+  })(),
+  resave: false,
+  saveUninitialized: false,
   cookie: { 
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
