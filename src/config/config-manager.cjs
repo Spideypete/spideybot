@@ -85,4 +85,23 @@ class ConfigManager {
   }
 }
 
-module.exports = { ConfigManager };
+// Backward-compatible singleton helpers used by feature services.
+// Keep ConfigManager available for new code while preserving the original
+// functional API used by older feature modules.
+const defaultConfigManager = new ConfigManager();
+
+const loadConfig = () => defaultConfigManager.loadConfig();
+const saveConfig = (config) => defaultConfigManager.saveConfig(config);
+const getGuildConfig = (guildId) => defaultConfigManager.getGuildConfig(guildId);
+const setGuildConfig = (guildId, guildConfig) => defaultConfigManager.setGuildConfig(guildId, guildConfig);
+const updateGuildConfig = (guildId, updates) => defaultConfigManager.updateGuildConfig(guildId, updates);
+
+module.exports = {
+  ConfigManager,
+  DEFAULT_GUILD_CONFIG,
+  loadConfig,
+  saveConfig,
+  getGuildConfig,
+  setGuildConfig,
+  updateGuildConfig
+};
