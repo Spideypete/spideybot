@@ -38,14 +38,33 @@ const DEFAULT_GUILD_CONFIG = {
 };
 
 class ConfigManager {
-  constructor() {
-    this.configPath = CONFIG_FILE;
+  constructor(configPath = CONFIG_FILE) {
+    this.configPath = configPath;
+  }
+
+  _cloneDefaultGuildConfig() {
+    return JSON.parse(JSON.stringify(DEFAULT_GUILD_CONFIG));
+  }
+
+  _writeConfigAtomic(config) {
+    const dir = path.dirname(this.configPath);
+    const tempPath = this.configPath + '.tmp-' + process.pid + '-' + Date.now();
+    const data = JSON.stringify(config, null, 2);
+    const fd = fs.openSync(tempPath, 'w', 0o600);
+    try {
+      fs.writeFileSync(fd, data, 'utf8');
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(tempPath, this.configPath);
+    try { fs.chmodSync(this.configPath, 0o600); } catch (_) {}
   }
 
   loadConfig() {
-    if (fs.existsSync(CONFIG_FILE)) {
+    if (fs.existsSync(this.configPath)) {
       try {
-        return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        return JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
       } catch (err) {
         console.error('Config load error:', err.message);
         return { guilds: {} };
@@ -55,13 +74,13 @@ class ConfigManager {
   }
 
   saveConfig(config) {
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+    this._writeConfigAtomic(config);
   }
 
   getGuildConfig(guildId) {
     const config = this.loadConfig();
     if (!config.guilds[guildId]) {
-      config.guilds[guildId] = { ...DEFAULT_GUILD_CONFIG };
+      config.guilds[guildId] = this._cloneDefaultGuildConfig();
       this.saveConfig(config);
     }
     return config.guilds[guildId];
@@ -77,7 +96,7 @@ class ConfigManager {
   updateGuildConfig(guildId, updates) {
     const config = this.loadConfig();
     if (!config.guilds[guildId]) {
-      config.guilds[guildId] = { ...DEFAULT_GUILD_CONFIG };
+      config.guilds[guildId] = this._cloneDefaultGuildConfig();
     }
     config.guilds[guildId] = { ...config.guilds[guildId], ...updates };
     this.saveConfig(config);
