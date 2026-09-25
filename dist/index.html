@@ -421,20 +421,11 @@
   </script>
 
   <script>
-    document.getElementById('addToDiscord').addEventListener('click', async function(e) {
+    // Invite flow: authenticate the Discord user first, then let them choose
+    // which administrator server should receive SPIDEY BOT.
+    document.getElementById('addToDiscord').addEventListener('click', function(e) {
       e.preventDefault();
-      try {
-        const res = await fetch('/api/config');
-        const cfg = await res.json();
-        if (cfg.inviteUrl) {
-          window.location.href = cfg.inviteUrl;
-          return;
-        }
-        window.location.href = '/invite';
-      } catch (err) {
-        console.error('Invite error:', err);
-        alert('Unable to redirect to Discord invite. Please try again later.');
-      }
+      window.location.href = '/invite';
     });
   </script>
 
