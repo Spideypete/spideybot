@@ -2965,61 +2965,6 @@
             });
         }
 
-        async function loadServerList() {
-            try {
-                const serversList = document.getElementById('serversList');
-                serversList.innerHTML = '<div style="padding: 1rem; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 0.8rem;">Loading servers...</div>';
-
-                const res = await fetch('/api/creator/servers', { credentials: 'include' });
-                if (!res.ok) {
-                    serversList.innerHTML = '<div style="padding: 1rem; color: #ff6b6b; font-size: 0.8rem;">Error loading servers</div>';
-                    return;
-                }
-
-                const data = await res.json();
-
-                if (!data.servers || data.servers.length === 0) {
-                    serversList.innerHTML = '<div style="padding: 1rem; color: rgba(255, 255, 255, 0.5); font-size: 0.8rem;">No servers found</div>';
-                    return;
-                }
-
-                const currentServerId = localStorage.getItem('selectedServerId');
-                serversList.innerHTML = '';
-
-                data.servers.forEach(server => {
-                    const item = document.createElement('div');
-                    item.className = `server-menu-item ${server.id === currentServerId ? 'active' : ''}`;
-                    item.onclick = () => selectServer(server.id, server.name, server.icon, server.iconProxy);
-                    let iconContent;
-                    if (server.icon) {
-                        const imgSrc = server.iconProxy || server.icon;
-                        iconContent = `<img src="${imgSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                    } else {
-                        iconContent = server.name.charAt(0).toUpperCase();
-                    }
-                    const memberText = server.memberCount ? `${server.memberCount} members` : '';
-                    item.innerHTML = `
-                        <div class="server-menu-icon">${iconContent}</div>
-                        <div class="server-menu-info">
-                            <div class="server-menu-name">${server.name}</div>
-                            <div class="server-menu-members">${memberText}</div>
-                        </div>
-                    `;
-                    // Handle image load errors
-                    const img = item.querySelector('.server-menu-icon img');
-                    if (img) {
-                        img.onerror = function() {
-                            this.parentElement.textContent = server.name.charAt(0).toUpperCase();
-                        };
-                    }
-                    serversList.appendChild(item);
-                });
-            } catch (err) {
-                console.error('Failed to load servers:', err);
-                document.getElementById('serversList').innerHTML = '<div style="padding: 1rem; color: #ff6b6b; font-size: 0.8rem;">Failed to load servers</div>';
-            }
-        }
-
         function renderStaffMember(member, guildId, type) {
             const avatarHtml = member.avatar
                 ? `<img src="/api/image?url=${encodeURIComponent(member.avatar)}" alt="" onerror="this.outerHTML='${member.displayName.charAt(0).toUpperCase()}'">`
@@ -6093,13 +6038,9 @@
                             );
 
                             if (activeServer) {
-                                await selectServer(
-                                    activeServer.id,
-                                    activeServer.name,
-                                    activeServer.icon,
-                                    activeServer.iconProxy
-                                );
-                                hideServerOverlay();
+                                const dashboardServerName = document.getElementById('dashboardServerName');
+                                if (dashboardServerName) dashboardServerName.textContent = activeServer.name;
+                                localStorage.setItem('selectedServerId', activeServer.id);
                             } else {
                                 // The selected server is no longer available or the bot is not
                                 // installed there. Never leave a broken/blank dashboard behind.
