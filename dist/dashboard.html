@@ -6204,20 +6204,44 @@
                         ownersDashLink.style.display = 'block';
                     }
 
-                    // The server selector passes the chosen guild in the URL.
-                    // Preserve the existing dashboard functionality; only initialize the selected server.
+                    // The server selector passes the selected guild in the URL.
+                    // Always prefer that explicit selection. The selector page and dashboard
+                    // now use the same /api/dashboard/servers source, preventing the dashboard
+                    // from falling back to "Select Server" because two endpoints disagree.
                     const requestedGuildId = new URLSearchParams(window.location.search).get('guildId');
-                    if (requestedGuildId) localStorage.setItem('selectedServerId', requestedGuildId);
+                    if (requestedGuildId) {
+                        localStorage.setItem('selectedServerId', requestedGuildId);
+                    }
 
-                    const activeGuildId = localStorage.getItem('selectedServerId');
+                    const activeGuildId = requestedGuildId || localStorage.getItem('selectedServerId');
+
                     if (activeGuildId) {
                         try {
-                            const guildRes = await fetch('/api/creator/servers', { credentials: 'include' });
+                            const guildRes = await fetch('/api/dashboard/servers', {
+                                credentials: 'include',
+                                cache: 'no-store'
+                            });
+
+                            if (!guildRes.ok) {
+                                throw new Error('Unable to load your Discord servers (' + guildRes.status + ')');
+                            }
+
                             const guildData = await guildRes.json();
-                            const activeServer = (guildData.servers || []).find(s => s.id === activeGuildId);
+                            const activeServer = (guildData.servers || []).find(
+                                s => String(s.id) === String(activeGuildId) && s.botInstalled
+                            );
+
                             if (activeServer) {
-                                await selectServer(activeServer.id, activeServer.name, activeServer.icon, activeServer.iconProxy);
+                                await selectServer(
+                                    activeServer.id,
+                                    activeServer.name,
+                                    activeServer.icon,
+                                    activeServer.iconProxy
+                                );
+                                hideServerOverlay();
                             } else {
+                                // The selected server is no longer available or the bot is not
+                                // installed there. Never leave a broken/blank dashboard behind.
                                 localStorage.removeItem('selectedServerId');
                                 document.getElementById('serverDisplayName').textContent = 'Select Server';
                                 updateServerBtnIcon(null, null, null);
@@ -6225,6 +6249,7 @@
                             }
                         } catch (e) {
                             console.error('Failed to restore selected server:', e);
+                            // Keep the dashboard usable: show the selector instead of a broken page.
                             showServerOverlay();
                         }
                     } else {
@@ -7127,6 +7152,42 @@
         background: rgba(145, 70, 255, 0.15) !important;
         color: #9146FF !important;
     }
+
+    /* Server selection overlay — only visible until a valid server is selected */
+    .main-container { position: relative !important; min-height: 0; }
+    .server-select-overlay {
+        position: absolute !important;
+        inset: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 2rem !important;
+        background: #0a0a0a !important;
+        z-index: 50 !important;
+    }
+    .server-select-overlay.hidden { display: none !important; }
+    .server-select-prompt {
+        width: min(560px, 92%) !important;
+        padding: 3rem !important;
+        text-align: center !important;
+        background: #111111 !important;
+        border: 1px solid rgba(145,70,255,.25) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 24px 70px rgba(0,0,0,.45) !important;
+    }
+    .server-select-prompt .prompt-icon {
+        width: 64px !important;
+        height: 64px !important;
+        margin: 0 auto 1rem !important;
+        display: grid !important;
+        place-items: center !important;
+        border-radius: 16px !important;
+        background: rgba(145,70,255,.12) !important;
+        color: #9146ff !important;
+        font-size: 1.8rem !important;
+    }
+    .server-select-prompt h2 { color:#fff !important; margin-bottom:.6rem !important; }
+    .server-select-prompt p { color:#888 !important; margin:0 !important; }
 
     /* Content area */
     .content-area {
