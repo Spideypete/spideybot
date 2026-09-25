@@ -20,6 +20,7 @@ const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 require("dotenv").config();
 console.log("[DEBUG] Dotenv loaded, env vars:");
 console.log("[DEBUG] TOKEN:", process.env.TOKEN ? "set" : "NOT SET");
@@ -364,6 +365,12 @@ app.use(securityHeadersMiddleware);
 const rateLimiter = new RateLimiter(500, 60000); // 500 requests per minute
 app.use(rateLimiter.middleware());
 
+// Protect the admin dashboard before static middleware can serve the file.
+app.use('/dashboard.html', (req, res, next) => {
+  if (!req.session.authenticated) return res.redirect('/login');
+  next();
+});
+
 // Serve static files from dist and public
 app.use(express.static(distDir, {
   etag: false,
@@ -384,13 +391,6 @@ app.use(express.static(publicDir, {
   }
 }));
 
-// Protect dashboard.html - must be after static but before routes
-app.use('/dashboard.html', (req, res, next) => {
-  if (!req.session.authenticated) {
-    return res.redirect('/login');
-  }
-  next();
-});
 const auditLogger = new SecurityAuditLogger();
 const antiSpam = new AntiSpamEngine();
 const joinGate = new JoinGateSystem();
@@ -5059,101 +5059,65 @@ app.get("/", (req, res) => {
 // Route /dashboard to dashboard.html - protected
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.redirect("/dashboard.html");
+  res.redirect("/dashboard/select");
 });
 
-// Route /owner-dash to owner-dash.html - protected
+app.get("/dashboard/select", (req, res) => {
+  if (!req.session.authenticated) return res.redirect("/login");
+  res.sendFile(path.join(publicDir, 'server-select.html'));
+});
+
+app.get("/dashboard/server/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.redirect("/login");
+  const guildId = String(req.params.guildId);
+  const hasAdminAccess = Array.isArray(req.session.guilds) && req.session.guilds.some(g => String(g.id) === guildId);
+  if (!hasAdminAccess) return res.status(403).send("You do not have administrator access to this server.");
+  if (!client.guilds.cache.has(guildId)) return res.redirect("/dashboard/select");
+  res.redirect("/dashboard.html?guildId=" + encodeURIComponent(guildId));
+});
+
 app.get("/owner-dash", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   res.redirect("/owner-dash.html");
 });
 
-// Route /premium - standalone pricing page
 app.get("/premium", (req, res) => {
   res.sendFile(path.join(publicDir, 'premium.html'));
 });
 
-// Test dashboard - no auth required for design template
 app.get("/testownerdashboard.html", (req, res) => {
   res.sendFile(path.join(publicDir, 'testownerdashboard.html'));
 });
 
-// Invite route - redirect to Discord OAuth
 app.get("/invite", (req, res) => {
-  const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8`;
-  res.redirect(inviteUrl);
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    scope: "bot applications.commands",
+    permissions: "8"
+  });
+  if (req.query.guildId) {
+    params.set("guild_id", String(req.query.guildId));
+    params.set("disable_guild_select", "true");
+  }
+  res.redirect("https://discord.com/oauth2/authorize?" + params.toString());
 });
 
-// Redirect login page to Discord OAuth
 app.get("/login", (req, res) => {
-  if (req.session.authenticated) return res.redirect("/dashboard.html");
+  if (req.session.authenticated) return res.redirect("/dashboard/select");
   const loginHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SPIDEY BOT Admin Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #000000;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-    }
-    .login-container {
-      text-align: center;
-      padding: 3rem;
-      background: rgba(145, 70, 255, 0.1);
-      border: 2px solid rgba(145, 70, 255, 0.3);
-      border-radius: 15px;
-      max-width: 400px;
-    }
-    h1 {
-      margin-bottom: 1rem;
-      font-size: 2rem;
-      background: linear-gradient(135deg, #fff 0%, #9146FF 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    p {
-      color: #aaa;
-      margin-bottom: 2rem;
-      font-size: 1rem;
-    }
-    .btn-discord {
-      display: inline-block;
-      padding: 1rem 2rem;
-      background: #5865F2;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      transition: all 0.3s;
-      border: none;
-      cursor: pointer;
-    }
-    .btn-discord:hover {
-      background: #4752C4;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(88, 101, 242, 0.3);
-    }
-  </style>
-</head>
-<body>
-  <div class="login-container">
-    <h1>SPIDEY BOT</h1>
-    <p>Admin Dashboard - Login with Discord</p>
-    <a href="/auth/discord" class="btn-discord">Login with Discord</a>
-  </div>
-</body>
-</html>`;
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SPIDEY BOT — Admin Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% -10%,rgba(145,70,255,.18),transparent 40%),#07070a;color:#fff;font-family:Inter,system-ui,sans-serif}
+.card{width:min(420px,calc(100% - 32px));padding:38px;border:1px solid #26262f;border-radius:18px;background:rgba(16,16,20,.94);text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+.logo{width:64px;height:64px;object-fit:contain;margin-bottom:16px}.eyebrow{color:#b98cff;font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}.card h1{margin:8px 0 10px;font-size:2rem;letter-spacing:-.04em}.card p{color:#9999a6;line-height:1.6;margin:0 0 24px}
+.btn{display:block;width:100%;padding:13px 18px;border:0;border-radius:10px;background:#5865f2;color:#fff;text-decoration:none;font-weight:700;cursor:pointer;transition:.18s}.btn:hover{background:#4752c4;transform:translateY(-1px)}.back{display:inline-block;margin-top:18px;color:#777;text-decoration:none;font-size:.85rem}.back:hover{color:#fff}
+</style></head><body><main class="card">
+<img class="logo" src="/assets/spidey-logo.png" alt="SPIDEY BOT"><div class="eyebrow">Admin Console</div>
+<h1>Sign in with Discord</h1><p>Sign in to see the Discord servers you administer and choose which SPIDEY BOT server you want to manage.</p>
+<a class="btn" href="/auth/discord">Continue with Discord</a><a class="back" href="/">← Back to SPIDEY BOT</a>
+</main></body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(loginHtml);
 });
@@ -5249,23 +5213,14 @@ function checkOAuthRateLimit(ip) {
 
 app.get("/auth/discord", (req, res) => {
   const now = Date.now();
-
-  // Prevent spam clicking
-  if (now - lastLogin < 15000) {
-    return res.send("⚠️ Please wait 15 seconds before trying again.");
-  }
-
+  if (now - lastLogin < 15000) return res.send("⚠️ Please wait 15 seconds before trying again.");
   lastLogin = now;
-
+  if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) return res.status(503).send("Discord login is not configured on this server.");
   const redirectUri = REDIRECT_URI || REDIRECT_URI_DETECTOR(req);
-
-  const url = `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=identify`;
-
-  console.log("========== OAUTH LOGIN ==========");
-  console.log("Redirect URI:", redirectUri);
-  console.log("==================================");
-
-  res.redirect(url);
+  const state = crypto.randomBytes(24).toString("hex");
+  req.session.oauthState = state;
+  const params = new URLSearchParams({client_id: DISCORD_CLIENT_ID,response_type:"code",redirect_uri:redirectUri,scope:"identify guilds",state});
+  res.redirect("https://discord.com/oauth2/authorize?" + params.toString());
 });
 
 app.get("/auth/discord/callback", async (req, res) => {
@@ -5332,11 +5287,10 @@ app.get("/auth/discord/callback", async (req, res) => {
 
   console.log("========== CALLBACK HIT ==========");
 
-  const { code } = req.query;
-
-  if (!code) {
-    return res.send("❌ No code provided");
-  }
+  const { code, state } = req.query;
+  if (!code) return res.send("❌ No code provided");
+  if (!state || !req.session.oauthState || state !== req.session.oauthState) return res.status(400).send("❌ Invalid OAuth state. Please start the login process again.");
+  delete req.session.oauthState;
 
   // Prevent reuse / loops
   if (usedCodes.has(code)) {
@@ -5359,7 +5313,7 @@ app.get("/auth/discord/callback", async (req, res) => {
           code,
           grant_type: "authorization_code",
           redirect_uri: redirectUri,
-          scope: "identify"
+          scope: "identify guilds"
         }),
         {
           headers: {
@@ -5436,50 +5390,8 @@ app.get("/auth/discord/callback", async (req, res) => {
       });
     });
 
-    console.log("✅ Session saved, redirecting to dashboard");
-
-    // Show success message for 1ms then redirect to dashboard
-    return res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Login Successful</title>
-        <style>
-          body {
-            font-family: 'Inter', sans-serif;
-            background: #000000;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-          }
-          .success-container {
-            text-align: center;
-            padding: 3rem;
-            background: rgba(145, 70, 255, 0.1);
-            border: 2px solid rgba(145, 70, 255, 0.3);
-            border-radius: 15px;
-          }
-          h1 {
-            color: #9146FF;
-            margin-bottom: 1rem;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="success-container">
-          <h1>✅ Login Successful!</h1>
-          <p>Redirecting to dashboard...</p>
-        </div>
-        <script>
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 1);
-        </script>
-      </body>
-      </html>
-    `);
+    console.log("✅ Session saved, redirecting to server selector");
+    return res.redirect("/dashboard/select");
 
   } catch (err) {
     // 🔥 HANDLE RATE LIMIT PROPERLY
@@ -5554,6 +5466,45 @@ app.get("/api/user", (req, res) => {
     guilds: req.session.guilds,
     isOwner
   });
+});
+
+// ============== DASHBOARD SERVER SELECTOR API ==============
+app.get("/api/dashboard/servers", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const ADMIN_PERMISSION = BigInt(8);
+  try {
+    let userGuilds = req.session.guilds || [];
+    if (req.session.accessToken) {
+      try {
+        const guildsRes = await axios.get("https://discord.com/api/users/@me/guilds?with_counts=true", { headers: { Authorization: "Bearer " + req.session.accessToken } });
+        userGuilds = guildsRes.data.filter(guild => (BigInt(guild.permissions || 0) & ADMIN_PERMISSION) === ADMIN_PERMISSION);
+        req.session.guilds = userGuilds;
+      } catch (err) {
+        console.warn("[dashboard/servers] Discord guild refresh failed:", err.message);
+      }
+    }
+    const config = loadConfig();
+    const servers = userGuilds.map(guild => {
+      const botGuild = client.guilds.cache.get(guild.id);
+      const installed = !!botGuild;
+      const guildConfig = config.guilds?.[guild.id] || {};
+      let icon = null;
+      if (guild.icon) {
+        const ext = Array.isArray(guild.features) && guild.features.includes("ANIMATED_ICON") ? "gif" : "png";
+        icon = "https://cdn.discordapp.com/icons/" + guild.id + "/" + guild.icon + "." + ext + "?size=128";
+      }
+      return {
+        id:guild.id,name:guild.name,icon,
+        memberCount:botGuild?.memberCount || guild.approximate_member_count || 0,
+        botInstalled:installed,tier:installed?(guildConfig.tier||"free"):null,
+        remainingMonths:installed&&guildConfig.tierEndDate&&guildConfig.tier!=="free"?Math.max(0,Math.ceil((guildConfig.tierEndDate-Date.now())/(30*24*60*60*1000))):0
+      };
+    }).sort((a,b)=>a.botInstalled!==b.botInstalled?(a.botInstalled?-1:1):a.name.localeCompare(b.name));
+    const user=req.session.user||{};
+    let avatarUrl=null;
+    if(user.id&&user.avatar){const ext=String(user.avatar).startsWith("a_")?"gif":"png";avatarUrl="https://cdn.discordapp.com/avatars/"+user.id+"/"+user.avatar+"."+ext+"?size=128";}
+    res.json({user:{...user,avatarUrl},servers});
+  } catch(err){console.error("[dashboard/servers] error:",err);res.status(500).json({error:"Failed to load dashboard servers"});}
 });
 
 // ============== OWNER DASH API ==============
