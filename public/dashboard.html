@@ -321,16 +321,7 @@
 </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style id="spidey-dashboard-hard-fix">
-/* SPIDEY BOT HARD FIX: dashboard is opened only for an already-selected guild. */
-.server-selector{display:none !important}
-#serverDropdownMenu,.server-dropdown-menu{display:none !important;pointer-events:none !important}
-#serverSelectOverlay,.server-select-overlay{display:none !important;visibility:hidden !important;pointer-events:none !important}
-.main-container{position:relative !important}
-.content-area{min-width:0 !important;width:100% !important;background:#0a0a0a !important}
-.content-section{display:none !important;visibility:hidden !important}
-.content-section.active{display:block !important;visibility:visible !important}
-</style>
+
 </head>
 <body>
     <div class="dashboard-wrapper">
@@ -341,14 +332,8 @@
                     <img src="/assets/spidey-logo.png" alt="SPIDEY BOT Logo" />
                 </div>
 
-                <div class="server-selector" aria-hidden="true">
-                    <div class="server-dropdown-btn" style="cursor:default;">
-                        <div class="server-btn-icon" id="serverBtnIcon">?</div>
-                        <span id="serverDisplayName">Loading Server...</span>
-                    </div>
-                    <div class="server-dropdown-menu" id="serverDropdownMenu" aria-hidden="true">
-                        <div id="serversList"></div>
-                    </div>
+                <div class="dashboard-context" aria-label="Selected server">
+                    <span id="dashboardServerName">Server Dashboard</span>
                 </div>
             </div>
 
@@ -2972,17 +2957,6 @@
             });
         }
 
-        function toggleServerDropdown() {
-            const menu = document.getElementById('serverDropdownMenu');
-            const isActive = menu.classList.contains('active');
-
-            if (!isActive) {
-                loadServerList();
-            }
-
-            menu.classList.toggle('active');
-        }
-
         function filterSidebar(query) {
             const q = (query || '').toLowerCase().trim();
             document.querySelectorAll('.sidebar-menu .sidebar-item').forEach(item => {
@@ -3043,133 +3017,6 @@
             } catch (err) {
                 console.error('Failed to load servers:', err);
                 document.getElementById('serversList').innerHTML = '<div style="padding: 1rem; color: #ff6b6b; font-size: 0.8rem;">Failed to load servers</div>';
-            }
-        }
-
-        function showServerOverlay() {
-            const overlay = document.getElementById('serverSelectOverlay');
-            if (overlay) overlay.classList.remove('hidden');
-        }
-
-        function hideServerOverlay() {
-            const overlay = document.getElementById('serverSelectOverlay');
-            if (overlay) overlay.classList.add('hidden');
-        }
-
-        async function selectServer(serverId, serverName, iconUrl, iconProxyUrl) {
-            // Dashboard server identity comes from /dashboard.html?guildId=...
-            // Never allow a hidden/stale picker state to replace it.
-            const urlGuildId = new URLSearchParams(window.location.search).get('guildId');
-            if (urlGuildId && String(urlGuildId) !== String(serverId)) {
-                console.warn('[dashboard] Ignoring mismatched guild selection:', serverId);
-                return;
-            }
-            localStorage.setItem('selectedServerId', serverId);
-            document.getElementById('serverDisplayName').textContent = serverName;
-            document.getElementById('serverDropdownMenu').classList.remove('active');
-
-            // Update button icon
-            updateServerBtnIcon(serverName, iconUrl, iconProxyUrl);
-
-            // Hide the overlay — server is now selected
-            hideServerOverlay();
-
-            console.log('🔄 Server switched to:', serverName, '(' + serverId + ')');
-
-            // Load roles and channels FIRST (required for other loads)
-            await loadServerRolesAndChannels(serverId);
-
-            // Load entitlements for feature gating
-            try {
-                const entRes = await fetch('/api/guild/' + serverId + '/entitlements');
-                const entData = await entRes.json();
-                window.currentEntitlements = entData.entitlements || {};
-                console.log('[selectServer] Entitlements:', window.currentEntitlements, 'Tier:', entData.tier);
-            } catch (e) {
-                window.currentEntitlements = {};
-                console.error('[selectServer] Failed to load entitlements:', e);
-            }
-
-            // Update dashboard badge with server tier
-            try {
-                const tierRes = await fetch('/api/guild/' + serverId + '/tier');
-                const tierData = await tierRes.json();
-                updateServerBadge(tierData.tier, tierData.remainingMonths);
-                updateSidebarBadges(tierData.tier);
-            } catch (e) {
-                updateServerBadge('free', 0);
-                updateSidebarBadges('free');
-            }
-
-            // Load settings in parallel (they don't depend on each other)
-            await Promise.all([
-                loadLogging(),
-                loadServerSettings(serverId),
-                loadServerGuard(),
-                loadRoleCategories(serverId)
-            ]);
-
-            // Load stats in parallel (they don't depend on settings)
-            // Only load stats if the stats tab is visible to improve initial load time
-            const statsTab = document.getElementById('dashboard-section');
-            const isStatsVisible = statsTab?.classList.contains('active');
-
-            if (isStatsVisible) {
-                await Promise.all([
-                    loadMemberGraphs(),
-                    loadMemberEvents(),
-                    loadStaffMembers(serverId)
-                ]);
-            } else {
-                // Just load staff members which is quick
-                await loadStaffMembers(serverId);
-            }
-
-            // Re-capture original values now that server data is loaded
-            setupUnsavedDetection();
-        }
-
-        // Staff Members Panel
-        async function loadStaffMembers(guildId) {
-            const panel = document.getElementById('staffPanel');
-            if (!panel) return;
-            panel.innerHTML = '<div style="color: rgba(255,255,255,0.5); padding: 1rem; text-align: center; font-size: 0.85rem;">Loading staff...</div>';
-
-            try {
-                const res = await fetch(`/api/staff-members/${guildId}`, { credentials: 'include' });
-                if (!res.ok) {
-                    panel.innerHTML = '<div style="color: #ff6b6b; padding: 1rem; text-align: center; font-size: 0.85rem;">Failed to load staff</div>';
-                    return;
-                }
-                const data = await res.json();
-                let html = '';
-
-                // Admins section
-                html += '<div class="staff-section-label">Admins (' + data.admins.length + ')</div>';
-                if (data.admins.length === 0) {
-                    html += '<div style="color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 0.5rem;">No admins found</div>';
-                } else {
-                    data.admins.forEach(m => {
-                        html += renderStaffMember(m, guildId, 'admin');
-                    });
-                }
-
-                html += '<div class="staff-divider"></div>';
-
-                // Mods section
-                html += '<div class="staff-section-label">Moderators (' + data.mods.length + ')</div>';
-                if (data.mods.length === 0) {
-                    html += '<div style="color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 0.5rem;">No moderators found</div>';
-                } else {
-                    data.mods.forEach(m => {
-                        html += renderStaffMember(m, guildId, 'mod');
-                    });
-                }
-
-                panel.innerHTML = html;
-            } catch (err) {
-                console.error('Failed to load staff:', err);
-                panel.innerHTML = '<div style="color: #ff6b6b; padding: 1rem; text-align: center; font-size: 0.85rem;">Error loading staff</div>';
             }
         }
 
@@ -3680,11 +3527,6 @@
                 profileMenu.classList.remove('active');
             }
 
-            const serverDropdown = document.getElementById('serverDropdownMenu');
-            const serverSelector = document.querySelector('.server-selector');
-            if (!serverSelector.contains(event.target)) {
-                serverDropdown.classList.remove('active');
-            }
         });
 
         // ==================== MASTER HANDLERS FOR ALL TABS ====================
@@ -6224,10 +6066,15 @@
                         return;
                     }
 
+                    // This page is server-specific. There is intentionally no guild
+                    // selection UI or fallback inside the dashboard.
+
                     // The dashboard is intentionally bound to the guild chosen on the
                     // server-selection page. Do not silently restore another guild.
                     localStorage.setItem('selectedServerId', requestedGuildId);
                     const activeGuildId = requestedGuildId;
+                    const dashboardServerName = document.getElementById('dashboardServerName');
+                    if (dashboardServerName) dashboardServerName.textContent = 'Server Dashboard • ' + requestedGuildId;
 
                     if (activeGuildId) {
                         try {
