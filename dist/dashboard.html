@@ -7193,9 +7193,17 @@
     .content-area {
         background: #0a0a0a !important;
     }
+    /* Only the selected dashboard tab is visible.
+       The JavaScript also toggles inline visibility, but this CSS prevents every
+       panel from flashing/stacking on first paint or when a script/API call fails. */
     .content-section {
+        display: none !important;
         position: relative;
         z-index: 1;
+    }
+    .content-section.active {
+        display: block !important;
+        visibility: visible !important;
     }
 
     /* Footer */
