@@ -21,6 +21,7 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { execFileSync } = require("child_process");
 require("dotenv").config();
 console.log("[DEBUG] Dotenv loaded, env vars:");
 console.log("[DEBUG] TOKEN:", process.env.TOKEN ? "set" : "NOT SET");
@@ -290,6 +291,27 @@ const distDir = path.join(__dirname, 'dist');
 const publicDir = path.join(__dirname, 'public');
 const app = express();
 
+// ============== DEPLOYMENT FINGERPRINT ==============
+function getGitCommit() {
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: __dirname,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    }).trim();
+  } catch {
+    return process.env.GIT_COMMIT || "unknown";
+  }
+}
+const SPIDEY_BUILD_COMMIT = getGitCommit();
+const DASHBOARD_FILE = path.join(distDir, "dashboard.html");
+let DASHBOARD_SHA256 = "missing";
+try {
+  DASHBOARD_SHA256 = crypto.createHash("sha256").update(fs.readFileSync(DASHBOARD_FILE)).digest("hex");
+} catch {}
+console.log("[BUILD] Git commit:", SPIDEY_BUILD_COMMIT);
+console.log("[BUILD] dashboard.html SHA256:", DASHBOARD_SHA256);
+
 // DEBUG - Test endpoint at VERY TOP
 app.get('/api/test', (req, res) => {
   console.log("✅ /api/test HIT - TOP ROUTE");
@@ -370,6 +392,39 @@ app.use('/dashboard.html', (req, res, next) => {
   if (!req.session.authenticated) return res.redirect('/login');
   if (!req.query.guildId) return res.redirect('/dashboard/select');
   next();
+});
+
+// Canonical dashboard route: always serve the exact dashboard build from dist.
+// Explicit no-store headers prevent Wisp/proxy/browser caching from resurrecting an older page.
+app.get('/dashboard.html', (req, res) => {
+  if (!req.session.authenticated) return res.redirect('/login');
+  if (!req.query.guildId) return res.redirect('/dashboard/select');
+
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store',
+    'X-Spidey-Build-Commit': SPIDEY_BUILD_COMMIT,
+    'X-Spidey-Dashboard-SHA256': DASHBOARD_SHA256
+  });
+  res.sendFile(DASHBOARD_FILE);
+});
+
+// Deployment fingerprint endpoint. This makes it possible to verify exactly which
+// Git commit and dashboard file WispByte is actually running.
+app.get('/api/deployment-fingerprint', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.json({
+    commit: SPIDEY_BUILD_COMMIT,
+    dashboardSha256: DASHBOARD_SHA256,
+    dashboardPath: DASHBOARD_FILE,
+    node: process.version
+  });
 });
 
 // Serve static files from dist and public
