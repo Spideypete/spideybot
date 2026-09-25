@@ -64,7 +64,19 @@ async function load(){
 }
 function openServer(id){location.href='/dashboard.html?guildId='+encodeURIComponent(id)}
 function inviteBot(id){location.href='/invite?guildId='+encodeURIComponent(id)}
-async function verifyServer(id){await load()}
+async function verifyServer(id){
+  for(let attempt=0;attempt<5;attempt++){
+    await new Promise(resolve=>setTimeout(resolve,attempt===0?1200:1800));
+    try{
+      const r=await fetch('/api/dashboard/servers',{credentials:'include',cache:'no-store'});
+      const d=await r.json();
+      if((d.servers||[]).some(s=>s.id===id&&s.botInstalled)){render(d);return}
+      render(d);
+    }catch(e){}
+  }
+  alert('SPIDEY BOT is not showing as installed yet. If Discord has finished the installation, click Refresh and try again.');
+  await load();
+}
 $('refresh').onclick=load;
 load();
 </script>
