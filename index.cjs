@@ -368,6 +368,7 @@ app.use(rateLimiter.middleware());
 // Protect the admin dashboard before static middleware can serve the file.
 app.use('/dashboard.html', (req, res, next) => {
   if (!req.session.authenticated) return res.redirect('/login');
+  if (!req.query.guildId) return res.redirect('/dashboard/select');
   next();
 });
 
@@ -5090,15 +5091,19 @@ app.get("/testownerdashboard.html", (req, res) => {
 });
 
 app.get("/invite", (req, res) => {
+  // No guild selected yet: authenticate the Discord user first, then show the server selector.
+  if (!req.query.guildId) {
+    return res.redirect("/login?intent=invite");
+  }
+
+  // A server has already been selected: send the user to Discord's bot authorization flow.
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     scope: "bot applications.commands",
-    permissions: "8"
+    permissions: "8",
+    guild_id: String(req.query.guildId),
+    disable_guild_select: "true"
   });
-  if (req.query.guildId) {
-    params.set("guild_id", String(req.query.guildId));
-    params.set("disable_guild_select", "true");
-  }
   res.redirect("https://discord.com/oauth2/authorize?" + params.toString());
 });
 
