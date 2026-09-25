@@ -6021,39 +6021,12 @@
                     const dashboardServerName = document.getElementById('dashboardServerName');
                     if (dashboardServerName) dashboardServerName.textContent = 'Server Dashboard • ' + requestedGuildId;
 
-                    if (activeGuildId) {
-                        try {
-                            const guildRes = await fetch('/api/dashboard/servers', {
-                                credentials: 'include',
-                                cache: 'no-store'
-                            });
-
-                            if (!guildRes.ok) {
-                                throw new Error('Unable to load your Discord servers (' + guildRes.status + ')');
-                            }
-
-                            const guildData = await guildRes.json();
-                            const activeServer = (guildData.servers || []).find(
-                                s => String(s.id) === String(activeGuildId) && s.botInstalled
-                            );
-
-                            if (activeServer) {
-                                const dashboardServerName = document.getElementById('dashboardServerName');
-                                if (dashboardServerName) dashboardServerName.textContent = activeServer.name;
-                                localStorage.setItem('selectedServerId', activeServer.id);
-                            } else {
-                                // The selected server is no longer available or the bot is not
-                                // installed there. Never leave a broken/blank dashboard behind.
-                                localStorage.removeItem('selectedServerId');
-                                window.location.replace('/dashboard/select');
-                                return;
-                            }
-                        } catch (e) {
-                            console.error('Failed to restore selected server:', e);
-                            window.location.replace('/dashboard/select');
-                            return;
-                        }
-                    }
+                    // The URL guildId is authoritative. The server-selection page already
+                    // verified the user's access and selected this guild. Do NOT re-query the
+                    // server list here and do NOT redirect back to /dashboard/select.
+                    // A transient API failure must never replace an already-selected dashboard.
+                    selectedServerId = requestedGuildId;
+                    localStorage.setItem('selectedServerId', requestedGuildId);
 
                     // Dashboard action buttons (non-functional placeholder)
                     document.getElementById('exportDataBtn')?.addEventListener('click', () => showToast('Export data is coming soon!', 'info'));
