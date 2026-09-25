@@ -320,6 +320,17 @@
     .sidebar-item-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style id="spidey-dashboard-hard-fix">
+/* SPIDEY BOT HARD FIX: dashboard is opened only for an already-selected guild. */
+.server-selector{display:none !important}
+#serverDropdownMenu,.server-dropdown-menu{display:none !important;pointer-events:none !important}
+#serverSelectOverlay,.server-select-overlay{display:none !important;visibility:hidden !important;pointer-events:none !important}
+.main-container{position:relative !important}
+.content-area{min-width:0 !important;width:100% !important;background:#0a0a0a !important}
+.content-section{display:none !important;visibility:hidden !important}
+.content-section.active{display:block !important;visibility:visible !important}
+</style>
 </head>
 <body>
     <div class="dashboard-wrapper">
@@ -330,13 +341,12 @@
                     <img src="/assets/spidey-logo.png" alt="SPIDEY BOT Logo" />
                 </div>
 
-                <div class="server-selector">
-                    <button class="server-dropdown-btn" onclick="toggleServerDropdown()">
+                <div class="server-selector" aria-hidden="true">
+                    <div class="server-dropdown-btn" style="cursor:default;">
                         <div class="server-btn-icon" id="serverBtnIcon">?</div>
-                        <span id="serverDisplayName">Select Server</span>
-                        <span>▼</span>
-                    </button>
-                    <div class="server-dropdown-menu" id="serverDropdownMenu">
+                        <span id="serverDisplayName">Loading Server...</span>
+                    </div>
+                    <div class="server-dropdown-menu" id="serverDropdownMenu" aria-hidden="true">
                         <div id="serversList"></div>
                     </div>
                 </div>
@@ -366,14 +376,7 @@
 
         <!-- Main Container -->
         <div class="main-container">
-            <!-- Server Selection Overlay -->
-            <div class="server-select-overlay" id="serverSelectOverlay">
-                <div class="server-select-prompt">
-                    <div class="prompt-icon">🖥️</div>
-                    <h2 data-i18n="overlay_selectServer">Select a Server</h2>
-                    <p data-i18n="overlay_selectServerDesc">Choose a server from the dropdown above to view its dashboard and manage settings.</p>
-                </div>
-            </div>
+            <!-- Server is selected before entering this dashboard. No guild selector is rendered here. -->
             <!-- Sidebar -->
             <div class="sidebar">
                 <div class="sidebar-search">
@@ -3054,6 +3057,13 @@
         }
 
         async function selectServer(serverId, serverName, iconUrl, iconProxyUrl) {
+            // Dashboard server identity comes from /dashboard.html?guildId=...
+            // Never allow a hidden/stale picker state to replace it.
+            const urlGuildId = new URLSearchParams(window.location.search).get('guildId');
+            if (urlGuildId && String(urlGuildId) !== String(serverId)) {
+                console.warn('[dashboard] Ignoring mismatched guild selection:', serverId);
+                return;
+            }
             localStorage.setItem('selectedServerId', serverId);
             document.getElementById('serverDisplayName').textContent = serverName;
             document.getElementById('serverDropdownMenu').classList.remove('active');
@@ -6209,11 +6219,15 @@
                     // now use the same /api/dashboard/servers source, preventing the dashboard
                     // from falling back to "Select Server" because two endpoints disagree.
                     const requestedGuildId = new URLSearchParams(window.location.search).get('guildId');
-                    if (requestedGuildId) {
-                        localStorage.setItem('selectedServerId', requestedGuildId);
+                    if (!requestedGuildId) {
+                        window.location.replace('/dashboard/select');
+                        return;
                     }
 
-                    const activeGuildId = requestedGuildId || localStorage.getItem('selectedServerId');
+                    // The dashboard is intentionally bound to the guild chosen on the
+                    // server-selection page. Do not silently restore another guild.
+                    localStorage.setItem('selectedServerId', requestedGuildId);
+                    const activeGuildId = requestedGuildId;
 
                     if (activeGuildId) {
                         try {
@@ -6243,19 +6257,14 @@
                                 // The selected server is no longer available or the bot is not
                                 // installed there. Never leave a broken/blank dashboard behind.
                                 localStorage.removeItem('selectedServerId');
-                                document.getElementById('serverDisplayName').textContent = 'Select Server';
-                                updateServerBtnIcon(null, null, null);
-                                showServerOverlay();
+                                window.location.replace('/dashboard/select');
+                                return;
                             }
                         } catch (e) {
                             console.error('Failed to restore selected server:', e);
-                            // Keep the dashboard usable: show the selector instead of a broken page.
-                            showServerOverlay();
+                            window.location.replace('/dashboard/select');
+                            return;
                         }
-                    } else {
-                        document.getElementById('serverDisplayName').textContent = 'Select Server';
-                        updateServerBtnIcon(null, null, null);
-                        showServerOverlay();
                     }
 
                     // Dashboard action buttons (non-functional placeholder)
