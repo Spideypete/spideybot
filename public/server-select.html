@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SPIDEY BOT — Select Server</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070a;--panel:#101014;--panel2:#15151b;--line:#24242d;--text:#f7f7fa;--muted:#9696a3;--purple:#9146ff;--discord:#5865f2;--green:#35d07f;--red:#ff6577}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,rgba(145,70,255,.18),transparent 38%),var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh}
+.wrap{max-width:1120px;margin:0 auto;padding:34px 22px 60px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px}.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.3px}.brand img{width:38px;height:38px;object-fit:contain}.user{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.9rem}.avatar{width:34px;height:34px;border-radius:50%;background:#24242d;display:grid;place-items:center;color:#fff;font-weight:700;overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover}
+.hero{margin-bottom:28px}.eyebrow{color:#b98cff;font-size:.76rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}.hero h1{font-size:clamp(2rem,5vw,3.2rem);margin:8px 0 10px;letter-spacing:-.04em}.hero p{color:var(--muted);max-width:680px;margin:0;line-height:1.65}
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:26px 0 14px}.count{color:var(--muted);font-size:.9rem}.btn{border:1px solid var(--line);background:var(--panel2);color:#fff;padding:10px 15px;border-radius:9px;font-weight:600;cursor:pointer}.btn:hover{border-color:rgba(145,70,255,.55)}.btn-primary{background:var(--purple);border-color:var(--purple)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}.card{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent),var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;gap:15px;align-items:center;min-height:110px;transition:.18s}.card:hover{transform:translateY(-2px);border-color:rgba(145,70,255,.5);box-shadow:0 14px 40px rgba(0,0,0,.25)}.icon{width:54px;height:54px;flex:0 0 54px;border-radius:14px;background:#20202a;display:grid;place-items:center;font-size:1.25rem;font-weight:800;overflow:hidden}.icon img{width:100%;height:100%;object-fit:cover}.info{min-width:0;flex:1}.name{font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{color:var(--muted);font-size:.78rem;margin-top:4px}.badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.badge{font-size:.68rem;font-weight:700;padding:4px 8px;border-radius:999px;background:#20202a;color:#aaa}.badge.free{color:#c5c5cf}.badge.premium{background:rgba(145,70,255,.14);color:#c59aff}.badge.pro{background:rgba(88,101,242,.14);color:#9ca5ff}.badge.installed{background:rgba(53,208,127,.12);color:#6be5a0}.badge.missing{background:rgba(255,101,119,.1);color:#ff8b99}.actions{display:flex;flex-direction:column;gap:7px;min-width:110px}.actions .btn{width:100%;font-size:.78rem;padding:9px 10px}.empty,.loading{border:1px dashed var(--line);border-radius:14px;padding:45px;text-align:center;color:var(--muted);grid-column:1/-1}.error{color:#ff8b99}.note{margin-top:20px;color:#777;font-size:.78rem;line-height:1.6}
+@media(max-width:650px){.wrap{padding:22px 14px 45px}.top{margin-bottom:26px}.user span{display:none}.card{align-items:flex-start}.actions{min-width:92px}.hero h1{font-size:2rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="/assets/spidey-logo.png" alt="Spidey Bot"><span>SPIDEY BOT</span></div>
+    <div class="user"><div class="avatar" id="avatar">?</div><span id="username">Loading...</span></div>
+  </header>
+  <section class="hero">
+    <div class="eyebrow">Admin Console</div>
+    <h1>Choose a server to manage</h1>
+    <p>Only Discord servers where you have administrator access are shown. If SPIDEY BOT is already installed, choose the server to open its admin dashboard. If it is not installed yet, add the bot first.</p>
+  </section>
+  <div class="toolbar"><div class="count" id="count">Loading servers...</div><button class="btn" id="refresh">↻ Refresh</button></div>
+  <main id="grid" class="grid"><div class="loading">Loading your Discord servers…</div></main>
+  <div class="note">Server access is checked against your Discord administrator permissions. Bot installation status is checked against the live SPIDEY BOT connection.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function tierBadge(tier){tier=String(tier||'free').toLowerCase();return '<span class="badge '+(tier==='premium'?'premium':tier==='pro'?'pro':'free')+'">'+escapeHtml(tier.toUpperCase())+'</span>'}
+function render(data){
+  const servers=Array.isArray(data.servers)?data.servers:[];
+  $('count').textContent=servers.length+' server'+(servers.length===1?'':'s')+' available';
+  if(!servers.length){$('grid').innerHTML='<div class="empty"><strong>No administrator servers found.</strong><br><span>Make sure your Discord account has Administrator permission in at least one server.</span></div>';return}
+  $('grid').innerHTML=servers.map(s=>{
+    const icon=s.icon?'<img src="'+escapeHtml(s.icon)+'" alt="">':escapeHtml((s.name||'?').charAt(0).toUpperCase());
+    const installed=!!s.botInstalled;
+    const status=installed?'<span class="badge installed">BOT INSTALLED</span>':'<span class="badge missing">BOT NOT INSTALLED</span>';
+    const tier=installed?tierBadge(s.tier):'<span class="badge">READY TO ADD</span>';
+    const count=s.memberCount?escapeHtml(String(s.memberCount))+' members':'Discord server';
+    const action=installed
+      ?'<button class="btn btn-primary" onclick="openServer(\''+escapeHtml(s.id)+'\')">Open Dashboard</button>'
+      :'<button class="btn btn-primary" onclick="inviteBot(\''+escapeHtml(s.id)+'\')">Add Bot</button>';
+    return '<article class="card"><div class="icon">'+icon+'</div><div class="info"><div class="name">'+escapeHtml(s.name)+'</div><div class="meta">'+count+'</div><div class="badges">'+status+tier+'</div></div><div class="actions">'+action+(installed?'':'<button class="btn" onclick="verifyServer(\''+escapeHtml(s.id)+'\')">I added it</button>')+'</div></article>';
+  }).join('');
+}
+async function load(){
+  $('grid').innerHTML='<div class="loading">Checking your Discord servers…</div>';
+  try{
+    const r=await fetch('/api/dashboard/servers',{credentials:'include',cache:'no-store'});
+    if(r.status===401){location.href='/login';return}
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Unable to load servers');
+    if(d.user){$('username').textContent=d.user.global_name||d.user.username||'Discord User';if(d.user.avatarUrl)$('avatar').innerHTML='<img src="'+escapeHtml(d.user.avatarUrl)+'" alt="">'}
+    render(d);
+  }catch(e){$('grid').innerHTML='<div class="empty error">'+escapeHtml(e.message||'Unable to load servers')+'<br><button class="btn" style="margin-top:12px" onclick="load()">Try Again</button></div>'}
+}
+function openServer(id){location.href='/dashboard.html?guildId='+encodeURIComponent(id)}
+function inviteBot(id){location.href='/invite?guildId='+encodeURIComponent(id)}
+async function verifyServer(id){await load()}
+$('refresh').onclick=load;
+load();
+</script>
+</body>
+</html>
