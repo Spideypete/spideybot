@@ -320,6 +320,29 @@
     .sidebar-item-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    // Hard dashboard context lock: a dashboard URL with guildId is never allowed
+    // to fall back to a server-selection UI, even if an old cached/injected element
+    // is present. The selected guild is established before the rest of the page boots.
+    (function () {
+        const guildId = new URLSearchParams(window.location.search).get('guildId');
+        if (!guildId) return;
+        localStorage.setItem('selectedServerId', guildId);
+        document.documentElement.dataset.spideyGuildId = guildId;
+        const hideLegacySelector = () => {
+            document.querySelectorAll('.server-select-overlay, #serverSelection, #serverSelectionPage, [data-server-selection]')
+                .forEach(el => {
+                    el.classList.add('hidden');
+                    el.style.setProperty('display', 'none', 'important');
+                });
+        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hideLegacySelector, { once: true });
+        } else {
+            hideLegacySelector();
+        }
+    })();
+    </script>
 
 
 </head>
