@@ -5115,6 +5115,8 @@ app.get("/", (req, res) => {
 // Route /dashboard to dashboard.html - protected
 app.get("/dashboard", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
+  // If a guild was already selected, never send the user back to the selector.
+  if (req.query.guildId) return res.redirect("/dashboard.html?guildId=" + encodeURIComponent(String(req.query.guildId)));
   res.redirect("/dashboard/select");
 });
 
@@ -5128,7 +5130,8 @@ app.get("/dashboard/server/:guildId", (req, res) => {
   const guildId = String(req.params.guildId);
   const hasAdminAccess = Array.isArray(req.session.guilds) && req.session.guilds.some(g => String(g.id) === guildId);
   if (!hasAdminAccess) return res.status(403).send("You do not have administrator access to this server.");
-  if (!client.guilds.cache.has(guildId)) return res.redirect("/dashboard/select");
+  // Do not depend on the Discord gateway cache for navigation. The dashboard
+  // must remain bound to the guild explicitly selected by the authenticated user.
   res.redirect("/dashboard.html?guildId=" + encodeURIComponent(guildId));
 });
 
@@ -6111,7 +6114,8 @@ app.get("/api/image", async (req, res) => {
 // ============== SERVER MANAGEMENT PAGE ==============
 app.get("/dashboard/server/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.redirect("/dashboard.html");
+  const guildId = String(req.params.guildId);
+  res.redirect("/dashboard.html?guildId=" + encodeURIComponent(guildId));
 });
 
 // ============== API: GET ROLE CATEGORIES (must be before :guildId) ==============
