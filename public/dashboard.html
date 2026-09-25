@@ -6204,13 +6204,34 @@
                         ownersDashLink.style.display = 'block';
                     }
 
-                    // Clear any previously saved server — user must choose each session
-                    localStorage.removeItem('selectedServerId');
-                    document.getElementById('serverDisplayName').textContent = 'Select Server';
-                    updateServerBtnIcon(null, null, null);
+                    // The server selector passes the chosen guild in the URL.
+                    // Preserve the existing dashboard functionality; only initialize the selected server.
+                    const requestedGuildId = new URLSearchParams(window.location.search).get('guildId');
+                    if (requestedGuildId) localStorage.setItem('selectedServerId', requestedGuildId);
 
-                    // Show the blur overlay prompting server selection
-                    showServerOverlay();
+                    const activeGuildId = localStorage.getItem('selectedServerId');
+                    if (activeGuildId) {
+                        try {
+                            const guildRes = await fetch('/api/creator/servers', { credentials: 'include' });
+                            const guildData = await guildRes.json();
+                            const activeServer = (guildData.servers || []).find(s => s.id === activeGuildId);
+                            if (activeServer) {
+                                await selectServer(activeServer.id, activeServer.name, activeServer.icon, activeServer.iconProxy);
+                            } else {
+                                localStorage.removeItem('selectedServerId');
+                                document.getElementById('serverDisplayName').textContent = 'Select Server';
+                                updateServerBtnIcon(null, null, null);
+                                showServerOverlay();
+                            }
+                        } catch (e) {
+                            console.error('Failed to restore selected server:', e);
+                            showServerOverlay();
+                        }
+                    } else {
+                        document.getElementById('serverDisplayName').textContent = 'Select Server';
+                        updateServerBtnIcon(null, null, null);
+                        showServerOverlay();
+                    }
 
                     // Dashboard action buttons (non-functional placeholder)
                     document.getElementById('exportDataBtn')?.addEventListener('click', () => showToast('Export data is coming soon!', 'info'));
