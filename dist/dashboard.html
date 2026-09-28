@@ -6,6 +6,35 @@
     <title>SPIDEY BOT - Admin Dashboard</title>
 
     <style>
+/* SPIDEY MAIN DASHBOARD HARD LOCK v2 */
+/* A selected guild URL is a final dashboard route. Nothing on this page may
+   render or inject a second server picker. */
+.dashboard-page [class*="server-select"],
+.dashboard-page [id*="server-select"],
+.dashboard-page [class*="serverSelection"],
+.dashboard-page [id*="serverSelection"],
+.dashboard-page [data-server-selection],
+.dashboard-page .server-picker,
+.dashboard-page .server-picker-overlay,
+.dashboard-page .server-list-overlay,
+.dashboard-page .server-select-card,
+.dashboard-page #server-select-overlay {
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+.dashboard-page .dashboard-wrapper { display:flex !important; flex-direction:column !important; min-height:100vh !important; }
+.dashboard-page .main-container { display:flex !important; flex:1 1 auto !important; min-height:0 !important; visibility:visible !important; }
+.dashboard-page .sidebar { display:block !important; visibility:visible !important; flex:0 0 260px !important; width:260px !important; }
+.dashboard-page .content-area { display:block !important; visibility:visible !important; flex:1 1 auto !important; min-width:0 !important; position:relative !important; z-index:1 !important; }
+.dashboard-page #dashboard-section { display:block !important; visibility:visible !important; }
+/* Never allow an old absolute/fixed server picker to cover the dashboard. */
+.dashboard-page .main-container > .server-select-overlay,
+.dashboard-page .main-container > [class*="server-select"],
+.dashboard-page .main-container > [id*="server-select"],
+.dashboard-page .main-container > [class*="serverSelection"],
+.dashboard-page .main-container > [id*="serverSelection"] { display:none !important; }
+
 /* MAIN DASHBOARD INVARIANT
    This page is never a server-selection screen. Server selection happens at
    /dashboard/select and this page is only entered with ?guildId=... */
