@@ -5144,9 +5144,6 @@ app.get("/premium", (req, res) => {
   res.sendFile(path.join(publicDir, 'premium.html'));
 });
 
-app.get("/testownerdashboard.html", (req, res) => {
-  res.sendFile(path.join(publicDir, 'testownerdashboard.html'));
-});
 
 app.get("/invite", (req, res) => {
   // No guild selected yet: authenticate the Discord user first, then show the server selector.
