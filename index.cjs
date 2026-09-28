@@ -8586,6 +8586,17 @@ app.use('/api/features', featuresRouter);
 
 const PORT = process.env.PORT || 5000;
 
+// Health endpoint for Railway deployment checks. Keep this lightweight and
+// independent of Discord readiness so Railway can verify the HTTP process.
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'spidey-bot',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health/status endpoint
 console.log('🔧 Registering /status endpoint');
 app.get('/status', (req, res) => {
