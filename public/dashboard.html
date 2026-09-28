@@ -5933,10 +5933,10 @@
         // Load Colors from LocalStorage
         function loadSavedColors() {
             // Load SAVED colors (persisted from last save)
-            const themeColor = localStorage.getItem('savedThemeColor') || localStorage.getItem('themeColor') || '#9146FF';
-            const cyanAccent = localStorage.getItem('savedAccentCyan') || localStorage.getItem('accentCyan') || '#9146FF';
-            const purpleAccent = localStorage.getItem('savedAccentPurple') || localStorage.getItem('accentPurple') || '#9146ff';
-            const pinkAccent = localStorage.getItem('savedAccentPink') || localStorage.getItem('accentPink') || '#9146FF';
+            const themeColor = localStorage.getItem('savedThemeColor') || localStorage.getItem('themeColor') || '#6D28D9';
+            const cyanAccent = localStorage.getItem('savedAccentCyan') || localStorage.getItem('accentCyan') || '#6D28D9';
+            const purpleAccent = localStorage.getItem('savedAccentPurple') || localStorage.getItem('accentPurple') || '#6D28D9';
+            const pinkAccent = localStorage.getItem('savedAccentPink') || localStorage.getItem('accentPink') || '#6D28D9';
             const textColor = localStorage.getItem('savedTextColor') || localStorage.getItem('textColor') || '#ffffff';
 
             // Apply colors to CSS
@@ -6099,7 +6099,7 @@
         // Color Theme Functions
         function hexToRgb(hex) {
             const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '145, 70, 255';
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '109, 40, 217';
         }
 
         function changeThemeColor(color) {
@@ -6150,10 +6150,10 @@
 
         function resetColors() {
             // Reset only unsaved color changes - revert to last SAVED state
-            const savedThemeColor = localStorage.getItem('savedThemeColor') || '#9146FF';
-            const savedCyanAccent = localStorage.getItem('savedAccentCyan') || '#9146FF';
-            const savedPurpleAccent = localStorage.getItem('savedAccentPurple') || '#9146ff';
-            const savedPinkAccent = localStorage.getItem('savedAccentPink') || '#9146FF';
+            const savedThemeColor = localStorage.getItem('savedThemeColor') || '#6D28D9';
+            const savedCyanAccent = localStorage.getItem('savedAccentCyan') || '#6D28D9';
+            const savedPurpleAccent = localStorage.getItem('savedAccentPurple') || '#6D28D9';
+            const savedPinkAccent = localStorage.getItem('savedAccentPink') || '#6D28D9';
             const savedTextColor = localStorage.getItem('savedTextColor') || '#ffffff';
 
             // Clear UNSAVED changes
@@ -6373,9 +6373,9 @@
                     const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
                     const gridColorFaint = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)';
                     const tooltipBg = isLight ? 'rgba(255,255,255,0.95)' : 'rgba(10, 20, 40, 0.9)';
-                    const tooltipBorder = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(145, 70, 255, 0.3)';
+                    const tooltipBorder = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(109, 40, 217, 0.35)';
                     const tooltipTextColor = isLight ? '#222' : '#fff';
-                    const memberColors = ['#9146FF', '#00ff88', '#9146ff', '#9146FF', '#ff6b35'];
+                    const memberColors = ['#6D28D9', '#0F6B78', '#7C3AED', '#1597A5', '#8B5CF6'];
                     const memberLabels = ['Members', 'Verified', 'Bots', 'Admins', 'Moderators'];
                     const memberData = [stats.members, stats.verified, stats.bots, stats.admins, stats.mods];
 
@@ -6386,8 +6386,8 @@
                             datasets: [{
                                 label: 'Count',
                                 data: memberData,
-                                borderColor: '#9146FF',
-                                backgroundColor: 'rgba(145, 70, 255, 0.1)',
+                                borderColor: '#6D28D9',
+                                backgroundColor: 'rgba(109, 40, 217, 0.12)',
                                 borderWidth: 3,
                                 fill: true,
                                 tension: 0.4,
@@ -6639,10 +6639,10 @@
             });
 
             // Save colors
-            const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#9146FF';
-            const cyanAccent = localStorage.getItem('accentCyan') || localStorage.getItem('savedAccentCyan') || '#9146FF';
-            const purpleAccent = localStorage.getItem('accentPurple') || localStorage.getItem('savedAccentPurple') || '#9146ff';
-            const pinkAccent = localStorage.getItem('accentPink') || localStorage.getItem('savedAccentPink') || '#9146FF';
+            const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#6D28D9';
+            const cyanAccent = localStorage.getItem('accentCyan') || localStorage.getItem('savedAccentCyan') || '#6D28D9';
+            const purpleAccent = localStorage.getItem('accentPurple') || localStorage.getItem('savedAccentPurple') || '#6D28D9';
+            const pinkAccent = localStorage.getItem('accentPink') || localStorage.getItem('savedAccentPink') || '#6D28D9';
             const textColor = localStorage.getItem('textColor') || localStorage.getItem('savedTextColor') || '#ffffff';
 
             localStorage.setItem('savedThemeColor', themeColor);
@@ -7098,4 +7098,64 @@
       <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
     </div>
   </footer>
+
+
+
+<style id="spidey-dashboard-theme-v2">
+:root{
+--spidey-bg:#08081c;--spidey-bg-secondary:#0b0d22;--spidey-sidebar:#0d1026;--spidey-card:#11142d;--spidey-card-hover:#171a38;--spidey-input:#0b0e22;--spidey-border:#222744;--spidey-border-strong:#30365b;
+--spidey-primary:#6d28d9;--spidey-primary-hover:#7c3aed;--spidey-primary-soft:rgba(109,40,217,.14);--spidey-primary-border:rgba(109,40,217,.32);
+--spidey-petrol:#0f6b78;--spidey-petrol-bright:#1597a5;--spidey-petrol-soft:rgba(15,107,120,.14);--spidey-petrol-border:rgba(21,151,165,.32);
+--spidey-text:#f8fafc;--spidey-text-secondary:#a3aed0;--spidey-text-muted:#707eae;--spidey-shadow:14px 17px 40px 4px rgba(4,7,25,.28)
+}
+body.light-mode{
+--spidey-bg:#f4f7fe;--spidey-bg-secondary:#eef2fa;--spidey-sidebar:#fff;--spidey-card:#fff;--spidey-card-hover:#f8faff;--spidey-input:#fff;--spidey-border:#e1e7f2;--spidey-border-strong:#cfd8e8;
+--spidey-primary:#5b21b6;--spidey-primary-hover:#6d28d9;--spidey-primary-soft:rgba(91,33,182,.09);--spidey-primary-border:rgba(91,33,182,.22);
+--spidey-petrol:#0f6672;--spidey-petrol-bright:#0b7d8a;--spidey-petrol-soft:rgba(15,102,114,.08);--spidey-petrol-border:rgba(15,102,114,.22);
+--spidey-text:#1b2559;--spidey-text-secondary:#707eae;--spidey-text-muted:#8f9bba;--spidey-shadow:14px 17px 40px 4px rgba(112,144,176,.16)
+}
+html,body,.dashboard-page{background:var(--spidey-bg)!important;color:var(--spidey-text)!important}
+body{transition:background-color .2s ease,color .2s ease}
+.header,.dashboard-page .header{background:var(--spidey-sidebar)!important;border-bottom-color:var(--spidey-border)!important}
+.content-area{background:var(--spidey-bg)!important}
+.sidebar{background:var(--spidey-sidebar)!important;border-right-color:var(--spidey-border)!important}
+.panel,.stat-card,.feature-card,.cta-section,.modal-content,.dropdown-menu,.profile-menu,.settings-card,.card,.table-container{background:var(--spidey-card)!important;border-color:var(--spidey-border)!important;box-shadow:var(--spidey-shadow)!important}
+.panel:hover,.stat-card:hover,.feature-card:hover{border-color:var(--spidey-border-strong)!important}
+.dashboard-page .panel-title,.dashboard-page .stat-value,.dashboard-page .content-title,.dashboard-page .dashboard-title,.dashboard-page .header-title,.dashboard-page .section-title,.dashboard-page .stat-total,.dashboard-page .feature-card h3,.dashboard-page .cta-section h2{color:var(--spidey-text)!important}
+.dashboard-page .stat-title,.dashboard-page .content-subtitle,.dashboard-page .form-label,.dashboard-page .feature-card p,.dashboard-page .cta-section p,.dashboard-page .text-muted{color:var(--spidey-text-secondary)!important}
+.dashboard-page .sidebar-section-title{color:var(--spidey-text-muted)!important}
+.dashboard-page .btn-primary,.dashboard-page .upgrade-btn,.dashboard-page .nav-cta{background:var(--spidey-primary)!important;border-color:var(--spidey-primary)!important;color:#fff!important}
+.dashboard-page .btn-primary:hover,.dashboard-page .upgrade-btn:hover,.dashboard-page .nav-cta:hover{background:var(--spidey-primary-hover)!important;border-color:var(--spidey-primary-hover)!important;box-shadow:0 8px 24px var(--spidey-primary-soft)!important}
+.dashboard-page .btn-secondary{background:transparent!important;border-color:var(--spidey-border-strong)!important;color:var(--spidey-text)!important}
+.dashboard-page .btn-secondary:hover{border-color:var(--spidey-petrol)!important;color:var(--spidey-petrol-bright)!important;background:var(--spidey-petrol-soft)!important}
+.dashboard-page .dashboard-context,.dashboard-page .dashboard-context span{color:var(--spidey-text-secondary)!important}
+.mode-toggle,.notification-icon{background:var(--spidey-primary-soft)!important;border-color:var(--spidey-primary-border)!important}
+.mode-toggle:hover,.notification-icon:hover{background:var(--spidey-petrol-soft)!important;border-color:var(--spidey-petrol-border)!important}
+.user-avatar{background:var(--spidey-primary)!important;border-color:var(--spidey-primary-hover)!important}
+.profile-menu{background:var(--spidey-card)!important;border-color:var(--spidey-border)!important}
+.profile-menu-item{color:var(--spidey-text-secondary)!important}
+.profile-menu-item:hover{background:var(--spidey-primary-soft)!important;color:var(--spidey-text)!important}
+.sidebar-search input{background:var(--spidey-input)!important;border-color:var(--spidey-border)!important;color:var(--spidey-text)!important}
+.sidebar-search input:focus{border-color:var(--spidey-petrol)!important;box-shadow:0 0 0 3px var(--spidey-petrol-soft)!important}
+.sidebar-search input::placeholder{color:var(--spidey-text-muted)!important}
+.sidebar-item{color:var(--spidey-text-secondary)!important}
+.sidebar-item:hover{color:var(--spidey-text)!important;background:var(--spidey-petrol-soft)!important}
+.sidebar-item.active{color:var(--spidey-primary-hover)!important;background:var(--spidey-primary-soft)!important;border-right-color:var(--spidey-primary)!important;box-shadow:inset -1px 0 0 var(--spidey-petrol)!important}
+.sidebar-tier-badge,.section-tier-badge{background:var(--spidey-petrol-soft)!important;color:var(--spidey-petrol-bright)!important;border-color:var(--spidey-petrol-border)!important}
+.form-input,.form-select,.role-select,.channel-select,.custom-multiselect,textarea,input[type=text],input[type=number],input[type=url],input[type=password]{background:var(--spidey-input)!important;border-color:var(--spidey-border)!important;color:var(--spidey-text)!important}
+.form-input:focus,.form-select:focus,.role-select:focus,.channel-select:focus,.custom-multiselect:focus,textarea:focus,input:focus{border-color:var(--spidey-petrol)!important;box-shadow:0 0 0 3px var(--spidey-petrol-soft)!important;outline:none!important}
+.form-input::placeholder,input::placeholder,textarea::placeholder{color:var(--spidey-text-muted)!important}
+.toggle-slider{background:var(--spidey-border-strong)!important}
+.toggle-switch input:checked+.toggle-slider{background:var(--spidey-primary)!important;box-shadow:0 0 12px var(--spidey-primary-soft)!important}
+.tab.active,.tab-button.active,.nav-tab.active{color:var(--spidey-primary-hover)!important;border-color:var(--spidey-primary-border)!important;background:var(--spidey-primary-soft)!important}
+table{color:var(--spidey-text)!important}th{color:var(--spidey-text-secondary)!important;border-bottom-color:var(--spidey-border)!important}td{border-bottom-color:var(--spidey-border)!important}tr:hover td{background:var(--spidey-petrol-soft)!important}
+#toastContainer>*,#unsavedNotification{background:var(--spidey-card)!important;color:var(--spidey-text)!important;border-color:var(--spidey-border)!important;box-shadow:var(--spidey-shadow)!important}
+.btn-save-changes{background:var(--spidey-primary)!important;color:#fff!important}.btn-reset{background:transparent!important;color:var(--spidey-text-secondary)!important;border-color:var(--spidey-border-strong)!important}
+.ai-toggle,.ai-header,.ai-input-area button{background:linear-gradient(135deg,var(--spidey-primary),var(--spidey-petrol))!important}
+.ai-chat{background:var(--spidey-card)!important;border-color:var(--spidey-primary-border)!important}.ai-msg.bot{background:var(--spidey-primary-soft)!important;color:var(--spidey-text)!important}.ai-msg.user{background:var(--spidey-primary)!important;color:#fff!important}
+.ai-input-area{border-top-color:var(--spidey-border)!important}.ai-input-area input{background:var(--spidey-input)!important;color:var(--spidey-text)!important;border-color:var(--spidey-border)!important}
+footer{background:var(--spidey-sidebar)!important;border-top-color:var(--spidey-border)!important}footer .footer-section h3{color:var(--spidey-petrol-bright)!important}footer .footer-section a:hover{color:var(--spidey-primary-hover)!important}footer .footer-bottom{color:var(--spidey-text-muted)!important;border-top-color:var(--spidey-border)!important}
+body.light-mode .panel,body.light-mode .stat-card,body.light-mode .feature-card,body.light-mode .profile-menu,body.light-mode .modal-content,body.light-mode .table-container{background:#fff!important;box-shadow:var(--spidey-shadow)!important}
+body.light-mode .form-input,body.light-mode .form-select,body.light-mode .role-select,body.light-mode .channel-select,body.light-mode .custom-multiselect,body.light-mode textarea,body.light-mode input{background:#fff!important;color:var(--spidey-text)!important}
+</style>
 
