@@ -4,10 +4,15 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --only=production
+# Railway builds must not depend on a stale lockfile.
+# npm install resolves package.json/package-lock.json drift while keeping
+# production dependencies only.
+RUN npm install --omit=dev --no-audit --no-fund
 
 COPY . .
 
-EXPOSE 3000
+ENV NODE_ENV=production
+
+EXPOSE 5000
 
 CMD ["node", "index.cjs"]
