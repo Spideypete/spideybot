@@ -6,66 +6,38 @@
     <title>SPIDEY BOT - Admin Dashboard</title>
 
     <style>
-/* SPIDEY MAIN DASHBOARD HARD LOCK v2 */
-/* A selected guild URL is a final dashboard route. Nothing on this page may
-   render or inject a second server picker. */
-.dashboard-page [class*="server-select"],
-.dashboard-page [id*="server-select"],
-.dashboard-page [class*="serverSelection"],
-.dashboard-page [id*="serverSelection"],
-.dashboard-page [data-server-selection],
-.dashboard-page .server-picker,
-.dashboard-page .server-picker-overlay,
-.dashboard-page .server-list-overlay,
-.dashboard-page .server-select-card,
-.dashboard-page #server-select-overlay {
-  display:none !important;
-  visibility:hidden !important;
-  pointer-events:none !important;
-}
+/* MAIN DASHBOARD
+   A selected guild is already known from ?guildId=...
+   This page contains the admin dashboard only. No server picker belongs here.
+*/
+.dashboard-page { min-height:100vh; overflow-x:hidden; }
+.dashboard-page .dashboard-wrapper { display:flex !important; flex-direction:column !important; min-height:100vh !important; width:100% !important; }
+.dashboard-page .header { display:flex !important; align-items:center !important; justify-content:space-between !important; gap:1.5rem !important; width:100% !important; flex:0 0 auto !important; }
+.dashboard-page .header-left,.dashboard-page .header-right { display:flex !important; align-items:center !important; }
+.dashboard-page .header-left { gap:1rem !important; min-width:0 !important; }
+.dashboard-page .header-right { gap:.75rem !important; }
+.dashboard-page .dashboard-context { display:flex !important; align-items:center !important; min-width:0 !important; }
+.dashboard-page #dashboardServerName { display:block !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.dashboard-page .main-container { display:flex !important; flex:1 1 auto !important; min-height:0 !important; width:100% !important; overflow:hidden !important; }
+.dashboard-page .sidebar { display:block !important; flex:0 0 260px !important; width:260px !important; min-width:260px !important; min-height:0 !important; overflow-y:auto !important; }
+.dashboard-page .content-area { display:block !important; flex:1 1 auto !important; min-width:0 !important; min-height:0 !important; overflow-y:auto !important; position:relative !important; z-index:1 !important; }
+.dashboard-page .content-section { display:none !important; }
+.dashboard-page .content-section.active { display:block !important; visibility:visible !important; }
+.dashboard-page .sidebar-item-icon img { width:20px !important; height:20px !important; max-width:20px !important; max-height:20px !important; }
+.dashboard-page .header-logo img { width:auto !important; height:40px !important; max-width:160px !important; max-height:40px !important; }
+.dashboard-page .user-avatar { width:40px !important; height:40px !important; flex:0 0 40px !important; overflow:hidden !important; }
+.dashboard-page .user-avatar img { width:100% !important; height:100% !important; object-fit:cover !important; }
 
-/* FINAL MAIN-DASHBOARD SAFETY NET
-   The selected-server dashboard is never allowed to show a picker or an
-   injected full-screen layer. */
-.dashboard-page iframe { display:none !important; }
-.dashboard-page [class*="server-select"],
-.dashboard-page [id*="server-select"],
-.dashboard-page [class*="serverSelection"],
-.dashboard-page [id*="serverSelection"],
-.dashboard-page [class*="server-picker"],
-.dashboard-page [id*="server-picker"] {
-  display:none !important;
-  visibility:hidden !important;
-  pointer-events:none !important;
-}
-.dashboard-page .dashboard-wrapper { display:flex !important; flex-direction:column !important; min-height:100vh !important; }
-.dashboard-page .main-container { display:flex !important; flex:1 1 auto !important; min-height:0 !important; visibility:visible !important; }
-.dashboard-page .sidebar { display:block !important; visibility:visible !important; flex:0 0 260px !important; width:260px !important; }
-.dashboard-page .content-area { display:block !important; visibility:visible !important; flex:1 1 auto !important; min-width:0 !important; position:relative !important; z-index:1 !important; }
-.dashboard-page #dashboard-section { display:block !important; visibility:visible !important; }
-/* Never allow an old absolute/fixed server picker to cover the dashboard. */
-.dashboard-page .main-container > .server-select-overlay,
-.dashboard-page .main-container > [class*="server-select"],
-.dashboard-page .main-container > [id*="server-select"],
-.dashboard-page .main-container > [class*="serverSelection"],
-.dashboard-page .main-container > [id*="serverSelection"] { display:none !important; }
+/* Absolutely no selector/picker UI is allowed on the selected-server dashboard. */
+.dashboard-page [class*="server-select"],.dashboard-page [id*="server-select"],
+.dashboard-page [class*="serverSelection"],.dashboard-page [id*="serverSelection"],
+.dashboard-page [class*="server-picker"],.dashboard-page [id*="server-picker"],
+.dashboard-page [data-server-selection] { display:none !important; visibility:hidden !important; pointer-events:none !important; }
 
-/* MAIN DASHBOARD INVARIANT
-   This page is never a server-selection screen. Server selection happens at
-   /dashboard/select and this page is only entered with ?guildId=... */
-.dashboard-page .server-select-overlay,
-.dashboard-page .server-select-prompt,
-.dashboard-page #serverSelection,
-.dashboard-page #serverSelectionPage,
-.dashboard-page [data-server-selection] {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-.dashboard-page .content-area {
-    position: relative;
-    z-index: 1;
-}
+/* Never allow an unexpected top-level element to cover the real dashboard. */
+.dashboard-page > .dashboard-wrapper > :not(.header):not(.main-container) { display:none !important; }
+.dashboard-page > .dashboard-wrapper > .main-container > :not(.sidebar):not(.content-area) { display:none !important; }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
@@ -381,99 +353,18 @@
 </script></head>
 <body class="dashboard-page">
 <script>
-(function enforceMainDashboard() {
-    const guildId = new URLSearchParams(window.location.search).get('guildId');
-
-    // /dashboard.html without a guild is never a valid dashboard state.
+(function bindSelectedGuild() {
+    const params = new URLSearchParams(window.location.search);
+    const guildId = params.get('guildId');
     if (!guildId) {
         window.location.replace('/dashboard/select');
         return;
     }
-
     selectedServerId = guildId;
     localStorage.setItem('selectedServerId', guildId);
-
-    const legacySelectorPattern = /(server[-_ ]?(select|selection|selector|picker)|serverselection|guild[-_ ]?selector)/i;
-
-    function removeLegacySelectorNodes(root = document) {
-        root.querySelectorAll(
-            '.server-select-overlay, .server-select-prompt, .server-picker, .server-picker-overlay, ' +
-            '.server-list-overlay, .server-select-card, #server-select-overlay, #serverSelection, ' +
-            '#serverSelectionPage, [data-server-selection], [class*="server-select"], [id*="server-select"], ' +
-            '[class*="serverSelection"], [id*="serverSelection"], [class*="server-picker"], [id*="server-picker"]'
-        ).forEach(el => el.remove());
-
-        // Catch legacy selectors whose class/id was changed but whose content still
-        // says "Select a server". Never remove the real dashboard wrapper itself.
-        root.querySelectorAll('body *').forEach(el => {
-            if (el === document.body || el.closest('#ai-widget') || el.closest('.dashboard-wrapper')) return;
-            const label = (el.textContent || '').replace(/\s+/g, ' ').trim();
-            if (/select\s+(a\s+)?server/i.test(label) && label.length < 500) el.remove();
-        });
-    }
-
-    function enforceLayout() {
-        removeLegacySelectorNodes();
-
-        const wrapper = document.querySelector('.dashboard-wrapper');
-        const main = document.querySelector('.main-container');
-        const content = document.querySelector('.content-area');
-        const dashboard = document.getElementById('dashboard-section');
-        const name = document.getElementById('dashboardServerName');
-
-        if (wrapper) {
-            wrapper.style.display = 'flex';
-            wrapper.style.visibility = 'visible';
-            wrapper.style.minHeight = '100vh';
-        }
-        if (main) {
-            main.style.display = 'flex';
-            main.style.visibility = 'visible';
-            main.style.flex = '1 1 auto';
-            main.style.minHeight = '0';
-        }
-        if (content) {
-            content.style.display = 'block';
-            content.style.visibility = 'visible';
-            content.style.flex = '1 1 auto';
-            content.style.minWidth = '0';
-        }
-        if (dashboard) {
-            dashboard.style.display = 'block';
-            dashboard.style.visibility = 'visible';
-        }
-        if (name) name.textContent = 'Server Dashboard • ' + guildId;
-
-        // If an unexpected legacy full-screen layer is injected, remove it.
-        document.querySelectorAll('body *').forEach(el => {
-            if (el.closest('.dashboard-wrapper') && !el.matches('[class*="server-select"], [id*="server-select"]')) return;
-            if (el.closest('#ai-widget')) return;
-            const cs = getComputedStyle(el);
-            const rect = el.getBoundingClientRect();
-            const fullScreenLayer =
-                (cs.position === 'fixed' || cs.position === 'absolute') &&
-                rect.width >= window.innerWidth * 0.80 &&
-                rect.height >= window.innerHeight * 0.70 &&
-                Number(cs.zIndex || 0) >= 10;
-            if (fullScreenLayer && el !== document.body && el !== document.documentElement) {
-                el.remove();
-            }
-        });
-    }
-
-    function start() {
-        enforceLayout();
-        const observer = new MutationObserver(() => enforceLayout());
-        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'id', 'style'] });
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', start, { once: true });
-    } else {
-        start();
-    }
-})();
-</script>
+    const serverName = document.getElementById('dashboardServerName');
+    if (serverName) serverName.textContent = 'Server Dashboard • ' + guildId;
+})();</script>
 
     <div class="dashboard-wrapper">
         <!-- Header -->
@@ -7141,10 +7032,13 @@
         display: flex !important;
         flex-direction: column !important;
         min-height: 100vh !important;
+        width: 100% !important;
     }
     .main-container {
         display: flex !important;
-        flex: 1 !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        width: 100% !important;
         overflow: hidden !important;
     }
 
