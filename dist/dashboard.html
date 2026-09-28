@@ -6,6 +6,22 @@
     <title>SPIDEY BOT - Admin Dashboard</title>
 
     <style>
+/* MAIN DASHBOARD INVARIANT
+   This page is never a server-selection screen. Server selection happens at
+   /dashboard/select and this page is only entered with ?guildId=... */
+.dashboard-page .server-select-overlay,
+.dashboard-page .server-select-prompt,
+.dashboard-page #serverSelection,
+.dashboard-page #serverSelectionPage,
+.dashboard-page [data-server-selection] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+.dashboard-page .content-area {
+    position: relative;
+    z-index: 1;
+}
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
@@ -272,15 +288,7 @@
     }
 
     /* Network background canvas */
-    #network-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-    }
+    #network-canvas { display: none !important; }
     main > *:not(#network-canvas) {
       position: relative;
       z-index: 1;
@@ -321,32 +329,34 @@
 </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-    // Hard dashboard context lock: a dashboard URL with guildId is never allowed
-    // to fall back to a server-selection UI, even if an old cached/injected element
-    // is present. The selected guild is established before the rest of the page boots.
-    (function () {
-        const guildId = new URLSearchParams(window.location.search).get('guildId');
-        if (!guildId) return;
-        localStorage.setItem('selectedServerId', guildId);
-        document.documentElement.dataset.spideyGuildId = guildId;
-        const hideLegacySelector = () => {
-            document.querySelectorAll('.server-select-overlay, #serverSelection, #serverSelectionPage, [data-server-selection]')
-                .forEach(el => {
-                    el.classList.add('hidden');
-                    el.style.setProperty('display', 'none', 'important');
-                });
-        };
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', hideLegacySelector, { once: true });
-        } else {
-            hideLegacySelector();
-        }
-    })();
-    </script>
+    // MAIN DASHBOARD: guildId is authoritative. There is no server selector here.
+    const dashboardGuildId = new URLSearchParams(window.location.search).get('guildId');
+    let selectedServerId = dashboardGuildId || localStorage.getItem('selectedServerId') || '';
+    if (dashboardGuildId) localStorage.setItem('selectedServerId', dashboardGuildId);
+</script></head>
+<body class="dashboard-page">
+<script>
+(function enforceMainDashboard() {
+    const guildId = new URLSearchParams(window.location.search).get('guildId');
+    if (!guildId) return;
+    selectedServerId = guildId;
+    localStorage.setItem('selectedServerId', guildId);
 
+    function removeLegacySelector() {
+        document.querySelectorAll('.server-select-overlay, .server-select-prompt, #serverSelection, #serverSelectionPage, [data-server-selection]')
+          .forEach(el => el.remove());
+        const name = document.getElementById('dashboardServerName');
+        if (name) name.textContent = 'Server Dashboard • ' + guildId;
+    }
 
-</head>
-<body>
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', removeLegacySelector, { once: true });
+    } else {
+        removeLegacySelector();
+    }
+})();
+</script>
+
     <div class="dashboard-wrapper">
         <!-- Header -->
         <div class="header">
@@ -443,7 +453,6 @@
 
             <!-- Content Area -->
             <div class="content-area">
-    <canvas id="network-canvas" aria-hidden="true"></canvas>
 
                 <!-- Dashboard Section -->
                 <div id="dashboard-section" class="content-section active">
@@ -5959,10 +5968,6 @@
             originalValues['textColorPicker'] = textColor;
         }
 
-        // Server context is authoritative from the URL selected by the server selector.
-        // Keep a real variable in scope for all dashboard startup logic.
-        let selectedServerId = new URLSearchParams(window.location.search).get('guildId') || localStorage.getItem('selectedServerId') || '';
-
         window.addEventListener('load', async () => {
             // Load saved colors
             loadSavedColors();
@@ -6804,9 +6809,7 @@
             console.error('🔴 Unhandled promise rejection:', event.reason);
         });
 
-    </script>
-
-    <!-- Toast Notification Container -->
+    </script><!-- Toast Notification Container -->
     <div id="toastContainer"></div>
 
     <!-- Unsaved Changes Notification -->
@@ -6950,44 +6953,6 @@
         color: #9146FF !important;
     }
 
-    /* Server selection overlay — only visible until a valid server is selected */
-    .main-container { position: relative !important; min-height: 0; }
-    .server-select-overlay {
-        position: absolute !important;
-        inset: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 2rem !important;
-        background: #0a0a0a !important;
-        z-index: 50 !important;
-    }
-    .server-select-overlay.hidden { display: none !important; }
-    .server-select-prompt {
-        width: min(560px, 92%) !important;
-        padding: 3rem !important;
-        text-align: center !important;
-        background: #111111 !important;
-        border: 1px solid rgba(145,70,255,.25) !important;
-        border-radius: 16px !important;
-        box-shadow: 0 24px 70px rgba(0,0,0,.45) !important;
-    }
-    .server-select-prompt .prompt-icon {
-        width: 64px !important;
-        height: 64px !important;
-        margin: 0 auto 1rem !important;
-        display: grid !important;
-        place-items: center !important;
-        border-radius: 16px !important;
-        background: rgba(145,70,255,.12) !important;
-        color: #9146ff !important;
-        font-size: 1.8rem !important;
-    }
-    .server-select-prompt h2 { color:#fff !important; margin-bottom:.6rem !important; }
-    .server-select-prompt p { color:#888 !important; margin:0 !important; }
-
-    /* Never allow the decorative network canvas to cover the real dashboard. */
-    #network-canvas { display: none !important; }
 
     /* Content area */
     .content-area {
@@ -7083,68 +7048,6 @@
       function addMessage(text,type='bot'){const div=document.createElement('div');div.className='ai-msg '+type;div.textContent=text;messages.appendChild(div);messages.scrollTop=messages.scrollHeight;if(type!=='system'){conversation.push({role:type,text});saveConversation()}}
       async function handleAsk(){const question=input.value.trim();if(!question)return;addMessage(question,'user');input.value='';await loadKnowledge();if(!knowledge){addMessage("Sorry, I'm having trouble connecting. Please try again.",'bot');return}if(knowledge.hasAI){try{const res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:question,history:conversation,isDashboard:true})});const data=await res.json();if(data.reply)setTimeout(()=>addMessage(data.reply,'bot'),300);else setTimeout(()=>addMessage("SIMBA is having trouble thinking right now. Try again in a moment.",'bot'),300)}catch(e){setTimeout(()=>addMessage("Sorry, SIMBA couldn't respond. Please try again.",'bot'),300)}}else{const q=question.toLowerCase();if(q.includes('log'))setTimeout(()=>addMessage("Go to Server Guard → Logging. Enable it and select a channel. Changes save automatically.",'bot'),300);else if(q.includes('verification')||q.includes('button'))setTimeout(()=>addMessage("Verification requires Server Guard to be enabled. Go to Server Guard → Anti-Nuke and enable it first.",'bot'),300);else if(q.includes('reaction role'))setTimeout(()=>addMessage("Go to Reaction Roles in the dashboard. Create a message, add emojis, and assign roles.",'bot'),300);else setTimeout(()=>addMessage("I'm SIMBA, your AI assistant! Ask me about logs, verification, reaction roles, or any dashboard features!",'bot'),300)}const warnings=knowledge.dashboard.proactiveWarnings||[];if(warnings.length>0&&Math.random()<.25)setTimeout(()=>addMessage("💡 "+warnings[Math.floor(Math.random()*warnings.length)],'system'),600);if(knowledge.knownIssues&&knowledge.knownIssues.length>0&&Math.random()<.2)setTimeout(()=>addMessage("📋 Current notes: "+knowledge.knownIssues.join('; '),'system'),1000)}
       toggle.addEventListener('click',()=>{chat.classList.toggle('open');if(chat.classList.contains('open')&&!knowledge)loadKnowledge()});close.addEventListener('click',()=>chat.classList.remove('open'));sendBtn.addEventListener('click',handleAsk);input.addEventListener('keypress',(e)=>{if(e.key==='Enter')handleAsk()});conversation.forEach(msg=>addMessage(msg.text,msg.role));if(conversation.length===0)setTimeout(()=>addMessage("Hi! I'm SIMBA, your AI assistant. Ask me about dashboard features, logs, verification, or any config questions!",'bot'),500);
-    })();
-    </script>
-
-    <!-- Final dashboard bootstrap: a selected guild must always render the admin dashboard. -->
-    <script>
-    (function () {
-        const params = new URLSearchParams(window.location.search);
-        const guildId = params.get('guildId');
-        if (!guildId) return;
-
-        localStorage.setItem('selectedServerId', guildId);
-        document.documentElement.dataset.spideyGuildId = guildId;
-
-        function forceDashboard() {
-            document.querySelectorAll('.server-select-overlay, #serverSelection, #serverSelectionPage, [data-server-selection]').forEach(el => {
-                el.classList.add('hidden');
-                el.style.setProperty('display', 'none', 'important');
-            });
-
-            const wrapper = document.querySelector('.dashboard-wrapper');
-            const main = document.querySelector('.main-container');
-            const sidebar = document.querySelector('.sidebar');
-            const content = document.querySelector('.content-area');
-            const dashboard = document.getElementById('dashboard-section');
-            const name = document.getElementById('dashboardServerName');
-
-            if (wrapper) wrapper.style.setProperty('display', 'flex', 'important');
-            if (main) {
-                main.style.setProperty('display', 'flex', 'important');
-                main.style.setProperty('visibility', 'visible', 'important');
-            }
-            if (sidebar) sidebar.style.setProperty('display', 'block', 'important');
-            if (content) {
-                content.style.setProperty('display', 'block', 'important');
-                content.style.setProperty('visibility', 'visible', 'important');
-            }
-            if (name) name.textContent = 'Server Dashboard • ' + guildId;
-
-            document.querySelectorAll('.content-section').forEach(section => {
-                const active = section === dashboard;
-                section.style.setProperty('display', active ? 'block' : 'none', 'important');
-                section.style.setProperty('visibility', active ? 'visible' : 'hidden', 'important');
-                section.style.setProperty('z-index', active ? '100' : '0', 'important');
-                section.classList.toggle('active', active);
-            });
-
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.section === 'dashboard');
-            });
-
-            // This canvas is not part of the admin dashboard and can cover content if an
-            // old visual script or CSS gives it an incorrect size/z-index.
-            const canvas = document.getElementById('network-canvas');
-            if (canvas) canvas.remove();
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', forceDashboard, { once: true });
-        } else {
-            forceDashboard();
-        }
-        window.addEventListener('load', forceDashboard, { once: true });
     })();
     </script>
   <footer>
