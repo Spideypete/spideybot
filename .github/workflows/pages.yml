@@ -1,0 +1,133 @@
+name: Deploy Spidey Bot website to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build GitHub Pages site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          cp -R public/. _site/
+
+          # GitHub Pages is a static host. Keep the real Discord/API dashboard
+          # on the bot server and make the Pages copy hand off cleanly.
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path("_site")
+          backend = "https://spideybot.freesrv.com"
+
+          replacements = {
+              'href="/commands"': 'href="./commands.html"',
+              'href="/login"': f'href="{backend}/login"',
+              'href="/security"': 'href="./security.html"',
+              'href="/terms"': 'href="./terms.html"',
+              'href="/privacy"': 'href="./privacy.html"',
+              'href="/"': 'href="./"',
+              'src="/assets/': 'src="./assets/',
+              'src="/dashboard-icons/': 'src="./dashboard-icons/',
+          }
+
+          for path in root.glob("*.html"):
+              text = path.read_text(encoding="utf-8")
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              path.write_text(text, encoding="utf-8")
+
+          redirects = {
+              "login.html": f"{backend}/login",
+              "server-select.html": f"{backend}/dashboard/select",
+              "dashboard.html": f"{backend}/dashboard/select",
+              "owner-dash.html": f"{backend}/owner-dash",
+              "premium.html": f"{backend}/premium",
+          }
+
+          redirect_template = """<!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0;url=TARGET">
+            <meta name="robots" content="noindex">
+            <title>SPIDEY BOT</title>
+            <script>window.location.replace("TARGET");</script>
+          </head>
+          <body>Redirecting to SPIDEY BOT…</body>
+          </html>
+          """
+          for filename, target in redirects.items():
+              (root / filename).write_text(
+                  redirect_template.replace("TARGET", target),
+                  encoding="utf-8"
+              )
+
+          index = root / "index.html"
+          text = index.read_text(encoding="utf-8")
+          text = text.replace("window.location.href = '/invite';",
+                              f"window.location.href = '{backend}/invite';")
+          text = text.replace("fetch('/api/config')",
+                              f"fetch('{backend}/api/config')")
+          index.write_text(text, encoding="utf-8")
+
+          commands = root / "commands.html"
+          text = commands.read_text(encoding="utf-8")
+          marker = "fetch('/api/commands').then"
+          if marker in text:
+              start = text.index(marker)
+              end = text.index("  </script>", start)
+              text = text[:start] + f"window.location.replace('{backend}/commands');\n" + text[end:]
+          commands.write_text(text, encoding="utf-8")
+
+          (root / "404.html").write_text("""<!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <meta name="theme-color" content="#08080b">
+            <title>SPIDEY BOT — Page Not Found</title>
+            <style>
+              *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#08080b;color:#fff;font-family:Inter,system-ui,sans-serif}
+              main{text-align:center;padding:40px;max-width:640px}h1{font-size:clamp(64px,14vw,120px);margin:0;line-height:1;color:#9146ff}h2{margin:12px 0;font-size:28px}p{color:#a9a9b2;line-height:1.6}a{display:inline-block;margin-top:18px;padding:12px 20px;border-radius:10px;background:#9146ff;color:#fff;text-decoration:none;font-weight:700}
+            </style>
+          </head>
+          <body><main><h1>404</h1><h2>Page not found</h2><p>The SPIDEY BOT page you requested does not exist.</p><a href="./">Return home</a></main></body>
+          </html>""", encoding="utf-8")
+
+          (root / ".nojekyll").write_text("", encoding="utf-8")
+          PY
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
