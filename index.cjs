@@ -304,11 +304,18 @@ function getGitCommit() {
   }
 }
 const SPIDEY_BUILD_COMMIT = getGitCommit();
-const DASHBOARD_FILE = path.join(distDir, "dashboard.html");
+// MAIN DASHBOARD SOURCE OF TRUTH:
+// The production dashboard is served directly from public/dashboard.html.
+// dist/dashboard.html is only a build artifact and must never decide what the
+// authenticated dashboard renders.
+const DASHBOARD_FILE = path.join(publicDir, "dashboard.html");
 let DASHBOARD_SHA256 = "missing";
 try {
   DASHBOARD_SHA256 = crypto.createHash("sha256").update(fs.readFileSync(DASHBOARD_FILE)).digest("hex");
 } catch {}
+const DASHBOARD_VERSION = DASHBOARD_SHA256 !== "missing"
+  ? DASHBOARD_SHA256.slice(0, 16)
+  : "dev";
 console.log("[BUILD] Git commit:", SPIDEY_BUILD_COMMIT);
 console.log("[BUILD] dashboard.html SHA256:", DASHBOARD_SHA256);
 
@@ -394,21 +401,55 @@ app.use('/dashboard.html', (req, res, next) => {
   next();
 });
 
-// Canonical dashboard route: always serve the exact dashboard build from dist.
-// Explicit no-store headers prevent Wisp/proxy/browser caching from resurrecting an older page.
+// Canonical production dashboard route.
+// A selected guild is the final destination: this route NEVER renders a server
+// selector. The public dashboard is the single source of truth.
+// A content-hash query parameter forces a new URL whenever the dashboard file changes,
+// so an old browser tab cannot keep resurrecting an earlier dashboard document.
 app.get('/dashboard.html', (req, res) => {
   if (!req.session.authenticated) return res.redirect('/login');
   if (!req.query.guildId) return res.redirect('/dashboard/select');
 
+  if (req.query.v !== DASHBOARD_VERSION) {
+    const query = new URLSearchParams();
+    query.set('guildId', String(req.query.guildId));
+    query.set('v', DASHBOARD_VERSION);
+    return res.redirect(302, '/dashboard.html?' + query.toString());
+  }
+
   res.set({
-    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
+    'Cache-Control': 'private, no-store, no-cache, max-age=0, must-revalidate',
     'Pragma': 'no-cache',
     'Expires': '0',
     'Surrogate-Control': 'no-store',
+    'X-Spidey-Dashboard-Source': 'public/dashboard.html',
     'X-Spidey-Build-Commit': SPIDEY_BUILD_COMMIT,
+    'X-Spidey-Dashboard-Version': DASHBOARD_VERSION,
     'X-Spidey-Dashboard-SHA256': DASHBOARD_SHA256
   });
-  res.sendFile(DASHBOARD_FILE);
+
+  res.sendFile(DASHBOARD_FILE, {
+    etag: false,
+    lastModified: false,
+    cacheControl: false
+  });
+});
+
+// Authenticated dashboard APIs must never be revalidated from a browser/CDN cache.
+// This also removes the confusing 304 responses seen while the dashboard is live.
+app.use('/api', (req, res, next) => {
+  if (
+    req.path.startsWith('/dashboard') ||
+    req.path.startsWith('/user') ||
+    req.path.startsWith('/member-stats/')
+  ) {
+    res.set({
+      'Cache-Control': 'private, no-store, no-cache, max-age=0, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+  }
+  next();
 });
 
 // Deployment fingerprint endpoint. This makes it possible to verify exactly which
