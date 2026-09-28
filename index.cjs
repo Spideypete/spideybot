@@ -402,20 +402,11 @@ app.use('/dashboard.html', (req, res, next) => {
 });
 
 // Canonical production dashboard route.
-// A selected guild is the final destination: this route NEVER renders a server
-// selector. The public dashboard is the single source of truth.
-// A content-hash query parameter forces a new URL whenever the dashboard file changes,
-// so an old browser tab cannot keep resurrecting an earlier dashboard document.
+// A selected guild is the final destination. This route never renders a
+// server selector and never redirects a valid selected-server request.
 app.get('/dashboard.html', (req, res) => {
   if (!req.session.authenticated) return res.redirect('/login');
   if (!req.query.guildId) return res.redirect('/dashboard/select');
-
-  if (req.query.v !== DASHBOARD_VERSION) {
-    const query = new URLSearchParams();
-    query.set('guildId', String(req.query.guildId));
-    query.set('v', DASHBOARD_VERSION);
-    return res.redirect(302, '/dashboard.html?' + query.toString());
-  }
 
   res.set({
     'Cache-Control': 'private, no-store, no-cache, max-age=0, must-revalidate',
@@ -424,7 +415,6 @@ app.get('/dashboard.html', (req, res) => {
     'Surrogate-Control': 'no-store',
     'X-Spidey-Dashboard-Source': 'public/dashboard.html',
     'X-Spidey-Build-Commit': SPIDEY_BUILD_COMMIT,
-    'X-Spidey-Dashboard-Version': DASHBOARD_VERSION,
     'X-Spidey-Dashboard-SHA256': DASHBOARD_SHA256
   });
 
