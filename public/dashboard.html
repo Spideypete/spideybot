@@ -272,15 +272,7 @@
     }
 
     /* Network background canvas */
-    #network-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-    }
+    #network-canvas { display: none !important; }
     main > *:not(#network-canvas) {
       position: relative;
       z-index: 1;
@@ -320,6 +312,12 @@
     .sidebar-item-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    // Server selection is completed before this page is opened.
+    // The URL is authoritative; the dashboard must never ask for a server again.
+    let selectedServerId = new URLSearchParams(window.location.search).get('guildId') || localStorage.getItem('selectedServerId') || '';
+    if (selectedServerId) localStorage.setItem('selectedServerId', selectedServerId);
+    </script>
     <script>
     // Hard dashboard context lock: a dashboard URL with guildId is never allowed
     // to fall back to a server-selection UI, even if an old cached/injected element
@@ -443,7 +441,6 @@
 
             <!-- Content Area -->
             <div class="content-area">
-    <canvas id="network-canvas" aria-hidden="true"></canvas>
 
                 <!-- Dashboard Section -->
                 <div id="dashboard-section" class="content-section active">
@@ -6802,6 +6799,32 @@
 
     </script>
 
+    <!-- Server-specific dashboard guard: never render a second server selector. -->
+    <script>
+    (function () {
+        const guildId = new URLSearchParams(window.location.search).get('guildId');
+        if (!guildId) return;
+        selectedServerId = guildId;
+        localStorage.setItem('selectedServerId', guildId);
+
+        function enforceServerDashboard() {
+            document.querySelectorAll('.server-select-overlay, #serverSelection, #serverSelectionPage, [data-server-selection]').forEach(el => el.remove());
+            const canvas = document.getElementById('network-canvas');
+            if (canvas) canvas.remove();
+            const dashboard = document.getElementById('dashboard-section');
+            if (dashboard) dashboard.classList.add('active');
+            const name = document.getElementById('dashboardServerName');
+            if (name) name.textContent = 'Server Dashboard • ' + guildId;
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enforceServerDashboard, { once: true });
+        else enforceServerDashboard();
+        window.addEventListener('load', enforceServerDashboard, { once: true });
+        const observer = new MutationObserver(enforceServerDashboard);
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 15000);
+    })();
+    </script>
+
     <!-- Toast Notification Container -->
     <div id="toastContainer"></div>
 
@@ -6949,6 +6972,7 @@
     /* Server selection overlay — only visible until a valid server is selected */
     .main-container { position: relative !important; min-height: 0; }
     .server-select-overlay {
+        display: none !important;
         position: absolute !important;
         inset: 0 !important;
         display: flex !important;
