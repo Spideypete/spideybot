@@ -5934,9 +5934,9 @@
         function loadSavedColors() {
             // Load SAVED colors (persisted from last save)
             const themeColor = localStorage.getItem('savedThemeColor') || localStorage.getItem('themeColor') || '#6D28D9';
-            const cyanAccent = localStorage.getItem('savedAccentCyan') || localStorage.getItem('accentCyan') || '#6D28D9';
+            const cyanAccent = localStorage.getItem('savedAccentCyan') || localStorage.getItem('accentCyan') || '#0F6B78';
             const purpleAccent = localStorage.getItem('savedAccentPurple') || localStorage.getItem('accentPurple') || '#6D28D9';
-            const pinkAccent = localStorage.getItem('savedAccentPink') || localStorage.getItem('accentPink') || '#6D28D9';
+            const pinkAccent = localStorage.getItem('savedAccentPink') || localStorage.getItem('accentPink') || '#7C3AED';
             const textColor = localStorage.getItem('savedTextColor') || localStorage.getItem('textColor') || '#ffffff';
 
             // Apply colors to CSS
@@ -6151,9 +6151,9 @@
         function resetColors() {
             // Reset only unsaved color changes - revert to last SAVED state
             const savedThemeColor = localStorage.getItem('savedThemeColor') || '#6D28D9';
-            const savedCyanAccent = localStorage.getItem('savedAccentCyan') || '#6D28D9';
+            const savedCyanAccent = localStorage.getItem('savedAccentCyan') || '#0F6B78';
             const savedPurpleAccent = localStorage.getItem('savedAccentPurple') || '#6D28D9';
-            const savedPinkAccent = localStorage.getItem('savedAccentPink') || '#6D28D9';
+            const savedPinkAccent = localStorage.getItem('savedAccentPink') || '#7C3AED';
             const savedTextColor = localStorage.getItem('savedTextColor') || '#ffffff';
 
             // Clear UNSAVED changes
@@ -6640,9 +6640,9 @@
 
             // Save colors
             const themeColor = localStorage.getItem('themeColor') || localStorage.getItem('savedThemeColor') || '#6D28D9';
-            const cyanAccent = localStorage.getItem('accentCyan') || localStorage.getItem('savedAccentCyan') || '#6D28D9';
+            const cyanAccent = localStorage.getItem('accentCyan') || localStorage.getItem('savedAccentCyan') || '#0F6B78';
             const purpleAccent = localStorage.getItem('accentPurple') || localStorage.getItem('savedAccentPurple') || '#6D28D9';
-            const pinkAccent = localStorage.getItem('accentPink') || localStorage.getItem('savedAccentPink') || '#6D28D9';
+            const pinkAccent = localStorage.getItem('accentPink') || localStorage.getItem('savedAccentPink') || '#7C3AED';
             const textColor = localStorage.getItem('textColor') || localStorage.getItem('savedTextColor') || '#ffffff';
 
             localStorage.setItem('savedThemeColor', themeColor);
