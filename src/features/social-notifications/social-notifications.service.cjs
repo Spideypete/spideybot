@@ -41,7 +41,8 @@ function getConfig(guildId) {
     twitchChannelId: sn.twitchChannelId || null,
     tiktokChannelId: sn.tiktokChannelId || null,
     kickChannelId: sn.kickChannelId || null,
-    youtubeChannelId: sn.youtubeChannelId || null
+    youtubeChannelId: sn.youtubeChannelId || null,
+    rumbleChannelId: sn.rumbleChannelId || null
   };
 }
 
