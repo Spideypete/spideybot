@@ -7889,3 +7889,877 @@ body.dashboard-page.light-mode{background:var(--spidey-light-bg)!important;color
   }
 })();
 </script>
+
+<style id="spidey-horizon-shell-v3">
+/* =========================================================
+   SPIDEY BOT — HORIZON-STYLE SHELL
+   Modeled on fuma-nama/discord-bot-dashboard-2:
+   300px desktop sidebar, floating/sticky navbar, centered
+   1200px content, responsive drawer on smaller screens.
+   ========================================================= */
+
+.dashboard-page {
+  --hz-bg-dark: #08081c;
+  --hz-surface-dark: #11112a;
+  --hz-surface-dark-2: #151534;
+  --hz-border-dark: rgba(255,255,255,.075);
+  --hz-text-dark: #f7f8ff;
+  --hz-muted-dark: #8f9bb8;
+  --hz-bg-light: #f4f7fe;
+  --hz-surface-light: #ffffff;
+  --hz-border-light: #e7eaf3;
+  --hz-text-light: #1b2559;
+  --hz-muted-light: #707eae;
+  --hz-purple: #6d3df5;
+  --hz-purple-soft: rgba(109,61,245,.12);
+  --hz-petrol: #1595a3;
+  --hz-petrol-soft: rgba(21,149,163,.12);
+  background: var(--hz-bg-dark) !important;
+  color: var(--hz-text-dark);
+  min-height: 100vh;
+}
+
+.dashboard-page.light-mode {
+  background: var(--hz-bg-light) !important;
+  color: var(--hz-text-light);
+}
+
+/* Full-height Horizon layout. The navbar floats above content instead
+   of consuming a separate horizontal row like the old dashboard. */
+.dashboard-page .dashboard-wrapper {
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
+.dashboard-page .header {
+  position: fixed !important;
+  top: 16px !important;
+  left: 316px !important;
+  right: 30px !important;
+  z-index: 2100 !important;
+  width: auto !important;
+  min-height: 62px !important;
+  height: auto !important;
+  padding: 8px 14px 8px 18px !important;
+  border: 1px solid rgba(255,255,255,.055) !important;
+  border-radius: 16px !important;
+  background: rgba(8,8,28,.56) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,.12) !important;
+}
+
+.dashboard-page.light-mode .header {
+  background: rgba(244,247,254,.72) !important;
+  border-color: rgba(231,234,243,.8) !important;
+  box-shadow: 0 12px 40px rgba(112,144,176,.08) !important;
+}
+
+.dashboard-page .header-left,
+.dashboard-page .header-right {
+  min-height: 46px !important;
+}
+
+.dashboard-page .header-left {
+  gap: 12px !important;
+}
+
+.dashboard-page .header-right {
+  gap: 12px !important;
+}
+
+.dashboard-page .header-logo {
+  display: none !important;
+}
+
+.dashboard-page .dashboard-context {
+  color: var(--hz-text-dark) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.15px !important;
+}
+
+.dashboard-page.light-mode .dashboard-context {
+  color: var(--hz-text-light) !important;
+}
+
+.dashboard-page #dashboardServerName {
+  max-width: min(48vw, 520px) !important;
+}
+
+/* Main content begins at the viewport top, exactly like the reference
+   where the sidebar occupies the full height. */
+.dashboard-page .main-container {
+  display: flex !important;
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+/* Reference desktop sidebar: 300px, full height, clean surface. */
+.dashboard-page .sidebar {
+  position: relative !important;
+  z-index: 2200 !important;
+  flex: 0 0 300px !important;
+  width: 300px !important;
+  min-width: 300px !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 18px 12px 16px !important;
+  background: var(--hz-surface-dark) !important;
+  border: 0 !important;
+  border-right: 1px solid var(--hz-border-dark) !important;
+  box-shadow: 14px 0 40px rgba(0,0,0,.08) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+}
+
+.dashboard-page.light-mode .sidebar {
+  background: var(--hz-surface-light) !important;
+  border-right-color: var(--hz-border-light) !important;
+  box-shadow: 14px 0 40px rgba(112,144,176,.05) !important;
+}
+
+/* Injected brand block uses the same visual role as the reference's
+   sidebar identity area. */
+.dashboard-page .horizon-sidebar-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  height: 54px !important;
+  padding: 4px 10px !important;
+  margin: 0 4px 18px !important;
+  color: var(--hz-text-dark) !important;
+  text-decoration: none !important;
+}
+
+.dashboard-page.light-mode .horizon-sidebar-brand {
+  color: var(--hz-text-light) !important;
+}
+
+.dashboard-page .horizon-sidebar-brand img {
+  width: 38px !important;
+  height: 38px !important;
+  object-fit: contain !important;
+  flex: 0 0 38px !important;
+}
+
+.dashboard-page .horizon-sidebar-brand-name {
+  font-size: 17px !important;
+  line-height: 1.1 !important;
+  font-weight: 800 !important;
+  letter-spacing: -.3px !important;
+}
+
+.dashboard-page .horizon-sidebar-brand-sub {
+  margin-top: 3px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: .9px !important;
+  text-transform: uppercase !important;
+  color: var(--hz-muted-dark) !important;
+}
+
+.dashboard-page.light-mode .horizon-sidebar-brand-sub {
+  color: var(--hz-muted-light) !important;
+}
+
+/* Reference sidebar uses understated section labels and comfortable
+   44-ish pixel navigation rows. */
+.dashboard-page .sidebar-search {
+  margin: 0 4px 18px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.dashboard-page .sidebar-search input {
+  width: 100% !important;
+  height: 42px !important;
+  padding: 0 13px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--hz-border-dark) !important;
+  background: rgba(255,255,255,.035) !important;
+  color: var(--hz-text-dark) !important;
+  font-size: 13px !important;
+  outline: none !important;
+}
+
+.dashboard-page.light-mode .sidebar-search input {
+  background: #f8faff !important;
+  color: var(--hz-text-light) !important;
+  border-color: var(--hz-border-light) !important;
+}
+
+.dashboard-page .sidebar-search input::placeholder {
+  color: var(--hz-muted-dark) !important;
+}
+
+.dashboard-page.light-mode .sidebar-search input::placeholder {
+  color: var(--hz-muted-light) !important;
+}
+
+.dashboard-page .sidebar-section {
+  padding: 0 0 13px !important;
+}
+
+.dashboard-page .sidebar-section-title {
+  padding: 8px 13px 7px !important;
+  color: var(--hz-muted-dark) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.15px !important;
+}
+
+.dashboard-page.light-mode .sidebar-section-title {
+  color: #a0a9c1 !important;
+}
+
+.dashboard-page .sidebar-menu {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+.dashboard-page .sidebar-item {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  margin: 2px 0 !important;
+  padding: 9px 12px !important;
+  gap: 11px !important;
+  border-radius: 11px !important;
+  border: 0 !important;
+  color: var(--hz-muted-dark) !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background .16s ease, color .16s ease, transform .16s ease !important;
+}
+
+.dashboard-page.light-mode .sidebar-item {
+  color: #707eae !important;
+}
+
+.dashboard-page .sidebar-item:hover {
+  color: var(--hz-text-dark) !important;
+  background: rgba(109,61,245,.07) !important;
+  transform: translateX(1px) !important;
+}
+
+.dashboard-page.light-mode .sidebar-item:hover {
+  color: var(--hz-text-light) !important;
+  background: rgba(109,61,245,.06) !important;
+}
+
+.dashboard-page .sidebar-item.active {
+  color: #fff !important;
+  background: linear-gradient(90deg, rgba(109,61,245,.18), rgba(21,149,163,.07)) !important;
+  border-right: 0 !important;
+  box-shadow: inset 3px 0 0 var(--hz-purple) !important;
+}
+
+.dashboard-page.light-mode .sidebar-item.active {
+  color: var(--hz-purple) !important;
+  background: rgba(109,61,245,.08) !important;
+}
+
+.dashboard-page .sidebar-item-icon {
+  width: 21px !important;
+  height: 21px !important;
+  flex: 0 0 21px !important;
+}
+
+.dashboard-page .sidebar-item-icon img {
+  width: 18px !important;
+  height: 18px !important;
+  opacity: .78 !important;
+  object-fit: contain !important;
+}
+
+.dashboard-page .sidebar-item.active .sidebar-item-icon img {
+  opacity: 1 !important;
+}
+
+.dashboard-page .sidebar-tier-badge {
+  margin-left: auto !important;
+  flex: 0 0 auto !important;
+  border-radius: 999px !important;
+  padding: 3px 7px !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  letter-spacing: .25px !important;
+}
+
+/* Content column mirrors the reference's max-width + centered layout. */
+.dashboard-page .content-area {
+  flex: 1 1 auto !important;
+  width: calc(100% - 300px) !important;
+  max-width: none !important;
+  height: 100vh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 104px 30px 40px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background:
+    radial-gradient(circle at 70% 0%, rgba(109,61,245,.055), transparent 32%),
+    var(--hz-bg-dark) !important;
+}
+
+.dashboard-page.light-mode .content-area {
+  background:
+    radial-gradient(circle at 70% 0%, rgba(109,61,245,.045), transparent 32%),
+    var(--hz-bg-light) !important;
+}
+
+.dashboard-page .content-area > .content-section {
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+}
+
+.dashboard-page .content-section.active {
+  display: block !important;
+}
+
+/* Reference uses a sticky translucent navbar + clean page heading,
+   rather than oversized full-width dashboard bars. */
+.dashboard-page .dashboard-header,
+.dashboard-page .content-header {
+  margin: 0 0 22px !important;
+  padding: 0 !important;
+}
+
+.dashboard-page .dashboard-title,
+.dashboard-page .content-title {
+  color: var(--hz-text-dark) !important;
+  font-size: 34px !important;
+  line-height: 1.18 !important;
+  font-weight: 800 !important;
+  letter-spacing: -.8px !important;
+}
+
+.dashboard-page.light-mode .dashboard-title,
+.dashboard-page.light-mode .content-title {
+  color: var(--hz-text-light) !important;
+}
+
+.dashboard-page .dashboard-subtitle,
+.dashboard-page .content-subtitle {
+  margin-top: 7px !important;
+  color: var(--hz-muted-dark) !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+}
+
+.dashboard-page.light-mode .dashboard-subtitle,
+.dashboard-page.light-mode .content-subtitle {
+  color: var(--hz-muted-light) !important;
+}
+
+.dashboard-page .dashboard-badge,
+.dashboard-page .section-tier-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  vertical-align: middle !important;
+  margin-left: 8px !important;
+  padding: 4px 9px !important;
+  border-radius: 999px !important;
+  background: var(--hz-purple-soft) !important;
+  color: #a991ff !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .45px !important;
+}
+
+/* Stat cards: compact Horizon-style cards rather than oversized blocks. */
+.dashboard-page .stats-grid,
+.dashboard-page .stat-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  margin: 0 0 26px !important;
+}
+
+.dashboard-page .stat-card {
+  min-width: 0 !important;
+  min-height: 122px !important;
+  margin: 0 !important;
+  padding: 18px 17px !important;
+  border: 1px solid var(--hz-border-dark) !important;
+  border-radius: 16px !important;
+  background: var(--hz-surface-dark) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.07) !important;
+}
+
+.dashboard-page.light-mode .stat-card {
+  background: var(--hz-surface-light) !important;
+  border-color: var(--hz-border-light) !important;
+  box-shadow: 0 8px 24px rgba(112,144,176,.08) !important;
+}
+
+.dashboard-page .stat-card:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(109,61,245,.25) !important;
+}
+
+.dashboard-page .stat-title {
+  color: var(--hz-muted-dark) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .65px !important;
+  text-transform: uppercase !important;
+}
+
+.dashboard-page.light-mode .stat-title {
+  color: var(--hz-muted-light) !important;
+}
+
+.dashboard-page .stat-value-row {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-top: 11px !important;
+}
+
+.dashboard-page .stat-value {
+  min-width: 0 !important;
+  color: var(--hz-text-dark) !important;
+  font-size: clamp(22px, 2vw, 29px) !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  letter-spacing: -.7px !important;
+}
+
+.dashboard-page.light-mode .stat-value {
+  color: var(--hz-text-light) !important;
+}
+
+.dashboard-page .stat-growth,
+.dashboard-page .stat-percent {
+  color: var(--hz-petrol) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.dashboard-page .stat-percent {
+  margin-top: 9px !important;
+  color: var(--hz-muted-dark) !important;
+}
+
+.dashboard-page.light-mode .stat-percent {
+  color: var(--hz-muted-light) !important;
+}
+
+/* Panels follow Horizon cards: roomy, softly rounded, subtle border/shadow. */
+.dashboard-page .content-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.dashboard-page .content-grid.wide {
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr) !important;
+}
+
+.dashboard-page .panel {
+  min-width: 0 !important;
+  margin: 0 0 16px !important;
+  padding: 20px !important;
+  border: 1px solid var(--hz-border-dark) !important;
+  border-radius: 18px !important;
+  background: var(--hz-surface-dark) !important;
+  box-shadow: 0 8px 26px rgba(0,0,0,.065) !important;
+}
+
+.dashboard-page.light-mode .panel {
+  background: var(--hz-surface-light) !important;
+  border-color: var(--hz-border-light) !important;
+  box-shadow: 0 8px 26px rgba(112,144,176,.075) !important;
+}
+
+.dashboard-page .panel-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-height: 24px !important;
+  margin-bottom: 16px !important;
+}
+
+.dashboard-page .panel-title {
+  color: var(--hz-text-dark) !important;
+  font-size: 15px !important;
+  font-weight: 750 !important;
+  letter-spacing: -.15px !important;
+}
+
+.dashboard-page.light-mode .panel-title {
+  color: var(--hz-text-light) !important;
+}
+
+.dashboard-page .panel-content {
+  min-width: 0 !important;
+}
+
+.dashboard-page .form-label {
+  color: var(--hz-muted-dark) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  margin-bottom: 7px !important;
+}
+
+.dashboard-page.light-mode .form-label {
+  color: var(--hz-muted-light) !important;
+}
+
+.dashboard-page .form-input,
+.dashboard-page .form-select,
+.dashboard-page select,
+.dashboard-page textarea {
+  min-height: 44px !important;
+  border: 1px solid var(--hz-border-dark) !important;
+  border-radius: 12px !important;
+  background: rgba(8,8,28,.48) !important;
+  color: var(--hz-text-dark) !important;
+  padding: 10px 12px !important;
+}
+
+.dashboard-page.light-mode .form-input,
+.dashboard-page.light-mode .form-select,
+.dashboard-page.light-mode select,
+.dashboard-page.light-mode textarea {
+  background: #f8faff !important;
+  color: var(--hz-text-light) !important;
+  border-color: var(--hz-border-light) !important;
+}
+
+.dashboard-page .form-input:focus,
+.dashboard-page .form-select:focus,
+.dashboard-page select:focus,
+.dashboard-page textarea:focus {
+  border-color: rgba(109,61,245,.55) !important;
+  box-shadow: 0 0 0 3px rgba(109,61,245,.10) !important;
+}
+
+.dashboard-page .btn {
+  border-radius: 12px !important;
+  min-height: 42px !important;
+  font-weight: 750 !important;
+}
+
+.dashboard-page .btn-primary,
+.dashboard-page .btn-success,
+.dashboard-page .btn-save,
+.dashboard-page .btn-save-changes {
+  background: linear-gradient(135deg, var(--hz-purple), var(--hz-petrol)) !important;
+}
+
+/* Theme/profile controls are compact like the reference navbar. */
+.dashboard-page .mode-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 11px !important;
+  border: 1px solid var(--hz-border-dark) !important;
+  background: rgba(255,255,255,.035) !important;
+  cursor: pointer !important;
+}
+
+.dashboard-page.light-mode .mode-toggle {
+  border-color: var(--hz-border-light) !important;
+  background: rgba(255,255,255,.8) !important;
+}
+
+.dashboard-page .mode-toggle img {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.dashboard-page .user-profile {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-height: 44px !important;
+  padding: 4px 8px 4px 5px !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,.035) !important;
+  border: 1px solid var(--hz-border-dark) !important;
+  cursor: pointer !important;
+}
+
+.dashboard-page.light-mode .user-profile {
+  background: rgba(255,255,255,.78) !important;
+  border-color: var(--hz-border-light) !important;
+}
+
+.dashboard-page .user-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px !important;
+  border-radius: 50% !important;
+}
+
+.dashboard-page .user-name {
+  color: var(--hz-text-dark) !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-page.light-mode .user-name {
+  color: var(--hz-text-light) !important;
+}
+
+.dashboard-page .user-role {
+  margin-top: 2px !important;
+  color: var(--hz-muted-dark) !important;
+  font-size: 10px !important;
+}
+
+.dashboard-page.light-mode .user-role {
+  color: var(--hz-muted-light) !important;
+}
+
+/* Desktop breakpoint mirrors the reference: content stays centered and
+   sidebar remains persistent. */
+@media (max-width: 1280px) and (min-width: 1101px) {
+  .dashboard-page .header {
+    left: 312px !important;
+    right: 18px !important;
+  }
+  .dashboard-page .content-area {
+    padding-left: 22px !important;
+    padding-right: 22px !important;
+  }
+  .dashboard-page .stats-grid,
+  .dashboard-page .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .dashboard-page .dashboard-wrapper {
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .dashboard-page .header {
+    top: max(10px, env(safe-area-inset-top)) !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    min-height: 58px !important;
+  }
+
+  .dashboard-page .main-container {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+  }
+
+  .dashboard-page .content-area {
+    width: 100% !important;
+    height: 100dvh !important;
+    padding: 88px 20px 32px !important;
+  }
+
+  .dashboard-page .sidebar {
+    width: min(300px, 88vw) !important;
+    min-width: 0 !important;
+    flex: 0 0 min(300px, 88vw) !important;
+  }
+
+  .dashboard-page .stats-grid,
+  .dashboard-page .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-page .content-grid.wide {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-page .header {
+    top: max(7px, env(safe-area-inset-top)) !important;
+    left: 7px !important;
+    right: 7px !important;
+    min-height: 54px !important;
+    padding: 6px 8px !important;
+    border-radius: 14px !important;
+  }
+
+  .dashboard-page .header-left,
+  .dashboard-page .header-right {
+    gap: 7px !important;
+  }
+
+  .dashboard-page .dashboard-context {
+    font-size: 13px !important;
+  }
+
+  .dashboard-page .content-area {
+    padding: 74px 10px 28px !important;
+  }
+
+  .dashboard-page .content-area > .content-section {
+    max-width: none !important;
+  }
+
+  .dashboard-page .dashboard-title,
+  .dashboard-page .content-title {
+    font-size: 26px !important;
+    letter-spacing: -.5px !important;
+  }
+
+  .dashboard-page .dashboard-subtitle,
+  .dashboard-page .content-subtitle {
+    font-size: 13px !important;
+  }
+
+  .dashboard-page .stats-grid,
+  .dashboard-page .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .dashboard-page .stat-card {
+    min-height: 112px !important;
+    padding: 15px !important;
+    border-radius: 15px !important;
+  }
+
+  .dashboard-page .stat-value {
+    font-size: 23px !important;
+  }
+
+  .dashboard-page .content-grid,
+  .dashboard-page .content-grid.wide {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-page .panel {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .dashboard-page .panel-header {
+    align-items: flex-start !important;
+  }
+
+  .dashboard-page .timeframe-selector {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .dashboard-page .timeframe-selector select {
+    width: 100% !important;
+  }
+
+  .dashboard-page .user-info,
+  .dashboard-page .profile-dropdown-icon {
+    display: none !important;
+  }
+
+  .dashboard-page .user-profile {
+    padding: 4px !important;
+    background: transparent !important;
+    border-color: transparent !important;
+  }
+
+  .dashboard-page .user-avatar {
+    width: 34px !important;
+    height: 34px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-page .stats-grid,
+  .dashboard-page .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-page .stat-card {
+    min-height: 96px !important;
+  }
+
+  .dashboard-page .dashboard-badge {
+    display: block !important;
+    width: max-content !important;
+    margin: 8px 0 0 !important;
+  }
+
+  .dashboard-page .dashboard-title,
+  .dashboard-page .content-title {
+    font-size: 23px !important;
+  }
+
+  .dashboard-page .panel {
+    padding: 14px !important;
+  }
+}
+</style>
+
+
+<script id="spidey-horizon-shell-script-v3">
+(function initHorizonShell() {
+  function setup() {
+    const page = document.body;
+    const sidebar = page.querySelector('.sidebar');
+    const header = page.querySelector('.header');
+    if (!page || !sidebar || !header || sidebar.querySelector('.horizon-sidebar-brand')) return;
+
+    const brand = document.createElement('div');
+    brand.className = 'horizon-sidebar-brand';
+    const sourceLogo = header.querySelector('.header-logo img');
+    if (sourceLogo) {
+      const logo = sourceLogo.cloneNode(true);
+      logo.alt = 'SPIDEY BOT';
+      brand.appendChild(logo);
+    }
+    const copy = document.createElement('div');
+    const name = document.createElement('div');
+    name.className = 'horizon-sidebar-brand-name';
+    name.textContent = 'SPIDEY BOT';
+    const sub = document.createElement('div');
+    sub.className = 'horizon-sidebar-brand-sub';
+    sub.textContent = 'Discord Dashboard';
+    copy.appendChild(name);
+    copy.appendChild(sub);
+    brand.appendChild(copy);
+    sidebar.insertBefore(brand, sidebar.firstChild);
+
+    const menu = document.getElementById('mobileMenuToggle');
+    if (menu) {
+      menu.setAttribute('aria-label', 'Open navigation');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, {once:true});
+  } else {
+    setup();
+  }
+})();
+</script>
+
