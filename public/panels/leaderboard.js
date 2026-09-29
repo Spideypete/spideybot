@@ -1,0 +1,2 @@
+import {box,esc,row,apiFactory,mount,notice} from './panel-kit.js';
+export async function render({body,gid}){const api=apiFactory(gid);const d=await api('/api/features/levels/'+gid+'/leaderboard?limit=100');const list=d.leaderboard||[];mount({body,content:box('XP Leaderboard',list.length?list.map((x,i)=>row('<strong>#'+(i+1)+' '+esc(x.username||x.userId||'Member')+'</strong>','Level '+esc(x.level??'—')+' · '+esc(x.xp??0)+' XP')).join(''):notice('No XP leaderboard data yet.'),{icon:'trophy'})});}
