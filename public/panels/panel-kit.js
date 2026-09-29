@@ -7,7 +7,7 @@ export const select=(id,label,options,value='')=>'<label style="display:block;fo
 export const toggle=(id,label,value=false)=>{if(typeof label==='boolean'){value=label;label=id}return'<label style="display:flex;justify-content:space-between;gap:15px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700">'+esc(label)+'<input id="'+id+'" type="checkbox" '+(value?'checked':'')+'></label>';
 export const button=(id,label,kind='primary')=>{if(typeof id==='string'&&id.includes(' ')&&typeof label==='string'&&!label.includes(' ')){[id,label]=[label,id]}return'<button class="select" id="'+id+'" data-action="'+kind+'">'+icon(kind==='danger'?'trash':'check')+' '+esc(label)+'</button>'};
 export const row=(title,sub,actions='')=>'<div class="activity-row"><div class="activity-main"><strong>'+title+'</strong><span>'+sub+'</span></div>'+actions+'</div>';
-export const grid=(content)=>'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">'+content+'</div>';
+export const grid=(content)=>'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">'+(Array.isArray(content)?content.join(''):content)+'</div>';
 export const notice=(text)=>'<div class="activity-row"><div class="activity-icon">'+icon('info')+'</div><div class="activity-main"><strong>Information</strong><span>'+esc(text)+'</span></div></div>';
 export const apiFactory=gid=>async(path,opts={})=>{const r=await fetch(path,{credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});let d={};try{d=await r.json()}catch{}if(!r.ok)throw Error(d.error||'Request failed '+r.status);return d};
 export const mount=({body,content})=>{body.innerHTML=content};
