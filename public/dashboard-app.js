@@ -12,8 +12,14 @@ import * as giveaways from './panels/giveaways.js';
 import * as tickets from './panels/tickets.js';
 import * as social from './panels/social.js';
 import * as invites from './panels/invites.js';
+import * as testifySettings from './panels/testify-settings.js';
+import * as testifyAutomod from './panels/testify-automod.js';
+import * as testifyEconomy from './panels/testify-economy.js';
+import * as testifyLevels from './panels/testify-levels.js';
+import * as testifyModeration from './panels/testify-moderation.js';
+import * as testifySystem from './panels/testify-system.js';
 
-const panels={analytics,settings,logging,moderation:serverGuard,roles,categories,messages,commands,levels,leaderboard,giveaways,tickets,social,invites};
+const panels={analytics,settings,logging,moderation:serverGuard,roles,categories,messages,commands,levels,leaderboard,giveaways,tickets,social,invites,testifySettings,testifyAutomod,testifyEconomy,testifyLevels,testifyModeration,testifySystem};
 const body=document.querySelector('#workspaceBody');
 const workspace=document.querySelector('#featureWorkspace');
 const overview=document.querySelector('#overview');
@@ -35,7 +41,13 @@ leaderboard:['Leaderboard','View server XP rankings.'],
 giveaways:['Giveaways','Create, end, delete and reroll giveaways.'],
 tickets:['Tickets','Configure and manage support tickets.'],
 social:['Social Notifications','Monitor Twitch, YouTube, Kick, TikTok and other supported channels.'],
-invites:['Invites','Track invite codes, joins, leaves and referral rankings.']
+invites:['Invites','Track invite codes, joins, leaves and referral rankings.'],
+testifySettings:['Testify Settings','Prefix, welcome, autorole, counting and server utilities.'],
+testifyAutomod:['Testify AutoMod','Invite, link, spam, mention and word filtering.'],
+testifyModeration:['Testify Moderation','Warnings, command controls, audit configuration and safety tools.'],
+testifyEconomy:['Testify Economy','Wallet, bank, rewards, shop and economy rankings.'],
+testifyLevels:['Testify Levels','XP progression, level rewards and leaderboards.'],
+testifySystem:['Testify System','Safe internal controls and diagnostics.']
 };
 
 function select(section){
