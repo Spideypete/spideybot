@@ -1,5 +1,6 @@
 // slash-commands.js - Complete Slash Commands from COMMANDS_META
 const { SlashCommandBuilder } = require('discord.js');
+const { testifyCommands } = require('./src/features/testify-suite/testify-suite.commands.cjs');
 
 const slashCommands = [
   // ===================== MODERATION =====================
@@ -528,4 +529,6 @@ if (duplicates.length > 0) {
     process.exit(1);
 }
 
+const existingCommandNames = new Set(slashCommands.map(c => c.name));
+for (const command of testifyCommands) if (!existingCommandNames.has(command.name)) slashCommands.push(command);
 module.exports = { slashCommands };
