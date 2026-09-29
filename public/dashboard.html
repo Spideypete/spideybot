@@ -43,10 +43,7 @@ a{text-decoration:none;color:inherit}
 <aside class="sidebar" id="sidebar">
   <div class="brand"><div class="brand-mark">S</div><div><div class="brand-name">SPIDEY BOT</div><div class="brand-sub">Discord Dashboard</div></div></div>
   <div class="nav-title">Main</div>
-  <nav class="nav">
-    <button class="active" data-section="overview"><span class="icon">⌂</span>Overview</button>
-    <button data-section="analytics"><span class="icon">◒</span>Analytics</button>
-  </nav>
+  <nav class="nav"><button class="active" data-section="overview"><span class="icon">⌂</span>Overview</button><button data-section="analytics"><span class="icon">◒</span>Analytics</button></nav><div class="nav-title">Configuration</div><nav class="nav"><button data-section="settings"><span class="icon">⚙</span>General Settings</button><button data-section="messages"><span class="icon">✦</span>Server Messages</button><button data-section="moderation"><span class="icon">◈</span>Server Guard</button><button data-section="logging"><span class="icon">◷</span>Logging</button></nav><div class="nav-title">Community</div><nav class="nav"><button data-section="roles"><span class="icon">♢</span>Reaction Roles</button><button data-section="categories"><span class="icon">◇</span>Role Categories</button><button data-section="commands"><span class="icon">⌘</span>Custom Commands</button><button data-section="levels"><span class="icon">↗</span>XP & Levels</button><button data-section="leaderboard"><span class="icon">≡</span>Leaderboard</button></nav><div class="nav-title">Tools</div><nav class="nav"><button data-section="giveaways"><span class="icon">◇</span>Giveaways</button><button data-section="tickets"><span class="icon">▣</span>Tickets</button><button data-section="social"><span class="icon">◉</span>Social Notifications</button><button data-section="invites"><span class="icon">↗</span>Invites</button></nav>
   <div class="nav-title">Features</div>
   <nav class="nav">
     <button data-section="settings"><span class="icon">⚙</span>General Settings</button>
@@ -103,7 +100,7 @@ a{text-decoration:none;color:inherit}
   </div>
 </section>
 </div>
-</main>
+<div id="featureWorkspace" class="section" hidden><div class="page-head"><div><div class="eyebrow">SPIDEY BOT</div><h1 id="workspaceTitle">Feature</h1><p id="workspaceDescription">Configure your server.</p></div><button class="select" id="workspaceRefresh">Refresh</button></div><div id="workspaceBody"></div></div></div></main>
 </div>
 <script>
 const body=document.body, sidebar=document.getElementById('sidebar');
@@ -153,5 +150,5 @@ document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.quer
   });
   window.spideyDashboard={loadIdentity,loadStats};
 })();
-</script></body>
+</script><script src="/dashboard-app.js"></script></body>
 </html>
