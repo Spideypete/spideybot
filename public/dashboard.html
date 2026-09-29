@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SPIDEY BOT - Admin Dashboard</title>
 
     <style>
@@ -350,7 +350,530 @@
     // URL is authoritative. Never fall back to a previously selected server.
     let selectedServerId = dashboardGuildId || '';
     if (dashboardGuildId) localStorage.setItem('selectedServerId', dashboardGuildId);
-</script></head>
+</script>
+<style id="spidey-responsive-v2">
+/* =========================================================
+   SPIDEY BOT — RESPONSIVE SHELL V2
+   Desktop: persistent sidebar
+   Tablet/phone: off-canvas navigation drawer
+   Content always gets the full available width.
+   ========================================================= */
+
+html, body.dashboard-page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none;
+}
+
+body.dashboard-page,
+.dashboard-page .dashboard-wrapper,
+.dashboard-page .main-container,
+.dashboard-page .content-area,
+.dashboard-page .content-inner,
+.dashboard-page .content-section {
+  min-width: 0 !important;
+}
+
+.dashboard-page .content-grid {
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+
+.dashboard-page .content-grid > *,
+.dashboard-page .stat-grid > *,
+.dashboard-page .panel,
+.dashboard-page .stat-card {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.dashboard-page .panel-header,
+.dashboard-page .panel-content,
+.dashboard-page .content-header {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.dashboard-page img,
+.dashboard-page canvas,
+.dashboard-page video,
+.dashboard-page iframe {
+  max-width: 100%;
+}
+
+.dashboard-page pre,
+.dashboard-page code {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.dashboard-page .table-container,
+.dashboard-page .table-wrapper,
+.dashboard-page .data-table-wrapper,
+.dashboard-page .overflow-auto {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-page table {
+  max-width: 100%;
+}
+
+.mobile-menu-toggle,
+.mobile-sidebar-close,
+.mobile-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  body.dashboard-page {
+    overflow: hidden !important;
+    height: 100dvh;
+    min-height: 100vh;
+  }
+
+  .dashboard-page .dashboard-wrapper {
+    height: 100dvh !important;
+    min-height: 100vh !important;
+  }
+
+  .dashboard-page .header {
+    width: calc(100% - 20px) !important;
+    margin: max(10px, env(safe-area-inset-top)) auto 0 !important;
+    padding: 8px 10px !important;
+    min-height: 58px !important;
+    gap: 10px !important;
+  }
+
+  .dashboard-page .header-left {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    gap: 8px !important;
+  }
+
+  .dashboard-page .header-right {
+    flex: 0 0 auto !important;
+    gap: 7px !important;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-flex !important;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(139,117,255,.20);
+    border-radius: 12px;
+    background: rgba(109,61,245,.10);
+    color: #fff;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .mobile-menu-toggle:hover,
+  .mobile-menu-toggle:focus-visible {
+    background: rgba(21,149,163,.14);
+    border-color: rgba(21,149,163,.45);
+    outline: none;
+  }
+
+  .dashboard-page.light-mode .mobile-menu-toggle {
+    background: #fff;
+    border-color: var(--spidey-light-border);
+    color: #1b2559;
+  }
+
+  .dashboard-page .dashboard-context {
+    min-width: 0 !important;
+    max-width: min(48vw, 420px);
+    overflow: hidden;
+  }
+
+  .dashboard-page #dashboardServerName {
+    max-width: 100%;
+  }
+
+  .dashboard-page .main-container {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    height: calc(100dvh - 78px) !important;
+    min-height: 0 !important;
+    margin-top: 10px !important;
+    padding: 0 10px max(10px, env(safe-area-inset-bottom)) !important;
+    overflow: visible !important;
+  }
+
+  .dashboard-page .content-area {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 16px !important;
+  }
+
+  .dashboard-page .content-inner {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 8px 2px 48px !important;
+  }
+
+  .dashboard-page .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    z-index: 3000 !important;
+    width: min(320px, 86vw) !important;
+    min-width: 0 !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 20px 20px 0 !important;
+    border-left: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    transform: translate3d(-105%, 0, 0) !important;
+    transition: transform .24s cubic-bezier(.22,.61,.36,1), box-shadow .24s ease !important;
+    box-shadow: 18px 0 60px rgba(0,0,0,.35) !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .dashboard-page.mobile-nav-open .sidebar {
+    transform: translate3d(0, 0, 0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  .dashboard-page.mobile-nav-open {
+    overflow: hidden !important;
+  }
+
+  .mobile-sidebar-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2990 !important;
+    background: rgba(3,5,18,.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .24s ease;
+  }
+
+  .dashboard-page.mobile-nav-open .mobile-sidebar-backdrop {
+    display: block !important;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-sidebar-close {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 12px;
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .mobile-sidebar-top {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 64px;
+    padding: max(10px, env(safe-area-inset-top)) 14px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+  }
+
+  .mobile-sidebar-title {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+  }
+
+  .dashboard-page.light-mode .mobile-sidebar-close {
+    background: #f4f7fe;
+    border-color: var(--spidey-light-border);
+    color: #1b2559;
+  }
+
+  .dashboard-page .sidebar-search {
+    padding-top: 10px !important;
+  }
+
+  .dashboard-page .sidebar-item {
+    min-height: 46px !important;
+    touch-action: manipulation;
+  }
+
+  .dashboard-page .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-page .content-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+  }
+
+  .dashboard-page .panel,
+  .dashboard-page .stat-card {
+    padding: 16px !important;
+    border-radius: 15px !important;
+  }
+
+  .dashboard-page .panel-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dashboard-page .panel-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-page .form-input,
+  .dashboard-page .form-select,
+  .dashboard-page .role-select,
+  .dashboard-page .channel-select,
+  .dashboard-page .custom-multiselect,
+  .dashboard-page input,
+  .dashboard-page select,
+  .dashboard-page textarea {
+    max-width: 100% !important;
+  }
+
+  .dashboard-page input,
+  .dashboard-page select,
+  .dashboard-page textarea {
+    font-size: 16px !important;
+  }
+
+  .dashboard-page .btn,
+  .dashboard-page button:not(.profile-menu-item) {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .dashboard-page .profile-menu {
+    max-width: min(300px, calc(100vw - 24px));
+  }
+
+  .dashboard-page #ai-widget .ai-chat {
+    width: min(420px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    right: 12px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .dashboard-page #ai-widget .ai-toggle {
+    right: 14px !important;
+    bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .dashboard-page .modal-content,
+  .dashboard-page .modal-dialog {
+    width: min(720px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-page .header {
+    min-height: 56px !important;
+    padding: 7px 8px !important;
+  }
+
+  .dashboard-page .header-logo {
+    width: 38px !important;
+    height: 38px !important;
+    flex: 0 0 38px !important;
+  }
+
+  .dashboard-page .header-logo img {
+    width: 31px !important;
+    height: 31px !important;
+  }
+
+  .dashboard-page .dashboard-context {
+    max-width: 38vw;
+    font-size: 12px !important;
+  }
+
+  .dashboard-page .user-info,
+  .dashboard-page .profile-dropdown-icon {
+    display: none !important;
+  }
+
+  .dashboard-page .user-profile {
+    min-height: 42px !important;
+    padding: 2px 3px !important;
+    background: transparent !important;
+  }
+
+  .dashboard-page .user-avatar {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .dashboard-page .mode-toggle,
+  .dashboard-page .notification-icon,
+  .mobile-menu-toggle {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  .dashboard-page .main-container {
+    height: calc(100dvh - 72px) !important;
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
+
+  .dashboard-page .content-inner {
+    padding: 6px 0 56px !important;
+  }
+
+  .dashboard-page .stat-grid,
+  .dashboard-page .content-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-page .stat-card,
+  .dashboard-page .panel {
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .dashboard-page .stat-value {
+    font-size: clamp(1.5rem, 7vw, 2rem) !important;
+  }
+
+  .dashboard-page .content-title {
+    font-size: clamp(20px, 6vw, 28px) !important;
+    line-height: 1.2 !important;
+  }
+
+  .dashboard-page .content-subtitle {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+  }
+
+  .dashboard-page .panel-header {
+    align-items: flex-start;
+  }
+
+  .dashboard-page .panel-header > .btn,
+  .dashboard-page .panel-header > button {
+    width: 100%;
+  }
+
+  .dashboard-page .btn {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .dashboard-page table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dashboard-page th,
+  .dashboard-page td {
+    min-width: 110px;
+  }
+
+  .dashboard-page .form-group {
+    width: 100%;
+  }
+
+  .dashboard-page .form-input,
+  .dashboard-page .form-select,
+  .dashboard-page .role-select,
+  .dashboard-page .channel-select,
+  .dashboard-page .custom-multiselect,
+  .dashboard-page textarea {
+    width: 100% !important;
+  }
+
+  .dashboard-page .mobile-sidebar-top + .sidebar-search {
+    padding-bottom: 10px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-page .dashboard-context {
+    display: none !important;
+  }
+
+  .dashboard-page .header-left {
+    gap: 6px !important;
+  }
+
+  .dashboard-page .header-right {
+    gap: 4px !important;
+  }
+
+  .dashboard-page .content-inner {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page .sidebar,
+  .mobile-sidebar-backdrop,
+  .mobile-menu-toggle {
+    transition: none !important;
+  }
+}
+
+@media (pointer: coarse) {
+  .dashboard-page .sidebar-item,
+  .dashboard-page .btn,
+  .dashboard-page button,
+  .dashboard-page .mode-toggle,
+  .dashboard-page .notification-icon,
+  .dashboard-page .user-profile {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+</style>
+
+</head>
 <body class="dashboard-page">
 <script>
 (function bindSelectedGuild() {
