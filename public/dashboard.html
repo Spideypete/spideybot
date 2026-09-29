@@ -67,18 +67,18 @@ a{text-decoration:none;color:inherit}
 <main class="main">
 <header class="topbar">
   <div style="display:flex;align-items:center;gap:10px"><button class="mobile-menu" id="menu">☰</button><div class="crumb"><strong>SPIDEY BOT</strong><span class="crumb-sep">/</span><span>Dashboard</span></div></div>
-  <div class="top-actions"><button class="top-btn" id="theme" title="Toggle theme">☾</button><button class="top-btn" title="Notifications">♧</button><div class="profile"><div class="avatar">SP</div><span>Administrator</span></div></div>
+  <div class="top-actions"><button class="top-btn" id="theme" title="Toggle theme">☾</button><button class="top-btn" title="Notifications">♧</button><div class="profile"><div class="avatar" id="userAvatar">SP</div><span id="userName">Administrator</span></div></div>
 </header>
 
 <div class="content">
 <section id="overview">
-  <div class="page-head"><div><div class="eyebrow">Guild dashboard</div><h1>Server Overview</h1><p>Manage your Discord server with SPIDEY BOT.</p></div><select class="select"><option>Current Server</option><option>All Servers</option></select></div>
+  <div class="page-head"><div><div class="eyebrow">Guild dashboard</div><h1>Server Overview</h1><p>Manage your Discord server with SPIDEY BOT.</p></div><select class="select" id="dashboardTimeframe"><option value="current">Current</option><option value="week">Last 7 days</option><option value="month">Last 30 days</option></select></div>
 
   <div class="stats">
-    <div class="card stat"><div class="stat-top"><span>Members</span><div class="stat-icon">♟</div></div><div class="stat-value">1,248</div><div class="stat-meta"><span class="up">+12.4%</span> this month</div></div>
-    <div class="card stat"><div class="stat-top"><span>Messages</span><div class="stat-icon">▤</div></div><div class="stat-value">18.6K</div><div class="stat-meta"><span class="up">+8.2%</span> this month</div></div>
-    <div class="card stat"><div class="stat-top"><span>Commands</span><div class="stat-icon">⌘</div></div><div class="stat-value">4,921</div><div class="stat-meta"><span class="up">+15.7%</span> this month</div></div>
-    <div class="card stat"><div class="stat-top"><span>Features</span><div class="stat-icon">✦</div></div><div class="stat-value">18</div><div class="stat-meta">12 currently enabled</div></div>
+    <div class="card stat"><div class="stat-top"><span>Members</span><div class="stat-icon">♟</div></div><div class="stat-value" id="statMembers">—</div><div class="stat-meta"><span class="up">+12.4%</span> this month</div></div>
+    <div class="card stat"><div class="stat-top"><span>Messages</span><div class="stat-icon">▤</div></div><div class="stat-value" id="statMessages">—</div><div class="stat-meta"><span class="up">+8.2%</span> this month</div></div>
+    <div class="card stat"><div class="stat-top"><span>Commands</span><div class="stat-icon">⌘</div></div><div class="stat-value" id="statCommands">—</div><div class="stat-meta"><span class="up">+15.7%</span> this month</div></div>
+    <div class="card stat"><div class="stat-top"><span>Features</span><div class="stat-icon">✦</div></div><div class="stat-value" id="statFeatures">—</div><div class="stat-meta">12 currently enabled</div></div>
   </div>
 
   <div class="grid">
@@ -111,5 +111,47 @@ document.getElementById('menu').onclick=()=>sidebar.classList.toggle('open');
 document.getElementById('theme').onclick=()=>{body.classList.toggle('dark');document.getElementById('theme').textContent=body.classList.contains('dark')?'☀':'☾'};
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');sidebar.classList.remove('open')});
 </script>
-</body>
+<script id="spidey-functionality-1">
+(function(){
+  const guildId=new URLSearchParams(window.location.search).get('guildId')||localStorage.getItem('selectedServerId');
+  if(guildId) localStorage.setItem('selectedServerId',guildId);
+  async function loadIdentity(){
+    try{
+      const res=await fetch('/api/user',{credentials:'include'});
+      if(!res.ok) return;
+      const data=await res.json();
+      const user=data.user||data;
+      const name=user.global_name||user.username||'Administrator';
+      const nameEl=document.getElementById('userName');
+      const avatar=document.getElementById('userAvatar');
+      if(nameEl) nameEl.textContent=name;
+      if(avatar){
+        if(user.avatar&&user.id) avatar.innerHTML='<img src="https://cdn.discordapp.com/avatars/'+user.id+'/'+user.avatar+'.png?size=128" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+        else avatar.textContent=name.charAt(0).toUpperCase();
+      }
+    }catch(e){console.warn('[dashboard] identity load failed',e)}
+  }
+  async function loadStats(){
+    const id=localStorage.getItem('selectedServerId');
+    if(!id) return;
+    const timeframe=document.getElementById('dashboardTimeframe')?.value||'current';
+    try{
+      const res=await fetch('/api/member-stats/'+encodeURIComponent(id)+'?timeframe='+encodeURIComponent(timeframe),{credentials:'include'});
+      if(!res.ok) return;
+      const stats=await res.json();
+      const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value??'—'};
+      set('statMembers',stats.total??stats.members);
+      set('statMessages',stats.messages??stats.messageCount);
+      set('statCommands',stats.commands??stats.commandCount);
+      set('statFeatures',stats.features??stats.enabledFeatures);
+    }catch(e){console.warn('[dashboard] stats load failed',e)}
+  }
+  window.addEventListener('DOMContentLoaded',function(){
+    loadIdentity();
+    loadStats();
+    document.getElementById('dashboardTimeframe')?.addEventListener('change',loadStats);
+  });
+  window.spideyDashboard={loadIdentity,loadStats};
+})();
+</script></body>
 </html>
