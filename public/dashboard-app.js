@@ -25,7 +25,17 @@ const panelLoaders={
  testifyEconomy:()=>import('./panels/testify-economy.js'),
  testifyLevels:()=>import('./panels/testify-levels.js'),
  testifyModeration:()=>import('./panels/testify-moderation.js'),
- testifySystem:()=>import('./panels/testify-system.js')
+ testifySystem:()=>import('./panels/testify-system.js'),
+ testifyCommunity:()=>import('./panels/testify-community.js'),
+ testifyAudit:()=>import('./panels/testify-audit.js'),
+ testifyTickets:()=>import('./panels/testify-tickets.js'),
+ testifyGiveaways:()=>import('./panels/testify-giveaways.js'),
+ testifyCasino:()=>import('./panels/testify-casino.js'),
+ testifyMusic:()=>import('./panels/testify-music.js'),
+ testifyLottery:()=>import('./panels/testify-lottery.js'),
+ testifyCommands:()=>import('./panels/testify-commands.js'),
+ testifyMembers:()=>import('./panels/testify-members.js'),
+ testifyOwner:()=>import('./panels/testify-owner.js'),
 };
 
 const meta={
@@ -48,7 +58,17 @@ const meta={
  testifyModeration:['Testify Moderation','Warnings, command controls, audit configuration and safety tools.'],
  testifyEconomy:['Testify Economy','Wallet, bank, rewards, shop and economy rankings.'],
  testifyLevels:['Testify Levels','XP progression, level rewards and leaderboards.'],
- testifySystem:['Testify System','Safe internal controls and diagnostics.']
+ testifySystem:['Testify System','Safe internal controls and diagnostics.'],
+ testifyCommunity:['Testify Community','Welcome, autorole, verification, counting and sticky-message controls.'],
+ testifyAudit:['Testify Audit Log','Configure Testify audit logging and moderation event delivery.'],
+ testifyTickets:['Testify Tickets','Configure ticket destinations, support roles and transcripts.'],
+ testifyGiveaways:['Testify Giveaways','Configure Testify giveaway defaults and community draws.'],
+ testifyCasino:['Testify Casino','Configure casino availability, limits and individual games.'],
+ testifyMusic:['Testify Music','Configure music playback, DJ controls and source settings.'],
+ testifyLottery:['Testify Lottery','Configure lottery ticket price, schedule and announcements.'],
+ testifyCommands:['Testify Commands','Enable or disable Testify command groups per server.'],
+ testifyMembers:['Testify Members','View Testify XP and economy rankings for this server.'],
+ testifyOwner:['Testify Owner','Owner and internal diagnostics for the Testify suite.'],
 };
 
 async function select(section){
