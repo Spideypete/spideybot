@@ -1,7 +1,5 @@
 const express = require('express');
 const { requireFeatureAuth } = require('./feature-auth.cjs');
-
-// Feature routers - all paths relative to src/routes/features.js
 const { createLoggingRouter } = require('../features/logging/logging.routes.cjs');
 const serverGuardRoutes = require('../features/server-guard/server-guard.routes.cjs');
 const { createReactionRolesRouter } = require('../features/reaction-roles/reaction-roles.routes.cjs');
@@ -13,15 +11,11 @@ const { createGiveawaysRouter } = require('../features/giveaways/giveaways.route
 const ticketsRoutes = require('../features/tickets/tickets.routes.cjs');
 const socialNotificationsRoutes = require('../features/social-notifications/social-notifications.routes.cjs');
 const invitesRoutes = require('../features/invites/invites.routes.cjs');
+const testifySuiteRoutes = require('../features/testify-suite/testify-suite.routes.cjs');
 
 function createFeaturesRouter(client, configManager) {
   const router = express.Router();
-
-  // All modular feature APIs require an authenticated Discord administrator.
-  // This closes the gaps where individual feature routers previously only
-  // checked authentication (or had no authorization check at all).
   router.use(requireFeatureAuth);
-
   router.use('/logging', createLoggingRouter(client));
   router.use('/server-guard', serverGuardRoutes);
   router.use('/reaction-roles', createReactionRolesRouter(client));
@@ -33,8 +27,7 @@ function createFeaturesRouter(client, configManager) {
   router.use('/tickets', ticketsRoutes);
   router.use('/social-notifications', socialNotificationsRoutes);
   router.use('/invites', invitesRoutes);
-
+  router.use('/testify-suite', testifySuiteRoutes);
   return router;
 }
-
 module.exports = { createFeaturesRouter };
