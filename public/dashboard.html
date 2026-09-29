@@ -873,6 +873,41 @@ body.dashboard-page,
 }
 </style>
 
+
+<style id="spidey-responsive-tune">
+/* Final proportion pass: keep the desktop shell balanced without changing app behavior. */
+@media (min-width: 1101px) {
+  .dashboard-page .sidebar {
+    width: 280px !important;
+    min-width: 280px !important;
+    flex-basis: 280px !important;
+  }
+
+  .dashboard-page .content-inner {
+    width: 100% !important;
+    max-width: 1440px !important;
+    margin-inline: auto !important;
+    padding: 12px 20px 48px !important;
+  }
+
+  .dashboard-page .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    align-items: start;
+  }
+
+  .dashboard-page .content-grid {
+    align-items: start;
+  }
+}
+
+@media (max-width: 1100px) {
+  .dashboard-page .sidebar-search:before {
+    content: none !important;
+    display: none !important;
+  }
+}
+</style>
+
 </head>
 <body class="dashboard-page">
 <script>
