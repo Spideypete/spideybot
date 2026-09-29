@@ -7769,3 +7769,123 @@ body.dashboard-page.light-mode{background:var(--spidey-light-bg)!important;color
   window.addEventListener('storage',function(e){if(e.key==='theme'){body.classList.toggle('light-mode',e.newValue==='light');syncIcon()}});
 })();
 </script>
+
+<script id="spidey-responsive-script">
+(function initSpideyResponsiveShell() {
+  function setup() {
+    const page = document.body;
+    const sidebar = document.querySelector('.dashboard-page .sidebar');
+    const headerLeft = document.querySelector('.dashboard-page .header-left');
+    if (!page || !sidebar || !headerLeft || document.getElementById('mobileMenuToggle')) return;
+
+    const toggle = document.createElement('button');
+    toggle.id = 'mobileMenuToggle';
+    toggle.className = 'mobile-menu-toggle';
+    toggle.type = 'button';
+    toggle.setAttribute('aria-label', 'Open navigation');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'spideyMobileSidebar');
+    toggle.innerHTML = '<span aria-hidden="true">☰</span>';
+
+    const logo = headerLeft.querySelector('.header-logo');
+    headerLeft.insertBefore(toggle, logo || headerLeft.firstChild);
+
+    sidebar.id = 'spideyMobileSidebar';
+    sidebar.setAttribute('aria-label', 'Dashboard navigation');
+
+    const sidebarTop = document.createElement('div');
+    sidebarTop.className = 'mobile-sidebar-top';
+
+    const sidebarTitle = document.createElement('div');
+    sidebarTitle.className = 'mobile-sidebar-title';
+    sidebarTitle.textContent = 'SPIDEY BOT';
+
+    const close = document.createElement('button');
+    close.className = 'mobile-sidebar-close';
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Close navigation');
+    close.innerHTML = '<span aria-hidden="true">×</span>';
+
+    sidebarTop.appendChild(sidebarTitle);
+    sidebarTop.appendChild(close);
+    sidebar.insertBefore(sidebarTop, sidebar.firstChild);
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'mobile-sidebar-backdrop';
+    backdrop.setAttribute('aria-hidden', 'true');
+    page.appendChild(backdrop);
+
+    let lastFocused = null;
+
+    function isMobileShell() {
+      return window.matchMedia('(max-width: 1100px)').matches;
+    }
+
+    function setOpen(open) {
+      if (!isMobileShell()) {
+        page.classList.remove('mobile-nav-open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'Open navigation');
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        return;
+      }
+
+      page.classList.toggle('mobile-nav-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+      document.documentElement.style.overflow = open ? 'hidden' : '';
+      document.body.style.overflow = open ? 'hidden' : '';
+
+      if (open) {
+        lastFocused = document.activeElement;
+        if (typeof close.focus === 'function') close.focus({preventScroll:true});
+      } else if (lastFocused && typeof lastFocused.focus === 'function') {
+        lastFocused.focus({preventScroll:true});
+        lastFocused = null;
+      }
+    }
+
+    toggle.addEventListener('click', function() {
+      setOpen(!page.classList.contains('mobile-nav-open'));
+    });
+
+    close.addEventListener('click', function() {
+      setOpen(false);
+    });
+
+    backdrop.addEventListener('click', function() {
+      setOpen(false);
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && page.classList.contains('mobile-nav-open')) {
+        event.preventDefault();
+        setOpen(false);
+      }
+    });
+
+    sidebar.querySelectorAll('.sidebar-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        if (isMobileShell()) setOpen(false);
+      });
+    });
+
+    window.addEventListener('resize', function() {
+      if (!isMobileShell()) setOpen(false);
+    }, {passive:true});
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function() {
+        page.style.setProperty('--spidey-viewport-height', window.visualViewport.height + 'px');
+      }, {passive:true});
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, {once:true});
+  } else {
+    setup();
+  }
+})();
+</script>
