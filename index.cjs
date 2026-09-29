@@ -67,9 +67,13 @@ const { initialize: initializeCustomCommands } = require("./src/features/custom-
 const { registerHandlers: registerInvitesHandlers } = require("./src/features/invites/invites.handler.cjs");
 const { startPolling: startSocialNotifications } = require("./src/features/social-notifications/social-notifications.handler.cjs");
 const { registerHandlers: registerLoggingHandlers } = require("./src/features/logging/logging.handler.cjs");
+const { execute: handleTestifyInteraction, handlePrefix: handleTestifyPrefix, registerTestifyHandlers } = require("./src/features/testify-suite/testify-suite.handler.cjs");
 
 // Initialize config manager
 const configManager = new ConfigManager();
+
+// Testify-inspired suite: modular commands, prefix support, AutoMod, XP, economy and admin tools.
+
 
 // ============== SINGLE INSTANCE LOCK (prevents duplicate welcome/join handlers) ==============
 const INSTANCE_LOCK_FILE = path.join(__dirname, ".bot.instance.lock");
@@ -906,6 +910,13 @@ const COMMANDS_META = {
   'removetwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Twitch user', usage: '/removetwitchuser [username]', adminOnly: true },
 };
 
+// Extend the dashboard command catalog with the modular Testify suite.
+try {
+  for (const cmd of slashCommands) {
+    if (!COMMANDS_META[cmd.name]) COMMANDS_META[cmd.name] = { category: 'testify', description: cmd.description || 'SPIDEY BOT command', usage: '/' + cmd.name };
+  }
+} catch (e) { console.warn('[TESTIFY] Command metadata extension failed:', e.message); }
+
 // expose metadata to dashboard regardless of bot login
 app.get('/api/commands', (req, res) => {
   res.json(COMMANDS_META);
@@ -1026,6 +1037,8 @@ const client = new Client({
   ],
   partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
+
+registerTestifyHandlers(client);
 
 const token = process.env.TOKEN || "";
 let botLoggedIn = false;
@@ -1283,6 +1296,7 @@ app.get('/api/guilds', async (req, res) => {
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot && !msg.guild.config?.messageCountingBots) return;
   if (!msg.member) return;
+  if (await handleTestifyPrefix(msg, { client })) return;
   
   // LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
   const guildConfig = getGuildConfig(msg.guild.id);
@@ -3100,6 +3114,12 @@ client.on("messageCreate", async (msg) => {
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS & SLASH COMMANDS) ==============
 client.on("interactionCreate", async (interaction) => {
+  // Dispatch modular Testify commands before the legacy monolith handles interactions.
+  if (interaction.isChatInputCommand()) {
+    const handled = await handleTestifyInteraction(interaction, { client });
+    if (handled) return;
+  }
+
   // Handle autocomplete interactions
   if (interaction.isAutocomplete()) {
     const { commandName, options } = interaction;
