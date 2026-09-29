@@ -24,11 +24,20 @@ router.post('/:guildId', auth, express.json(), (req, res) => {
   const { guildId } = req.params;
   const { platform, username, channelId } = req.body;
 
+  // A body containing only configuration keys updates the server-wide notification switch/channels.
+  if (!platform && !username && !channelId) {
+    if (typeof req.body?.enabled !== 'boolean' && !req.body?.twitchChannelId && !req.body?.youtubeChannelId && !req.body?.kickChannelId && !req.body?.tiktokChannelId && !req.body?.rumbleChannelId) {
+      return res.status(400).json({ success: false, error: 'Provide a notification or configuration update' });
+    }
+    socialNotificationsService.setConfig(guildId, req.body);
+    return res.json({ success: true, config: socialNotificationsService.getConfig(guildId) });
+  }
+
   if (!platform || !username || !channelId) {
     return res.status(400).json({ success: false, error: 'Missing required fields: platform, username, channelId' });
   }
 
-  const validPlatforms = ['twitch', 'tiktok', 'kick', 'youtube'];
+  const validPlatforms = ['twitch', 'tiktok', 'kick', 'youtube', 'rumble'];
   if (!validPlatforms.includes(platform.toLowerCase())) {
     return res.status(400).json({ success: false, error: `Invalid platform. Must be one of: ${validPlatforms.join(', ')}` });
   }
