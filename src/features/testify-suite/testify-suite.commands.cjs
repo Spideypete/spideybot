@@ -1,58 +1,67 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
-const commands=[]; const add=b=>commands.push(b.setDMPermission(false)); const user=(n,d)=>new SlashCommandBuilder().setName(n).setDescription(d);
-add(user('avatar','Show a member avatar').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false)));
-add(user('userinfo','Show detailed member information').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false)));
-add(user('serverinfo','Show detailed server information'));
-add(user('roleinfo','Show role information').addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true)));
-add(user('botinfo','Show bot runtime information'));
-add(user('membercount','Show member counts'));
-add(user('permissions','Show your permissions'));
-add(user('profile','Show a profile').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false)));
-add(user('rank','Show XP rank').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false)));
-add(user('daily','Claim daily economy reward')); add(user('beg','Beg for coins'));
-add(user('deposit','Move coins to bank').addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1)));
-add(user('withdraw','Withdraw coins').addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1)));
-add(user('inventory','Show inventory').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false)));
-add(user('shop','Show server shop')); add(user('buy','Buy a shop item').addStringOption(o=>o.setName('item').setDescription('Item').setRequired(true)));
-add(user('give','Give coins').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1)));
-add(user('rob','Attempt to rob').addUserOption(o=>o.setName('user').setDescription('Target').setRequired(true))); add(user('crime','Commit a risky crime'));
-add(user('pet','View or adopt a pet').addStringOption(o=>o.setName('name').setDescription('Pet name').setRequired(false)));
-add(user('poll','Create a simple poll').addStringOption(o=>o.setName('question').setDescription('Question').setRequired(true)));
-add(user('calculator','Calculate basic arithmetic').addStringOption(o=>o.setName('expression').setDescription('Expression').setRequired(true)));
-add(user('ascii','Render simple ASCII text').addStringOption(o=>o.setName('text').setDescription('Text').setRequired(true)));
-add(user('advice','Get random advice')); add(user('dadjoke','Tell a dad joke')); add(user('wouldyourather','Get a Would You Rather question'));
-add(user('hack','Run a harmless fake hack').addUserOption(o=>o.setName('user').setDescription('Target').setRequired(false)));
-add(user('relationship','Playful compatibility').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)));
-add(user('purge','Delete recent messages').addIntegerOption(o=>o.setName('amount').setDescription('1-100').setRequired(true).setMinValue(1).setMaxValue(100)).setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages));
-add(user('softban','Ban then unban').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false)).setDefaultMemberPermissions(PermissionFlagsBits.BanMembers));
-add(user('unban','Unban by ID').addStringOption(o=>o.setName('user_id').setDescription('User ID').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.BanMembers));
-add(user('clearwarnings','Clear warnings').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('slowmode','Set channel slowmode').addIntegerOption(o=>o.setName('seconds').setDescription('0-21600').setRequired(true).setMinValue(0).setMaxValue(21600)).setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels));
-add(user('lock','Lock current channel').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)); add(user('unlock','Unlock current channel').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels));
-add(user('nickname','Set member nickname').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('nickname').setDescription('Nickname').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames));
-add(user('role','Add or remove role').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true)).addStringOption(o=>o.setName('action').setDescription('Action').setRequired(true).addChoices({name:'add',value:'add'},{name:'remove',value:'remove'})).setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles));
-add(user('announce','Send an announcement').addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(true).addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement)).addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('say','Send a message').addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages));
-add(user('thread','Create a thread').addStringOption(o=>o.setName('name').setDescription('Thread name').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.ManageThreads));
-add(user('automod','Toggle AutoMod').addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(false)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('automodwords','Set blocked words').addStringOption(o=>o.setName('words').setDescription('Comma separated').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('automodlinks','Toggle link filtering').addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('automodspam','Set spam threshold').addIntegerOption(o=>o.setName('messages').setDescription('Messages').setRequired(true).setMinValue(2).setMaxValue(30)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('auditlog','Set audit log channel').addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(true).addChannelTypes(ChannelType.GuildText)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('setprefix','Set Testify-style prefix').addStringOption(o=>o.setName('prefix').setDescription('Prefix').setRequired(true).setMinLength(1).setMaxLength(5)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('sticky','Set sticky message').addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('unsticky','Remove sticky message').setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('counting','Configure counting').addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('welcome','Configure welcome').addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(false).addChannelTypes(ChannelType.GuildText)).addStringOption(o=>o.setName('message').setDescription('Message').setRequired(false)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('autorole','Configure autorole').addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(false)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('verify','Set verification role').addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('commandtoggle','Toggle a command').addStringOption(o=>o.setName('command').setDescription('Command').setRequired(true)).addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('levelrewards','Show level rewards')); add(user('setlevelreward','Set level reward').addIntegerOption(o=>o.setName('level').setDescription('Level').setRequired(true).setMinValue(1).setMaxValue(100)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('resetxp','Reset member XP').addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('botstats','Show bot statistics').setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('guildlist','List bot guilds').setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('blacklist','Blacklist a user').addUserOption(o=>o.setName('user').setDescription('User').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('unblacklist','Remove user blacklist').addUserOption(o=>o.setName('user').setDescription('User').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('reloadconfig','Normalize and reload config').setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
-add(user('debug','Show safe diagnostics').setDefaultMemberPermissions(PermissionFlagsBits.Administrator));
+const A=PermissionFlagsBits.Administrator, M=PermissionFlagsBits.ManageMessages, C=PermissionFlagsBits.ManageChannels, R=PermissionFlagsBits.ManageRoles;
+const S=(name,description,build)=>{const b=new SlashCommandBuilder().setName(name).setDescription(description).setDMPermission(false);build(b);return b;};
+const sub=(name,description,build)=>s=>{s.setName(name).setDescription(description);if(build)build(s);return s;};
+const commands=[
+S('info','Information and profile tools',b=>b
+ .addSubcommand(sub('avatar','Show an avatar',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
+ .addSubcommand(sub('userinfo','Show member information',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
+ .addSubcommand(sub('serverinfo','Show server information'))
+ .addSubcommand(sub('roleinfo','Show role information',s=>s.addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
+ .addSubcommand(sub('botinfo','Show bot runtime information'))
+ .addSubcommand(sub('membercount','Show member counts'))
+ .addSubcommand(sub('permissions','Show your permissions'))
+ .addSubcommand(sub('profile','Show a profile',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
+ .addSubcommand(sub('rank','Show XP rank',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))),
+S('economy','Economy and progression tools',b=>b
+ .addSubcommand(sub('daily','Claim daily reward')).addSubcommand(sub('beg','Beg for coins'))
+ .addSubcommand(sub('deposit','Deposit coins',s=>s.addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1))))
+ .addSubcommand(sub('withdraw','Withdraw coins',s=>s.addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1))))
+ .addSubcommand(sub('inventory','Show inventory',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
+ .addSubcommand(sub('shop','Show the shop')).addSubcommand(sub('buy','Buy an item',s=>s.addStringOption(o=>o.setName('item').setDescription('Item').setRequired(true))))
+ .addSubcommand(sub('give','Give coins',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1))))
+ .addSubcommand(sub('rob','Attempt a robbery',s=>s.addUserOption(o=>o.setName('user').setDescription('Target').setRequired(true))))
+ .addSubcommand(sub('crime','Commit a risky crime')).addSubcommand(sub('pet','View or adopt a pet',s=>s.addStringOption(o=>o.setName('name').setDescription('Pet name').setRequired(false))))),
+S('fun','Community fun and utility',b=>b
+ .addSubcommand(sub('poll','Create a poll',s=>s.addStringOption(o=>o.setName('question').setDescription('Question').setRequired(true))))
+ .addSubcommand(sub('calculator','Calculate arithmetic',s=>s.addStringOption(o=>o.setName('expression').setDescription('Expression').setRequired(true))))
+ .addSubcommand(sub('ascii','Render ASCII text',s=>s.addStringOption(o=>o.setName('text').setDescription('Text').setRequired(true))))
+ .addSubcommand(sub('advice','Get advice')).addSubcommand(sub('dadjoke','Tell a dad joke')).addSubcommand(sub('wouldyourrather','Would You Rather'))
+ .addSubcommand(sub('hack','Fake hack simulation',s=>s.addUserOption(o=>o.setName('user').setDescription('Target').setRequired(false))))
+ .addSubcommand(sub('relationship','Playful compatibility',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))),
+S('mod','Moderation and channel management',b=>b
+ .addSubcommand(sub('purge','Delete recent messages',s=>s.addIntegerOption(o=>o.setName('amount').setDescription('1-100').setRequired(true).setMinValue(1).setMaxValue(100))))
+ .addSubcommand(sub('softban','Ban then unban',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
+ .addSubcommand(sub('unban','Unban by user ID',s=>s.addStringOption(o=>o.setName('user_id').setDescription('User ID').setRequired(true))))
+ .addSubcommand(sub('clearwarnings','Clear warning history',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
+ .addSubcommand(sub('slowmode','Set channel slowmode',s=>s.addIntegerOption(o=>o.setName('seconds').setDescription('0-21600').setRequired(true).setMinValue(0).setMaxValue(21600))))
+ .addSubcommand(sub('lock','Lock current channel')).addSubcommand(sub('unlock','Unlock current channel'))
+ .addSubcommand(sub('nickname','Set nickname',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('nickname').setDescription('Nickname').setRequired(true))))
+ .addSubcommand(sub('role','Add/remove role',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true)).addStringOption(o=>o.setName('action').setDescription('Action').setRequired(true).addChoices({name:'add',value:'add'},{name:'remove',value:'remove'}))))
+ .addSubcommand(sub('announce','Send announcement',s=>s.addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(true).addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement)).addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
+ .addSubcommand(sub('say','Send a message',s=>s.addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
+ .addSubcommand(sub('thread','Create a thread',s=>s.addStringOption(o=>o.setName('name').setDescription('Name').setRequired(true))))).setDefaultMemberPermissions(M),
+S('automod','Auto-moderation controls',b=>b
+ .addSubcommand(sub('toggle','Enable or disable AutoMod',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(false))))
+ .addSubcommand(sub('words','Set blocked words',s=>s.addStringOption(o=>o.setName('words').setDescription('Comma separated').setRequired(true))))
+ .addSubcommand(sub('links','Toggle link filtering',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true))))
+ .addSubcommand(sub('spam','Set spam threshold',s=>s.addIntegerOption(o=>o.setName('messages').setDescription('Messages').setRequired(true).setMinValue(2).setMaxValue(30)))).setDefaultMemberPermissions(A)),
+S('config','Server configuration',b=>b
+ .addSubcommand(sub('auditlog','Set audit log channel',s=>s.addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(true).addChannelTypes(ChannelType.GuildText))))
+ .addSubcommand(sub('prefix','Set command prefix',s=>s.addStringOption(o=>o.setName('prefix').setDescription('Prefix').setRequired(true).setMinLength(1).setMaxLength(5))))
+ .addSubcommand(sub('sticky','Set sticky message',s=>s.addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
+ .addSubcommand(sub('unsticky','Remove sticky message')).addSubcommand(sub('counting','Configure counting',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true))))
+ .addSubcommand(sub('welcome','Configure welcome',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(false).addChannelTypes(ChannelType.GuildText)).addStringOption(o=>o.setName('message').setDescription('Message').setRequired(false))))
+ .addSubcommand(sub('autorole','Configure autorole',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(false))))
+ .addSubcommand(sub('verify','Set verification role',s=>s.addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
+ .addSubcommand(sub('toggle','Toggle a command',s=>s.addStringOption(o=>o.setName('command').setDescription('Command').setRequired(true)).addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)))).setDefaultMemberPermissions(A)),
+S('levels','XP and leveling controls',b=>b
+ .addSubcommand(sub('rewards','Show level rewards')).addSubcommand(sub('setreward','Set a level role reward',s=>s.addIntegerOption(o=>o.setName('level').setDescription('Level').setRequired(true).setMinValue(1).setMaxValue(100)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
+ .addSubcommand(sub('reset','Reset member XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)))).setDefaultMemberPermissions(A)),
+S('system','Internal administration and safe diagnostics',b=>b
+ .addSubcommand(sub('stats','Show bot statistics')).addSubcommand(sub('guilds','List bot guilds'))
+ .addSubcommand(sub('blacklist','Blacklist a user',s=>s.addUserOption(o=>o.setName('user').setDescription('User').setRequired(true))))
+ .addSubcommand(sub('unblacklist','Remove blacklist',s=>s.addUserOption(o=>o.setName('user').setDescription('User').setRequired(true))))
+ .addSubcommand(sub('reload','Normalize guild configuration')).addSubcommand(sub('debug','Show safe diagnostics')).setDefaultMemberPermissions(A))
+];
 module.exports={testifyCommands:commands};
