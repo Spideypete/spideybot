@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'giveaways',title:'Giveaways',subtitle:'Giveaway defaults and server settings.'});
