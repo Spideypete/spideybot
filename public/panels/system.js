@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'system',title:'System',subtitle:'Diagnostics and configuration controls.'});
