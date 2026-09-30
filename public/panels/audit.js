@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'audit',title:'Audit Log',subtitle:'Server audit events and moderation activity delivery.'});
