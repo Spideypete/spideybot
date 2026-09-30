@@ -43,31 +43,34 @@ a{text-decoration:none;color:inherit}
 <aside class="sidebar" id="sidebar">
   <div class="brand"><div class="brand-mark">S</div><div><div class="brand-name">SPIDEY BOT</div><div class="brand-sub">Discord Dashboard</div></div></div>
   <div class="nav-title">Main</div>
-  <nav class="nav"><button class="active" data-section="overview"><span class="icon">⌂</span>Overview</button><button data-section="analytics"><span class="icon">◒</span>Analytics</button></nav><div class="nav-title">Configuration</div><nav class="nav"><button data-section="settings"><span class="icon">⚙</span>General Settings</button><button data-section="messages"><span class="icon">✦</span>Server Messages</button><button data-section="moderation"><span class="icon">◈</span>Server Guard</button><button data-section="logging"><span class="icon">◷</span>Logging</button></nav><div class="nav-title">Community</div><nav class="nav"><button data-section="roles"><span class="icon">♢</span>Reaction Roles</button><button data-section="categories"><span class="icon">◇</span>Role Categories</button><button data-section="commands"><span class="icon">⌘</span>Custom Commands</button><button data-section="levels"><span class="icon">↗</span>XP & Levels</button><button data-section="leaderboard"><span class="icon">≡</span>Leaderboard</button></nav>
-  
-  <div class="nav-title">Tools</div>
+  <nav class="nav"><button class="active" data-section="overview"><span class="icon">⌂</span>Overview</button></nav>
+  <div class="nav-title">Server</div>
   <nav class="nav">
+    <button data-section="settings"><span class="icon">⚙</span>Settings</button>
+    <button data-section="community"><span class="icon">✦</span>Community</button>
+    <button data-section="moderation"><span class="icon">◈</span>Moderation</button>
+    <button data-section="automod"><span class="icon">◉</span>AutoMod</button>
+    <button data-section="audit"><span class="icon">◷</span>Audit Log</button>
+  </nav>
+  <div class="nav-title">Community</div>
+  <nav class="nav">
+    <button data-section="economy"><span class="icon">¤</span>Economy</button>
+    <button data-section="levels"><span class="icon">↗</span>Levels</button>
+    <button data-section="members"><span class="icon">♟</span>Members</button>
+    <button data-section="commands"><span class="icon">⌘</span>Commands</button>
     <button data-section="tickets"><span class="icon">▣</span>Tickets</button>
     <button data-section="giveaways"><span class="icon">◇</span>Giveaways</button>
   </nav>
-  <div class="nav-title">Testify Suite</div>
+  <div class="nav-title">Tools</div>
   <nav class="nav">
-    <button data-section="testifySettings"><span class="icon">⚙</span>Testify Settings</button>
-    <button data-section="testifyCommunity"><span class="icon">✦</span>Testify Community</button>
-    <button data-section="testifyModeration"><span class="icon">◈</span>Testify Moderation</button>
-    <button data-section="testifyAutomod"><span class="icon">◉</span>Testify AutoMod</button>
-    <button data-section="testifyAudit"><span class="icon">◷</span>Testify Audit Log</button>
-    <button data-section="testifyEconomy"><span class="icon">¤</span>Testify Economy</button>
-    <button data-section="testifyLevels"><span class="icon">↗</span>Testify Levels</button>
-    <button data-section="testifyCasino"><span class="icon">◎</span>Testify Casino</button>
-    <button data-section="testifyMusic"><span class="icon">♫</span>Testify Music</button>
-    <button data-section="testifyTickets"><span class="icon">▣</span>Testify Tickets</button>
-    <button data-section="testifyGiveaways"><span class="icon">◇</span>Testify Giveaways</button>
-    <button data-section="testifyLottery"><span class="icon">◌</span>Testify Lottery</button>
-    <button data-section="testifyCommands"><span class="icon">⌘</span>Testify Commands</button>
-    <button data-section="testifyMembers"><span class="icon">♟</span>Testify Members</button>
-    <button data-section="testifySystem"><span class="icon">◫</span>Testify System</button>
-    <button data-section="testifyOwner"><span class="icon">♛</span>Testify Owner</button>
+    <button data-section="music"><span class="icon">♫</span>Music</button>
+    <button data-section="casino"><span class="icon">◎</span>Casino</button>
+    <button data-section="lottery"><span class="icon">◌</span>Lottery</button>
+  </nav>
+  <div class="nav-title">Administration</div>
+  <nav class="nav">
+    <button data-section="system"><span class="icon">◫</span>System</button>
+    <button data-section="owner"><span class="icon">♛</span>Owner</button>
   </nav>
   <div class="sidebar-foot"><div class="bot-status"><div><span class="status-dot"></span><span class="status-label">Bot Online</span></div><div class="status-copy">SPIDEY BOT is connected and ready.</div></div></div>
 </aside>
@@ -124,49 +127,6 @@ a{text-decoration:none;color:inherit}
 const body=document.body, sidebar=document.getElementById('sidebar');
 document.getElementById('menu').onclick=()=>sidebar.classList.toggle('open');
 document.getElementById('theme').onclick=()=>{body.classList.toggle('dark');document.getElementById('theme').textContent=body.classList.contains('dark')?'☀':'☾'};
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');sidebar.classList.remove('open')});
 </script>
-<script id="spidey-functionality-1">
-(function(){
-  const guildId=new URLSearchParams(window.location.search).get('guildId')||localStorage.getItem('selectedServerId');
-  if(guildId) localStorage.setItem('selectedServerId',guildId);
-  async function loadIdentity(){
-    try{
-      const res=await fetch('/api/user',{credentials:'include'});
-      if(!res.ok) return;
-      const data=await res.json();
-      const user=data.user||data;
-      const name=user.global_name||user.username||'Administrator';
-      const nameEl=document.getElementById('userName');
-      const avatar=document.getElementById('userAvatar');
-      if(nameEl) nameEl.textContent=name;
-      if(avatar){
-        if(user.avatar&&user.id) avatar.innerHTML='<img src="https://cdn.discordapp.com/avatars/'+user.id+'/'+user.avatar+'.png?size=128" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
-        else avatar.textContent=name.charAt(0).toUpperCase();
-      }
-    }catch(e){console.warn('[dashboard] identity load failed',e)}
-  }
-  async function loadStats(){
-    const id=localStorage.getItem('selectedServerId');
-    if(!id) return;
-    const timeframe=document.getElementById('dashboardTimeframe')?.value||'current';
-    try{
-      const res=await fetch('/api/member-stats/'+encodeURIComponent(id)+'?timeframe='+encodeURIComponent(timeframe),{credentials:'include'});
-      if(!res.ok) return;
-      const stats=await res.json();
-      const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value??'—'};
-      set('statMembers',stats.total??stats.members);
-      set('statMessages',stats.messages??stats.messageCount);
-      set('statCommands',stats.commands??stats.commandCount);
-      set('statFeatures',stats.features??stats.enabledFeatures);
-    }catch(e){console.warn('[dashboard] stats load failed',e)}
-  }
-  window.addEventListener('DOMContentLoaded',function(){
-    loadIdentity();
-    loadStats();
-    document.getElementById('dashboardTimeframe')?.addEventListener('change',loadStats);
-  });
-  window.spideyDashboard={loadIdentity,loadStats};
-})();
-</script><script src="https://unpkg.com/@phosphor-icons/web"></script><script type="module" src="/dashboard-app.js"></script></body>
+<script src="https://unpkg.com/@phosphor-icons/web"></script><script type="module" src="/dashboard-app.js"></script></body>
 </html>
