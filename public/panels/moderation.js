@@ -1,2 +1,0 @@
-import{loadFeature}from'./feature-panel.js';import{field,toggle,button,val,checked}from'./panel-kit.js';
-export const render=({body,gid})=>loadFeature(body,gid,'Moderation','Warnings, audit delivery and moderation-related server controls.',(d,c)=>toggle('audit','Audit logging',!!c.audit?.enabled)+field('auditChannel','Audit log channel ID',c.audit?.channelId||'')+button('save','Save moderation settings'),c=>({audit:{...(c.audit||{}),enabled:checked('audit'),channelId:val('auditChannel')||null}}));
