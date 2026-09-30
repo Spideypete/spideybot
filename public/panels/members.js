@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'members',title:'Members',subtitle:'Progression and economy member rankings.'});
