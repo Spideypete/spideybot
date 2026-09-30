@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'settings',title:'Server Settings',subtitle:'Prefix, welcome, autorole and core server controls.'});
