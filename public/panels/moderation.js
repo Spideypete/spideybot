@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'moderation',title:'Moderation',subtitle:'Warnings, permissions and moderation controls.'});
