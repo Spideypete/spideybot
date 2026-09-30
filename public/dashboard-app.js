@@ -75,7 +75,7 @@ const guildId=()=>{
 const endpoint=id=>'/api/features/testify-suite/'+encodeURIComponent(id);
 const load=async id=>(await api(endpoint(id)+'?guildId='+encodeURIComponent(id))).config||{};
 const save=async(id,patch)=>api(endpoint(id)+'?guildId='+encodeURIComponent(id),{method:'PUT',body:JSON.stringify(patch)});
-const setFeature=async(id,key,enabled)=>save(id,{plugins:{[key]:enabled}});
+const setFeature=async(id,key,enabled)=>{const result=await save(id,{plugins:{[key]:enabled}});return result.config||result;};
 const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const icon=n=>'<i class="ph-bold ph-'+n+'"></i>';
 const val=id=>document.getElementById(id)?.value??'';
@@ -110,7 +110,21 @@ function renderCatalog(config){
  root.innerHTML='<div class="plugin-sections">'+FEATURES.map(g=>'<section><div class="plugin-section-title">'+esc(g[0])+'</div><div class="plugin-grid">'+g[1].map(f=>{const on=isEnabled(config,f);return '<article class="card plugin-card '+(on?'':'disabled')+'"><div class="plugin-icon">'+icon(f[3])+'</div><h3>'+esc(f[1])+'</h3><p>'+esc(f[2])+'</p><div class="plugin-foot"><span class="plugin-status '+(on?'':'off')+'">'+(on?'Enabled':'Disabled')+'</span><button class="plugin-switch '+(on?'on':'')+'" data-feature="'+esc(f[0])+'"></button></div></article>';}).join('')+'</div></section>').join('')+'</div>';
  root.querySelectorAll('[data-feature]').forEach(button=>button.addEventListener('click',async()=>{
    const key=button.dataset.feature;const f=allFeatures().find(x=>x[0]===key);const current=isEnabled(config,f);button.disabled=true;
-   try{config=await setFeature(guildId(),key,!current);renderCatalog(config);await buildNavigation();}catch(e){alert(e.message);}finally{button.disabled=false;}
+   try{
+     config=await setFeature(guildId(),key,!current);
+     const card=button.closest('.plugin-card');
+     const status=card?.querySelector('.plugin-status');
+     const nextOn=isEnabled(config,f);
+     button.classList.toggle('on',nextOn);
+     card?.classList.toggle('disabled',!nextOn);
+     if(status){
+       status.classList.toggle('off',!nextOn);
+       status.textContent=nextOn?'Enabled':'Disabled';
+     }
+     button.setAttribute('aria-label',(nextOn?'Disable ':'Enable ')+f[1]);
+     await buildNavigation();
+   }catch(e){alert(e.message);}
+   finally{button.disabled=false;}
  }));
 }
 async function buildNavigation(){
@@ -134,7 +148,7 @@ async function select(section){
  if(section==='overview'){overview.hidden=false;workspace.hidden=true;sidebar?.classList.remove('open');await renderOverview();return;}
  const id=guildId();
  if(!id){body.innerHTML=card('Server selection required','No guild ID was supplied to the dashboard.','');return;}
- const f=featureByPanel(section);if(!f)return;
+ const f=featureByPanel(section);if(!f){body.innerHTML=card('Panel unavailable','This dashboard section is not registered.','');return;}
  try{
    const config=await load(id);
    if(!isEnabled(config,f)){await buildNavigation();return;}
@@ -145,7 +159,43 @@ async function select(section){
 }
 async function genericPanel(id,f,config){
  const c=await load(id);
- body.innerHTML=card(f[1],f[2],switchHtml(id,f,c)+input('channel','Channel ID',c.channels?.[f[0]]||'')+input('role','Role ID',c.roles?.[f[0]]||'')+input('message','Message / configuration',c.messages?.[f[0]]||'')+'<div class="panel-actions">'+btn('saveFeature','Save '+f[1])+'</div>');
+ const labels={
+   welcomeChannel:['Channel ID','Welcome channel','Welcome channel ID'],
+   reactionRoles:['Message ID','Reaction message','Role mapping'],
+   achievements:['Channel ID','Achievement channel','Achievement configuration'],
+   starboards:['Channel ID','Starboard channel','Starboard configuration'],
+   automations:['Channel ID','Automation target','Automation configuration'],
+   inviteTracker:['Channel ID','Invite log channel','Invite tracking configuration'],
+   emojis:['Channel ID','Emoji management channel','Emoji configuration'],
+   polls:['Channel ID','Poll channel','Poll configuration'],
+   embeds:['Channel ID','Embed channel','Embed configuration'],
+   search:['Channel ID','Search channel','Search configuration'],
+   help:['Channel ID','Help channel','Help configuration'],
+   reminders:['Channel ID','Reminder channel','Reminder configuration'],
+   statistics:['Channel ID','Statistics channel','Statistics configuration'],
+   temporaryChannels:['Channel ID','Temporary channel category','Temporary channel configuration'],
+   twitch:['Channel ID','Twitch alert channel','Twitch configuration'],
+   xalerts:['Channel ID','X alert channel','X configuration'],
+   youtube:['Channel ID','YouTube alert channel','YouTube configuration'],
+   reddit:['Channel ID','Reddit alert channel','Reddit configuration'],
+   instagram:['Channel ID','Instagram alert channel','Instagram configuration'],
+   rss:['Channel ID','RSS alert channel','RSS configuration'],
+   kick:['Channel ID','Kick alert channel','Kick configuration'],
+   podcast:['Channel ID','Podcast alert channel','Podcast configuration'],
+   tiktok:['Channel ID','TikTok alert channel','TikTok configuration'],
+   birthdays:['Channel ID','Birthday channel','Birthday configuration'],
+   ai:['Channel ID','AI channel','AI configuration'],
+   monetize:['Channel ID','Monetization channel','Monetization configuration'],
+   nftStats:['Collection ID','NFT collection','NFT statistics configuration'],
+   nftQueries:['Collection ID','NFT collection','NFT query configuration'],
+   nftSales:['Channel ID','Sales channel','NFT sales configuration'],
+   cryptoStats:['Asset','Crypto asset','Crypto statistics configuration'],
+   cryptoQueries:['Asset','Crypto asset','Crypto query configuration'],
+   gasTracker:['Network','Network','Gas tracker configuration'],
+   gating:['Role ID','Gated role','Gating configuration']
+ };
+ const l=labels[f[0]]||['Channel ID','Channel ID','Configuration'];
+ body.innerHTML=card(f[1],f[2],switchHtml(id,f,c)+input('channel',l[1],c.channels?.[f[0]]||'')+input('role',f[0]==='gating'?'Gated role ID':'Role ID',c.roles?.[f[0]]||'')+input('message',l[2],c.messages?.[f[0]]||'')+'<div class="panel-actions">'+btn('saveFeature','Save '+f[1])+'</div>');
  document.getElementById('saveFeature').onclick=async()=>{const fresh=await load(id);await save(id,{channels:{...(fresh.channels||{}),[f[0]]:val('channel')||null},roles:{...(fresh.roles||{}),[f[0]]:val('role')||null},messages:{...(fresh.messages||{}),[f[0]]:val('message')}});alert(f[1]+' saved.');};
  document.querySelector('[data-panel-toggle]')?.addEventListener('click',async()=>{await setFeature(id,f[0],!isEnabled(c,f));await buildNavigation();await select(f[4]);});
 }
@@ -153,7 +203,26 @@ async function settingsPanel(id){const c=await load(id),f=featureByPanel('settin
 async function moderationPanel(id){const c=await load(id),f=featureByPanel('moderator');body.innerHTML=card('Moderator','Moderation and server protection.',switchHtml(id,f,c)+check('audit','Audit logging',!!c.audit?.enabled)+input('auditChannel','Audit log channel ID',c.audit?.channelId||'')+'<div class="panel-actions">'+btn('save','Save')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{audit:{...(c.audit||{}),enabled:yes('audit'),channelId:val('auditChannel')||null}});alert('Saved.');};}
 async function levelsPanel(id){const c=await load(id),l=c.levels||{},f=featureByPanel('levels');body.innerHTML=card('Levels','XP progression and rewards.',switchHtml(id,f,c)+check('enabled','Enable leveling',l.enabled!==false)+input('xp','XP per message',l.xpPerMessage||15,'number')+input('per','XP per level',l.xpPerLevel||500,'number')+check('announce','Announce level ups',l.announce!==false)+input('channel','Announcement channel ID',l.announceChannel||'')+'<div class="panel-actions">'+btn('save','Save levels')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{levels:{...l,enabled:yes('enabled'),xpPerMessage:Number(val('xp'))||15,xpPerLevel:Number(val('per'))||500,announce:yes('announce'),announceChannel:val('channel')||null}});alert('Saved.');};}
 async function commandsPanel(id){const c=await load(id),f=featureByPanel('customCommands'),groups={Information:['avatar','userinfo','serverinfo','profile','rank'],Economy:['daily','beg','deposit','withdraw','inventory','shop','buy','give','rob','crime'],Fun:['poll','calculator','ascii','advice','dadjoke','wouldyourrather'],Moderation:['purge','softban','unban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say'],AutoMod:['automod','automodwords','automodlinks','automodspam'],Configuration:['auditlog','setprefix','sticky','unsticky','welcome','autorole','verify'],Levels:['levelrewards','setlevelreward','resetxp'],Music:['play','pause','resume','skip','stop','queue','volume'],Administration:['blacklist','unblacklist','reloadconfig','debug','guildlist','botstats']};let html=switchHtml(id,f,c);Object.keys(groups).forEach(g=>{html+=card(g,'Enable or disable commands.',groups[g].map(n=>check('cmd_'+n,n,c.commandToggles?.[n]!==false)).join(''));});html+='<div class="panel-actions">'+btn('saveCommands','Save command settings')+'</div>';body.innerHTML=html;document.getElementById('saveCommands').onclick=async()=>{const patch={...(c.commandToggles||{})};Object.values(groups).flat().forEach(n=>patch[n]=yes('cmd_'+n));await save(id,{commandToggles:patch});alert('Saved.');};}
-async function ticketsPanel(id){const c=await load(id),t=c.tickets||{},f=featureByPanel('ticketing');body.innerHTML=card('Ticketing','Support tickets and transcripts.',switchHtml(id,f,c)+check('enabled','Enable tickets',t.enabled!==false)+input('category','Ticket category ID',t.categoryId||'')+input('channel','Ticket panel channel ID',t.ticketChannelId||'')+input('support','Support role ID',t.supportRoleId||'')+input('log','Transcript log channel ID',t.logChannelId||'')+'<div class="panel-actions">'+btn('save','Save tickets')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{tickets:{...t,enabled:yes('enabled'),categoryId:val('category')||null,ticketChannelId:val('channel')||null,supportRoleId:val('support')||null,logChannelId:val('log')||null}});alert('Saved.');};}
+async function ticketsPanel(id){
+ const c=await load(id),t=c.tickets||{},f=featureByPanel('ticketing');
+ body.innerHTML=card('Ticketing','Support tickets and transcripts.',switchHtml(id,f,c)+check('enabled','Enable tickets',t.enabled!==false)+input('category','Ticket category ID',t.categoryId||'')+input('channel','Ticket panel channel ID',t.ticketChannelId||'')+input('support','Support role ID',t.supportRoleId||'')+input('log','Transcript log channel ID',t.logChannelId||'')+'<div class="panel-actions">'+btn('save','Save tickets')+'</div>');
+ document.getElementById('save').onclick=async()=>{
+   const fresh=await load(id);
+   await save(id,{tickets:{...(fresh.tickets||{}),enabled:yes('enabled'),categoryId:val('category')||null,ticketChannelId:val('channel')||null,supportRoleId:val('support')||null,logChannelId:val('log')||null}});
+   alert('Saved.');
+ };
+ document.querySelector('[data-panel-toggle]')?.addEventListener('click',async()=>{
+   const current=isEnabled(c,f);
+   const button=document.querySelector('[data-panel-toggle]');
+   if(button)button.disabled=true;
+   try{
+     await setFeature(id,f[0],!current);
+     await buildNavigation();
+     await select(f[4]);
+   }catch(e){alert(e.message);}
+   finally{if(button)button.disabled=false;}
+ };
+}
 async function auditPanel(id){const c=await load(id),f=featureByPanel('audit');body.innerHTML=card('Audit Log','Audit event delivery.',switchHtml(id,f,c)+check('enabled','Enable audit logging',!!c.audit?.enabled)+input('channel','Audit channel ID',c.audit?.channelId||'')+'<div class="panel-actions">'+btn('save','Save audit settings')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{audit:{...(c.audit||{}),enabled:yes('enabled'),channelId:val('channel')||null}});alert('Saved.');};}
 async function economyPanel(id){const c=await load(id),e=c.economy||{},f=featureByPanel('economy');body.innerHTML=card('Economy','Wallet, rewards and shop.',switchHtml(id,f,c)+check('enabled','Enable economy',e.enabled!==false)+input('currency','Currency name',e.currency||'coins')+input('daily','Daily reward',e.daily||100,'number')+input('min','Work minimum',e.workMin||20,'number')+input('max','Work maximum',e.workMax||60,'number')+'<div class="panel-actions">'+btn('save','Save economy')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{economy:{...e,enabled:yes('enabled'),currency:val('currency')||'coins',daily:Number(val('daily'))||100,workMin:Number(val('min'))||20,workMax:Number(val('max'))||60}});alert('Saved.');};}
 async function giveawayPanel(id){const c=await load(id),g=c.giveaways||{},f=featureByPanel('giveaways');body.innerHTML=card('Giveaways','Giveaway defaults.',switchHtml(id,f,c)+input('channel','Default channel ID',g.channelId||'')+input('duration','Duration in minutes',g.duration||60,'number')+input('winners','Default winners',g.winners||1,'number')+input('prize','Default prize',g.prize||'')+'<div class="panel-actions">'+btn('save','Save giveaways')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{giveaways:{...g,channelId:val('channel')||null,duration:Number(val('duration'))||60,winners:Number(val('winners'))||1,prize:val('prize')}});alert('Saved.');};}
