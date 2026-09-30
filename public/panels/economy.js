@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'economy',title:'Economy',subtitle:'Wallets, rewards, shop and economy rankings.'});
