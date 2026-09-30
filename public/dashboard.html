@@ -128,5 +128,33 @@ const body=document.body, sidebar=document.getElementById('sidebar');
 document.getElementById('menu').onclick=()=>sidebar.classList.toggle('open');
 document.getElementById('theme').onclick=()=>{body.classList.toggle('dark');document.getElementById('theme').textContent=body.classList.contains('dark')?'☀':'☾'};
 </script>
-<script src="https://unpkg.com/@phosphor-icons/web"></script><script type="module" src="/dashboard-app.js"></script></body>
+<script src="https://unpkg.com/@phosphor-icons/web"></script><script>
+(function(){
+  const id=new URLSearchParams(location.search).get('guildId');
+  if(id) localStorage.setItem('selectedServerId',id);
+  async function identity(){
+    try{
+      const r=await fetch('/api/user',{credentials:'include'}); if(!r.ok)return;
+      const d=await r.json(),u=d.user||d,n=u.global_name||u.username||'Administrator';
+      const ne=document.getElementById('userName'),av=document.getElementById('userAvatar');
+      if(ne)ne.textContent=n;
+      if(av&&u.avatar&&u.id)av.innerHTML='<img src="https://cdn.discordapp.com/avatars/'+u.id+'/'+u.avatar+'.png?size=128" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+      else if(av)av.textContent=n.charAt(0).toUpperCase();
+    }catch(e){console.warn('[dashboard] identity',e)}
+  }
+  async function stats(){
+    const gid=new URLSearchParams(location.search).get('guildId')||localStorage.getItem('selectedServerId'); if(!gid)return;
+    try{
+      const r=await fetch('/api/member-stats/'+encodeURIComponent(gid),{credentials:'include'});if(!r.ok)return;
+      const d=await r.json();
+      const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v??'—'};
+      set('statMembers',d.total??d.members);
+      set('statMessages',d.messages??d.messageCount);
+      set('statCommands',d.commands??d.commandCount);
+      set('statFeatures',d.features??d.enabledFeatures);
+    }catch(e){console.warn('[dashboard] stats',e)}
+  }
+  identity();stats();
+})();
+</script><script type="module" src="/dashboard-app.js"></script></body>
 </html>
