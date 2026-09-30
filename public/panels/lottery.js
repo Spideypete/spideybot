@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'lottery',title:'Lottery',subtitle:'Lottery settings and announcements.'});
