@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'community',title:'Community',subtitle:'Welcome, verification, counting and sticky-message controls.'});
