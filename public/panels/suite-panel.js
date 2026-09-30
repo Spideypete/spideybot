@@ -1,0 +1,1 @@
+export const renderPanel=({body,gid})=>{body.innerHTML='<div class="card panel"><div class="panel-title">'+(gid||'No server selected')+'</div></div>'};
