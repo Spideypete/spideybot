@@ -52,27 +52,12 @@ const {
 } = require("./security");
 
 // ============== MODULAR FEATURE IMPORTS ==============
-const { ConfigManager } = require("./src/config/config-manager.cjs");
 const { createFeaturesRouter } = require("./src/routes/features.js");
 
 // Feature services and handlers
-const { ServerMessagesService } = require("./src/features/server-messages/server-messages.service.cjs");
-const { initialize: initializeServerMessages } = require("./src/features/server-messages/server-messages.handler.cjs");
-const { initialize: initializeServerGuard } = require("./src/features/server-guard/server-guard.handler.cjs");
-const { registerReactionRolesHandler } = require("./src/features/reaction-roles/reaction-roles.handler.cjs");
-const { registerHandlers: registerLevelsHandlers } = require("./src/features/levels/levels.handler.cjs");
-const { registerHandlers: registerGiveawaysHandlers, startChecker: startGiveawaysChecker } = require("./src/features/giveaways/giveaways.handler.cjs");
-const { registerHandlers: registerTicketsHandlers } = require("./src/features/tickets/tickets.handler.cjs");
-const { initialize: initializeCustomCommands } = require("./src/features/custom-commands/custom-commands.handler.cjs");
-const { registerHandlers: registerInvitesHandlers } = require("./src/features/invites/invites.handler.cjs");
-const { startPolling: startSocialNotifications } = require("./src/features/social-notifications/social-notifications.handler.cjs");
-const { registerHandlers: registerLoggingHandlers } = require("./src/features/logging/logging.handler.cjs");
 const { execute: handleTestifyInteraction, handlePrefix: handleTestifyPrefix, registerTestifyHandlers } = require("./src/features/testify-suite/testify-suite.handler.cjs");
 
-// Initialize config manager
-const configManager = new ConfigManager();
-
-// Testify-inspired suite: modular commands, prefix support, AutoMod, XP, economy and admin tools.
+// Integrated server command suite: slash + prefix commands, AutoMod, XP, economy and admin tools.
 
 
 // ============== SINGLE INSTANCE LOCK (prevents duplicate welcome/join handlers) ==============
@@ -8553,7 +8538,7 @@ app.post("/api/quick-setup/:setupType", express.json(), (req, res) => {
 });
 
 // ============== MODULAR FEATURE ROUTES ==============
-const featuresRouter = createFeaturesRouter(client, configManager);
+const featuresRouter = createFeaturesRouter(client);
 app.use('/api/features', featuresRouter);
 
 const PORT = process.env.PORT || 5000;
@@ -8686,80 +8671,7 @@ client.once('ready', () => {
   console.log('🔧 Registering unified command/event handlers...');
   try { registerTestifyHandlers(client); console.log('✅ Core command/event handlers registered'); } catch (err) { console.error('❌ Failed to register core command/event handlers:', err.message); }
 
-  console.log('🔧 Registering modular feature handlers...');
-  
-  try {
-    initializeServerGuard(client);
-    console.log('✅ Server Guard handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Server Guard handler:', err.message);
-  }
-  
-  try {
-    registerReactionRolesHandler(client);
-    console.log('✅ Reaction Roles handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Reaction Roles handler:', err.message);
-  }
-  
-  try {
-    registerLevelsHandlers(client);
-    console.log('✅ Levels handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Levels handler:', err.message);
-  }
-  
-  try {
-    registerGiveawaysHandlers(client);
-    startGiveawaysChecker();
-    console.log('✅ Giveaways handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Giveaways handler:', err.message);
-  }
-  
-  try {
-    registerTicketsHandlers(client);
-    console.log('✅ Tickets handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Tickets handler:', err.message);
-  }
-  
-  try {
-    initializeCustomCommands(client);
-    console.log('✅ Custom Commands handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Custom Commands handler:', err.message);
-  }
-  
-  try {
-    registerInvitesHandlers(client);
-    console.log('✅ Invites handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Invites handler:', err.message);
-  }
-  
-  try {
-    startSocialNotifications(client);
-    console.log('✅ Social Notifications polling started');
-  } catch (err) {
-    console.error('❌ Failed to start Social Notifications:', err.message);
-  }
-  
-  try {
-    registerLoggingHandlers(client);
-    console.log('✅ Logging handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Logging handler:', err.message);
-  }
-  
-  try {
-    initializeServerMessages(client);
-    console.log('✅ Server Messages handler registered');
-  } catch (err) {
-    console.error('❌ Failed to register Server Messages handler:', err.message);
-  }
-  
-  console.log('🔧 Modular feature handlers registration complete');
+
 });
 
 // ============== LOGIN (single attempt — avoid duplicate gateway sessions) ==============
