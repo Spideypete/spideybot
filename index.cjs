@@ -807,117 +807,18 @@ function setCachedMemberStats(guildId, data) {
 }
 
 // ------------------------------------------------------------------
-// Command metadata (shared): exposed to dashboard via /api/commands
-// This lives at top-level so the dashboard can render even when bot
-// isn't logged in or slash commands aren't registered yet.
-const COMMANDS_META = {
-  help: { category: 'info', description: 'Show full command list', usage: '/help' },
-  adminhelp: { category: 'info', description: 'Show admin-only commands', usage: '/adminhelp', adminOnly: true },
-  
-  // Leveling & XP
-  xp: { category: 'leveling', subsection: 'Status', description: 'Check your XP and level', usage: '/xp' },
-  level: { category: 'leveling', subsection: 'Status', description: 'Check your level and XP', usage: '/level' },
-  leaderboard: { category: 'leveling', subsection: 'Status', description: 'View server leaderboard', usage: '/leaderboard' },
-  
-  kick: { category: 'moderation', subsection: 'Core', description: 'Remove member from server', usage: '/kick @user [reason]' },
-  ban: { category: 'moderation', subsection: 'Core', description: 'Permanently ban member', usage: '/ban @user [reason]' },
-  warn: { category: 'moderation', subsection: 'Core', description: 'Warn member (tracked & logged)', usage: '/warn @user [reason]' },
-  mute: { category: 'moderation', subsection: 'Core', description: 'Timeout member', usage: '/mute @user' },
-  unmute: { category: 'moderation', subsection: 'Core', description: 'Remove timeout from member', usage: '/unmute @user' },
-  warnings: { category: 'moderation', subsection: 'Core', description: "View member's warning history", usage: '/warnings @user' },
+// Command metadata for the integrated command suite.
+const COMMANDS_META = {};
+for (const command of slashCommands) {
+  const json = typeof command.toJSON === 'function' ? command.toJSON() : command;
+  COMMANDS_META[json.name] = {
+    category: 'commands',
+    description: json.description || 'SPIDEY BOT command',
+    usage: '/' + json.name,
+    adminOnly: !!json.default_member_permissions
+  };
+}
 
-  balance: { category: 'economy', subsection: 'Currency', description: 'Check your coin balance', usage: '/balance' },
-  pay: { category: 'economy', subsection: 'Currency', description: 'Pay another user', usage: '/pay @user [amount]' },
-  addmoney: { category: 'economy', subsection: 'Currency', description: 'Add money to a user (admin)', usage: '/addmoney @user [amount]', adminOnly: true },
-  removemoney: { category: 'economy', subsection: 'Currency', description: 'Remove money from a user (admin)', usage: '/removemoney @user [amount]', adminOnly: true },
-  work: { category: 'economy', subsection: 'Currency', description: 'Work for coins (cooldown)', usage: '/work' },
-  transfer: { category: 'economy', subsection: 'Currency', description: 'Send coins to other members', usage: '/transfer @user [amount]' },
-
-  rps: { category: 'games', subsection: 'Game Commands', description: 'Play rock-paper-scissors', usage: '/rps [rock/paper/scissors]' },
-  '8ball': { category: 'games', subsection: 'Game Commands', description: 'Magic 8-ball', usage: '/8ball' },
-  dice: { category: 'games', subsection: 'Game Commands', description: 'Roll a dice', usage: '/dice' },
-  coin: { category: 'games', subsection: 'Game Commands', description: 'Flip a coin', usage: '/coin' },
-  trivia: { category: 'games', subsection: 'Game Commands', description: 'Get a trivia question', usage: '/trivia' },
-
-  play: { category: 'music', subsection: 'Playback', description: 'Search and play music', usage: '/play [song or URL]' },
-  shuffle: { category: 'music', subsection: 'Playback', description: 'Randomize the queue', usage: '/shuffle' },
-  queue: { category: 'music', subsection: 'Playback', description: 'Show music queue', usage: '/queue' },
-  loop: { category: 'music', subsection: 'Playback', description: 'Toggle queue repeat', usage: '/loop' },
-  volume: { category: 'music', subsection: 'Playback', description: 'Adjust playback volume', usage: '/volume [0-200]' },
-  back: { category: 'music', subsection: 'Button Controls', description: 'Go to previous track', usage: '/back' },
-  pause: { category: 'music', subsection: 'Button Controls', description: 'Pause playback', usage: '/pause' },
-  resume: { category: 'music', subsection: 'Button Controls', description: 'Resume playback', usage: '/resume' },
-  skip: { category: 'music', subsection: 'Button Controls', description: 'Skip current track', usage: '/skip' },
-  stop: { category: 'music', subsection: 'Button Controls', description: 'Stop playback and clear queue', usage: '/stop' },
-
-  suggest: { category: 'info', description: 'Send a suggestion', usage: '/suggest [message]' },
-  ticketsetup: { category: 'tickets', subsection: 'Setup', description: 'Setup ticket system', usage: '/ticketsetup #channel', adminOnly: true },
-  ticket: { category: 'tickets', subsection: 'User', description: 'Create a support ticket', usage: '/ticket' },
-  closeTicket: { category: 'tickets', subsection: 'User', description: 'Close an active ticket', usage: '/close-ticket', adminOnly: true },
-
-  configmodlog: { category: 'config', subsection: 'Channels', description: 'Set moderation log channel', usage: '/configmodlog #channel' },
-  configwelcomechannel: { category: 'config', subsection: 'Channels', description: 'Set welcome channel', usage: '/configwelcomechannel #channel' },
-  configwelcomemessage: { category: 'config', subsection: 'Messages', description: 'Set welcome message', usage: '/configwelcomemessage [message]' },
-  configgoodbyemessage: { category: 'config', subsection: 'Messages', description: 'Set goodbye message', usage: '/configgoodbyemessage [message]' },
-  configlogging: { category: 'config', subsection: 'Features', description: 'Configure logging', usage: '/configlogging' },
-  configleaderboard: { category: 'config', subsection: 'Features', description: 'Configure leaderboards', usage: '/configleaderboard #channel' },
-  configxp: { category: 'config', subsection: 'Features', description: 'Configure XP settings', usage: '/configxp [xpPerMessage] [xpPerLevel]' },
-  configsubscriptions: { category: 'config', subsection: 'Features', description: 'Configure subscriptions', usage: '/configsubscriptions' },
-  configstatisticschannels: { category: 'config', subsection: 'Channels', description: 'Configure statistic channels', usage: '/configstatisticschannels #channel' },
-  configserverguard: { category: 'config', subsection: 'Features', description: 'Server guard settings', usage: '/configserverguard' },
-  configreactroles: { category: 'config', subsection: 'Features', description: 'Configure reaction roles', usage: '/configreactroles' },
-  configrolecategories: { category: 'config', subsection: 'Features', description: 'Manage role categories', usage: '/configrolecategories [name]' },
-  configsocialnotifs: { category: 'config', subsection: 'Features', description: 'Configure social notifications', usage: '/configsocialnotifs #channel' },
-  configsuggestions: { category: 'config', subsection: 'Features', description: 'Configure suggestions channel', usage: '/configsuggestions #channel' },
-  configkickchannel: { category: 'config', subsection: 'Channels', description: 'Set kick channel', usage: '/configkickchannel #channel' },
-  configtiktokchannel: { category: 'config', subsection: 'Channels', description: 'Set TikTok alerts channel', usage: '/configtiktokchannel #channel' },
-  configtwitchchannel: { category: 'config', subsection: 'Channels', description: 'Set Twitch alerts channel', usage: '/configtwitchchannel #channel' },
-
-  createcategory: { category: 'roles', subsection: 'Category', description: 'Create a role category', usage: '/createcategory [name]' },
-  listroles: { category: 'roles', subsection: 'Category', description: 'View all active role categories', usage: '/listroles' },
-  addrole: { category: 'roles', subsection: 'Category', description: 'Add role to category', usage: '/addrole [category] [role name] [role ID]' },
-  removerole: { category: 'roles', subsection: 'Category', description: 'Remove role from category', usage: '/removerole [category] [role name]' },
-  setcategorybanner: { category: 'roles', subsection: 'Category', description: 'Set category banner', usage: '/setcategorybanner [category] [url]' },
-  setupcategory: { category: 'roles', subsection: 'Category', description: 'Setup a new category message', usage: '/setupcategory [category]' },
-  deletecategory: { category: 'roles', subsection: 'Category', description: 'Delete a category', usage: '/deletecategory [category]' },
-  addgamerole: { category: 'roles', subsection: 'Gaming', description: 'Add game role', usage: '/addgamerole [role name] [role ID]' },
-  removegamerole: { category: 'roles', subsection: 'Gaming', description: 'Remove game role', usage: '/removegamerole [role name]' },
-  addwatchpartyrole: { category: 'roles', subsection: 'Gaming', description: 'Add watchparty role', usage: '/addwatchpartyrole [role name] [role ID]' },
-  removewatchpartyrole: { category: 'roles', subsection: 'Gaming', description: 'Remove watchparty role', usage: '/removewatchpartyrole [role name]' },
-  addplatformrole: { category: 'roles', subsection: 'Gaming', description: 'Add platform role', usage: '/addplatformrole [role name] [role ID]' },
-  removeplatformrole: { category: 'roles', subsection: 'Gaming', description: 'Remove platform role', usage: '/removeplatformrole [role name]' },
-  setuproles: { category: 'roles', subsection: 'Selectors', description: 'Post gaming roles selector with buttons', usage: '/setuproles' },
-  setupwatchparty: { category: 'roles', subsection: 'Selectors', description: 'Post watch party role selector', usage: '/setupwatchparty' },
-  setupplatform: { category: 'roles', subsection: 'Selectors', description: 'Post platform selector', usage: '/setupplatform' },
-  removeroles: { category: 'roles', subsection: 'Selectors', description: 'Post role removal message', usage: '/removeroles' },
-  setuplevelroles: { category: 'roles', subsection: 'Selectors', description: 'Auto-create level roles', usage: '/setuplevelroles' },
-
-  addcustomcommand: { category: 'custom', subsection: 'Management', description: 'Add a custom command', usage: '/addcustomcommand [name] | [response]', adminOnly: true },
-  addcmd: { category: 'custom', subsection: 'Management', description: 'Add a custom command (alias)', usage: '/addcmd [name] | [response]', adminOnly: true },
-  removecustomcommand: { category: 'custom', subsection: 'Management', description: 'Remove custom command', usage: '/removecustomcommand [name]', adminOnly: true },
-  delcmd: { category: 'custom', subsection: 'Management', description: 'Delete custom command (alias)', usage: '/delcmd [name]', adminOnly: true },
-
-  giveaway: { category: 'giveaway', subsection: 'Core', description: 'Create a giveaway', usage: '/giveaway', adminOnly: true },
-  startgiveaway: { category: 'giveaway', subsection: 'Core', description: 'Start a giveaway', usage: '/startgiveaway', adminOnly: true },
-  filtertoggle: { category: 'config', subsection: 'Features', description: 'Toggle profanity filter', usage: '/filtertoggle' },
-  linkfilter: { category: 'config', subsection: 'Features', description: 'Toggle link filter', usage: '/linkfilter [on/off]' },
-  setprefix: { category: 'config', subsection: 'Features', description: 'Change command prefix', usage: '/setprefix [prefix]' },
-  addkickuser: { category: 'social', subsection: 'Monitoring', description: 'Monitor Kick user', usage: '/addkickuser [username]', adminOnly: true },
-  removekickuser: { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Kick user', usage: '/removekickuser [username]', adminOnly: true },
-  addtiktokuser: { category: 'social', subsection: 'Monitoring', description: 'Monitor TikTok user', usage: '/addtiktokuser [username]', adminOnly: true },
-  removetiktokuser: { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring TikTok user', usage: '/removetiktokuser [username]', adminOnly: true },
-  'addtwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Monitor Twitch user', usage: '/addtwitchuser [username]', adminOnly: true },
-  'removetwitchuser': { category: 'social', subsection: 'Monitoring', description: 'Stop monitoring Twitch user', usage: '/removetwitchuser [username]', adminOnly: true },
-};
-
-// Extend the dashboard command catalog with the modular Testify suite.
-try {
-  for (const cmd of slashCommands) {
-    if (!COMMANDS_META[cmd.name]) COMMANDS_META[cmd.name] = { category: 'testify', description: cmd.description || 'SPIDEY BOT command', usage: '/' + cmd.name };
-  }
-} catch (e) { console.warn('[TESTIFY] Command metadata extension failed:', e.message); }
-
-// expose metadata to dashboard regardless of bot login
 app.get('/api/commands', (req, res) => {
   res.json(COMMANDS_META);
 });
