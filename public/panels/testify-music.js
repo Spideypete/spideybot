@@ -1,5 +1,0 @@
-import {apiFactory,box,field,toggle,button,grid,mount,on,val,checked} from './panel-kit.js';
-export async function render({body,gid}){const api=apiFactory(gid);const d=await api('/api/features/testify-suite/'+gid);const m=d.config?.music||{};mount({body,content:grid([
- box('Music System',toggle('tmEnabled','Enabled',m.enabled!==false)+field('tmDj','DJ role ID',m.djRoleId||'')+field('tmVolume','Maximum volume',m.maxVolume||200),button('Save Music','tmSave')),
- box('Playback',toggle('tmYoutube','YouTube',m.youtube!==false)+toggle('tmSoundcloud','SoundCloud',m.soundcloud!==false)+toggle('tmQueue','Queue controls',m.queue!==false)+toggle('tmDjOnly','DJ-only controls',!!m.djOnly),button('Save Playback','tmPlayback'))
- ])});on('tmSave',()=>save({...m,enabled:checked('tmEnabled'),djRoleId:val('tmDj'),maxVolume:Number(val('tmVolume'))||200}));on('tmPlayback',()=>save({...m,youtube:checked('tmYoutube'),soundcloud:checked('tmSoundcloud'),queue:checked('tmQueue'),djOnly:checked('tmDjOnly')}));async function save(music){await api('/api/features/testify-suite/'+gid,{method:'PUT',body:JSON.stringify({music})});alert('Music settings saved.');}}
