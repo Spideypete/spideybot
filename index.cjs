@@ -15,7 +15,7 @@ const {
   REST,
   Routes
 } = require("discord.js");
-const { slashCommands } = require("./slash-commands");
+const { testifyCommands } = require("./src/features/testify-suite/testify-suite.commands.cjs");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
@@ -794,7 +794,7 @@ function setCachedMemberStats(guildId, data) {
 // ------------------------------------------------------------------
 // Command metadata for the integrated command suite.
 const COMMANDS_META = {};
-for (const command of slashCommands) {
+for (const command of testifyCommands) {
   const json = typeof command.toJSON === 'function' ? command.toJSON() : command;
   COMMANDS_META[json.name] = {
     category: 'commands',
@@ -1014,7 +1014,7 @@ client.once("ready", async () => {
     }
     
     // Now register fresh
-    const commands = slashCommands.map(cmd => cmd.toJSON());
+    const commands = testifyCommands.map(cmd => cmd.toJSON());
     console.log(`➡️ Registering ${commands.length} commands...`);
     await new Promise(r => setTimeout(r, 500));
     const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
@@ -1045,7 +1045,7 @@ async function registerSlashCommands(forceOverwrite = false) {
 
   try {
     const rest = new REST({ version: '10' }).setToken(token);
-    const commands = slashCommands.map(cmd => cmd.toJSON());
+    const commands = testifyCommands.map(cmd => cmd.toJSON());
     const rawGuildIds = process.env.REGISTER_GUILD_IDS || process.env.GUILD_ID || '';
     const guildIds = rawGuildIds
       .split(',')
@@ -1957,7 +1957,7 @@ client.on("messageCreate", async (msg) => {
     const replyMsg = await msg.reply("🔁 Registering slash commands...");
     try {
       const rest = new REST({ version: '10' }).setToken(token);
-      const commands = slashCommands.map(cmd => cmd.toJSON());
+      const commands = testifyCommands.map(cmd => cmd.toJSON());
       console.log(`📝 Pushing ${commands.length} commands...`);
       const startTime = Date.now();
       
