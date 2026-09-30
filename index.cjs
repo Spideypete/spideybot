@@ -69,6 +69,28 @@ const { startPolling: startSocialNotifications } = require("./src/features/socia
 const { registerHandlers: registerLoggingHandlers } = require("./src/features/logging/logging.handler.cjs");
 const { execute: handleTestifyInteraction, handlePrefix: handleTestifyPrefix, registerTestifyHandlers } = require("./src/features/testify-suite/testify-suite.handler.cjs");
 
+// Unified command bridge: every configured slash command and prefix command reaches the same feature handler.
+client.on('interactionCreate', async interaction => {
+  try {
+    if (interaction.isChatInputCommand()) {
+      const handled = await handleTestifyInteraction(interaction, { client });
+      if (handled) return;
+    }
+  } catch (e) {
+    console.error('[COMMANDS] interaction handler failed:', e);
+    if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
+      await interaction.reply({content:'❌ Command failed to execute.',ephemeral:true}).catch(()=>{});
+    }
+  }
+});
+client.on('messageCreate', async message => {
+  try {
+    if (await handleTestifyPrefix(message, { client })) return;
+  } catch (e) {
+    console.error('[COMMANDS] prefix handler failed:', e);
+  }
+});
+
 // Initialize config manager
 const configManager = new ConfigManager();
 
@@ -8758,6 +8780,9 @@ client.once('ready', () => {
   } catch (err) {
     console.error('❌ Migration error:', err.message);
   }
+
+  console.log('🔧 Registering unified command/event handlers...');
+  try { registerTestifyHandlers(client); console.log('✅ Core command/event handlers registered'); } catch (err) { console.error('❌ Failed to register core command/event handlers:', err.message); }
 
   console.log('🔧 Registering modular feature handlers...');
   
