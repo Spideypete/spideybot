@@ -1,2 +1,0 @@
-import{loadFeature}from'./feature-panel.js';import{field,toggle,button,val,checked}from'./panel-kit.js';
-export const render=({body,gid})=>loadFeature(body,gid,'Audit Log','Choose where server audit events are delivered.',(d,c)=>toggle('enabled','Enable audit logging',!!c.audit?.enabled)+field('channel','Audit channel ID',c.audit?.channelId||'')+button('save','Save audit settings'),c=>({audit:{...(c.audit||{}),enabled:checked('enabled'),channelId:val('channel')||null}}));
