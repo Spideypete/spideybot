@@ -2,6 +2,7 @@ const { getGuildConfig, updateGuildConfig } = require('../../config/config-manag
 
 const DEFAULTS = {
   enabled: true, prefix: '!',
+  plugins: {},
   automod: { enabled: false, antiInvite: true, antiLink: false, antiSpam: true, maxMessages: 6, windowMs: 8000, caps: false, massMention: true, maxMentions: 5, words: [] },
   audit: { enabled: false, channelId: null },
   welcome: { enabled: false, channelId: null, message: 'Welcome {user} to {server}! We now have {membercount} members.' },
