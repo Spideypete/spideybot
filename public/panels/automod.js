@@ -1,0 +1,1 @@
+import{renderPanel}from'./suite-panel.js';export const render=({body,gid})=>renderPanel({body,gid,section:'automod',title:'AutoMod',subtitle:'Invite, link, spam, mention and blocked-word protection.'});
