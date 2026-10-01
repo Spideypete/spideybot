@@ -105,19 +105,37 @@ function switcher(id,f,c){
  const on=enabled(c,f);
  return '<div class="feature-toggle"><span>'+esc(on?'Enabled':'Disabled')+'</span><button type="button" class="'+(on?'on':'')+'" data-feature-toggle="'+f[0]+'"></button></div>';
 }
-async function toggleFeature(id,f){
- const c=await load(id);
- const next=!enabled(c,f);
+async function toggleFeature(id,f,current){
+ const next=!enabled(current,f);
  const result=await save(id,{plugins:{[f[0]]:next}});
- return result.config||result;
+ return {config:result.config||result,next};
+}
+function refreshToggleUI(f,next){
+ const el=document.querySelector('[data-feature-toggle]');
+ if(el){
+   el.classList.toggle('on',next);
+   el.disabled=false;
+   const label=el.closest('.feature-toggle')?.querySelector('span');
+   if(label)label.textContent=next?'Enabled':'Disabled';
+ }
+ document.querySelectorAll('[data-section="'+f[0]+'"]').forEach(b=>b.classList.toggle('feature-disabled',!next));
+ return next;
 }
 function attachToggle(id,f,c){
  const el=document.querySelector('[data-feature-toggle]');
  if(!el)return;
  el.addEventListener('click',async e=>{
+   const current=await load(id).catch(()=>c);
+   const next=!enabled(current,f);
    e.currentTarget.disabled=true;
-   try{await toggleFeature(id,f);window.location.reload();}
-   catch(err){e.currentTarget.disabled=false;alert(err.message);}
+   try{
+     await save(id,{plugins:{[f[0]]:next}});
+     refreshToggleUI(f,next);
+     c.plugins={...(c.plugins||{}),[f[0]]:next};
+   }catch(err){
+     e.currentTarget.disabled=false;
+     alert(err.message);
+   }
  });
 }
 function baseFeaturePanel(id,f,c,fields){
@@ -178,7 +196,11 @@ async function renderOverview(){
    const key=el.dataset.overviewToggle,f=feature(key),next=!enabled(c,f);
    el.disabled=true;el.classList.toggle('on',next);el.setAttribute('aria-pressed',String(next));
    const cardEl=el.closest('.overview-feature-card');cardEl?.classList.toggle('is-on',next);cardEl?.classList.toggle('is-off',!next);const status=cardEl?.querySelector('.overview-feature-status');if(status)status.textContent=next?'ON':'OFF';
-   try{await save(id,{plugins:{[key]:next}});window.location.reload();}
+   try{
+     await save(id,{plugins:{[key]:next}});
+     c.plugins={...(c.plugins||{}),[key]:next};
+     document.querySelectorAll('[data-section="'+key+'"]').forEach(b=>b.classList.toggle('feature-disabled',!next));
+   }
    catch(err){el.disabled=false;el.classList.toggle('on',!next);el.setAttribute('aria-pressed',String(!next));cardEl?.classList.toggle('is-on',!next);cardEl?.classList.toggle('is-off',next);if(status)status.textContent=!next?'ON':'OFF';alert(err.message);}
  }));
 }
