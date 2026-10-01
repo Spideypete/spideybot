@@ -98,7 +98,7 @@ const yes=id=>!!document.getElementById(id)?.checked;
 function addStyles(){
  if(document.getElementById('integrated-dashboard-styles'))return;
  const s=document.createElement('style');s.id='integrated-dashboard-styles';
- s.textContent='.field{display:block;font-size:11px;font-weight:750;color:var(--muted);margin:10px 0}.field input{display:block;width:100%;margin-top:5px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface);color:var(--text)}.check{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700}.check input{width:18px;height:18px}.panel-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.command-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.command-item{padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2)}@media(max-width:760px){.command-grid{grid-template-columns:1fr}}';
+ s.textContent='.field{display:block;font-size:11px;font-weight:750;color:var(--muted);margin:10px 0}.field input{display:block;width:100%;margin-top:5px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface);color:var(--text)}.check{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700}.check input{width:18px;height:18px}.panel-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.command-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.command-item{padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2)}.feature-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;padding:12px 14px;border:1px solid var(--border);border-radius:13px;background:var(--surface-2)}.feature-toggle>span{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}.feature-toggle button{position:relative;width:48px;height:26px;border:0;border-radius:999px;background:#9ca3b8;padding:0;transition:background .12s ease,box-shadow .12s ease;cursor:pointer}.feature-toggle button:before{content:\"\";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .12s ease}.feature-toggle button.on{background:var(--petrol);box-shadow:0 0 0 3px rgba(21,149,163,.12)}.feature-toggle button.on:before{transform:translateX(22px)}.feature-toggle button:disabled{opacity:.7;cursor:wait}.overview-feature-group{margin-top:18px}.overview-feature-group h2{font-size:16px;font-weight:800;margin-bottom:10px}.overview-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.overview-feature-card{padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}.overview-feature-card:hover{transform:translateY(-1px);box-shadow:var(--shadow)}.overview-feature-top{display:flex;align-items:flex-start;gap:11px}.overview-feature-icon{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;background:#f0ecff;color:var(--purple)}.dark .overview-feature-icon{background:#241d40}.overview-feature-copy{min-width:0;flex:1}.overview-feature-copy strong{display:block;font-size:12px}.overview-feature-copy span{display:block;font-size:10px;color:var(--muted);margin-top:3px;line-height:1.45}.overview-feature-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:14px}.overview-feature-status{font-size:10px;font-weight:800;color:var(--muted)}.overview-feature-card.is-on .overview-feature-status{color:var(--petrol)}.overview-feature-card.is-off{opacity:.82}.overview-toggle{position:relative;width:42px;height:23px;border:0;border-radius:999px;background:#9ca3b8;cursor:pointer;transition:background .12s ease}.overview-toggle:before{content:\"\";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform .12s ease}.overview-toggle.on{background:var(--petrol)}.overview-toggle.on:before{transform:translateX(19px)}.overview-toggle:disabled{opacity:.7;cursor:wait}.nav button.feature-disabled{opacity:.48}.nav button.feature-disabled:after{content:\"OFF\";margin-left:auto;font-size:8px;font-weight:800;letter-spacing:.5px;padding:3px 6px;border-radius:999px;background:var(--surface-2);color:var(--muted)}@media(max-width:900px){.overview-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.command-grid{grid-template-columns:1fr}.overview-feature-grid{grid-template-columns:1fr}}';
  document.head.appendChild(s);
 }
 function switcher(id,f,c){
@@ -112,11 +112,12 @@ async function toggleFeature(id,f){
  return result.config||result;
 }
 function attachToggle(id,f,c){
- document.querySelector('[data-feature-toggle]')?.addEventListener('click',async e=>{
+ const el=document.querySelector('[data-feature-toggle]');
+ if(!el)return;
+ el.addEventListener('click',async e=>{
    e.currentTarget.disabled=true;
-   try{await toggleFeature(id,f);await buildNavigation();await select(f[0]);}
-   catch(err){alert(err.message);}
-   finally{e.currentTarget.disabled=false;}
+   try{await toggleFeature(id,f);window.location.reload();}
+   catch(err){e.currentTarget.disabled=false;alert(err.message);}
  });
 }
 function baseFeaturePanel(id,f,c,fields){
@@ -165,11 +166,21 @@ async function renderSystem(id,f,c){
  document.getElementById('inspect').onclick=()=>alert(JSON.stringify({guildId:id,enabled:c.enabled!==false,commands:Object.keys(c.commandToggles||{}).length},null,2));
  attachToggle(id,f,c);
 }
-function renderOverview(){
+async function renderOverview(){
  const id=guildId();
  const root=document.getElementById('pluginCatalog');
  if(!root)return;
- root.innerHTML=id?'<div class="card panel"><div class="panel-title">Features</div><div class="panel-sub">Use the navigation to configure every server feature.</div></div>':card('Server selection required','Choose a Discord server before managing features.','');
+ if(!id){root.innerHTML=card('Server selection required','Choose a Discord server before managing features.','');return;}
+ let c={plugins:{}};
+ try{c=await load(id);}catch(err){root.innerHTML=card('Features unavailable','The server feature configuration could not be loaded.','<div class="activity-row"><div class="activity-main"><strong>Error</strong><span>'+esc(err.message||String(err))+'</span></div></div>');return;}
+ root.innerHTML='<div class="panel-head"><div><div class="eyebrow">Essentials</div><div class="panel-title">Feature controls</div><div class="panel-sub">Every dashboard panel can be enabled or disabled here. Turning a feature off keeps its panel visible and disables its runtime.</div></div></div>'+featureGroups().map(group=>'<div class="overview-feature-group"><h2>'+esc(group.name)+'</h2><div class="overview-feature-grid">'+group.items.map(f=>{const on=enabled(c,f);return '<article class="overview-feature-card '+(on?'is-on':'is-off')+'"><div class="overview-feature-top"><div class="overview-feature-icon">'+icon(f[3])+'</div><div class="overview-feature-copy"><strong>'+esc(f[1])+'</strong><span>'+esc(f[2])+'</span></div></div><div class="overview-feature-bottom"><span class="overview-feature-status">'+(on?'ON':'OFF')+'</span><button class="overview-toggle '+(on?'on':'')+'" type="button" data-overview-toggle="'+esc(f[0])+'" aria-label="Toggle '+esc(f[1])+'" aria-pressed="'+String(on)+'"></button></div></article>';}).join('')+'</div></div>').join('');
+ root.querySelectorAll('[data-overview-toggle]').forEach(el=>el.addEventListener('click',async()=>{
+   const key=el.dataset.overviewToggle,f=feature(key),next=!enabled(c,f);
+   el.disabled=true;el.classList.toggle('on',next);el.setAttribute('aria-pressed',String(next));
+   const cardEl=el.closest('.overview-feature-card');cardEl?.classList.toggle('is-on',next);cardEl?.classList.toggle('is-off',!next);const status=cardEl?.querySelector('.overview-feature-status');if(status)status.textContent=next?'ON':'OFF';
+   try{await save(id,{plugins:{[key]:next}});window.location.reload();}
+   catch(err){el.disabled=false;el.classList.toggle('on',!next);el.setAttribute('aria-pressed',String(!next));cardEl?.classList.toggle('is-on',!next);cardEl?.classList.toggle('is-off',next);if(status)status.textContent=!next?'ON':'OFF';alert(err.message);}
+ }));
 }
 async function buildNavigation(){
  if(!navigation)return;
@@ -180,11 +191,11 @@ async function buildNavigation(){
  const nav=document.createElement('nav');nav.className='nav';
  const overviewButton=document.createElement('button');overviewButton.type='button';overviewButton.dataset.section='overview';overviewButton.innerHTML='<span class="icon">'+icon('house')+'</span>Overview';overviewButton.onclick=()=>select('overview');nav.appendChild(overviewButton);navigation.appendChild(nav);
  FEATURES.forEach(group=>{
-   const visible=group[1].filter(f=>enabled(c,f));
+   const visible=group[1];
    if(!visible.length)return;
    const heading=document.createElement('div');heading.className='nav-title';heading.textContent=group[0];navigation.appendChild(heading);
    const groupNav=document.createElement('nav');groupNav.className='nav';
-   visible.forEach(f=>{const b=document.createElement('button');b.type='button';b.dataset.section=f[0];b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);b.onclick=()=>select(f[0]);groupNav.appendChild(b);});
+   visible.forEach(f=>{const b=document.createElement('button');b.type='button';b.dataset.section=f[0];b.classList.toggle('feature-disabled',!enabled(c,f));b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);b.onclick=()=>select(f[0]);groupNav.appendChild(b);});
    navigation.appendChild(groupNav);
  });
 }
@@ -197,7 +208,6 @@ async function select(section){
  if(!f){overview.hidden=true;workspace.hidden=false;body.innerHTML=card('Panel unavailable','This section is not registered.','');return;}
  try{
    const c=await load(id);
-   if(!enabled(c,f)){await buildNavigation();return;}
    overview.hidden=true;workspace.hidden=false;
    title.textContent=f[1];description.textContent=f[2];body.innerHTML=card('Loading',f[2],'');
    await renderPanel(id,f,c);
