@@ -343,6 +343,36 @@ app.use(session({
   }
 }));
 
+// LOCAL DASHBOARD UI DEVELOPMENT ONLY — never enabled in production.
+// Set SPIDEY_DASHBOARD_DEV_AUTH_BYPASS=true while running locally to skip Discord OAuth.
+// This creates a clearly labelled synthetic server context so the dashboard UI can be built
+// without Discord credentials. It does not grant access on deployed production instances.
+app.use((req, res, next) => {
+  const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(String(req.hostname || '').toLowerCase());
+  const devBypassEnabled = process.env.NODE_ENV !== 'production'
+    && process.env.SPIDEY_DASHBOARD_DEV_AUTH_BYPASS === 'true'
+    && isLocalHost;
+
+  if (devBypassEnabled && req.session) {
+    req.session.authenticated = true;
+    req.session.user = req.session.user || {
+      id: 'local-dev-user',
+      username: 'Local Developer',
+      global_name: 'Local Developer',
+      avatar: null
+    };
+    req.session.guilds = [{
+      id: '000000000000000001',
+      name: 'SPIDEY BOT UI Development Server',
+      icon: null,
+      owner: true,
+      permissions: '8'
+    }];
+    req.session.selectedGuildId = req.session.selectedGuildId || '000000000000000001';
+  }
+  next();
+});
+
 // Inject version timestamp and cache-busting to ALL HTML pages
 app.use((req, res, next) => {
     const isApi = req.path.startsWith('/api/');
