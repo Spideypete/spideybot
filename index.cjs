@@ -343,16 +343,49 @@ app.use(session({
   }
 }));
 
-// LOCAL DASHBOARD UI DEVELOPMENT ONLY — never enabled in production.
-// Set SPIDEY_DASHBOARD_DEV_AUTH_BYPASS=true while running locally to skip Discord OAuth.
-// This creates a clearly labelled synthetic server context so the dashboard UI can be built
-// without Discord credentials. It does not grant access on deployed production instances.
+// DASHBOARD AUTH BYPASS FOR THE DEDICATED RAILWAY TESTING HOST ONLY.
+// The public testing URL is intentionally unauthenticated while the dashboard is being built.
+// Production/main keeps the normal Discord OAuth flow. Keep the hostname exact and never
+// enable this on a custom domain or the production service.
+const SPIDEY_TESTING_HOST = 'spidey-bot-testing-testing.up.railway.app';
+function isSpideyTestingHost(req) {
+  return String(req.hostname || '').toLowerCase() === SPIDEY_TESTING_HOST;
+}
+function applyTestingDashboardSession(req) {
+  if (!isSpideyTestingHost(req) || !req.session) return;
+  req.session.authenticated = true;
+  req.session.user = {
+    id: 'spidey-testing-admin',
+    username: 'Spidey Testing Admin',
+    global_name: 'Spidey Testing Admin',
+    avatar: null
+  };
+  // Treat every server the testing bot is connected to as available to the dashboard.
+  // This list is rebuilt on every request so newly joined servers appear without OAuth.
+  req.session.guilds = client.guilds.cache.map(guild => ({
+    id: guild.id,
+    name: guild.name,
+    icon: guild.icon,
+    owner: true,
+    permissions: '8'
+  }));
+  if (!req.session.guilds.some(guild => guild.id === req.session.selectedGuildId)) {
+    req.session.selectedGuildId = req.session.guilds[0]?.id || null;
+  }
+}
 app.use((req, res, next) => {
+  applyTestingDashboardSession(req);
+
+  if (isSpideyTestingHost(req) && (req.path === '/login' || req.path.startsWith('/auth/discord'))) {
+    const guildId = req.session?.guilds?.[0]?.id;
+    return res.redirect(guildId ? `/dashboard.html?guildId=${encodeURIComponent(guildId)}` : '/dashboard/select');
+  }
+
+  // Preserve the existing local-only synthetic context for local UI development.
   const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(String(req.hostname || '').toLowerCase());
   const devBypassEnabled = process.env.NODE_ENV !== 'production'
     && process.env.SPIDEY_DASHBOARD_DEV_AUTH_BYPASS === 'true'
     && isLocalHost;
-
   if (devBypassEnabled && req.session) {
     req.session.authenticated = true;
     req.session.user = req.session.user || {
@@ -415,6 +448,11 @@ app.use(rateLimiter.middleware());
 
 // Protect the admin dashboard before static middleware can serve the file.
 app.use('/dashboard.html', (req, res, next) => {
+  if (isSpideyTestingHost(req)) {
+    const guildId = String(req.query.guildId || req.session?.selectedGuildId || req.session?.guilds?.[0]?.id || '');
+    if (guildId) return res.redirect(307, `/dashboard.html?guildId=${encodeURIComponent(guildId)}`);
+    return res.redirect('/dashboard/select');
+  }
   if (!req.session.authenticated) return res.redirect('/login');
   if (!req.query.guildId) return res.redirect('/dashboard/select');
   next();
@@ -424,8 +462,14 @@ app.use('/dashboard.html', (req, res, next) => {
 // A selected guild is the final destination. This route never renders a
 // server selector and never redirects a valid selected-server request.
 app.get('/dashboard.html', (req, res) => {
-  if (!req.session.authenticated) return res.redirect('/login');
-  if (!req.query.guildId) return res.redirect('/dashboard/select');
+  if (!isSpideyTestingHost(req) && !req.session.authenticated) return res.redirect('/login');
+  if (!req.query.guildId) {
+    const testingGuildId = isSpideyTestingHost(req)
+      ? (req.session?.selectedGuildId || req.session?.guilds?.[0]?.id)
+      : null;
+    if (testingGuildId) return res.redirect(`/dashboard.html?guildId=${encodeURIComponent(testingGuildId)}`);
+    return res.redirect('/dashboard/select');
+  }
 
   res.set({
     'Cache-Control': 'private, no-store, no-cache, max-age=0, must-revalidate',
@@ -4793,6 +4837,11 @@ const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.e
 
 // ============== HOMEPAGE ==============
 app.get("/", (req, res) => {
+  if (isSpideyTestingHost(req)) {
+    const guildId = req.session?.selectedGuildId || req.session?.guilds?.[0]?.id;
+    if (guildId) return res.redirect(`/dashboard.html?guildId=${encodeURIComponent(guildId)}`);
+    return res.redirect('/dashboard/select');
+  }
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
