@@ -449,9 +449,12 @@ app.use(rateLimiter.middleware());
 // Protect the admin dashboard before static middleware can serve the file.
 app.use('/dashboard.html', (req, res, next) => {
   if (isSpideyTestingHost(req)) {
-    const guildId = String(req.query.guildId || req.session?.selectedGuildId || req.session?.guilds?.[0]?.id || '');
-    if (guildId) return res.redirect(307, `/dashboard.html?guildId=${encodeURIComponent(guildId)}`);
-    return res.redirect('/dashboard/select');
+    if (!req.query.guildId) {
+      const guildId = String(req.session?.selectedGuildId || req.session?.guilds?.[0]?.id || '');
+      if (guildId) return res.redirect(307, `/dashboard.html?guildId=${encodeURIComponent(guildId)}`);
+      return res.redirect('/dashboard/select');
+    }
+    return next();
   }
   if (!req.session.authenticated) return res.redirect('/login');
   if (!req.query.guildId) return res.redirect('/dashboard/select');
