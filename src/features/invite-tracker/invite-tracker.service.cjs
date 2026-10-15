@@ -1,6 +1,7 @@
 'use strict';
 
 const snapshots = new Map();
+const recentJoinTimes = new Map();
 const getTracker = (svc, guildId) => svc.get(guildId).inviteTracker || {enabled:true,logJoins:true,logLeaves:true,rewardRolesEnabled:false,logChannelId:null,rewards:[],counts:{},joinedBy:{}};
 const key = (guildId, inviteCode) => guildId + ':' + inviteCode;
 
@@ -54,6 +55,22 @@ async function logEvent(guild,cfg,content) {
   const channel=guild.channels.cache.get(cfg.logChannelId)||await guild.channels.fetch(cfg.logChannelId).catch(()=>null);
   if(channel?.isTextBased?.())await channel.send({content,allowedMentions:{parse:[]}}).catch(err=>console.warn('[INVITE TRACKER] Could not send log:',err.message));
 }
+function detectSuspiciousJoin(member, cfg) {
+  if (cfg.fraudDetectionEnabled !== true) return [];
+  const reasons = [];
+  const minimumHours = Math.max(0, Number(cfg.minimumAccountAgeHours) || 0);
+  const createdAt = Number(member.user?.createdTimestamp) || 0;
+  if (minimumHours > 0 && createdAt > 0 && Date.now() - createdAt < minimumHours * 3600000) {
+    reasons.push('Discord account is newer than ' + minimumHours + ' hour(s)');
+  }
+  const windowMs = Math.max(10, Number(cfg.rapidJoinWindowSeconds) || 60) * 1000;
+  const threshold = Math.max(2, Number(cfg.rapidJoinThreshold) || 5);
+  const now = Date.now(), key = member.guild.id;
+  const recent = (recentJoinTimes.get(key) || []).filter(ts => now - ts <= windowMs);
+  recent.push(now); recentJoinTimes.set(key, recent);
+  if (recent.length >= threshold) reasons.push(recent.length + ' members joined within ' + Math.round(windowMs / 1000) + ' seconds');
+  return reasons;
+}
 async function onJoin(member) {
   if(member.user.bot)return;
   const svc=module.exports._svc;if(!svc)return;
@@ -80,7 +97,9 @@ async function onJoin(member) {
   const joinedBy={...(cfg.joinedBy||{}),[member.id]:inviterId};
   svc.save(member.guild.id,{inviteTracker:{...cfg,counts,joinedBy}});
   const active=Math.max(0,row.joins-(Number(row.leaves)||0));
-  await rewardInviter(member.guild,inviterId,cfg,active);
+  const fraudReasons=detectSuspiciousJoin(member,cfg);
+  if(fraudReasons.length)await logEvent(member.guild,cfg,'⚠️ Potentially suspicious join: '+member.user.tag+' (invite from <@'+inviterId+'>). '+fraudReasons.join('; ')+'.');
+  if(!fraudReasons.length||cfg.blockRewardsForFlagged!==true)await rewardInviter(member.guild,inviterId,cfg,active);
   if(cfg.logJoins!==false)await logEvent(member.guild,cfg,'📨 '+member.user.tag+' joined using an invite from <@'+inviterId+'>. Inviter now has **'+active+'** active invite(s).');
 }
 async function onLeave(member) {
