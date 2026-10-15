@@ -1002,6 +1002,12 @@ const client = new Client({
 });
 
 registerTestifyHandlers(client);
+try {
+  require("./src/features/reaction-roles/reaction-roles.handler.cjs").registerReactionRolesHandler(client);
+  console.log("✅ Reaction role add/remove handlers registered");
+} catch (err) {
+  console.error("❌ Failed to register reaction role handlers:", err.message);
+}
 
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
 client.on('interactionCreate', async interaction => {
