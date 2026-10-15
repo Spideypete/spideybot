@@ -72,6 +72,13 @@ S('levels','XP and leveling controls',b=>b
  .addSubcommand(sub('addxp','Add XP to a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('XP to add').setRequired(true).setMinValue(1).setMaxValue(1000000))))
  .addSubcommand(sub('setxp','Set a member total XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Total XP').setRequired(true).setMinValue(0).setMaxValue(100000000))))
  .addSubcommand(sub('removexp','Remove XP from a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('XP to remove').setRequired(true).setMinValue(1).setMaxValue(1000000)))).setDefaultMemberPermissions(A)),
+S('invites','Invite tracking, statistics and administration',b=>b
+ .addSubcommand(sub('stats','Show invite totals',s=>s.addUserOption(o=>o.setName('user').setDescription('Member to check').setRequired(false))))
+ .addSubcommand(sub('leaderboard','Show the invite leaderboard'))
+ .addSubcommand(sub('add','Add successful invites (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Number of invites').setRequired(true).setMinValue(1).setMaxValue(100000))))
+ .addSubcommand(sub('remove','Remove successful invites (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Number of invites').setRequired(true).setMinValue(1).setMaxValue(100000))))
+ .addSubcommand(sub('reset','Reset invite totals (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
+ .setDefaultMemberPermissions(PermissionFlagsBits.UseApplicationCommands)),
 S('stats','Show your message and emoji milestone statistics',b=>b.setDMPermission(false)),
 S('system','Internal administration and safe diagnostics',b=>b
  .addSubcommand(sub('stats','Show bot statistics')).addSubcommand(sub('guilds','List bot guilds'))
