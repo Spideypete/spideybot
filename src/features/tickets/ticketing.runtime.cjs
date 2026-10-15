@@ -4,7 +4,7 @@ const {
 } = require('discord.js');
 const svc = require('../testify-suite/testify-suite.service.cjs');
 const defaults = {enabled:true,categoryId:null,ticketChannelId:null,supportRoleId:null,logChannelId:null,transcriptChannelId:null,ticketPrefix:'ticket',maxTicketsPerUser:1,panelTitle:'Need help? Open a ticket',panelDescription:'Select the button below to contact our support team.',buttonLabel:'Create Ticket',welcomeMessage:'Hello {user}, please describe your issue and a staff member will be with you shortly.',questions:[],allowUserClose:true,claimEnabled:true,allowReopen:true,transcriptsEnabled:true,autoCloseHours:0,records:{},nextNumber:1};
-const getConfig = id => Object.assign({}, defaults, svc.get(id).tickets || {});
+const getConfig = id => { const all=svc.get(id),t=all.tickets||{}; return Object.assign({},defaults,t,{enabled:all.plugins?.ticketing!==false&&t.enabled!==false}); };
 const saveConfig = (id, patch) => svc.save(id, {tickets:Object.assign({}, getConfig(id), patch)}).tickets;
 const isAdmin = i => Boolean(i.memberPermissions && i.memberPermissions.has(PermissionFlagsBits.Administrator));
 const isStaff = (m,c) => Boolean(m && (m.permissions.has(PermissionFlagsBits.Administrator) || (c.supportRoleId && m.roles.cache.has(c.supportRoleId))));
@@ -98,6 +98,7 @@ async function execute(i) {
 }
 async function close(i,t,c) {
  if(i.user.id!==t.userId&&!isStaff(i,c))return i.reply({content:'Only the ticket owner or support staff can close this ticket.',ephemeral:true});
+ if(i.user.id===t.userId&&!c.allowUserClose&&!isStaff(i,c))return i.reply({content:'Ticket owners are not allowed to close tickets in this server.',ephemeral:true});
  if(t.status!=='open')return i.reply({content:'This ticket is already closed.',ephemeral:true});
  await i.deferReply({ephemeral:true});t.status='closed';t.closedAt=new Date().toISOString();saveConfig(i.guild.id,{records:c.records});
  await i.channel.send({embeds:[new EmbedBuilder().setColor(0xed4245).setTitle('🔒 '+t.id+' closed').setDescription('Closed by '+i.user+'.').setTimestamp()],components:[row(t,c)].filter(Boolean)});
