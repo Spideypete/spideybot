@@ -487,7 +487,57 @@ async function renderPanel(id,f,c){
   attachToggle(id,f,c);return;
  }
  if(k==='economy'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable economy',c.economy?.enabled!==false)+input('currency','Currency name',c.economy?.currency||'coins')+input('daily','Daily reward',c.economy?.daily||100,'number')+input('min','Work minimum',c.economy?.workMin||20,'number')+input('max','Work maximum',c.economy?.workMax||60,'number')+'<div class="panel-actions">'+button('save','Save economy')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{economy:{...(c.economy||{}),enabled:yes('enabled'),currency:val('currency')||'coins',daily:Number(val('daily'))||100,workMin:Number(val('min'))||20,workMax:Number(val('max'))||60}});alert('Economy saved.');};attachToggle(id,f,c);return;}
- if(k==='ticketing'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable tickets',c.tickets?.enabled!==false)+input('category','Ticket category ID',c.tickets?.categoryId||'')+input('channel','Ticket panel channel ID',c.tickets?.ticketChannelId||'')+input('support','Support role ID',c.tickets?.supportRoleId||'')+input('log','Transcript log channel ID',c.tickets?.logChannelId||'')+'<div class="panel-actions">'+button('save','Save tickets')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{tickets:{...(c.tickets||{}),enabled:yes('enabled'),categoryId:val('category')||null,ticketChannelId:val('channel')||null,supportRoleId:val('support')||null,logChannelId:val('log')||null}});alert('Tickets saved.');};attachToggle(id,f,c);return;}
+ if(k==='ticketing'){
+  const t=c.tickets||{},questions=Array.isArray(t.questions)?t.questions:[];
+  const [channelResult,roleResult]=await Promise.all([api('/api/guild/'+encodeURIComponent(id)+'/channels'),api('/api/guild/'+encodeURIComponent(id)+'/roles')]);
+  const channels=channelResult.channels||[],roles=(roleResult.roles||[]).filter(x=>!x.managed);
+  const textChannels=channels.filter(x=>x.type==='text');
+  const categories=channels.filter(x=>x.type==='category');
+  const channelSelect=(field,label,value,items,placeholder)=>'<label class="field">'+label+'<select id="'+field+'">'+optionList(items,value||'',placeholder)+'</select></label>';
+  body.innerHTML=card('Ticketing','Configure a complete support workflow inspired by Open Ticket: ticket panels, private channels, staff access, claims, close/reopen controls, logs and transcripts.', 
+   '<div class="welcome-panel">'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Core settings</h3><p>These settings control ticket creation and who can access each ticket.</p></div></div>'+
+   check('ticketEnabled','Enable ticketing',t.enabled!==false)+
+   channelSelect('ticketPanelChannel','Ticket panel channel',t.ticketChannelId,textChannels,'Choose panel channel')+
+   channelSelect('ticketCategory','Open ticket category',t.categoryId,categories,'Choose category')+
+   channelSelect('ticketSupportRole','Support staff role',t.supportRoleId,roles,'Choose support role')+
+   channelSelect('ticketLogChannel','Ticket event log channel',t.logChannelId,textChannels,'Choose log channel')+
+   channelSelect('ticketTranscriptChannel','Transcript delivery channel',t.transcriptChannelId||t.logChannelId,textChannels,'Choose transcript channel')+
+   input('ticketPrefix','Ticket channel prefix',t.ticketPrefix||'ticket')+
+   input('ticketMaxOpen','Maximum open tickets per member',t.maxTicketsPerUser??1,'number')+
+   '</section>'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Panel appearance</h3><p>Customize the message members click to open a support ticket.</p></div></div>'+
+   input('ticketPanelTitle','Panel title',t.panelTitle||'Need help? Open a ticket')+
+   '<label class="field">Panel description<textarea id="ticketPanelDescription" rows="3" maxlength="3500">'+esc(t.panelDescription||'Select the button below to contact our support team.')+'</textarea></label>'+
+   input('ticketButtonLabel','Open button label',t.buttonLabel||'Create Ticket')+
+   input('ticketWelcome','First message inside the ticket',t.welcomeMessage||'Hello {user}, please describe your issue and a staff member will be with you shortly.')+
+   '</section>'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Ticket questions</h3><p>Optional questions appear in a Discord modal before a ticket is created. Leave a field blank to skip it.</p></div></div>'+
+   input('ticketQ1','Question 1',questions[0]||'What do you need help with?')+
+   input('ticketQ2','Question 2 (optional)',questions[1]||'')+
+   input('ticketQ3','Question 3 (optional)',questions[2]||'')+
+   '</section>'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Ticket workflow</h3><p>Choose how tickets are handled after they are opened.</p></div></div>'+
+   check('ticketUserClose','Allow ticket owners to close their tickets',t.allowUserClose!==false)+
+   check('ticketClaim','Show staff claim button',t.claimEnabled!==false)+
+   check('ticketReopen','Allow staff to reopen closed tickets',t.allowReopen!==false)+
+   check('ticketTranscript','Save and deliver a transcript on close',t.transcriptsEnabled!==false)+
+   input('ticketAutoClose','Auto-close inactive tickets after hours (0 = off)',t.autoCloseHours||0,'number')+
+   '<p class="mention-help">The bot needs Manage Channels, View Channel, Send Messages, Read Message History and Manage Roles/permissions as appropriate. Its role must be high enough to apply the configured overwrites.</p>'+
+   '</section>'+
+   '<div class="panel-actions"><button class="select" id="saveTicketing" type="button">Save ticket settings</button><button class="select" id="publishTicketPanel" type="button">Publish / refresh panel</button></div></div>');
+  document.getElementById('saveTicketing').onclick=async()=>{
+   const next={...t,enabled:yes('ticketEnabled'),ticketChannelId:val('ticketPanelChannel')||null,categoryId:val('ticketCategory')||null,supportRoleId:val('ticketSupportRole')||null,logChannelId:val('ticketLogChannel')||null,transcriptChannelId:val('ticketTranscriptChannel')||null,ticketPrefix:(val('ticketPrefix').trim().toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,20)||'ticket'),maxTicketsPerUser:Math.max(1,Math.min(10,Number(val('ticketMaxOpen'))||1)),panelTitle:val('ticketPanelTitle').trim().slice(0,256)||'Need help? Open a ticket',panelDescription:val('ticketPanelDescription').trim().slice(0,3500),buttonLabel:val('ticketButtonLabel').trim().slice(0,80)||'Create Ticket',welcomeMessage:val('ticketWelcome').trim().slice(0,1800)||'Hello {user}, please describe your issue and a staff member will be with you shortly.',questions:[val('ticketQ1').trim(),val('ticketQ2').trim(),val('ticketQ3').trim()].filter(Boolean).slice(0,5),allowUserClose:yes('ticketUserClose'),claimEnabled:yes('ticketClaim'),allowReopen:yes('ticketReopen'),transcriptsEnabled:yes('ticketTranscript'),autoCloseHours:Math.max(0,Math.min(8760,Number(val('ticketAutoClose'))||0))};
+   const result=await save(id,{tickets:next});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Ticket settings saved.');
+  };
+  document.getElementById('publishTicketPanel').onclick=async()=>{
+   const next={...t,enabled:yes('ticketEnabled'),ticketChannelId:val('ticketPanelChannel')||null,categoryId:val('ticketCategory')||null,supportRoleId:val('ticketSupportRole')||null,logChannelId:val('ticketLogChannel')||null,transcriptChannelId:val('ticketTranscriptChannel')||null,ticketPrefix:(val('ticketPrefix').trim().toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,20)||'ticket'),maxTicketsPerUser:Math.max(1,Math.min(10,Number(val('ticketMaxOpen'))||1)),panelTitle:val('ticketPanelTitle').trim().slice(0,256)||'Need help? Open a ticket',panelDescription:val('ticketPanelDescription').trim().slice(0,3500),buttonLabel:val('ticketButtonLabel').trim().slice(0,80)||'Create Ticket',welcomeMessage:val('ticketWelcome').trim().slice(0,1800),questions:[val('ticketQ1').trim(),val('ticketQ2').trim(),val('ticketQ3').trim()].filter(Boolean).slice(0,5),allowUserClose:yes('ticketUserClose'),claimEnabled:yes('ticketClaim'),allowReopen:yes('ticketReopen'),transcriptsEnabled:yes('ticketTranscript'),autoCloseHours:Math.max(0,Math.min(8760,Number(val('ticketAutoClose'))||0))};
+   const saved=await save(id,{tickets:next});if(saved?.success===false)throw new Error(saved.error||'Save failed');
+   try{const result=await api('/api/features/testify-suite/'+encodeURIComponent(id)+'/ticket-panel',{method:'POST',body:JSON.stringify({})});if(result?.success===false)throw new Error(result.error||'Could not publish panel');alert(result.message||'Ticket panel published.');}
+   catch(err){alert('Settings were saved, but the panel could not be published yet. '+(err.message||String(err)));}
+  };
+  attachToggle(id,f,c);return;
+ }
  if(k==='commands'){return renderCommands(id,f,c);}
  if(k==='system'){return renderSystem(id,f,c);}
  if(k==='giveaways'){baseFeaturePanel(id,f,c,input('channel','Default giveaway channel ID',c.giveaways?.channelId||'')+input('duration','Default duration (minutes)',c.giveaways?.duration||60,'number')+input('winners','Default winners',c.giveaways?.winners||1,'number')+input('message','Default prize',c.giveaways?.prize||''));return;}
