@@ -32,7 +32,7 @@ async function execute(i,ctx){
     if(c.blacklist?.includes(i.user.id)){await i.reply({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
     try{
       if(custom.counterEnabled!==false){custom.count=Math.max(0,Number(custom.count)||0)+1;svc.save(i.guild.id,{customCommands:c.customCommands});}
-      const count=Number(custom.count)||0,replace=(text)=>String(text||'').replace(/\\{count\\}/gi,String(count)).replace(/\\{user\\}/gi,i.user.toString()).replace(/\\{username\\}/gi,i.user.username).replace(/\\{server\\}/gi,i.guild.name).replace(/\\{counterLabel\\}/gi,String(custom.counterLabel||'Count'));
+      const count=Number(custom.count)||0,replace=(text)=>String(text||'').replace(/\{count\}/gi,String(count)).replace(/\{user\}/gi,i.user.toString()).replace(/\{username\}/gi,i.user.username).replace(/\{server\}/gi,i.guild.name).replace(/\{counterLabel\}/gi,String(custom.counterLabel||'Count'));
       const content=replace(custom.messageTemplate).slice(0,2000);
       await i.reply({content:content||'Command executed.',allowedMentions:{parse:[]}});
     }catch(err){console.error('[CUSTOM COMMAND]',err);if(!i.replied&&!i.deferred)await i.reply({content:'Could not run this custom command. Please try again.',ephemeral:true}).catch(()=>{});}
