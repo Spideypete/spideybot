@@ -7086,8 +7086,7 @@ app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
-    const { ReactionRolesService } = require('./src/features/reaction-roles/reaction-roles.service.cjs');
-    const service = new ReactionRolesService();
+    const service = require('./src/features/reaction-roles/reaction-roles.service.cjs');
     const { allowMultiple, removeOnUnreact, dmConfirm, enabled, language, updateNotifications, errorReporting, notificationChannelId } = req.body;
     const config = service.getConfig(guildId);
     const updated = { ...config, allowMultiple, removeOnUnreact, dmConfirm, enabled, language, updateNotifications, errorReporting, notificationChannelId: notificationChannelId || null, dmConfirmations: !!dmConfirm };
