@@ -227,7 +227,25 @@ async function renderWelcomePanel(id,f,c){
   return Object.fromEntries(Object.entries(e).filter(([_,v])=>String(v||'').trim()));
  };
  const updateMessageSectionState=key=>{const enabled=yes(key+'Enabled');const section=document.getElementById(key+'Content');if(!section)return;section.querySelectorAll('input,select,textarea,button').forEach(el=>{if(el.id!==key+'Enabled')el.disabled=!enabled;});section.classList.toggle('welcome-section-disabled',!enabled);};
- ['welcome','goodbye'].forEach(key=>{const toggle=document.getElementById(key+'Enabled');toggle.addEventListener('change',()=>updateMessageSectionState(key));updateMessageSectionState(key);});
+ ['welcome','goodbye'].forEach(key=>{
+  const toggle=document.getElementById(key+'Enabled');
+  toggle.addEventListener('change',async()=>{
+   const enabled=toggle.checked;
+   updateMessageSectionState(key);
+   toggle.disabled=true;
+   try{
+    await api('/api/config/server-messages?guildId='+encodeURIComponent(id),{
+     method:'POST',
+     body:JSON.stringify({[key+'Enabled']:enabled,[key==='welcome'?'enableWelcome':'enableGoodbye']:enabled})
+    });
+   }catch(err){
+    toggle.checked=!enabled;
+    updateMessageSectionState(key);
+    alert('Could not '+(enabled?'enable ':'disable ')+key+': '+(err.message||String(err)));
+   }finally{toggle.disabled=false;}
+  });
+  updateMessageSectionState(key);
+ });
  document.getElementById('saveWelcomeSettings').onclick=async()=>{
   const messages={welcome:val('welcomeType')==='embed'?'':val('welcomeText'),goodbye:val('goodbyeType')==='embed'?'':val('goodbyeText')};
   const embeds={welcome:val('welcomeType')==='embed'?makeEmbed('welcome'):null,goodbye:val('goodbyeType')==='embed'?makeEmbed('goodbye'):null};
