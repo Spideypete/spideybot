@@ -1019,12 +1019,107 @@ try {
   console.error("❌ Failed to register welcome/goodbye handlers:", err.message);
 }
 
+// Custom slash commands are registered per guild and dispatched here.
+// This deliberately never changes the global application command registry.
+async function syncCustomSlashCommands(guildId, previousItems, nextItems) {
+  if (!client.isReady() || !client.user?.id) throw new Error('Bot is not ready to register commands yet.');
+  if (!process.env.TOKEN) throw new Error('Discord bot token is unavailable.');
+  if (!Array.isArray(nextItems)) throw new Error('Custom command items must be an array.');
+  if (nextItems.length > 25) throw new Error('A server can have at most 25 custom commands from this panel.');
+
+  const reserved = new Set(testifyCommands.map(command => String(command.name).toLowerCase()));
+  const seen = new Set();
+  for (const item of nextItems) {
+    const name = String(item?.name || '').trim().toLowerCase();
+    if (!/^[a-z0-9-]{1,32}$/.test(name)) throw new Error('Custom command names must use 1–32 lowercase letters, numbers, or hyphens.');
+    if (reserved.has(name)) throw new Error('/' + name + ' is already a registered bot command.');
+    if (seen.has(name)) throw new Error('Duplicate custom command: /' + name);
+    if (!String(item?.messageTemplate || '').trim()) throw new Error('Every custom command needs response text.');
+    seen.add(name);
+  }
+
+  const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+  const route = Routes.applicationGuildCommands(client.user.id, guildId);
+  const existing = await rest.get(route);
+  const previousNames = new Set((Array.isArray(previousItems) ? previousItems : []).map(item => String(item?.name || '').toLowerCase()));
+  const retained = existing
+    .filter(command => !previousNames.has(String(command.name).toLowerCase()) && !String(command.description || '').startsWith('Custom response command:'))
+    .map(command => {
+      const clean = {
+        name: command.name,
+        description: command.description,
+        type: command.type || 1,
+        options: command.options || []
+      };
+      for (const key of ['default_member_permissions', 'dm_permission', 'nsfw', 'contexts', 'integration_types']) {
+        if (command[key] !== undefined) clean[key] = command[key];
+      }
+      return clean;
+    });
+
+  const retainedNames = new Set(retained.map(command => String(command.name).toLowerCase()));
+  for (const item of nextItems) {
+    if (retainedNames.has(String(item.name).toLowerCase())) {
+      throw new Error('/' + item.name + ' already exists as a server-specific command.');
+    }
+  }
+
+  const custom = nextItems.map(item => new SlashCommandBuilder()
+    .setName(String(item.name).toLowerCase())
+    .setDescription(('Custom response command: ' + String(item.name)).slice(0, 100))
+    .setDMPermission(false)
+    .toJSON());
+
+  if (retained.length + custom.length > 100) throw new Error('Discord allows at most 100 guild slash commands.');
+  await rest.put(route, { body: [...retained, ...custom] });
+}
+
+async function handleCustomSlashCommand(interaction) {
+  if (!interaction.guildId || !interaction.isChatInputCommand()) return false;
+  const config = loadConfig();
+  const guildConfig = config.guilds?.[interaction.guildId];
+  const commands = guildConfig?.customCommands?.items;
+  if (!Array.isArray(commands)) return false;
+  const item = commands.find(command => String(command?.name || '').toLowerCase() === interaction.commandName.toLowerCase());
+  if (!item) return false;
+  if (item.enabled === false) {
+    await interaction.reply({ content: 'This custom command is currently disabled.', ephemeral: true });
+    return true;
+  }
+
+  const useCounter = item.counterEnabled !== false;
+  const count = Math.max(0, Number(item.count) || 0) + (useCounter ? 1 : 0);
+  if (useCounter) {
+    item.count = count;
+    saveConfig(config);
+  }
+
+  const template = String(item.messageTemplate || '');
+  let response = template
+    .replace(/\\{count\\}/gi, String(count))
+    .replace(/\\{user\\}/gi, '<@' + interaction.user.id + '>')
+    .replace(/\\{username\\}/gi, interaction.user.username)
+    .replace(/\\{server\\}/gi, interaction.guild?.name || 'this server');
+  if (useCounter && !/\\{count\\}/i.test(template)) {
+    response += (response ? '\\n' : '') + String(item.counterLabel || 'Count') + ': ' + count;
+  }
+  if (!response.trim()) response = 'Custom command executed.';
+  if (response.length > 2000) response = response.slice(0, 1997) + '...';
+
+  await interaction.reply({
+    content: response,
+    allowedMentions: { users: [interaction.user.id], roles: [], repliedUser: false }
+  });
+  return true;
+}
+
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
 client.on('interactionCreate', async interaction => {
   try {
     if (interaction.isChatInputCommand()) {
       const handled = await handleTestifyInteraction(interaction, { client });
       if (handled) return;
+      if (await handleCustomSlashCommand(interaction)) return;
     }
   } catch (e) {
     console.error('[COMMANDS] interaction handler failed:', e);
@@ -6407,7 +6502,7 @@ app.get("/api/config/giveaways", (req, res) => {
   });
 });
 
-app.post("/api/config/:guildId", (req, res) => {
+app.post("/api/config/:guildId", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
 
   const guildId = req.params.guildId;
@@ -6424,6 +6519,16 @@ app.post("/api/config/:guildId", (req, res) => {
     const existingTickets = guildConfig.tickets && typeof guildConfig.tickets === 'object' ? guildConfig.tickets : {};
     const incomingTickets = req.body.tickets;
     req.body.tickets = { ...existingTickets, ...incomingTickets };
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'customCommands')) {
+    const previousItems = Array.isArray(guildConfig.customCommands?.items) ? guildConfig.customCommands.items : [];
+    const nextItems = Array.isArray(req.body.customCommands?.items) ? req.body.customCommands.items : [];
+    try {
+      await syncCustomSlashCommands(guildId, previousItems, nextItems);
+    } catch (err) {
+      return res.status(400).json({ success: false, error: 'Could not register custom slash commands: ' + err.message });
+    }
   }
 
   Object.assign(guildConfig, req.body);
