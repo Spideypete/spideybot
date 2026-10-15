@@ -6837,15 +6837,22 @@ adminConfigs.forEach(configName => {
     if (configName === 'server-messages') {
       if (!config.guilds[guildId].serverMessages) config.guilds[guildId].serverMessages = {};
       const body = req.body || {};
-      Object.assign(config.guilds[guildId].serverMessages, {
-        enableWelcome: body.welcomeEnabled ?? body.enableWelcome ?? config.guilds[guildId].serverMessages.enableWelcome,
-        welcomeChannel: body.welcomeChannel || config.guilds[guildId].serverMessages.welcomeChannel,
-        welcomeMessage: body.welcomeMessage ?? config.guilds[guildId].serverMessages.welcomeMessage,
-        enableGoodbye: body.goodbyeEnabled ?? body.enableGoodbye ?? config.guilds[guildId].serverMessages.enableGoodbye,
-        goodbyeChannel: body.goodbyeChannel || config.guilds[guildId].serverMessages.goodbyeChannel,
-        goodbyeMessage: body.goodbyeMessage ?? config.guilds[guildId].serverMessages.goodbyeMessage
+      const currentMessages = config.guilds[guildId].serverMessages;
+      Object.assign(currentMessages, {
+        enableWelcome: body.welcomeEnabled ?? body.enableWelcome ?? currentMessages.enableWelcome,
+        welcomeChannel: body.welcomeChannel !== undefined ? body.welcomeChannel : currentMessages.welcomeChannel,
+        welcomeMessage: body.welcomeMessage !== undefined ? body.welcomeMessage : currentMessages.welcomeMessage,
+        welcomeEmbed: body.welcomeEmbed !== undefined ? body.welcomeEmbed : currentMessages.welcomeEmbed,
+        welcomeType: body.welcomeType !== undefined ? body.welcomeType : currentMessages.welcomeType,
+        enableGoodbye: body.goodbyeEnabled ?? body.enableGoodbye ?? currentMessages.enableGoodbye,
+        goodbyeChannel: body.goodbyeChannel !== undefined ? body.goodbyeChannel : currentMessages.goodbyeChannel,
+        goodbyeMessage: body.goodbyeMessage !== undefined ? body.goodbyeMessage : currentMessages.goodbyeMessage,
+        goodbyeEmbed: body.goodbyeEmbed !== undefined ? body.goodbyeEmbed : currentMessages.goodbyeEmbed,
+        goodbyeType: body.goodbyeType !== undefined ? body.goodbyeType : currentMessages.goodbyeType,
+        enableAutorole: body.autoroleEnabled !== undefined ? !!body.autoroleEnabled : currentMessages.enableAutorole,
+        autoroleRole: body.autoroleRole !== undefined ? body.autoroleRole : currentMessages.autoroleRole
       });
-      if (body.welcomeChannel) config.guilds[guildId].welcomeChannelId = body.welcomeChannel;
+      if (body.welcomeChannel !== undefined) config.guilds[guildId].welcomeChannelId = body.welcomeChannel;
     }
 
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
