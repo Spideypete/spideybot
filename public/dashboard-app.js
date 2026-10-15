@@ -330,6 +330,42 @@ async function renderPanel(id,f,c){
  const k=f[0];
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
  if(k==='reactionRoles'){await renderReactionRolesPanel(id,f,c);return;}
+ if(['twitch','youtube','tiktok','kick'].includes(k)){
+  const platform=k, titleByPlatform={twitch:'Twitch',youtube:'YouTube',tiktok:'TikTok',kick:'Kick'};
+  const platformTitle=titleByPlatform[platform], settingKey=platform+'ChannelId';
+  const root='/api/social-notifications/'+encodeURIComponent(id);
+  const [socialResult,channelResult]=await Promise.all([
+   api(root),
+   api('/api/guild/'+encodeURIComponent(id)+'/channels')
+  ]);
+  const socialConfig=socialResult.config||{}, allNotifications=socialResult.notifications||[];
+  const channels=(channelResult.channels||[]).filter(ch=>ch.type==='text');
+  const tracked=allNotifications.filter(n=>n.platform===platform);
+  const accountLabel=platform==='youtube'?'YouTube channel ID (UC…; not the display name)':'Streamer username';
+  const accountHint=platform==='youtube'?'Use the channel ID beginning with UC. YouTube API access must be configured on the bot host.':platform==='twitch'?'Use the Twitch login name without @. Twitch Client ID and Client Secret must be configured on the bot host.':platform==='tiktok'?'Use the TikTok username without @. Live detection requires runtime support; it is not currently implemented in this bot handler.':'Use the Kick username without @.';
+  const options=items=>'<option value="">Choose a text channel</option>'+items.map(ch=>'<option value="'+esc(ch.id)+'">'+esc(ch.name)+'</option>').join('');
+  const trackedRows=()=>tracked.map(n=>'<article class="rr-entry"><div style="min-width:0;flex:1"><strong>'+esc(n.username)+'</strong><p>'+esc(n.channelId===socialConfig[settingKey]?'Default '+platformTitle+' alert channel':'Channel ID: '+n.channelId)+' · '+(n.enabled?'Enabled':'Paused')+(n.isLive?' · LIVE':'')+'</p></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="rr-remove" type="button" data-social-toggle="'+esc(n.username)+'">'+(n.enabled?'Pause':'Enable')+'</button><button class="rr-remove" type="button" data-social-remove="'+esc(n.username)+'">Remove</button></div></article>').join('');
+  body.innerHTML=card(platformTitle+' Alerts','Manage '+platformTitle+' accounts and choose where live notifications are posted.','<div class="welcome-panel">'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+platformTitle+' alert settings</h3><p>Notifications are checked by the bot polling service every five minutes.</p></div></div>'+
+   check('socialAlertsEnabled','Enable social alerts for this server',socialConfig.enabled===true)+
+   '<label class="field">Default '+platformTitle+' notification channel<select id="socialDefaultChannel">'+options(channels)+'</select></label>'+
+   '<p class="mention-help">The default channel is saved per platform. Each monitored account also stores its own destination channel when added.</p>'+
+   '<div class="panel-actions"><button class="select" id="saveSocialSettings" type="button">Save '+platformTitle+' settings</button></div></section>'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Add a '+platformTitle+' account</h3><p>New accounts start enabled and will post when a new live session is detected.</p></div></div>'+
+   '<label class="field">'+accountLabel+'<input id="socialUsername" maxlength="100" placeholder="'+(platform==='youtube'?'UCxxxxxxxxxxxxxxxxxxxxxx':'username')+'"></label>'+
+   '<label class="field">Post alerts to<select id="socialAccountChannel">'+options(channels)+'</select></label>'+
+   '<p class="mention-help">'+accountHint+'</p>'+
+   '<div class="panel-actions"><button class="select" id="addSocialAccount" type="button">Add '+platformTitle+' account</button></div></section>'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Monitored '+platformTitle+' accounts</h3><p>'+tracked.length+' account(s) configured</p></div></div><div id="socialTrackedAccounts">'+(trackedRows()||'<p class="mention-help">No '+platformTitle+' accounts are being monitored yet.</p>')+'</div>'+
+   '<p class="mention-help">Live alerts require the bot to be online and have permission to send messages and embeds in the selected channel.</p></section></div>');
+  document.getElementById('socialDefaultChannel').value=socialConfig[settingKey]||'';
+  document.getElementById('socialAccountChannel').value=socialConfig[settingKey]||'';
+  document.getElementById('saveSocialSettings').onclick=async()=>{const channelId=val('socialDefaultChannel');if(!channelId){alert('Choose a default notification channel before saving.');return;}try{const result=await api(root,{method:'POST',body:JSON.stringify({enabled:yes('socialAlertsEnabled'),[settingKey]:channelId})});if(result?.success===false)throw new Error(result.error||'Save failed');alert(platformTitle+' alert settings saved.');await renderPanel(id,f,await load(id));}catch(err){alert('Could not save '+platformTitle+' settings: '+err.message);}};
+  document.getElementById('addSocialAccount').onclick=async()=>{const username=val('socialUsername').trim().replace(/^@/,'');const channelId=val('socialAccountChannel');if(!username){alert('Enter a '+(platform==='youtube'?'YouTube channel ID':'username')+' first.');return;}if(!channelId){alert('Choose the channel where alerts should be posted.');return;}if(platform==='youtube'&&!/^UC[A-Za-z0-9_-]{20,}$/.test(username)){alert('YouTube expects a channel ID beginning with UC, not a handle or display name.');return;}if(platform!=='youtube'&&!/^[A-Za-z0-9._-]{1,100}$/.test(username)){alert('Enter a valid username without spaces.');return;}try{const result=await api(root,{method:'POST',body:JSON.stringify({platform,username,channelId})});if(result?.success===false)throw new Error(result.error||'Could not add account');alert(platformTitle+' account added.');await renderPanel(id,f,await load(id));}catch(err){alert('Could not add '+platformTitle+' account: '+err.message);}};
+  document.querySelectorAll('[data-social-remove]').forEach(btn=>btn.onclick=async()=>{if(!confirm('Stop monitoring '+platformTitle+' account '+btn.dataset.socialRemove+'?'))return;try{const result=await api(root+'/'+encodeURIComponent(platform)+'/'+encodeURIComponent(btn.dataset.socialRemove),{method:'DELETE'});if(result?.success===false)throw new Error(result.error||'Remove failed');await renderPanel(id,f,await load(id));}catch(err){alert('Could not remove account: '+err.message);}});
+  document.querySelectorAll('[data-social-toggle]').forEach(btn=>btn.onclick=async()=>{try{const result=await api(root+'/'+encodeURIComponent(platform)+'/'+encodeURIComponent(btn.dataset.socialToggle)+'/toggle',{method:'POST',body:JSON.stringify({})});if(result?.success===false)throw new Error(result.error||'Update failed');await renderPanel(id,f,await load(id));}catch(err){alert('Could not update account: '+err.message);}});
+  attachToggle(id,f,c);return;
+ }
  if(k==='reminders'){
   const cfg=c.reminderSettings||{};
   body.innerHTML=card('Reminders','Inspired by RemindmeBot: configure reminder defaults, recurring reminders and timezone handling. Reminder scheduling and slash-command delivery must be supported by the bot runtime to take effect.',switcher(id,f,c)+
