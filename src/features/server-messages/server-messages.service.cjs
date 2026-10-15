@@ -61,19 +61,28 @@ class ServerMessagesService {
   }
 
   async getConfig(guildId) {
-    const guildConfig = getGuildConfig(guildId)
+    const fullConfig = this._load()
+    const guildConfig = fullConfig.guilds?.[guildId] || {}
     const defaults = this._getDefaults()
-    const stored = guildConfig.serverMessages || {}
+    const stored = {
+      ...(guildConfig.serverMessages || {}),
+      ...(guildConfig["server-messages"] || {})
+    }
     return { ...defaults, ...stored }
   }
 
   async setConfig(guildId, config) {
     const defaults = this._getDefaults()
-    const merged = { ...defaults, ...config }
     const fullConfig = this._load()
     if (!fullConfig.guilds) fullConfig.guilds = {}
-    const guildConfig = getGuildConfig(guildId)
+    const guildConfig = fullConfig.guilds[guildId] || {}
+    const existing = {
+      ...(guildConfig.serverMessages || {}),
+      ...(guildConfig["server-messages"] || {})
+    }
+    const merged = { ...defaults, ...existing, ...config }
     guildConfig.serverMessages = merged
+    guildConfig["server-messages"] = { ...existing, ...config }
     fullConfig.guilds[guildId] = guildConfig
     this._save(fullConfig)
     return merged
