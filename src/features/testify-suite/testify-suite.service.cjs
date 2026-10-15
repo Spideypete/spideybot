@@ -4,7 +4,7 @@ const DEFAULTS = {
   enabled: true, prefix: '!',
   plugins: {},
   channels: {}, roles: {}, messages: {},
-  automod: { enabled: false, antiInvite: true, antiLink: false, antiSpam: true, maxMessages: 6, windowMs: 8000, caps: false, massMention: true, maxMentions: 5, words: [] },
+  automod: { enabled: false, notifyUser: true, presetProfanity: true, presetSlurs: false, presetSexual: false, antiInvite: true, antiLink: true, antiSpam: true, antiDuplicate: true, maxMessages: 6, windowMs: 8000, caps: false, massMention: true, maxMentions: 5, screenUsername: true, screenNickname: true, screenActionTimeout: false, action: 'delete', timeoutMinutes: 10, alertStaff: true, logChannelId: null, words: [], customRules: [] },
   audit: { enabled: false, channelId: null },
   welcome: { enabled: false, channelId: null, message: 'Welcome {user} to {server}! We now have {membercount} members.' },
   autorole: { enabled: false, roleId: null },
