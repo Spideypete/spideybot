@@ -27,7 +27,7 @@ router.get('/:guildId', auth, requireGuildAccess, (req, res) => {
   });
 });
 
-router.post('/:guildId', auth, express.json(), (req, res) => {
+router.post('/:guildId', auth, requireGuildAccess, express.json(), (req, res) => {
   const { guildId } = req.params;
   const { platform, username, channelId } = req.body;
 
@@ -66,7 +66,7 @@ router.post('/:guildId', auth, express.json(), (req, res) => {
   }
 });
 
-router.delete('/:guildId/:platform/:username', auth, express.json(), (req, res) => {
+router.delete('/:guildId/:platform/:username', auth, requireGuildAccess, express.json(), (req, res) => {
   const { guildId, platform, username } = req.params;
 
   try {
@@ -80,7 +80,7 @@ router.delete('/:guildId/:platform/:username', auth, express.json(), (req, res) 
   }
 });
 
-router.post('/:guildId/:platform/:username/toggle', auth, express.json(), (req, res) => {
+router.post('/:guildId/:platform/:username/toggle', auth, requireGuildAccess, express.json(), (req, res) => {
   const { guildId, platform, username } = req.params;
 
   try {
