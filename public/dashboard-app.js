@@ -326,11 +326,51 @@ async function renderReactionRolesPanel(id,f,c){
  attachToggle(id,f,c);
 }
 
+async function renderSourceAlertPanel(id,f,c){
+ const key=f[0];
+ const definitions={
+  rss:{title:'RSS Feeds',label:'Feed name',placeholder:'My blog',sourceLabel:'Feed URL',sourcePlaceholder:'https://example.com/feed.xml',hint:'Add a public RSS or Atom feed URL. The bot needs a feed polling worker to deliver new entries.'},
+  reddit:{title:'Reddit Alerts',label:'Alert name',placeholder:'Gaming subreddit',sourceLabel:'Subreddit or Reddit URL',sourcePlaceholder:'r/gaming or https://reddit.com/r/gaming',hint:'Use a subreddit such as r/gaming or a Reddit community URL.'},
+  podcast:{title:'Podcast Alerts',label:'Podcast name',placeholder:'My favourite podcast',sourceLabel:'Podcast RSS URL',sourcePlaceholder:'https://example.com/podcast.xml',hint:'Podcast episode feeds are usually RSS or Atom URLs provided by the podcast host.'},
+  instagram:{title:'Instagram Alerts',label:'Account label',placeholder:'Creator name',sourceLabel:'Instagram username or profile URL',sourcePlaceholder:'username or https://instagram.com/username',hint:'Instagram access and reliable change detection may require an approved API or external provider.'},
+  xalerts:{title:'X Alerts',label:'Account label',placeholder:'Creator name',sourceLabel:'X username or profile URL',sourcePlaceholder:'username or https://x.com/username',hint:'X monitoring requires API access or a compatible external provider; credentials and usage limits may apply.'}
+ };
+ const def=definitions[key];
+ const configKey=key+'Alerts';
+ const existing=Array.isArray(c[configKey])?c[configKey]:[];
+ let entries=existing.map(x=>({...x}));
+ const channelsResult=await api('/api/guild/'+encodeURIComponent(id)+'/channels');
+ const channels=(channelsResult.channels||[]).filter(ch=>ch.type==='text');
+ const channelOptions=selected=>'<option value="">Choose a text channel</option>'+channels.map(ch=>'<option value="'+esc(ch.id)+'" '+(ch.id===selected?'selected':'')+'>'+esc(ch.name)+'</option>').join('');
+ const drawEntries=()=>entries.map((entry,index)=>'<article class="rr-entry"><div style="min-width:0;flex:1"><strong>'+esc(entry.label||entry.source)+'</strong><p>'+esc(entry.source)+' · '+esc(channels.find(ch=>ch.id===entry.channelId)?.name||'Channel ID: '+(entry.channelId||'not selected'))+' · '+(entry.enabled===false?'Paused':'Enabled')+'</p></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="rr-remove" type="button" data-alert-toggle="'+index+'">'+(entry.enabled===false?'Enable':'Pause')+'</button><button class="rr-remove" type="button" data-alert-remove="'+index+'">Remove</button></div></article>').join('');
+ body.innerHTML=card(def.title,'Configure sources and their Discord destination channels.','<div class="welcome-panel">'+
+  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+def.title+' settings</h3><p>Choose a default destination and enable or pause this alert type.</p></div></div>'+
+  check('sourceAlertsEnabled','Enable '+def.title.toLowerCase()+' for this server',c[key+'AlertsEnabled']===true)+
+  '<label class="field">Default notification channel<select id="sourceDefaultChannel">'+channelOptions(c[key+'DefaultChannel']||'')+'</select></label>'+
+  '<div class="panel-actions"><button class="select" id="saveSourceSettings" type="button">Save settings</button></div></section>'+
+  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Add a source</h3><p>Each source can use its own channel or the default destination.</p></div></div>'+
+  '<label class="field">'+def.label+'<input id="sourceLabel" maxlength="100" placeholder="'+esc(def.placeholder)+'"></label>'+
+  '<label class="field">'+def.sourceLabel+'<input id="sourceValue" maxlength="1000" placeholder="'+esc(def.sourcePlaceholder)+'"></label>'+
+  '<label class="field">Post notifications to<select id="sourceChannel">'+channelOptions('')+'</select></label>'+
+  '<p class="mention-help">'+def.hint+'</p>'+
+  '<div class="panel-actions"><button class="select" id="addSourceAlert" type="button">Add source</button></div></section>'+
+  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Configured sources</h3><p>'+entries.length+' source(s) saved</p></div></div><div id="sourceAlertEntries">'+(drawEntries()||'<p class="mention-help">No sources added yet.</p>')+'</div>'+
+  '<div class="panel-actions"><button class="select" id="saveSourceList" type="button">Save source list</button></div></section>'+
+  '<p class="mention-help">This panel currently saves dashboard configuration. Actual automated delivery requires the corresponding runtime monitor and credentials/API access to be implemented and tested.</p></div>');
+ const persist=async()=>{const patch={[configKey]:entries,[key+'AlertsEnabled']:yes('sourceAlertsEnabled'),[key+'DefaultChannel']:val('sourceDefaultChannel')||null};const result=await save(id,patch);if(result?.success===false)throw new Error(result.error||'Save failed');};
+ document.getElementById('saveSourceSettings').onclick=async()=>{try{await persist();alert(def.title+' settings saved.');}catch(err){alert('Could not save settings: '+err.message);}};
+ document.getElementById('addSourceAlert').onclick=async()=>{const label=val('sourceLabel').trim(),source=val('sourceValue').trim(),channelId=val('sourceChannel')||val('sourceDefaultChannel');if(!source){alert('Enter a source first.');return;}if(!channelId){alert('Choose a notification channel, either for this source or as the default.');return;}if(key==='rss'||key==='podcast'){try{const u=new URL(source);if(!['http:','https:'].includes(u.protocol))throw new Error();}catch(_){alert('Enter a valid http:// or https:// feed URL.');return;}}const duplicate=entries.some(e=>e.source.toLowerCase()===source.toLowerCase());if(duplicate){alert('This source is already configured.');return;}entries.push({label:label||source,source,channelId,enabled:true,addedAt:new Date().toISOString()});try{await persist();await renderSourceAlertPanel(id,f,{...(await load(id))});}catch(err){alert('Could not add source: '+err.message);}};
+ document.querySelectorAll('[data-alert-toggle]').forEach(btn=>btn.onclick=async()=>{const index=Number(btn.dataset.alertToggle);if(!entries[index])return;entries[index].enabled=entries[index].enabled===false;try{await persist();await renderSourceAlertPanel(id,f,{...(await load(id))});}catch(err){alert('Could not update source: '+err.message);}});
+ document.querySelectorAll('[data-alert-remove]').forEach(btn=>btn.onclick=async()=>{const index=Number(btn.dataset.alertRemove);if(!entries[index]||!confirm('Remove this source?'))return;entries.splice(index,1);try{await persist();await renderSourceAlertPanel(id,f,{...(await load(id))});}catch(err){alert('Could not remove source: '+err.message);}});
+ document.getElementById('saveSourceList').onclick=async()=>{try{await persist();alert('Source list saved.');}catch(err){alert('Could not save source list: '+err.message);}};
+ attachToggle(id,f,c);
+}
+
 async function renderPanel(id,f,c){
  const k=f[0];
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
  if(k==='reactionRoles'){await renderReactionRolesPanel(id,f,c);return;}
- if(['twitch','youtube','tiktok','kick'].includes(k)){
+ if(['rss','reddit','podcast','instagram','xalerts'].includes(k)){await renderSourceAlertPanel(id,f,c);return;}\n if(['twitch','youtube','tiktok','kick'].includes(k)){
   const platform=k, titleByPlatform={twitch:'Twitch',youtube:'YouTube',tiktok:'TikTok',kick:'Kick'};
   const platformTitle=titleByPlatform[platform], settingKey=platform+'ChannelId';
   const root='/api/social-notifications/'+encodeURIComponent(id);
