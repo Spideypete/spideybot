@@ -177,11 +177,10 @@ function messageSection(prefix,label,enabled,channel,type,message,embed,channels
  '<div id="'+prefix+'EmbedPanel" '+(type==='embed'?'':'hidden')+'>'+embedEditor(prefix,embed,channels,roles)+'</div></section>';
 }
 async function renderWelcomePanel(id,f,c){
- const [channelResult,roleResult,settingsResult,rrResult]=await Promise.all([
+ const [channelResult,roleResult,settingsResult]=await Promise.all([
   api('/api/guild/'+encodeURIComponent(id)+'/channels'),
   api('/api/guild/'+encodeURIComponent(id)+'/roles'),
-  api('/api/config/'+encodeURIComponent(id)),
-  api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id))
+  api('/api/config/'+encodeURIComponent(id))
  ]);
  const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
  const roles=roleResult.roles||[];
@@ -257,12 +256,12 @@ async function renderReactionRolesPanel(id,f,c){
  const [channelResult,roleResult,settingsResult]=await Promise.all([
   api('/api/guild/'+encodeURIComponent(id)+'/channels'),
   api('/api/guild/'+encodeURIComponent(id)+'/roles'),
-  api('/api/config/'+encodeURIComponent(id))
+  api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id))
  ]);
  const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
  const roles=(roleResult.roles||[]).filter(x=>!x.managed);
- const gc=settingsResult||{};
- const rr=rrResult.config||gc.reactRoles||{};
+ const gc={};
+ const rr=settingsResult.config||{};
  const entries=Array.isArray(rr.entries)?rr.entries:[];
  const entryRows=entries.map((e,i)=>'<div class="rr-entry"><div><strong>'+esc(e.emoji||'😀')+' → '+esc(e.roleName||roles.find(r=>r.id===e.roleId)?.name||'Role')+'</strong><p>#'+esc(e.channelName||channels.find(ch=>ch.id===e.channelId)?.name||'channel')+' · Message '+esc(e.messageId||'')+'</p></div><button type="button" class="rr-remove" data-remove-rr="'+i+'">Remove</button></div>').join('');
  const channelOptions=optionList(channels,'','Choose a text channel');
