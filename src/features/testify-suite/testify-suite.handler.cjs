@@ -192,6 +192,26 @@ async function handlePrefix(msg,ctx){
   const featureKey=featureForCommand(n);
   if(!featureIsOn(c,featureKey))return reply('That feature is currently disabled by this server.');
   try{
+    if(n==='poll'){
+      const cfg=c.polls||{};if(cfg.enabled===false)return reply('Polls are disabled in this server dashboard settings.');
+      const raw=msg.content.slice(p.length+n.length).trim(),parts=raw.split('|'),question=String(parts.shift()||'').trim().slice(0,250),options=(parts.join('|')||'Yes,No').split(',').map(x=>x.trim()).filter(Boolean);
+      const max=Math.min(20,Math.max(2,Number(cfg.maxOptions)||20));
+      if(!question)return reply('Usage: '+p+'poll Question | Option 1, Option 2, Option 3');
+      if(options.length<2||options.length>max||options.some(x=>x.length>80))return reply('Provide 2–'+max+' options, comma-separated, each 80 characters or fewer.');
+      const pollId=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),duration=Math.max(0,Number(cfg.defaultDurationMinutes)||0);
+      const poll={id:pollId,question,options,votes:{},guildId:msg.guild.id,channelId:null,messageId:null,createdAt:Date.now(),expiresAt:duration?Date.now()+duration*60000:null,anonymous:cfg.anonymous!==false,allowMultipleVotes:cfg.allowMultipleVotes===true,closed:false};
+      const counts=()=>options.map((_,index)=>Object.values(poll.votes).reduce((sum,v)=>sum+(Array.isArray(v)?v.includes(index):v===index?1:0),0));
+      const embed=()=>{const e=new EmbedBuilder().setColor(0x5865f2).setTitle('📊 '+question).setDescription(options.map((option,index)=>'**'+(index+1)+'. '+option+'**\n'+counts()[index]+' vote'+(counts()[index]===1?'':'s')).join('\n\n')).setFooter({text:'Poll ID: '+pollId+(poll.allowMultipleVotes?' · Multiple choices allowed':' · One choice per member')+(poll.anonymous?' · Anonymous results':'')}).setTimestamp(new Date(poll.createdAt));if(poll.expiresAt)e.addFields({name:'Closes',value:'<t:'+Math.floor(poll.expiresAt/1000)+':R>'});return e;};
+      const rows=[];for(let start=0;start<options.length;start+=5){const row=new ActionRowBuilder();options.slice(start,start+5).forEach((option,offset)=>row.addComponents(new ButtonBuilder().setCustomId('pollvote:'+pollId+':'+(start+offset)).setLabel(option).setStyle(ButtonStyle.Primary)));rows.push(row);}
+      try{let target=msg.channel;if(cfg.defaultChannelId){const ch=msg.guild.channels.cache.get(cfg.defaultChannelId)||await msg.guild.channels.fetch(cfg.defaultChannelId).catch(()=>null);if(ch?.isTextBased?.())target=ch;}const sent=await target.send({embeds:[embed()],components:rows});poll.channelId=target.id;poll.messageId=sent.id;svc.save(msg.guild.id,{polls:{...cfg,active:{...(cfg.active||{}),[pollId]:poll}}});return reply('Poll created: '+sent.url+' · Poll ID: '+pollId);}
+      catch(err){console.error('[PREFIX POLL CREATE]',err.message);return reply('Could not create poll. Check bot channel permissions.');}
+    }
+    if(n==='deletepoll'){
+      const cfg=c.polls||{},pollId=String(a.shift()||'').trim(),poll=cfg.active?.[pollId];if(!poll)return reply('No active poll found with that ID.');
+      if(cfg.adminDelete!==false&&!msg.member?.permissions?.has(PermissionFlagsBits.Administrator))return reply('Administrator permission required to delete polls.');
+      try{const ch=msg.guild.channels.cache.get(poll.channelId)||await msg.guild.channels.fetch(poll.channelId).catch(()=>null);const sent=ch?.messages?await ch.messages.fetch(poll.messageId).catch(()=>null):null;if(sent)await sent.delete();const active={...(cfg.active||{})};delete active[pollId];svc.save(msg.guild.id,{polls:{...cfg,active}});return reply('Poll '+pollId+' deleted.');}
+      catch(err){console.error('[PREFIX POLL DELETE]',err.message);return reply('Could not delete poll. Check bot Manage Messages permission.');}
+    }
     if(n==='ping')return reply('🏓 Pong! '+ctx.client.ws.ping+'ms');
     if(n==='help')return reply('📚 Prefix: '+['ping','profile','rank','balance','daily','work','beg','inventory','shop','buy','give','rob','crime','serverinfo','userinfo','avatar','8ball','rps','dice','coin','trivia','purge','slowmode','lock','unlock','warn','warnings','kick','ban','unban','softban','announce','say','poll','sticky','setprefix','automod','auditlog','welcome','autorole','verify','addxp','setxp','removexp','resetxp','stats','invites'].map(x=>p+x).join(', '));
     if(n==='profile')return reply({embeds:[profile({user:msg.author},msg.author,c)]});
