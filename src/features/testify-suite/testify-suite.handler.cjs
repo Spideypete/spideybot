@@ -179,7 +179,7 @@ const BUILTIN_TERMS={
  slurs:['nigger','faggot','kike','chink','spic'],
  sexual:['porn','hentai','blowjob','onlyfans','dickpic','cumshot']
 };
-const normalizeText=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu,' ').trim();
+const normalizeText=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 function automodTerms(c){
  const a=c.automod||{},terms=[...(Array.isArray(a.words)?a.words:[])];
  if(a.presetProfanity!==false)terms.push(...BUILTIN_TERMS.profanity);
@@ -256,8 +256,8 @@ function registerTestifyHandlers(client){
       if(featureIsOn(c,'automod')&&a.enabled===true){
         const content=String(msg.content||''),now=Date.now(),key=msg.guild.id+':'+msg.author.id;
         let reason=null;
-        if(a.antiInvite!==false&&/(?:discord\\.gg\\/|discord(?:app)?\\.com\\/invite\\/)/i.test(content))reason='Discord invite link';
-        if(!reason&&a.antiLink&&/https?:\\/\\//i.test(content))reason='Link blocked by server policy';
+        if(a.antiInvite!==false&&/(?:discord\.gg\/|discord(?:app)?\.com\/invite\/)/i.test(content))reason='Discord invite link';
+        if(!reason&&a.antiLink&&/https?:\/\//i.test(content))reason='Link blocked by server policy';
         const term=!reason?findAutoModTerm(content,c):null;
         if(!reason&&term)reason='Blocked keyword matched';
         if(!reason&&a.massMention!==false){
