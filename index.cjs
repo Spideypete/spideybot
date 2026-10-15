@@ -1071,7 +1071,7 @@ client.once("ready", async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   try {
     const { execSync } = require('child_process');
-    const commit = execSync('git rev-parse --short HEAD').toString().trim();
+    const commit = execSync('git rev-parse --short HEAD 2>/dev/null').toString().trim();
     console.log(`🔁 Running commit: ${commit} (pid:${process.pid})`);
   } catch (err) {
     console.log('🔁 Running commit: unknown');
