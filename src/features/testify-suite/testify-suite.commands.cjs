@@ -72,6 +72,7 @@ S('levels','XP and leveling controls',b=>b
  .addSubcommand(sub('addxp','Add XP to a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('XP to add').setRequired(true).setMinValue(1).setMaxValue(1000000))))
  .addSubcommand(sub('setxp','Set a member total XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Total XP').setRequired(true).setMinValue(0).setMaxValue(100000000))))
  .addSubcommand(sub('removexp','Remove XP from a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('XP to remove').setRequired(true).setMinValue(1).setMaxValue(1000000)))).setDefaultMemberPermissions(A)),
+S('stats','Show your message and emoji milestone statistics',b=>b.setDMPermission(false)),
 S('system','Internal administration and safe diagnostics',b=>b
  .addSubcommand(sub('stats','Show bot statistics')).addSubcommand(sub('guilds','List bot guilds'))
  .addSubcommand(sub('blacklist','Blacklist a user',s=>s.addUserOption(o=>o.setName('user').setDescription('User').setRequired(true))))
