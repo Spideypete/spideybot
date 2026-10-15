@@ -17,7 +17,7 @@ const COMMAND_FEATURE={
   daily:'economy',beg:'economy',deposit:'economy',withdraw:'economy',inventory:'economy',shop:'economy',buy:'economy',give:'economy',rob:'economy',crime:'economy',pet:'economy',
   poll:'polls',deletepoll:'polls',calculator:'community',ascii:'community',advice:'community',dadjoke:'community',wouldyourrather:'community',hack:'community',relationship:'community',
   purge:'moderator',softban:'moderator',unban:'moderator',clearwarnings:'moderator',slowmode:'moderator',lock:'moderator',unlock:'moderator',nickname:'moderator',role:'moderator',announce:'moderator',say:'moderator',thread:'ticketing',ticket:'ticketing',
-  automod:'automod',automodwords:'automod',automodlinks:'automod',automodspam:'automod',auditlog:'audit',setprefix:'welcome',sticky:'automations',unsticky:'automations',counting:'community',welcome:'welcome',autorole:'welcome',verify:'moderator',commandtoggle:'commands',
+  automod:'automod',automodwords:'automod',automodlinks:'automod',automodspam:'automod',auditlog:'audit',setprefix:'welcome',sticky:'commands',unsticky:'commands',counting:'community',welcome:'welcome',autorole:'welcome',verify:'moderator',commandtoggle:'commands',
   levelrewards:'levels',setlevelreward:'levels',resetxp:'levels',addxp:'levels',setxp:'levels',removexp:'levels',
   blacklist:'moderator',unblacklist:'moderator'
 };
