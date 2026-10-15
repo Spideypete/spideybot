@@ -13,7 +13,7 @@
     "logs": "pm2 logs spidey-bot",
     "build": "node build.js",
     "sync": "node build.js",
-    "test": "node --test test/*.test.cjs"
+    "test": "node --test test/*.test.cjs && node --check index.cjs && node --check public/dashboard-app.js && find src -type f \\( -name '*.cjs' -o -name '*.js' \\) -print0 | xargs -0 -n1 node --check"
   },
   "keywords": [],
   "author": "",
