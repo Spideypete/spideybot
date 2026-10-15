@@ -8130,6 +8130,10 @@ app.get("/api/guild/:guildId/roles", (req, res) => {
 // Discord server emoji manager for the dashboard
 async function getDashboardGuildAccess(req, guild) {
   if (!req.session?.authenticated || !req.session?.guilds?.some(g => g.id === guild.id)) return { ok: false, status: 403, error: "No access to this guild" };
+  // The isolated test dashboard intentionally uses a synthetic admin session instead of OAuth.
+  if (typeof isSpideyTestingHost === "function" && isSpideyTestingHost(req)) {
+    return { ok: true, member: { permissions: { has: () => true } } };
+  }
   const userId = req.session.user?.id || req.session.passport?.user?.id;
   if (!userId) return { ok: false, status: 403, error: "Could not verify the signed-in Discord member" };
   const member = await guild.members.fetch(userId).catch(() => null);
