@@ -23,7 +23,8 @@ S('economy','Economy and progression tools',b=>b
  .addSubcommand(sub('rob','Attempt a robbery',s=>s.addUserOption(o=>o.setName('user').setDescription('Target').setRequired(true))))
  .addSubcommand(sub('crime','Commit a risky crime')).addSubcommand(sub('pet','View or adopt a pet',s=>s.addStringOption(o=>o.setName('name').setDescription('Pet name').setRequired(false))))),
 S('fun','Community fun and utility',b=>b
- .addSubcommand(sub('poll','Create a poll',s=>s.addStringOption(o=>o.setName('question').setDescription('Question').setRequired(true))))
+ .addSubcommand(sub('poll','Create a button-voting poll',s=>s.addStringOption(o=>o.setName('question').setDescription('Question').setRequired(true)).addStringOption(o=>o.setName('options').setDescription('Comma-separated options, e.g. Red,Blue,Green').setRequired(false))))
+ .addSubcommand(sub('deletepoll','Delete an active poll',s=>s.addStringOption(o=>o.setName('poll_id').setDescription('Poll ID shown in the poll footer').setRequired(true))))
  .addSubcommand(sub('calculator','Calculate arithmetic',s=>s.addStringOption(o=>o.setName('expression').setDescription('Expression').setRequired(true))))
  .addSubcommand(sub('ascii','Render ASCII text',s=>s.addStringOption(o=>o.setName('text').setDescription('Text').setRequired(true))))
  .addSubcommand(sub('advice','Get advice')).addSubcommand(sub('dadjoke','Tell a dad joke')).addSubcommand(sub('wouldyourrather','Would You Rather'))
