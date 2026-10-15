@@ -186,7 +186,7 @@ async function renderWelcomePanel(id,f,c){
  const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
  const roles=roleResult.roles||[];
  const guildConfig=settingsResult||{};
- const sm={...(guildConfig.serverMessages||{}),...(guildConfig['server-messages']||{})};
+ const sm={...(guildConfig['server-messages']||{}),...(guildConfig.serverMessages||{})};
  const welcomeType=sm.welcomeType||(sm.welcomeEmbed?'embed':'text');
  const goodbyeType=sm.goodbyeType||(sm.goodbyeEmbed?'embed':'text');
  const bodyHtml=messageSection('welcome','Welcome message',sm.welcomeEnabled??sm.enableWelcome??false,sm.welcomeChannel||'',welcomeType,sm.welcomeMessage??'Welcome {user} to {server}! 🎉',sm.welcomeEmbed,channels,roles)+
