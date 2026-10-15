@@ -26,6 +26,17 @@ function profile(i,u,c){const l=c.levels.users?.[u.id]||{level:0,xp:0},e=c.econo
 async function execute(i,ctx){
   if(!i.isChatInputCommand()||!i.guild)return false;
   const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
+  const custom=(Array.isArray(c.customCommands?.items)?c.customCommands.items:[]).find(x=>x.name===root&&x.enabled!==false);
+  if(custom){
+    if(c.blacklist?.includes(i.user.id)){await i.reply({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
+    try{
+      if(custom.counterEnabled!==false){custom.count=Math.max(0,Number(custom.count)||0)+1;svc.save(i.guild.id,{customCommands:c.customCommands});}
+      const count=Number(custom.count)||0,replace=(text)=>String(text||'').replace(/\\{count\\}/gi,String(count)).replace(/\\{user\\}/gi,i.user.toString()).replace(/\\{username\\}/gi,i.user.username).replace(/\\{server\\}/gi,i.guild.name).replace(/\\{counterLabel\\}/gi,String(custom.counterLabel||'Count'));
+      const content=replace(custom.messageTemplate).slice(0,2000);
+      await i.reply({content:content||'Command executed.',allowedMentions:{parse:[]}});
+    }catch(err){console.error('[CUSTOM COMMAND]',err);if(!i.replied&&!i.deferred)await i.reply({content:'Could not run this custom command. Please try again.',ephemeral:true}).catch(()=>{});}
+    return true;
+  }
   if(c.blacklist?.includes(i.user.id)){await i.reply({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
   const featureKey=featureForCommand(n);
   if(!featureIsOn(c,featureKey)){await i.reply({content:'That feature is currently disabled by this server.',ephemeral:true});return true;}
@@ -376,6 +387,30 @@ function registerTestifyHandlers(client){
       }
     }catch(e){console.error('[TESTIFY MESSAGE]',e.message);}
   });
+  const syncCustomCommands=async()=>{
+    try{
+      if(!client.application?.commands)return;
+      for(const guild of client.guilds.cache.values()){
+        const cfg=svc.get(guild.id),items=Array.isArray(cfg.customCommands?.items)?cfg.customCommands.items:[];
+        const desired=new Map(items.filter(x=>x.enabled!==false&&/^[a-z0-9-]{1,32}$/.test(String(x.name||''))).map(x=>[x.name,x]));
+        const existing=await guild.commands.fetch();
+        for(const command of existing.values()){
+          if(command.description==='SPIDEY BOT custom counter command'&&!desired.has(command.name)){
+            await guild.commands.delete(command.id).catch(err=>console.error('[CUSTOM COMMAND DELETE]',err.message));
+          }
+        }
+        for(const [name] of desired){
+          const current=existing.find(x=>x.name===name);
+          if(current){if(current.description!=='SPIDEY BOT custom counter command')console.warn('[CUSTOM COMMAND] Name conflicts with an existing slash command:',name);continue;}
+          try{await guild.commands.create({name,description:'SPIDEY BOT custom counter command',type:1},'Custom counter command');}
+          catch(err){console.error('[CUSTOM COMMAND REGISTER]',guild.id,name,err.message);}
+        }
+      }
+    }catch(err){console.error('[CUSTOM COMMAND SYNC]',err.message);}
+  };
+  setTimeout(()=>syncCustomCommands(),5000);
+  const customCommandSyncTimer=setInterval(syncCustomCommands,45000);
+  customCommandSyncTimer.unref?.();
   client.on('guildMemberUpdate',async(_oldMember,newMember)=>{
     try{const c=svc.get(newMember.guild.id);await screenAutoModMember(newMember,c,'profile updated');}
     catch(e){console.error('[AUTOMOD PROFILE UPDATE]',e.message);}
