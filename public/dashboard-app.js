@@ -44,7 +44,7 @@ const FEATURES=[
     ['music','Music','Configure voice playback, DJ role and playback limits.','music-notes'],
     ['casino','Casino','Configure slots, betting limits and casino controls.','dice-five'],
     ['lottery','Lottery','Configure lottery entries, draw schedule and prizes.','ticket'],
-    ['games','Games','Configure community games inspired by DebilBot.','gamepad-2']
+    ['games','Games','Manage community games and activities.','gamepad-2']
   ]],
   ['Advanced',[
     ['ai','AI Assistant','Configure the AI chat assistant inspired by DebilBot.','sparkle']
