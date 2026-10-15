@@ -36,7 +36,7 @@ class ReactionRolesService {
   _guildConfig(guildId, create) {
     if (!this.data.guilds[guildId]) {
       if (!create) return null;
-      this.data.guilds[guildId] = { entries: [], dmConfirmations: false, allowMultiple: true, removeOnUnreact: true, dmConfirm: false, enabled: true };
+      this.data.guilds[guildId] = { entries: [], dmConfirmations: false, allowMultiple: true, removeOnUnreact: true, dmConfirm: false, enabled: true, language: "en", updateNotifications: false, errorReporting: false, notificationChannelId: null };
     }
     return this.data.guilds[guildId];
   }
@@ -81,7 +81,7 @@ class ReactionRolesService {
 
   getConfig(guildId) {
     const cfg = this._guildConfig(guildId, true);
-    return { entries: cfg.entries, dmConfirmations: cfg.dmConfirmations, allowMultiple: cfg.allowMultiple !== false, removeOnUnreact: cfg.removeOnUnreact !== false, dmConfirm: !!cfg.dmConfirm, enabled: cfg.enabled !== false };
+    return { entries: cfg.entries, dmConfirmations: cfg.dmConfirmations, allowMultiple: cfg.allowMultiple !== false, removeOnUnreact: cfg.removeOnUnreact !== false, dmConfirm: !!cfg.dmConfirm, enabled: cfg.enabled !== false, language: cfg.language || "en", updateNotifications: !!cfg.updateNotifications, errorReporting: !!cfg.errorReporting, notificationChannelId: cfg.notificationChannelId || null };
   }
 
   setConfig(guildId, config) {
@@ -90,7 +90,7 @@ class ReactionRolesService {
       : (config && config.entries) || [];
     const current = this._guildConfig(guildId, true);
     const dmConfirmations = config && typeof config.dmConfirmations === "boolean" ? config.dmConfirmations : (config && typeof config.dmConfirm === "boolean" ? config.dmConfirm : current.dmConfirmations);
-    this.data.guilds[guildId] = { entries, dmConfirmations, allowMultiple: config && typeof config.allowMultiple === "boolean" ? config.allowMultiple : current.allowMultiple !== false, removeOnUnreact: config && typeof config.removeOnUnreact === "boolean" ? config.removeOnUnreact : current.removeOnUnreact !== false, dmConfirm: config && typeof config.dmConfirm === "boolean" ? config.dmConfirm : !!current.dmConfirm, enabled: config && typeof config.enabled === "boolean" ? config.enabled : current.enabled !== false };
+    this.data.guilds[guildId] = { entries, dmConfirmations, allowMultiple: config && typeof config.allowMultiple === "boolean" ? config.allowMultiple : current.allowMultiple !== false, removeOnUnreact: config && typeof config.removeOnUnreact === "boolean" ? config.removeOnUnreact : current.removeOnUnreact !== false, dmConfirm: config && typeof config.dmConfirm === "boolean" ? config.dmConfirm : !!current.dmConfirm, enabled: config && typeof config.enabled === "boolean" ? config.enabled : current.enabled !== false, language: typeof config?.language === "string" ? config.language : (current.language || "en"), updateNotifications: typeof config?.updateNotifications === "boolean" ? config.updateNotifications : !!current.updateNotifications, errorReporting: typeof config?.errorReporting === "boolean" ? config.errorReporting : !!current.errorReporting, notificationChannelId: config?.notificationChannelId !== undefined ? config.notificationChannelId : (current.notificationChannelId || null) };
     this._persist();
     return this.getConfig(guildId);
   }
