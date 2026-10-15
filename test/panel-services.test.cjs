@@ -28,6 +28,37 @@ test('registered slash command definitions serialize with unique roots and subco
   }
 });
 
+test('custom slash runtime replaces template variables and persists its counter', async () => {
+  const guildId = 'guild-custom-slash-runtime';
+  const suiteService = require('../src/features/testify-suite/testify-suite.service.cjs');
+  const runtime = require('../src/features/custom-commands/custom-slash-runtime.cjs');
+  suiteService.save(guildId, {
+    customCommands: {
+      items: [{
+        name: 'kill',
+        messageTemplate: 'Ohh killed {username} — {count} in {server} by {user}',
+        counterEnabled: true,
+        counterLabel: 'Kills',
+        enabled: true,
+        count: 0
+      }]
+    }
+  });
+
+  let reply;
+  const interaction = {
+    guildId,
+    commandName: 'kill',
+    user: { id: 'member-1', username: 'TestMember' },
+    guild: { name: 'Test Server' },
+    isChatInputCommand: () => true,
+    reply: async payload => { reply = payload; }
+  };
+  assert.equal(await runtime.handleCustomSlashCommand(interaction), true);
+  assert.match(reply.content, /TestMember — 1 in Test Server by <@member-1>/);
+  assert.equal(suiteService.get(guildId).customCommands.items[0].count, 1);
+});
+
 test('custom commands create, match, count, and persist', async () => {
   const guildId = 'guild-custom-tests';
   const service = new CustomCommandsService(['help']);
