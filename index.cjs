@@ -1066,7 +1066,13 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Auto-clear and re-register on startup
+  // Never mutate the shared global Discord command registry from the staging deployment.
+  // The test service uses the same bot token as production, so global registration here would affect production servers.
+  const isTestingDeployment = process.env.RAILWAY_SERVICE_NAME === 'spidey-bot-testing' || String(process.env.RAILWAY_PUBLIC_DOMAIN || '').includes('spidey-bot-testing');
+  if (isTestingDeployment) {
+    console.log('🧪 Testing deployment: skipping global slash-command clear/register to protect production.');
+  } else {
+    // Auto-clear and re-register on startup
   try {
     console.log('📝 Auto-clearing and registering slash commands...');
     const rest = new REST({ version: '10' }).setToken(token);
@@ -1098,6 +1104,9 @@ client.once("ready", async () => {
     console.log(`✅ Registered ${data.length} slash commands`);
   } catch (error) {
     console.error("❌ Error:", error.message || error);
+  }
+
+
   }
 
   // Pre-fetch members for all guilds so dashboard stats work immediately
