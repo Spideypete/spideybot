@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const CONFIG_FILE = path.join(__dirname, '../../config.json');
+const CONFIG_FILE = path.join(__dirname, '../../../config.json');
 
 function loadConfig() {
   if (fs.existsSync(CONFIG_FILE)) {
@@ -12,6 +12,13 @@ function loadConfig() {
 
 function saveConfig(config) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+}
+
+function saveGuildConfig(guildId, guildConfig) {
+  const config = loadConfig();
+  if (!config.guilds) config.guilds = {};
+  config.guilds[guildId] = guildConfig;
+  saveConfig(config);
 }
 
 function getGuildConfig(guildId) {
@@ -46,7 +53,7 @@ function setConfig(guildId, config) {
   const merged = { ...invites, ...config };
   const guildConfig = getGuildConfig(guildId);
   guildConfig.invites = merged;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 }
 
 function trackInvite(guildId, invite) {
@@ -68,7 +75,7 @@ function trackInvite(guildId, invite) {
 
   const guildConfig = getGuildConfig(guildId);
   guildConfig.invites = invites;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true, invite: invites.invites[invite.code] };
 }
@@ -102,7 +109,7 @@ function recordJoin(guildId, inviteCode, userId) {
 
   const guildConfig = getGuildConfig(guildId);
   guildConfig.invites = invites;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true, invite };
 }
@@ -133,7 +140,7 @@ function recordLeave(guildId, userId) {
 
   const guildConfig = getGuildConfig(guildId);
   guildConfig.invites = invites;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true };
 }
@@ -176,7 +183,7 @@ function removeInvite(guildId, inviteCode) {
 
   const guildConfig = getGuildConfig(guildId);
   guildConfig.invites = invites;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true };
 }
