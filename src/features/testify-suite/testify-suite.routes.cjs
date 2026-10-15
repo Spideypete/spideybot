@@ -1,6 +1,7 @@
 const express=require('express');
 const {requireFeatureAuth}=require('../../routes/feature-auth.cjs');
 const svc=require('./testify-suite.service.cjs');
+const customSlashRuntime=require('../custom-commands/custom-slash-runtime.cjs');
 const router=express.Router();
 
 router.use(requireFeatureAuth);
@@ -16,16 +17,24 @@ function sendConfig(res,id){
 router.get('/',(req,res)=>sendConfig(res,getGuild(req)));
 router.get('/:guildId',(req,res)=>sendConfig(res,getGuild(req)));
 
-router.put('/',(req,res)=>{
+async function saveGuildSettings(req,res){
   const id=getGuild(req);
   if(!id)return res.status(400).json({success:false,error:'Missing guildId'});
-  return res.json({success:true,config:svc.save(id,req.body||{})});
-});
-router.put('/:guildId',(req,res)=>{
-  const id=getGuild(req);
-  if(!id)return res.status(400).json({success:false,error:'Missing guildId'});
-  return res.json({success:true,config:svc.save(id,req.body||{})});
-});
+  const patch=req.body||{};
+  if(Object.prototype.hasOwnProperty.call(patch,'customCommands')){
+    const current=svc.get(id).customCommands||{};
+    const previousItems=Array.isArray(current.items)?current.items:[];
+    const nextItems=Array.isArray(patch.customCommands?.items)?patch.customCommands.items:[];
+    try{
+      await customSlashRuntime.syncGuildCustomSlashCommands(req.botClient,id,previousItems,nextItems);
+    }catch(err){
+      return res.status(400).json({success:false,error:'Could not register custom slash commands: '+(err.message||String(err))});
+    }
+  }
+  return res.json({success:true,config:svc.save(id,patch)});
+}
+router.put('/',saveGuildSettings);
+router.put('/:guildId',saveGuildSettings);
 
 router.post('/:guildId/toggle',(req,res)=>{
   const id=getGuild(req);
