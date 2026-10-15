@@ -257,7 +257,11 @@ function registerTestifyHandlers(client){
         const content=String(msg.content||''),now=Date.now(),key=msg.guild.id+':'+msg.author.id;
         let reason=null;
         if(a.antiInvite!==false&&/(?:discord\.gg\/|discord(?:app)?\.com\/invite\/)/i.test(content))reason='Discord invite link';
-        if(!reason&&a.antiLink&&/https?:\/\//i.test(content))reason='Link blocked by server policy';
+        if(!reason&&a.antiLink&&/https?:\/\//i.test(content)){
+          const urls=content.match(/https?:\/\/[^\s<>]+/gi)||[],blockedDomains=Array.isArray(a.blockedDomains)?a.blockedDomains.map(x=>String(x).toLowerCase().replace(/^https?:\/\//,'').split('/')[0]).filter(Boolean):[];
+          const suspicious=['free-nitro','nitro-free','gift-discord','steamcommunity','robux-free','discordapp.com/invite','bit.ly/discord'];
+          if(urls.some(raw=>{let host='';try{host=new URL(raw).hostname.toLowerCase();}catch{}return suspicious.some(x=>raw.toLowerCase().includes(x))||blockedDomains.some(x=>host===x||host.endsWith('.'+x));}))reason='Suspicious or blocked link';
+        }
         const term=!reason?findAutoModTerm(content,c):null;
         if(!reason&&term)reason='Blocked keyword matched';
         if(!reason&&a.massMention!==false){
