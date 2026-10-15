@@ -5,7 +5,7 @@ const DEFAULTS = {
   plugins: {},
   channels: {}, roles: {}, messages: {},
   automod: { enabled: false, notifyUser: true, presetProfanity: true, presetSlurs: false, presetSexual: false, antiInvite: true, antiLink: true, antiSpam: true, antiDuplicate: true, maxMessages: 6, windowMs: 8000, caps: false, massMention: true, maxMentions: 5, screenUsername: true, screenNickname: true, screenActionTimeout: false, action: 'delete', timeoutMinutes: 10, alertStaff: true, logChannelId: null, words: [], customRules: [] },
-  audit: { enabled: false, channelId: null },
+  audit: { enabled: false, channelId: null, ignoreChannelIds: [], events: { messageDelete: true, messageUpdate: true, messageDeleteBulk: true, memberJoin: true, memberLeave: true, memberUpdate: true, bans: true, voice: true, channels: true, roles: true, guild: true }, entries: [] },
   welcome: { enabled: false, channelId: null, message: 'Welcome {user} to {server}! We now have {membercount} members.' },
   autorole: { enabled: false, roleId: null },
   sticky: {}, counting: {}, profiles: {}, warnings: {}, commandToggles: {}, blacklist: [],
