@@ -165,10 +165,27 @@ async function handlePrefix(msg,ctx){
   if(!featureIsOn(c,featureKey))return reply('That feature is currently disabled by this server.');
   try{
     if(n==='ping')return reply('🏓 Pong! '+ctx.client.ws.ping+'ms');
-    if(n==='help')return reply('📚 Prefix: '+['ping','profile','rank','balance','daily','work','beg','inventory','shop','buy','give','rob','crime','serverinfo','userinfo','avatar','8ball','rps','dice','coin','trivia','purge','slowmode','lock','unlock','warn','warnings','kick','ban','unban','softban','announce','say','poll','sticky','setprefix','automod','auditlog','welcome','autorole','verify','addxp','setxp','removexp','resetxp','stats'].map(x=>p+x).join(', '));
+    if(n==='help')return reply('📚 Prefix: '+['ping','profile','rank','balance','daily','work','beg','inventory','shop','buy','give','rob','crime','serverinfo','userinfo','avatar','8ball','rps','dice','coin','trivia','purge','slowmode','lock','unlock','warn','warnings','kick','ban','unban','softban','announce','say','poll','sticky','setprefix','automod','auditlog','welcome','autorole','verify','addxp','setxp','removexp','resetxp','stats','invites'].map(x=>p+x).join(', '));
     if(n==='profile')return reply({embeds:[profile({user:msg.author},msg.author,c)]});
     if(n==='rank'){const u=c.levels.users?.[msg.author.id]||{level:0,xp:0},per=Math.max(1,Number(c.levels.xpPerLevel)||500),progress=(Number(u.xp)||0)%per;return reply('🏆 Level '+u.level+' | Total XP '+fmt(u.xp)+' | Progress '+fmt(progress)+'/'+fmt(per)+' XP | '+fmt(per-progress)+' XP to next level.');}
     if(n==='stats'){const s=achievements.getStats(msg.guild.id,msg.author.id);return reply('📊 **Your server stats**\nMessages: **'+fmt(s.message_count)+'**\nEmojis used: **'+fmt(s.emoji_count)+'**');}
+    if(n==='invites'){
+      const sub=(a.shift()||'stats').toLowerCase(),target=msg.mentions.users.first()||msg.author;
+      if(sub==='leaderboard'){
+        const rows=inviteTracker.leaderboard(msg.guild.id,10);
+        return reply('🏆 **Invite leaderboard**\\n'+(rows.length?rows.map((x,index)=>(index+1)+'. <@'+x.userId+'> — **'+fmt(x.active)+'** active invites').join('\\n'):'No invite data has been recorded yet.'));
+      }
+      if(['add','remove','reset'].includes(sub)){
+        if(!msg.member?.permissions?.has(PermissionFlagsBits.Administrator))return reply('❌ Administrator permission required to edit invite totals.');
+        if(!msg.mentions.users.first())return reply('Usage: '+p+'invites '+sub+' @member'+(sub==='reset'?'':' amount'));
+        const amount=Number(a[a.length-1]||0);
+        if(sub!=='reset'&&(!Number.isInteger(amount)||amount<1))return reply('Enter a positive whole-number invite amount.');
+        inviteTracker.adjust(msg.guild.id,target.id,sub==='reset'?'reset':sub,amount);
+        return reply('✅ Updated invite totals for '+target.username+'.');
+      }
+      const stats=inviteTracker.getStats(msg.guild.id,target.id);
+      return reply('📨 **'+target.username+' invite stats**\\nSuccessful joins: **'+fmt(stats.joins)+'**\\nMembers left: **'+fmt(stats.leaves)+'**\\nActive invites: **'+fmt(stats.active)+'**');
+    }
     if(['addxp','setxp','removexp','resetxp'].includes(n)){
       if(!msg.member?.permissions?.has(PermissionFlagsBits.Administrator))return reply('❌ Administrator permission required to edit XP.');
       const target=msg.mentions.users.first();if(!target)return reply('Usage: '+p+n+' @member'+(n==='resetxp'?'':' amount'));
