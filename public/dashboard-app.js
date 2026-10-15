@@ -24,12 +24,8 @@ const FEATURES=[
     ['embeds','Embed Messages','Configure reusable rich message defaults.','article']
   ]],
   ['Utilities',[
-    ['search','Search','Configure supported search and lookup commands.','magnifying-glass'],
-    ['help','Help','Configure the help command and command discovery.','question'],
-    ['reminders','Reminders','Configure reminder delivery and scheduling defaults.','bell'],
-    ['statistics','Statistics Channels','Configure live server statistics channels.','chart-line'],
-    ['temporaryChannels','Temporary Channels','Configure temporary voice channel behavior.','waveform'],
-    ['birthdays','Birthdays','Configure birthday tracking and greeting behavior.','cake']
+    ['reminders','Reminders','Configure scheduled reminders, recurring events and timezone defaults.','bell'],
+    ['birthdays','Birthdays','Configure birthday announcements, roles, timezones and custom messages.','cake']
   ]],
   ['Social Alerts',[
     ['twitch','Twitch Alerts','Configure Twitch stream notifications.','twitch-logo'],
@@ -334,6 +330,27 @@ async function renderPanel(id,f,c){
  const k=f[0];
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
  if(k==='reactionRoles'){await renderReactionRolesPanel(id,f,c);return;}
+ if(k==='reminders'){
+  const cfg=c.reminderSettings||{};
+  body.innerHTML=card('Reminders','Inspired by RemindmeBot: configure reminder defaults, recurring reminders and timezone handling. Reminder scheduling and slash-command delivery must be supported by the bot runtime to take effect.',switcher(id,f,c)+
+   '<div class="welcome-panel">'+
+   '<section class="welcome-message-section"><h3>Reminder defaults</h3>'+check('reminderEnabled','Enable reminders',cfg.enabled!==false)+input('reminderTimezone','Server timezone (IANA)',cfg.timezone||'UTC')+input('reminderChannel','Default reminder channel ID (optional)',cfg.channelId||'')+input('reminderMax','Maximum active reminders per member',cfg.maxPerUser??25,'number')+'</section>'+
+   '<section class="welcome-message-section"><h3>Reminder behavior</h3>'+check('reminderDm','Deliver personal reminders by direct message',cfg.dm!==false)+check('reminderRecurring','Allow recurring reminders',cfg.recurring!==false)+check('reminderMentions','Allow reminders to mention users and roles',cfg.allowMentions===true)+'<p class="mention-help">Reference features include one-time reminders, recurring intervals, reminders for other users or roles, and server timezone settings. Timezone must be a valid IANA name, such as Europe/London or Africa/Nairobi.</p></section>'+
+   '<div class="panel-actions"><button class="select" id="saveReminderSettings" type="button">Save Reminders</button></div></div>');
+  document.getElementById('saveReminderSettings').onclick=async()=>{const timezone=val('reminderTimezone').trim()||'UTC';if(!/^[A-Za-z_+-]+(?:\/[A-Za-z0-9_+.-]+)*$/.test(timezone)){alert('Enter a valid IANA timezone, for example Africa/Nairobi.');return;}const max=Math.floor(Number(val('reminderMax'))||25);if(max<1||max>500){alert('Maximum active reminders must be between 1 and 500.');return;}const fresh=await load(id);const result=await save(id,{reminderSettings:{enabled:yes('reminderEnabled'),timezone,channelId:val('reminderChannel').trim()||null,maxPerUser:max,dm:yes('reminderDm'),recurring:yes('reminderRecurring'),allowMentions:yes('reminderMentions')}});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Reminder settings saved.');};
+  attachToggle(id,f,c);return;
+ }
+ if(k==='birthdays'){
+  const cfg=c.birthdaySettings||{};
+  body.innerHTML=card('Birthdays','Inspired by BirthdayBot: customize birthday announcements, birthday roles, privacy-friendly messages, timezone and recurring custom events.',switcher(id,f,c)+
+   '<div class="welcome-panel">'+
+   '<section class="welcome-message-section"><h3>Birthday announcements</h3>'+check('birthdayEnabled','Enable birthday celebrations',cfg.enabled!==false)+input('birthdayChannel','Birthday announcement channel ID',cfg.channelId||'')+input('birthdayRole','Birthday role ID (optional)',cfg.roleId||'')+input('birthdayTimezone','Server timezone (IANA)',cfg.timezone||'UTC')+input('birthdayHour','Announcement hour (0–23)',cfg.hour??9,'number')+'</section>'+
+   '<section class="welcome-message-section"><h3>Message and privacy</h3><label class="field">Birthday message<textarea id="birthdayMessage" rows="4" maxlength="1800" placeholder="Happy birthday, {user}! 🎂">'+esc(cfg.message||'Happy birthday, {user}! 🎂')+'</textarea></label>'+check('birthdayPing','Mention the birthday member',cfg.ping!==false)+check('birthdayAge','Allow age to be shown when available',cfg.showAge===true)+check('birthdayTimezoneUser','Use each member timezone when available',cfg.useMemberTimezone===true)+'<p class="mention-help">Supported message placeholder: {user}. Birthdays should not expose a member’s birth year unless the member has chosen to share it.</p></section>'+
+   '<section class="welcome-message-section"><h3>Custom events</h3><p class="mention-help">Use one event per line in the format <code>Name | MM-DD | Message</code>. Leave the year out for an annual event, or use <code>YYYY-MM-DD</code> for a one-time event.</p><label class="field">Custom events<textarea id="birthdayEvents" rows="4" maxlength="8000" placeholder="Server anniversary | 04-12 | Happy server anniversary, {server}!">'+esc(cfg.customEventsText||'')+'</textarea></label></section>'+
+   '<div class="panel-actions"><button class="select" id="saveBirthdaySettings" type="button">Save Birthdays</button></div></div>');
+  document.getElementById('saveBirthdaySettings').onclick=async()=>{const timezone=val('birthdayTimezone').trim()||'UTC';if(!/^[A-Za-z_+-]+(?:\/[A-Za-z0-9_+.-]+)*$/.test(timezone)){alert('Enter a valid IANA timezone, for example Africa/Nairobi.');return;}const hour=Number(val('birthdayHour'));if(!Number.isInteger(hour)||hour<0||hour>23){alert('Announcement hour must be a whole number from 0 to 23.');return;}const fresh=await load(id);const result=await save(id,{birthdaySettings:{enabled:yes('birthdayEnabled'),channelId:val('birthdayChannel').trim()||null,roleId:val('birthdayRole').trim()||null,timezone,hour,message:val('birthdayMessage').trim().slice(0,1800)||'Happy birthday, {user}! 🎂',ping:yes('birthdayPing'),showAge:yes('birthdayAge'),useMemberTimezone:yes('birthdayTimezoneUser'),customEventsText:val('birthdayEvents').trim().slice(0,8000)}});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Birthday settings saved.');};
+  attachToggle(id,f,c);return;
+ }
  if(k==='moderator'){
   const modCfg=await api('/api/config/'+encodeURIComponent(id));
   body.innerHTML=card('Moderation','Vortex-inspired moderation setup: moderator access, action logs and strike punishments.', '<div class="welcome-panel moderation-panel">'+
