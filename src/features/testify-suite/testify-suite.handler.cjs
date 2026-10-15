@@ -173,7 +173,7 @@ async function handlePrefix(msg,ctx){
       const sub=(a.shift()||'stats').toLowerCase(),target=msg.mentions.users.first()||msg.author;
       if(sub==='leaderboard'){
         const rows=inviteTracker.leaderboard(msg.guild.id,10);
-        return reply('🏆 **Invite leaderboard**\\n'+(rows.length?rows.map((x,index)=>(index+1)+'. <@'+x.userId+'> — **'+fmt(x.active)+'** active invites').join('\\n'):'No invite data has been recorded yet.'));
+        return reply('🏆 **Invite leaderboard**\n'+(rows.length?rows.map((x,index)=>(index+1)+'. <@'+x.userId+'> — **'+fmt(x.active)+'** active invites').join('\n'):'No invite data has been recorded yet.'));
       }
       if(['add','remove','reset'].includes(sub)){
         if(!msg.member?.permissions?.has(PermissionFlagsBits.Administrator))return reply('❌ Administrator permission required to edit invite totals.');
@@ -184,7 +184,7 @@ async function handlePrefix(msg,ctx){
         return reply('✅ Updated invite totals for '+target.username+'.');
       }
       const stats=inviteTracker.getStats(msg.guild.id,target.id);
-      return reply('📨 **'+target.username+' invite stats**\\nSuccessful joins: **'+fmt(stats.joins)+'**\\nMembers left: **'+fmt(stats.leaves)+'**\\nActive invites: **'+fmt(stats.active)+'**');
+      return reply('📨 **'+target.username+' invite stats**\nSuccessful joins: **'+fmt(stats.joins)+'**\nMembers left: **'+fmt(stats.leaves)+'**\nActive invites: **'+fmt(stats.active)+'**');
     }
     if(['addxp','setxp','removexp','resetxp'].includes(n)){
       if(!msg.member?.permissions?.has(PermissionFlagsBits.Administrator))return reply('❌ Administrator permission required to edit XP.');
