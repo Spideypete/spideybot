@@ -253,7 +253,7 @@ function registerTestifyHandlers(client){
     try{
       if(!msg.guild||msg.author.bot)return;
       const c=svc.get(msg.guild.id),a=c.automod||{};
-      if(featureIsOn(c,'automod')&&a.enabled!==false){
+      if(featureIsOn(c,'automod')&&a.enabled===true){
         const content=String(msg.content||''),now=Date.now(),key=msg.guild.id+':'+msg.author.id;
         let reason=null;
         if(a.antiInvite!==false&&/(?:discord\\.gg\\/|discord(?:app)?\\.com\\/invite\\/)/i.test(content))reason='Discord invite link';
