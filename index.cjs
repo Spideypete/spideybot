@@ -7047,6 +7047,21 @@ app.post("/api/bot-config/server-guard", express.json(), async (req, res) => {
 });
 
 // ============== REACT ROLES API ENDPOINTS ==============
+// Read live reaction-role settings and mappings for the selected server.
+app.get("/api/bot-config/react-roles/settings", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
+  try {
+    const service = require("./src/features/reaction-roles/reaction-roles.service.cjs");
+    res.json({ success: true, config: service.getConfig(guildId) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Could not load reaction role settings" });
+  }
+});
+
 // Save react role settings (allowMultiple, removeOnUnreact, dmConfirm)
 app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
