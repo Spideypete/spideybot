@@ -102,10 +102,7 @@ function addStyles(){
  s.textContent='.field{display:block;font-size:11px;font-weight:750;color:var(--muted);margin:10px 0}.field input{display:block;width:100%;margin-top:5px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface);color:var(--text)}.check{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700}.check input{width:18px;height:18px}.panel-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.command-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.command-item{padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2)}.feature-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;padding:12px 14px;border:1px solid var(--border);border-radius:13px;background:var(--surface-2)}.feature-toggle>span{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}.feature-toggle button{position:relative;width:48px;height:26px;border:0;border-radius:999px;background:#9ca3b8;padding:0;transition:background .12s ease,box-shadow .12s ease;cursor:pointer}.feature-toggle button:before{content:\"\";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .12s ease}.feature-toggle button.on{background:var(--petrol);box-shadow:0 0 0 3px color-mix(in srgb,var(--petrol) 16%,transparent)}.feature-toggle button.on:before{transform:translateX(22px)}.feature-toggle button:disabled{opacity:.7;cursor:wait}.overview-feature-group{margin-top:18px}.overview-feature-group h2{font-size:16px;font-weight:800;margin-bottom:10px}.overview-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.overview-feature-card{padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}.overview-feature-card:hover{transform:translateY(-1px);box-shadow:var(--shadow)}.overview-feature-top{display:flex;align-items:flex-start;gap:11px}.overview-feature-icon{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--purple)}.dark .overview-feature-icon{background:var(--accent-soft);color:var(--purple)}.overview-feature-copy{min-width:0;flex:1}.overview-feature-copy strong{display:block;font-size:12px}.overview-feature-copy span{display:block;font-size:10px;color:var(--muted);margin-top:3px;line-height:1.45}.overview-feature-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:14px}.overview-feature-status{font-size:10px;font-weight:800;color:var(--muted)}.overview-feature-card.is-on .overview-feature-status{color:var(--petrol)}.overview-feature-card.is-off{opacity:.82}.overview-toggle{position:relative;width:42px;height:23px;border:0;border-radius:999px;background:#9ca3b8;cursor:pointer;transition:background .12s ease}.overview-toggle:before{content:\"\";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform .12s ease}.overview-toggle.on{background:var(--petrol)}.overview-toggle.on:before{transform:translateX(19px)}.overview-toggle:disabled{opacity:.7;cursor:wait}.nav button.feature-disabled{opacity:.48}.nav button.feature-disabled:after{content:\"OFF\";margin-left:auto;font-size:8px;font-weight:800;letter-spacing:.5px;padding:3px 6px;border-radius:999px;background:var(--surface-2);color:var(--muted)}@media(max-width:900px){.overview-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.command-grid{grid-template-columns:1fr}.overview-feature-grid{grid-template-columns:1fr}}';
  document.head.appendChild(s);
 }
-function switcher(id,f,c){
- const on=enabled(c,f);
- return '<div class="feature-toggle"><span>'+esc(on?'Enabled':'Disabled')+'</span><button type="button" class="'+(on?'on':'')+'" data-feature-toggle="'+f[0]+'"></button></div>';
-}
+function switcher(){ return ''; }
 async function toggleFeature(id,f,current){
  const next=!enabled(current,f);
  const result=await save(id,{plugins:{[f[0]]:next}});
@@ -162,7 +159,7 @@ function attachToggle(id,f,c){
  });
 }
 function baseFeaturePanel(id,f,c,fields){
- body.innerHTML=card(f[1],f[2],switcher(id,f,c)+fields+'<div class="panel-actions">'+button('saveFeature','Save '+f[1])+'</div>');
+ body.innerHTML=card(f[1],f[2],fields+'<div class="panel-actions">'+button('saveFeature','Save '+f[1])+'</div>');
  document.getElementById('saveFeature').onclick=async()=>{
    const fresh=await load(id);
    const patch={channels:{...(fresh.channels||{}),[f[0]]:val('channel')||null},roles:{...(fresh.roles||{}),[f[0]]:val('role')||null},messages:{...(fresh.messages||{}),[f[0]]:val('message')||''}};
@@ -192,7 +189,7 @@ function embedEditor(prefix,embed,channels,roles){
  '<label class="field">Large image URL<input id="'+prefix+'Image" type="url" value="'+esc(e.image||'')+'" placeholder="https://…"></label></div>';
 }
 function messageSection(prefix,label,enabled,channel,type,message,embed,channels,roles){
- return '<section class="welcome-message-section" id="'+prefix+'Content"><div class="welcome-section-heading"><div><h3>'+esc(label)+'</h3><p>Sent '+(prefix==='welcome'?'when a member joins':'when a member leaves')+'.</p></div>'+check(prefix+'Enabled','Enable '+label.toLowerCase(),enabled)+'</div>'+
+ return '<section class="welcome-message-section" id="'+prefix+'Content"><div class="welcome-section-heading"><div><h3>'+esc(label)+'</h3><p>Sent '+(prefix==='welcome'?'when a member joins':'when a member leaves')+'.</p></div></div>'+
  '<label class="field">'+esc(label)+' channel<select id="'+prefix+'Channel">'+optionList(channels,channel,'Choose a text channel')+'</select></label>'+
  '<label class="field">Message format<select id="'+prefix+'Type"><option value="text" '+((type||'text')==='text'?'selected':'')+'>Normal text</option><option value="embed" '+(type==='embed'?'selected':'')+'>Discord embed</option></select></label>'+
  '<div id="'+prefix+'TextPanel" '+(type==='embed'?'hidden':'')+'>'+textEditor(prefix,label+' message',message,channels,roles)+'</div>'+
@@ -212,10 +209,10 @@ async function renderWelcomePanel(id,f,c){
  const goodbyeType=sm.goodbyeType||(sm.goodbyeEmbed?'embed':'text');
  const bodyHtml=messageSection('welcome','Welcome message',sm.enableWelcome??sm.welcomeEnabled??false,sm.welcomeChannel||'',welcomeType,sm.welcomeMessage??'Welcome {user} to {server}! 🎉',sm.welcomeEmbed,channels,roles)+
  messageSection('goodbye','Goodbye message',sm.enableGoodbye??sm.goodbyeEnabled??false,sm.goodbyeChannel||'',goodbyeType,sm.goodbyeMessage??'{user} has left {server}. 👋',sm.goodbyeEmbed,channels,roles)+
- '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Automatic welcome role</h3><p>Give every new member this role automatically.</p></div>'+check('autoroleEnabled','Enable automatic role',!!(sm.autoroleEnabled??sm.enableAutorole??c.autorole?.enabled))+'</div><label class="field">Role to assign<select id="autoroleRole">'+optionList(roles,sm.autoroleRole||sm.autoroleRoleId||c.autorole?.roleId||'','Choose a role')+'</select></label><p class="mention-help">SPIDEY BOT needs Manage Roles, and its highest role must be above the selected role.</p></section>'+
+ '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Automatic welcome role</h3><p>Give every new member this role automatically when a role is selected.</p></div></div><label class="field">Role to assign<select id="autoroleRole">'+optionList(roles,sm.autoroleRole||sm.autoroleRoleId||c.autorole?.roleId||'','Choose a role')+'</select></label><p class="mention-help">SPIDEY BOT needs Manage Roles, and its highest role must be above the selected role.</p></section>'+
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Admin commands</h3><p>Administrative configuration only. These settings do not change who can run the commands.</p></div></div>'+input('prefix','Prefix (admin use)',c.prefix||'!')+'<div class="command-help"><strong>Existing Discord commands</strong><p>Use your configured welcome/goodbye commands in Discord. In message text, {user} tags the member; inserted channel and role mentions remain clickable.</p></div></section>'+
  '<div class="panel-actions"><button class="select" id="saveWelcomeSettings" type="button">Save welcome & goodbye settings</button></div>';
- body.innerHTML=card('Welcome & Goodbye','Configure join and leave messages, mentions, embeds and automatic roles.',switcher(id,f,c)+'<div class="welcome-panel">'+bodyHtml+'</div>');
+ body.innerHTML=card('Welcome & Goodbye','Configure join and leave messages, mentions, embeds and automatic roles.','<div class="welcome-panel">'+bodyHtml+'</div>');
  const setMode=(key)=>{const type=val(key+'Type');document.getElementById(key+'TextPanel').hidden=type==='embed';document.getElementById(key+'EmbedPanel').hidden=type!=='embed';};
  ['welcome','goodbye'].forEach(key=>{
   document.getElementById(key+'Type').addEventListener('change',()=>setMode(key));
@@ -248,40 +245,17 @@ async function renderWelcomePanel(id,f,c){
   const e={title:val(key+'Title').trim(),description,color:val(key+'Color'),footer:val(key+'Footer').trim(),thumbnail:val(key+'Thumbnail').trim(),image:val(key+'Image').trim()};
   return Object.fromEntries(Object.entries(e).filter(([_,v])=>String(v||'').trim()));
  };
- const updateMessageSectionState=key=>{const enabled=yes(key+'Enabled');const section=document.getElementById(key+'Content');if(!section)return;section.querySelectorAll('input,select,textarea,button').forEach(el=>{if(el.id!==key+'Enabled')el.disabled=!enabled;});section.classList.toggle('welcome-section-disabled',!enabled);};
- ['welcome','goodbye'].forEach(key=>{
-  const toggle=document.getElementById(key+'Enabled');
-  toggle.addEventListener('change',async()=>{
-   const enabled=toggle.checked;
-   updateMessageSectionState(key);
-   toggle.disabled=true;
-   try{
-    const result=await api('/api/config/server-messages?guildId='+encodeURIComponent(id),{
-     method:'POST',
-     body:JSON.stringify({[key+'Enabled']:enabled,[key==='welcome'?'enableWelcome':'enableGoodbye']:enabled})
-    });
-    if(result.success!==true)throw new Error(result.error||'Server did not confirm the setting');
-    const otherEnabled=yes(key==='welcome'?'goodbyeEnabled':'welcomeEnabled');
-    await save(id,{plugins:{welcome:enabled||otherEnabled}});
-   }catch(err){
-    toggle.checked=!enabled;
-    updateMessageSectionState(key);
-    alert('Could not '+(enabled?'enable ':'disable ')+key+': '+(err.message||String(err)));
-   }finally{toggle.disabled=false;}
-  });
-  updateMessageSectionState(key);
- });
- document.getElementById('saveWelcomeSettings').onclick=async()=>{
+  document.getElementById('saveWelcomeSettings').onclick=async()=>{
   const messages={welcome:val('welcomeType')==='embed'?'':val('welcomeText'),goodbye:val('goodbyeType')==='embed'?'':val('goodbyeText')};
   const embeds={welcome:val('welcomeType')==='embed'?makeEmbed('welcome'):null,goodbye:val('goodbyeType')==='embed'?makeEmbed('goodbye'):null};
   if(wordCount(val('welcomeText'))>500||wordCount(val('goodbyeText'))>500||wordCount(val('welcomeDescription'))>500||wordCount(val('goodbyeDescription'))>500){alert('Each message or embed description must be 500 words or fewer.');return;}
   const settings={
-   welcomeEnabled:yes('welcomeEnabled'),welcomeChannel:val('welcomeChannel')||null,welcomeMessage:messages.welcome,welcomeEmbed:embeds.welcome,welcomeType:val('welcomeType'),
-   goodbyeEnabled:yes('goodbyeEnabled'),goodbyeChannel:val('goodbyeChannel')||null,goodbyeMessage:messages.goodbye,goodbyeEmbed:embeds.goodbye,goodbyeType:val('goodbyeType'),
-   autoroleEnabled:yes('autoroleEnabled'),autoroleRole:val('autoroleRole')||null
+   welcomeEnabled:true,enableWelcome:true,welcomeChannel:val('welcomeChannel')||null,welcomeMessage:messages.welcome,welcomeEmbed:embeds.welcome,welcomeType:val('welcomeType'),
+   goodbyeEnabled:true,enableGoodbye:true,goodbyeChannel:val('goodbyeChannel')||null,goodbyeMessage:messages.goodbye,goodbyeEmbed:embeds.goodbye,goodbyeType:val('goodbyeType'),
+   autoroleEnabled:true,autoroleRole:val('autoroleRole')||null
   };
   for(const key of ['welcome','goodbye']){
-   if(settings[key+'Enabled']&&!settings[key+'Channel']){alert('Choose a channel for the '+key+' message or disable it.');return;}
+   if(settings[key+'Channel']&&!String(settings[key+'Channel']).trim()){alert('Choose a valid channel for the '+key+' message.');return;}
    if(!settings[key+'Enabled'])continue;
    if(settings[key+'Type']==='text'&&!String(settings[key+'Message']||'').trim()){alert('Enter the '+key+' message or disable it.');return;}
    if(settings[key+'Type']==='embed'&&!['title','description','image','thumbnail','footer'].some(field=>String(embeds[key]?.[field]||'').trim())){alert('Add a title, description, footer or image to the '+key+' embed.');return;}
@@ -309,7 +283,7 @@ async function renderReactionRolesPanel(id,f,c){
  const channelOptions=optionList(channels,'','Choose a text channel');
  const roleOptions=optionList(roles,'','Choose a role');
  const enabledNow=rr.enabled!==false;
- body.innerHTML=card('Reaction Roles','Create custom text/embed messages and map emoji reactions to server roles. Settings apply only to the selected server.',switcher(id,f,c)+
+ body.innerHTML=card('Reaction Roles','Create custom text/embed messages and map emoji reactions to server roles. Settings apply only to the selected server.',
  '<div class="welcome-panel reaction-roles-panel">'+
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Reaction roles status</h3><p>Disable to pause the feature; configuration stays saved.</p></div>'+check('rrEnabled','Enable Reaction Roles',enabledNow)+'</div></section>'+
  '<div id="rrConfigContent" '+(enabledNow?'':'hidden')+'>'+
@@ -328,31 +302,15 @@ async function renderReactionRolesPanel(id,f,c){
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Language and notifications</h3><p>Choose the language and whether the bot should send optional notices to a server channel.</p></div></div><label class="field">Panel language<select id="rrLanguage"><option value="en" '+((rr.language||'en')==='en'?'selected':'')+'>English</option><option value="es" '+(rr.language==='es'?'selected':'')+'>Español</option><option value="fr" '+(rr.language==='fr'?'selected':'')+'>Français</option><option value="de" '+(rr.language==='de'?'selected':'')+'>Deutsch</option><option value="pt" '+(rr.language==='pt'?'selected':'')+'>Português</option><option value="pl" '+(rr.language==='pl'?'selected':'')+'>Polski</option><option value="ru" '+(rr.language==='ru'?'selected':'')+'>Русский</option></select></label>'+check('rrUpdateNotifications','Enable update notifications',!!rr.updateNotifications)+check('rrErrorReporting','Enable error reporting',!!rr.errorReporting)+'<label class="field">Notification/error channel<select id="rrNotificationChannel">'+optionList(channels,rr.notificationChannelId||'','Choose a channel (optional)')+'</select></label><p class="mention-help">These preferences are stored per server. Notification delivery requires the bot to have permission to send messages in the selected channel.</p></section>'+
  '<div class="panel-actions"><button class="select" id="rrCreateSave" type="button">Save reaction role</button><button class="select" id="rrSaveSettings" type="button">Save settings only</button></div></section>'+
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Existing reaction roles</h3><p>Manage role mappings already configured for this server.</p></div></div>'+(entryRows||'<p class="mention-help">No reaction roles have been created yet.</p>')+'</section></div></div>');
- const toggleContent=()=>{document.getElementById('rrConfigContent').hidden=!yes('rrEnabled');};
- const rrToggle=document.getElementById('rrEnabled');
- rrToggle.addEventListener('change',async()=>{
-  const enabled=rrToggle.checked;
-  toggleContent();
-  rrToggle.disabled=true;
-  try{
-   const result=await api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({enabled})});
-   if(result.success!==true)throw new Error(result.error||result.message||'The server did not confirm the setting');
-   if(result.config&&result.config.enabled!==enabled)throw new Error('The server returned a different enabled state');
-   await save(id,{plugins:{reactionRoles:enabled}});
-  }catch(e){
-   rrToggle.checked=!enabled;
-   toggleContent();
-   alert('Could not '+(enabled?'enable':'disable')+' Reaction Roles: '+(e.message||String(e)));
-  }finally{rrToggle.disabled=false;}
- });
+ // Reaction Roles is always enabled; configuration remains editable.
  document.getElementById('rrMessageAction').addEventListener('change',()=>{const existing=val('rrMessageAction')==='existing';document.getElementById('rrCreateMessage').hidden=existing;document.getElementById('rrExistingMessage').hidden=!existing;});
  document.getElementById('rrType').addEventListener('change',()=>{const embed=val('rrType')==='embed';document.getElementById('rrTextPanel').hidden=embed;document.getElementById('rrEmbedPanel').hidden=!embed;});
  document.querySelectorAll('[data-rr-insert]').forEach(btn=>btn.addEventListener('click',()=>{const type=btn.dataset.rrInsert;const target=document.getElementById('rrMessageText');let value='';if(type==='user'&&/^\\d{17,20}$/.test(val('rrMentionUser').trim()))value='<@'+val('rrMentionUser').trim()+'>';if(type==='user'&&!value){alert('Enter a valid Discord user ID first.');return;}if(type==='channel'&&val('rrMentionChannel'))value='<#'+val('rrMentionChannel')+'>';if(type==='role'&&val('rrMentionRole'))value='<@&'+val('rrMentionRole')+'>';if(!value)return;const start=target.selectionStart??target.value.length,end=target.selectionEnd??start;target.value=target.value.slice(0,start)+value+target.value.slice(end);target.focus();target.selectionStart=target.selectionEnd=start+value.length;}));
  document.getElementById('rrResolveIds').addEventListener('click',()=>{const channelIds=new Set(channels.map(x=>String(x.id))),roleIds=new Set(roles.map(x=>String(x.id)));const el=document.getElementById('rrMessageText');el.value=el.value.replace(/\b\d{17,20}\b/g,raw=>channelIds.has(raw)?'<#'+raw+'>':roleIds.has(raw)?'<@&'+raw+'>':raw);});
- const saveSettings=async()=>api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({allowMultiple:yes('rrAllowMultiple'),removeOnUnreact:yes('rrRemoveOnUnreact'),dmConfirm:yes('rrDmConfirm'),enabled:yes('rrEnabled'),language:val('rrLanguage')||'en',updateNotifications:yes('rrUpdateNotifications'),errorReporting:yes('rrErrorReporting'),notificationChannelId:val('rrNotificationChannel')||null})});
+ const saveSettings=async()=>api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({allowMultiple:yes('rrAllowMultiple'),removeOnUnreact:yes('rrRemoveOnUnreact'),dmConfirm:yes('rrDmConfirm'),enabled:true,language:val('rrLanguage')||'en',updateNotifications:yes('rrUpdateNotifications'),errorReporting:yes('rrErrorReporting'),notificationChannelId:val('rrNotificationChannel')||null})});
  document.getElementById('rrSaveSettings').onclick=async()=>{try{await saveSettings();alert('Reaction role settings saved.');}catch(e){alert('Could not save settings: '+e.message);}};
  document.getElementById('rrCreateSave').onclick=async()=>{
-  if(!yes('rrEnabled')){alert('Enable Reaction Roles first.');return;}
+  // Reaction Roles remains enabled; validate the mapping fields below.
   const action=val('rrMessageAction'),channelId=action==='existing'?val('rrExistingChannel'):val('rrChannel'),emoji=val('rrEmoji').trim(),roleId=val('rrRole');
   if(!channelId||!emoji||!roleId){alert('Choose a channel, emoji and role.');return;}
   try{
@@ -414,23 +372,12 @@ async function renderOverview(){
  if(!id){root.innerHTML=card('Server selection required','Choose a Discord server before managing features.','');return;}
  let c={plugins:{}};
  try{c=await load(id);}catch(err){root.innerHTML=card('Features unavailable','The server feature configuration could not be loaded.','<div class="activity-row"><div class="activity-main"><strong>Error</strong><span>'+esc(err.message||String(err))+'</span></div></div>');return;}
- root.innerHTML='<div class="panel-head"><div><div class="eyebrow">Essentials</div><div class="panel-title">Feature controls</div><div class="panel-sub">Every dashboard panel can be enabled or disabled here. Turning a feature off keeps its panel visible and disables its runtime.</div></div></div>'+featureGroups().map(group=>'<div class="overview-feature-group"><h2>'+esc(group.name)+'</h2><div class="overview-feature-grid">'+group.items.map(f=>{const on=enabled(c,f);return '<article class="overview-feature-card '+(on?'is-on':'is-off')+'"><div class="overview-feature-top"><div class="overview-feature-icon">'+icon(f[3])+'</div><div class="overview-feature-copy"><strong>'+esc(f[1])+'</strong><span>'+esc(f[2])+'</span></div></div><div class="overview-feature-bottom"><span class="overview-feature-status">'+(on?'ON':'OFF')+'</span><button class="overview-toggle '+(on?'on':'')+'" type="button" data-overview-toggle="'+esc(f[0])+'" aria-label="Toggle '+esc(f[1])+'" aria-pressed="'+String(on)+'"></button></div></article>';}).join('')+'</div></div>').join('');
- root.querySelectorAll('[data-overview-toggle]').forEach(el=>el.addEventListener('click',async()=>{
-   const key=el.dataset.overviewToggle,f=feature(key),next=!enabled(c,f);
-   el.disabled=true;el.classList.toggle('on',next);el.setAttribute('aria-pressed',String(next));
-   const cardEl=el.closest('.overview-feature-card');cardEl?.classList.toggle('is-on',next);cardEl?.classList.toggle('is-off',!next);const status=cardEl?.querySelector('.overview-feature-status');if(status)status.textContent=next?'ON':'OFF';
-   try{
-     await setFeatureEnabled(id,key,next);
-     c.plugins={...(c.plugins||{}),[key]:next};
-     document.querySelectorAll('[data-section="'+key+'"]').forEach(b=>b.classList.toggle('feature-disabled',!next));
-   }
-   catch(err){el.disabled=false;el.classList.toggle('on',!next);el.setAttribute('aria-pressed',String(!next));cardEl?.classList.toggle('is-on',!next);cardEl?.classList.toggle('is-off',next);if(status)status.textContent=!next?'ON':'OFF';alert('Could not '+(next?'enable ':'disable ')+f[1]+': '+(err.message||String(err)));}
- }));
+ root.innerHTML='<div class="panel-head"><div><div class="eyebrow">Essentials</div><div class="panel-title">All features available</div><div class="panel-sub">Feature switches have been removed. All dashboard features are available while we work on the configuration controls separately.</div></div></div>'+featureGroups().map(group=>'<div class="overview-feature-group"><h2>'+esc(group.name)+'</h2><div class="overview-feature-grid">'+group.items.map(f=>'<article class="overview-feature-card"><div class="overview-feature-top"><div class="overview-feature-icon">'+icon(f[3])+'</div><div class="overview-feature-copy"><strong>'+esc(f[1])+'</strong><span>'+esc(f[2])+'</span></div></div></article>').join('')+'</div></div>').join('');
 }
 async function buildNavigation(){
  if(!navigation)return;
  const id=guildId();let c={plugins:{}};
- if(id){try{c=await load(id);}catch(err){console.warn('[dashboard] feature config',err);}}
+ if(id){try{c=await load(id);const allEnabled=Object.fromEntries(all().map(f=>[f[0],true]));await save(id,{plugins:allEnabled});c.plugins={...(c.plugins||{}),...allEnabled};}catch(err){console.warn('[dashboard] feature config',err);}}
  navigation.innerHTML='';
  const main=document.createElement('div');main.className='nav-title';main.textContent='Main';navigation.appendChild(main);
  const nav=document.createElement('nav');nav.className='nav';
@@ -440,7 +387,7 @@ async function buildNavigation(){
    if(!visible.length)return;
    const heading=document.createElement('div');heading.className='nav-title';heading.textContent=group[0];navigation.appendChild(heading);
    const groupNav=document.createElement('nav');groupNav.className='nav';
-   visible.forEach(f=>{const b=document.createElement('button');b.type='button';b.dataset.section=f[0];b.classList.toggle('feature-disabled',!enabled(c,f));b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);b.onclick=()=>select(f[0]);groupNav.appendChild(b);});
+   visible.forEach(f=>{const b=document.createElement('button');b.type='button';b.dataset.section=f[0];b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);b.onclick=()=>select(f[0]);groupNav.appendChild(b);});
    navigation.appendChild(groupNav);
  });
 }
