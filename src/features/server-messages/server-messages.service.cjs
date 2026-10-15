@@ -12,6 +12,10 @@ const DEFAULT_SERVER_MESSAGES = Object.freeze({
   goodbyeChannel: null,
   goodbyeEmbed: null,
   enableBoost: false,
+  enableAutorole: false,
+  autoroleRole: null,
+  welcomeType: 'text',
+  goodbyeType: 'text',
   boostMessage: '🎉 {user} boosted {server}! Thank you!',
   boostChannel: null,
   boostEmbed: null
