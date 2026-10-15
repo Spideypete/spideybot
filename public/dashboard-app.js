@@ -122,6 +122,24 @@ function refreshToggleUI(f,next){
  document.querySelectorAll('[data-section="'+f[0]+'"]').forEach(b=>b.classList.toggle('feature-disabled',!next));
  return next;
 }
+async function setFeatureEnabled(id,key,next){
+ const previous=await load(id).catch(()=>({plugins:{}}));
+ const previousPlugin=previous.plugins?.[key]!==false;
+ await save(id,{plugins:{[key]:next}});
+ try{
+  if(key==='welcome'){
+   const result=await api('/api/config/server-messages?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({welcomeEnabled:next,enableWelcome:next,goodbyeEnabled:next,enableGoodbye:next})});
+   if(result.success!==true)throw new Error(result.error||'Server did not confirm Welcome/Goodbye state');
+  }else if(key==='reactionRoles'){
+   const result=await api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({enabled:next})});
+   if(result.success!==true||result.config?.enabled!==next)throw new Error(result.error||'Server did not confirm Reaction Roles state');
+  }
+ }catch(err){
+  await save(id,{plugins:{[key]:previousPlugin}}).catch(()=>{});
+  throw err;
+ }
+ return next;
+}
 function attachToggle(id,f,c){
  const el=document.querySelector('[data-feature-toggle]');
  if(!el)return;
@@ -130,12 +148,16 @@ function attachToggle(id,f,c){
    const next=!enabled(current,f);
    e.currentTarget.disabled=true;
    try{
-     await save(id,{plugins:{[f[0]]:next}});
-     refreshToggleUI(f,next);
+     await setFeatureEnabled(id,f[0],next);
      c.plugins={...(c.plugins||{}),[f[0]]:next};
+     if(f[0]==='welcome'||f[0]==='reactionRoles'){
+      await select(f[0]);
+      return;
+     }
+     refreshToggleUI(f,next);
    }catch(err){
      e.currentTarget.disabled=false;
-     alert(err.message);
+     alert('Could not '+(next?'enable ':'disable ')+f[1]+': '+(err.message||String(err)));
    }
  });
 }
@@ -234,10 +256,13 @@ async function renderWelcomePanel(id,f,c){
    updateMessageSectionState(key);
    toggle.disabled=true;
    try{
-    await api('/api/config/server-messages?guildId='+encodeURIComponent(id),{
+    const result=await api('/api/config/server-messages?guildId='+encodeURIComponent(id),{
      method:'POST',
      body:JSON.stringify({[key+'Enabled']:enabled,[key==='welcome'?'enableWelcome':'enableGoodbye']:enabled})
     });
+    if(result.success!==true)throw new Error(result.error||'Server did not confirm the setting');
+    const otherEnabled=yes(key==='welcome'?'goodbyeEnabled':'welcomeEnabled');
+    await save(id,{plugins:{welcome:enabled||otherEnabled}});
    }catch(err){
     toggle.checked=!enabled;
     updateMessageSectionState(key);
@@ -313,6 +338,7 @@ async function renderReactionRolesPanel(id,f,c){
    const result=await api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({enabled})});
    if(result.success!==true)throw new Error(result.error||result.message||'The server did not confirm the setting');
    if(result.config&&result.config.enabled!==enabled)throw new Error('The server returned a different enabled state');
+   await save(id,{plugins:{reactionRoles:enabled}});
   }catch(e){
    rrToggle.checked=!enabled;
    toggleContent();
@@ -394,11 +420,11 @@ async function renderOverview(){
    el.disabled=true;el.classList.toggle('on',next);el.setAttribute('aria-pressed',String(next));
    const cardEl=el.closest('.overview-feature-card');cardEl?.classList.toggle('is-on',next);cardEl?.classList.toggle('is-off',!next);const status=cardEl?.querySelector('.overview-feature-status');if(status)status.textContent=next?'ON':'OFF';
    try{
-     await save(id,{plugins:{[key]:next}});
+     await setFeatureEnabled(id,key,next);
      c.plugins={...(c.plugins||{}),[key]:next};
      document.querySelectorAll('[data-section="'+key+'"]').forEach(b=>b.classList.toggle('feature-disabled',!next));
    }
-   catch(err){el.disabled=false;el.classList.toggle('on',!next);el.setAttribute('aria-pressed',String(!next));cardEl?.classList.toggle('is-on',!next);cardEl?.classList.toggle('is-off',next);if(status)status.textContent=!next?'ON':'OFF';alert(err.message);}
+   catch(err){el.disabled=false;el.classList.toggle('on',!next);el.setAttribute('aria-pressed',String(!next));cardEl?.classList.toggle('is-on',!next);cardEl?.classList.toggle('is-off',next);if(status)status.textContent=!next?'ON':'OFF';alert('Could not '+(next?'enable ':'disable ')+f[1]+': '+(err.message||String(err)));}
  }));
 }
 async function buildNavigation(){
