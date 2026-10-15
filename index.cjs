@@ -8162,6 +8162,7 @@ app.post("/api/guild/:guildId/emojis", async (req, res) => {
   if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
   const access = await getDashboardGuildAccess(req, guild);
   if (!access.ok) return res.status(access.status).json({ error: access.error });
+  if (!access.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions) && !access.member.permissions.has(PermissionFlagsBits.Administrator)) return res.status(403).json({ error: "You need Manage Expressions permission to add server emojis" });
   const name = String(req.body?.name || "").trim();
   const image = String(req.body?.image || "");
   if (!/^[A-Za-z0-9_]{2,32}$/.test(name)) return res.status(400).json({ error: "Emoji name must be 2–32 letters, numbers or underscores" });
@@ -8189,6 +8190,7 @@ app.delete("/api/guild/:guildId/emojis/:emojiId", async (req, res) => {
   if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
   const access = await getDashboardGuildAccess(req, guild);
   if (!access.ok) return res.status(access.status).json({ error: access.error });
+  if (!access.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions) && !access.member.permissions.has(PermissionFlagsBits.Administrator)) return res.status(403).json({ error: "You need Manage Expressions permission to delete server emojis" });
   const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
   if (!botMember?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Expressions permission" });
   try {
