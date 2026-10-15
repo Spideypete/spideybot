@@ -1068,6 +1068,12 @@ player.on("connectionError", (queue, error) => {
 // ============== READY EVENT ==============
 client.once("ready", async () => {
   botLoggedIn = true;
+  try {
+    const socialNotificationsHandler = require('./src/features/social-notifications/social-notifications.handler.cjs');
+    socialNotificationsHandler.startPolling(client);
+  } catch (error) {
+    console.error('[Social Alerts] Could not start polling:', error.message);
+  }
   console.log(`✅ Logged in as ${client.user.tag}`);
   try {
     const { execSync } = require('child_process');
@@ -1239,6 +1245,10 @@ async function registerSlashCommands(forceOverwrite = false) {
 }
 
 // ============== API ENDPOINTS FOR DASHBOARD ==============
+// Social alert API used by the Twitch, YouTube, TikTok and Kick dashboard panels.
+app.locals.discordClient = client;
+app.use('/api/social-notifications', require('./src/features/social-notifications/social-notifications.routes.cjs'));
+
 app.get('/api/config', (req, res) => {
   const config = loadConfig();
   const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8`;
