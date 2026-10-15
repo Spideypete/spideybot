@@ -10,7 +10,14 @@ function auth(req, res, next) {
   next();
 }
 
-router.get('/:guildId', auth, (req, res) => {
+function requireGuildAccess(req, res, next) {
+  const guildId = req.params.guildId;
+  const allowed = Array.isArray(req.session?.guilds) && req.session.guilds.some(g => String(g.id) === String(guildId));
+  if (!allowed) return res.status(403).json({ error: "You don't have admin permissions in this server" });
+  next();
+}
+
+router.get('/:guildId', auth, requireGuildAccess, (req, res) => {
   const notifications = socialNotificationsService.getNotifications(req.params.guildId);
   const config = socialNotificationsService.getConfig(req.params.guildId);
 
@@ -87,7 +94,7 @@ router.post('/:guildId/:platform/:username/toggle', auth, express.json(), (req, 
   }
 });
 
-router.post('/:guildId/check', auth, express.json(), async (req, res) => {
+router.post('/:guildId/check', auth, requireGuildAccess, express.json(), async (req, res) => {
   const { guildId } = req.params;
 
   try {
