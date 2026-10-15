@@ -1028,6 +1028,9 @@ async function syncCustomSlashCommands(guildId, previousItems, nextItems) {
   if (nextItems.length > 25) throw new Error('A server can have at most 25 custom commands from this panel.');
 
   const reserved = new Set(testifyCommands.map(command => String(command.name).toLowerCase()));
+  const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+  const globalCommands = await rest.get(Routes.applicationCommands(client.user.id));
+  for (const command of globalCommands) reserved.add(String(command.name).toLowerCase());
   const seen = new Set();
   for (const item of nextItems) {
     const name = String(item?.name || '').trim().toLowerCase();
@@ -1038,7 +1041,6 @@ async function syncCustomSlashCommands(guildId, previousItems, nextItems) {
     seen.add(name);
   }
 
-  const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   const route = Routes.applicationGuildCommands(client.user.id, guildId);
   const existing = await rest.get(route);
   const previousNames = new Set((Array.isArray(previousItems) ? previousItems : []).map(item => String(item?.name || '').toLowerCase()));
