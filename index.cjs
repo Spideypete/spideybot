@@ -8150,7 +8150,7 @@ app.get("/api/guild/:guildId/emojis", async (req, res) => {
   try {
     const fetched = await guild.emojis.fetch();
     const emojis = [...fetched.values()].map(emoji => ({
-      id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 96 }),
+      id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 128 }),
       animated: emoji.animated, managed: emoji.managed
     })).sort((a, b) => a.name.localeCompare(b.name));
     return res.json({ emojis, count: emojis.length });
@@ -8180,7 +8180,7 @@ app.post("/api/guild/:guildId/emojis", async (req, res) => {
   }
   try {
     const emoji = await guild.emojis.create({ attachment: buffer, name, reason: "Added from the SPIDEY BOT dashboard" });
-    return res.status(201).json({ success: true, emoji: { id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 96 }), animated: emoji.animated } });
+    return res.status(201).json({ success: true, emoji: { id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 128 }), animated: emoji.animated } });
   } catch (err) {
     console.error("[dashboard emoji create]", err.message);
     const status = /maximum number|maximum.*emoji|limit/i.test(err.message) ? 409 : 400;
