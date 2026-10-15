@@ -50,8 +50,6 @@ async function handleReactionAdd(reaction, user) {
 
   const settings = service.getConfig(guild.id);
   if (settings.enabled === false) return;
-  const settings = service.getConfig(guild.id);
-  if (settings.enabled === false || settings.removeOnUnreact === false) return;
   const entries = service.getEntriesForMessage(guild.id, reaction.message.id);
   const entry = entries.find((e) => entryMatchesEmoji(e, reaction.emoji));
   if (!entry) return;
@@ -92,6 +90,8 @@ async function handleReactionRemove(reaction, user) {
   const guild = reaction.message.guild;
   if (!guild) return;
 
+  const settings = service.getConfig(guild.id);
+  if (settings.enabled === false || settings.removeOnUnreact === false) return;
   const entries = service.getEntriesForMessage(guild.id, reaction.message.id);
   const entry = entries.find((e) => entryMatchesEmoji(e, reaction.emoji));
   if (!entry) return;
