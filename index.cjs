@@ -6329,7 +6329,7 @@ app.get("/api/config/tickets", (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({});
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const config = loadConfig();
@@ -6353,7 +6353,7 @@ app.post("/api/config/tickets", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.status(400).json({ success: false, error: "No guildId provided" });
 
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const category = req.body?.category || "";
@@ -6394,7 +6394,7 @@ app.get("/api/config/giveaways", (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ giveaways: {}, activeGiveaways: {}, activeCount: 0 });
 
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const config = loadConfig();
@@ -6414,7 +6414,7 @@ app.post("/api/config/:guildId", async (req, res) => {
 
   const guildId = req.params.guildId;
   const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => g.id === guildId);
+  const hasAccess = userGuilds.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const config = loadConfig();
@@ -6441,7 +6441,7 @@ app.post("/api/giveaway/create", express.json(), async (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, error: "No guild" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
   
   const { prize, channel, duration, winners } = req.body;
@@ -6555,7 +6555,7 @@ app.post("/api/ticket/message", express.json(), async (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, error: "No guild" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
   
   const { channel, title, description, buttonLabel } = req.body;
@@ -6719,7 +6719,7 @@ app.get("/api/bot-config/custom-commands", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
   
   try {
@@ -6747,7 +6747,7 @@ app.post("/api/bot-config/custom-commands/save", express.json(), async (req, res
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
   
   try {
@@ -6787,7 +6787,7 @@ app.post("/api/bot-config/custom-commands/delete", express.json(), async (req, r
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
   
   try {
@@ -6823,7 +6823,7 @@ app.get("/api/config/:guildId", (req, res) => {
   }
 
   const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => g.id === guildId);
+  const hasAccess = userGuilds.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const config = loadConfig();
@@ -6839,7 +6839,7 @@ adminConfigs.forEach(configName => {
     if (!guildId) return res.json({});
 
     // Verify user has admin access to this guild
-    const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+    const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
     if (!hasAccess) {
       console.warn(`⚠️ Unauthorized config access attempt: ${req.session.user?.username} tried to access guild ${guildId}`);
       return res.status(403).json({ error: "You don't have admin permissions in this server" });
@@ -6858,7 +6858,7 @@ adminConfigs.forEach(configName => {
     if (!guildId) return res.json({ success: false, error: "No guild found" });
 
     // Verify user has admin access to this guild
-    const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+    const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
     if (!hasAccess) {
       console.warn(`⚠️ Unauthorized config save attempt: ${req.session.user?.username} tried to save config for guild ${guildId}`);
       return res.status(403).json({ error: "You don't have admin permissions in this server" });
@@ -6919,7 +6919,7 @@ app.post("/api/bot-config/prefix", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) {
     return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
   }
@@ -6950,7 +6950,7 @@ app.post("/api/bot-config/language", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) {
     return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
   }
@@ -6983,7 +6983,7 @@ app.post("/api/bot-config/roles", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) {
     return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
   }
@@ -7015,7 +7015,7 @@ app.post("/api/bot-config/channels", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) {
     return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
   }
@@ -7044,7 +7044,7 @@ app.post("/api/bot-config/logging", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -7062,7 +7062,7 @@ app.post("/api/bot-config/server-guard", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -7096,7 +7096,7 @@ app.get("/api/bot-config/react-roles/settings", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.status(400).json({ success: false, error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
   try {
     const service = require("./src/features/reaction-roles/reaction-roles.service.cjs");
@@ -7111,7 +7111,7 @@ app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const service = require('./src/features/reaction-roles/reaction-roles.service.cjs');
@@ -7145,7 +7145,7 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { channelId, messageId, emoji, roleId, requiredRoleIds } = req.body;
@@ -7266,7 +7266,7 @@ app.post("/api/bot-config/react-roles/remove", express.json(), async (req, res) 
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { index } = req.body;
@@ -7308,7 +7308,7 @@ app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) =>
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { channelId, type = "embed", content, title, description, color, footer, image } = req.body;
@@ -7348,7 +7348,7 @@ app.post("/api/bot-config/verification/post", express.json(), async (req, res) =
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   
   try {
@@ -7407,7 +7407,7 @@ app.post("/api/bot-config/role-category/delete", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { categoryName } = req.body;
@@ -7433,7 +7433,7 @@ app.post("/api/bot-config/setup-category", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
   try {
     const { categoryName, channelId } = req.body;
@@ -7490,7 +7490,7 @@ app.post("/api/bot-config/typed-role/add", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { type, roles, roleId, roleName } = req.body;
@@ -7538,7 +7538,7 @@ app.post("/api/bot-config/typed-role/remove", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { type, index } = req.body;
@@ -7566,7 +7566,7 @@ app.post("/api/bot-config/anti-spam", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -7586,7 +7586,7 @@ app.post("/api/bot-config/raid", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -7606,7 +7606,7 @@ app.post("/api/bot-config/permissions", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -7626,7 +7626,7 @@ app.post("/api/bot-config/messages", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -8331,7 +8331,7 @@ app.get("/api/guild/:guildId/dashboard-resources", async (req, res) => {
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
   // Primary access check from OAuth session guild list
-  let hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  let hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
 
   // Fallback access check when session guild cache is stale
   if (!hasAccess && req.session.user?.id) {
