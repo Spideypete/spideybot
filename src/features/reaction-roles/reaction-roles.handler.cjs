@@ -70,6 +70,10 @@ async function handleReactionAdd(reaction, user) {
     if (settings.allowMultiple === false) {
       const otherRoleIds = [...new Set(entries.filter(e => e.roleId !== role.id).map(e => e.roleId))].filter(roleId => member.roles.cache.has(roleId));
       if (otherRoleIds.length) await member.roles.remove(otherRoleIds, "Reaction role single-selection mode");
+      for (const otherEntry of entries.filter(e => e.emoji !== entry.emoji)) {
+        const otherReaction = reaction.message.reactions.cache.find(r => entryMatchesEmoji(otherEntry, r.emoji));
+        if (otherReaction) await otherReaction.users.remove(user.id).catch(() => {});
+      }
     }
     await member.roles.add(role, "Reaction role assigned");
     console.log(
