@@ -145,6 +145,8 @@ async function pollGuild(guildId, client) {
   const guild = client?.guilds?.cache?.get(guildId);
   if (!guild) return;
 
+  const serverSettings = socialNotificationsService.getConfig(guildId);
+  if (!serverSettings.enabled) return [];
   const notifications = socialNotificationsService.getEnabledNotifications(guildId);
   const results = [];
 
