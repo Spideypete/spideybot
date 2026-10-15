@@ -443,17 +443,22 @@ async function renderPanel(id,f,c){
    check('itLogJoins','Log successful invite joins',it.logJoins!==false)+
    check('itLogLeaves','Log when invited members leave',it.logLeaves!==false)+
    check('itRewardRoles','Automatically assign invite milestone roles',it.rewardRolesEnabled===true)+
+   check('itFraudDetection','Flag suspicious invite joins',it.fraudDetectionEnabled===true)+
+   input('itMinimumAge','Flag accounts younger than (hours)',it.minimumAccountAgeHours??24,'number')+
+   input('itRapidThreshold','Flag join bursts at this member count',it.rapidJoinThreshold??5,'number')+
+   input('itRapidWindow','Join burst window (seconds)',it.rapidJoinWindowSeconds??60,'number')+
+   check('itBlockFraudRewards','Do not award roles for flagged joins',it.blockRewardsForFlagged!==false)+
    input('itLogChannel','Invite log channel ID',it.logChannelId||'')+
    input('itReward1Count','First reward: invite threshold',rewards[0]?.threshold??5,'number')+
    input('itReward1Role','First reward: role ID',rewards[0]?.roleId||'')+
    input('itReward2Count','Second reward: invite threshold',rewards[1]?.threshold??10,'number')+
    input('itReward2Role','Second reward: role ID',rewards[1]?.roleId||'')+
-   '<p class="mention-help">Available commands: <code>/invites stats</code>, <code>/invites leaderboard</code>. Admins can also add, remove or reset invite counts. Make sure the bot role is above any reward roles.</p>'+
+   '<p class="mention-help">Feature reference: <a href="https://github.com/e-enes/invitron" target="_blank" rel="noopener noreferrer">Invitron</a>. Available commands: <code>/invites stats</code>, <code>/invites leaderboard</code>. Admins can also add, remove or reset invite counts. Fraud flags are heuristic warnings, not proof of abuse. Make sure the bot role is above any reward roles.</p>'+
    '<div class="panel-actions"><button class="select" id="saveInviteTracker" type="button">Save invite tracker</button></div></section></div>');
   document.getElementById('saveInviteTracker').onclick=async()=>{
    const rewards=[];
    for(const n of [1,2]){const threshold=Number(val('itReward'+n+'Count')),roleId=val('itReward'+n+'Role').trim();if(roleId&&Number.isInteger(threshold)&&threshold>0)rewards.push({threshold,roleId});}
-   const next={...it,enabled:yes('itEnabled'),logJoins:yes('itLogJoins'),logLeaves:yes('itLogLeaves'),rewardRolesEnabled:yes('itRewardRoles'),logChannelId:val('itLogChannel').trim()||null,rewards};
+   const minimumAccountAgeHours=Number(val('itMinimumAge')),rapidJoinThreshold=Number(val('itRapidThreshold')),rapidJoinWindowSeconds=Number(val('itRapidWindow'));if(!Number.isFinite(minimumAccountAgeHours)||minimumAccountAgeHours<0||minimumAccountAgeHours>8760||!Number.isInteger(rapidJoinThreshold)||rapidJoinThreshold<2||rapidJoinThreshold>100||!Number.isInteger(rapidJoinWindowSeconds)||rapidJoinWindowSeconds<10||rapidJoinWindowSeconds>3600){alert('Check fraud detection thresholds. Account age must be 0–8760 hours, join count 2–100 and window 10–3600 seconds.');return;}const next={...it,enabled:yes('itEnabled'),logJoins:yes('itLogJoins'),logLeaves:yes('itLogLeaves'),rewardRolesEnabled:yes('itRewardRoles'),fraudDetectionEnabled:yes('itFraudDetection'),minimumAccountAgeHours,rapidJoinThreshold,rapidJoinWindowSeconds,blockRewardsForFlagged:yes('itBlockFraudRewards'),logChannelId:val('itLogChannel').trim()||null,rewards};
    try{const result=await save(id,{inviteTracker:next});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Invite tracker settings saved.');await renderPanel(id,f,await load(id));}
    catch(err){alert('Could not save invite tracker settings: '+(err.message||String(err)));}
   };
