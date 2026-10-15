@@ -78,6 +78,29 @@ test('custom commands create, match, count, and persist', async () => {
   assert.equal(freshService.findMatch(guildId, 'help'), null);
 });
 
+test('the live invite-tracker service persists manual adjustments and leaderboard stats', () => {
+  const guildId = 'guild-live-invite-tracker';
+  const suiteService = require('../src/features/testify-suite/testify-suite.service.cjs');
+  const tracker = require('../src/features/invite-tracker/invite-tracker.service.cjs');
+  const listeners = {};
+  const fakeClient = {
+    once: (event, handler) => { listeners['once:' + event] = handler; },
+    on: (event, handler) => { listeners[event] = handler; }
+  };
+  tracker.initialize(fakeClient, suiteService);
+  suiteService.save(guildId, {
+    inviteTracker: { enabled: true, counts: {}, joinedBy: {}, rewards: [] }
+  });
+
+  tracker.adjust(guildId, 'inviter-1', 'add', 3);
+  assert.deepEqual(tracker.getStats(guildId, 'inviter-1'), { joins: 3, leaves: 0, active: 3 });
+  assert.equal(tracker.leaderboard(guildId)[0].userId, 'inviter-1');
+  tracker.adjust(guildId, 'inviter-1', 'remove', 1);
+  assert.equal(tracker.getStats(guildId, 'inviter-1').active, 2);
+  tracker.adjust(guildId, 'inviter-1', 'reset', 0);
+  assert.equal(tracker.getStats(guildId, 'inviter-1').active, 0);
+});
+
 test('invite tracker persists settings, invite usage, joins, leaves and leaderboard', () => {
   const guildId = 'guild-invite-tests';
   invites.setConfig(guildId, { enabled: true });
