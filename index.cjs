@@ -6848,9 +6848,7 @@ adminConfigs.forEach(configName => {
         goodbyeChannel: body.goodbyeChannel !== undefined ? body.goodbyeChannel : currentMessages.goodbyeChannel,
         goodbyeMessage: body.goodbyeMessage !== undefined ? body.goodbyeMessage : currentMessages.goodbyeMessage,
         goodbyeEmbed: body.goodbyeEmbed !== undefined ? body.goodbyeEmbed : currentMessages.goodbyeEmbed,
-        goodbyeType: body.goodbyeType !== undefined ? body.goodbyeType : currentMessages.goodbyeType,
-        enableAutorole: body.autoroleEnabled !== undefined ? !!body.autoroleEnabled : currentMessages.enableAutorole,
-        autoroleRole: body.autoroleRole !== undefined ? body.autoroleRole : currentMessages.autoroleRole
+        goodbyeType: body.goodbyeType !== undefined ? body.goodbyeType : currentMessages.goodbyeType
       });
       if (body.welcomeChannel !== undefined) config.guilds[guildId].welcomeChannelId = body.welcomeChannel;
     }
