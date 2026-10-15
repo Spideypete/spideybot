@@ -230,6 +230,12 @@ async function renderWelcomePanel(id,f,c){
    goodbyeEnabled:yes('goodbyeEnabled'),goodbyeChannel:val('goodbyeChannel')||null,goodbyeMessage:messages.goodbye,goodbyeEmbed:embeds.goodbye,goodbyeType:val('goodbyeType'),
    autoroleEnabled:yes('autoroleEnabled'),autoroleRole:val('autoroleRole')||null
   };
+  for(const key of ['welcome','goodbye']){
+   if(settings[key+'Enabled']&&!settings[key+'Channel']){alert('Choose a channel for the '+key+' message or disable it.');return;}
+   if(!settings[key+'Enabled'])continue;
+   if(settings[key+'Type']==='text'&&!String(settings[key+'Message']||'').trim()){alert('Enter the '+key+' message or disable it.');return;}
+   if(settings[key+'Type']==='embed'&&!['title','description','image','thumbnail','footer'].some(field=>String(embeds[key]?.[field]||'').trim())){alert('Add a title, description, footer or image to the '+key+' embed.');return;}
+  }
   try{
    await api('/api/config/server-messages?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify(settings)});
    await save(id,{prefix:val('prefix')||'!',autorole:{enabled:settings.autoroleEnabled,roleId:settings.autoroleRole}});
