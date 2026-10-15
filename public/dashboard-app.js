@@ -177,10 +177,11 @@ function messageSection(prefix,label,enabled,channel,type,message,embed,channels
  '<div id="'+prefix+'EmbedPanel" '+(type==='embed'?'':'hidden')+'>'+embedEditor(prefix,embed,channels,roles)+'</div></section>';
 }
 async function renderWelcomePanel(id,f,c){
- const [channelResult,roleResult,settingsResult]=await Promise.all([
+ const [channelResult,roleResult,settingsResult,rrResult]=await Promise.all([
   api('/api/guild/'+encodeURIComponent(id)+'/channels'),
   api('/api/guild/'+encodeURIComponent(id)+'/roles'),
-  api('/api/config/'+encodeURIComponent(id))
+  api('/api/config/'+encodeURIComponent(id)),
+  api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id))
  ]);
  const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
  const roles=roleResult.roles||[];
@@ -261,12 +262,12 @@ async function renderReactionRolesPanel(id,f,c){
  const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
  const roles=(roleResult.roles||[]).filter(x=>!x.managed);
  const gc=settingsResult||{};
- const rr=gc.reactRoles||{};
+ const rr=rrResult.config||gc.reactRoles||{};
  const entries=Array.isArray(rr.entries)?rr.entries:[];
  const entryRows=entries.map((e,i)=>'<div class="rr-entry"><div><strong>'+esc(e.emoji||'😀')+' → '+esc(e.roleName||roles.find(r=>r.id===e.roleId)?.name||'Role')+'</strong><p>#'+esc(e.channelName||channels.find(ch=>ch.id===e.channelId)?.name||'channel')+' · Message '+esc(e.messageId||'')+'</p></div><button type="button" class="rr-remove" data-remove-rr="'+i+'">Remove</button></div>').join('');
  const channelOptions=optionList(channels,'','Choose a text channel');
  const roleOptions=optionList(roles,'','Choose a role');
- const enabledNow=gc.plugins?.reactionRoles!==false;
+ const enabledNow=rr.enabled!==false&&gc.plugins?.reactionRoles!==false;
  body.innerHTML=card('Reaction Roles','Create custom text/embed messages and map emoji reactions to server roles. Settings apply only to the selected server.',switcher(id,f,c)+
  '<div class="welcome-panel reaction-roles-panel">'+
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Reaction roles status</h3><p>Disable to pause the feature; configuration stays saved.</p></div>'+check('rrEnabled','Enable Reaction Roles',enabledNow)+'</div></section>'+
@@ -282,16 +283,17 @@ async function renderReactionRolesPanel(id,f,c){
  '</div>'+
  '<div id="rrExistingMessage" hidden><label class="field">Message channel<select id="rrExistingChannel">'+channelOptions+'</select></label>'+input('rrMessageId','Existing message ID','')+'<p class="mention-help">Paste the message ID from the selected server and channel. The bot must be able to view the channel and message.</p></div>'+
  '<div class="rr-mapping"><h4>Emoji → role mapping</h4><div class="rr-mapping-grid">'+input('rrEmoji','Emoji (Unicode or custom emoji)','🎮')+'<label class="field">Role to assign<select id="rrRole">'+roleOptions+'</select></label></div><p class="mention-help">When a member adds this reaction, the bot assigns the selected role. Removing the reaction removes the role.</p></div>'+
- '<div class="rr-options">'+check('rrAllowMultiple','Allow members to select multiple roles',rr.allowMultiple!==false)+check('rrRemoveOnUnreact','Remove role when reaction is removed',rr.removeOnUnreact!==false)+check('rrDmConfirm','Send a DM confirmation',!!rr.dmConfirm)+'</div>'+
+ '<div class="rr-options">'+check('rrAllowMultiple','Allow members to select multiple roles',rr.allowMultiple!==false)+check('rrRemoveOnUnreact','Remove role when reaction is removed',rr.removeOnUnreact!==false)+check('rrDmConfirm','Send a DM confirmation',!!(rr.dmConfirm||rr.dmConfirmations))+'</div>'+
+ '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Language and notifications</h3><p>Choose the language and whether the bot should send optional notices to a server channel.</p></div></div><label class="field">Panel language<select id="rrLanguage"><option value="en" '+((rr.language||'en')==='en'?'selected':'')+'>English</option><option value="es" '+(rr.language==='es'?'selected':'')+'>Español</option><option value="fr" '+(rr.language==='fr'?'selected':'')+'>Français</option><option value="de" '+(rr.language==='de'?'selected':'')+'>Deutsch</option><option value="pt" '+(rr.language==='pt'?'selected':'')+'>Português</option><option value="pl" '+(rr.language==='pl'?'selected':'')+'>Polski</option><option value="ru" '+(rr.language==='ru'?'selected':'')+'>Русский</option></select></label>'+check('rrUpdateNotifications','Enable update notifications',!!rr.updateNotifications)+check('rrErrorReporting','Enable error reporting',!!rr.errorReporting)+'<label class="field">Notification/error channel<select id="rrNotificationChannel">'+optionList(channels,rr.notificationChannelId||'','Choose a channel (optional)')+'</select></label><p class="mention-help">These preferences are stored per server. Notification delivery requires the bot to have permission to send messages in the selected channel.</p></section>'+
  '<div class="panel-actions"><button class="select" id="rrCreateSave" type="button">Save reaction role</button><button class="select" id="rrSaveSettings" type="button">Save settings only</button></div></section>'+
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Existing reaction roles</h3><p>Manage role mappings already configured for this server.</p></div></div>'+(entryRows||'<p class="mention-help">No reaction roles have been created yet.</p>')+'</section></div></div>');
  const toggleContent=()=>{document.getElementById('rrConfigContent').hidden=!yes('rrEnabled');};
- document.getElementById('rrEnabled').addEventListener('change',async()=>{toggleContent();try{await save(id,{plugins:{...(gc.plugins||{}),reactionRoles:yes('rrEnabled')}});await api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({allowMultiple:yes('rrAllowMultiple'),removeOnUnreact:yes('rrRemoveOnUnreact'),dmConfirm:yes('rrDmConfirm'),enabled:yes('rrEnabled')})});}catch(e){alert('Could not update feature status: '+e.message);}});
+ document.getElementById('rrEnabled').addEventListener('change',async()=>{toggleContent();try{await save(id,{plugins:{...(gc.plugins||{}),reactionRoles:yes('rrEnabled')}});await api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({allowMultiple:yes('rrAllowMultiple'),removeOnUnreact:yes('rrRemoveOnUnreact'),dmConfirm:yes('rrDmConfirm'),enabled:yes('rrEnabled'),language:val('rrLanguage')||'en',updateNotifications:yes('rrUpdateNotifications'),errorReporting:yes('rrErrorReporting'),notificationChannelId:val('rrNotificationChannel')||null})});}catch(e){alert('Could not update feature status: '+e.message);}});
  document.getElementById('rrMessageAction').addEventListener('change',()=>{const existing=val('rrMessageAction')==='existing';document.getElementById('rrCreateMessage').hidden=existing;document.getElementById('rrExistingMessage').hidden=!existing;});
  document.getElementById('rrType').addEventListener('change',()=>{const embed=val('rrType')==='embed';document.getElementById('rrTextPanel').hidden=embed;document.getElementById('rrEmbedPanel').hidden=!embed;});
  document.querySelectorAll('[data-rr-insert]').forEach(btn=>btn.addEventListener('click',()=>{const type=btn.dataset.rrInsert;const target=document.getElementById('rrMessageText');let value='';if(type==='user'&&/^\\d{17,20}$/.test(val('rrMentionUser').trim()))value='<@'+val('rrMentionUser').trim()+'>';if(type==='user'&&!value){alert('Enter a valid Discord user ID first.');return;}if(type==='channel'&&val('rrMentionChannel'))value='<#'+val('rrMentionChannel')+'>';if(type==='role'&&val('rrMentionRole'))value='<@&'+val('rrMentionRole')+'>';if(!value)return;const start=target.selectionStart??target.value.length,end=target.selectionEnd??start;target.value=target.value.slice(0,start)+value+target.value.slice(end);target.focus();target.selectionStart=target.selectionEnd=start+value.length;}));
  document.getElementById('rrResolveIds').addEventListener('click',()=>{const channelIds=new Set(channels.map(x=>String(x.id))),roleIds=new Set(roles.map(x=>String(x.id)));const el=document.getElementById('rrMessageText');el.value=el.value.replace(/\b\d{17,20}\b/g,raw=>channelIds.has(raw)?'<#'+raw+'>':roleIds.has(raw)?'<@&'+raw+'>':raw);});
- const saveSettings=async()=>api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({allowMultiple:yes('rrAllowMultiple'),removeOnUnreact:yes('rrRemoveOnUnreact'),dmConfirm:yes('rrDmConfirm'),enabled:yes('rrEnabled')})});
+ const saveSettings=async()=>api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({allowMultiple:yes('rrAllowMultiple'),removeOnUnreact:yes('rrRemoveOnUnreact'),dmConfirm:yes('rrDmConfirm'),enabled:yes('rrEnabled'),language:val('rrLanguage')||'en',updateNotifications:yes('rrUpdateNotifications'),errorReporting:yes('rrErrorReporting'),notificationChannelId:val('rrNotificationChannel')||null})});
  document.getElementById('rrSaveSettings').onclick=async()=>{try{await saveSettings();alert('Reaction role settings saved.');}catch(e){alert('Could not save settings: '+e.message);}};
  document.getElementById('rrCreateSave').onclick=async()=>{
   if(!yes('rrEnabled')){alert('Enable Reaction Roles first.');return;}
