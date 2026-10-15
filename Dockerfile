@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Native modules such as better-sqlite3 need a compiler toolchain on Alpine.
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ git
 
 COPY package*.json ./
 
