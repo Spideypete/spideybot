@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const CONFIG_FILE = path.join(__dirname, '../../config.json');
+const CONFIG_FILE = process.env.SPIDEYBOT_CONFIG_PATH || path.join(__dirname, '../../config.json');
 
 const DEFAULT_GUILD_CONFIG = {
   welcomeChannelId: null,
