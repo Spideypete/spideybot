@@ -10,7 +10,8 @@ const DEFAULTS = {
   autorole: { enabled: false, roleId: null },
   sticky: {}, counting: {}, profiles: {}, warnings: {}, commandToggles: {}, blacklist: [],
   economy: { enabled: true, currency: 'coins', daily: 100, workMin: 20, workMax: 60, cooldown: 300000, users: {}, shop: [] },
-  levels: { enabled: true, xpPerMessage: 15, xpPerLevel: 500, xpCooldownSeconds: 60, announceChannel: null, announce: true, rewards: {}, users: {} }
+  levels: { enabled: true, xpPerMessage: 15, xpPerLevel: 500, xpCooldownSeconds: 60, announceChannel: null, announce: true, rewards: {}, users: {} },
+  tickets: { enabled: true, categoryId: null, ticketChannelId: null, supportRoleId: null, logChannelId: null, transcriptChannelId: null, ticketPrefix: 'ticket', maxTicketsPerUser: 1, panelTitle: 'Need help? Open a ticket', panelDescription: 'Select the button below to contact our support team.', buttonLabel: 'Create Ticket', welcomeMessage: 'Hello {user}, please describe your issue and a staff member will be with you shortly.', questions: [], allowUserClose: true, claimEnabled: true, allowReopen: true, transcriptsEnabled: true, autoCloseHours: 0, records: {}, nextNumber: 1 }
 };
 
 const clone=v=>JSON.parse(JSON.stringify(v));
@@ -19,7 +20,7 @@ function get(guildId){
   if(!c.testifySuite)updateGuildConfig(guildId,{testifySuite:clone(DEFAULTS)});
   const fresh=getGuildConfig(guildId);
   const out={...clone(DEFAULTS),...(fresh.testifySuite||{})};
-  for(const k of ['plugins','channels','roles','messages','sticky','counting','profiles','warnings','commandToggles','blacklist','automod','audit','welcome','autorole','economy','levels']){
+  for(const k of ['plugins','channels','roles','messages','sticky','counting','profiles','warnings','commandToggles','blacklist','automod','audit','welcome','autorole','economy','levels','tickets']){
     const base=clone(DEFAULTS[k]||{});
     out[k]={...base,...(out[k]||{})};
   }
