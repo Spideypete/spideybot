@@ -16,6 +16,25 @@
 .dark .stat-icon{background:var(--accent-soft);color:var(--purple)}
 .dark .chart .bar{background:linear-gradient(180deg,#9270ad,var(--purple))}
 .select:focus-visible,.top-btn:focus-visible,.profile:focus-visible,.nav button:focus-visible{outline:2px solid var(--petrol);outline-offset:2px}
+
+/* Reference UI skin: blue sidebar, white active item, clean rounded cards. Visual-only. */
+:root{--bg:#f4f6fc;--surface:#fff;--surface2:#f5f7fc;--border:#e0e6f2;--text:#1b2540;--muted:#687590;--purple:#0046fd;--petrol:#315eff;--accent-soft:#e9efff;--petrol-soft:#edf2ff;--shadow:0 8px 24px rgba(26,48,100,.07)}
+.sidebar{background:#0046fd;color:#fff;border-right:0;padding:24px 0 24px 16px}
+.brand{padding:4px 16px 28px 10px}.brand-mark{background:#fff;color:#0046fd;border-radius:10px;box-shadow:0 5px 14px rgba(0,0,0,.12)}.brand-name{color:#fff}.brand-sub{color:rgba(255,255,255,.72)}
+.nav-title{color:rgba(255,255,255,.68);padding-left:12px}.nav{padding-right:0;gap:5px}
+.nav button{color:rgba(255,255,255,.88);border-radius:27px 0 0 27px;min-height:44px;padding-left:14px;transition:background .18s ease,color .18s ease}
+.nav button:hover{background:rgba(255,255,255,.14);color:#fff}
+.nav button.active{background:#fff;color:#0046fd;box-shadow:none;border-radius:27px 0 0 27px;font-weight:800}.nav button.active .icon{color:#0046fd}
+.sidebar-foot{padding:12px 16px 12px 12px}.bot-status{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:12px}.status-label{color:#fff}.status-copy{color:rgba(255,255,255,.72)}
+.topbar{background:rgba(255,255,255,.94);border-bottom-color:var(--border)}.eyebrow{color:#0046fd}.card,.stat{border-radius:13px;box-shadow:var(--shadow)}
+.stat-icon,.activity-icon{background:#e9efff;color:#0046fd;border-radius:10px}.chart{border-radius:12px}.chart .bar{background:linear-gradient(180deg,#5d88ff,#0046fd)}.activity-row{border-radius:10px}.select,.top-btn,.profile{border-radius:10px}
+.dark{--bg:#0c1223;--surface:#141d33;--surface2:#1a2742;--border:#2a3857;--text:#f2f5ff;--muted:#aab7d3;--purple:#83a4ff;--petrol:#6b8fff;--accent-soft:#202f52;--petrol-soft:#1b2a4b;--shadow:0 8px 24px rgba(0,0,0,.18)}
+.dark .sidebar{background:#101a3b;border-right:1px solid #25345c}.dark .brand-mark{background:#fff;color:#0046fd}
+.dark .nav button{color:rgba(242,245,255,.82)}.dark .nav button:hover{background:rgba(255,255,255,.1);color:#fff}.dark .nav button.active{background:#fff;color:#0046fd}.dark .nav button.active .icon{color:#0046fd}
+.dark .bot-status{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}.dark .status-label{color:#fff}.dark .status-copy{color:#aab7d3}
+.dark .topbar{background:rgba(12,18,35,.92)}.dark .stat-icon,.dark .activity-icon{background:#202f52;color:#9bb4ff}.dark .chart .bar{background:linear-gradient(180deg,#83a4ff,#315eff)}.dark .eyebrow{color:#9bb4ff}
+@media(max-width:760px){.sidebar{padding:24px 0 24px 16px}.sidebar-foot{padding-right:16px}.nav button,.nav button.active{border-radius:27px 0 0 27px}}
+
 </style></head>
 <body class="dark"><div class="app"><aside class="sidebar" id="sidebar"><div class="brand"><div class="brand-mark">S</div><div><div class="brand-name">SPIDEY BOT</div><div class="brand-sub">Discord Dashboard</div></div></div><div id="navigation"></div><div class="sidebar-foot"><div class="bot-status"><div><span class="status-dot"></span><span class="status-label">Bot Online</span></div><div class="status-copy">SPIDEY BOT is connected and ready.</div></div></div></aside>
 <main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:10px"><button class="mobile-menu" id="menu">☰</button><div class="crumb"><strong>SPIDEY BOT</strong><span>/</span><span>Dashboard</span></div></div><div class="top-actions"><button class="top-btn" id="theme" title="Toggle theme">☾</button><div class="profile"><div class="avatar" id="userAvatar">SP</div><span id="userName">Administrator</span></div></div></header>
