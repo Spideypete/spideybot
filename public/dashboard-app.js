@@ -47,7 +47,7 @@ const FEATURES=[
     ['games','Games','Manage community games and activities.','gamepad-2']
   ]],
   ['Advanced',[
-    ['ai','AI Assistant','Configure the AI chat assistant inspired by DebilBot.','sparkle']
+    ['ai','AI Assistant','Configure the AI chat assistant.','sparkle']
   ]],
   ['Administration',[
     ['commands','Commands','Enable or disable individual commands by server.','command'],
@@ -370,7 +370,7 @@ async function renderDebilInspiredPanel(id,f,c){
    ['allowReroll','Allow rerolling winners',c.giveawaySettings?.allowReroll!==false,'check'],
    ['requireRoleId','Optional required role ID',c.giveawaySettings?.requireRoleId||'','text']
   ]},
-  economy:{key:'economySettings',title:'Economy settings',intro:'DebilBot-inspired economy options. These settings need matching command/runtime support before they affect Discord commands.',fields:[
+  economy:{key:'economySettings',title:'Economy settings',intro:'Configure server currency, rewards, and member transfers.',fields:[
    ['enabled','Enable economy',c.economySettings?.enabled!==false,'check'],
    ['currencyName','Currency name',c.economySettings?.currencyName||'Credits','text'],
    ['currencySymbol','Currency symbol',c.economySettings?.currencySymbol||'₵','text'],
@@ -379,7 +379,7 @@ async function renderDebilInspiredPanel(id,f,c){
    ['startingBalance','Starting balance',c.economySettings?.startingBalance||0,'number'],
    ['allowTransfers','Allow member-to-member transfers',c.economySettings?.allowTransfers!==false,'check']
   ]},
-  music:{key:'musicSettings',title:'Music settings',intro:'DebilBot-inspired voice music controls. Playback requires a compatible music runtime and audio dependencies.',fields:[
+  music:{key:'musicSettings',title:'Music settings',intro:'Configure voice music controls. Playback requires a compatible music runtime and audio dependencies.',fields:[
    ['enabled','Enable music controls',c.musicSettings?.enabled!==false,'check'],
    ['djRoleId','DJ role ID',c.musicSettings?.djRoleId||'','text'],
    ['musicChannelId','Optional music command channel ID',c.musicSettings?.musicChannelId||'','text'],
@@ -387,7 +387,7 @@ async function renderDebilInspiredPanel(id,f,c){
    ['allowPlaylists','Allow playlists',c.musicSettings?.allowPlaylists!==false,'check'],
    ['allowSkip','Allow skip/pause/resume controls',c.musicSettings?.allowSkip!==false,'check']
   ]},
-  casino:{key:'casinoSettings',title:'Casino settings',intro:'DebilBot includes a slots game with configurable bets and multipliers. Use limits responsibly; this is virtual in-server currency.',fields:[
+  casino:{key:'casinoSettings',title:'Casino settings',intro:'Configure slots, bet limits, and multipliers for virtual in-server currency.',fields:[
    ['enabled','Enable casino',c.casinoSettings?.enabled!==false,'check'],
    ['minBet','Minimum bet',c.casinoSettings?.minBet||50,'number'],
    ['maxBet','Maximum bet',c.casinoSettings?.maxBet||10000,'number'],
@@ -401,14 +401,14 @@ async function renderDebilInspiredPanel(id,f,c){
    ['drawIntervalHours','Draw interval (hours)',c.lotterySettings?.drawIntervalHours||24,'number'],
    ['prizePercent','Prize pool percentage',c.lotterySettings?.prizePercent||80,'number']
   ]},
-  games:{key:'gamesSettings',title:'Games settings',intro:'Game ideas taken from DebilBot’s public feature set: Rock Paper Scissors, Slots, jokes and quote cards. Slots are also managed in Casino.',fields:[
+  games:{key:'gamesSettings',title:'Games settings',intro:'Configure community games including Rock Paper Scissors, slots, jokes, and quote cards. Slots are also managed in Casino.',fields:[
    ['enabled','Enable games panel settings',c.gamesSettings?.enabled!==false,'check'],
    ['rockPaperScissors','Rock Paper Scissors',c.gamesSettings?.rockPaperScissors!==false,'check'],
    ['jokes','Joke command',c.gamesSettings?.jokes!==false,'check'],
    ['quoteCards','Quote image command',c.gamesSettings?.quoteCards!==false,'check'],
    ['gameChannelId','Optional games channel ID',c.gamesSettings?.gameChannelId||'','text']
   ]},
-  ai:{key:'aiAssistantSettings',title:'AI Assistant settings',intro:'Inspired by DebilBot’s OpenRouter chat feature. Configure the model and access rules here; an AI runtime and secret API key must be wired on the bot host for chat to work.',fields:[
+  ai:{key:'aiAssistantSettings',title:'AI Assistant settings',intro:'Configure the AI model and access rules. An AI runtime and secret API key must be wired on the bot host for chat to work.',fields:[
    ['enabled','Enable AI Assistant',c.aiAssistantSettings?.enabled!==false,'check'],
    ['model','OpenRouter model ID',c.aiAssistantSettings?.model||'','text'],
    ['channelId','Optional allowed channel ID',c.aiAssistantSettings?.channelId||'','text'],
@@ -787,7 +787,7 @@ async function renderEmbedsPanel(id,f,c){
  loadTemplate(null);
 }
 async function renderCommands(id,f,c){
- const groups={Information:['avatar','userinfo','serverinfo','profile','rank','roleinfo','botinfo','membercount','permissions'],Economy:['daily','beg','deposit','withdraw','inventory','shop','buy','give','rob','crime','pet'],Fun:['poll','calculator','ascii','advice','dadjoke','wouldyourrather','hack','relationship'],Moderation:['purge','softban','unban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread'],AutoMod:['automod','automodwords','automodlinks','automodspam'],Configuration:['auditlog','setprefix','sticky','unsticky','counting','welcome','autorole','verify','toggle','ticket'],Levels:['levelrewards','setlevelreward','resetxp'],Administration:['blacklist','unblacklist','reloadconfig','debug','guildlist','botstats']};
+ const groups={Information:['avatar','userinfo','serverinfo','roleinfo','botinfo','membercount','permissions','profile','rank'],Economy:['daily','beg','deposit','withdraw','inventory','shop','buy','give','rob','crime','pet'],Fun:['poll','deletepoll','calculator','ascii','advice','dadjoke','wouldyourrather','hack','relationship'],Moderation:['purge','softban','unban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread'],AutoMod:['automod','automodwords','automodlinks','automodspam'],Configuration:['auditlog','setprefix','sticky','unsticky','counting','welcome','goodbye','autorole','verify','commandtoggle'],Levels:['levelrewards','setlevelreward','resetxp','addxp','setxp','removexp'],Invites:['invitesstats','invitesleaderboard','invitesadd','invitesremove','invitesreset'],Tickets:['ticket'],Administration:['blacklist','unblacklist','reloadconfig','debug','guildlist','botstats']};
  let html=switcher(id,f,c)+'<div class="command-grid">';
  Object.entries(groups).forEach(([group,names])=>names.forEach(name=>{html+='<label class="command-item"><span>'+esc(group)+' · '+esc(name)+'</span><input type="checkbox" id="cmd_'+esc(name)+'" '+(c.commandToggles?.[name]!==false?'checked':'')+'></label>';}));
  html+='</div><div class="panel-actions">'+button('saveCommands','Save command settings')+'</div>';
