@@ -434,6 +434,31 @@ async function renderPanel(id,f,c){
   };
   attachToggle(id,f,c);return;
  }
+ if(k==='inviteTracker'){
+  const it=c.inviteTracker||{},rewards=Array.isArray(it.rewards)?it.rewards:[];
+  body.innerHTML=card('Invite Tracker','Track which members invite people, show invite totals and leaderboards, log joins and leaves, and optionally reward invite milestones. Based on the feature set of Invitron.', 
+   '<div class="welcome-panel">'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Tracking settings</h3><p>Invite attribution requires the bot to have permission to view server invites.</p></div></div>'+
+   check('itEnabled','Enable invite tracking',it.enabled!==false)+
+   check('itLogJoins','Log successful invite joins',it.logJoins!==false)+
+   check('itLogLeaves','Log when invited members leave',it.logLeaves!==false)+
+   check('itRewardRoles','Automatically assign invite milestone roles',it.rewardRolesEnabled===true)+
+   input('itLogChannel','Invite log channel ID',it.logChannelId||'')+
+   input('itReward1Count','First reward: invite threshold',rewards[0]?.threshold??5,'number')+
+   input('itReward1Role','First reward: role ID',rewards[0]?.roleId||'')+
+   input('itReward2Count','Second reward: invite threshold',rewards[1]?.threshold??10,'number')+
+   input('itReward2Role','Second reward: role ID',rewards[1]?.roleId||'')+
+   '<p class="mention-help">Available commands: <code>/invites stats</code>, <code>/invites leaderboard</code>. Admins can also add, remove or reset invite counts. Make sure the bot role is above any reward roles.</p>'+
+   '<div class="panel-actions"><button class="select" id="saveInviteTracker" type="button">Save invite tracker</button></div></section></div>');
+  document.getElementById('saveInviteTracker').onclick=async()=>{
+   const rewards=[];
+   for(const n of [1,2]){const threshold=Number(val('itReward'+n+'Count')),roleId=val('itReward'+n+'Role').trim();if(roleId&&Number.isInteger(threshold)&&threshold>0)rewards.push({threshold,roleId});}
+   const next={...it,enabled:yes('itEnabled'),logJoins:yes('itLogJoins'),logLeaves:yes('itLogLeaves'),rewardRolesEnabled:yes('itRewardRoles'),logChannelId:val('itLogChannel').trim()||null,rewards};
+   try{const result=await save(id,{inviteTracker:next});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Invite tracker settings saved.');await renderPanel(id,f,await load(id));}
+   catch(err){alert('Could not save invite tracker settings: '+(err.message||String(err)));}
+  };
+  attachToggle(id,f,c);return;
+ }
  if(k==='customCommands'){
   const cc=c.customCommands||{items:[]},items=Array.isArray(cc.items)?cc.items:[];
   const commandRows=items.map((x,index)=>'<div class="welcome-message-section"><div class="welcome-section-heading"><div><h3>/'+esc(x.name)+'</h3><p>'+(x.enabled===false?'Disabled':'Enabled')+' · Used '+Number(x.count||0)+' times</p></div><button type="button" class="rr-remove" data-remove-custom="'+index+'">Remove</button></div><p class="mention-help">'+esc(x.messageTemplate||'')+'</p><p class="mention-help">Counter: '+(x.counterEnabled===false?'off':'on')+'</p></div>').join('');
