@@ -29,7 +29,7 @@ function get(guildId){
 function save(guildId,patch){
   const current=get(guildId);
   const next={...current,...(patch||{})};
-  for(const k of ['plugins','channels','roles','messages','sticky','counting','profiles','warnings','commandToggles','blacklist','automod','audit','welcome','autorole','economy','levels']){
+  for(const k of ['plugins','channels','roles','messages','sticky','counting','profiles','warnings','commandToggles','blacklist','automod','audit','welcome','autorole','economy','levels','tickets']){
     if(patch&&patch[k]&&typeof patch[k]==='object'&&!Array.isArray(patch[k]))next[k]={...(current[k]||{}),...patch[k]};
   }
   updateGuildConfig(guildId,{testifySuite:next});
