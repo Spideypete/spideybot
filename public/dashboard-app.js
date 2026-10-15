@@ -422,7 +422,7 @@ async function renderDebilInspiredPanel(id,f,c){
  const controls=schema.fields.map(([field,label,defaultValue,type])=>type==='check'
   ?'<label class="check"><span>'+esc(label)+'</span><input type="checkbox" id="debil_'+field+'" '+(defaultValue?'checked':'')+'></label>'
   :input('debil_'+field,label,defaultValue,type)).join('');
- body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+esc(schema.title)+'</h3><p>Settings are saved per server.</p></div></div>'+controls+'<div class="panel-actions">'+button('saveDebilSettings','Save '+f[1])+'</div></section><p class="mention-help">Reference projects: <a href="'+(k==='giveaways'?'https://github.com/jagrosh/GiveawayBot':'https://github.com/TiDurak/DebilBot')+'" target="_blank" rel="noopener noreferrer">GitHub source</a>. This panel saves configuration only; features are not considered live until their commands and runtime handlers are implemented and tested.</p></div>');
+ body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+esc(schema.title)+'</h3><p>Settings are saved per server.</p></div></div>'+controls+'<div class="panel-actions">'+button('saveDebilSettings','Save '+f[1])+'</div></section></div>');
  document.getElementById('saveDebilSettings').onclick=async()=>{
   const next={};
   schema.fields.forEach(([field,,defaultValue,type])=>{
