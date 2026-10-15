@@ -173,6 +173,52 @@ async function handlePrefix(msg,ctx){
   }catch(e){console.error('[TESTIFY PREFIX]',n,e);return reply('❌ '+e.message);}
 }
 
+const autoModRate=new Map(),autoModRepeat=new Map();
+const BUILTIN_TERMS={
+ profanity:['fuck','shit','bitch','asshole','bastard','motherfucker'],
+ slurs:['nigger','faggot','kike','chink','spic'],
+ sexual:['porn','hentai','blowjob','onlyfans','dickpic','cumshot']
+};
+const normalizeText=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu,' ').trim();
+function automodTerms(c){
+ const a=c.automod||{},terms=[...(Array.isArray(a.words)?a.words:[])];
+ if(a.presetProfanity!==false)terms.push(...BUILTIN_TERMS.profanity);
+ if(a.presetSlurs)terms.push(...BUILTIN_TERMS.slurs);
+ if(a.presetSexual)terms.push(...BUILTIN_TERMS.sexual);
+ for(const rule of (Array.isArray(a.customRules)?a.customRules:[]))if(Array.isArray(rule.terms))terms.push(...rule.terms);
+ return [...new Set(terms.map(normalizeText).filter(Boolean))];
+}
+function findAutoModTerm(text,c){
+ const hay=' '+normalizeText(text)+' ';
+ return automodTerms(c).find(term=>hay.includes(' '+term+' '))||null;
+}
+async function sendAutoModAlert(guild,c,details){
+ const a=c.automod||{};if(a.alertStaff===false||!a.logChannelId)return;
+ try{const channel=guild.channels.cache.get(a.logChannelId)||await guild.channels.fetch(a.logChannelId).catch(()=>null);if(!channel?.send)return;
+ await channel.send({embeds:[new EmbedBuilder().setColor(0xd94f70).setTitle('🛡️ AutoMod alert').setDescription(details.slice(0,3900)).setTimestamp()]});
+ }catch(e){console.error('[AUTOMOD ALERT]',e.message);}
+}
+async function handleAutoModViolation(msg,c,reason){
+ const a=c.automod||{},action=a.action||'delete';
+ if(action!=='alert')await msg.delete().catch(()=>{});
+ if(action==='timeout'&&msg.member?.moderatable){
+  const minutes=Math.max(1,Math.min(40320,Number(a.timeoutMinutes)||10));
+  await msg.member.timeout(minutes*60000,'SPIDEY BOT AutoMod: '+reason).catch(e=>console.error('[AUTOMOD TIMEOUT]',e.message));
+ }
+ if(a.notifyUser!==false&&action!=='alert')await msg.author.send('Your message in **'+msg.guild.name+'** was removed by AutoMod. Reason: '+reason+'.').catch(()=>{});
+ await sendAutoModAlert(msg.guild,c,'**Member:** '+msg.author.tag+' ('+msg.author.id+')\\n**Channel:** <#'+msg.channel.id+'>\\n**Reason:** '+reason+'\\n**Action:** '+action+'\\n**Message:** '+String(msg.content||'[no text]').slice(0,900));
+}
+async function screenAutoModMember(member,c,source){
+ const a=c.automod||{};if(!featureIsOn(c,'automod')||a.enabled===false)return;
+ const checks=[];
+ if(a.screenUsername!==false)checks.push(['username',member.user.username]);
+ if(a.screenNickname!==false&&member.nickname)checks.push(['server nickname',member.nickname]);
+ const match=checks.map(([label,value])=>({label,term:findAutoModTerm(value,c)})).find(x=>x.term);
+ if(!match)return;
+ if(a.screenActionTimeout&&member.moderatable)await member.timeout(Math.max(1,Math.min(40320,Number(a.timeoutMinutes)||10))*60000,'SPIDEY BOT AutoMod: prohibited profile term').catch(()=>{});
+ await sendAutoModAlert(member.guild,c,'**Member:** '+member.user.tag+' ('+member.id+')\\n**Profile field:** '+match.label+'\\n**Detected term:** '+match.term+'\\n**Event:** '+source+'\\n**Action:** '+(a.screenActionTimeout?'timeout attempted':'alert only'));
+}
+
 function registerTestifyHandlers(client){
   client.on('guildMemberAdd',async member=>{
     const c=svc.get(member.guild.id);
@@ -203,6 +249,53 @@ function registerTestifyHandlers(client){
       if(Object.keys(payload).length)await channel.send(payload);
     }catch(e){console.error('[TESTIFY GOODBYE]',e.message);}
   });
-  client.on('messageCreate',async msg=>{try{if(!msg.guild||msg.author.bot)return;const c=svc.get(msg.guild.id);if(featureIsOn(c,'automod')&&c.automod.enabled){if(c.automod.antiInvite&&/discord\.gg\//i.test(msg.content)){await msg.delete().catch(()=>{});return;}if(c.automod.antiLink&&/https?:\/\//i.test(msg.content)){await msg.delete().catch(()=>{});return;}if(c.automod.words.some(w=>w&&msg.content.toLowerCase().includes(String(w).toLowerCase()))){await msg.delete().catch(()=>{});return;}}if(featureIsOn(c,'levels')&&c.levels.enabled){const r=svc.addXp(msg.guild.id,msg.author.id,c.levels.xpPerMessage||15);if(r.levelled&&c.levels.announce&&c.levels.announceChannel){const ch=msg.guild.channels.cache.get(c.levels.announceChannel);if(ch)ch.send(msg.author+' reached level **'+r.user.level+'**!').catch(()=>{});}}if(featureIsOn(c,'automations')&&c.sticky?.[msg.channel.id]){if(!registerTestifyHandlers.sticky)registerTestifyHandlers.sticky=new Map();const key=msg.guild.id+':'+msg.channel.id,old=registerTestifyHandlers.sticky.get(key);if(old)old.delete().catch(()=>{});const sent=await msg.channel.send('📌 '+c.sticky[msg.channel.id]).catch(()=>null);if(sent)registerTestifyHandlers.sticky.set(key,sent);}}catch(e){console.error('[TESTIFY MESSAGE]',e.message);}});
+  client.on('messageCreate',async msg=>{
+    try{
+      if(!msg.guild||msg.author.bot)return;
+      const c=svc.get(msg.guild.id),a=c.automod||{};
+      if(featureIsOn(c,'automod')&&a.enabled!==false){
+        const content=String(msg.content||''),now=Date.now(),key=msg.guild.id+':'+msg.author.id;
+        let reason=null;
+        if(a.antiInvite!==false&&/(?:discord\\.gg\\/|discord(?:app)?\\.com\\/invite\\/)/i.test(content))reason='Discord invite link';
+        if(!reason&&a.antiLink&&/https?:\\/\\//i.test(content))reason='Link blocked by server policy';
+        const term=!reason?findAutoModTerm(content,c):null;
+        if(!reason&&term)reason='Blocked keyword matched';
+        if(!reason&&a.massMention!==false){
+          const count=(msg.mentions.users.size||0)+(msg.mentions.roles.size||0)+(msg.mentions.everyone?1:0);
+          if(count>Math.max(1,Math.min(50,Number(a.maxMentions)||5)))reason='Mass mention limit exceeded';
+        }
+        if(!reason&&a.caps&&content.length>=12){
+          const letters=content.match(/[A-Za-z]/g)||[],upper=content.match(/[A-Z]/g)||[];
+          if(letters.length>=12&&upper.length/letters.length>=0.8)reason='Excessive capitalisation';
+        }
+        if(!reason&&a.antiDuplicate){
+          const repeated=autoModRepeat.get(key);
+          if(repeated&&repeated.content===normalizeText(content)&&now-repeated.at<30000)reason='Repeated identical message';
+          autoModRepeat.set(key,{content:normalizeText(content),at:now});
+        }
+        if(!reason&&a.antiSpam!==false){
+          const windowMs=Math.max(1000,Math.min(60000,Number(a.windowMs)||8000)),threshold=Math.max(2,Math.min(30,Number(a.maxMessages)||6));
+          const hits=(autoModRate.get(key)||[]).filter(t=>now-t<windowMs);hits.push(now);autoModRate.set(key,hits);
+          if(hits.length>=threshold)reason='Rapid-message spam';
+        }
+        if(reason){await handleAutoModViolation(msg,c,reason);return;}
+      }
+      if(featureIsOn(c,'levels')&&c.levels.enabled){
+        const r=svc.addXp(msg.guild.id,msg.author.id,c.levels.xpPerMessage||15);
+        if(r.levelled&&c.levels.announce&&c.levels.announceChannel){const ch=msg.guild.channels.cache.get(c.levels.announceChannel);if(ch)ch.send(msg.author+' reached level **'+r.user.level+'**!').catch(()=>{});}
+      }
+      if(featureIsOn(c,'automations')&&c.sticky?.[msg.channel.id]){
+        if(!registerTestifyHandlers.sticky)registerTestifyHandlers.sticky=new Map();
+        const stickyKey=msg.guild.id+':'+msg.channel.id,oldSticky=registerTestifyHandlers.sticky.get(stickyKey);
+        if(oldSticky)oldSticky.delete().catch(()=>{});
+        const sent=await msg.channel.send('📌 '+c.sticky[msg.channel.id]).catch(()=>null);
+        if(sent)registerTestifyHandlers.sticky.set(stickyKey,sent);
+      }
+    }catch(e){console.error('[TESTIFY MESSAGE]',e.message);}
+  });
+  client.on('guildMemberUpdate',async(_oldMember,newMember)=>{
+    try{const c=svc.get(newMember.guild.id);await screenAutoModMember(newMember,c,'profile updated');}
+    catch(e){console.error('[AUTOMOD PROFILE UPDATE]',e.message);}
+  });
 }
 module.exports={execute,handlePrefix,registerTestifyHandlers};
