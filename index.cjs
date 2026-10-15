@@ -6880,12 +6880,14 @@ adminConfigs.forEach(configName => {
       if (body.welcomeEnabled !== undefined || body.enableWelcome !== undefined) {
         const enabled = body.welcomeEnabled ?? body.enableWelcome;
         currentMessages.enableWelcome = enabled;
+        currentMessages.welcomeEnabled = enabled;
         legacyMessages.enableWelcome = enabled;
         legacyMessages.welcomeEnabled = enabled;
       }
       if (body.goodbyeEnabled !== undefined || body.enableGoodbye !== undefined) {
         const enabled = body.goodbyeEnabled ?? body.enableGoodbye;
         currentMessages.enableGoodbye = enabled;
+        currentMessages.goodbyeEnabled = enabled;
         legacyMessages.enableGoodbye = enabled;
         legacyMessages.goodbyeEnabled = enabled;
       }
