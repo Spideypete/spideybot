@@ -7057,9 +7057,9 @@ app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
   try {
     const { ReactionRolesService } = require('./src/features/reaction-roles/reaction-roles.service.cjs');
     const service = new ReactionRolesService();
-    const { allowMultiple, removeOnUnreact, dmConfirm, enabled } = req.body;
+    const { allowMultiple, removeOnUnreact, dmConfirm, enabled, language, updateNotifications, errorReporting, notificationChannelId } = req.body;
     const config = service.getConfig(guildId);
-    const updated = { ...config, allowMultiple, removeOnUnreact, dmConfirm, enabled, dmConfirmations: !!dmConfirm };
+    const updated = { ...config, allowMultiple, removeOnUnreact, dmConfirm, enabled, language, updateNotifications, errorReporting, notificationChannelId: notificationChannelId || null, dmConfirmations: !!dmConfirm };
     service.setConfig(guildId, updated);
     console.log(`✅ React roles settings saved (Guild: ${guildId})`);
     res.json({ success: true, message: "React roles settings saved" });
