@@ -65,8 +65,8 @@ class ServerMessagesService {
     const guildConfig = fullConfig.guilds?.[guildId] || {}
     const defaults = this._getDefaults()
     const stored = {
-      ...(guildConfig.serverMessages || {}),
-      ...(guildConfig["server-messages"] || {})
+      ...(guildConfig["server-messages"] || {}),
+      ...(guildConfig.serverMessages || {})
     }
     return { ...defaults, ...stored }
   }
@@ -77,8 +77,8 @@ class ServerMessagesService {
     if (!fullConfig.guilds) fullConfig.guilds = {}
     const guildConfig = fullConfig.guilds[guildId] || {}
     const existing = {
-      ...(guildConfig.serverMessages || {}),
-      ...(guildConfig["server-messages"] || {})
+      ...(guildConfig["server-messages"] || {}),
+      ...(guildConfig.serverMessages || {})
     }
     const merged = { ...defaults, ...existing, ...config }
     guildConfig.serverMessages = merged
