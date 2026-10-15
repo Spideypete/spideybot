@@ -1101,7 +1101,7 @@ async function handleCustomSlashCommand(interaction) {
     .replace(/\{username\}/gi, interaction.user.username)
     .replace(/\{server\}/gi, interaction.guild?.name || 'this server');
   if (useCounter && !/\{count\}/i.test(template)) {
-    response += (response ? '\\n' : '') + String(item.counterLabel || 'Count') + ': ' + count;
+    response += (response ? '\n' : '') + String(item.counterLabel || 'Count') + ': ' + count;
   }
   if (!response.trim()) response = 'Custom command executed.';
   if (response.length > 2000) response = response.slice(0, 1997) + '...';
