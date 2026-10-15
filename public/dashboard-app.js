@@ -370,7 +370,8 @@ async function renderPanel(id,f,c){
  const k=f[0];
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
  if(k==='reactionRoles'){await renderReactionRolesPanel(id,f,c);return;}
- if(['rss','reddit','podcast','instagram','xalerts'].includes(k)){await renderSourceAlertPanel(id,f,c);return;}\n if(['twitch','youtube','tiktok','kick'].includes(k)){
+ if(['rss','reddit','podcast','instagram','xalerts'].includes(k)){await renderSourceAlertPanel(id,f,c);return;}
+ if(['twitch','youtube','tiktok','kick'].includes(k)){
   const platform=k, titleByPlatform={twitch:'Twitch',youtube:'YouTube',tiktok:'TikTok',kick:'Kick'};
   const platformTitle=titleByPlatform[platform], settingKey=platform+'ChannelId';
   const root='/api/social-notifications/'+encodeURIComponent(id);
