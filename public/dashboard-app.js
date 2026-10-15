@@ -153,7 +153,7 @@ function optionList(items,selected,placeholder){
  const first='<option value="">'+esc(placeholder||'Choose…')+'</option>';
  return first+(items||[]).map(item=>'<option value="'+esc(item.id)+'" '+(String(item.id)===String(selected||'')?'selected':'')+'>'+esc(item.name)+' ('+esc(item.id)+')</option>').join('');
 }
-function wordCount(value){return String(value||'').trim().split(/\\s+/).filter(Boolean).length;}
+function wordCount(value){return String(value||'').trim().split(/\s+/).filter(Boolean).length;}
 function mentionTools(prefix,channels,roles){
  return '<div class="mention-tools"><span>Insert a mention</span><button type="button" data-insert-user="'+prefix+'">Insert member tag</button><select id="'+prefix+'ChannelMention">'+optionList(channels,'','Choose channel')+'</select><button type="button" data-insert-channel="'+prefix+'">Insert channel</button><select id="'+prefix+'RoleMention">'+optionList(roles,'','Choose role')+'</select><button type="button" data-insert-role="'+prefix+'">Insert role</button><div class="mention-help">Use {user} to tag the joining member, {username}, {server} and {membercount}. Channel and role inserts use Discord mentions.</div></div>';
 }
@@ -199,7 +199,7 @@ async function renderWelcomePanel(id,f,c){
   document.getElementById(key+'Type').addEventListener('change',()=>setMode(key));
  });
  document.querySelectorAll('[data-word-limit]').forEach(el=>{
-  const update=()=>{const words=String(el.value||'').trim().split(/\\s+/).filter(Boolean);if(words.length>500)el.value=words.slice(0,500).join(' ');const count=wordCount(el.value);const counter=document.getElementById(el.id+'Count');if(counter)counter.textContent=count+' / 500 words';counter?.classList.toggle('over-limit',count>=500);};
+  const update=()=>{const words=String(el.value||'').trim().split(/\s+/).filter(Boolean);if(words.length>500)el.value=words.slice(0,500).join(' ');const count=wordCount(el.value);const counter=document.getElementById(el.id+'Count');if(counter)counter.textContent=count+' / 500 words';counter?.classList.toggle('over-limit',count>=500);};
   el.addEventListener('input',update);update();
  });
  function insertAtCursor(textareaId,text){
