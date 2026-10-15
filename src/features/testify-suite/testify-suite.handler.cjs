@@ -1,5 +1,7 @@
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const svc=require('./testify-suite.service.cjs');
+const { ServerMessagesService } = require('../server-messages/server-messages.service.cjs');
+const serverMessages = new ServerMessagesService();
 const advice=['Be curious before being certain.','Small consistent actions compound.','Ask clear questions and verify assumptions.','Leave systems easier to understand than you found them.'];
 const jokes=['Why did the scarecrow win an award? Because he was outstanding in his field.','I only know 25 letters of the alphabet. I do not know y.','Why do programmers prefer dark mode? Because light attracts bugs.'];
 const wyr=['Unlimited money or unlimited time?','Always early or always prepared?','Explore space or the deep ocean?'];
@@ -7,7 +9,7 @@ const fmt=n=>new Intl.NumberFormat().format(Math.max(0,n||0));
 const isAdmin=i=>!!i.member?.permissions?.has(PermissionFlagsBits.Administrator);
 const who=i=>i.options.getUser('user')||i.user;
 const COMMAND_FEATURE={
-  avatar:'members',userinfo:'members',serverinfo:'members',roleinfo:'members',botinfo:'system',membercount:'members',permissions:'members',profile:'members',rank:'levels',
+  goodbye:'welcome',avatar:'members',userinfo:'members',serverinfo:'members',roleinfo:'members',botinfo:'system',membercount:'members',permissions:'members',profile:'members',rank:'levels',
   daily:'economy',beg:'economy',deposit:'economy',withdraw:'economy',inventory:'economy',shop:'economy',buy:'economy',give:'economy',rob:'economy',crime:'economy',pet:'economy',
   poll:'polls',calculator:'community',ascii:'community',advice:'community',dadjoke:'community',wouldyourrather:'community',hack:'community',relationship:'community',
   purge:'moderator',softban:'moderator',unban:'moderator',clearwarnings:'moderator',slowmode:'moderator',lock:'moderator',unlock:'moderator',nickname:'moderator',role:'moderator',announce:'moderator',say:'moderator',thread:'ticketing',
@@ -21,7 +23,7 @@ function profile(i,u,c){const l=c.levels.users?.[u.id]||{level:0,xp:0},e=c.econo
 
 async function execute(i,ctx){
   if(!i.isChatInputCommand()||!i.guild)return false;
-  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
+  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
   if(c.blacklist?.includes(i.user.id)){await i.reply({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
   const featureKey=featureForCommand(n);
   if(!featureIsOn(c,featureKey)){await i.reply({content:'That feature is currently disabled by this server.',ephemeral:true});return true;}
@@ -86,7 +88,23 @@ async function execute(i,ctx){
       if(n==='sticky'){c.sticky[i.channel.id]=i.options.getString('message');svc.save(i.guild.id,{sticky:c.sticky});return i.reply('📌 Sticky saved.');}
       if(n==='unsticky'){delete c.sticky[i.channel.id];svc.save(i.guild.id,{sticky:c.sticky});return i.reply('📌 Sticky removed.');}
       if(n==='counting'){c.counting[i.channel.id]={enabled:i.options.getBoolean('enabled'),current:c.counting[i.channel.id]?.current||0,lastUser:null};svc.save(i.guild.id,{counting:c.counting});return i.reply('🔢 Counting configured.');}
-      if(n==='welcome'){c.welcome.enabled=i.options.getBoolean('enabled');if(i.options.getChannel('channel'))c.welcome.channelId=i.options.getChannel('channel').id;if(i.options.getString('message'))c.welcome.message=i.options.getString('message');svc.save(i.guild.id,{welcome:c.welcome});return i.reply('👋 Welcome settings saved.');}
+      if(n==='welcome'||n==='goodbye'){
+        if(!isAdmin(i))return i.reply({content:'Only server administrators can change welcome/goodbye settings.',ephemeral:true});
+        const kind=n,cap=kind[0].toUpperCase()+kind.slice(1),direct=root===kind;
+        const current=await serverMessages.getConfig(i.guild.id);
+        const enabled=direct?true:i.options.getBoolean('enabled')!==false;
+        const channel=i.options.getChannel('channel',false);
+        const type=i.options.getString('type',false)||current[kind+'Type']||'text';
+        const message=i.options.getString('message',false);
+        const previous=type==='embed'?(current[kind+'Embed']?.description||current[kind+'Message']||''):(current[kind+'Message']||current[kind+'Embed']?.description||'');
+        const text=message!==null&&message!==undefined?message:previous;
+        const next={...current,['enable'+cap]:enabled,[kind+'Type']:type};
+        if(channel)next[kind+'Channel']=channel.id;
+        if(type==='embed'){next[kind+'Message']='';next[kind+'Embed']={...(current[kind+'Embed']||{}),description:text,color:current[kind+'Embed']?.color||'#56306f'};}
+        else{next[kind+'Message']=text;next[kind+'Embed']=null;}
+        await serverMessages.setConfig(i.guild.id,next);
+        return i.reply({content:(kind==='welcome'?'👋 Welcome':'👋 Goodbye')+' settings saved.',ephemeral:true});
+      }
       if(n==='autorole'){c.autorole.enabled=i.options.getBoolean('enabled');if(i.options.getRole('role'))c.autorole.roleId=i.options.getRole('role').id;svc.save(i.guild.id,{autorole:c.autorole});return i.reply('🎭 Autorole settings saved.');}
       if(n==='verify'){c.verification={roleId:i.options.getRole('role').id};svc.save(i.guild.id,{verification:c.verification});return i.reply('✅ Verification role saved.');}
       if(n==='commandtoggle'){svc.toggle(i.guild.id,i.options.getString('command').toLowerCase(),i.options.getBoolean('enabled'));return i.reply('⚙️ Command toggle saved.');}
@@ -137,7 +155,7 @@ async function handlePrefix(msg,ctx){
     if(n==='setprefix'){if(!msg.member.permissions.has(PermissionFlagsBits.Administrator))return reply('❌ Permission denied.');c.prefix=a[0]||'!';svc.save(msg.guild.id,{prefix:c.prefix});return reply('Prefix set to '+c.prefix);}
     if(n==='automod'){if(!msg.member.permissions.has(PermissionFlagsBits.Administrator))return reply('❌ Permission denied.');c.automod.enabled=a[0]!=='off';svc.save(msg.guild.id,{automod:c.automod});return reply('AutoMod '+(c.automod.enabled?'on':'off'));}
     if(n==='auditlog'){if(!msg.member.permissions.has(PermissionFlagsBits.Administrator))return reply('❌ Permission denied.');const ch=msg.mentions.channels.first();if(!ch)return reply('Mention a channel.');c.audit={enabled:true,channelId:ch.id};svc.save(msg.guild.id,{audit:c.audit});return reply('Audit logging enabled.');}
-    if(n==='welcome'){if(!msg.member.permissions.has(PermissionFlagsBits.Administrator))return reply('❌ Permission denied.');c.welcome.enabled=a[0]!=='off';if(msg.mentions.channels.first())c.welcome.channelId=msg.mentions.channels.first().id;svc.save(msg.guild.id,{welcome:c.welcome});return reply('Welcome settings saved.');}
+    if(n==='welcome'){if(!msg.member.permissions.has(PermissionFlagsBits.Administrator))return reply('❌ Permission denied.');const current=await serverMessages.getConfig(msg.guild.id);if(a[0]?.toLowerCase()==='off'){await serverMessages.setConfig(msg.guild.id,{...current,enableWelcome:false});return reply('Welcome messages disabled.');}const channel=msg.mentions.channels.first();if(channel)current.welcomeChannel=channel.id;const message=msg.content.split(/\\s+/).slice(channel?2:1).join(' ').trim();if(message){current.welcomeMessage=message;current.welcomeEmbed=null;current.welcomeType='text';}current.enableWelcome=true;await serverMessages.setConfig(msg.guild.id,current);return reply('Welcome settings saved.');}
     if(n==='autorole'){if(!msg.member.permissions.has(PermissionFlagsBits.Administrator))return reply('❌ Permission denied.');const r=msg.mentions.roles.first();c.autorole.enabled=true;c.autorole.roleId=r?.id||null;svc.save(msg.guild.id,{autorole:c.autorole});return reply('Autorole saved.');}
     if(n==='verify'){if(!msg.member.permissions.has(PermissionFlagsBits.Administrator))return reply('❌ Permission denied.');const r=msg.mentions.roles.first();if(!r)return reply('Mention a role.');c.verification={roleId:r.id};svc.save(msg.guild.id,{verification:c.verification});return reply('Verification role saved.');}
     if(n==='sticky'){if(!msg.member.permissions.has(PermissionFlagsBits.Administrator))return reply('❌ Permission denied.');c.sticky[msg.channel.id]=a.join(' ');svc.save(msg.guild.id,{sticky:c.sticky});return reply('Sticky saved.');}
@@ -157,7 +175,35 @@ async function handlePrefix(msg,ctx){
 }
 
 function registerTestifyHandlers(client){
-  client.on('guildMemberAdd',async member=>{try{const c=svc.get(member.guild.id);if(featureIsOn(c,'welcome')&&c.autorole.enabled&&c.autorole.roleId){const r=member.guild.roles.cache.get(c.autorole.roleId);if(r)await member.roles.add(r).catch(()=>{});}if(featureIsOn(c,'welcome')&&c.welcome.enabled&&c.welcome.channelId){const ch=member.guild.channels.cache.get(c.welcome.channelId);if(ch)await ch.send(c.welcome.message.replaceAll('{user}',member.toString()).replaceAll('{server}',member.guild.name).replaceAll('{membercount}',String(member.guild.memberCount))).catch(()=>{});}}catch(e){console.error('[TESTIFY MEMBER]',e.message);}});
+  client.on('guildMemberAdd',async member=>{
+    const c=svc.get(member.guild.id);
+    if(!featureIsOn(c,'welcome'))return;
+    if(c.autorole.enabled&&c.autorole.roleId){
+      try{const role=member.guild.roles.cache.get(c.autorole.roleId)||await member.guild.roles.fetch(c.autorole.roleId).catch(()=>null);if(role&&!member.roles.cache.has(role.id))await member.roles.add(role,'Configured automatic welcome role');}
+      catch(e){console.error('[TESTIFY AUTOROLE]',e.message);}
+    }
+    try{
+      const cfg=await serverMessages.getConfig(member.guild.id);
+      if(!cfg.enableWelcome||!cfg.welcomeChannel)return;
+      const channel=member.guild.channels.cache.get(cfg.welcomeChannel)||await member.guild.channels.fetch(cfg.welcomeChannel).catch(()=>null);
+      if(!channel?.send)return;
+      const payload={},message=serverMessages.replaceVariables(cfg.welcomeMessage,member,member.guild),embed=serverMessages.buildEmbed(cfg.welcomeEmbed,member,member.guild);
+      if(message)payload.content=message;if(embed)payload.embeds=[embed];
+      if(Object.keys(payload).length)await channel.send(payload);
+    }catch(e){console.error('[TESTIFY WELCOME]',e.message);}
+  });
+  client.on('guildMemberRemove',async member=>{
+    try{
+      const c=svc.get(member.guild.id);if(!featureIsOn(c,'welcome'))return;
+      const cfg=await serverMessages.getConfig(member.guild.id);
+      if(!cfg.enableGoodbye||!cfg.goodbyeChannel)return;
+      const channel=member.guild.channels.cache.get(cfg.goodbyeChannel)||await member.guild.channels.fetch(cfg.goodbyeChannel).catch(()=>null);
+      if(!channel?.send)return;
+      const payload={},message=serverMessages.replaceVariables(cfg.goodbyeMessage,member,member.guild),embed=serverMessages.buildEmbed(cfg.goodbyeEmbed,member,member.guild);
+      if(message)payload.content=message;if(embed)payload.embeds=[embed];
+      if(Object.keys(payload).length)await channel.send(payload);
+    }catch(e){console.error('[TESTIFY GOODBYE]',e.message);}
+  });
   client.on('messageCreate',async msg=>{try{if(!msg.guild||msg.author.bot)return;const c=svc.get(msg.guild.id);if(featureIsOn(c,'automod')&&c.automod.enabled){if(c.automod.antiInvite&&/discord\.gg\//i.test(msg.content)){await msg.delete().catch(()=>{});return;}if(c.automod.antiLink&&/https?:\/\//i.test(msg.content)){await msg.delete().catch(()=>{});return;}if(c.automod.words.some(w=>w&&msg.content.toLowerCase().includes(String(w).toLowerCase()))){await msg.delete().catch(()=>{});return;}}if(featureIsOn(c,'levels')&&c.levels.enabled){const r=svc.addXp(msg.guild.id,msg.author.id,c.levels.xpPerMessage||15);if(r.levelled&&c.levels.announce&&c.levels.announceChannel){const ch=msg.guild.channels.cache.get(c.levels.announceChannel);if(ch)ch.send(msg.author+' reached level **'+r.user.level+'**!').catch(()=>{});}}if(featureIsOn(c,'automations')&&c.sticky?.[msg.channel.id]){if(!registerTestifyHandlers.sticky)registerTestifyHandlers.sticky=new Map();const key=msg.guild.id+':'+msg.channel.id,old=registerTestifyHandlers.sticky.get(key);if(old)old.delete().catch(()=>{});const sent=await msg.channel.send('📌 '+c.sticky[msg.channel.id]).catch(()=>null);if(sent)registerTestifyHandlers.sticky.set(key,sent);}}catch(e){console.error('[TESTIFY MESSAGE]',e.message);}});
 }
 module.exports={execute,handlePrefix,registerTestifyHandlers};
