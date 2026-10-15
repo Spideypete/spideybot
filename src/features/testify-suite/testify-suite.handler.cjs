@@ -7,6 +7,7 @@ const jokes=['Why did the scarecrow win an award? Because he was outstanding in 
 const wyr=['Unlimited money or unlimited time?','Always early or always prepared?','Explore space or the deep ocean?'];
 const levelXpCooldown=new Map();
 const achievements=require('../achievements/achievements.service.cjs');
+const inviteTracker=require('../invite-tracker/invite-tracker.service.cjs');
 const fmt=n=>new Intl.NumberFormat().format(Math.max(0,n||0));
 const isAdmin=i=>!!i.member?.permissions?.has(PermissionFlagsBits.Administrator);
 const who=i=>i.options.getUser('user')||i.user;
@@ -25,7 +26,7 @@ function profile(i,u,c){const l=c.levels.users?.[u.id]||{level:0,xp:0},e=c.econo
 
 async function execute(i,ctx){
   if(!i.isChatInputCommand()||!i.guild)return false;
-  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
+  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
   const custom=(Array.isArray(c.customCommands?.items)?c.customCommands.items:[]).find(x=>x.name===root&&x.enabled!==false);
   if(custom){
     if(c.blacklist?.includes(i.user.id)){await i.reply({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
@@ -51,6 +52,21 @@ async function execute(i,ctx){
     if(n==='permissions'){await i.reply('Your permissions: '+i.member.permissions.toArray().join(', '));return true;}
     if(n==='profile'){await i.reply({embeds:[profile(i,u,c)]});return true;}
     if(n==='rank'){const l=c.levels.users?.[u.id]||{level:0,xp:0},top=svc.topXp(i.guild.id),pos=Math.max(1,top.findIndex(x=>x.id===u.id)+1);await i.reply('🏆 '+u.username+' — Level '+l.level+' | '+l.xp+' XP | Rank #'+pos);return true;}
+    if(n==='invitesstats'){
+      const target=i.options.getUser('user')||i.user,stats=inviteTracker.getStats(i.guild.id,target.id);
+      await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📨 Invite statistics — '+target.username).setThumbnail(target.displayAvatarURL({size:128})).addFields({name:'Successful joins',value:fmt(stats.joins),inline:true},{name:'Members left',value:fmt(stats.leaves),inline:true},{name:'Active invites',value:fmt(stats.active),inline:true})]});return true;
+    }
+    if(n==='invitesleaderboard'){
+      const rows=inviteTracker.leaderboard(i.guild.id,10);
+      await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('🏆 Invite leaderboard').setDescription(rows.length?rows.map((x,index)=>'**'+(index+1)+'.** <@'+x.userId+'> — **'+fmt(x.active)+'** active invites ('+fmt(x.joins)+' joins, '+fmt(x.leaves)+' left)').join('\n'):'No invite data has been recorded yet.').setFooter({text:'Counts are per server'})]});return true;
+    }
+    if(['invitesadd','invitesremove','invitesreset'].includes(n)){
+      if(!isAdmin(i)){await i.reply({content:'Only server administrators can adjust invite counts.',ephemeral:true});return true;}
+      const target=i.options.getUser('user'),amount=i.options.getInteger('amount')||0;
+      if(n==='invitesreset')inviteTracker.adjust(i.guild.id,target.id,'reset',0);
+      else inviteTracker.adjust(i.guild.id,target.id,n==='invitesadd'?'add':'remove',amount);
+      await i.reply({content:'Updated invite totals for '+target.username+'.',ephemeral:true});return true;
+    }
     if(n==='stats'){const totals=achievements.getStats(i.guild.id,u.id);await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📊 '+u.username+' — Server Statistics').setThumbnail(u.displayAvatarURL({size:256})).addFields({name:'Text messages',value:fmt(totals.message_count),inline:true},{name:'Emojis used',value:fmt(totals.emoji_count),inline:true})]});return true;}
     if(n==='guildlist'){await i.reply(ctx.client.guilds.cache.map(g=>g.name+' ('+g.id+')').slice(0,30).join('\n')||'No guilds.');return true;}
     if(n==='debug'){await i.reply(JSON.stringify({guild:i.guild.id,automod:c.automod.enabled,levels:c.levels.enabled,commands:Object.keys(c.commandToggles).length},null,2));return true;}
@@ -275,6 +291,7 @@ const auditActor=async(guild,type,targetId)=>{
 };
 
 function registerTestifyHandlers(client){
+  inviteTracker.initialize(client,svc);
   client.on('messageDelete',async msg=>{
    try{if(!msg.guild)return;const content=msg.content||msg.embeds?.map(e=>e.description||'').join(' ')||'[Content unavailable — message was not cached]';await writeAuditEvent(msg.guild,{type:'messageDelete',title:'Message deleted',description:content.slice(0,1800),actor:await auditActor(msg.guild, 'MessageDelete',msg.author?.id),target:msg.author?.tag||'Unknown',channel:'#'+(msg.channel?.name||'unknown'),channelId:msg.channel?.id,color:0xe74c3c},'messageDelete');}catch(e){console.error('[AUDIT MESSAGE DELETE]',e.message);}
   });
