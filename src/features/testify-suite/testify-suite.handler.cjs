@@ -5,6 +5,7 @@ const serverMessages = new ServerMessagesService();
 const advice=['Be curious before being certain.','Small consistent actions compound.','Ask clear questions and verify assumptions.','Leave systems easier to understand than you found them.'];
 const jokes=['Why did the scarecrow win an award? Because he was outstanding in his field.','I only know 25 letters of the alphabet. I do not know y.','Why do programmers prefer dark mode? Because light attracts bugs.'];
 const wyr=['Unlimited money or unlimited time?','Always early or always prepared?','Explore space or the deep ocean?'];
+const levelXpCooldown=new Map();
 const fmt=n=>new Intl.NumberFormat().format(Math.max(0,n||0));
 const isAdmin=i=>!!i.member?.permissions?.has(PermissionFlagsBits.Administrator);
 const who=i=>i.options.getUser('user')||i.user;
@@ -14,7 +15,7 @@ const COMMAND_FEATURE={
   poll:'polls',calculator:'community',ascii:'community',advice:'community',dadjoke:'community',wouldyourrather:'community',hack:'community',relationship:'community',
   purge:'moderator',softban:'moderator',unban:'moderator',clearwarnings:'moderator',slowmode:'moderator',lock:'moderator',unlock:'moderator',nickname:'moderator',role:'moderator',announce:'moderator',say:'moderator',thread:'ticketing',
   automod:'automod',automodwords:'automod',automodlinks:'automod',automodspam:'automod',auditlog:'audit',setprefix:'welcome',sticky:'automations',unsticky:'automations',counting:'community',welcome:'welcome',autorole:'welcome',verify:'moderator',commandtoggle:'commands',
-  levelrewards:'levels',setlevelreward:'levels',resetxp:'levels',
+  levelrewards:'levels',setlevelreward:'levels',resetxp:'levels',addxp:'levels',setxp:'levels',removexp:'levels',
   blacklist:'moderator',unblacklist:'moderator'
 };
 const featureForCommand=n=>COMMAND_FEATURE[n]||null;
@@ -23,7 +24,7 @@ function profile(i,u,c){const l=c.levels.users?.[u.id]||{level:0,xp:0},e=c.econo
 
 async function execute(i,ctx){
   if(!i.isChatInputCommand()||!i.guild)return false;
-  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
+  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
   if(c.blacklist?.includes(i.user.id)){await i.reply({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
   const featureKey=featureForCommand(n);
   if(!featureIsOn(c,featureKey)){await i.reply({content:'That feature is currently disabled by this server.',ephemeral:true});return true;}
@@ -111,8 +112,15 @@ async function execute(i,ctx){
     }
 
     if(n==='levelrewards')return i.reply(Object.entries(c.levels.rewards||{}).map(([l,r])=>'Level '+l+': <@&'+r+'>').join('\n')||'No level rewards configured.');
+    if(['setlevelreward','resetxp','addxp','setxp','removexp'].includes(n)&&!isAdmin(i))return i.reply({content:'❌ Administrator permission required to edit XP or level rewards.',ephemeral:true});
     if(n==='setlevelreward'){c.levels.rewards[i.options.getInteger('level')]=i.options.getRole('role').id;svc.save(i.guild.id,{levels:c.levels});return i.reply('🏅 Level reward saved.');}
-    if(n==='resetxp'){c.levels.users[i.options.getUser('user').id]={xp:0,level:0};svc.save(i.guild.id,{levels:c.levels});return i.reply('📉 XP reset.');}
+    if(n==='resetxp'){const id=i.options.getUser('user').id;c.levels.users[id]={xp:0,level:0};svc.save(i.guild.id,{levels:c.levels});return i.reply('📉 XP reset to 0.');}
+    if(['addxp','setxp','removexp'].includes(n)){
+      const target=i.options.getUser('user'),amount=i.options.getInteger('amount');c.levels.users=c.levels.users||{};const current=c.levels.users[target.id]||{xp:0,level:0};
+      const nextXp=n==='addxp'?Math.max(0,Number(current.xp)||0)+amount:n==='removexp'?Math.max(0,(Number(current.xp)||0)-amount):amount;
+      const perLevel=Math.max(1,Number(c.levels.xpPerLevel)||500);c.levels.users[target.id]={xp:nextXp,level:Math.floor(nextXp/perLevel)};svc.save(i.guild.id,{levels:c.levels});
+      return i.reply('✅ Updated '+target.username+': **'+fmt(nextXp)+' XP**, Level **'+Math.floor(nextXp/perLevel)+'**.');
+    }
     if(n==='blacklist'){const id=i.options.getUser('user').id;if(!c.blacklist.includes(id))c.blacklist.push(id);svc.save(i.guild.id,{blacklist:c.blacklist});return i.reply('🚫 User blacklisted.');}
     if(n==='unblacklist'){const id=i.options.getUser('user').id;c.blacklist=c.blacklist.filter(x=>x!==id);svc.save(i.guild.id,{blacklist:c.blacklist});return i.reply('✅ User removed from blacklist.');}
     return false;
@@ -336,8 +344,17 @@ function registerTestifyHandlers(client){
         if(reason){await handleAutoModViolation(msg,c,reason);return;}
       }
       if(featureIsOn(c,'levels')&&c.levels.enabled){
-        const r=svc.addXp(msg.guild.id,msg.author.id,c.levels.xpPerMessage||15);
-        if(r.levelled&&c.levels.announce&&c.levels.announceChannel){const ch=msg.guild.channels.cache.get(c.levels.announceChannel);if(ch)ch.send(msg.author+' reached level **'+r.user.level+'**!').catch(()=>{});}
+        const cooldownMs=Math.max(0,Math.min(3600000,Number(c.levels.xpCooldownSeconds??60)||0))*1000;
+        const cooldownKey=msg.guild.id+':'+msg.author.id,now=Date.now(),last=levelXpCooldown.get(cooldownKey)||0;
+        if(now-last>=cooldownMs){
+          levelXpCooldown.set(cooldownKey,now);
+          if(levelXpCooldown.size>10000){for(const [key,time] of levelXpCooldown){if(now-time>3600000)levelXpCooldown.delete(key);}}
+          const r=svc.addXp(msg.guild.id,msg.author.id,Math.max(0,Math.min(10000,Number(c.levels.xpPerMessage)||15)));
+          if(r.levelled&&c.levels.announce&&c.levels.announceChannel){
+            const ch=msg.guild.channels.cache.get(c.levels.announceChannel)||await msg.guild.channels.fetch(c.levels.announceChannel).catch(()=>null);
+            if(ch?.send){const perLevel=Math.max(1,Number(c.levels.xpPerLevel)||500),progress=r.user.xp%perLevel;const embed=new EmbedBuilder().setColor(0x6d3df5).setTitle('🎉 Level Up!').setThumbnail(msg.author.displayAvatarURL({size:128})).setDescription(msg.author+' reached **Level '+r.user.level+'**!').addFields({name:'Current XP',value:fmt(r.user.xp),inline:true},{name:'Level',value:String(r.user.level),inline:true},{name:'XP to next level',value:fmt(perLevel-progress),inline:true}).setTimestamp();ch.send({embeds:[embed]}).catch(()=>{});}
+          }
+        }
       }
       if(featureIsOn(c,'automations')&&c.sticky?.[msg.channel.id]){
         if(!registerTestifyHandlers.sticky)registerTestifyHandlers.sticky=new Map();
