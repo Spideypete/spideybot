@@ -8,7 +8,6 @@ const navigation=document.querySelector('#navigation');
 const FEATURES=[
   ['Essentials',[
     ['welcome','Welcome & Goodbye','Member greetings, welcome channels, messages and automatic roles.','chats-circle'],
-    ['welcomeChannel','Welcome Channel','Configure the dedicated channel and message used for new members.','door'],
     ['reactionRoles','Reaction Roles','Create self-assignable role mappings for your community.','hand-waving'],
     ['moderator','Moderation','Warnings, kicks, bans, channel controls and moderation history.','shield-check'],
     ['automod','AutoMod','Filter invites, links, spam, mentions, caps and blocked words.','shield-warning'],
@@ -96,7 +95,7 @@ const val=id=>document.getElementById(id)?.value??'';
 const yes=id=>!!document.getElementById(id)?.checked;
 
 function addStyles(){
- if(!document.getElementById('welcome-panel-styles')){const ws=document.createElement('style');ws.id='welcome-panel-styles';ws.textContent=".welcome-panel{display:grid;gap:14px}.welcome-message-section{border:1px solid var(--border);border-radius:14px;padding:16px;background:var(--surface2)}.welcome-section-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}.welcome-section-heading h3{font-size:13px;font-weight:850}.welcome-section-heading p,.command-help p{font-size:11px;color:var(--muted);margin-top:4px}.welcome-section-heading .check{border:0;padding:0;gap:10px}.welcome-message-section .field{margin:10px 0}.welcome-message-section .field input,.welcome-message-section .field textarea,.welcome-message-section .field select,.mention-tools select{display:block;width:100%;margin-top:5px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface);color:var(--text);font:inherit;font-size:12px}.welcome-message-section .field textarea{resize:vertical;line-height:1.5}.welcome-message-section [hidden]{display:none!important}.word-counter{display:block;text-align:right;color:var(--muted);font-size:10px;margin-top:4px}.word-counter.over-limit{color:#d97706}.mention-tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:center;margin:0 0 12px}.mention-tools>span,.mention-help{grid-column:1/-1;font-size:10px;color:var(--muted)}.mention-tools button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:9px;padding:0 11px;min-height:38px;font-size:11px;font-weight:750;cursor:pointer}.mention-tools select{margin:0}.mention-help{line-height:1.5}.embed-two-col{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px}.command-help{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--surface)}.welcome-panel .panel-actions{margin-top:4px}@media(max-width:620px){.mention-tools{grid-template-columns:1fr}.mention-tools button{min-height:38px}.embed-two-col{grid-template-columns:1fr}.welcome-section-heading{flex-direction:column}}";document.head.appendChild(ws);}
+ if(!document.getElementById('welcome-panel-styles')){const ws=document.createElement('style');ws.id='welcome-panel-styles';ws.textContent=".welcome-panel{display:grid;gap:14px}.welcome-section-disabled{opacity:.48}.welcome-section-disabled .welcome-section-heading{opacity:1}.rr-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);border-radius:10px;margin-top:8px}.rr-entry p{font-size:11px;color:var(--muted);margin-top:4px}.rr-remove{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;padding:7px 10px;cursor:pointer}.rr-mapping{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}.rr-mapping h4{font-size:12px;margin-bottom:8px}.rr-mapping-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rr-options{display:grid;gap:8px;margin-top:12px}.welcome-message-section{border:1px solid var(--border);border-radius:14px;padding:16px;background:var(--surface2)}.welcome-section-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}.welcome-section-heading h3{font-size:13px;font-weight:850}.welcome-section-heading p,.command-help p{font-size:11px;color:var(--muted);margin-top:4px}.welcome-section-heading .check{border:0;padding:0;gap:10px}.welcome-message-section .field{margin:10px 0}.welcome-message-section .field input,.welcome-message-section .field textarea,.welcome-message-section .field select,.mention-tools select{display:block;width:100%;margin-top:5px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface);color:var(--text);font:inherit;font-size:12px}.welcome-message-section .field textarea{resize:vertical;line-height:1.5}.welcome-message-section [hidden]{display:none!important}.word-counter{display:block;text-align:right;color:var(--muted);font-size:10px;margin-top:4px}.word-counter.over-limit{color:#d97706}.mention-tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:center;margin:0 0 12px}.mention-tools>span,.mention-help{grid-column:1/-1;font-size:10px;color:var(--muted)}.mention-tools button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:9px;padding:0 11px;min-height:38px;font-size:11px;font-weight:750;cursor:pointer}.mention-tools select{margin:0}.mention-help{line-height:1.5}.embed-two-col{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px}.command-help{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--surface)}.welcome-panel .panel-actions{margin-top:4px}@media(max-width:620px){.mention-tools{grid-template-columns:1fr}.mention-tools button{min-height:38px}.embed-two-col{grid-template-columns:1fr}.welcome-section-heading{flex-direction:column}}";document.head.appendChild(ws);}
 
  if(document.getElementById('integrated-dashboard-styles'))return;
  const s=document.createElement('style');s.id='integrated-dashboard-styles';
@@ -171,7 +170,7 @@ function embedEditor(prefix,embed,channels,roles){
  '<label class="field">Large image URL<input id="'+prefix+'Image" type="url" value="'+esc(e.image||'')+'" placeholder="https://…"></label></div>';
 }
 function messageSection(prefix,label,enabled,channel,type,message,embed,channels,roles){
- return '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+esc(label)+'</h3><p>Sent '+(prefix==='welcome'?'when a member joins':'when a member leaves')+'.</p></div>'+check(prefix+'Enabled','Enable '+label.toLowerCase(),enabled)+'</div>'+
+ return '<section class="welcome-message-section" id="'+prefix+'Content"><div class="welcome-section-heading"><div><h3>'+esc(label)+'</h3><p>Sent '+(prefix==='welcome'?'when a member joins':'when a member leaves')+'.</p></div>'+check(prefix+'Enabled','Enable '+label.toLowerCase(),enabled)+'</div>'+
  '<label class="field">'+esc(label)+' channel<select id="'+prefix+'Channel">'+optionList(channels,channel,'Choose a text channel')+'</select></label>'+
  '<label class="field">Message format<select id="'+prefix+'Type"><option value="text" '+((type||'text')==='text'?'selected':'')+'>Normal text</option><option value="embed" '+(type==='embed'?'selected':'')+'>Discord embed</option></select></label>'+
  '<div id="'+prefix+'TextPanel" '+(type==='embed'?'hidden':'')+'>'+textEditor(prefix,label+' message',message,channels,roles)+'</div>'+
@@ -227,6 +226,8 @@ async function renderWelcomePanel(id,f,c){
   const e={title:val(key+'Title').trim(),description,color:val(key+'Color'),footer:val(key+'Footer').trim(),thumbnail:val(key+'Thumbnail').trim(),image:val(key+'Image').trim()};
   return Object.fromEntries(Object.entries(e).filter(([_,v])=>String(v||'').trim()));
  };
+ const updateMessageSectionState=key=>{const enabled=yes(key+'Enabled');const section=document.getElementById(key+'Content');if(!section)return;section.querySelectorAll('input,select,textarea,button').forEach(el=>{if(el.id!==key+'Enabled')el.disabled=!enabled;});section.classList.toggle('welcome-section-disabled',!enabled);};
+ ['welcome','goodbye'].forEach(key=>{const toggle=document.getElementById(key+'Enabled');toggle.addEventListener('change',()=>updateMessageSectionState(key));updateMessageSectionState(key);});
  document.getElementById('saveWelcomeSettings').onclick=async()=>{
   const messages={welcome:val('welcomeType')==='embed'?'':val('welcomeText'),goodbye:val('goodbyeType')==='embed'?'':val('goodbyeText')};
   const embeds={welcome:val('welcomeType')==='embed'?makeEmbed('welcome'):null,goodbye:val('goodbyeType')==='embed'?makeEmbed('goodbye'):null};
@@ -250,10 +251,75 @@ async function renderWelcomePanel(id,f,c){
  };
  attachToggle(id,f,c);
 }
+
+async function renderReactionRolesPanel(id,f,c){
+ const [channelResult,roleResult,settingsResult]=await Promise.all([
+  api('/api/guild/'+encodeURIComponent(id)+'/channels'),
+  api('/api/guild/'+encodeURIComponent(id)+'/roles'),
+  api('/api/config/'+encodeURIComponent(id))
+ ]);
+ const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
+ const roles=(roleResult.roles||[]).filter(x=>!x.managed);
+ const gc=settingsResult||{};
+ const rr=gc.reactRoles||{};
+ const entries=Array.isArray(rr.entries)?rr.entries:[];
+ const entryRows=entries.map((e,i)=>'<div class="rr-entry"><div><strong>'+esc(e.emoji||'😀')+' → '+esc(e.roleName||roles.find(r=>r.id===e.roleId)?.name||'Role')+'</strong><p>#'+esc(e.channelName||channels.find(ch=>ch.id===e.channelId)?.name||'channel')+' · Message '+esc(e.messageId||'')+'</p></div><button type="button" class="rr-remove" data-remove-rr="'+i+'">Remove</button></div>').join('');
+ const channelOptions=optionList(channels,'','Choose a text channel');
+ const roleOptions=optionList(roles,'','Choose a role');
+ const enabledNow=gc.plugins?.reactionRoles!==false;
+ body.innerHTML=card('Reaction Roles','Create custom text/embed messages and map emoji reactions to server roles. Settings apply only to the selected server.',switcher(id,f,c)+
+ '<div class="welcome-panel reaction-roles-panel">'+
+ '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Reaction roles status</h3><p>Disable to pause the feature; configuration stays saved.</p></div>'+check('rrEnabled','Enable Reaction Roles',enabledNow)+'</div></section>'+
+ '<div id="rrConfigContent" '+(enabledNow?'':'hidden')+'>'+
+ '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Create reaction role</h3><p>Post a new message or attach a reaction role to a message that already exists.</p></div></div>'+
+ '<label class="field">Message action<select id="rrMessageAction"><option value="create">Create a new message</option><option value="existing">Use an existing message</option></select></label>'+
+ '<div id="rrCreateMessage">'+
+ '<label class="field">Post in channel<select id="rrChannel">'+channelOptions+'</select></label>'+
+ '<label class="field">Message format<select id="rrType"><option value="text">Normal text</option><option value="embed">Discord embed</option></select></label>'+
+ '<div id="rrTextPanel">'+input('rrMessageText','Message text','React below to choose your roles.')+
+ '<div class="mention-tools"><span>Insert a mention into the message</span><button type="button" data-rr-insert="user">Insert @user</button><select id="rrMentionChannel">'+channelOptions+'</select><button type="button" data-rr-insert="channel">Insert channel mention</button><select id="rrMentionRole">'+roleOptions+'</select><button type="button" data-rr-insert="role">Insert role mention</button><button type="button" id="rrResolveIds">Resolve pasted channel/role IDs</button></div></div>'+
+ '<div id="rrEmbedPanel" hidden>'+input('rrEmbedTitle','Embed title','Choose your roles')+'<label class="field">Embed description<textarea id="rrEmbedDescription" rows="4" maxlength="4000">React below to choose your roles.</textarea></label>'+input('rrEmbedColor','Embed color (hex)','5865F2')+input('rrEmbedFooter','Footer','SPIDEY BOT • Reaction Roles')+input('rrEmbedImage','Image URL','')+'</div>'+
+ '</div>'+
+ '<div id="rrExistingMessage" hidden><label class="field">Message channel<select id="rrExistingChannel">'+channelOptions+'</select></label>'+input('rrMessageId','Existing message ID','')+'<p class="mention-help">Paste the message ID from the selected server and channel. The bot must be able to view the channel and message.</p></div>'+
+ '<div class="rr-mapping"><h4>Emoji → role mapping</h4><div class="rr-mapping-grid">'+input('rrEmoji','Emoji (Unicode or custom emoji)','🎮')+'<label class="field">Role to assign<select id="rrRole">'+roleOptions+'</select></label></div><p class="mention-help">When a member adds this reaction, the bot assigns the selected role. Removing the reaction removes the role.</p></div>'+
+ '<div class="rr-options">'+check('rrAllowMultiple','Allow members to select multiple roles',rr.allowMultiple!==false)+check('rrRemoveOnUnreact','Remove role when reaction is removed',rr.removeOnUnreact!==false)+check('rrDmConfirm','Send a DM confirmation',!!rr.dmConfirm)+'</div>'+
+ '<div class="panel-actions"><button class="select" id="rrCreateSave" type="button">Save reaction role</button><button class="select" id="rrSaveSettings" type="button">Save settings only</button></div></section>'+
+ '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Existing reaction roles</h3><p>Manage role mappings already configured for this server.</p></div></div>'+(entryRows||'<p class="mention-help">No reaction roles have been created yet.</p>')+'</section></div></div>');
+ const toggleContent=()=>{document.getElementById('rrConfigContent').hidden=!yes('rrEnabled');};
+ document.getElementById('rrEnabled').addEventListener('change',async()=>{toggleContent();try{await save(id,{plugins:{...(gc.plugins||{}),reactionRoles:yes('rrEnabled')}});}catch(e){alert('Could not update feature status: '+e.message);}});
+ document.getElementById('rrMessageAction').addEventListener('change',()=>{const existing=val('rrMessageAction')==='existing';document.getElementById('rrCreateMessage').hidden=existing;document.getElementById('rrExistingMessage').hidden=!existing;});
+ document.getElementById('rrType').addEventListener('change',()=>{const embed=val('rrType')==='embed';document.getElementById('rrTextPanel').hidden=embed;document.getElementById('rrEmbedPanel').hidden=!embed;});
+ document.querySelectorAll('[data-rr-insert]').forEach(btn=>btn.addEventListener('click',()=>{const type=btn.dataset.rrInsert;const target=document.getElementById('rrMessageText');let value='';if(type==='user')value='@everyone';if(type==='channel'&&val('rrMentionChannel'))value='<#'+val('rrMentionChannel')+'>';if(type==='role'&&val('rrMentionRole'))value='<@&'+val('rrMentionRole')+'>';if(!value)return;const start=target.selectionStart??target.value.length,end=target.selectionEnd??start;target.value=target.value.slice(0,start)+value+target.value.slice(end);target.focus();target.selectionStart=target.selectionEnd=start+value.length;}));
+ document.getElementById('rrResolveIds').addEventListener('click',()=>{const channelIds=new Set(channels.map(x=>String(x.id))),roleIds=new Set(roles.map(x=>String(x.id)));const el=document.getElementById('rrMessageText');el.value=el.value.replace(/\b\d{17,20}\b/g,raw=>channelIds.has(raw)?'<#'+raw+'>':roleIds.has(raw)?'<@&'+raw+'>':raw);});
+ const saveSettings=async()=>api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({allowMultiple:yes('rrAllowMultiple'),removeOnUnreact:yes('rrRemoveOnUnreact'),dmConfirm:yes('rrDmConfirm')})});
+ document.getElementById('rrSaveSettings').onclick=async()=>{try{await saveSettings();alert('Reaction role settings saved.');}catch(e){alert('Could not save settings: '+e.message);}};
+ document.getElementById('rrCreateSave').onclick=async()=>{
+  if(!yes('rrEnabled')){alert('Enable Reaction Roles first.');return;}
+  const action=val('rrMessageAction'),channelId=action==='existing'?val('rrExistingChannel'):val('rrChannel'),emoji=val('rrEmoji').trim(),roleId=val('rrRole');
+  if(!channelId||!emoji||!roleId){alert('Choose a channel, emoji and role.');return;}
+  try{
+   let messageId=val('rrMessageId').trim();
+   if(action==='create'){
+    const type=val('rrType');
+    const payload={channelId,type,content:type==='text'?val('rrMessageText'):undefined,title:val('rrEmbedTitle'),description:val('rrEmbedDescription'),color:val('rrEmbedColor'),footer:val('rrEmbedFooter'),image:val('rrEmbedImage')};
+    const posted=await api('/api/bot-config/react-roles/post?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify(payload)});
+    if(!posted.success)throw new Error(posted.error||posted.message||'Could not post message');
+    messageId=posted.messageId;
+   }
+   const added=await api('/api/bot-config/react-roles/add?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({channelId,messageId,emoji,roleId})});
+   if(!added.success)throw new Error(added.error||added.message||'Could not add reaction role');
+   await saveSettings();
+   alert('Reaction role created.');await renderReactionRolesPanel(id,f,await load(id));
+  }catch(e){alert('Could not create reaction role: '+e.message);}
+ };
+ document.querySelectorAll('[data-remove-rr]').forEach(btn=>btn.addEventListener('click',async()=>{const index=Number(btn.dataset.removeRr);if(!confirm('Remove this reaction role mapping?'))return;try{const result=await api('/api/bot-config/react-roles/remove?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({index})});if(result.success===false)throw new Error(result.error||result.message);await renderReactionRolesPanel(id,f,await load(id));}catch(e){alert('Could not remove reaction role: '+e.message);}}));
+ attachToggle(id,f,c);
+}
+
 async function renderPanel(id,f,c){
  const k=f[0];
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
- if(k==='welcomeChannel'){baseFeaturePanel(id,f,c,input('channel','Welcome channel ID',c.welcome?.channelId||'')+input('message','Welcome message',c.welcome?.message||''));return;}
+ if(k==='reactionRoles'){await renderReactionRolesPanel(id,f,c);return;}
  if(k==='moderator'){baseFeaturePanel(id,f,c,check('warnings','Warnings',true)+check('audit','Audit logging',!!c.audit?.enabled)+input('channel','Moderation log channel ID',c.audit?.channelId||''));return;}
  if(k==='automod'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable filtering',c.automod?.enabled!==false)+check('invites','Block Discord invites',c.automod?.antiInvite!==false)+check('links','Block links',!!c.automod?.antiLink)+check('caps','Caps protection',!!c.automod?.caps)+check('mentions','Mass mention protection',c.automod?.massMention!==false)+input('max','Spam threshold',c.automod?.maxMessages||6,'number')+input('words','Blocked words',Array.isArray(c.automod?.words)?c.automod.words.join(', '):'')+'<div class="panel-actions">'+button('save','Save AutoMod')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{automod:{...(c.automod||{}),enabled:yes('enabled'),antiInvite:yes('invites'),antiLink:yes('links'),caps:yes('caps'),massMention:yes('mentions'),maxMessages:Number(val('max'))||6,words:val('words').split(',').map(x=>x.trim()).filter(Boolean)}});alert('AutoMod saved.');};attachToggle(id,f,c);return;}
  if(k==='levels'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable leveling',c.levels?.enabled!==false)+input('xp','XP per message',c.levels?.xpPerMessage||15,'number')+input('per','XP per level',c.levels?.xpPerLevel||500,'number')+check('announce','Announce level ups',c.levels?.announce!==false)+input('channel','Announcement channel ID',c.levels?.announceChannel||'')+'<div class="panel-actions">'+button('save','Save levels')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{levels:{...(c.levels||{}),enabled:yes('enabled'),xpPerMessage:Number(val('xp'))||15,xpPerLevel:Number(val('per'))||500,announce:yes('announce'),announceChannel:val('channel')||null}});alert('Levels saved.');};attachToggle(id,f,c);return;}
