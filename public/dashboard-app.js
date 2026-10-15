@@ -16,7 +16,6 @@ const FEATURES=[
     ['achievements','Achievements','Configure achievement milestones and reward behavior.','trophy']
   ]],
   ['Server Management',[
-    ['automations','Automations','Configure automated server actions and recurring behavior.','lightning'],
     ['customCommands','Custom Commands','Create, enable and disable custom commands.','terminal-window'],
     ['inviteTracker','Invite Tracker','Track referral activity and invite logging.','users-three'],
     ['ticketing','Ticketing','Configure support tickets, categories, staff roles and transcripts.','ticket'],
@@ -433,6 +432,33 @@ async function renderPanel(id,f,c){
    const result=await save(id,{achievements:{...a,enabled:yes('achEnabled'),messages:rows('msg'),emojis:rows('emoji'),announcementChannelId:val('achChannel')||null,announce:yes('achAnnounce')}});
    if(result?.success===false)throw new Error(result.error||'Save failed');alert('Achievement milestone settings saved.');
   };
+  attachToggle(id,f,c);return;
+ }
+ if(k==='customCommands'){
+  const cc=c.customCommands||{items:[]},items=Array.isArray(cc.items)?cc.items:[];
+  const commandRows=items.map((x,index)=>'<div class="welcome-message-section"><div class="welcome-section-heading"><div><h3>/'+esc(x.name)+'</h3><p>'+(x.enabled===false?'Disabled':'Enabled')+' · Used '+Number(x.count||0)+' times</p></div><button type="button" class="rr-remove" data-remove-custom="'+index+'">Remove</button></div><p class="mention-help">'+esc(x.messageTemplate||'')+'</p><p class="mention-help">Counter: '+(x.counterEnabled===false?'off':'on')+'</p></div>').join('');
+  body.innerHTML=card('Custom Commands','Build real server slash commands such as /kill. Each use increments a saved counter and inserts it into your custom response text.',
+   '<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Create a command</h3><p>Use letters, numbers and hyphens only. Discord command names are lowercase and cannot contain spaces.</p></div></div>'+
+   input('ccName','Command name (example: kill)','')+
+   '<label class="field">Response text<textarea id="ccMessage" rows="4" maxlength="1800" placeholder="Ohh, killed! Total kills: {count}"></textarea></label>'+
+   check('ccCounter','Increment and show a counter',true)+
+   input('ccCounterLabel','Counter label (optional)','Total kills')+
+   check('ccEnabled','Enable this command immediately',true)+
+   '<p class="mention-help">Template variables: <code>{count}</code> = use count, <code>{user}</code> = member mention, <code>{username}</code> = member name, <code>{server}</code> = server name. Example: <code>Ohh killed you — {count}</code>.</p>'+
+   '<div class="panel-actions"><button class="select" id="createCustomCommand" type="button">Create slash command</button></div></section>'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Your custom commands</h3><p>Commands are server-specific. New slash commands can take up to a minute to appear in Discord.</p></div></div>'+
+   (commandRows||'<p class="mention-help">No custom commands created yet.</p>')+'</section></div>');
+  document.getElementById('createCustomCommand').onclick=async()=>{
+   const name=val('ccName').trim().toLowerCase().replace(/^\/+/,''),messageTemplate=val('ccMessage').trim();
+   if(!/^[a-z0-9-]{1,32}$/.test(name)){alert('Enter a command name using 1–32 lowercase letters, numbers or hyphens.');return;}
+   if(!messageTemplate){alert('Enter the response text for this command.');return;}
+   if(items.some(x=>x.name===name)){alert('That custom command already exists.');return;}
+   if(items.length>=25){alert('Discord supports up to 25 custom commands in this panel. Remove one before adding another.');return;}
+   const next={...cc,items:[...items,{name,messageTemplate,counterEnabled:yes('ccCounter'),counterLabel:val('ccCounterLabel').trim(),enabled:yes('ccEnabled'),count:0}]};
+   try{const result=await save(id,{customCommands:next});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Custom command saved. Discord may take up to a minute to register /'+name+'.');await renderPanel(id,f,await load(id));}
+   catch(err){alert('Could not save custom command: '+(err.message||String(err)));}
+  };
+  document.querySelectorAll('[data-remove-custom]').forEach(btn=>btn.addEventListener('click',async()=>{const index=Number(btn.dataset.removeCustom);if(!confirm('Remove this custom slash command?'))return;const next={...cc,items:items.filter((_,i)=>i!==index)};try{const result=await save(id,{customCommands:next});if(result?.success===false)throw new Error(result.error||'Save failed');await renderPanel(id,f,await load(id));}catch(err){alert('Could not remove command: '+err.message);}}));
   attachToggle(id,f,c);return;
  }
  if(k==='economy'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable economy',c.economy?.enabled!==false)+input('currency','Currency name',c.economy?.currency||'coins')+input('daily','Daily reward',c.economy?.daily||100,'number')+input('min','Work minimum',c.economy?.workMin||20,'number')+input('max','Work maximum',c.economy?.workMax||60,'number')+'<div class="panel-actions">'+button('save','Save economy')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{economy:{...(c.economy||{}),enabled:yes('enabled'),currency:val('currency')||'coins',daily:Number(val('daily'))||100,workMin:Number(val('min'))||20,workMax:Number(val('max'))||60}});alert('Economy saved.');};attachToggle(id,f,c);return;}
