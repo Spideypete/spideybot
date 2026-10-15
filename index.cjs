@@ -8208,6 +8208,74 @@ app.delete("/api/guild/:guildId/emojis/:emojiId", async (req, res) => {
   }
 });
 
+// Publish an embed built in the dashboard to a selected server channel.
+app.post("/api/guild/:guildId/embeds/send", express.json(), async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  const { channelId, embed } = req.body || {};
+  if (!channelId || !embed || typeof embed !== "object") {
+    return res.status(400).json({ success: false, error: "Choose a channel and provide an embed." });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ success: false, error: "The bot cannot find this server." });
+
+  try {
+    const member = req.session.user?.id ? await guild.members.fetch(req.session.user.id) : null;
+    if (!member || !(member.permissions.has(PermissionFlagsBits.Administrator) || member.permissions.has(PermissionFlagsBits.ManageGuild))) {
+      return res.status(403).json({ success: false, error: "You need Manage Server permission to publish embeds." });
+    }
+    const channel = await guild.channels.fetch(channelId).catch(() => null);
+    if (!channel || !channel.isTextBased?.() || !channel.send) {
+      return res.status(400).json({ success: false, error: "Select a valid text channel." });
+    }
+    const botMember = guild.members.me;
+    const perms = botMember ? channel.permissionsFor(botMember) : null;
+    if (!perms?.has(PermissionFlagsBits.SendMessages) || !perms.has(PermissionFlagsBits.EmbedLinks)) {
+      return res.status(403).json({ success: false, error: "The bot needs Send Messages and Embed Links permissions in that channel." });
+    }
+
+    const title = typeof embed.title === "string" ? embed.title.trim() : "";
+    const description = typeof embed.description === "string" ? embed.description : "";
+    const author = typeof embed.author === "string" ? embed.author.trim() : "";
+    const footer = typeof embed.footer === "string" ? embed.footer.trim() : "";
+    const url = typeof embed.url === "string" ? embed.url.trim() : "";
+    const image = typeof embed.image === "string" ? embed.image.trim() : "";
+    const thumbnail = typeof embed.thumbnail === "string" ? embed.thumbnail.trim() : "";
+    const fields = Array.isArray(embed.fields) ? embed.fields.slice(0, 25).map(field => ({
+      name: String(field.name || "").trim().slice(0, 256) || "\u200b",
+      value: String(field.value || "").trim().slice(0, 1024) || "\u200b",
+      inline: !!field.inline
+    })).filter(field => field.name !== "\u200b" || field.value !== "\u200b") : [];
+    const validUrl = value => !value || /^https?:\/\//i.test(value);
+    if (!validUrl(url) || !validUrl(image) || !validUrl(thumbnail)) {
+      return res.status(400).json({ success: false, error: "URLs must start with http:// or https://." });
+    }
+    if (title.length > 256 || description.length > 4096 || author.length > 256 || footer.length > 2048) {
+      return res.status(400).json({ success: false, error: "The embed exceeds Discord's character limits." });
+    }
+    if (!title && !description && !fields.length && !image && !thumbnail && !author && !footer) {
+      return res.status(400).json({ success: false, error: "Add content to the embed before publishing." });
+    }
+
+    const color = /^#[0-9a-f]{6}$/i.test(String(embed.color || "")) ? parseInt(String(embed.color).slice(1), 16) : 0x5865F2;
+    const builder = new EmbedBuilder().setColor(color);
+    if (title) builder.setTitle(title);
+    if (description) builder.setDescription(description);
+    if (url) builder.setURL(url);
+    if (author) builder.setAuthor({ name: author });
+    if (footer) builder.setFooter({ text: footer });
+    if (image) builder.setImage(image);
+    if (thumbnail) builder.setThumbnail(thumbnail);
+    if (embed.timestamp) builder.setTimestamp();
+    if (fields.length) builder.addFields(fields);
+    const message = await channel.send({ embeds: [builder] });
+    return res.json({ success: true, messageId: message.id, channelId: channel.id, channelName: channel.name });
+  } catch (err) {
+    console.error("[dashboard embeds publish] Failed:", err.message);
+    return res.status(500).json({ success: false, error: "Could not publish the embed. Check the bot's channel permissions and try again." });
+  }
+});
+
 // Get channels in a guild for dashboard selectors
 app.get("/api/guild/:guildId/channels", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
