@@ -402,7 +402,7 @@ function registerTestifyHandlers(client){
         for(const [name] of desired){
           const current=existing.find(x=>x.name===name);
           if(current){if(current.description!=='SPIDEY BOT custom counter command')console.warn('[CUSTOM COMMAND] Name conflicts with an existing slash command:',name);continue;}
-          try{await guild.commands.create({name,description:'SPIDEY BOT custom counter command',type:1},'Custom counter command');}
+          try{await guild.commands.create({name,description:'SPIDEY BOT custom counter command',type:1});}
           catch(err){console.error('[CUSTOM COMMAND REGISTER]',guild.id,name,err.message);}
         }
       }
