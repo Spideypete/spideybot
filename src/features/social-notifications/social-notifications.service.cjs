@@ -110,7 +110,7 @@ function removeNotification(guildId, platform, username) {
   const removed = sn.notifications.splice(index, 1)[0];
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = sn;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true, notification: removed };
 }
@@ -131,7 +131,7 @@ function toggleNotification(guildId, platform, username) {
 
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = sn;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true, notification };
 }
@@ -167,7 +167,7 @@ function updateStreamStatus(guildId, platform, username, isLive, title) {
 
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = sn;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return {
     success: true,
