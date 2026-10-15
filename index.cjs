@@ -320,7 +320,7 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -8125,6 +8125,81 @@ app.get("/api/guild/:guildId/roles", (req, res) => {
     .sort((a, b) => b.position - a.position);
 
   res.json({ roles });
+});
+
+// Discord server emoji manager for the dashboard
+async function getDashboardGuildAccess(req, guild) {
+  if (!req.session?.authenticated || !req.session?.guilds?.some(g => g.id === guild.id)) return { ok: false, status: 403, error: "No access to this guild" };
+  const userId = req.session.user?.id || req.session.passport?.user?.id;
+  if (!userId) return { ok: false, status: 403, error: "Could not verify the signed-in Discord member" };
+  const member = await guild.members.fetch(userId).catch(() => null);
+  if (!member) return { ok: false, status: 403, error: "You must be a member of this Discord server" };
+  return { ok: true, member };
+}
+
+app.get("/api/guild/:guildId/emojis", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  try {
+    const fetched = await guild.emojis.fetch();
+    const emojis = [...fetched.values()].map(emoji => ({
+      id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 96 }),
+      animated: emoji.animated, managed: emoji.managed
+    })).sort((a, b) => a.name.localeCompare(b.name));
+    return res.json({ emojis, count: emojis.length });
+  } catch (err) {
+    console.error("[dashboard emojis list]", err.message);
+    return res.status(502).json({ error: "Could not fetch server emojis. Check the bot's server access." });
+  }
+});
+
+app.post("/api/guild/:guildId/emojis", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  const name = String(req.body?.name || "").trim();
+  const image = String(req.body?.image || "");
+  if (!/^[A-Za-z0-9_]{2,32}$/.test(name)) return res.status(400).json({ error: "Emoji name must be 2–32 letters, numbers or underscores" });
+  const match = image.match(/^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) return res.status(400).json({ error: "Upload a valid PNG, JPG, GIF or WebP image" });
+  const buffer = Buffer.from(match[2], "base64");
+  if (!buffer.length || buffer.length > 256 * 1024) return res.status(413).json({ error: "Emoji image must be between 1 byte and 256 KB" });
+  const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+  if (!botMember?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions)) {
+    return res.status(403).json({ error: "SPIDEY BOT needs Manage Expressions permission in this server" });
+  }
+  try {
+    const emoji = await guild.emojis.create({ attachment: buffer, name, reason: "Added from the SPIDEY BOT dashboard" });
+    return res.status(201).json({ success: true, emoji: { id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 96 }), animated: emoji.animated } });
+  } catch (err) {
+    console.error("[dashboard emoji create]", err.message);
+    const status = /maximum number|maximum.*emoji|limit/i.test(err.message) ? 409 : 400;
+    return res.status(status).json({ error: "Discord could not create this emoji. Check the server emoji limit, image format, and bot permissions." });
+  }
+});
+
+app.delete("/api/guild/:guildId/emojis/:emojiId", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+  if (!botMember?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Expressions permission" });
+  try {
+    const emoji = await guild.emojis.fetch(req.params.emojiId);
+    if (emoji.managed) return res.status(403).json({ error: "This emoji is managed by an integration and cannot be deleted by the bot" });
+    await emoji.delete("Deleted from the SPIDEY BOT dashboard");
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[dashboard emoji delete]", err.message);
+    return res.status(400).json({ error: "Discord could not delete this emoji. Check permissions and that the emoji still exists." });
+  }
 });
 
 // Get channels in a guild for dashboard selectors
