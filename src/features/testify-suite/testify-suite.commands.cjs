@@ -51,10 +51,21 @@ S('config','Server configuration',b=>b
  .addSubcommand(sub('prefix','Set command prefix',s=>s.addStringOption(o=>o.setName('prefix').setDescription('Prefix').setRequired(true).setMinLength(1).setMaxLength(5))))
  .addSubcommand(sub('sticky','Set sticky message',s=>s.addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
  .addSubcommand(sub('unsticky','Remove sticky message')).addSubcommand(sub('counting','Configure counting',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true))))
- .addSubcommand(sub('welcome','Configure welcome',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(false).addChannelTypes(ChannelType.GuildText)).addStringOption(o=>o.setName('message').setDescription('Message').setRequired(false))))
+ .addSubcommand(sub('welcome','Configure welcome',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(false).addChannelTypes(ChannelType.GuildText)).addStringOption(o=>o.setName('type').setDescription('Message format').setRequired(false).addChoices({name:'Normal text',value:'text'},{name:'Embed',value:'embed'})).addStringOption(o=>o.setName('message').setDescription('Message text or embed description').setRequired(false).setMaxLength(4000))))
+ .addSubcommand(sub('goodbye','Configure goodbye',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(false).addChannelTypes(ChannelType.GuildText)).addStringOption(o=>o.setName('type').setDescription('Message format').setRequired(false).addChoices({name:'Normal text',value:'text'},{name:'Embed',value:'embed'})).addStringOption(o=>o.setName('message').setDescription('Message text or embed description').setRequired(false).setMaxLength(4000))))
  .addSubcommand(sub('autorole','Configure autorole',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(false))))
  .addSubcommand(sub('verify','Set verification role',s=>s.addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
  .addSubcommand(sub('toggle','Toggle a command',s=>s.addStringOption(o=>o.setName('command').setDescription('Command').setRequired(true)).addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)))).setDefaultMemberPermissions(A)),
+S('welcome','Send a welcome configuration update',b=>b
+ .addChannelOption(o=>o.setName('channel').setDescription('Welcome channel').setRequired(true).addChannelTypes(ChannelType.GuildText))
+ .addStringOption(o=>o.setName('type').setDescription('Message format').setRequired(true).addChoices({name:'Normal text',value:'text'},{name:'Embed',value:'embed'}))
+ .addStringOption(o=>o.setName('message').setDescription('Message text or embed description (use {user} to tag the member)').setRequired(true).setMaxLength(4000))
+ .setDefaultMemberPermissions(A)),
+S('goodbye','Send a goodbye configuration update',b=>b
+ .addChannelOption(o=>o.setName('channel').setDescription('Goodbye channel').setRequired(true).addChannelTypes(ChannelType.GuildText))
+ .addStringOption(o=>o.setName('type').setDescription('Message format').setRequired(true).addChoices({name:'Normal text',value:'text'},{name:'Embed',value:'embed'}))
+ .addStringOption(o=>o.setName('message').setDescription('Message text or embed description').setRequired(true).setMaxLength(4000))
+ .setDefaultMemberPermissions(A)),
 S('levels','XP and leveling controls',b=>b
  .addSubcommand(sub('rewards','Show level rewards')).addSubcommand(sub('setreward','Set a level role reward',s=>s.addIntegerOption(o=>o.setName('level').setDescription('Level').setRequired(true).setMinValue(1).setMaxValue(100)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
  .addSubcommand(sub('reset','Reset member XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)))).setDefaultMemberPermissions(A)),
