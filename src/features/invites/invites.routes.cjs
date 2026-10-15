@@ -10,7 +10,14 @@ function auth(req, res, next) {
   next();
 }
 
-router.get('/:guildId', auth, (req, res) => {
+function requireGuildAccess(req, res, next) {
+  const guildId = req.params.guildId;
+  const allowed = Array.isArray(req.session?.guilds) && req.session.guilds.some(g => String(g.id) === String(guildId));
+  if (!allowed) return res.status(403).json({ error: "You don't have admin permissions in this server" });
+  next();
+}
+
+router.get('/:guildId', auth, requireGuildAccess, (req, res) => {
   const { guildId } = req.params;
   const invites = invitesService.getAllInvites(guildId);
   const config = invitesService.getConfig(guildId);
@@ -21,14 +28,14 @@ router.get('/:guildId', auth, (req, res) => {
   });
 });
 
-router.get('/:guildId/leaderboard', auth, (req, res) => {
+router.get('/:guildId/leaderboard', auth, requireGuildAccess, (req, res) => {
   const { guildId } = req.params;
   const leaderboard = invitesService.getInviteLeaderboard(guildId);
 
   res.json({ leaderboard });
 });
 
-router.get('/:guildId/:inviteCode', auth, (req, res) => {
+router.get('/:guildId/:inviteCode', auth, requireGuildAccess, (req, res) => {
   const { guildId, inviteCode } = req.params;
   const invite = invitesService.getInvite(guildId, decodeURIComponent(inviteCode));
 
@@ -39,7 +46,7 @@ router.get('/:guildId/:inviteCode', auth, (req, res) => {
   res.json({ invite });
 });
 
-router.post('/:guildId/sync', auth, express.json(), async (req, res) => {
+router.post('/:guildId/sync', auth, requireGuildAccess, express.json(), async (req, res) => {
   const { guildId } = req.params;
   const guild = global.client?.guilds?.cache?.get(guildId);
 
