@@ -1096,11 +1096,11 @@ async function handleCustomSlashCommand(interaction) {
 
   const template = String(item.messageTemplate || '');
   let response = template
-    .replace(/\\{count\\}/gi, String(count))
-    .replace(/\\{user\\}/gi, '<@' + interaction.user.id + '>')
-    .replace(/\\{username\\}/gi, interaction.user.username)
-    .replace(/\\{server\\}/gi, interaction.guild?.name || 'this server');
-  if (useCounter && !/\\{count\\}/i.test(template)) {
+    .replace(/\{count\}/gi, String(count))
+    .replace(/\{user\}/gi, '<@' + interaction.user.id + '>')
+    .replace(/\{username\}/gi, interaction.user.username)
+    .replace(/\{server\}/gi, interaction.guild?.name || 'this server');
+  if (useCounter && !/\{count\}/i.test(template)) {
     response += (response ? '\\n' : '') + String(item.counterLabel || 'Count') + ': ' + count;
   }
   if (!response.trim()) response = 'Custom command executed.';
