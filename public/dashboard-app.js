@@ -155,7 +155,7 @@ function optionList(items,selected,placeholder){
 }
 function wordCount(value){return String(value||'').trim().split(/\s+/).filter(Boolean).length;}
 function mentionTools(prefix,channels,roles){
- return '<div class="mention-tools"><span>Insert a mention</span><button type="button" data-insert-user="'+prefix+'">Insert member tag</button><select id="'+prefix+'ChannelMention">'+optionList(channels,'','Choose channel')+'</select><button type="button" data-insert-channel="'+prefix+'">Insert channel</button><select id="'+prefix+'RoleMention">'+optionList(roles,'','Choose role')+'</select><button type="button" data-insert-role="'+prefix+'">Insert role</button><div class="mention-help">Use {user} to tag the joining member, {username}, {server} and {membercount}. Channel and role inserts use Discord mentions.</div></div>';
+ return '<div class="mention-tools"><span>Insert a mention</span><button type="button" data-insert-user="'+prefix+'">Insert member tag</button><select id="'+prefix+'ChannelMention">'+optionList(channels,'','Choose channel')+'</select><button type="button" data-insert-channel="'+prefix+'">Insert channel</button><select id="'+prefix+'RoleMention">'+optionList(roles,'','Choose role')+'</select><button type="button" data-insert-role="'+prefix+'">Insert role</button><button type="button" data-resolve-ids="'+prefix+'">Resolve pasted channel/role IDs</button><div class="mention-help">Use {user} to tag the joining member, {username}, {server} and {membercount}. Channel and role inserts use Discord mentions.</div></div>';
 }
 function textEditor(prefix,label,value,channels,roles){
  return '<label class="field">'+esc(label)+'<textarea id="'+prefix+'Text" rows="6" maxlength="10000" data-word-limit="500">'+esc(value||'')+'</textarea><span class="word-counter" id="'+prefix+'TextCount">0 / 500 words</span></label>'+mentionTools(prefix+'Text',channels,roles);
@@ -210,6 +210,12 @@ async function renderWelcomePanel(id,f,c){
   el.focus();el.selectionStart=el.selectionEnd=start+text.length;el.dispatchEvent(new Event('input',{bubbles:true}));
  }
  document.querySelectorAll('[data-insert-user]').forEach(btn=>btn.addEventListener('click',()=>insertAtCursor(btn.dataset.insertUser,'{user}')));
+ document.querySelectorAll('[data-resolve-ids]').forEach(btn=>btn.addEventListener('click',()=>{
+  const id=btn.dataset.resolveIds,el=document.getElementById(id);if(!el)return;
+  const channelIds=new Set(channels.map(item=>String(item.id))),roleIds=new Set(roles.map(item=>String(item.id)));
+  el.value=String(el.value||'').replace(/\b\d{17,20}\b/g,raw=>channelIds.has(raw)?'<#'+raw+'>':roleIds.has(raw)?'<@&'+raw+'>':raw);
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+ }));
  document.querySelectorAll('[data-insert-channel]').forEach(btn=>btn.addEventListener('click',()=>{
   const prefix=btn.dataset.insertChannel,selected=val(prefix+'ChannelMention');if(selected)insertAtCursor(prefix,'<#'+selected+'>');
  }));
