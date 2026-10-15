@@ -91,7 +91,7 @@ router.post('/:guildId/check', auth, express.json(), async (req, res) => {
   const { guildId } = req.params;
 
   try {
-    const results = await socialNotificationsHandler.checkNow(guildId);
+    const results = await socialNotificationsHandler.checkNow(guildId, req.app.locals.discordClient);
     res.json({ success: true, results });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
