@@ -7057,9 +7057,9 @@ app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
   try {
     const { ReactionRolesService } = require('./src/features/reaction-roles/reaction-roles.service.cjs');
     const service = new ReactionRolesService();
-    const { allowMultiple, removeOnUnreact, dmConfirm } = req.body;
+    const { allowMultiple, removeOnUnreact, dmConfirm, enabled } = req.body;
     const config = service.getConfig(guildId);
-    const updated = { ...config, allowMultiple, removeOnUnreact, dmConfirm };
+    const updated = { ...config, allowMultiple, removeOnUnreact, dmConfirm, enabled, dmConfirmations: !!dmConfirm };
     service.setConfig(guildId, updated);
     console.log(`✅ React roles settings saved (Guild: ${guildId})`);
     res.json({ success: true, message: "React roles settings saved" });
@@ -7148,15 +7148,17 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
       });
     }
     
-    // Try to add the reaction to the message
+    // Try to add the reaction and register it with the live reaction-role handler.
     try {
       await message.react(emoji);
+      const reactionRoleService = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+      await reactionRoleService.addEntry(guildId, { channelId, messageId, emoji, roleId, description: role.name });
     } catch (e) {
-      console.warn('Could not add reaction:', e.message);
-      return res.json({ success: false, error: "Could not add reaction. Make sure the emoji is valid and the bot has permissions." });
+      console.warn('Could not register reaction role:', e.message);
+      return res.json({ success: false, error: e.message || "Could not add reaction. Check emoji and bot permissions." });
     }
 
-    // Save to config - reuse existing config from above
+    // Keep legacy dashboard config in sync for existing UI consumers.
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId].reactRoles) config.guilds[guildId].reactRoles = { entries: [], allowMultiple: true, removeOnUnreact: true, dmConfirm: false };
@@ -7202,6 +7204,8 @@ app.post("/api/bot-config/react-roles/remove", express.json(), async (req, res) 
     if (!entries || index < 0 || index >= entries.length) return res.json({ success: false, message: "Invalid index" });
 
     const removed = entries.splice(index, 1)[0];
+    const reactionRoleService = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+    reactionRoleService.removeEntry(guildId, removed.messageId, removed.emoji);
 
     // Try to remove the bot's reaction from the message
     try {
@@ -7236,24 +7240,29 @@ app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) =>
   const hasAccess = req.session.guilds?.some(g => g.id === guildId);
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
-    const { channelId, title, description } = req.body;
-    if (!channelId || !title) return res.json({ success: false, error: "Channel and title required" });
+    const { channelId, type = "embed", content, title, description, color, footer, image } = req.body;
+    if (!channelId) return res.json({ success: false, error: "Channel required" });
+    if (type === "text" && !String(content || "").trim()) return res.json({ success: false, error: "Message text is required" });
+    if (type !== "text" && !String(title || description || footer || image || "").trim()) return res.json({ success: false, error: "Add a title, description, footer or image to the embed" });
 
     const guild = client.guilds.cache.get(guildId);
     if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
 
     const channel = guild.channels.cache.get(channelId);
-    if (!channel) return res.json({ success: false, error: "Channel not found" });
+    if (!channel || !channel.isTextBased?.() || !channel.send) return res.json({ success: false, error: "Select a text channel" });
 
-    // Build and send embed
-    const embed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle(title)
-      .setDescription(description || 'React below to claim your roles!')
-      .setFooter({ text: 'SPIDEY BOT • React to get roles' })
-      .setTimestamp();
-
-    const msg = await channel.send({ embeds: [embed] });
+    let payload;
+    if (type === "text") {
+      payload = { content: String(content).slice(0, 2000) };
+    } else {
+      const embed = new EmbedBuilder().setColor(/^#?[0-9a-f]{6}$/i.test(String(color || "")) ? parseInt(String(color).replace("#", ""), 16) : 0x5865F2);
+      if (title) embed.setTitle(String(title).slice(0, 256));
+      if (description) embed.setDescription(String(description).slice(0, 4000));
+      if (footer) embed.setFooter({ text: String(footer).slice(0, 2048) });
+      if (image && /^https?:\/\//i.test(String(image))) embed.setImage(String(image));
+      payload = { embeds: [embed] };
+    }
+    const msg = await channel.send(payload);
     console.log(`✅ React role message posted: ${msg.id} in #${channel.name} (Guild: ${guildId})`);
     addActivity(guildId, "📨", "Admin", `posted reaction role message in #${channel.name}`);
     res.json({ success: true, messageId: msg.id, message: "Message posted" });
