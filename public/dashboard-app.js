@@ -355,7 +355,46 @@ async function renderPanel(id,f,c){
   };
   return;
  }
- if(k==='automod'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable filtering',c.automod?.enabled!==false)+check('invites','Block Discord invites',c.automod?.antiInvite!==false)+check('links','Block links',!!c.automod?.antiLink)+check('caps','Caps protection',!!c.automod?.caps)+check('mentions','Mass mention protection',c.automod?.massMention!==false)+input('max','Spam threshold',c.automod?.maxMessages||6,'number')+input('words','Blocked words',Array.isArray(c.automod?.words)?c.automod.words.join(', '):'')+'<div class="panel-actions">'+button('save','Save AutoMod')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{automod:{...(c.automod||{}),enabled:yes('enabled'),antiInvite:yes('invites'),antiLink:yes('links'),caps:yes('caps'),massMention:yes('mentions'),maxMessages:Number(val('max'))||6,words:val('words').split(',').map(x=>x.trim()).filter(Boolean)}});alert('AutoMod saved.');};attachToggle(id,f,c);return;}
+ if(k==='automod'){
+  const am=c.automod||{},rules=Array.isArray(am.customRules)?am.customRules:[];
+  const ruleText=n=>Array.isArray(rules[n]?.terms)?rules[n].terms.join('\\n'):'';
+  const area=(id,label,value,help)=>'<label class="field">'+esc(label)+'<textarea id="'+id+'" rows="4" maxlength="30000" placeholder="One term per line, or separate terms with commas">'+esc(value)+'</textarea><span class="mention-help">'+esc(help)+'</span></label>';
+  const pick=(id,label,value)=>'<label class="field">'+esc(label)+'<select id="'+id+'">'+[['delete','Delete message'],['timeout','Delete + timeout'],['alert','Alert only']].map(x=>'<option value="'+x[0]+'" '+(value===x[0]?'selected':'')+'>'+x[1]+'</option>').join('')+'</select></label>';
+  const section=(heading,sub,html)=>'<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+heading+'</h3><p>'+sub+'</p></div></div>'+html+'</section>';
+  body.innerHTML=card('AutoMod protection','Build server rules, choose responses and route alerts to your staff channel.',
+   '<div class="welcome-panel">'+
+   section('Protection status','Controls are saved to this server configuration.',check('enabled','Enable AutoMod',am.enabled!==false)+check('notifyUser','Privately notify the member after a block',am.notifyUser!==false))+
+   section('Keyword filters','Turn on curated categories and add up to three custom rules. Each custom rule accepts up to 1,000 terms.',
+    check('presetProfanity','Profanity filter',am.presetProfanity!==false)+check('presetSlurs','Slur filter',!!am.presetSlurs)+check('presetSexual','Explicit sexual-content filter',!!am.presetSexual)+
+    area('words','Additional blocked words',Array.isArray(am.words)?am.words.join('\\n'):'','Optional extra terms. Supports line breaks or commas.')+
+    area('rule1','Custom rule 1',ruleText(0),'Up to 1,000 terms. Example: server-specific prohibited words.')+
+    area('rule2','Custom rule 2',ruleText(1),'Up to 1,000 terms.')+
+    area('rule3','Custom rule 3',ruleText(2),'Up to 1,000 terms.'))+
+   section('Spam & links','Uses local heuristics and rate limits; no external machine-learning service is configured.',
+    check('antiSpam','Detect repeated / rapid messages',am.antiSpam!==false)+input('max','Messages before spam action',am.maxMessages||6,'number')+
+    input('window','Detection window (seconds)',Math.round((am.windowMs||8000)/1000),'number')+
+    check('antiInvite','Block Discord invite links',am.antiInvite!==false)+check('antiLink','Block suspicious / unwanted links',am.antiLink!==false)+check('antiDuplicate','Block repeated identical messages',am.antiDuplicate!==false)+
+    check('caps','Flag excessive capitalisation',!!am.caps)+check('massMention','Limit mass mentions',am.massMention!==false)+input('maxMentions','Maximum mentions per message (1–50)',Math.min(50,am.maxMentions||5),'number'))+
+   section('Member profile screening','Check usernames and server nicknames when members join or update their profile.',
+    check('screenUsername','Screen usernames',am.screenUsername!==false)+check('screenNickname','Screen server nicknames',am.screenNickname!==false)+check('screenActionTimeout','Timeout for prohibited profile terms',!!am.screenActionTimeout))+
+   section('Automated responses','Choose what happens when a rule is triggered. Timeout requires the bot to have Moderate Members permission.',
+    pick('action','Violation action',am.action||'delete')+input('timeoutMinutes','Timeout duration (minutes, 1–40320)',am.timeoutMinutes||10,'number')+
+    check('alertStaff','Send staff alert',am.alertStaff!==false)+input('logChannel','Private staff log channel ID',am.logChannelId||'')+
+    '<p class="mention-help">Use a private channel where only moderators can view AutoMod alerts. The bot needs View Channel and Send Messages permissions.</p>')+
+   '<div class="panel-actions"><button class="select" id="saveAutoMod" type="button">Save AutoMod settings</button></div></div>');
+  document.getElementById('saveAutoMod').onclick=async()=>{
+   const parseTerms=id=>val(id).split(/[\\n,]/).map(x=>x.trim()).filter(Boolean).slice(0,1000);
+   const customRules=[1,2,3].map((n)=>({name:'Custom rule '+n,terms:parseTerms('rule'+n)}));
+   const patch={automod:{...am,enabled:yes('enabled'),notifyUser:yes('notifyUser'),presetProfanity:yes('presetProfanity'),presetSlurs:yes('presetSlurs'),presetSexual:yes('presetSexual'),words:parseTerms('words'),customRules,
+    antiSpam:yes('antiSpam'),maxMessages:Math.max(2,Math.min(30,Number(val('max'))||6)),windowMs:Math.max(1,Math.min(60,Number(val('window'))||8))*1000,
+    antiInvite:yes('antiInvite'),antiLink:yes('antiLink'),antiDuplicate:yes('antiDuplicate'),caps:yes('caps'),massMention:yes('massMention'),maxMentions:Math.max(1,Math.min(50,Number(val('maxMentions'))||5)),
+    screenUsername:yes('screenUsername'),screenNickname:yes('screenNickname'),screenActionTimeout:yes('screenActionTimeout'),action:val('action'),
+    timeoutMinutes:Math.max(1,Math.min(40320,Number(val('timeoutMinutes'))||10)),alertStaff:yes('alertStaff'),logChannelId:val('logChannel').trim()||null}};
+   try{const result=await save(id,patch);if(result.success===false)throw new Error(result.error||'Save failed');alert('AutoMod settings saved.');}
+   catch(err){alert('Could not save AutoMod settings: '+(err.message||String(err)));}
+  };
+  attachToggle(id,f,c);return;
+ }
  if(k==='levels'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable leveling',c.levels?.enabled!==false)+input('xp','XP per message',c.levels?.xpPerMessage||15,'number')+input('per','XP per level',c.levels?.xpPerLevel||500,'number')+check('announce','Announce level ups',c.levels?.announce!==false)+input('channel','Announcement channel ID',c.levels?.announceChannel||'')+'<div class="panel-actions">'+button('save','Save levels')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{levels:{...(c.levels||{}),enabled:yes('enabled'),xpPerMessage:Number(val('xp'))||15,xpPerLevel:Number(val('per'))||500,announce:yes('announce'),announceChannel:val('channel')||null}});alert('Levels saved.');};attachToggle(id,f,c);return;}
  if(k==='economy'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable economy',c.economy?.enabled!==false)+input('currency','Currency name',c.economy?.currency||'coins')+input('daily','Daily reward',c.economy?.daily||100,'number')+input('min','Work minimum',c.economy?.workMin||20,'number')+input('max','Work maximum',c.economy?.workMax||60,'number')+'<div class="panel-actions">'+button('save','Save economy')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{economy:{...(c.economy||{}),enabled:yes('enabled'),currency:val('currency')||'coins',daily:Number(val('daily'))||100,workMin:Number(val('min'))||20,workMax:Number(val('max'))||60}});alert('Economy saved.');};attachToggle(id,f,c);return;}
  if(k==='ticketing'){body.innerHTML=card(f[1],f[2],switcher(id,f,c)+check('enabled','Enable tickets',c.tickets?.enabled!==false)+input('category','Ticket category ID',c.tickets?.categoryId||'')+input('channel','Ticket panel channel ID',c.tickets?.ticketChannelId||'')+input('support','Support role ID',c.tickets?.supportRoleId||'')+input('log','Transcript log channel ID',c.tickets?.logChannelId||'')+'<div class="panel-actions">'+button('save','Save tickets')+'</div>');document.getElementById('save').onclick=async()=>{await save(id,{tickets:{...(c.tickets||{}),enabled:yes('enabled'),categoryId:val('category')||null,ticketChannelId:val('channel')||null,supportRoleId:val('support')||null,logChannelId:val('log')||null}});alert('Tickets saved.');};attachToggle(id,f,c);return;}
