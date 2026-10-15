@@ -79,6 +79,14 @@ S('invites','Invite tracking, statistics and administration',b=>b
  .addSubcommand(sub('remove','Remove successful invites (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Number of invites').setRequired(true).setMinValue(1).setMaxValue(100000))))
  .addSubcommand(sub('reset','Reset invite totals (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
  .setDefaultMemberPermissions(PermissionFlagsBits.UseApplicationCommands)),
+S('ticket','Create and manage private support tickets',b=>b
+ .addSubcommand(sub('panel','Publish the configured ticket panel'))
+ .addSubcommand(sub('create','Open a support ticket'))
+ .addSubcommand(sub('close','Close this ticket'))
+ .addSubcommand(sub('claim','Claim this ticket'))
+ .addSubcommand(sub('reopen','Reopen a closed ticket'))
+ .addSubcommand(sub('delete','Delete a closed ticket channel'))
+ .addSubcommand(sub('stats','View ticket statistics'))),
 S('stats','Show your message and emoji milestone statistics',b=>b.setDMPermission(false)),
 S('system','Internal administration and safe diagnostics',b=>b
  .addSubcommand(sub('stats','Show bot statistics')).addSubcommand(sub('guilds','List bot guilds'))
