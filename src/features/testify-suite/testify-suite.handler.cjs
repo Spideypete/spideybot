@@ -77,7 +77,7 @@ async function execute(i,ctx){
     if(n==='say'){await i.channel.send(i.options.getString('message'));await i.reply({content:'Sent.',ephemeral:true});return true;}
     if(n==='thread'){const t=await i.channel.threads.create({name:i.options.getString('name'),reason:'SPIDEY BOT'});await i.reply('🧵 Created '+t.toString());return true;}
 
-    if(['automod','automodwords','automodlinks','automodspam','auditlog','setprefix','sticky','unsticky','counting','welcome','autorole','verify','commandtoggle'].includes(n)){
+    if(['automod','automodwords','automodlinks','automodspam','auditlog','setprefix','sticky','unsticky','counting','welcome','goodbye','autorole','verify','commandtoggle'].includes(n)){
       if(!isAdmin(i))return i.reply({content:'❌ Administrator permission required.',ephemeral:true});
       if(n==='automod'){c.automod.enabled=i.options.getBoolean('enabled')??c.automod.enabled;svc.save(i.guild.id,{automod:c.automod});return i.reply('🛡️ AutoMod '+(c.automod.enabled?'enabled':'disabled')+'.');}
       if(n==='automodwords'){c.automod.words=i.options.getString('words').split(',').map(x=>x.trim()).filter(Boolean).slice(0,100);svc.save(i.guild.id,{automod:c.automod});return i.reply('🛡️ Blocked words updated.');}
