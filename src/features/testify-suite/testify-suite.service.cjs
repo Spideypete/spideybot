@@ -10,7 +10,7 @@ const DEFAULTS = {
   autorole: { enabled: false, roleId: null },
   sticky: {}, counting: {}, profiles: {}, warnings: {}, commandToggles: {}, blacklist: [],
   economy: { enabled: true, currency: 'coins', daily: 100, workMin: 20, workMax: 60, cooldown: 300000, users: {}, shop: [] },
-  levels: { enabled: true, xpPerMessage: 15, xpPerLevel: 500, announceChannel: null, announce: true, rewards: {}, users: {} }
+  levels: { enabled: true, xpPerMessage: 15, xpPerLevel: 500, xpCooldownSeconds: 60, announceChannel: null, announce: true, rewards: {}, users: {} }
 };
 
 const clone=v=>JSON.parse(JSON.stringify(v));
@@ -37,7 +37,7 @@ function save(guildId,patch){
 function balance(guildId,id){const c=get(guildId),e=c.economy;e.users=e.users||{};e.users[id]=e.users[id]||{cash:0,bank:0,daily:0,work:0,inventory:[],pet:null};save(guildId,{economy:e});return e.users[id];}
 function addWarning(guildId,userId,entry){const c=get(guildId);c.warnings[userId]=c.warnings[userId]||[];c.warnings[userId].push(entry);save(guildId,{warnings:c.warnings});return c.warnings[userId];}
 function getWarnings(guildId,userId){return get(guildId).warnings?.[userId]||[];}
-function addXp(guildId,userId,amount){const c=get(guildId),l=c.levels;l.users=l.users||{};const u=l.users[userId]||{xp:0,level:0};u.xp+=Math.max(0,amount);let levelled=false;while(u.xp>=(u.level+1)*l.xpPerLevel){u.level++;levelled=true;}l.users[userId]=u;save(guildId,{levels:l});return {user:u,levelled};}
+function addXp(guildId,userId,amount){const c=get(guildId),l=c.levels;l.users=l.users||{};const u=l.users[userId]||{xp:0,level:0};const previousLevel=Math.max(0,Number(u.level)||0);u.xp=Math.max(0,Number(u.xp)||0)+Math.max(0,Number(amount)||0);const perLevel=Math.max(1,Number(l.xpPerLevel)||500);u.level=Math.floor(u.xp/perLevel);l.users[userId]=u;save(guildId,{levels:l});return {user:u,levelled:u.level>previousLevel,previousLevel};}
 function topXp(guildId){return Object.entries(get(guildId).levels.users||{}).map(([id,u])=>({id,...u})).sort((a,b)=>b.level-a.level||b.xp-a.xp).slice(0,20);}
 function topMoney(guildId){return Object.entries(get(guildId).economy.users||{}).map(([id,u])=>({id,cash:u.cash||0,bank:u.bank||0,total:(u.cash||0)+(u.bank||0)})).sort((a,b)=>b.total-a.total).slice(0,20);}
 function toggle(guildId,key,value){return save(guildId,{commandToggles:{[key]:!!value}}).commandToggles;}
