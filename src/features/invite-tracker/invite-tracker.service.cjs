@@ -58,7 +58,7 @@ async function onJoin(member) {
   if(member.user.bot)return;
   const svc=module.exports._svc;if(!svc)return;
   const cfg=getTracker(svc,member.guild.id);
-  if(cfg.enabled===false)return;
+  if(cfg.enabled===false || svc.get(member.guild.id).plugins?.inviteTracker===false)return;
   const before=snapshots.get(snapshotKey(member.guild.id))||new Map();
   const current=await fetchInvites(member.guild);
   let used=null;
