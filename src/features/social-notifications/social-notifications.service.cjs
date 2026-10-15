@@ -14,6 +14,13 @@ function saveConfig(config) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
 
+function saveGuildConfig(guildId, guildConfig) {
+  const config = loadConfig();
+  if (!config.guilds) config.guilds = {};
+  config.guilds[guildId] = guildConfig;
+  saveConfig(config);
+}
+
 function getGuildConfig(guildId) {
   const config = loadConfig();
   if (!config.guilds[guildId]) {
@@ -54,7 +61,7 @@ function setConfig(guildId, config) {
   const merged = { ...sn, ...config };
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = merged;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 }
 
 function addNotification(guildId, notification) {
@@ -83,7 +90,7 @@ function addNotification(guildId, notification) {
   sn.notifications.push(entry);
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = sn;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true, notification: entry };
 }
