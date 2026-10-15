@@ -6,6 +6,7 @@ const advice=['Be curious before being certain.','Small consistent actions compo
 const jokes=['Why did the scarecrow win an award? Because he was outstanding in his field.','I only know 25 letters of the alphabet. I do not know y.','Why do programmers prefer dark mode? Because light attracts bugs.'];
 const wyr=['Unlimited money or unlimited time?','Always early or always prepared?','Explore space or the deep ocean?'];
 const levelXpCooldown=new Map();
+const achievements=require('../achievements/achievements.service.cjs');
 const fmt=n=>new Intl.NumberFormat().format(Math.max(0,n||0));
 const isAdmin=i=>!!i.member?.permissions?.has(PermissionFlagsBits.Administrator);
 const who=i=>i.options.getUser('user')||i.user;
@@ -39,6 +40,7 @@ async function execute(i,ctx){
     if(n==='permissions'){await i.reply('Your permissions: '+i.member.permissions.toArray().join(', '));return true;}
     if(n==='profile'){await i.reply({embeds:[profile(i,u,c)]});return true;}
     if(n==='rank'){const l=c.levels.users?.[u.id]||{level:0,xp:0},top=svc.topXp(i.guild.id),pos=Math.max(1,top.findIndex(x=>x.id===u.id)+1);await i.reply('🏆 '+u.username+' — Level '+l.level+' | '+l.xp+' XP | Rank #'+pos);return true;}
+    if(n==='stats'){const totals=achievements.getStats(i.guild.id,u.id);await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📊 '+u.username+' — Server Statistics').setThumbnail(u.displayAvatarURL({size:256})).addFields({name:'Text messages',value:fmt(totals.message_count),inline:true},{name:'Emojis used',value:fmt(totals.emoji_count),inline:true})]});return true;}
     if(n==='guildlist'){await i.reply(ctx.client.guilds.cache.map(g=>g.name+' ('+g.id+')').slice(0,30).join('\n')||'No guilds.');return true;}
     if(n==='debug'){await i.reply(JSON.stringify({guild:i.guild.id,automod:c.automod.enabled,levels:c.levels.enabled,commands:Object.keys(c.commandToggles).length},null,2));return true;}
     if(n==='reloadconfig'){svc.get(i.guild.id);await i.reply('♻️ Guild configuration normalized and reloaded.');return true;}
@@ -139,6 +141,7 @@ async function handlePrefix(msg,ctx){
     if(n==='help')return reply('📚 Prefix: '+['ping','profile','rank','balance','daily','work','beg','inventory','shop','buy','give','rob','crime','serverinfo','userinfo','avatar','8ball','rps','dice','coin','trivia','purge','slowmode','lock','unlock','warn','warnings','kick','ban','unban','softban','announce','say','poll','sticky','setprefix','automod','auditlog','welcome','autorole','verify','addxp','setxp','removexp','resetxp'].map(x=>p+x).join(', '));
     if(n==='profile')return reply({embeds:[profile({user:msg.author},msg.author,c)]});
     if(n==='rank'){const u=c.levels.users?.[msg.author.id]||{level:0,xp:0},per=Math.max(1,Number(c.levels.xpPerLevel)||500),progress=(Number(u.xp)||0)%per;return reply('🏆 Level '+u.level+' | Total XP '+fmt(u.xp)+' | Progress '+fmt(progress)+'/'+fmt(per)+' XP | '+fmt(per-progress)+' XP to next level.');}
+    if(n==='stats'){const s=achievements.getStats(msg.guild.id,msg.author.id);return reply('📊 **Your server stats**\nMessages: **'+fmt(s.message_count)+'**\nEmojis used: **'+fmt(s.emoji_count)+'**');}
     if(['addxp','setxp','removexp','resetxp'].includes(n)){
       if(!msg.member?.permissions?.has(PermissionFlagsBits.Administrator))return reply('❌ Administrator permission required to edit XP.');
       const target=msg.mentions.users.first();if(!target)return reply('Usage: '+p+n+' @member'+(n==='resetxp'?'':' amount'));
@@ -319,6 +322,7 @@ function registerTestifyHandlers(client){
     try{
       if(!msg.guild||msg.author.bot)return;
       const c=svc.get(msg.guild.id),a=c.automod||{};
+      try{await achievements.trackMessage(msg,c.achievements||{});}catch(err){console.error('[ACHIEVEMENTS TRACKER]',err.message);}
       if(featureIsOn(c,'automod')&&a.enabled===true){
         const content=String(msg.content||''),now=Date.now(),key=msg.guild.id+':'+msg.author.id;
         let reason=null;
