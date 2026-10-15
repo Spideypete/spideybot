@@ -181,11 +181,12 @@ async function renderWelcomePanel(id,f,c){
  const [channelResult,roleResult,settingsResult]=await Promise.all([
   api('/api/guild/'+encodeURIComponent(id)+'/channels'),
   api('/api/guild/'+encodeURIComponent(id)+'/roles'),
-  api('/api/config/server-messages?guildId='+encodeURIComponent(id))
+  api('/api/config/'+encodeURIComponent(id))
  ]);
  const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
  const roles=roleResult.roles||[];
- const sm=settingsResult||{};
+ const guildConfig=settingsResult||{};
+ const sm={...(guildConfig.serverMessages||{}),...(guildConfig['server-messages']||{})};
  const welcomeType=sm.welcomeType||(sm.welcomeEmbed?'embed':'text');
  const goodbyeType=sm.goodbyeType||(sm.goodbyeEmbed?'embed':'text');
  const bodyHtml=messageSection('welcome','Welcome message',sm.welcomeEnabled??sm.enableWelcome??false,sm.welcomeChannel||'',welcomeType,sm.welcomeMessage??'Welcome {user} to {server}! 🎉',sm.welcomeEmbed,channels,roles)+
