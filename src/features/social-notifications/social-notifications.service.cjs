@@ -30,6 +30,9 @@ function getSocialNotifications(guildId) {
       enabled: false,
       notifications: []
     };
+    const config = loadConfig();
+    config.guilds[guildId] = guildConfig;
+    saveConfig(config);
   }
   return guildConfig.socialNotifications;
 }
