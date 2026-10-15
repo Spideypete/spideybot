@@ -155,7 +155,7 @@ function optionList(items,selected,placeholder){
 }
 function wordCount(value){return String(value||'').trim().split(/\\s+/).filter(Boolean).length;}
 function mentionTools(prefix,channels,roles){
- return '<div class="mention-tools"><span>Insert a mention</span><select id="'+prefix+'ChannelMention">'+optionList(channels,'','Choose channel')+'</select><button type="button" data-insert-channel="'+prefix+'">Insert channel</button><select id="'+prefix+'RoleMention">'+optionList(roles,'','Choose role')+'</select><button type="button" data-insert-role="'+prefix+'">Insert role</button><div class="mention-help">Use {user} to tag the joining member, {username}, {server} and {membercount}. Channel and role inserts use Discord mentions.</div></div>';
+ return '<div class="mention-tools"><span>Insert a mention</span><button type="button" data-insert-user="'+prefix+'">Insert member tag</button><select id="'+prefix+'ChannelMention">'+optionList(channels,'','Choose channel')+'</select><button type="button" data-insert-channel="'+prefix+'">Insert channel</button><select id="'+prefix+'RoleMention">'+optionList(roles,'','Choose role')+'</select><button type="button" data-insert-role="'+prefix+'">Insert role</button><div class="mention-help">Use {user} to tag the joining member, {username}, {server} and {membercount}. Channel and role inserts use Discord mentions.</div></div>';
 }
 function textEditor(prefix,label,value,channels,roles){
  return '<label class="field">'+esc(label)+'<textarea id="'+prefix+'Text" rows="6" maxlength="10000" data-word-limit="500">'+esc(value||'')+'</textarea><span class="word-counter" id="'+prefix+'TextCount">0 / 500 words</span></label>'+mentionTools(prefix+'Text',channels,roles);
@@ -208,6 +208,7 @@ async function renderWelcomePanel(id,f,c){
   el.value=el.value.slice(0,start)+text+el.value.slice(end);
   el.focus();el.selectionStart=el.selectionEnd=start+text.length;el.dispatchEvent(new Event('input',{bubbles:true}));
  }
+ document.querySelectorAll('[data-insert-user]').forEach(btn=>btn.addEventListener('click',()=>insertAtCursor(btn.dataset.insertUser,'{user}')));
  document.querySelectorAll('[data-insert-channel]').forEach(btn=>btn.addEventListener('click',()=>{
   const prefix=btn.dataset.insertChannel,selected=val(prefix+'ChannelMention');if(selected)insertAtCursor(prefix,'<#'+selected+'>');
  }));
