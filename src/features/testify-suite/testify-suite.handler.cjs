@@ -136,9 +136,16 @@ async function handlePrefix(msg,ctx){
   if(!featureIsOn(c,featureKey))return reply('That feature is currently disabled by this server.');
   try{
     if(n==='ping')return reply('🏓 Pong! '+ctx.client.ws.ping+'ms');
-    if(n==='help')return reply('📚 Prefix: '+['ping','profile','rank','balance','daily','work','beg','inventory','shop','buy','give','rob','crime','serverinfo','userinfo','avatar','8ball','rps','dice','coin','trivia','purge','slowmode','lock','unlock','warn','warnings','kick','ban','unban','softban','announce','say','poll','sticky','setprefix','automod','auditlog','welcome','autorole','verify'].map(x=>p+x).join(', '));
+    if(n==='help')return reply('📚 Prefix: '+['ping','profile','rank','balance','daily','work','beg','inventory','shop','buy','give','rob','crime','serverinfo','userinfo','avatar','8ball','rps','dice','coin','trivia','purge','slowmode','lock','unlock','warn','warnings','kick','ban','unban','softban','announce','say','poll','sticky','setprefix','automod','auditlog','welcome','autorole','verify','addxp','setxp','removexp','resetxp'].map(x=>p+x).join(', '));
     if(n==='profile')return reply({embeds:[profile({user:msg.author},msg.author,c)]});
-    if(n==='rank')return reply('🏆 Level '+(c.levels.users?.[msg.author.id]?.level||0)+' | XP '+(c.levels.users?.[msg.author.id]?.xp||0));
+    if(n==='rank'){const u=c.levels.users?.[msg.author.id]||{level:0,xp:0},per=Math.max(1,Number(c.levels.xpPerLevel)||500),progress=(Number(u.xp)||0)%per;return reply('🏆 Level '+u.level+' | Total XP '+fmt(u.xp)+' | Progress '+fmt(progress)+'/'+fmt(per)+' XP | '+fmt(per-progress)+' XP to next level.');}
+    if(['addxp','setxp','removexp','resetxp'].includes(n)){
+      if(!msg.member?.permissions?.has(PermissionFlagsBits.Administrator))return reply('❌ Administrator permission required to edit XP.');
+      const target=msg.mentions.users.first();if(!target)return reply('Usage: '+p+n+' @member'+(n==='resetxp'?'':' amount'));
+      c.levels.users=c.levels.users||{};const current=c.levels.users[target.id]||{xp:0,level:0};let nextXp=0;
+      if(n==='resetxp')nextXp=0;else{const amount=Number(a[1]);if(!Number.isInteger(amount)||amount<0||(n!=='setxp'&&amount===0))return reply('❌ Enter a valid whole-number XP amount.');nextXp=n==='addxp'?Math.max(0,Number(current.xp)||0)+amount:n==='removexp'?Math.max(0,(Number(current.xp)||0)-amount):amount;}
+      const per=Math.max(1,Number(c.levels.xpPerLevel)||500);c.levels.users[target.id]={xp:nextXp,level:Math.floor(nextXp/per)};svc.save(msg.guild.id,{levels:c.levels});return reply('✅ Updated '+target.username+': '+fmt(nextXp)+' total XP, Level '+Math.floor(nextXp/per)+'.');
+    }
     if(n==='balance'){const m=svc.balance(msg.guild.id,msg.author.id);return reply('💰 Cash: '+fmt(m.cash)+' | Bank: '+fmt(m.bank));}
     if(n==='daily'){const e=c.economy,m=svc.balance(msg.guild.id,msg.author.id);if(Date.now()-m.daily<86400000)return reply('⏳ Daily cooldown active.');m.cash+=e.daily||100;m.daily=Date.now();svc.save(msg.guild.id,{economy:e});return reply('💰 Daily claimed.');}
     if(n==='work'||n==='beg'){const e=c.economy,m=svc.balance(msg.guild.id,msg.author.id),x=n==='work'?e.workMin+Math.floor(Math.random()*(e.workMax-e.workMin+1)):5+Math.floor(Math.random()*26);m.cash+=x;svc.save(msg.guild.id,{economy:e});return reply('💰 Earned '+x+' coins.');}
