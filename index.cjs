@@ -6863,6 +6863,7 @@ adminConfigs.forEach(configName => {
       if (!config.guilds[guildId].serverMessages) config.guilds[guildId].serverMessages = {};
       const body = req.body || {};
       const currentMessages = config.guilds[guildId].serverMessages;
+      const legacyMessages = config.guilds[guildId]['server-messages'];
       Object.assign(currentMessages, {
         enableWelcome: body.welcomeEnabled ?? body.enableWelcome ?? currentMessages.enableWelcome,
         welcomeChannel: body.welcomeChannel !== undefined ? body.welcomeChannel : currentMessages.welcomeChannel,
@@ -6875,6 +6876,19 @@ adminConfigs.forEach(configName => {
         goodbyeEmbed: body.goodbyeEmbed !== undefined ? body.goodbyeEmbed : currentMessages.goodbyeEmbed,
         goodbyeType: body.goodbyeType !== undefined ? body.goodbyeType : currentMessages.goodbyeType
       });
+      // Keep both persisted shapes canonical so an old alias cannot override a new toggle.
+      if (body.welcomeEnabled !== undefined || body.enableWelcome !== undefined) {
+        const enabled = body.welcomeEnabled ?? body.enableWelcome;
+        currentMessages.enableWelcome = enabled;
+        legacyMessages.enableWelcome = enabled;
+        legacyMessages.welcomeEnabled = enabled;
+      }
+      if (body.goodbyeEnabled !== undefined || body.enableGoodbye !== undefined) {
+        const enabled = body.goodbyeEnabled ?? body.enableGoodbye;
+        currentMessages.enableGoodbye = enabled;
+        legacyMessages.enableGoodbye = enabled;
+        legacyMessages.goodbyeEnabled = enabled;
+      }
       if (body.welcomeChannel !== undefined) config.guilds[guildId].welcomeChannelId = body.welcomeChannel;
     }
 
@@ -7087,15 +7101,28 @@ app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const service = require('./src/features/reaction-roles/reaction-roles.service.cjs');
-    const { allowMultiple, removeOnUnreact, dmConfirm, enabled, language, updateNotifications, errorReporting, notificationChannelId } = req.body;
-    const config = service.getConfig(guildId);
-    const updated = { ...config, allowMultiple, removeOnUnreact, dmConfirm, enabled, language, updateNotifications, errorReporting, notificationChannelId: notificationChannelId || null, dmConfirmations: !!dmConfirm };
+    const body = req.body || {};
+    const current = service.getConfig(guildId);
+    const updated = { ...current };
+    for (const key of ['allowMultiple', 'removeOnUnreact', 'enabled', 'language', 'updateNotifications', 'errorReporting']) {
+      if (body[key] !== undefined) updated[key] = body[key];
+    }
+    if (body.notificationChannelId !== undefined) updated.notificationChannelId = body.notificationChannelId || null;
+    if (typeof body.dmConfirm === 'boolean') {
+      updated.dmConfirm = body.dmConfirm;
+      updated.dmConfirmations = body.dmConfirm;
+    }
+    if (typeof body.dmConfirmations === 'boolean') updated.dmConfirmations = body.dmConfirmations;
     service.setConfig(guildId, updated);
-    console.log(`✅ React roles settings saved (Guild: ${guildId})`);
-    res.json({ success: true, message: "React roles settings saved" });
+    const saved = service.getConfig(guildId);
+    if (typeof body.enabled === 'boolean' && saved.enabled !== body.enabled) {
+      throw new Error('Reaction Roles enabled state did not persist');
+    }
+    console.log(`✅ React roles settings saved (Guild: ${guildId}; enabled: ${saved.enabled})`);
+    res.json({ success: true, config: saved, message: "React roles settings saved" });
   } catch (err) {
     console.error('❌ Error saving react roles settings:', err);
-    res.json({ success: false, message: "Error saving settings" });
+    res.status(500).json({ success: false, error: err.message || "Error saving settings" });
   }
 });
 
