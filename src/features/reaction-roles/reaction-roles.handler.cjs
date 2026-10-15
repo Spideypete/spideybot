@@ -48,6 +48,10 @@ async function handleReactionAdd(reaction, user) {
   const guild = reaction.message.guild;
   if (!guild) return;
 
+  const settings = service.getConfig(guild.id);
+  if (settings.enabled === false) return;
+  const settings = service.getConfig(guild.id);
+  if (settings.enabled === false || settings.removeOnUnreact === false) return;
   const entries = service.getEntriesForMessage(guild.id, reaction.message.id);
   const entry = entries.find((e) => entryMatchesEmoji(e, reaction.emoji));
   if (!entry) return;
@@ -65,6 +69,10 @@ async function handleReactionAdd(reaction, user) {
   if (member.roles.cache.has(role.id)) return;
 
   try {
+    if (settings.allowMultiple === false) {
+      const otherRoleIds = [...new Set(entries.filter(e => e.roleId !== role.id).map(e => e.roleId))].filter(roleId => member.roles.cache.has(roleId));
+      if (otherRoleIds.length) await member.roles.remove(otherRoleIds, "Reaction role single-selection mode");
+    }
     await member.roles.add(role, "Reaction role assigned");
     console.log(
       `[reaction-roles] Assigned ${role.name} to ${user.tag} in ${guild.name}`
