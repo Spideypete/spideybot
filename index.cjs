@@ -1009,6 +1009,16 @@ try {
   console.error("❌ Failed to register reaction role handlers:", err.message);
 }
 
+try {
+  require("./src/features/server-messages/server-messages.handler.cjs").initialize(
+    client,
+    path.join(__dirname, "config.json")
+  );
+  console.log("✅ Welcome/goodbye member event handlers registered");
+} catch (err) {
+  console.error("❌ Failed to register welcome/goodbye handlers:", err.message);
+}
+
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
 client.on('interactionCreate', async interaction => {
   try {
