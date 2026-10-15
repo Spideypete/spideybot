@@ -68,7 +68,10 @@ S('goodbye','Send a goodbye configuration update',b=>b
  .setDefaultMemberPermissions(A)),
 S('levels','XP and leveling controls',b=>b
  .addSubcommand(sub('rewards','Show level rewards')).addSubcommand(sub('setreward','Set a level role reward',s=>s.addIntegerOption(o=>o.setName('level').setDescription('Level').setRequired(true).setMinValue(1).setMaxValue(100)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
- .addSubcommand(sub('reset','Reset member XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)))).setDefaultMemberPermissions(A)),
+ .addSubcommand(sub('reset','Reset member XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
+ .addSubcommand(sub('addxp','Add XP to a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('XP to add').setRequired(true).setMinValue(1).setMaxValue(1000000))))
+ .addSubcommand(sub('setxp','Set a member total XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Total XP').setRequired(true).setMinValue(0).setMaxValue(100000000))))
+ .addSubcommand(sub('removexp','Remove XP from a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('XP to remove').setRequired(true).setMinValue(1).setMaxValue(1000000)))).setDefaultMemberPermissions(A)),
 S('system','Internal administration and safe diagnostics',b=>b
  .addSubcommand(sub('stats','Show bot statistics')).addSubcommand(sub('guilds','List bot guilds'))
  .addSubcommand(sub('blacklist','Blacklist a user',s=>s.addUserOption(o=>o.setName('user').setDescription('User').setRequired(true))))
