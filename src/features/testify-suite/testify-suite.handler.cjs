@@ -138,7 +138,7 @@ async function handlePrefix(msg,ctx){
   if(!featureIsOn(c,featureKey))return reply('That feature is currently disabled by this server.');
   try{
     if(n==='ping')return reply('🏓 Pong! '+ctx.client.ws.ping+'ms');
-    if(n==='help')return reply('📚 Prefix: '+['ping','profile','rank','balance','daily','work','beg','inventory','shop','buy','give','rob','crime','serverinfo','userinfo','avatar','8ball','rps','dice','coin','trivia','purge','slowmode','lock','unlock','warn','warnings','kick','ban','unban','softban','announce','say','poll','sticky','setprefix','automod','auditlog','welcome','autorole','verify','addxp','setxp','removexp','resetxp'].map(x=>p+x).join(', '));
+    if(n==='help')return reply('📚 Prefix: '+['ping','profile','rank','balance','daily','work','beg','inventory','shop','buy','give','rob','crime','serverinfo','userinfo','avatar','8ball','rps','dice','coin','trivia','purge','slowmode','lock','unlock','warn','warnings','kick','ban','unban','softban','announce','say','poll','sticky','setprefix','automod','auditlog','welcome','autorole','verify','addxp','setxp','removexp','resetxp','stats'].map(x=>p+x).join(', '));
     if(n==='profile')return reply({embeds:[profile({user:msg.author},msg.author,c)]});
     if(n==='rank'){const u=c.levels.users?.[msg.author.id]||{level:0,xp:0},per=Math.max(1,Number(c.levels.xpPerLevel)||500),progress=(Number(u.xp)||0)%per;return reply('🏆 Level '+u.level+' | Total XP '+fmt(u.xp)+' | Progress '+fmt(progress)+'/'+fmt(per)+' XP | '+fmt(per-progress)+' XP to next level.');}
     if(n==='stats'){const s=achievements.getStats(msg.guild.id,msg.author.id);return reply('📊 **Your server stats**\nMessages: **'+fmt(s.message_count)+'**\nEmojis used: **'+fmt(s.emoji_count)+'**');}
@@ -322,7 +322,7 @@ function registerTestifyHandlers(client){
     try{
       if(!msg.guild||msg.author.bot)return;
       const c=svc.get(msg.guild.id),a=c.automod||{};
-      try{await achievements.trackMessage(msg,c.achievements||{});}catch(err){console.error('[ACHIEVEMENTS TRACKER]',err.message);}
+      try{await achievements.trackMessage(msg,{...(c.achievements||{}),enabled:c.plugins?.achievements!==false&&(c.achievements?.enabled!==false)});}catch(err){console.error('[ACHIEVEMENTS TRACKER]',err.message);}
       if(featureIsOn(c,'automod')&&a.enabled===true){
         const content=String(msg.content||''),now=Date.now(),key=msg.guild.id+':'+msg.author.id;
         let reason=null;
