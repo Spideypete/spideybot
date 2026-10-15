@@ -373,7 +373,7 @@ async function renderPanel(id,f,c){
    section('Spam & links','Uses local heuristics and rate limits; no external machine-learning service is configured.',
     check('antiSpam','Detect repeated / rapid messages',am.antiSpam!==false)+input('max','Messages before spam action',am.maxMessages||6,'number')+
     input('window','Detection window (seconds)',Math.round((am.windowMs||8000)/1000),'number')+
-    check('antiInvite','Block Discord invite links',am.antiInvite!==false)+check('antiLink','Block suspicious / unwanted links',am.antiLink!==false)+check('antiDuplicate','Block repeated identical messages',am.antiDuplicate!==false)+
+    check('antiInvite','Block Discord invite links',am.antiInvite!==false)+check('antiLink','Scan links for suspicious / blocked domains',am.antiLink!==false)+area('blockedDomains','Custom blocked domains',Array.isArray(am.blockedDomains)?am.blockedDomains.join('\\n'):'','One domain per line, such as example.com. Only matching domains will be blocked.')+check('antiDuplicate','Block repeated identical messages',am.antiDuplicate!==false)+
     check('caps','Flag excessive capitalisation',!!am.caps)+check('massMention','Limit mass mentions',am.massMention!==false)+input('maxMentions','Maximum mentions per message (1–50)',Math.min(50,am.maxMentions||5),'number'))+
    section('Member profile screening','Check usernames and server nicknames when members join or update their profile.',
     check('screenUsername','Screen usernames',am.screenUsername!==false)+check('screenNickname','Screen server nicknames',am.screenNickname!==false)+check('screenActionTimeout','Timeout for prohibited profile terms',!!am.screenActionTimeout))+
@@ -387,7 +387,7 @@ async function renderPanel(id,f,c){
    const customRules=[1,2,3].map((n)=>({name:'Custom rule '+n,terms:parseTerms('rule'+n)}));
    const patch={automod:{...am,enabled:yes('enabled'),notifyUser:yes('notifyUser'),presetProfanity:yes('presetProfanity'),presetSlurs:yes('presetSlurs'),presetSexual:yes('presetSexual'),words:parseTerms('words'),customRules,
     antiSpam:yes('antiSpam'),maxMessages:Math.max(2,Math.min(30,Number(val('max'))||6)),windowMs:Math.max(1,Math.min(60,Number(val('window'))||8))*1000,
-    antiInvite:yes('antiInvite'),antiLink:yes('antiLink'),antiDuplicate:yes('antiDuplicate'),caps:yes('caps'),massMention:yes('massMention'),maxMentions:Math.max(1,Math.min(50,Number(val('maxMentions'))||5)),
+    antiInvite:yes('antiInvite'),antiLink:yes('antiLink'),blockedDomains:parseTerms('blockedDomains'),antiDuplicate:yes('antiDuplicate'),caps:yes('caps'),massMention:yes('massMention'),maxMentions:Math.max(1,Math.min(50,Number(val('maxMentions'))||5)),
     screenUsername:yes('screenUsername'),screenNickname:yes('screenNickname'),screenActionTimeout:yes('screenActionTimeout'),action:val('action'),
     timeoutMinutes:Math.max(1,Math.min(40320,Number(val('timeoutMinutes'))||10)),alertStaff:yes('alertStaff'),logChannelId:val('logChannel').trim()||null}};
    try{const result=await save(id,patch);if(result.success===false)throw new Error(result.error||'Save failed');alert('AutoMod settings saved.');}
