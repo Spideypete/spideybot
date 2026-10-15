@@ -51,6 +51,16 @@ test('invite tracker persists settings, invite usage, joins, leaves and leaderbo
   assert.equal(invites.getConfig(guildId).enabled, true);
   assert.equal(invites.getInviteLeaderboard(guildId)[0].netJoins, 1);
 
+  // A periodic invite sync must not erase accumulated joins/leaves.
+  invites.trackInvite(guildId, {
+    code: 'testcode',
+    inviter: { id: 'inviter-1' },
+    uses: 1
+  });
+  invite = invites.getInvite(guildId, 'testcode');
+  assert.equal(invite.joins, 1);
+  assert.equal(invite.joinedUsers.length, 1);
+
   invites.recordLeave(guildId, 'member-1');
   invite = invites.getInvite(guildId, 'testcode');
   assert.equal(invite.leaves, 1);
