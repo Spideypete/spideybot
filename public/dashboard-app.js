@@ -39,22 +39,15 @@ const FEATURES=[
     ['xalerts','X Alerts','Configure X notifications.','x-logo']
   ]],
   ['Games & Community',[
-    ['giveaways','Giveaways','Configure giveaway defaults and community prize events.','gift'],
-    ['economy','Economy','Configure currency, rewards, shop and economy behavior.','coins'],
-    ['music','Music','Configure player, DJ role and playback limits.','music-notes'],
-    ['casino','Casino','Configure casino game availability and limits.','dice-five'],
-    ['lottery','Lottery','Configure lottery entry and reward settings.','ticket']
+    ['giveaways','Giveaways','Configure giveaway events, entry rules and winner selection.','gift'],
+    ['economy','Economy','Configure currency, daily rewards, balances and transfers.','coins'],
+    ['music','Music','Configure voice playback, DJ role and playback limits.','music-notes'],
+    ['casino','Casino','Configure slots, betting limits and casino controls.','dice-five'],
+    ['lottery','Lottery','Configure lottery entries, draw schedule and prizes.','ticket'],
+    ['games','Games','Configure community games inspired by DebilBot.','gamepad-2']
   ]],
   ['Advanced',[
-    ['ai','AI Assistant','Configure AI assistant channel and behavior.','sparkle'],
-    ['monetize','Monetization','Configure server monetization settings.','credit-card'],
-    ['nftStats','NFT Statistics','Configure NFT collection statistics queries.','cube'],
-    ['nftQueries','NFT Queries','Configure NFT lookup commands.','magnifying-glass'],
-    ['nftSales','NFT Sales & Listings','Configure NFT sales and listing notifications.','shopping-cart'],
-    ['cryptoStats','Crypto Statistics','Configure cryptocurrency statistics.','currency-circle-dollar'],
-    ['cryptoQueries','Crypto Queries','Configure cryptocurrency lookup commands.','currency-circle-dollar'],
-    ['gasTracker','Gas Tracker','Configure network fee tracking.','gauge'],
-    ['gating','Gating','Configure role-gated community access.','lock-key']
+    ['ai','AI Assistant','Configure the AI chat assistant inspired by DebilBot.','sparkle']
   ]],
   ['Administration',[
     ['commands','Commands','Enable or disable individual commands by server.','command'],
@@ -366,8 +359,89 @@ async function renderSourceAlertPanel(id,f,c){
  attachToggle(id,f,c);
 }
 
+async function renderDebilInspiredPanel(id,f,c){
+ const k=f[0];
+ const schemas={
+  giveaways:{key:'giveawaySettings',title:'Giveaway settings',intro:'GiveawayBot-style workflow: timed giveaways, entry buttons, winner selection and rerolls.',fields:[
+   ['enabled','Enable giveaway controls',c.giveawaySettings?.enabled!==false,'check'],
+   ['channelId','Default giveaway channel ID',c.giveawaySettings?.channelId||'','text'],
+   ['defaultDurationMinutes','Default duration (minutes)',c.giveawaySettings?.defaultDurationMinutes||60,'number'],
+   ['defaultWinners','Default winner count',c.giveawaySettings?.defaultWinners||1,'number'],
+   ['allowReroll','Allow rerolling winners',c.giveawaySettings?.allowReroll!==false,'check'],
+   ['requireRoleId','Optional required role ID',c.giveawaySettings?.requireRoleId||'','text']
+  ]},
+  economy:{key:'economySettings',title:'Economy settings',intro:'DebilBot-inspired economy options. These settings need matching command/runtime support before they affect Discord commands.',fields:[
+   ['enabled','Enable economy',c.economySettings?.enabled!==false,'check'],
+   ['currencyName','Currency name',c.economySettings?.currencyName||'Credits','text'],
+   ['currencySymbol','Currency symbol',c.economySettings?.currencySymbol||'₵','text'],
+   ['dailyReward','Daily reward amount',c.economySettings?.dailyReward||100,'number'],
+   ['dailyCooldownHours','Daily reward cooldown (hours)',c.economySettings?.dailyCooldownHours||24,'number'],
+   ['startingBalance','Starting balance',c.economySettings?.startingBalance||0,'number'],
+   ['allowTransfers','Allow member-to-member transfers',c.economySettings?.allowTransfers!==false,'check']
+  ]},
+  music:{key:'musicSettings',title:'Music settings',intro:'DebilBot-inspired voice music controls. Playback requires a compatible music runtime and audio dependencies.',fields:[
+   ['enabled','Enable music controls',c.musicSettings?.enabled!==false,'check'],
+   ['djRoleId','DJ role ID',c.musicSettings?.djRoleId||'','text'],
+   ['musicChannelId','Optional music command channel ID',c.musicSettings?.musicChannelId||'','text'],
+   ['maxQueueSize','Maximum queue size',c.musicSettings?.maxQueueSize||100,'number'],
+   ['allowPlaylists','Allow playlists',c.musicSettings?.allowPlaylists!==false,'check'],
+   ['allowSkip','Allow skip/pause/resume controls',c.musicSettings?.allowSkip!==false,'check']
+  ]},
+  casino:{key:'casinoSettings',title:'Casino settings',intro:'DebilBot includes a slots game with configurable bets and multipliers. Use limits responsibly; this is virtual in-server currency.',fields:[
+   ['enabled','Enable casino',c.casinoSettings?.enabled!==false,'check'],
+   ['minBet','Minimum bet',c.casinoSettings?.minBet||50,'number'],
+   ['maxBet','Maximum bet',c.casinoSettings?.maxBet||10000,'number'],
+   ['slotsEnabled','Enable slots',c.casinoSettings?.slotsEnabled!==false,'check'],
+   ['showMultipliers','Show slots multiplier help',c.casinoSettings?.showMultipliers!==false,'check']
+  ]},
+  lottery:{key:'lotterySettings',title:'Lottery settings',intro:'Configure a virtual-currency lottery. Scheduled draws and payouts require runtime support.',fields:[
+   ['enabled','Enable lottery',c.lotterySettings?.enabled!==false,'check'],
+   ['ticketPrice','Ticket price',c.lotterySettings?.ticketPrice||10,'number'],
+   ['maxTicketsPerMember','Maximum tickets per member',c.lotterySettings?.maxTicketsPerMember||5,'number'],
+   ['drawIntervalHours','Draw interval (hours)',c.lotterySettings?.drawIntervalHours||24,'number'],
+   ['prizePercent','Prize pool percentage',c.lotterySettings?.prizePercent||80,'number']
+  ]},
+  games:{key:'gamesSettings',title:'Games settings',intro:'Game ideas taken from DebilBot’s public feature set: Rock Paper Scissors, Slots, jokes and quote cards. Slots are also managed in Casino.',fields:[
+   ['enabled','Enable games panel settings',c.gamesSettings?.enabled!==false,'check'],
+   ['rockPaperScissors','Rock Paper Scissors',c.gamesSettings?.rockPaperScissors!==false,'check'],
+   ['jokes','Joke command',c.gamesSettings?.jokes!==false,'check'],
+   ['quoteCards','Quote image command',c.gamesSettings?.quoteCards!==false,'check'],
+   ['gameChannelId','Optional games channel ID',c.gamesSettings?.gameChannelId||'','text']
+  ]},
+  ai:{key:'aiAssistantSettings',title:'AI Assistant settings',intro:'Inspired by DebilBot’s OpenRouter chat feature. Configure the model and access rules here; an AI runtime and secret API key must be wired on the bot host for chat to work.',fields:[
+   ['enabled','Enable AI Assistant',c.aiAssistantSettings?.enabled!==false,'check'],
+   ['model','OpenRouter model ID',c.aiAssistantSettings?.model||'','text'],
+   ['channelId','Optional allowed channel ID',c.aiAssistantSettings?.channelId||'','text'],
+   ['costPerRequest','Virtual currency cost per request',c.aiAssistantSettings?.costPerRequest||0,'number'],
+   ['keepConversationContext','Keep conversation context',c.aiAssistantSettings?.keepConversationContext!==false,'check'],
+   ['maxResponseLength','Maximum response characters',c.aiAssistantSettings?.maxResponseLength||3500,'number']
+  ]}
+ };
+ const schema=schemas[k]; if(!schema)return false;
+ const current=c[schema.key]||{};
+ const controls=schema.fields.map(([field,label,defaultValue,type])=>type==='check'
+  ?'<label class="check"><span>'+esc(label)+'</span><input type="checkbox" id="debil_'+field+'" '+(defaultValue?'checked':'')+'></label>'
+  :input('debil_'+field,label,defaultValue,type)).join('');
+ body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+esc(schema.title)+'</h3><p>Settings are saved per server.</p></div></div>'+controls+'<div class="panel-actions">'+button('saveDebilSettings','Save '+f[1])+'</div></section><p class="mention-help">Reference projects: <a href="'+(k==='giveaways'?'https://github.com/jagrosh/GiveawayBot':'https://github.com/TiDurak/DebilBot')+'" target="_blank" rel="noopener noreferrer">GitHub source</a>. This panel saves configuration only; features are not considered live until their commands and runtime handlers are implemented and tested.</p></div>');
+ document.getElementById('saveDebilSettings').onclick=async()=>{
+  const next={};
+  schema.fields.forEach(([field,,defaultValue,type])=>{
+   const element=document.getElementById('debil_'+field);
+   if(type==='check')next[field]=!!element?.checked;
+   else if(type==='number')next[field]=Math.max(0,Number(element?.value)||0);
+   else next[field]=String(element?.value||'').trim();
+  });
+  const result=await save(id,{[schema.key]:next});
+  if(result?.success===false)throw new Error(result.error||'Save failed');
+  alert(f[1]+' settings saved.');
+ };
+ attachToggle(id,f,c);
+ return true;
+}
+
 async function renderPanel(id,f,c){
  const k=f[0];
+ if(['giveaways','economy','music','casino','lottery','games','ai'].includes(k)){await renderDebilInspiredPanel(id,f,c);return;}
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
  if(k==='reactionRoles'){await renderReactionRolesPanel(id,f,c);return;}
  if(['rss','reddit','podcast','instagram','xalerts'].includes(k)){await renderSourceAlertPanel(id,f,c);return;}
