@@ -219,7 +219,58 @@ async function screenAutoModMember(member,c,source){
  await sendAutoModAlert(member.guild,c,'**Member:** '+member.user.tag+' ('+member.id+')\\n**Profile field:** '+match.label+'\\n**Detected term:** '+match.term+'\\n**Event:** '+source+'\\n**Action:** '+(a.screenActionTimeout?'timeout attempted':'alert only'));
 }
 
+
+async function writeAuditEvent(guild,entry,eventKey){
+ try{
+  const c=svc.get(guild.id),a=c.audit||{},settings=a.events||{};
+  if(a.enabled!==true||settings[eventKey]===false)return;
+  const ignored=Array.isArray(a.ignoreChannelIds)?a.ignoreChannelIds:[];
+  if(entry.channelId&&ignored.includes(entry.channelId))return;
+  const enriched={id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),time:new Date().toISOString(),...entry};
+  const entries=[enriched,...(Array.isArray(a.entries)?a.entries:[])].slice(0,100);
+  svc.save(guild.id,{audit:{...a,entries}});
+  if(!a.channelId)return;
+  const channel=guild.channels.cache.get(a.channelId)||await guild.channels.fetch(a.channelId).catch(()=>null);
+  if(!channel?.send)return;
+  const embed=new EmbedBuilder().setColor(enriched.color||0x5865f2).setTitle(('Audit · '+(enriched.title||'Server event')).slice(0,256)).setDescription(String(enriched.description||'No additional details').slice(0,3900)).addFields(
+   {name:'When',value:enriched.time,inline:true},
+   {name:'Actor',value:String(enriched.actor||'Unknown / unavailable').slice(0,1024),inline:true},
+   {name:'Target',value:String(enriched.target||'Not applicable').slice(0,1024),inline:true}
+  ).setTimestamp(new Date(enriched.time));
+  if(enriched.channel)embed.addFields({name:'Channel',value:String(enriched.channel).slice(0,1024),inline:true});
+  await channel.send({embeds:[embed]});
+ }catch(e){console.error('[AUDIT LOG]',e.message);}
+}
+const auditActor=async(guild,type,targetId)=>{
+ try{const logs=await guild.fetchAuditLogs({type,limit:5});const now=Date.now();const entry=logs.entries.find(x=>(!targetId||x.target?.id===targetId)&&now-x.createdTimestamp<15000);return entry?.executor?.tag||entry?.executor?.username||null;}catch{return null;}
+};
+
 function registerTestifyHandlers(client){
+  client.on('messageDelete',async msg=>{
+   try{if(!msg.guild)return;const content=msg.content||msg.embeds?.map(e=>e.description||'').join(' ')||'[Content unavailable — message was not cached]';await writeAuditEvent(msg.guild,{type:'messageDelete',title:'Message deleted',description:content.slice(0,1800),actor:await auditActor(msg.guild, 'MessageDelete',msg.author?.id),target:msg.author?.tag||'Unknown',channel:'#'+(msg.channel?.name||'unknown'),channelId:msg.channel?.id,color:0xe74c3c},'messageDelete');}catch(e){console.error('[AUDIT MESSAGE DELETE]',e.message);}
+  });
+  client.on('messageUpdate',async(oldMsg,newMsg)=>{
+   try{if(!newMsg.guild)return;const before=oldMsg.content,after=newMsg.content;if(before===after)return;await writeAuditEvent(newMsg.guild,{type:'messageUpdate',title:'Message edited',description:'**Before:** '+String(before||'[Unavailable]').slice(0,850)+'\n**After:** '+String(after||'[Empty]').slice(0,850),actor:newMsg.author?.tag||'Author',target:newMsg.author?.tag||'Unknown',channel:'#'+(newMsg.channel?.name||'unknown'),channelId:newMsg.channel?.id,color:0xe67e22},'messageUpdate');}catch(e){console.error('[AUDIT MESSAGE UPDATE]',e.message);}
+  });
+  client.on('messageDeleteBulk',async(messages,channel)=>{
+   try{const guild=channel.guild;if(!guild)return;await writeAuditEvent(guild,{type:'messageDeleteBulk',title:'Bulk messages deleted',description:messages.size+' messages deleted in #'+channel.name,actor:await auditActor(guild,'MessageBulkDelete'),target:messages.size+' messages',channel:'#'+channel.name,channelId:channel.id,color:0xe74c3c},'messageDeleteBulk');}catch(e){console.error('[AUDIT BULK DELETE]',e.message);}
+  });
+  client.on('guildMemberAdd',member=>writeAuditEvent(member.guild,{type:'memberJoin',title:'Member joined',description:member.user.tag+' joined the server.',target:member.user.tag,color:0x2ecc71},'memberJoin'));
+  client.on('guildMemberRemove',member=>writeAuditEvent(member.guild,{type:'memberLeave',title:'Member left',description:(member.user?.tag||member.id)+' left the server.',target:member.user?.tag||member.id,color:0xe67e22},'memberLeave'));
+  client.on('guildMemberUpdate',async(oldMember,newMember)=>{
+   try{const changes=[];if(oldMember.nickname!==newMember.nickname)changes.push('Nickname: '+(oldMember.nickname||oldMember.user.username)+' → '+(newMember.nickname||newMember.user.username));const before=oldMember.roles.cache.map(r=>r.id).filter(id=>id!==newMember.guild.id),after=newMember.roles.cache.map(r=>r.id).filter(id=>id!==newMember.guild.id);if(JSON.stringify(before.sort())!==JSON.stringify(after.sort()))changes.push('Roles updated');if(oldMember.user.username!==newMember.user.username)changes.push('Username: '+oldMember.user.username+' → '+newMember.user.username);if(changes.length)await writeAuditEvent(newMember.guild,{type:'memberUpdate',title:'Member profile or roles changed',description:changes.join('\n'),actor:await auditActor(newMember.guild,'MemberUpdate',newMember.id),target:newMember.user.tag,color:0xe67e22},'memberUpdate');}catch(e){console.error('[AUDIT MEMBER UPDATE]',e.message);}
+  });
+  client.on('guildBanAdd',async ban=>writeAuditEvent(ban.guild,{type:'ban',title:'Member banned',description:'A member was banned from the server.',actor:await auditActor(ban.guild,'MemberBanAdd',ban.user.id),target:ban.user.tag,color:0xe74c3c},'bans'));
+  client.on('guildBanRemove',async ban=>writeAuditEvent(ban.guild,{type:'unban',title:'Member unbanned',description:'A member was unbanned from the server.',actor:await auditActor(ban.guild,'MemberBanRemove',ban.user.id),target:ban.user.tag,color:0x2ecc71},'bans'));
+  client.on('voiceStateUpdate',async(oldState,newState)=>{
+   try{const oldId=oldState.channelId,newId=newState.channelId;if(oldId===newId&&oldState.serverMute===newState.serverMute&&oldState.serverDeaf===newState.serverDeaf)return;const action=!oldId&&newId?'joined voice':oldId&&!newId?'left voice':'voice state changed';await writeAuditEvent(newState.guild,{type:'voice',title:'Voice activity',description:(newState.member?.user?.tag||newState.id)+' '+action+'.'+(oldId!==newId?' '+(oldState.channel?.name||'No channel')+' → '+(newState.channel?.name||'No channel'):''),target:newState.member?.user?.tag||newState.id,channel:newState.channel?.name||oldState.channel?.name||'Voice',color:0x5865f2},'voice');}catch(e){console.error('[AUDIT VOICE]',e.message);}
+  });
+  for(const [event,action] of [['channelCreate','created'],['channelDelete','deleted']])client.on(event,channel=>{if(channel.guild)writeAuditEvent(channel.guild,{type:'channels',title:'Channel '+action,description:'#'+channel.name+' ('+channel.id+') was '+action+'.',target:channel.name,color:0x5865f2},'channels');});
+  client.on('channelUpdate',(oldChannel,newChannel)=>{if(newChannel.guild)writeAuditEvent(newChannel.guild,{type:'channels',title:'Channel updated',description:oldChannel.name+' → '+newChannel.name+' ('+newChannel.id+')',target:newChannel.name,color:0xe67e22},'channels');});
+  for(const [event,action] of [['roleCreate','created'],['roleDelete','deleted']])client.on(event,role=>writeAuditEvent(role.guild,{type:'roles',title:'Role '+action,description:'@'+role.name+' ('+role.id+') was '+action+'.',target:role.name,color:0x5865f2},'roles'));
+  client.on('roleUpdate',(oldRole,newRole)=>writeAuditEvent(newRole.guild,{type:'roles',title:'Role updated',description:'@'+oldRole.name+' → @'+newRole.name+' ('+newRole.id+')',target:newRole.name,color:0xe67e22},'roles'));
+  client.on('guildUpdate',(oldGuild,newGuild)=>{if(oldGuild.name!==newGuild.name||oldGuild.icon!==newGuild.icon)writeAuditEvent(newGuild,{type:'guild',title:'Server updated',description:'Server settings or identity changed: '+oldGuild.name+' → '+newGuild.name+'.',target:newGuild.name,color:0xe67e22},'guild');});
+
   client.on('guildMemberAdd',async member=>{
     const c=svc.get(member.guild.id);
     if(!featureIsOn(c,'welcome'))return;
