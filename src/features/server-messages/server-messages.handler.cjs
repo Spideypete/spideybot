@@ -14,6 +14,19 @@ function initialize(client, configPath) {
 
 async function handleGuildMemberAdd(member) {
   if (!service) return
+  // Assign the configured welcome role independently of whether welcome messages are enabled.
+  try {
+    const settings = await service.getConfig(member.guild.id)
+    const roleId = settings.autoroleRole
+    if (settings.enableAutorole && roleId) {
+      const role = member.guild.roles.cache.get(roleId) || await member.guild.roles.fetch(roleId).catch(() => null)
+      if (role && !member.roles.cache.has(role.id)) {
+        await member.roles.add(role, 'Configured automatic welcome role')
+      }
+    }
+  } catch (error) {
+    console.error(`[ServerMessages] Failed to assign automatic welcome role in ${member.guild.name}: ${error.message}`)
+  }
   try {
     const msgData = await service.getWelcomeMessage(member.guild.id, member)
     if (!msgData) return
