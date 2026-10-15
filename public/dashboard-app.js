@@ -355,7 +355,29 @@ async function renderPanel(id,f,c){
   };
   return;
  }
- if(k==='automod'){
+ if(k==='audit'){
+   const au=c.audit||{},events=Array.isArray(au.entries)?au.entries:[];
+   const toggle=(key,label,checked)=>check(key,label,checked!==false);
+   const logRows=events.slice(0,100).map(e=>'<article class="audit-entry"><div class="audit-entry-head"><strong>'+esc(e.title||e.type||'Server event')+'</strong><span>'+esc(e.time?new Date(e.time).toLocaleString():'Unknown time')+'</span></div><p>'+esc(e.description||'No additional details')+'</p><small>'+esc([e.actor?'Actor: '+e.actor:'',e.target?'Target: '+e.target:'',e.channel?'Channel: '+e.channel:''].filter(Boolean).join(' · '))+'</small></article>').join('');
+   body.innerHTML=card('Audit Log','A searchable activity timeline plus controls for which server events SPIDEY BOT records.',
+    '<div class="welcome-panel audit-panel">'+
+    '<section class="welcome-message-section"><h3>Audit log delivery</h3><p class="mention-help">Send audit embeds to a staff-only Discord channel and keep a recent timeline visible here.</p>'+check('auditEnabled','Enable audit logging',au.enabled===true)+input('auditChannel','Audit log channel ID',au.channelId||'')+input('ignoreChannels','Ignored channel IDs (comma separated)',(au.ignoreChannelIds||[]).join(', '))+'</section>'+
+    '<section class="welcome-message-section"><h3>Messages</h3>'+toggle('auditMessageDelete','Deleted messages',au.events?.messageDelete)+toggle('auditMessageEdit','Edited messages with before/after text',au.events?.messageUpdate)+toggle('auditBulkDelete','Bulk message deletion',au.events?.messageDeleteBulk)+'</section>'+
+    '<section class="welcome-message-section"><h3>Members & moderation</h3>'+toggle('auditMemberJoin','Member joins',au.events?.memberJoin)+toggle('auditMemberLeave','Member leaves',au.events?.memberLeave)+toggle('auditMemberUpdate','Username, nickname and role changes',au.events?.memberUpdate)+toggle('auditBan','Bans and unbans',au.events?.bans)+toggle('auditVoice','Voice joins, leaves, moves and mute/deafen changes',au.events?.voice)+'</section>'+
+    '<section class="welcome-message-section"><h3>Server structure</h3>'+toggle('auditChannels','Channel create, update and delete',au.events?.channels)+toggle('auditRoles','Role create, update and delete',au.events?.roles)+toggle('auditGuild','Server name and icon changes',au.events?.guild)+'</section>'+
+    '<div class="panel-actions"><button class="select" id="saveAudit" type="button">Save audit settings</button><button class="select" id="refreshAudit" type="button">Refresh timeline</button><button class="select" id="exportAudit" type="button">Export JSON</button></div>'+
+    '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Recent activity</h3><p class="mention-help">Up to 100 recent entries are displayed. Message content may be unavailable if Discord did not provide it to the bot.</p></div></div><div class="audit-timeline">'+(logRows||'<p class="mention-help">No audit events recorded yet. Enable logging, save settings and ensure the bot has the required Discord intents and View Audit Log permission.</p>')+'</div></section></div>');
+   document.getElementById('saveAudit').onclick=async()=>{
+    const eventSettings={...(au.events||{}),messageDelete:yes('auditMessageDelete'),messageUpdate:yes('auditMessageEdit'),messageDeleteBulk:yes('auditBulkDelete'),memberJoin:yes('auditMemberJoin'),memberLeave:yes('auditMemberLeave'),memberUpdate:yes('auditMemberUpdate'),bans:yes('auditBan'),voice:yes('auditVoice'),channels:yes('auditChannels'),roles:yes('auditRoles'),guild:yes('auditGuild')};
+    const ignoreChannelIds=val('ignoreChannels').split(',').map(x=>x.trim()).filter(Boolean);
+    const result=await save(id,{audit:{...au,enabled:yes('auditEnabled'),channelId:val('auditChannel').trim()||null,ignoreChannelIds,events:eventSettings}});
+    if(result.success===false)throw new Error(result.error||'Could not save audit settings');alert('Audit log settings saved.');
+   };
+   document.getElementById('refreshAudit').onclick=()=>{renderPanel(id,f,{...c,audit:{...au,entries:[]}});};
+   document.getElementById('exportAudit').onclick=()=>{const blobText=JSON.stringify({guildId:id,exportedAt:new Date().toISOString(),entries:events},null,2);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([blobText],{type:'application/json'}));a.download='spideybot-audit-'+id+'.json';a.click();URL.revokeObjectURL(a.href);};
+   return;
+  }
+  if(k==='automod'){
   const am=c.automod||{},rules=Array.isArray(am.customRules)?am.customRules:[];
   const ruleText=n=>Array.isArray(rules[n]?.terms)?rules[n].terms.join('\\n'):'';
   const area=(id,label,value,help)=>'<label class="field">'+esc(label)+'<textarea id="'+id+'" rows="4" maxlength="30000" placeholder="One term per line, or separate terms with commas">'+esc(value)+'</textarea><span class="mention-help">'+esc(help)+'</span></label>';
