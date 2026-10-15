@@ -16,6 +16,18 @@ function readConfig() {
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 
+test('registered slash command definitions serialize with unique roots and subcommands', () => {
+  const { testifyCommands } = require('../src/features/testify-suite/testify-suite.commands.cjs');
+  const definitions = testifyCommands.map(command => command.toJSON());
+  const rootNames = definitions.map(command => command.name);
+  assert.ok(definitions.length > 0);
+  assert.equal(new Set(rootNames).size, rootNames.length, 'slash command root names must be unique');
+  for (const command of definitions) {
+    const subcommands = (command.options || []).filter(option => option.type === 1).map(option => option.name);
+    assert.equal(new Set(subcommands).size, subcommands.length, command.name + ' subcommand names must be unique');
+  }
+});
+
 test('custom commands create, match, count, and persist', async () => {
   const guildId = 'guild-custom-tests';
   const service = new CustomCommandsService(['help']);
