@@ -107,7 +107,7 @@ async function close(i,t,c) {
  return i.editReply({content:'Ticket closed.'});
 }
 async function claim(i,t,c) {
- if(!isStaff(i.member,c))return i.reply({content:'Only support staff can claim tickets.',ephemeral:true});
+ if(!isStaff(i,c))return i.reply({content:'Only support staff can claim tickets.',ephemeral:true});
  if(t.status!=='open')return i.reply({content:'Closed tickets cannot be claimed.',ephemeral:true});
  if(t.claimedBy)return i.reply({content:'Already claimed by <@'+t.claimedBy+'>.',ephemeral:true});
  t.claimedBy=i.user.id;saveConfig(i.guild.id,{records:c.records});
@@ -116,7 +116,7 @@ async function claim(i,t,c) {
  return i.reply({content:'You claimed '+t.id+'.',ephemeral:true});
 }
 async function reopen(i,t,c) {
- if(!isStaff(i.member,c))return i.reply({content:'Only support staff can reopen tickets.',ephemeral:true});
+ if(!isStaff(i,c))return i.reply({content:'Only support staff can reopen tickets.',ephemeral:true});
  if(!c.allowReopen)return i.reply({content:'Reopening tickets is disabled.',ephemeral:true});
  if(t.status!=='closed')return i.reply({content:'This ticket is already open.',ephemeral:true});
  t.status='open';t.closedAt=null;t.lastActivityAt=new Date().toISOString();saveConfig(i.guild.id,{records:c.records});
@@ -126,7 +126,7 @@ async function reopen(i,t,c) {
  return i.reply({content:'Ticket reopened.',ephemeral:true});
 }
 async function remove(i,t,c) {
- if(!isStaff(i.member,c))return i.reply({content:'Only support staff can delete tickets.',ephemeral:true});
+ if(!isStaff(i,c))return i.reply({content:'Only support staff can delete tickets.',ephemeral:true});
  if(t.status==='open')return i.reply({content:'Close the ticket before deleting it.',ephemeral:true});
  delete c.records[t.id];saveConfig(i.guild.id,{records:c.records});await log(i.guild,c,'Ticket deleted',t.id+' deleted by <@'+i.user.id+'>.');
  await i.reply({content:'Deleting ticket channel…',ephemeral:true});await i.channel.delete('Ticket deleted by '+i.user.tag).catch(e=>console.error('[TICKET DELETE]',e.message));
