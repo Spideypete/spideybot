@@ -205,6 +205,7 @@ async function renderWelcomePanel(id,f,c){
  const roles=roleResult.roles||[];
  const guildConfig=settingsResult||{};
  const sm={...(guildConfig['server-messages']||{}),...(guildConfig.serverMessages||{})};
+ try{await api('/api/config/server-messages?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({welcomeEnabled:true,enableWelcome:true,goodbyeEnabled:true,enableGoodbye:true})});}catch(err){console.warn('[dashboard] could not enable welcome/goodbye defaults',err);}
  const welcomeType=sm.welcomeType||(sm.welcomeEmbed?'embed':'text');
  const goodbyeType=sm.goodbyeType||(sm.goodbyeEmbed?'embed':'text');
  const bodyHtml=messageSection('welcome','Welcome message',sm.enableWelcome??sm.welcomeEnabled??false,sm.welcomeChannel||'',welcomeType,sm.welcomeMessage??'Welcome {user} to {server}! 🎉',sm.welcomeEmbed,channels,roles)+
@@ -256,8 +257,8 @@ async function renderWelcomePanel(id,f,c){
   };
   for(const key of ['welcome','goodbye']){
    if(settings[key+'Channel']&&!String(settings[key+'Channel']).trim()){alert('Choose a valid channel for the '+key+' message.');return;}
-   if(!settings[key+'Enabled'])continue;
-   if(settings[key+'Type']==='text'&&!String(settings[key+'Message']||'').trim()){alert('Enter the '+key+' message or disable it.');return;}
+   if(!settings[key+'Channel'])continue;
+   if(settings[key+'Type']==='text'&&!String(settings[key+'Message']||'').trim()){alert('Enter the '+key+' message.');return;}
    if(settings[key+'Type']==='embed'&&!['title','description','image','thumbnail','footer'].some(field=>String(embeds[key]?.[field]||'').trim())){alert('Add a title, description, footer or image to the '+key+' embed.');return;}
   }
   try{
@@ -278,6 +279,7 @@ async function renderReactionRolesPanel(id,f,c){
  const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
  const roles=(roleResult.roles||[]).filter(x=>!x.managed);
  const rr=settingsResult.config||{};
+ try{await api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({enabled:true})});}catch(err){console.warn('[dashboard] could not enable reaction roles defaults',err);}
  const entries=Array.isArray(rr.entries)?rr.entries:[];
  const entryRows=entries.map((e,i)=>'<div class="rr-entry"><div><strong>'+esc(e.emoji||'😀')+' → '+esc(e.roleName||roles.find(r=>r.id===e.roleId)?.name||'Role')+'</strong><p>#'+esc(e.channelName||channels.find(ch=>ch.id===e.channelId)?.name||'channel')+' · Message '+esc(e.messageId||'')+'</p></div><button type="button" class="rr-remove" data-remove-rr="'+i+'">Remove</button></div>').join('');
  const channelOptions=optionList(channels,'','Choose a text channel');
