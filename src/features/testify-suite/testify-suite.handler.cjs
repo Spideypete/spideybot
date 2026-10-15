@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const svc=require('./testify-suite.service.cjs');
 const { ServerMessagesService } = require('../server-messages/server-messages.service.cjs');
 const serverMessages = new ServerMessagesService();
@@ -15,7 +15,7 @@ const who=i=>i.options.getUser('user')||i.user;
 const COMMAND_FEATURE={
   goodbye:'welcome',avatar:'members',userinfo:'members',serverinfo:'members',roleinfo:'members',botinfo:'system',membercount:'members',permissions:'members',profile:'members',rank:'levels',
   daily:'economy',beg:'economy',deposit:'economy',withdraw:'economy',inventory:'economy',shop:'economy',buy:'economy',give:'economy',rob:'economy',crime:'economy',pet:'economy',
-  poll:'polls',calculator:'community',ascii:'community',advice:'community',dadjoke:'community',wouldyourrather:'community',hack:'community',relationship:'community',
+  poll:'polls',deletepoll:'polls',calculator:'community',ascii:'community',advice:'community',dadjoke:'community',wouldyourrather:'community',hack:'community',relationship:'community',
   purge:'moderator',softban:'moderator',unban:'moderator',clearwarnings:'moderator',slowmode:'moderator',lock:'moderator',unlock:'moderator',nickname:'moderator',role:'moderator',announce:'moderator',say:'moderator',thread:'ticketing',ticket:'ticketing',
   automod:'automod',automodwords:'automod',automodlinks:'automod',automodspam:'automod',auditlog:'audit',setprefix:'welcome',sticky:'automations',unsticky:'automations',counting:'community',welcome:'welcome',autorole:'welcome',verify:'moderator',commandtoggle:'commands',
   levelrewards:'levels',setlevelreward:'levels',resetxp:'levels',addxp:'levels',setxp:'levels',removexp:'levels',
@@ -27,7 +27,7 @@ function profile(i,u,c){const l=c.levels.users?.[u.id]||{level:0,xp:0},e=c.econo
 
 async function execute(i,ctx){
   if(!i.isChatInputCommand()||!i.guild)return false;
-  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
+  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
   const custom=(Array.isArray(c.customCommands?.items)?c.customCommands.items:[]).find(x=>x.name===root&&x.enabled!==false);
   if(custom){
     if(c.blacklist?.includes(i.user.id)){await i.reply({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
@@ -88,7 +88,33 @@ async function execute(i,ctx){
       if(n==='pet'){const name=i.options.getString('name');if(name){me.pet=name;svc.save(i.guild.id,{economy:e});return i.reply('🐾 Pet set to '+name+'.');}return i.reply('🐾 Pet: '+(me.pet||'None'));}
     }
 
-    if(n==='poll'){const m=await i.channel.send('📊 **Poll:** '+i.options.getString('question'));await m.react('👍');await m.react('👎');await i.reply({content:'Poll created.',ephemeral:true});return true;}
+    if(n==='poll'){
+      const pollConfig=c.polls||{};
+      if(pollConfig.enabled===false){await i.reply({content:'Polls are disabled in this server dashboard settings.',ephemeral:true});return true;}
+      const question=String(i.options.getString('question')||'').trim().slice(0,250);
+      const options=String(i.options.getString('options')||'Yes,No').split(',').map(x=>x.trim()).filter(Boolean).slice(0,20);
+      const maxOptions=Math.min(20,Math.max(2,Number(pollConfig.maxOptions)||20));
+      if(options.length<2){await i.reply({content:'Add at least two comma-separated options, for example: Red, Blue, Green.',ephemeral:true});return true;}
+      if(options.length>maxOptions){await i.reply({content:'This server allows up to '+maxOptions+' options per poll.',ephemeral:true});return true;}
+      if(options.some(x=>x.length>80)){await i.reply({content:'Each poll option must be 80 characters or fewer.',ephemeral:true});return true;}
+      const pollId=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
+      const expiresMinutes=Math.max(0,Number(pollConfig.defaultDurationMinutes)||0);
+      const poll={id:pollId,question,options,votes:{},guildId:i.guild.id,channelId:null,messageId:null,createdAt:Date.now(),expiresAt:expiresMinutes?Date.now()+expiresMinutes*60000:null,anonymous:pollConfig.anonymous!==false,allowMultipleVotes:pollConfig.allowMultipleVotes===true,closed:false};
+      const renderPoll=()=>{const counts=options.map((_,index)=>Object.values(poll.votes).reduce((sum,v)=>sum+(Array.isArray(v)?v.includes(index):v===index?1:0),0));const embed=new EmbedBuilder().setColor(0x5865f2).setTitle('📊 '+question).setDescription(options.map((option,index)=>'**'+(index+1)+'. '+option+'**\n'+counts[index]+' vote'+(counts[index]===1?'':'s')).join('\n\n')).setFooter({text:'Poll ID: '+pollId+(poll.allowMultipleVotes?' · Multiple choices allowed':' · One choice per member')+(poll.anonymous?' · Anonymous results':'')}).setTimestamp(new Date(poll.createdAt));if(poll.expiresAt)embed.addFields({name:'Closes',value:'<t:'+Math.floor(poll.expiresAt/1000)+':R>'});return embed;};
+      const rows=[];for(let start=0;start<options.length;start+=5){const row=new ActionRowBuilder();options.slice(start,start+5).forEach((option,offset)=>row.addComponents(new ButtonBuilder().setCustomId('pollvote:'+pollId+':'+(start+offset)).setLabel(option).setStyle(ButtonStyle.Primary).setDisabled(!!poll.closed)));rows.push(row);}
+      let target=i.channel;if(pollConfig.defaultChannelId){const configured=i.guild.channels.cache.get(pollConfig.defaultChannelId)||await i.guild.channels.fetch(pollConfig.defaultChannelId).catch(()=>null);if(configured?.isTextBased?.())target=configured;}
+      try{const message=await target.send({embeds:[renderPoll()],components:rows});poll.channelId=target.id;poll.messageId=message.id;const active={...(pollConfig.active||{}),[pollId]:poll};svc.save(i.guild.id,{polls:{...pollConfig,active}});await i.reply({content:'Poll created: '+message.url+' · Poll ID: '+pollId,ephemeral:true});}
+      catch(err){console.error('[POLL CREATE]',err.message);await i.reply({content:'Could not create the poll. Check the bot has View Channel, Send Messages and Embed Links permissions.',ephemeral:true});}
+      return true;
+    }
+    if(n==='deletepoll'){
+      const pollConfig=c.polls||{},pollId=String(i.options.getString('poll_id')||'').trim(),poll=pollConfig.active?.[pollId];
+      if(!poll){await i.reply({content:'No active poll was found with that ID.',ephemeral:true});return true;}
+      if(pollConfig.adminDelete!==false&&!isAdmin(i)){await i.reply({content:'Only server admins can delete polls.',ephemeral:true});return true;}
+      try{const channel=i.guild.channels.cache.get(poll.channelId)||await i.guild.channels.fetch(poll.channelId).catch(()=>null);const message=channel?.messages?await channel.messages.fetch(poll.messageId).catch(()=>null):null;if(message)await message.delete();const active={...(pollConfig.active||{})};delete active[pollId];svc.save(i.guild.id,{polls:{...pollConfig,active}});await i.reply({content:'Poll '+pollId+' deleted.',ephemeral:true});}
+      catch(err){console.error('[POLL DELETE]',err.message);await i.reply({content:'Could not delete that poll. Check the bot has Manage Messages permission.',ephemeral:true});}
+      return true;
+    }
     if(n==='calculator'){const ex=i.options.getString('expression');if(!/^[0-9+\-*/().%\s]+$/.test(ex))return i.reply('❌ Only basic arithmetic is allowed.');let result;try{result=Function('"use strict";return ('+ex+')')();}catch{return i.reply('❌ Invalid expression.');}if(!Number.isFinite(result))return i.reply('❌ Result is not finite.');await i.reply('🧮 '+ex+' = '+result);return true;}
     if(n==='ascii'){await i.reply('ASCII: '+i.options.getString('text').slice(0,80).toUpperCase().split('').join(' '));return true;}
     if(n==='advice'){await i.reply('💡 '+advice[Math.floor(Math.random()*advice.length)]);return true;}
@@ -311,6 +337,25 @@ const auditActor=async(guild,type,targetId)=>{
 
 function registerTestifyHandlers(client){
   ticketRuntime.register(client);
+  client.on('interactionCreate',async interaction=>{
+    if(!interaction.isButton?.()||!interaction.customId?.startsWith('pollvote:')||!interaction.guild)return;
+    const [,pollId,rawIndex]=interaction.customId.split(':'),optionIndex=Number(rawIndex);
+    try{
+      const cfg=svc.get(interaction.guild.id),pollCfg=cfg.polls||{},poll=pollCfg.active?.[pollId];
+      if(!poll||poll.closed){await interaction.reply({content:'This poll is no longer active.',ephemeral:true});return;}
+      if(poll.expiresAt&&Date.now()>=poll.expiresAt){await interaction.reply({content:'This poll has expired.',ephemeral:true});return;}
+      if(!Number.isInteger(optionIndex)||optionIndex<0||optionIndex>=poll.options.length){await interaction.reply({content:'That poll option is invalid.',ephemeral:true});return;}
+      const voter=interaction.user.id,old=poll.votes?.[voter];
+      if(poll.allowMultipleVotes){const selected=Array.isArray(old)?old.slice():old===undefined?[]:[old];const next=selected.includes(optionIndex)?selected.filter(x=>x!==optionIndex):[...selected,optionIndex];if(next.length)poll.votes[voter]=next;else delete poll.votes[voter];}
+      else {if(old===optionIndex)delete poll.votes[voter];else poll.votes[voter]=optionIndex;}
+      const counts=poll.options.map((_,index)=>Object.values(poll.votes||{}).reduce((sum,v)=>sum+(Array.isArray(v)?v.includes(index):v===index?1:0),0));
+      const embed=new EmbedBuilder().setColor(0x5865f2).setTitle('📊 '+poll.question).setDescription(poll.options.map((option,index)=>'**'+(index+1)+'. '+option+'**\n'+counts[index]+' vote'+(counts[index]===1?'':'s')).join('\n\n')).setFooter({text:'Poll ID: '+pollId+(poll.allowMultipleVotes?' · Multiple choices allowed':' · One choice per member')+(poll.anonymous?' · Anonymous results':'')}).setTimestamp(new Date(poll.createdAt||Date.now()));
+      if(poll.expiresAt)embed.addFields({name:'Closes',value:'<t:'+Math.floor(poll.expiresAt/1000)+':R>'});
+      const rows=[];for(let start=0;start<poll.options.length;start+=5){const row=new ActionRowBuilder();poll.options.slice(start,start+5).forEach((option,offset)=>row.addComponents(new ButtonBuilder().setCustomId('pollvote:'+pollId+':'+(start+offset)).setLabel(option).setStyle(ButtonStyle.Primary).setDisabled(!!poll.closed)));rows.push(row);}
+      svc.save(interaction.guild.id,{polls:{...pollCfg,active:{...(pollCfg.active||{}),[pollId]:poll}}});
+      await interaction.update({embeds:[embed],components:rows});
+    }catch(err){console.error('[POLL VOTE]',err.message);if(!interaction.replied&&!interaction.deferred)await interaction.reply({content:'Could not record your vote. Please try again.',ephemeral:true}).catch(()=>{});}
+  });
   inviteTracker.initialize(client,svc);
   client.on('messageDelete',async msg=>{
    try{if(!msg.guild)return;const content=msg.content||msg.embeds?.map(e=>e.description||'').join(' ')||'[Content unavailable — message was not cached]';await writeAuditEvent(msg.guild,{type:'messageDelete',title:'Message deleted',description:content.slice(0,1800),actor:await auditActor(msg.guild, 'MessageDelete',msg.author?.id),target:msg.author?.tag||'Unknown',channel:'#'+(msg.channel?.name||'unknown'),channelId:msg.channel?.id,color:0xe74c3c},'messageDelete');}catch(e){console.error('[AUDIT MESSAGE DELETE]',e.message);}
