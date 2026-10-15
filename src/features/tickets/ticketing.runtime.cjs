@@ -97,7 +97,7 @@ async function execute(i) {
  return false;
 }
 async function close(i,t,c) {
- if(i.user.id!==t.userId&&!isStaff(i.member,c))return i.reply({content:'Only the ticket owner or support staff can close this ticket.',ephemeral:true});
+ if(i.user.id!==t.userId&&!isStaff(i,c))return i.reply({content:'Only the ticket owner or support staff can close this ticket.',ephemeral:true});
  if(t.status!=='open')return i.reply({content:'This ticket is already closed.',ephemeral:true});
  await i.deferReply({ephemeral:true});t.status='closed';t.closedAt=new Date().toISOString();saveConfig(i.guild.id,{records:c.records});
  await i.channel.send({embeds:[new EmbedBuilder().setColor(0xed4245).setTitle('🔒 '+t.id+' closed').setDescription('Closed by '+i.user+'.').setTimestamp()],components:[row(t,c)].filter(Boolean)});
