@@ -36,7 +36,7 @@ class ReactionRolesService {
   _guildConfig(guildId, create) {
     if (!this.data.guilds[guildId]) {
       if (!create) return null;
-      this.data.guilds[guildId] = { entries: [], dmConfirmations: false };
+      this.data.guilds[guildId] = { entries: [], dmConfirmations: false, allowMultiple: true, removeOnUnreact: true, dmConfirm: false };
     }
     return this.data.guilds[guildId];
   }
@@ -81,18 +81,16 @@ class ReactionRolesService {
 
   getConfig(guildId) {
     const cfg = this._guildConfig(guildId, true);
-    return { entries: cfg.entries, dmConfirmations: cfg.dmConfirmations };
+    return { entries: cfg.entries, dmConfirmations: cfg.dmConfirmations, allowMultiple: cfg.allowMultiple !== false, removeOnUnreact: cfg.removeOnUnreact !== false, dmConfirm: !!cfg.dmConfirm };
   }
 
   setConfig(guildId, config) {
     const entries = Array.isArray(config)
       ? config
       : (config && config.entries) || [];
-    const dmConfirmations =
-      config && typeof config.dmConfirmations === "boolean"
-        ? config.dmConfirmations
-        : false;
-    this.data.guilds[guildId] = { entries, dmConfirmations };
+    const current = this._guildConfig(guildId, true);
+    const dmConfirmations = config && typeof config.dmConfirmations === "boolean" ? config.dmConfirmations : (config && typeof config.dmConfirm === "boolean" ? config.dmConfirm : current.dmConfirmations);
+    this.data.guilds[guildId] = { entries, dmConfirmations, allowMultiple: config && typeof config.allowMultiple === "boolean" ? config.allowMultiple : current.allowMultiple !== false, removeOnUnreact: config && typeof config.removeOnUnreact === "boolean" ? config.removeOnUnreact : current.removeOnUnreact !== false, dmConfirm: config && typeof config.dmConfirm === "boolean" ? config.dmConfirm : !!current.dmConfirm };
     this._persist();
     return this.getConfig(guildId);
   }
