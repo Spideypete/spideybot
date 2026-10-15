@@ -66,9 +66,10 @@ function trackInvite(guildId, invite) {
   invites.invites[invite.code] = {
     inviteCode: invite.code,
     inviterId,
-    uses: invite.uses || 0,
-    joins: 0,
-    leaves: 0,
+    uses: invite.uses ?? existing?.uses ?? 0,
+    joins: existing?.joins || 0,
+    leaves: existing?.leaves || 0,
+    joinedUsers: existing?.joinedUsers || [],
     createdAt: existing?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
