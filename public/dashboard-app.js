@@ -195,7 +195,6 @@ function baseFeaturePanel(id,f,c,fields){
    await save(id,patch);alert(f[1]+' saved.');
  };
  attachToggle(id,f,c);
- if(k!=='overview'&&k!=='premium'&&typeof commandStrip==='function'){const existing=body.querySelector('.panel-command-strip');if(existing)existing.remove();body.insertAdjacentHTML('beforeend',commandStrip(k));}
 }
 function optionList(items,selected,placeholder){
  const first='<option value="">'+esc(placeholder||'Choose…')+'</option>';
@@ -787,6 +786,7 @@ async function renderPanel(id,f,c){
  if(k==='gating'){baseFeaturePanel(id,f,c,input('role','Gated role ID',c.roles?.gating||'')+check('enabled','Require gated role',c.gating?.enabled!==false));return;}
  const fields=input('channel',(k==='nftStats'||k==='nftQueries'||k==='nftSales')?'Collection ID':(k==='cryptoStats'||k==='cryptoQueries')?'Asset':'Network / channel ID',c.channels?.[k]||'')+input('message','Configuration / identifier',c.messages?.[k]||'');
  baseFeaturePanel(id,f,c,fields);
+  if(k!=='overview'&&k!=='premium'&&typeof commandStrip==='function'){const existing=body.querySelector('.panel-command-strip');if(existing)existing.remove();body.insertAdjacentHTML('beforeend',commandStrip(k));}
  } catch(renderError) { console.error('Panel render failed:',f?.[0]||id,renderError); body.innerHTML='<section class="welcome-message-section"><h3>'+esc(f[1])+'</h3><p class="mention-help">This panel could not load. '+esc(renderError.message||'Unknown error')+'</p></section>'; }
 }
 async function renderEmbedsPanel(id,f,c){
