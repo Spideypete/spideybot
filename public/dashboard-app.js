@@ -71,9 +71,11 @@ const FEATURES=[
     ['lottery','Lottery','Configure lottery entries, draw schedule and prizes.','ticket'],
     ['games','Games','Manage community games and activities.','gamepad-2']
   ]],
+  ['Monetisation',[
+    ['premium','Premium','Compare Free, Premium and Pro plans.','crown']
+  ]],
   ['Advanced',[
-    ['ai','AI Assistant','Configure Gemini, your server’s assistant name and AI behaviour.','sparkle'],
-    ['premium','Premium','Premium features and subscription settings.','crown']
+    ['ai','AI Assistant','Configure Gemini, your server’s assistant name and AI behaviour.','sparkle']
   ]],
   ['Administration',[
     ['commands','Commands','Enable or disable individual commands by server.','command'],
@@ -456,11 +458,11 @@ async function renderDebilInspiredPanel(id,f,c){
    ['keepConversationContext','Keep conversation context',c.aiAssistantSettings?.keepConversationContext!==false,'check'],
    ['maxResponseLength','Maximum response characters',c.aiAssistantSettings?.maxResponseLength||1900,'number']
   ]},
-  premium:{key:'premiumSettings',title:'Premium settings',intro:'Premium panel placeholder. Premium options will be added here later.',fields:[]}
+  premium:{key:'premiumSettings',title:'Premium plans',intro:'Compare plans for your community. Subscription checkout and plan enforcement are separate from this pricing display.',fields:[]}
  };
  const schema=schemas[k]; if(!schema)return false;
  const current=c[schema.key]||{};
- if(k==='premium'){body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel"><section class="welcome-message-section"><h3>Coming later</h3><p class="mention-help">This panel is intentionally blank for now.</p></section></div>');return true;}
+ if(k==='premium'){const plans=[{name:'Free',price:'$0',term:'forever',desc:'For every server, with no subscription required.',features:['Moderation, essential security and basic logs','Welcome & Goodbye','Basic reaction roles, tickets and giveaways','Basic XP, levels and leaderboards','5 custom commands','Basic invite tracking','AI with limited daily usage']},{name:'Premium',price:'$4.99',term:'/mo',desc:'Best value · $39.99/year (about $3.33/month).',features:['Everything in Free','Advanced XP and level rewards','Advanced reaction roles and tickets','More giveaway options','25 custom commands','Invite tracking and social notifications','Advanced embeds, messages and automation','Expanded logging and analytics','Higher AI usage limits']},{name:'Pro',price:'$7.99',term:'/mo',desc:'$69.99/year (about $5.83/month).',features:['Everything in Premium','Advanced Server Guard and Anti-Nuke','Advanced anti-raid and anti-spam rules','100 custom commands','Advanced automation and moderation workflows','Detailed analytics and extended history','Higher module limits','Highest standard AI allowance','Priority support']}];body.innerHTML=card(f[1],schema.intro,'<div class="pricing-grid">'+plans.map((p,i)=>'<article class="pricing-card '+(i===1?'pricing-featured':'')+'"><div class="pricing-card-head"><h3>'+p.name+'</h3>'+(i===1?'<span>BEST VALUE</span>':'')+'</div><div class="pricing-price"><strong>'+p.price+'</strong><span>'+p.term+'</span></div><p class="pricing-desc">'+p.desc+'</p><ul>'+p.features.map(x=>'<li><span>✓</span>'+x+'</li>').join('')+'</ul></article>').join('')+'</div>');return true;}
  const controls=schema.fields.map(([field,label,defaultValue,type])=>type==='check'
   ?'<label class="check"><span>'+esc(label)+'</span><input type="checkbox" id="debil_'+field+'" '+(defaultValue?'checked':'')+'></label>'
   :input('debil_'+field,label,defaultValue,type)).join('');
@@ -481,6 +483,9 @@ async function renderDebilInspiredPanel(id,f,c){
  return true;
 }
 
+const PANEL_COMMANDS={welcome:['/welcome','/goodbye'],reactionRoles:['/reactionrole'],moderator:['/mod purge','/mod softban','/mod unban','/mod clearwarnings','/mod slowmode','/mod lock','/mod unlock'],automod:['/automod'],audit:['/auditlog'],levels:['/rank','/leaderboard','/level'],achievements:['/stats'],customCommands:['/your-custom-command'],inviteTracker:['/invites stats','/invites leaderboard'],ticketing:['/ticket'],emojis:['/emoji'],polls:['/fun poll'],embeds:['/embed'],reminders:['/remind'],birthdays:['/birthday'],twitch:['/twitch'],youtube:['/youtube'],reddit:['/reddit'],instagram:['/instagram'],rss:['/rss'],kick:['/kick'],podcast:['/podcast'],tiktok:['/tiktok'],xalerts:['/x'],giveaways:['/giveaway'],economy:['/economy daily','/economy beg','/economy shop'],music:['/play','/skip','/stop'],casino:['/casino'],lottery:['/lottery'],games:['/fun calculator','/fun advice','/fun dadjoke'],ai:['/ask'],commands:['/help','/adminhelp'],system:['/adminhelp'],premium:[]};
+function commandStrip(panelKey){const cmds=PANEL_COMMANDS[panelKey]||[];return '<section class="panel-command-strip"><div><strong>Discord commands for this panel</strong><p>Use these in your server. Permissions and enabled features may affect availability.</p></div><div class="panel-command-list">'+(cmds.length?cmds.map(c=>'<code>'+esc(c)+'</code>').join(''):'<span class="panel-command-empty">No Discord commands available yet.</span>')+'</div></section>';}
+if(!document.getElementById('panel-command-pricing-styles')){const st=document.createElement('style');st.id='panel-command-pricing-styles';st.textContent=".panel-command-strip{margin-top:16px;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}.panel-command-strip strong{font-size:12px}.panel-command-strip p{font-size:10px;color:var(--muted);margin:4px 0 10px}.panel-command-list{display:flex;gap:7px;flex-wrap:wrap}.panel-command-list code{padding:5px 8px;border-radius:7px;background:var(--surface-2);font-size:11px}.panel-command-empty{font-size:11px;color:var(--muted)}.pricing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.pricing-card{border:1px solid var(--border);border-radius:15px;padding:17px;background:var(--surface);min-width:0}.pricing-featured{border-color:var(--petrol);box-shadow:0 0 0 1px var(--petrol)}.pricing-card-head{display:flex;justify-content:space-between;gap:6px;align-items:center}.pricing-card-head h3{font-size:16px}.pricing-card-head span{font-size:9px;color:var(--petrol);font-weight:850}.pricing-price{display:flex;align-items:baseline;gap:6px;margin:16px 0 8px}.pricing-price strong{font-size:29px}.pricing-price span,.pricing-desc{font-size:11px;color:var(--muted)}.pricing-card ul{padding:0;list-style:none;margin:15px 0 0;display:grid;gap:10px}.pricing-card li{font-size:11px;line-height:1.45;display:flex;gap:7px}.pricing-card li span{color:var(--petrol);font-weight:900}@media(max-width:950px){.pricing-grid{grid-template-columns:1fr}}";document.head.appendChild(st);}
 async function renderPanel(id,f,c){
  const k=f[0];
  if(['giveaways','economy','music','casino','lottery','games','ai'].includes(k)){await renderDebilInspiredPanel(id,f,c);return;}
