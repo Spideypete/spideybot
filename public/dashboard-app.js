@@ -72,7 +72,8 @@ const FEATURES=[
     ['games','Games','Manage community games and activities.','gamepad-2']
   ]],
   ['Advanced',[
-    ['ai','AI Assistant','Configure the AI chat assistant.','sparkle']
+    ['ai','AI Assistant','Configure Gemini, your server’s assistant name and AI behaviour.','sparkle'],
+    ['premium','Premium','Premium features and subscription settings.','crown']
   ]],
   ['Administration',[
     ['commands','Commands','Enable or disable individual commands by server.','command'],
@@ -448,17 +449,18 @@ async function renderDebilInspiredPanel(id,f,c){
    ['quoteCards','Quote image command',c.gamesSettings?.quoteCards!==false,'check'],
    ['gameChannelId','Optional games channel ID',c.gamesSettings?.gameChannelId||'','text']
   ]},
-  ai:{key:'aiAssistantSettings',title:'AI Assistant settings',intro:'Configure the AI model and access rules. An AI runtime and secret API key must be wired on the bot host for chat to work.',fields:[
+  ai:{key:'aiAssistantSettings',title:'Gemini AI Assistant settings',intro:'Powered by Google Gemini. Server admins can customise the assistant name and allowed channel; provider credentials stay private on Railway.',fields:[
    ['enabled','Enable AI Assistant',c.aiAssistantSettings?.enabled!==false,'check'],
-   ['model','OpenRouter model ID',c.aiAssistantSettings?.model||'','text'],
+   ['assistantName','Assistant name (used for the Discord command)',c.aiAssistantSettings?.assistantName||c.aiAssistantName||'spidey','text'],
    ['channelId','Optional allowed channel ID',c.aiAssistantSettings?.channelId||'','text'],
-   ['costPerRequest','Virtual currency cost per request',c.aiAssistantSettings?.costPerRequest||0,'number'],
    ['keepConversationContext','Keep conversation context',c.aiAssistantSettings?.keepConversationContext!==false,'check'],
-   ['maxResponseLength','Maximum response characters',c.aiAssistantSettings?.maxResponseLength||3500,'number']
-  ]}
+   ['maxResponseLength','Maximum response characters',c.aiAssistantSettings?.maxResponseLength||1900,'number']
+  ]},
+  premium:{key:'premiumSettings',title:'Premium settings',intro:'Premium panel placeholder. Premium options will be added here later.',fields:[]}
  };
  const schema=schemas[k]; if(!schema)return false;
  const current=c[schema.key]||{};
+ if(k==='premium'){body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel"><section class="welcome-message-section"><h3>Coming later</h3><p class="mention-help">This panel is intentionally blank for now.</p></section></div>');return true;}
  const controls=schema.fields.map(([field,label,defaultValue,type])=>type==='check'
   ?'<label class="check"><span>'+esc(label)+'</span><input type="checkbox" id="debil_'+field+'" '+(defaultValue?'checked':'')+'></label>'
   :input('debil_'+field,label,defaultValue,type)).join('');
