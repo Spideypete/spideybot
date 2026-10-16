@@ -197,6 +197,8 @@ function baseFeaturePanel(id,f,c,fields){
    await save(id,patch);alert(f[1]+' saved.');
  };
  attachToggle(id,f,c);
+ if(k!=='overview'&&k!=='premium'&&typeof commandStrip==='function'){const existing=body.querySelector('.panel-command-strip');if(existing)existing.remove();body.insertAdjacentHTML('beforeend',commandStrip(k));}
+ } catch(renderError) { console.error('Panel render failed:',k,renderError); body.innerHTML='<section class="welcome-message-section"><h3>'+esc(f[1])+'</h3><p class="mention-help">This panel could not load. '+esc(renderError.message||'Unknown error')+'</p></section>'; }
 }
 function optionList(items,selected,placeholder){
  const first='<option value="">'+esc(placeholder||'Choose…')+'</option>';
@@ -487,6 +489,8 @@ const PANEL_COMMANDS={welcome:['/welcome','/goodbye'],reactionRoles:['/reactionr
 function commandStrip(panelKey){const cmds=PANEL_COMMANDS[panelKey]||[];return '<section class="panel-command-strip"><div><strong>Discord commands for this panel</strong><p>Use these in your server. Permissions and enabled features may affect availability.</p></div><div class="panel-command-list">'+(cmds.length?cmds.map(c=>'<code>'+esc(c)+'</code>').join(''):'<span class="panel-command-empty">No Discord commands available yet.</span>')+'</div></section>';}
 if(!document.getElementById('panel-command-pricing-styles')){const st=document.createElement('style');st.id='panel-command-pricing-styles';st.textContent=".panel-command-strip{margin-top:16px;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}.panel-command-strip strong{font-size:12px}.panel-command-strip p{font-size:10px;color:var(--muted);margin:4px 0 10px}.panel-command-list{display:flex;gap:7px;flex-wrap:wrap}.panel-command-list code{padding:5px 8px;border-radius:7px;background:var(--surface-2);font-size:11px}.panel-command-empty{font-size:11px;color:var(--muted)}.pricing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.pricing-card{border:1px solid var(--border);border-radius:15px;padding:17px;background:var(--surface);min-width:0}.pricing-featured{border-color:var(--petrol);box-shadow:0 0 0 1px var(--petrol)}.pricing-card-head{display:flex;justify-content:space-between;gap:6px;align-items:center}.pricing-card-head h3{font-size:16px}.pricing-card-head span{font-size:9px;color:var(--petrol);font-weight:850}.pricing-price{display:flex;align-items:baseline;gap:6px;margin:16px 0 8px}.pricing-price strong{font-size:29px}.pricing-price span,.pricing-desc{font-size:11px;color:var(--muted)}.pricing-card ul{padding:0;list-style:none;margin:15px 0 0;display:grid;gap:10px}.pricing-card li{font-size:11px;line-height:1.45;display:flex;gap:7px}.pricing-card li span{color:var(--petrol);font-weight:900}@media(max-width:950px){.pricing-grid{grid-template-columns:1fr}}";document.head.appendChild(st);}
 async function renderPanel(id,f,c){
+ try {
+
  const k=f[0];
  if(['giveaways','economy','music','casino','lottery','games','ai'].includes(k)){await renderDebilInspiredPanel(id,f,c);return;}
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
