@@ -825,7 +825,7 @@ async function renderOverview(){
  if(!id){root.innerHTML=card('Server selection required','Choose a Discord server before managing features.','');return;}
  let c={plugins:{}};
  try{c=await load(id);}catch(err){root.innerHTML=card('Features unavailable','The server feature configuration could not be loaded.','<div class="activity-row"><div class="activity-main"><strong>Error</strong><span>'+esc(err.message||String(err))+'</span></div></div>');return;}
- const groups=featureGroups();
+ const groups=FEATURES.map(([name,items])=>({name,items}));
  root.innerHTML='<div class="panel-head"><div><div class="eyebrow">Control centre</div><div class="panel-title">Panels</div><div class="panel-sub">Switch each panel on or off for this Discord server. Changes are saved to the server configuration.</div></div></div>'+groups.map(group=>'<section class="overview-feature-group"><h2>'+esc(group.name)+'</h2><div class="overview-feature-grid">'+group.items.map(f=>{const on=enabled(c,f);return '<article class="overview-feature-card '+(on?'is-on':'is-off')+'"><div class="overview-feature-top"><div class="overview-feature-icon">'+icon(f[3])+'</div><div class="overview-feature-copy"><strong>'+esc(f[1])+'</strong><span>'+esc(f[2])+'</span></div></div><div class="overview-feature-bottom"><span class="overview-feature-status">'+(on?'ON':'OFF')+'</span><button type="button" class="overview-toggle '+(on?'on':'')+'" role="switch" aria-checked="'+on+'" aria-label="'+(on?'Disable ':'Enable ')+esc(f[1])+'" data-panel-toggle="'+esc(f[0])+'"></button></div></article>';}).join('')+'</div></section>').join('');
  root.querySelectorAll('[data-panel-toggle]').forEach(btn=>btn.addEventListener('click',async()=>{
    const key=btn.dataset.panelToggle;
