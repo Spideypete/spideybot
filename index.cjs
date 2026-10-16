@@ -1023,6 +1023,27 @@ try {
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
 client.on('interactionCreate', async interaction => {
   try {
+    if (interaction.isChatInputCommand() && interaction.commandName === 'ask') {
+      await interaction.deferReply();
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) return interaction.editReply('The AI assistant is not configured yet. Please contact a server administrator.');
+      const question = interaction.options.getString('question', true).trim();
+      const guildConfig = interaction.guildId ? getGuildConfig(interaction.guildId) : {};
+      const assistantName = String(guildConfig.aiAssistantName || 'Spidey').trim().slice(0, 32) || 'Spidey';
+      try {
+        const response = await axios.post(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+          { system_instruction: { parts: [{ text: `You are ${assistantName}, the helpful AI assistant for SPIDEY BOT on Discord. Answer clearly and conversationally. For current facts such as exchange rates, do not invent live values; explain when you cannot verify a live source. Keep replies suitable for Discord.` }] }, contents: [{ role: 'user', parts: [{ text: question }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 700 } },
+          { headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' }, timeout: 25000 }
+        );
+        const answer = response.data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim();
+        if (!answer) return interaction.editReply('I could not generate an answer just now. Please try again.');
+        return interaction.editReply({ content: answer.slice(0, 1900) });
+      } catch (error) {
+        console.error('[Gemini AI] request failed:', error.response?.status || error.message);
+        return interaction.editReply('The AI service is temporarily unavailable. Please try again shortly.');
+      }
+    }
     if (interaction.isChatInputCommand()) {
       const handled = await handleTestifyInteraction(interaction, { client });
       if (handled) return;
