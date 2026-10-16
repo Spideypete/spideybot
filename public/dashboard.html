@@ -12,8 +12,8 @@
 :root{
   --bg:#f3f5f8;--surface:#ffffff;--surface2:#f7f8fa;--border:#e4e7ec;
   --text:#20242b;--muted:#777f8c;--purple:#168eea;--petrol:#00a5ff;
-  --accent-soft:#e7f4ff;--petrol-soft:#e5f7ff;--shadow:0 5px 18px rgba(23,35,52,.045);
-  --nile-blue:#079fe8;--nile-pink:#c52e6b;--nile-yellow:#ffc928;
+  --accent-soft:#e8e0f2;--petrol-soft:#e2eeee;--shadow:0 5px 18px rgba(23,35,52,.045);
+  --nile-blue:#258f99;--nile-pink:#7651a8;--nile-yellow:#b6a0d4;
 }
 body{background:var(--bg);color:var(--text);font-size:13px;letter-spacing:.005em}
 .app{grid-template-columns:218px minmax(0,1fr);background:var(--bg)}
@@ -26,9 +26,9 @@ body{background:var(--bg);color:var(--text);font-size:13px;letter-spacing:.005em
 .nav{gap:4px;padding:0 2px}
 .nav button,.nav button.active{height:39px;min-height:39px;padding:0 11px;border-radius:8px;gap:10px;font-size:12px;font-weight:600;box-shadow:none;border:0;transition:background .16s ease,color .16s ease}
 .nav button{color:#717987;background:transparent}
-.nav button:hover{background:#edf5fb;color:#168eea}
-.nav button.active{background:#e6f4ff;color:#078ed8;font-weight:750;box-shadow:inset 3px 0 #079fe8}
-.nav button.active .icon{color:#078ed8}
+.nav button:hover{background:#eaf4f3;color:#168eea}
+.nav button.active{background:#e5f3f2;color:#258f99;font-weight:750;box-shadow:inset 3px 0 #258f99}
+.nav button.active .icon{color:#258f99}
 .icon{width:18px;font-size:16px}
 .sidebar-foot{padding:12px 5px 4px}
 .bot-status{border:1px solid var(--border);background:var(--surface);border-radius:9px;padding:12px}
@@ -41,20 +41,20 @@ body{background:var(--bg);color:var(--text);font-size:13px;letter-spacing:.005em
 .crumb strong{color:var(--text);font-weight:750}
 .top-actions{gap:10px}
 .top-btn{width:35px;height:35px;border-radius:9px;background:var(--surface);border:1px solid var(--border);color:var(--muted)}
-.top-btn:hover{border-color:#b7dcf5;color:#078ed8}
+.top-btn:hover{border-color:#b7dcf5;color:#258f99}
 .profile{height:38px;border:1px solid var(--border);background:var(--surface);border-radius:9px;padding:3px 10px 3px 4px;gap:8px}
 .avatar{width:29px;height:29px;background:var(--nile-blue);font-size:10px}
 .profile span{font-size:11px;color:var(--text)}
 .content{max-width:1500px;padding:29px 30px 44px}
 .page-head{margin-bottom:22px}
-.eyebrow{font-size:10px;letter-spacing:1.35px;color:#078ed8;margin-bottom:7px}
+.eyebrow{font-size:10px;letter-spacing:1.35px;color:#258f99;margin-bottom:7px}
 .page-head h1{font-size:27px;line-height:1.2;letter-spacing:-.6px;font-weight:750}
 .page-head p{font-size:12px;color:var(--muted);margin-top:7px}
 .stats{gap:13px;margin-bottom:18px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow)}
 .stat{padding:17px 18px;min-height:118px}
 .stat-top{align-items:center;color:var(--muted);font-size:10px;letter-spacing:.45px}
-.stat-icon{width:31px;height:31px;border-radius:8px;background:#e6f4ff;color:#078ed8}
+.stat-icon{width:31px;height:31px;border-radius:8px;background:#e5f3f2;color:#258f99}
 .stat-value{font-size:27px;font-weight:750;letter-spacing:-.7px;margin-top:12px}
 .stat-meta{font-size:10px;color:var(--muted);margin-top:4px}
 .grid{gap:14px}
@@ -65,19 +65,19 @@ body{background:var(--bg);color:var(--text);font-size:13px;letter-spacing:.005em
 .chart{height:226px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);padding:14px}
 .grid-lines{inset:18px 17px 23px;background:repeating-linear-gradient(to bottom,transparent 0,transparent 46px,var(--border) 47px)}
 .bars{left:20px;right:20px;bottom:23px;top:18px;gap:13px}
-.bar{border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#079fe8,#2676dc);min-height:15px}
-.bars .bar:nth-child(3n){background:linear-gradient(180deg,#d84c83,#c52e6b)}
-.bars .bar:nth-child(4n){background:linear-gradient(180deg,#ffd65b,#f2ad16)}
+.bar{border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#258f99,#258f99);min-height:15px}
+.bars .bar:nth-child(3n){background:linear-gradient(180deg,#7651a8,#7651a8)}
+.bars .bar:nth-child(4n){background:linear-gradient(180deg,#a88bc8,#7651a8)}
 .activity{gap:9px}
 .activity-row{padding:10px;border-radius:8px;background:var(--surface2);border:1px solid transparent}
-.activity-icon{width:32px;height:32px;border-radius:8px;background:#e6f4ff;color:#078ed8}
+.activity-icon{width:32px;height:32px;border-radius:8px;background:#e5f3f2;color:#258f99}
 .activity-main strong{font-size:11px;font-weight:700}
 .activity-main span{font-size:10px;color:var(--muted);line-height:1.45}
 .section{margin-top:15px}
 .select,.field input,.field select,.field textarea,input,select,textarea{
   border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;
 }
-.select:focus,input:focus,select:focus,textarea:focus{outline:0;border-color:#079fe8;box-shadow:0 0 0 3px rgba(7,159,232,.12)}
+.select:focus,input:focus,select:focus,textarea:focus{outline:0;border-color:#258f99;box-shadow:0 0 0 3px rgba(7,159,232,.12)}
 button{transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
 button:active{transform:translateY(1px)}
 button:not(.nav button):not(.mobile-menu):not(.top-btn){border-radius:8px}
@@ -91,8 +91,8 @@ button:not(.nav button):not(.mobile-menu):not(.top-btn){border-radius:8px}
 .overview-feature-group{margin-bottom:18px}
 .overview-feature-grid{gap:12px}
 .overview-feature-card{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);padding:14px}
-.overview-feature-card:hover{border-color:#a9d9f5;transform:translateY(-1px)}
-.overview-feature-icon{background:#e6f4ff;color:#078ed8;border-radius:8px}
+.overview-feature-card:hover{border-color:#a7d8d5;transform:translateY(-1px)}
+.overview-feature-icon{background:#e5f3f2;color:#258f99;border-radius:8px}
 .overview-feature-copy{color:var(--muted)}
 table{border-color:var(--border)}
 th{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
@@ -102,33 +102,33 @@ td,th{border-color:var(--border)}
 .mobile-menu{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px}
 .dark{
   --bg:#151619;--surface:#1b1d22;--surface2:#202227;--border:#2d3037;
-  --text:#ededf0;--muted:#9b9da6;--purple:#079fe8;--petrol:#079fe8;
-  --accent-soft:#202a33;--petrol-soft:#1d2b34;--shadow:0 5px 18px rgba(0,0,0,.12);
+  --text:#ededf0;--muted:#9b9da6;--purple:#7651a8;--petrol:#258f99;
+  --accent-soft:#2d263c;--petrol-soft:#24383a;--shadow:0 5px 18px rgba(0,0,0,.12);
 }
 .dark .sidebar{background:#202126;border-right:1px solid #2c2e34}
 .dark .brand-name{color:#f2f2f4}
 .dark .brand-sub,.dark .nav-title{color:#898c96}
 .dark .nav button{color:#a6a8b1}
 .dark .nav button:hover{background:#292d34;color:#fff}
-.dark .nav button.active{background:#2a3037;color:#20b5ff;box-shadow:inset 3px 0 #079fe8}
-.dark .nav button.active .icon{color:#20b5ff}
+.dark .nav button.active{background:#2a3037;color:#56b8bd;box-shadow:inset 3px 0 #258f99}
+.dark .nav button.active .icon{color:#56b8bd}
 .dark .bot-status{background:#24262b;border-color:#33363d}
 .dark .status-label{color:#e8e8eb}
 .dark .status-copy{color:#92949e}
 .dark .topbar{background:rgba(21,22,25,.94);border-bottom-color:#2d3037}
 .dark .crumb strong,.dark .profile span{color:#ededf0}
 .dark .top-btn,.dark .profile,.dark .mobile-menu{background:#1b1d22;border-color:#33363d;color:#c5c7ce}
-.dark .stat-icon,.dark .activity-icon,.dark .overview-feature-icon{background:#1b303b;color:#20b5ff}
+.dark .stat-icon,.dark .activity-icon,.dark .overview-feature-icon{background:#252033;color:#56b8bd}
 .dark .chart{background:#1b1d22;border-color:#2d3037}
 .dark .grid-lines{background:repeating-linear-gradient(to bottom,transparent 0,transparent 46px,#2b2e35 47px)}
-.dark .bars .bar{background:linear-gradient(180deg,#16b5ff,#1477cb)}
-.dark .bars .bar:nth-child(3n){background:linear-gradient(180deg,#e24e88,#b92661)}
-.dark .bars .bar:nth-child(4n){background:linear-gradient(180deg,#ffd55b,#d99d14)}
+.dark .bars .bar{background:linear-gradient(180deg,#56b8bd,#258f99)}
+.dark .bars .bar:nth-child(3n){background:linear-gradient(180deg,#a88bc8,#7651a8)}
+.dark .bars .bar:nth-child(4n){background:linear-gradient(180deg,#a88bc8,#7651a8)}
 .dark .activity-row{background:#202227;border-color:#2b2e35}
 .dark .activity-main strong{color:#ececf0}
 .dark .select,.dark .field input,.dark .field select,.dark .field textarea,.dark input,.dark select,.dark textarea{background:#1c1e23;border-color:#343740;color:#ededf0}
 .dark .overview-feature-card{background:#1b1d22;border-color:#2d3037}
-.dark .overview-feature-card:hover{border-color:#17648a}
+.dark .overview-feature-card:hover{border-color:#326f74}
 .dark .panel-section,.dark .welcome-panel,.dark .embed-builder-panel,.dark .embed-builder-card,.dark .embed-preview,.dark .reaction-roles-panel,.dark .moderation-panel,.dark .audit-panel,.dark .audit-timeline,.dark .command-item,.dark .rr-entry,.dark .embed-fields{background:#1b1d22;border-color:#2d3037}
 @media(max-width:1050px){
  .app{grid-template-columns:205px minmax(0,1fr)}
@@ -149,6 +149,12 @@ td,th{border-color:var(--border)}
  .nav button,.nav button.active{border-radius:8px}
 }
 @media(min-width:761px){.mobile-menu{display:none}}
+
+/* Phosphor panel iconography */
+.nav .icon{width:20px;min-width:20px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;line-height:1;color:inherit}
+.nav .icon i{font-size:17px;line-height:1}
+.nav button.active .icon{color:var(--petrol)}
+.overview-feature-icon i,.stat-icon i,.activity-icon i{font-size:18px;line-height:1}
 </style></head>
 <body class="dark"><div class="app"><aside class="sidebar" id="sidebar"><div class="brand"><div class="brand-mark">S</div><div><div class="brand-name">SPIDEY BOT</div><div class="brand-sub">Discord Dashboard</div></div></div><div id="navigation"></div><div class="sidebar-foot"><div class="bot-status"><div><span class="status-dot"></span><span class="status-label">Bot Online</span></div><div class="status-copy">SPIDEY BOT is connected and ready.</div></div></div></aside>
 <main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:10px"><button class="mobile-menu" id="menu">☰</button><div class="crumb"><strong>SPIDEY BOT</strong><span>/</span><span>Dashboard</span></div></div><div class="top-actions"><button class="top-btn" id="theme" title="Toggle theme">☾</button><div class="profile"><div class="avatar" id="userAvatar">SP</div><span id="userName">Administrator</span></div></div></header>
@@ -156,7 +162,7 @@ td,th{border-color:var(--border)}
 <div class="stats"><div class="card stat"><div class="stat-top"><span>Members</span><div class="stat-icon"><i class="ph-bold ph-users"></i></div></div><div class="stat-value" id="statMembers">—</div><div class="stat-meta">Server members</div></div><div class="card stat"><div class="stat-top"><span>Messages</span><div class="stat-icon"><i class="ph-bold ph-chat-circle"></i></div></div><div class="stat-value" id="statMessages">—</div><div class="stat-meta">Recent activity</div></div><div class="card stat"><div class="stat-top"><span>Commands</span><div class="stat-icon"><i class="ph-bold ph-command"></i></div></div><div class="stat-value" id="statCommands">—</div><div class="stat-meta">Command activity</div></div><div class="card stat"><div class="stat-top"><span>Features</span><div class="stat-icon"><i class="ph-bold ph-sparkle"></i></div></div><div class="stat-value" id="statFeatures">—</div><div class="stat-meta">Enabled configuration</div></div></div>
 <div id="pluginCatalog" class="section"></div><div class="grid"><div class="card panel"><div class="panel-head"><div><div class="panel-title">Server activity</div><div class="panel-sub">Recent activity overview</div></div></div><div class="chart"><div class="grid-lines"></div><div class="bars"><i class="bar" style="height:38%"></i><i class="bar" style="height:52%"></i><i class="bar" style="height:45%"></i><i class="bar" style="height:68%"></i><i class="bar" style="height:57%"></i><i class="bar" style="height:82%"></i><i class="bar" style="height:71%"></i><i class="bar" style="height:91%"></i></div></div></div><div class="card panel"><div class="panel-head"><div><div class="panel-title">Dashboard</div><div class="panel-sub">Your server is connected.</div></div></div><div class="activity"><div class="activity-row"><div class="activity-icon"><i class="ph-bold ph-check"></i></div><div class="activity-main"><strong>Configuration ready</strong><span>Open a section from the sidebar to manage it.</span></div></div><div class="activity-row"><div class="activity-icon"><i class="ph-bold ph-shield-check"></i></div><div class="activity-main"><strong>Protection tools</strong><span>Moderation and AutoMod are available.</span></div></div><div class="activity-row"><div class="activity-icon"><i class="ph-bold ph-command"></i></div><div class="activity-main"><strong>Command suite</strong><span>Slash and prefix commands are supported.</span></div></div></div></div></div></section>
 <section id="featureWorkspace" class="section" hidden><div class="page-head"><div><div class="eyebrow">SPIDEY BOT</div><h1 id="workspaceTitle">Feature</h1><p id="workspaceDescription">Configure your server.</p></div></div><div id="workspaceBody"></div></section></div></main></div>
-<script src="https://unpkg.com/@phosphor-icons/web"></script><script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css"><script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script><script>
 const THEME_KEY='spidey-dashboard-theme';
 function applyTheme(theme){
   const dark=theme!=='light';
