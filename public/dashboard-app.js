@@ -825,12 +825,29 @@ async function renderOverview(){
  if(!id){root.innerHTML=card('Server selection required','Choose a Discord server before managing features.','');return;}
  let c={plugins:{}};
  try{c=await load(id);}catch(err){root.innerHTML=card('Features unavailable','The server feature configuration could not be loaded.','<div class="activity-row"><div class="activity-main"><strong>Error</strong><span>'+esc(err.message||String(err))+'</span></div></div>');return;}
- root.innerHTML='<div class="panel-head"><div><div class="eyebrow">Essentials</div><div class="panel-title">All features available</div><div class="panel-sub">Feature switches have been removed. All dashboard features are available while we work on the configuration controls separately.</div></div></div>'+featureGroups().map(group=>'<div class="overview-feature-group"><h2>'+esc(group.name)+'</h2><div class="overview-feature-grid">'+group.items.map(f=>'<article class="overview-feature-card"><div class="overview-feature-top"><div class="overview-feature-icon">'+icon(f[3])+'</div><div class="overview-feature-copy"><strong>'+esc(f[1])+'</strong><span>'+esc(f[2])+'</span></div></div></article>').join('')+'</div></div>').join('');
+ const groups=featureGroups();
+ root.innerHTML='<div class="panel-head"><div><div class="eyebrow">Control centre</div><div class="panel-title">Panels</div><div class="panel-sub">Switch each panel on or off for this Discord server. Changes are saved to the server configuration.</div></div></div>'+groups.map(group=>'<section class="overview-feature-group"><h2>'+esc(group.name)+'</h2><div class="overview-feature-grid">'+group.items.map(f=>{const on=enabled(c,f);return '<article class="overview-feature-card '+(on?'is-on':'is-off')+'"><div class="overview-feature-top"><div class="overview-feature-icon">'+icon(f[3])+'</div><div class="overview-feature-copy"><strong>'+esc(f[1])+'</strong><span>'+esc(f[2])+'</span></div></div><div class="overview-feature-bottom"><span class="overview-feature-status">'+(on?'ON':'OFF')+'</span><button type="button" class="overview-toggle '+(on?'on':'')+'" role="switch" aria-checked="'+on+'" aria-label="'+(on?'Disable ':'Enable ')+esc(f[1])+'" data-panel-toggle="'+esc(f[0])+'"></button></div></article>';}).join('')+'</div></section>').join('');
+ root.querySelectorAll('[data-panel-toggle]').forEach(btn=>btn.addEventListener('click',async()=>{
+   const key=btn.dataset.panelToggle;
+   const f=feature(key);
+   if(!f||btn.disabled)return;
+   const next=!enabled(c,f);
+   btn.disabled=true;
+   try{
+     await setFeatureEnabled(id,key,next);
+     c.plugins={...(c.plugins||{}),[key]:next};
+     await buildNavigation();
+     await renderOverview();
+   }catch(err){
+     btn.disabled=false;
+     alert('Could not '+(next?'enable ':'disable ')+f[1]+'. '+(err.message||String(err)));
+   }
+ }));
 }
 async function buildNavigation(){
  if(!navigation)return;
  const id=guildId();let c={plugins:{}};
- if(id){try{c=await load(id);const allEnabled=Object.fromEntries(all().map(f=>[f[0],true]));await save(id,{plugins:allEnabled});c.plugins={...(c.plugins||{}),...allEnabled};}catch(err){console.warn('[dashboard] feature config',err);}}
+ if(id){try{c=await load(id);}catch(err){console.warn('[dashboard] feature config',err);}}
  navigation.innerHTML='';
  const main=document.createElement('div');main.className='nav-title';main.textContent='Main';navigation.appendChild(main);
  const nav=document.createElement('nav');nav.className='nav';
@@ -840,7 +857,7 @@ async function buildNavigation(){
    if(!visible.length)return;
    const heading=document.createElement('div');heading.className='nav-title';heading.textContent=group[0];navigation.appendChild(heading);
    const groupNav=document.createElement('nav');groupNav.className='nav';
-   visible.forEach(f=>{const b=document.createElement('button');b.type='button';b.dataset.section=f[0];b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);b.onclick=()=>select(f[0]);groupNav.appendChild(b);});
+   visible.forEach(f=>{const on=enabled(c,f);const b=document.createElement('button');b.type='button';b.dataset.section=f[0];b.classList.toggle('feature-disabled',!on);b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);b.onclick=()=>{if(!enabled(c,f)){alert(f[1]+' is switched off. Turn it on from Overview → Panels first.');return;}select(f[0]);};groupNav.appendChild(b);});
    navigation.appendChild(groupNav);
  });
 }
