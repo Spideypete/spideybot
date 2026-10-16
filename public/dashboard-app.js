@@ -90,7 +90,10 @@ const PHOSPHOR_ICON_ALIASES={
 };
 const icon=n=>{
  const name=PHOSPHOR_ICON_ALIASES[n]||'shapes';
- return '<i class="ph-bold ph-'+name+'" aria-hidden="true"></i>';
+ // Use Phosphor's SVG endpoint rather than font glyphs: this avoids tofu/rectangle
+ // glyphs when the remote webfont is blocked or fails to load.
+ const src='https://api.iconify.design/ph/'+encodeURIComponent(name)+'-bold.svg';
+ return '<span class="ph-svg-icon" aria-hidden="true" style="--ph-svg-url:url(&quot;'+src+'&quot;)"></span>';
 };
 const input=(id,label,value,type='text')=>'<label class="field">'+esc(label)+'<input id="'+id+'" type="'+type+'" value="'+esc(value??'')+'"></label>';
 const check=(id,label,value)=>'<label class="check"><span>'+esc(label)+'</span><input id="'+id+'" type="checkbox" '+(value?'checked':'')+'></label>';
