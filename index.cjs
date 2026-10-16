@@ -7629,7 +7629,7 @@ app.post("/api/bot-config/messages", express.json(), (req, res) => {
   // The no-OAuth testing dashboard is permitted only when explicitly enabled on
   // the isolated test deployment. Never enable this bypass in production.
   const testDashboardAccess =
-    process.env.NODE_ENV !== "production" &&
+    process.env.RAILWAY_ENVIRONMENT_NAME === "testing" &&
     process.env.SPIDEY_TESTING_NO_AUTH === "true" &&
     client.guilds.cache.has(guildId);
 
