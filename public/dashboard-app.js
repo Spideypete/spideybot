@@ -90,9 +90,10 @@ const PHOSPHOR_ICON_ALIASES={
 };
 const icon=n=>{
  const name=PHOSPHOR_ICON_ALIASES[n]||'shapes';
- // Render icons using the official @phosphor-icons/web CSS class API.
- // The stylesheet maps .ph-bold.ph-<name>::before to the bundled icon-font glyph.
- return '<i class="ph-bold ph-'+esc(name)+'" aria-hidden="true"></i>';
+ // Use the official Phosphor Core SVG assets instead of font glyphs.
+ // This avoids tofu/rectangle glyphs when the webfont fails to load or is blocked.
+ const asset='https://cdn.jsdelivr.net/npm/@phosphor-icons/core@2.1.1/assets/bold/'+name+'-bold.svg';
+ return '<span class="ph-svg-icon" role="img" aria-label="'+esc(n)+'" style="--ph-svg-url:url(&quot;'+asset+'&quot;)"></span>';
 };
 const input=(id,label,value,type='text')=>'<label class="field">'+esc(label)+'<input id="'+id+'" type="'+type+'" value="'+esc(value??'')+'"></label>';
 const check=(id,label,value)=>'<label class="check"><span>'+esc(label)+'</span><input id="'+id+'" type="checkbox" '+(value?'checked':'')+'></label>';
