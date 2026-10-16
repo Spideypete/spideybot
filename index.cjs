@@ -1029,7 +1029,7 @@ client.on('interactionCreate', async interaction => {
       if (!apiKey) return interaction.editReply('The AI assistant is not configured yet. Please contact a server administrator.');
       const question = interaction.options.getString('question', true).trim();
       const guildConfig = interaction.guildId ? getGuildConfig(interaction.guildId) : {};
-      const assistantName = String(guildConfig.aiAssistantName || 'Spidey').trim().slice(0, 32) || 'Spidey';
+      const assistantName = String(guildConfig.aiAssistantSettings?.assistantName || guildConfig.aiAssistantName || 'Spidey').trim().slice(0, 32) || 'Spidey';
       try {
         const response = await axios.post(
           'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
@@ -1115,7 +1115,17 @@ client.once("ready", async () => {
   // The test service uses the same bot token as production, so global registration here would affect production servers.
   const isTestingDeployment = process.env.RAILWAY_SERVICE_NAME === 'spidey-bot-testing' || String(process.env.RAILWAY_PUBLIC_DOMAIN || '').includes('spidey-bot-testing');
   if (isTestingDeployment) {
-    console.log('🧪 Testing deployment: skipping global slash-command clear/register to protect production.');
+    console.log('🧪 Testing deployment: registering commands per connected guild only; global production commands are not modified.');
+    try {
+      const rest = new REST({ version: '10' }).setToken(token);
+      const commands = testifyCommands.map(cmd => cmd.toJSON());
+      for (const guild of client.guilds.cache.values()) {
+        const result = await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands });
+        console.log(`🧪 Registered ${result.length} test slash commands for guild ${guild.id} (${guild.name})`);
+      }
+    } catch (error) {
+      console.error('[Testing guild command registration] Failed:', error.message || error);
+    }
   } else {
     // Auto-clear and re-register on startup
   try {
