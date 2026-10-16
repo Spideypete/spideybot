@@ -74,7 +74,24 @@ const all=()=>FEATURES.flatMap(g=>g[1]);
 const feature=key=>all().find(x=>x[0]===key);
 const enabled=(c,f)=>c.plugins?.[f[0]]!==false;
 const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const icon=n=>'<i class="ph-bold ph-'+n+'" aria-hidden="true"></i>';
+// Translate the dashboard's legacy/Lucide-style icon identifiers to verified Phosphor web-font names.
+const PHOSPHOR_ICON_ALIASES={
+ 'house':'house','chats-circle':'chat-circle','hand-waving':'hand-waving',
+ 'shield-check':'shield-check','shield-warning':'shield-warning','list-checks':'list-checks',
+ 'chart-line-up':'chart-line-up','trophy':'trophy','terminal-window':'terminal-window',
+ 'users-three':'users-three','ticket':'ticket','smiley':'smiley','chart-bar':'chart-bar',
+ 'article':'article','bell':'bell','cake':'cake','twitch-logo':'broadcast',
+ 'youtube-logo':'youtube-logo','reddit-logo':'alien','instagram-logo':'camera',
+ 'rss':'rss','broadcast':'broadcast','microphone-stage':'microphone-stage',
+ 'tiktok-logo':'music-notes','x-logo':'x','gift':'gift','coins':'coins',
+ 'music-notes':'music-notes','dice-five':'dice-five','gamepad-2':'game-controller',
+ 'sparkle':'sparkle','command':'terminal','gear':'gear','kick':'broadcast',
+ 'automodspam':'shield-warning'
+};
+const icon=n=>{
+ const name=PHOSPHOR_ICON_ALIASES[n]||'shapes';
+ return '<i class="ph-bold ph-'+name+'" aria-hidden="true"></i>';
+};
 const input=(id,label,value,type='text')=>'<label class="field">'+esc(label)+'<input id="'+id+'" type="'+type+'" value="'+esc(value??'')+'"></label>';
 const check=(id,label,value)=>'<label class="check"><span>'+esc(label)+'</span><input id="'+id+'" type="checkbox" '+(value?'checked':'')+'></label>';
 const button=(id,label)=>'<button class="select" id="'+id+'" type="button">'+esc(label)+'</button>';
