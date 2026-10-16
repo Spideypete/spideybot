@@ -6410,12 +6410,17 @@ app.get("/api/config/giveaways", (req, res) => {
 });
 
 app.post("/api/config/:guildId", async (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false });
-
   const guildId = req.params.guildId;
+  const testingGuildAccess = isSpideyTestingHost(req)
+    && Boolean(client.guilds.cache.get(String(guildId)));
+  if (!isSpideyTestingHost(req) && !req.session.authenticated) {
+    return res.status(401).json({ success: false, error: "Not authenticated" });
+  }
   const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => String(g.id) === String(guildId));
-  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+  const sessionGuildAccess = userGuilds.some(g => String(g.id) === String(guildId));
+  if (!(testingGuildAccess || sessionGuildAccess)) {
+    return res.status(403).json({ success: false, error: "No access" });
+  }
 
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
