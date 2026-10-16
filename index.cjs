@@ -1048,8 +1048,9 @@ client.on('interactionCreate', async interaction => {
       }
     }
     if (interaction.isChatInputCommand()) {
-      const handled = await handleTestifyInteraction(interaction, { client });
-      if (handled) return;
+      // Testify commands are dispatched by the legacy interaction router below.
+      // Do not execute the same interaction twice; duplicate dispatch can cause
+      // failed replies and Discord "Unknown interaction" errors.
       if (await customSlashRuntime.handleCustomSlashCommand(interaction)) return;
     }
   } catch (e) {
