@@ -21,9 +21,18 @@ function get(guildId){
   if(!c.testifySuite)updateGuildConfig(guildId,{testifySuite:clone(DEFAULTS)});
   const fresh=getGuildConfig(guildId);
   const out={...clone(DEFAULTS),...(fresh.testifySuite||{})};
-  for(const k of ['plugins','channels','roles','messages','sticky','counting','profiles','warnings','commandToggles','blacklist','automod','audit','welcome','autorole','economy','levels','tickets','polls']){
+  for(const k of ['plugins','channels','roles','messages','sticky','counting','profiles','warnings','commandToggles','automod','audit','welcome','autorole','economy','levels','tickets','polls']){
     const base=clone(DEFAULTS[k]||{});
     out[k]={...base,...(out[k]||{})};
+  }
+  // blacklist is a list, not a keyed settings object. Older configs may contain
+  // an object, so normalize it safely instead of calling .includes on an object.
+  if(Array.isArray(out.blacklist)){
+    out.blacklist=out.blacklist.map(String);
+  }else if(out.blacklist&&typeof out.blacklist==='object'){
+    out.blacklist=Object.entries(out.blacklist).filter(([,blocked])=>blocked===true).map(([id])=>String(id));
+  }else{
+    out.blacklist=[];
   }
   return out;
 }
