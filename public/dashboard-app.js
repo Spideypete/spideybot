@@ -1,3 +1,28 @@
+
+// Right-side toast notifications, replacing blocking browser alert popups.
+(function installSpideyToasts(){
+ if (window.__spideyToastInstalled) return;
+ window.__spideyToastInstalled = true;
+ const originalAlert = window.alert.bind(window);
+ window.alert = function(message){
+   let host = document.getElementById('spideyToastHost');
+   if(!host){
+     host=document.createElement('div');host.id='spideyToastHost';host.className='spidey-toast-host';
+     host.setAttribute('aria-live','polite');host.setAttribute('aria-atomic','false');
+     document.body.appendChild(host);
+   }
+   const text=String(message ?? '');
+   const toast=document.createElement('div');toast.className='spidey-toast';
+   const isError=/could not|failed|error|no access|not authenticated|invalid/i.test(text);
+   toast.classList.add(isError?'is-error':'is-success');
+   const mark=document.createElement('span');mark.className='spidey-toast-mark';mark.textContent=isError?'!':'✓';
+   const copy=document.createElement('div');copy.className='spidey-toast-copy';copy.textContent=text;
+   const close=document.createElement('button');close.type='button';close.className='spidey-toast-close';close.setAttribute('aria-label','Dismiss notification');close.textContent='×';
+   close.onclick=()=>toast.remove();toast.append(mark,copy,close);host.appendChild(toast);
+   requestAnimationFrame(()=>toast.classList.add('is-visible'));
+   window.setTimeout(()=>{toast.classList.remove('is-visible');window.setTimeout(()=>toast.remove(),220);},5200);
+ };
+})();
 const body=document.querySelector('#workspaceBody');
 const workspace=document.querySelector('#featureWorkspace');
 const overview=document.querySelector('#overview');
