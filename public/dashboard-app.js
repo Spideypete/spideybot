@@ -88,13 +88,8 @@ const PHOSPHOR_ICON_ALIASES={
  'sparkle':'sparkle','command':'terminal','gear':'gear','kick':'broadcast',
  'automodspam':'shield-warning'
 };
-const icon=n=>{
- const name=PHOSPHOR_ICON_ALIASES[n]||'shapes';
- // Use the official Phosphor Core SVG assets instead of font glyphs.
- // This avoids tofu/rectangle glyphs when the webfont fails to load or is blocked.
- const asset='https://cdn.jsdelivr.net/npm/@phosphor-icons/core@2.1.1/assets/bold/'+name+'-bold.svg';
- return '<span class="ph-svg-icon" role="img" aria-label="'+esc(n)+'" style="--ph-svg-url:url(&quot;'+asset+'&quot;)"></span>';
-};
+// Icons are intentionally disabled until a reliable, self-hosted icon set is added.
+const icon=()=>'';
 const input=(id,label,value,type='text')=>'<label class="field">'+esc(label)+'<input id="'+id+'" type="'+type+'" value="'+esc(value??'')+'"></label>';
 const check=(id,label,value)=>'<label class="check"><span>'+esc(label)+'</span><input id="'+id+'" type="checkbox" '+(value?'checked':'')+'></label>';
 const button=(id,label)=>'<button class="select" id="'+id+'" type="button">'+esc(label)+'</button>';
