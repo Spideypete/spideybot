@@ -1025,11 +1025,14 @@ client.on('interactionCreate', async interaction => {
   try {
     if (interaction.isChatInputCommand() && interaction.commandName === 'ask') {
       await interaction.deferReply();
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) return interaction.editReply('The AI assistant is not configured yet. Please contact a server administrator.');
       const question = interaction.options.getString('question', true).trim();
       const guildConfig = interaction.guildId ? getGuildConfig(interaction.guildId) : {};
-      const assistantName = String(guildConfig.aiAssistantSettings?.assistantName || guildConfig.aiAssistantName || 'Spidey').trim().slice(0, 32) || 'Spidey';
+      const aiSettings = guildConfig.aiAssistantSettings || {};
+      if (aiSettings.enabled === false) return interaction.editReply('The AI Assistant is disabled for this server. An administrator can enable it in the dashboard.');
+      if (aiSettings.channelId && interaction.channelId !== String(aiSettings.channelId)) return interaction.editReply('Please use the AI Assistant in the configured channel.');
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) { console.error('[Gemini AI] GEMINI_API_KEY is missing from the runtime environment.'); return interaction.editReply('The AI service is temporarily unavailable because its server configuration is incomplete. Please contact the bot owner.'); }
+      const assistantName = String(aiSettings.assistantName || guildConfig.aiAssistantName || 'Spidey').trim().slice(0, 32) || 'Spidey';
       try {
         const response = await axios.post(
           'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
