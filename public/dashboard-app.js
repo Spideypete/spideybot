@@ -33,6 +33,7 @@ const navigation=document.querySelector('#navigation');
 const FEATURES=[
   ['Essentials',[
     ['welcome','Welcome & Goodbye','Member greetings, welcome channels, messages and automatic roles.','chats-circle'],
+    ['premium','Premium','Compare Free, Premium and Pro plans.','crown'],
     ['reactionRoles','Reaction Roles','Create self-assignable role mappings for your community.','hand-waving'],
     ['moderator','Moderation','Warnings, kicks, bans, channel controls and moderation history.','shield-check'],
     ['automod','AutoMod','Filter invites, links, spam, mentions, caps and blocked words.','shield-warning'],
@@ -70,9 +71,6 @@ const FEATURES=[
     ['casino','Casino','Configure slots, betting limits and casino controls.','dice-five'],
     ['lottery','Lottery','Configure lottery entries, draw schedule and prizes.','ticket'],
     ['games','Games','Manage community games and activities.','gamepad-2']
-  ]],
-  ['Main',[
-    ['premium','Premium','Compare Free, Premium and Pro plans.','crown']
   ]],
   ['Advanced',[
     ['ai','AI Assistant','Configure Gemini, your server’s assistant name and AI behaviour.','sparkle']
@@ -789,7 +787,7 @@ async function renderPanel(id,f,c){
  if(k==='gating'){baseFeaturePanel(id,f,c,input('role','Gated role ID',c.roles?.gating||'')+check('enabled','Require gated role',c.gating?.enabled!==false));return;}
  const fields=input('channel',(k==='nftStats'||k==='nftQueries'||k==='nftSales')?'Collection ID':(k==='cryptoStats'||k==='cryptoQueries')?'Asset':'Network / channel ID',c.channels?.[k]||'')+input('message','Configuration / identifier',c.messages?.[k]||'');
  baseFeaturePanel(id,f,c,fields);
- } catch(renderError) { console.error('Panel render failed:',k,renderError); body.innerHTML='<section class="welcome-message-section"><h3>'+esc(f[1])+'</h3><p class="mention-help">This panel could not load. '+esc(renderError.message||'Unknown error')+'</p></section>'; }
+ } catch(renderError) { console.error('Panel render failed:',f?.[0]||id,renderError); body.innerHTML='<section class="welcome-message-section"><h3>'+esc(f[1])+'</h3><p class="mention-help">This panel could not load. '+esc(renderError.message||'Unknown error')+'</p></section>'; }
 }
 async function renderEmbedsPanel(id,f,c){
  const saved=Array.isArray(c.embedTemplates)?c.embedTemplates:[];
