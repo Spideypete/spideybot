@@ -488,7 +488,7 @@ async function renderPanel(id,f,c){
  try {
 
  const k=f[0];
- if(['giveaways','economy','music','casino','lottery','games','ai'].includes(k)){await renderDebilInspiredPanel(id,f,c);return;}
+ if(['giveaways','economy','music','casino','lottery','games','ai','premium'].includes(k)){await renderDebilInspiredPanel(id,f,c);return;}
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
  if(k==='reactionRoles'){await renderReactionRolesPanel(id,f,c);return;}
  if(['rss','reddit','podcast','instagram','xalerts'].includes(k)){await renderSourceAlertPanel(id,f,c);return;}
