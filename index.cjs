@@ -6858,7 +6858,13 @@ adminConfigs.forEach(configName => {
     if (!guildId) return res.json({ success: false, error: "No guild found" });
 
     // Verify user has admin access to this guild
-    const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+    // Testing-only bypass: trust only guilds the bot is currently connected to,
+    // and only when the exact Railway testing hostname is used. Production keeps
+    // the normal authenticated session guild membership check.
+    const testingGuildAccess = isSpideyTestingHost(req)
+      && Boolean(client.guilds.cache.get(String(guildId)));
+    const sessionGuildAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+    const hasAccess = testingGuildAccess || sessionGuildAccess;
     if (!hasAccess) {
       console.warn(`⚠️ Unauthorized config save attempt: ${req.session.user?.username} tried to save config for guild ${guildId}`);
       return res.status(403).json({ error: "You don't have admin permissions in this server" });
