@@ -6024,8 +6024,8 @@ app.post('/api/paypal/create-order', async (req, res) => {
     const guildName = guildConfig.guildName || 'Server';
     
     const pricing = {
-      premium: { 1: 5, 3: 13, 6: 24, 12: 42 },
-      pro: { 1: 8, 3: 21, 6: 36, 12: 60 }
+      premium: { 1: 4.99, 3: 13.99, 6: 24.99, 12: 39.99 },
+      pro: { 1: 7.99, 3: 21.99, 6: 39.99, 12: 69.99 }
     };
     
     const amount = pricing[tier]?.[durationMonths];
