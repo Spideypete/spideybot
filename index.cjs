@@ -7623,11 +7623,24 @@ app.post("/api/bot-config/permissions", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/messages", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
-  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild found" });
+
+  // The no-OAuth testing dashboard is permitted only when explicitly enabled on
+  // the isolated test deployment. Never enable this bypass in production.
+  const testDashboardAccess =
+    process.env.NODE_ENV !== "production" &&
+    process.env.SPIDEY_TESTING_NO_AUTH === "true" &&
+    client.guilds.cache.has(guildId);
+
+  if (!testDashboardAccess && !req.session?.authenticated) {
+    return res.status(401).json({ success: false, error: "Not authenticated" });
+  }
+
+  const sessionHasGuild = req.session?.guilds?.some(g => String(g.id) === guildId);
+  if (!testDashboardAccess && !sessionHasGuild) {
+    return res.status(403).json({ success: false, error: "You don't have admin permissions" });
+  }
 
   try {
     const config = loadConfig();
