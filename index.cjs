@@ -6838,9 +6838,12 @@ adminConfigs.forEach(configName => {
     const guildId = req.query.guildId;
     if (!guildId) return res.json({});
 
-    // Verify user has admin access to this guild
-    const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
-    if (!hasAccess) {
+    // Testing dashboard: allow only guilds the bot is actually connected to.
+    // Production continues to require the guild in the authenticated OAuth session.
+    const testingGuildAccess = isSpideyTestingHost(req)
+      && Boolean(client.guilds.cache.get(String(guildId)));
+    const sessionGuildAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+    if (!(testingGuildAccess || sessionGuildAccess)) {
       console.warn(`⚠️ Unauthorized config access attempt: ${req.session.user?.username} tried to access guild ${guildId}`);
       return res.status(403).json({ error: "You don't have admin permissions in this server" });
     }
