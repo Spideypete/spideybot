@@ -189,9 +189,9 @@
     </div>
     
     <div class="period-toggle" id="periodToggle">
-        <button class="period-btn" data-period="1" onclick="setPeriod(1)">1 Month</button>
+        <button class="period-btn active" data-period="1" onclick="setPeriod(1)">Monthly</button>
         <button class="period-btn" data-period="3" onclick="setPeriod(3)">3 Months</button>
-        <button class="period-btn active" data-period="6" onclick="setPeriod(6)">6 Months ⭐</button>
+        <button class="period-btn" data-period="6" onclick="setPeriod(6)">6 Months</button>
         <button class="period-btn" data-period="12" onclick="setPeriod(12)">12 Months</button>
     </div>
     
@@ -204,7 +204,7 @@
     </div>
     
     <script>
-        let currentPeriod = 6;
+        let currentPeriod = 1;
         let selectedServerId = null;
         let currentTier = 'free';
         let tierEndDate = null;
