@@ -3,6 +3,8 @@ const A=PermissionFlagsBits.Administrator, M=PermissionFlagsBits.ManageMessages,
 const S=(name,description,build)=>{const b=new SlashCommandBuilder().setName(name).setDescription(description).setDMPermission(false);build(b);return b;};
 const sub=(name,description,build)=>s=>{s.setName(name).setDescription(description);if(build)build(s);return s;};
 const commands=[
+S('ask','Ask the SPIDEY BOT AI assistant',b=>b.addStringOption(o=>o.setName('question').setDescription('What would you like to ask?').setRequired(true).setMaxLength(1500))),
+
 S('info','Information and profile tools',b=>b
  .addSubcommand(sub('avatar','Show an avatar',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
  .addSubcommand(sub('userinfo','Show member information',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
