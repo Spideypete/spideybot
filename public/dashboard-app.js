@@ -198,7 +198,6 @@ function baseFeaturePanel(id,f,c,fields){
  };
  attachToggle(id,f,c);
  if(k!=='overview'&&k!=='premium'&&typeof commandStrip==='function'){const existing=body.querySelector('.panel-command-strip');if(existing)existing.remove();body.insertAdjacentHTML('beforeend',commandStrip(k));}
- } catch(renderError) { console.error('Panel render failed:',k,renderError); body.innerHTML='<section class="welcome-message-section"><h3>'+esc(f[1])+'</h3><p class="mention-help">This panel could not load. '+esc(renderError.message||'Unknown error')+'</p></section>'; }
 }
 function optionList(items,selected,placeholder){
  const first='<option value="">'+esc(placeholder||'Choose…')+'</option>';
@@ -878,6 +877,7 @@ async function renderOverview(){
      btn.disabled=false;
      alert('Could not '+(next?'enable ':'disable ')+f[1]+'. '+(err.message||String(err)));
    }
+  } catch(renderError) { console.error('Panel render failed:',k,renderError); body.innerHTML='<section class="welcome-message-section"><h3>'+esc(f[1])+'</h3><p class="mention-help">This panel could not load. '+esc(renderError.message||'Unknown error')+'</p></section>'; }
  }));
 }
 async function buildNavigation(){
