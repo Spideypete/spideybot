@@ -71,7 +71,7 @@ const FEATURES=[
     ['lottery','Lottery','Configure lottery entries, draw schedule and prizes.','ticket'],
     ['games','Games','Manage community games and activities.','gamepad-2']
   ]],
-  ['Monetisation',[
+  ['Main',[
     ['premium','Premium','Compare Free, Premium and Pro plans.','crown']
   ]],
   ['Advanced',[
