@@ -8666,19 +8666,10 @@ app.get("/api/member-stats/:guildId", async (req, res) => {
     return res.json(cached);
   }
 
-  // Use cached member data if available, otherwise fetch
-  const memberCache = guild.members.cache;
-  
-  // If cache is too small (likely not fetched yet), fetch now
-  if (memberCache.size <= 1) {
-    console.log(`📊 Member cache empty for ${guildId}, fetching...`);
-    try {
-      await guild.members.fetch();
-    } catch (err) {
-      console.warn(`⚠️ Failed to fetch members for ${guildId}:`, err.message);
-    }
-  }
-  
+  // Use the Gateway-maintained member cache. Full guild member fetches use
+  // Discord Gateway opcode 8 and can be rate-limited if repeated from dashboard
+  // polling. The startup pre-fetch populates this cache; avoid fetching it again
+  // from every cache miss/request.
   const members = guild.members.cache;
   
   // Count non-bot members (humans)
@@ -8714,35 +8705,8 @@ app.get("/api/member-stats/:guildId", async (req, res) => {
   // Cache the stats
   setCachedMemberStats(guildId, stats);
   
-  // Fetch fresh data in background (don't wait for it)
-  guild.members.fetch().then(freshMembers => {
-    const freshHumans = freshMembers.filter(m => !m.user.bot);
-    const freshVerified = freshHumans.filter(m => !m.pending && m.roles.cache.size > 1).size;
-    const freshAdmins = freshMembers.filter(m => !m.user.bot && m.permissions.has('Administrator')).size;
-    const freshMods = freshMembers.filter(m => {
-      if (m.user.bot) return false;
-      if (m.permissions.has('Administrator')) return false;
-      return m.permissions.has('ModerateMembers') || 
-             m.permissions.has('KickMembers') || 
-             m.permissions.has('BanMembers') || 
-             m.permissions.has('ManageMessages') ||
-             m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
-    }).size;
-    
-    const freshStats = {
-      total: freshMembers.size,
-      members: freshHumans.size,
-      verified: freshVerified,
-      bots: freshMembers.filter(m => m.user.bot).size,
-      admins: freshAdmins,
-      mods: freshMods,
-      roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
-    };
-    setCachedMemberStats(guildId, freshStats);
-    console.log(`✅ Updated member stats cache for guild ${guildId}`);
-  }).catch(err => {
-    console.warn(`⚠️ Background member fetch failed for guild ${guildId}:`, err.message);
-  });
+  // Do not trigger a second full member fetch here. Stats are calculated from
+  // the cached members above and refreshed from Gateway events/startup sync.
 
   res.json(stats);
 });
