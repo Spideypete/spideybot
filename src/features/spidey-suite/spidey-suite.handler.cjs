@@ -381,11 +381,11 @@ async function execute(i,ctx){
     const cfg=svc.get(i.guild.id),economy=cfg.economy,lottery={...(cfg.lottery||{}),tickets:{...((cfg.lottery||{}).tickets||{})}};
     if(commandSub==='info'){
       const count=Object.values(lottery.tickets).reduce((sum,n)=>sum+Number(n||0),0);
-      await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎟️ Server lottery').setDescription('Tickets cost **100 coins** each.').addFields({name:'Tickets sold',value:fmt(count),inline:true},{name:'Ticket holders',value:String(Object.keys(lottery.tickets).length),inline:true},{name:'Prize pool',value:fmt(count*100)+' coins',inline:true})]});return true;
+      await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎟️ Server lottery').setDescription('Tickets cost **100 coins** each.').addFields({name:'Tickets sold',value:fmt(count),inline:true},{name:'Ticket holders',value:String(Object.keys(lottery.tickets).length),inline:true},{name:'Prize pool',value:fmt(count*100)+' coins',inline:true},{name:'Next draw',value:lottery.drawAt?'<t:'+Math.floor(lottery.drawAt/1000)+':R>':'Draw starts with the first ticket purchase',inline:false})]});return true;
     }
     const amount=i.options.getInteger('tickets_amount',true),cost=amount*100;economy.users=economy.users||{};const account=economy.users[i.user.id]||(economy.users[i.user.id]={cash:0,bank:0,daily:0,work:0,inventory:[],pet:null});
     if(account.cash<cost){await i.reply({content:'You need '+fmt(cost)+' coins to buy '+amount+' ticket(s).',ephemeral:true});return true;}
-    account.cash-=cost;lottery.tickets[i.user.id]=(Number(lottery.tickets[i.user.id])||0)+amount;lottery.channelId=i.channelId;lottery.updatedAt=Date.now();svc.save(i.guild.id,{economy,lottery});
+    account.cash-=cost;lottery.tickets[i.user.id]=(Number(lottery.tickets[i.user.id])||0)+amount;lottery.channelId=i.channelId;lottery.updatedAt=Date.now();if(!Number(lottery.drawAt)||lottery.drawAt<=Date.now())lottery.drawAt=Date.now()+86400000;svc.save(i.guild.id,{economy,lottery});
     await i.reply({content:'🎟️ Bought '+amount+' lottery ticket(s) for '+fmt(cost)+' coins. Your total: '+lottery.tickets[i.user.id]+'.',ephemeral:true});return true;
   }
   if(commandRoot==='alerts'){
@@ -1114,6 +1114,32 @@ function registerSpideyHandlers(client){
         await target.send({embeds:[new EmbedBuilder().setColor(0x5865f2).setTitle('Slash command used').addFields({name:'Command',value:'/'+pathName,inline:true},{name:'User',value:interaction.user.toString(),inline:true},{name:'Channel',value:interaction.channel?.toString()||'Unknown',inline:true}).setTimestamp()],allowedMentions:{parse:[]}});
       }catch(error){console.warn('[COMMAND LOGGING]',error.message);}
     });
+  }
+  if(!registerSpideyHandlers.lotterySweep){
+    registerSpideyHandlers.lotterySweep=setInterval(async()=>{
+      for(const guild of client.guilds.cache.values()){
+        try{
+          const cfg=svc.get(guild.id),lottery={...(cfg.lottery||{}),tickets:{...((cfg.lottery||{}).tickets||{})}};
+          if(!Number(lottery.drawAt)||Date.now()<Number(lottery.drawAt))continue;
+          const entries=Object.entries(lottery.tickets).filter(([,count])=>Number(count)>0);
+          const total=entries.reduce((sum,[,count])=>sum+Number(count),0);
+          let winnerId=null;
+          if(total>0){
+            let pick=Math.floor(Math.random()*total);
+            for(const [userId,count] of entries){pick-=Number(count);if(pick<0){winnerId=userId;break;}}
+            const economy=cfg.economy;economy.users=economy.users||{};
+            const winner=economy.users[winnerId]||(economy.users[winnerId]={cash:0,bank:0,daily:0,work:0,inventory:[],pet:null});
+            winner.cash=(Number(winner.cash)||0)+total*100;
+          }
+          lottery.lastDrawAt=Date.now();lottery.lastWinnerId=winnerId;lottery.lastPrize=total*100;
+          lottery.tickets={};lottery.drawAt=Date.now()+86400000;
+          svc.save(guild.id,{economy:cfg.economy,lottery});
+          const channel=lottery.channelId?(guild.channels.cache.get(lottery.channelId)||await guild.channels.fetch(lottery.channelId).catch(()=>null)):null;
+          if(channel?.isTextBased())await channel.send(winnerId?'🎟️ Lottery draw complete! Winner: <@'+winnerId+'> — **'+fmt(total*100)+' coins**. Next draw <t:'+Math.floor(lottery.drawAt/1000)+':R>.':'🎟️ Lottery draw complete with no tickets sold. The next draw is <t:'+Math.floor(lottery.drawAt/1000)+':R>.');
+        }catch(error){console.error('[LOTTERY SWEEP]',error.message);}
+      }
+    },15000);
+    registerSpideyHandlers.lotterySweep.unref?.();
   }
   if(!registerSpideyHandlers.giveawaySweep){
     registerSpideyHandlers.giveawaySweep=setInterval(async()=>{
