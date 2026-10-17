@@ -1040,16 +1040,49 @@ client.on('interactionCreate', async interaction => {
       if (!apiKey) { console.error('[Gemini AI] GEMINI_API_KEY is missing from the runtime environment.'); return interaction.editReply('The AI service is temporarily unavailable because its server configuration is incomplete. Please contact the bot owner.'); }
       const assistantName = String(aiSettings.assistantName || guildConfig.aiAssistantName || 'Spidey').trim().slice(0, 32) || 'Spidey';
       try {
+        // Discover a model that this API key can actually use instead of assuming
+        // a fixed model name that may not be available to every Google AI project.
+        const modelResponse = await axios.get(
+          'https://generativelanguage.googleapis.com/v1beta/models',
+          { headers: { 'x-goog-api-key': apiKey }, timeout: 12000, params: { pageSize: 100 } }
+        );
+        const availableModels = (modelResponse.data?.models || []).filter(model =>
+          Array.isArray(model.supportedGenerationMethods) &&
+          model.supportedGenerationMethods.includes('generateContent') &&
+          /gemini/i.test(model.name || '') &&
+          /flash/i.test(model.name || '')
+        );
+        const preferredNames = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3-flash'];
+        availableModels.sort((a, b) => {
+          const score = name => {
+            const simple = String(name || '').replace(/^models\//, '').toLowerCase();
+            const exact = preferredNames.indexOf(simple);
+            return exact >= 0 ? exact : 100;
+          };
+          return score(a.name) - score(b.name);
+        });
+        const selectedModel = availableModels[0]?.name;
+        if (!selectedModel) {
+          console.error('[Gemini AI] No Flash model supporting generateContent was returned by the model list.');
+          return interaction.editReply('The AI service is temporarily unavailable because no supported Gemini model is available for this API key.');
+        }
+        console.log('[Gemini AI] Using available model:', selectedModel);
         const response = await axios.post(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+          `https://generativelanguage.googleapis.com/v1beta/${selectedModel}:generateContent`,
           { system_instruction: { parts: [{ text: `You are ${assistantName}, the helpful AI assistant for SPIDEY BOT on Discord. Answer clearly and conversationally. For current facts such as exchange rates, do not invent live values; explain when you cannot verify a live source. Keep replies suitable for Discord.` }] }, contents: [{ role: 'user', parts: [{ text: question }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 700 } },
           { headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' }, timeout: 25000 }
         );
         const answer = response.data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim();
-        if (!answer) return interaction.editReply('I could not generate an answer just now. Please try again.');
+        if (!answer) {
+          const blockReason = response.data?.promptFeedback?.blockReason;
+          console.warn('[Gemini AI] No answer returned; block reason:', blockReason || 'none');
+          return interaction.editReply('I could not generate an answer just now. Please try again.');
+        }
         return interaction.editReply({ content: answer.slice(0, 1900) });
       } catch (error) {
-        console.error('[Gemini AI] request failed:', error.response?.status || error.message);
+        const status = error.response?.status || error.message;
+        const apiMessage = error.response?.data?.error?.message;
+        console.error('[Gemini AI] request failed:', status, apiMessage ? String(apiMessage).slice(0, 300) : '');
         return interaction.editReply('The AI service is temporarily unavailable. Please try again shortly.');
       }
     }
