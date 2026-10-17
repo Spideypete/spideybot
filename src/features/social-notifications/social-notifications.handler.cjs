@@ -97,11 +97,15 @@ function getYouTubeStatus(username) {
 
 async function getFeedLatest(platform, value) {
   let url=String(value||'').trim();
-  if(platform==='reddit'&&!/^https?:\\/\\//i.test(url)){
-    const handle=url.replace(/^r\\//,'').replace(/^u\\//,'');
-    url=/^u\\//i.test(value)?'https://www.reddit.com/user/'+handle+'/new.json?limit=1':'https://www.reddit.com/r/'+handle+'/new.json?limit=1';
+  if(platform==='reddit'&&!/^https?:\/\//i.test(url)){
+    const raw=String(value||'').trim();
+    const isUser=/^u\//i.test(raw);
+    const handle=raw.replace(/^r\//i,'').replace(/^u\//i,'');
+    url=isUser?'https://www.reddit.com/user/'+handle+'/new.json?limit=1':'https://www.reddit.com/r/'+handle+'/new.json?limit=1';
+  } else if(platform==='reddit' && /^https?:\/\//i.test(url) && !/\.json(?:\?|$)/i.test(url)) {
+    url=url.replace(/\/?$/,'')+'.json?limit=1';
   }
-  if(!/^https?:\\/\\//i.test(url))throw new Error('Provide a valid HTTPS feed URL or Reddit community/user.');
+  if(!/^https?:\/\//i.test(url))throw new Error('Provide a valid HTTPS feed URL or Reddit community/user.');
   const response=await axios.get(url,{timeout:15000,headers:{'User-Agent':'SPIDEY-BOT/1.0 (feed notifications)'}});
   if(platform==='reddit'){
     const post=response.data?.data?.children?.[0]?.data;
@@ -109,11 +113,11 @@ async function getFeedLatest(platform, value) {
     return {id:String(post.id),title:String(post.title||'New Reddit post'),url:'https://www.reddit.com'+String(post.permalink||'')};
   }
   const xml=String(response.data||'');
-  const items=[...xml.matchAll(/<(item|entry)\\b[^>]*>([\\s\\S]*?)<\\/\\1>/gi)];
+  const items=[...xml.matchAll(/<(item|entry)\b[^>]*>([\s\S]*?)<\/\1>/gi)];
   const item=items[0]?.[2];
   if(!item)return null;
-  const readTag=(tag)=>{const m=item.match(new RegExp('<'+tag+'(?:\\\\s+[^>]*)?>([\\s\\S]*?)<\\/'+tag+'>','i'));return m?m[1].replace(/<!\\[CDATA\\[|\\]\\]>/g,'').replace(/<[^>]+>/g,'').trim():'';};
-  const linkTag=item.match(/<link[^>]+href=["']([^"']+)["'][^>]*\\/?\\s*>/i);
+  const readTag=(tag)=>{const m=item.match(new RegExp('<'+tag+'(?:\\s+[^>]*)?>([\\s\\S]*?)<\\/'+tag+'>','i'));return m?m[1].replace(/<!\[CDATA\[|\]\]>/g,'').replace(/<[^>]+>/g,'').trim():'';};
+  const linkTag=item.match(/<link[^>]+href=["']([^"']+)["'][^>]*\/?\s*>/i);
   const urlValue=linkTag?.[1]||readTag('link')||readTag('guid')||readTag('id');
   const title=readTag('title')||'New feed item';
   return {id:readTag('guid')||readTag('id')||urlValue||title,title,url:urlValue};
