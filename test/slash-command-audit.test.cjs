@@ -8,6 +8,7 @@ const definitionsSource = fs.readFileSync(path.join(root, 'src/features/spidey-s
 const handlerSource = fs.readFileSync(path.join(root, 'src/features/spidey-suite/spidey-suite.handler.cjs'), 'utf8');
 const indexSource = fs.readFileSync(path.join(root, 'index.cjs'), 'utf8');
 const { spideyCommands } = require('../src/features/spidey-suite/spidey-suite.commands.cjs');
+const { PermissionFlagsBits } = require('discord.js');
 
 test('every grouped slash command subcommand has a handler alias', () => {
   const aliasMatch = handlerSource.match(/alias=(\{[\s\S]*?\}),n=alias/);
@@ -30,6 +31,8 @@ test('every moderation slash command is routed to an implemented moderation hand
   const mod = spideyCommands.map(command => command.toJSON()).find(command => command.name === 'mod');
   assert.ok(mod, 'the /mod command must be registered');
   const moderationNames = (mod.options || []).filter(option => option.type === 1).map(option => option.name);
+  assert.equal(mod.default_member_permissions, PermissionFlagsBits.UseApplicationCommands.toString(),
+    'the /mod group should not require moderators to hold every moderation permission at once');
   const aliasMatch = handlerSource.match(/alias=(\{[\s\S]*?\}),n=alias/);
   const aliasKeys = new Set([...aliasMatch[1].matchAll(/'([^']+)'\s*:\s*'[^']+'/g)].map(match => match[1]));
   for (const name of moderationNames) {
