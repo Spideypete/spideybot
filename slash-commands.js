@@ -1,7 +1,7 @@
 // Unified slash-command registry for the integrated server suite.
-const { testifyCommands } = require('./src/features/testify-suite/testify-suite.commands.cjs');
+const { spideyCommands } = require('./src/features/spidey-suite/spidey-suite.commands.cjs');
 
-const slashCommands = Array.isArray(testifyCommands) ? testifyCommands : [];
+const slashCommands = Array.isArray(spideyCommands) ? spideyCommands : [];
 
 const commandNames = slashCommands.map(command => command.name);
 const duplicates = commandNames.filter((name,index)=>commandNames.indexOf(name)!==index);
