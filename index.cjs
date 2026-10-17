@@ -1078,7 +1078,7 @@ client.on('interactionCreate', async interaction => {
         // time. Try each advertised generateContent model instead of failing /ask
         // on the first unavailable model.
         const requestBody = {
-          system_instruction: { parts: [{ text: \`You are \${assistantName}, the helpful AI assistant for SPIDEY BOT on Discord. Answer clearly and conversationally. For current facts such as exchange rates, do not invent live values; explain when you cannot verify a live source. Keep replies suitable for Discord.\` }] },
+          system_instruction: { parts: [{ text: `You are ${assistantName}, the helpful AI assistant for SPIDEY BOT on Discord. Answer clearly and conversationally. For current facts such as exchange rates, do not invent live values; explain when you cannot verify a live source. Keep replies suitable for Discord.` }] },
           contents: [{ role: 'user', parts: [{ text: question }] }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 700 }
         };
@@ -1089,7 +1089,7 @@ client.on('interactionCreate', async interaction => {
             const modelName = String(model.name || '').replace(/^\/+/, '');
             console.log('[Gemini AI] Trying model:', modelName);
             response = await axios.post(
-              \`https://generativelanguage.googleapis.com/v1beta/\${modelName}:generateContent\`,
+              `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent`,
               requestBody,
               { headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' }, timeout: 25000 }
             );
