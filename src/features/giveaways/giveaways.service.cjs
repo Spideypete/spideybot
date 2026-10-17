@@ -84,6 +84,18 @@ function create(guildId, data) {
   return giveaway;
 }
 
+function updateMessage(guildId, id, messageId, channelId) {
+  const giveaways = getGiveaways(guildId);
+  const giveaway = giveaways[id];
+  if (!giveaway) return null;
+  giveaway.messageId = String(messageId);
+  giveaway.channelId = String(channelId);
+  const guildConfig = getGuildConfig(guildId);
+  guildConfig.giveaways = giveaways;
+  saveConfig(loadConfig());
+  return giveaway;
+}
+
 function endGiveaway(guildId, id) {
   const giveaways = getGiveaways(guildId);
   const giveaway = giveaways[id];
@@ -165,6 +177,7 @@ module.exports = {
   getEnded,
   getGiveaway,
   create,
+  updateMessage,
   endGiveaway,
   reroll,
   deleteGiveaway,
