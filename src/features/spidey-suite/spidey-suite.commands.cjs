@@ -49,7 +49,7 @@ S('mod','Moderation and channel management',b=>b
  .addSubcommand(sub('role','Add/remove role',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true)).addStringOption(o=>o.setName('action').setDescription('Action').setRequired(true).addChoices({name:'add',value:'add'},{name:'remove',value:'remove'}))))
  .addSubcommand(sub('announce','Send announcement',s=>s.addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(true).addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement)).addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
  .addSubcommand(sub('say','Send a message',s=>s.addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
- .addSubcommand(sub('thread','Create a thread',s=>s.addStringOption(o=>o.setName('name').setDescription('Name').setRequired(true))))).setDefaultMemberPermissions(M),
+ .addSubcommand(sub('thread','Create a thread',s=>s.addStringOption(o=>o.setName('name').setDescription('Name').setRequired(true))))).setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages | PermissionFlagsBits.ModerateMembers | PermissionFlagsBits.KickMembers | PermissionFlagsBits.BanMembers),
 S('automod','Auto-moderation controls',b=>b
  .addSubcommand(sub('toggle','Enable or disable AutoMod',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(false))))
  .addSubcommand(sub('words','Set blocked words',s=>s.addStringOption(o=>o.setName('words').setDescription('Comma separated').setRequired(true))))
