@@ -23,11 +23,31 @@ const COMMAND_FEATURE={
 };
 const featureForCommand=n=>COMMAND_FEATURE[n]||null;
 const featureIsOn=(c,key)=>!key||c.plugins?.[key]!==false;
+async function sendModerationLog(i,action,target,reason){
+  try{
+    const logging=i.guild?null:null;
+    const config=svc.get(i.guild.id)||{};
+    const modLogging=config.logging?.moderationLogging||{};
+    const toggleMap={WARN:'logWarns',KICK:'logKicks',BAN:'logBans',MUTE:'logMutes',UNMUTE:'logMutes'};
+    if(modLogging[toggleMap[action]]===false)return;
+    const channelId=modLogging.modLogChannel||config.modLogChannelId||modLogging.logChannel;
+    if(!channelId)return;
+    const channel=i.guild.channels.cache.get(String(channelId))||await i.guild.channels.fetch(String(channelId)).catch(()=>null);
+    if(!channel?.isTextBased())return;
+    const color=action==='WARN'?0xffbd39:action==='KICK'?0xff6b6b:action==='BAN'?0xed4245:0x5865f2;
+    const embed=new EmbedBuilder().setColor(color).setTitle('🛡️ '+action).addFields(
+      {name:'Moderator',value:String(i.user.tag||i.user.username),inline:true},
+      {name:'Target',value:String(target.tag||target.username||target.id),inline:true},
+      {name:'Reason',value:String(reason||'No reason provided').slice(0,1024)}
+    ).setTimestamp();
+    await channel.send({embeds:[embed]});
+  }catch(error){console.error('[MODERATION LOG]',error.message||error);}
+}
 function profile(i,u,c){const l=c.levels.users?.[u.id]||{level:0,xp:0},e=c.economy.users?.[u.id]||{cash:0,bank:0},p=c.profiles?.[u.id]||{};return new EmbedBuilder().setColor(0x6d3df5).setTitle(p.displayName||u.username).setThumbnail(u.displayAvatarURL({size:256})).addFields({name:'Level',value:String(l.level),inline:true},{name:'XP',value:String(l.xp),inline:true},{name:'Cash',value:fmt(e.cash),inline:true},{name:'Bank',value:fmt(e.bank),inline:true},{name:'Bio',value:p.bio||'No bio set.'});}
 
 async function execute(i,ctx){
   if(!i.isChatInputCommand()||!i.guild)return false;
-  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
+  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:warn':'warn','mod:warnings':'warnings','mod:kick':'kick','mod:ban':'ban','mod:mute':'mute','mod:unmute':'unmute','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset'},n=alias[(root+':'+sub)]||root,c=svc.get(i.guild.id),u=who(i);
   const custom=(Array.isArray(c.customCommands?.items)?c.customCommands.items:[]).find(x=>x.name===root&&x.enabled!==false);
   if(custom){
     if(c.blacklist?.includes(i.user.id)){await i.reply({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
@@ -123,6 +143,43 @@ async function execute(i,ctx){
     if(n==='hack'){await i.reply('💻 Connecting...');setTimeout(()=>i.editReply('💻 Scanning... | 📦 Downloading memes... | 😂 Fake hack complete.').catch(()=>{}),900);return true;}
     if(n==='relationship'){await i.reply('💜 Compatibility: '+(50+Math.floor(Math.random()*51))+'%');return true;}
 
+    if(['warn','warnings','kick','ban','mute','unmute'].includes(n)){
+      const targetUser=i.options.getUser('user', n!=='warnings');
+      if(!targetUser)return i.reply({content:'❌ Select a member.',ephemeral:true});
+      const member=await i.guild.members.fetch(targetUser.id).catch(()=>null);
+      const reason=i.options.getString('reason')||'No reason provided';
+      const hasPerm=perm=>i.memberPermissions?.has(perm);
+      if(n==='warn'||n==='warnings'){
+        if(!hasPerm(PermissionFlagsBits.ModerateMembers)&&!hasPerm(PermissionFlagsBits.KickMembers)&&!isAdmin(i))return i.reply({content:'❌ You need Moderate Members or Kick Members permission.',ephemeral:true});
+        if(n==='warnings'){const list=svc.getWarnings(i.guild.id,targetUser.id);return i.reply({content:list.length?list.map((w,index)=>(index+1)+'. '+(w.reason||'No reason')+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\\n'):'No warnings recorded for this member.',ephemeral:true});}
+        if(!member)return i.reply({content:'❌ That member is no longer in this server.',ephemeral:true});
+        const list=svc.addWarning(i.guild.id,targetUser.id,{reason,by:i.user.id,at:Date.now()});
+        await i.reply('⚠️ Warned '+targetUser.tag+'. Total warnings: '+list.length+'. Reason: '+reason);
+        await sendModerationLog(i,'WARN',targetUser,reason);
+        return true;
+      }
+      if(n==='kick'){
+        if(!hasPerm(PermissionFlagsBits.KickMembers))return i.reply({content:'❌ You need Kick Members permission.',ephemeral:true});
+        if(!member?.kickable)return i.reply({content:'❌ I cannot kick that member. Check role hierarchy and bot permissions.',ephemeral:true});
+        await member.kick(reason);await i.reply('👢 Kicked '+targetUser.tag+'. Reason: '+reason);await sendModerationLog(i,'KICK',targetUser,reason);return true;
+      }
+      if(n==='ban'){
+        if(!hasPerm(PermissionFlagsBits.BanMembers))return i.reply({content:'❌ You need Ban Members permission.',ephemeral:true});
+        if(member&&!member.bannable)return i.reply({content:'❌ I cannot ban that member. Check role hierarchy and bot permissions.',ephemeral:true});
+        await i.guild.members.ban(targetUser.id,{reason});await i.reply('🔨 Banned '+targetUser.tag+'. Reason: '+reason);await sendModerationLog(i,'BAN',targetUser,reason);return true;
+      }
+      if(n==='mute'){
+        if(!hasPerm(PermissionFlagsBits.ModerateMembers))return i.reply({content:'❌ You need Moderate Members permission.',ephemeral:true});
+        const minutes=i.options.getInteger('minutes');if(!member?.moderatable)return i.reply({content:'❌ I cannot timeout that member. Check role hierarchy and bot permissions.',ephemeral:true});
+        await member.timeout(minutes*60*1000,reason);await i.reply('🔇 Timed out '+targetUser.tag+' for '+minutes+' minute(s). Reason: '+reason);await sendModerationLog(i,'MUTE',targetUser,reason+' (Duration: '+minutes+' minute(s))');return true;
+      }
+      if(n==='unmute'){
+        if(!hasPerm(PermissionFlagsBits.ModerateMembers))return i.reply({content:'❌ You need Moderate Members permission.',ephemeral:true});
+        if(!member)return i.reply({content:'❌ That member is no longer in this server.',ephemeral:true});
+        if(!member.moderatable)return i.reply({content:'❌ I cannot remove this timeout. Check role hierarchy and bot permissions.',ephemeral:true});
+        await member.timeout(null,reason);await i.reply('🔊 Timeout removed for '+targetUser.tag+'.');await sendModerationLog(i,'UNMUTE',targetUser,reason);return true;
+      }
+    }
     if(n==='purge'){const d=await i.channel.bulkDelete(i.options.getInteger('amount'),true);await i.reply({content:'🧹 Deleted '+d.size+' messages.',ephemeral:true});return true;}
     if(n==='softban'){const id=i.options.getUser('user').id,m=await i.guild.members.fetch(id).catch(()=>null);if(m&&!m.bannable)return i.reply('❌ I cannot ban that member.');await i.guild.members.ban(id,{reason:i.options.getString('reason')||'Softban'});await i.guild.bans.remove(id,'Softban');await i.reply('✅ Softbanned.');return true;}
     if(n==='unban'){await i.guild.bans.remove(i.options.getString('user_id'));await i.reply('✅ Unbanned.');return true;}
