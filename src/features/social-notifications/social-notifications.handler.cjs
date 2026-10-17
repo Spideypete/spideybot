@@ -125,7 +125,7 @@ async function getFeedLatest(platform, value) {
 async function sendFeedNotification(guild, notification, item) {
   const channel=guild.channels.cache.get(notification.channelId)||await guild.channels.fetch(notification.channelId).catch(()=>null);
   if(!channel?.isTextBased())return;
-  const embed=new EmbedBuilder().setColor(0x6d3df5).setTitle('🆕 New '+String(notification.platform).toUpperCase()+' update').setDescription(String(item.title||'New item').slice(0,3500)).setURL(/^https?:\\/\\//i.test(item.url||'')?item.url:null).addFields({name:'Feed',value:String(notification.username).slice(0,1024)}).setTimestamp();
+  const embed=new EmbedBuilder().setColor(0x6d3df5).setTitle('🆕 New '+String(notification.platform).toUpperCase()+' update').setDescription(String(item.title||'New item').slice(0,3500)).setURL((String(item.url||'').startsWith('https://')||String(item.url||'').startsWith('http://'))?item.url:null).addFields({name:'Feed',value:String(notification.username).slice(0,1024)}).setTimestamp();
   const content=notification.pingRoleId?' <@&'+notification.pingRoleId+'>':'';
   await channel.send({content:content||undefined,embeds:[embed],allowedMentions:{parse:[],roles:notification.pingRoleId?[notification.pingRoleId]:[]}});
 }
