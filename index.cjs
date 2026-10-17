@@ -1210,9 +1210,16 @@ client.once("ready", async () => {
   // The test service uses the same bot token as production, so global registration here would affect production servers.
   const isTestingDeployment = process.env.RAILWAY_SERVICE_NAME === 'spidey-bot-testing' || String(process.env.RAILWAY_PUBLIC_DOMAIN || '').includes('spidey-bot-testing');
   if (isTestingDeployment) {
-    console.log('🧪 Testing deployment: registering commands per connected guild only; global production commands are not modified.');
+    console.log('🧪 Testing deployment: clearing shared global commands and registering test commands per guild.');
     try {
       const rest = new REST({ version: '10' }).setToken(token);
+
+      // Production and testing share this Discord application/token. Remove the shared
+      // global registry so old production slash commands cannot shadow the test suite.
+      // Guild-scoped commands below remain available immediately in the owned test servers.
+      const cleared = await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
+      console.log(`🧹 Global slash command registry cleared (${Array.isArray(cleared) ? cleared.length : 0} commands remain).`);
+
       const commands = spideyCommands.map(cmd => cmd.toJSON());
       for (const guild of client.guilds.cache.values()) {
         const result = await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands });
