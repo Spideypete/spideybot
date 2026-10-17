@@ -132,7 +132,7 @@ function addStyles(){
  document.head.appendChild(s);
 }
 (function installEssentialsPurpleGlow(){if(document.getElementById('essentials-purple-glow'))return;const style=document.createElement('style');style.id='essentials-purple-glow';style.textContent=".nav-title{color:#5b21b6!important;text-shadow:0 0 8px rgba(139,92,246,.10);letter-spacing:.035em}.overview-feature-group .overview-feature-card{border-color:rgba(139,92,246,.48);box-shadow:0 0 0 1px rgba(139,92,246,.12),0 0 15px rgba(139,92,246,.14);transition:border-color .18s ease,box-shadow .18s ease,transform .12s ease}.overview-feature-group .overview-feature-card.is-on{border-color:rgba(168,85,247,.88);box-shadow:0 0 0 1px rgba(168,85,247,.25),0 0 21px rgba(139,92,246,.26),inset 0 0 16px rgba(139,92,246,.045)}.overview-feature-group .overview-feature-card.is-off{border-color:rgba(139,92,246,.38);box-shadow:0 0 0 1px rgba(139,92,246,.10),0 0 11px rgba(139,92,246,.10)}.overview-feature-group .overview-feature-card .overview-toggle.on{background:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.22),0 0 12px rgba(139,92,246,.48)}.overview-feature-group .overview-feature-card .overview-feature-status{color:#a78bfa}";document.head.appendChild(style);})();
-function installSidebarHeadingGlow(){if(document.getElementById('sidebar-heading-purple-glow'))return;const style=document.createElement('style');style.id='sidebar-heading-purple-glow';style.textContent=".sidebar .nav-group-toggle{width:100%;min-height:35px;height:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 11px 7px;margin-top:3px;border:0;border-radius:7px;background:transparent;color:#4b2568!important;text-shadow:0 0 2px rgba(75,37,104,.10),0 0 5px rgba(75,37,104,.10);font-size:10px;letter-spacing:.65px;font-weight:850;font-style:italic;text-transform:none;text-align:left;cursor:pointer}.sidebar .nav-group-toggle:hover{background:rgba(118,81,168,.08)}.sidebar .nav-group-label{font-weight:850;font-style:italic}.sidebar .nav-group-chevron{font-size:13px;font-style:normal;line-height:1;opacity:.8;text-shadow:none}.sidebar .nav[hidden]{display:none!important}.dark .sidebar .nav-group-toggle{color:#b49acb!important;text-shadow:0 0 3px rgba(139,92,246,.10),0 0 6px rgba(139,92,246,.10)}.dark .sidebar .nav-group-toggle:hover{background:rgba(139,92,246,.12)}";document.head.appendChild(style);}
+function installSidebarHeadingGlow(){if(document.getElementById('sidebar-heading-purple-glow'))return;const style=document.createElement('style');style.id='sidebar-heading-purple-glow';style.textContent=".sidebar .nav-group-toggle{width:100%;min-height:35px;height:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 11px 7px;margin-top:3px;border:0;border-radius:7px;background:transparent;color:#4b2568!important;text-shadow:0 0 2px rgba(75,37,104,.10),0 0 5px rgba(75,37,104,.10);font-size:10px;letter-spacing:.65px;font-weight:850;font-style:italic;text-transform:none;text-align:left;cursor:pointer}.sidebar .nav-group-toggle:hover{background:rgba(118,81,168,.08)}.sidebar .nav-group-label{font-weight:850;font-style:italic}.sidebar .nav-group-chevron{font-size:13px;font-style:normal;line-height:1;opacity:.8;text-shadow:none}.sidebar .nav[hidden]{display:none!important}.dark .sidebar .nav-group-toggle{color:#b49acb!important;text-shadow:0 0 3px rgba(139,92,246,.10),0 0 6px rgba(139,92,246,.10)}.dark .sidebar .nav-group-toggle:hover{background:rgba(139,92,246,.12)}.sidebar .nav-group-items{max-height:1200px;opacity:1;overflow:hidden;transform:translateY(0);transition:max-height .28s cubic-bezier(.2,.7,.2,1),opacity .22s ease,transform .28s cubic-bezier(.2,.7,.2,1);will-change:max-height,opacity,transform}.sidebar .nav-group-items.is-collapsed{max-height:0;opacity:0;transform:translateY(-7px);pointer-events:none}";document.head.appendChild(style);}
 function switcher(){ return ''; }
 async function toggleFeature(id,f,current){
  const next=!enabled(current,f);
@@ -930,13 +930,15 @@ function addSidebarGroup(name,items,groupConfig){
  heading.setAttribute('aria-controls','sidebar-group-'+key);
  if(!sidebarGroupExpanded.has(key))sidebarGroupExpanded.set(key,true);
  const groupNav=document.createElement('nav');
- groupNav.className='nav';
+ groupNav.className='nav nav-group-items';
  groupNav.id='sidebar-group-'+key;
  const renderHeading=()=>{
    const expanded=sidebarGroupExpanded.get(key)!==false;
    heading.setAttribute('aria-expanded',String(expanded));
    heading.innerHTML='<span class="nav-group-label">'+esc(name)+'</span><span class="nav-group-chevron" aria-hidden="true">'+(expanded?'▾':'▸')+'</span>';
-   groupNav.hidden=!expanded;
+   groupNav.classList.toggle('is-collapsed',!expanded);
+   groupNav.inert=!expanded;
+   groupNav.setAttribute('aria-hidden',String(!expanded));
  };
  heading.onclick=()=>{
    sidebarGroupExpanded.set(key,!(sidebarGroupExpanded.get(key)!==false));
