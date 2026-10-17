@@ -1,4 +1,6 @@
 const { EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const svc=require('./spidey-suite.service.cjs');
 const { ServerMessagesService } = require('../server-messages/server-messages.service.cjs');
 const serverMessages = new ServerMessagesService();
@@ -16,7 +18,7 @@ const COMMAND_FEATURE={
   goodbye:'welcome',avatar:'members',userinfo:'members',serverinfo:'members',roleinfo:'members',botinfo:'system',membercount:'members',permissions:'members',profile:'members',rank:'levels',
   daily:'economy',beg:'economy',deposit:'economy',withdraw:'economy',inventory:'economy',shop:'economy',buy:'economy',give:'economy',rob:'economy',crime:'economy',pet:'economy',
   poll:'polls',deletepoll:'polls',calculator:'community',ascii:'community',advice:'community',dadjoke:'community',wouldyourrather:'community',hack:'community',relationship:'community',
-  purge:'moderator',softban:'moderator',unban:'moderator',clearwarnings:'moderator',slowmode:'moderator',lock:'moderator',unlock:'moderator',nickname:'moderator',role:'moderator',announce:'moderator',say:'moderator',thread:'ticketing',ticket:'ticketing',
+  warn:'moderator',warnings:'moderator',kick:'moderator',ban:'moderator',mute:'moderator',unmute:'moderator',purge:'moderator',softban:'moderator',unban:'moderator',clearwarnings:'moderator',slowmode:'moderator',lock:'moderator',unlock:'moderator',nickname:'moderator',role:'moderator',announce:'moderator',say:'moderator',thread:'ticketing',ticket:'ticketing',
   automod:'automod',automodwords:'automod',automodlinks:'automod',automodspam:'automod',auditlog:'audit',setprefix:'welcome',sticky:'commands',unsticky:'commands',counting:'community',welcome:'welcome',autorole:'welcome',verify:'moderator',commandtoggle:'commands',
   levelrewards:'levels',setlevelreward:'levels',resetxp:'levels',addxp:'levels',setxp:'levels',removexp:'levels',
   blacklist:'moderator',unblacklist:'moderator'
@@ -25,12 +27,13 @@ const featureForCommand=n=>COMMAND_FEATURE[n]||null;
 const featureIsOn=(c,key)=>!key||c.plugins?.[key]!==false;
 async function sendModerationLog(i,action,target,reason){
   try{
-    const logging=i.guild?null:null;
-    const config=svc.get(i.guild.id)||{};
-    const modLogging=config.logging?.moderationLogging||{};
+    const configPath=path.join(__dirname,'../../../config.json');
+    const rootConfig=JSON.parse(fs.readFileSync(configPath,'utf8'));
+    const guildConfig=rootConfig.guilds?.[i.guild.id]||{};
+    const modLogging=guildConfig.logging?.moderationLogging||{};
     const toggleMap={WARN:'logWarns',KICK:'logKicks',BAN:'logBans',MUTE:'logMutes',UNMUTE:'logMutes'};
     if(modLogging[toggleMap[action]]===false)return;
-    const channelId=modLogging.modLogChannel||config.modLogChannelId||modLogging.logChannel;
+    const channelId=modLogging.modLogChannel||guildConfig.modLogChannelId||modLogging.logChannel;
     if(!channelId)return;
     const channel=i.guild.channels.cache.get(String(channelId))||await i.guild.channels.fetch(String(channelId)).catch(()=>null);
     if(!channel?.isTextBased())return;
