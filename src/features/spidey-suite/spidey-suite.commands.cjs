@@ -99,7 +99,7 @@ const spideyCommands = [
     .addSubcommand(sub('logging','Enable or disable command logging',s=>s.addBooleanOption(x=>x.setName('enabled').setDescription('Enable logging').setRequired(true))))),
   S('system','System administration',b=>b
     .addSubcommand(sub('diagnostic','Run safe system diagnostics'))
-    .addSubcommand(sub('maintenance','Set maintenance mode',s=>s.addStringOption(x=>x.setName('mode').setDescription('Maintenance mode').setRequired(true).addChoices({name:'On',value:'on'},{name:'Off',value:'off'}))))))
+    .addSubcommand(sub('maintenance','Set maintenance mode',s=>s.addStringOption(x=>x.setName('mode').setDescription('Maintenance mode').setRequired(true).addChoices({name:'On',value:'on'},{name:'Off',value:'off'})))))
 ];
 
 module.exports = { spideyCommands };
