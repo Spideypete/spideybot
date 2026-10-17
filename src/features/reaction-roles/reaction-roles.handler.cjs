@@ -73,13 +73,13 @@ async function sendConfiguredNotice(guild, settings, message, isError = false, f
   }
 }
 
-async function sendDmConfirmation(user, message, guild, settings) {
+async function sendDmConfirmation(user, message, guild, settings, fallbackChannel = null) {
   if (!settings?.dmConfirmations && !settings?.dmConfirm) return;
   try {
     await user.send(message);
   } catch (error) {
     console.warn(`[reaction-roles] Could not DM ${user.tag || user.id}; their Discord DMs may be closed: ${error.message}`);
-    await sendConfiguredNotice(guild, settings, `⚠️ Role update succeeded for <@${user.id}>, but I could not send the confirmation DM because their DMs may be closed.`, true, reaction.message.channel);
+    await sendConfiguredNotice(guild, settings, `⚠️ Role update succeeded for <@${user.id}>, but I could not send the confirmation DM because their DMs may be closed.`, true, fallbackChannel);
   }
 }
 
@@ -143,7 +143,7 @@ async function handleReactionAdd(reaction, user) {
       `[reaction-roles] Assigned ${role.name} to ${user.tag} in ${guild.name}`
     );
     await sendConfiguredNotice(guild, settings, `✅ <@${user.id}> was given the **${role.name}** role.`, false, reaction.message.channel);
-    await sendDmConfirmation(user, `✅ You've been given the **${role.name}** role in **${guild.name}**!`, guild, settings);
+    await sendDmConfirmation(user, `✅ You've been given the **${role.name}** role in **${guild.name}**!`, guild, settings, reaction.message.channel);
   } catch (e) {
     if (e.code === 50013 || e.code === "50013") {
       console.error(`[reaction-roles] Discord denied assigning ${role.name} in ${guild.name}. Check that SPIDEY BOT has Manage Roles and its highest role is above the target role.`);
@@ -182,7 +182,7 @@ async function handleReactionRemove(reaction, user) {
       `[reaction-roles] Removed ${role.name} from ${user.tag} in ${guild.name}`
     );
     await sendConfiguredNotice(guild, settings, `➖ <@${user.id}> had the **${role.name}** role removed.`, false, reaction.message.channel);
-    await sendDmConfirmation(user, `➖ Your **${role.name}** role in **${guild.name}** has been removed.`, guild, settings);
+    await sendDmConfirmation(user, `➖ Your **${role.name}** role in **${guild.name}** has been removed.`, guild, settings, reaction.message.channel);
   } catch (e) {
     console.error("[reaction-roles] Failed to remove role:", e.message);
     await sendConfiguredNotice(guild, settings, `❌ Failed to remove **${role.name}** from <@${user.id}>: ${e.message || "unknown Discord error"}`, true, reaction.message.channel);
