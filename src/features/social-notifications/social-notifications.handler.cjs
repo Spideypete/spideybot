@@ -95,11 +95,47 @@ function getYouTubeStatus(username) {
     });
 }
 
+async function getFeedLatest(platform, value) {
+  let url=String(value||'').trim();
+  if(platform==='reddit'&&!/^https?:\\/\\//i.test(url)){
+    const handle=url.replace(/^r\\//,'').replace(/^u\\//,'');
+    url=/^u\\//i.test(value)?'https://www.reddit.com/user/'+handle+'/new.json?limit=1':'https://www.reddit.com/r/'+handle+'/new.json?limit=1';
+  }
+  if(!/^https?:\\/\\//i.test(url))throw new Error('Provide a valid HTTPS feed URL or Reddit community/user.');
+  const response=await axios.get(url,{timeout:15000,headers:{'User-Agent':'SPIDEY-BOT/1.0 (feed notifications)'}});
+  if(platform==='reddit'){
+    const post=response.data?.data?.children?.[0]?.data;
+    if(!post)return null;
+    return {id:String(post.id),title:String(post.title||'New Reddit post'),url:'https://www.reddit.com'+String(post.permalink||'')};
+  }
+  const xml=String(response.data||'');
+  const items=[...xml.matchAll(/<(item|entry)\\b[^>]*>([\\s\\S]*?)<\\/\\1>/gi)];
+  const item=items[0]?.[2];
+  if(!item)return null;
+  const readTag=(tag)=>{const m=item.match(new RegExp('<'+tag+'(?:\\\\s+[^>]*)?>([\\s\\S]*?)<\\/'+tag+'>','i'));return m?m[1].replace(/<!\\[CDATA\\[|\\]\\]>/g,'').replace(/<[^>]+>/g,'').trim():'';};
+  const linkTag=item.match(/<link[^>]+href=["']([^"']+)["'][^>]*\\/?\\s*>/i);
+  const urlValue=linkTag?.[1]||readTag('link')||readTag('guid')||readTag('id');
+  const title=readTag('title')||'New feed item';
+  return {id:readTag('guid')||readTag('id')||urlValue||title,title,url:urlValue};
+}
+async function sendFeedNotification(guild, notification, item) {
+  const channel=guild.channels.cache.get(notification.channelId)||await guild.channels.fetch(notification.channelId).catch(()=>null);
+  if(!channel?.isTextBased())return;
+  const embed=new EmbedBuilder().setColor(0x6d3df5).setTitle('🆕 New '+String(notification.platform).toUpperCase()+' update').setDescription(String(item.title||'New item').slice(0,3500)).setURL(/^https?:\\/\\//i.test(item.url||'')?item.url:null).addFields({name:'Feed',value:String(notification.username).slice(0,1024)}).setTimestamp();
+  const content=notification.pingRoleId?' <@&'+notification.pingRoleId+'>':'';
+  await channel.send({content:content||undefined,embeds:[embed],allowedMentions:{parse:[],roles:notification.pingRoleId?[notification.pingRoleId]:[]}});
+}
+
 const PLATFORM_API = {
   twitch: getTwitchStatus,
   tiktok: getTikTokStatus,
   kick: getKickStatus,
-  youtube: getYouTubeStatus
+  youtube: getYouTubeStatus,
+  reddit: (username)=>getFeedLatest('reddit',username),
+  rss: (url)=>getFeedLatest('rss',url),
+  podcast: (url)=>getFeedLatest('podcast',url),
+  instagram: ()=>Promise.resolve({isLive:false,error:'Instagram monitoring requires an API integration; live checks are not configured'}),
+  x: ()=>Promise.resolve({isLive:false,error:'X monitoring requires an API integration; live checks are not configured'})
 };
 
 async function checkPlatform(platform, username) {
@@ -152,9 +188,16 @@ async function pollGuild(guildId, client) {
 
   for (const notification of notifications) {
     try {
+      if(['reddit','rss','podcast'].includes(notification.platform)){
+        const item=await getFeedLatest(notification.platform,notification.username);
+        if(!item)continue;
+        const state=socialNotificationsService.updateFeedStatus(guildId,notification.platform,notification.username,item.id,item.title,item.url);
+        if(state.isNew){await sendFeedNotification(guild,state.notification,item);results.push({notification:state.notification.username,platform:notification.platform,newItem:true});}
+        continue;
+      }
       const streamData = await checkPlatform(notification.platform, notification.username);
+      if(streamData.error){console.warn('[SOCIAL ALERT]',notification.platform,notification.username,streamData.error);continue;}
       const status = socialNotificationsService.updateStreamStatus(guildId, notification.platform, notification.username, streamData.isLive, streamData.title);
-
       if (status.wentLive && streamData.isLive) {
         await sendLiveNotification(guild, status.notification, streamData);
         results.push({ notification: status.notification.username, platform: notification.platform, wentLive: true });
