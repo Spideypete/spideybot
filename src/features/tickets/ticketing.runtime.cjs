@@ -79,6 +79,16 @@ async function execute(i) {
   if(!isAdmin(i))return i.reply({content:'Only server administrators can publish the ticket panel.',ephemeral:true});
   try{const ch=await publish(i.guild);return i.reply({content:'Ticket panel published in '+ch+'.',ephemeral:true});}catch(e){return i.reply({content:'Could not publish panel: '+e.message,ephemeral:true});}
  }
+ if(sub==='add'){
+  const t=Object.values(c.records||{}).find(x=>x.channelId===i.channelId);
+  if(!t)return i.reply({content:'Use this command inside a SPIDEY BOT ticket channel.',ephemeral:true});
+  if(!isStaff(i,c))return i.reply({content:'Only support staff can add members to tickets.',ephemeral:true});
+  if(t.status!=='open')return i.reply({content:'This ticket is closed.',ephemeral:true});
+  const target=i.options.getUser('user',true);
+  await i.channel.permissionOverwrites.edit(target.id,{ViewChannel:true,SendMessages:true,ReadMessageHistory:true});
+  await i.channel.send({content:target.toString()+' was added to this ticket by '+i.user+'.',allowedMentions:{users:[target.id]}});
+  return i.reply({content:'Added '+target.toString()+' to '+t.id+'.',ephemeral:true});
+ }
  if(sub==='create'){
   const qs=(c.questions||[]).filter(q=>String(q||'').trim()).slice(0,5);
   if(qs.length){const m=new ModalBuilder().setCustomId('spidey_ticket_modal').setTitle('Open a support ticket');m.addComponents(...qs.map((q,n)=>new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('q'+n).setLabel(String(q).slice(0,45)).setStyle(TextInputStyle.Paragraph).setRequired(false).setMaxLength(1000))));return i.showModal(m);}
