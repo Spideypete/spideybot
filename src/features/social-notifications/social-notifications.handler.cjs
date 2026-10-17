@@ -171,7 +171,7 @@ async function sendLiveNotification(guild, notification, streamData) {
   }
 
   try {
-    await channel.send({ embeds: [embed] });
+    await channel.send({ content: notification.pingRoleId ? '<@&'+notification.pingRoleId+'>' : undefined, embeds: [embed], allowedMentions: { parse: [], roles: notification.pingRoleId ? [notification.pingRoleId] : [] } });
   } catch (err) {
     console.error(`Failed to send notification for ${notification.platform}/${notification.username}:`, err.message);
   }
