@@ -185,7 +185,7 @@ async function execute(i,ctx){
         if(!hasPerm(PermissionFlagsBits.ModerateMembers)&&!hasPerm(PermissionFlagsBits.KickMembers)) return respond({content:'❌ You need Moderate Members or Kick Members permission to view warning history.',ephemeral:true});
         const list=svc.getWarnings(i.guild.id,targetUser.id);
         const description=list.length
-          ? list.map((w,index)=>(index+1)+'. '+String(w.reason||'No reason').slice(0,300)+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\\n')
+          ? list.map((w,index)=>(index+1)+'. '+String(w.reason||'No reason').slice(0,300)+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\n')
           : 'No warnings recorded for this member.';
         return respond({content:description.slice(0,1900),ephemeral:true});
       }
@@ -247,16 +247,6 @@ async function execute(i,ctx){
     }
     if(n==='purge'){const d=await i.channel.bulkDelete(i.options.getInteger('amount'),true);await i.reply({content:'🧹 Deleted '+d.size+' messages.',ephemeral:true});return true;}
     if(n==='softban'){const id=i.options.getUser('user').id,m=await i.guild.members.fetch(id).catch(()=>null);if(m&&!m.bannable)return i.reply('❌ I cannot ban that member.');await i.guild.members.ban(id,{reason:i.options.getString('reason')||'Softban'});await i.guild.bans.remove(id,'Softban');await i.reply('✅ Softbanned.');return true;}
-    if(n==='unban'){
-      if(!i.memberPermissions?.has(PermissionFlagsBits.BanMembers)&&!isAdmin(i)) return respond({content:'❌ You need Ban Members permission.',ephemeral:true});
-      const userId = String(i.options.getString('user_id') || '').trim();
-      if(!/^\d{17,20}$/.test(userId)) return respond({content:'❌ Enter a valid Discord user ID (17–20 digits).',ephemeral:true});
-      const existingBan = await i.guild.bans.fetch(userId).catch(() => null);
-      if(!existingBan) return respond({content:'ℹ️ That user is not currently banned from this server.',ephemeral:true});
-      await i.guild.bans.remove(userId, 'Unbanned by '+i.user.tag);
-      await respond({content:'✅ Unbanned <@'+userId+'>.'});
-      return true;
-    }
     if(n==='clearwarnings'){const id=i.options.getUser('user').id;c.warnings[id]=[];svc.save(i.guild.id,{warnings:c.warnings});await i.reply('✅ Warning history cleared.');return true;}
     if(n==='slowmode'){await i.channel.setRateLimitPerUser(i.options.getInteger('seconds'),'SPIDEY BOT');await i.reply('🐢 Slowmode updated.');return true;}
     if(n==='lock'||n==='unlock'){await i.channel.permissionOverwrites.edit(i.guild.roles.everyone,{SendMessages:n==='unlock'?null:false});await i.reply(n==='lock'?'🔒 Channel locked.':'🔓 Channel unlocked.');return true;}
