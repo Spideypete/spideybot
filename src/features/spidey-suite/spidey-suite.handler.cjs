@@ -11,6 +11,7 @@ const levelXpCooldown=new Map();
 const achievements=require('../achievements/achievements.service.cjs');
 const inviteTracker=require('../invite-tracker/invite-tracker.service.cjs');
 const ticketRuntime=require('../tickets/ticketing.runtime.cjs');
+const reactionRolesService=require('../reaction-roles/reaction-roles.service.cjs');
 const fmt=n=>new Intl.NumberFormat().format(Math.max(0,n||0));
 const isAdmin=i=>!!i.member?.permissions?.has(PermissionFlagsBits.Administrator);
 const who=i=>i.options.getUser('user')||i.user;
@@ -50,8 +51,8 @@ function profile(i,u,c){const l=c.levels.users?.[u.id]||{level:0,xp:0},e=c.econo
 
 async function execute(i,ctx){
   if(!i.isChatInputCommand()||!i.guild)return false;
-  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:warn':'warn','mod:warnings':'warnings','mod:kick':'kick','mod:ban':'ban','mod:mute':'mute','mod:unmute':'unmute','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset'},n=alias[(root+':'+sub)]||root;
-  const deferredModerationCommands=['warn','warnings','kick','ban','mute','unmute','unban','purge','softban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread'];
+  const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:warn':'warn','mod:warnings':'warnings','mod:kick':'kick','mod:ban':'ban','mod:mute':'mute','mod:unmute':'unmute','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset','reactionrole:add':'reactionroleadd','reactionrole:remove':'reactionroleremove','reactionrole:list':'reactionrolelist','reactionrole:toggle':'reactionroletoggle'},n=alias[(root+':'+sub)]||root;
+  const deferredModerationCommands=['warn','warnings','kick','ban','mute','unmute','unban','purge','softban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread','reactionroleadd','reactionroleremove','reactionrolelist','reactionroletoggle'];
   // Acknowledge these interactions immediately, before config checks or Discord API requests.
   if(deferredModerationCommands.includes(n)&&!i.deferred&&!i.replied) await i.deferReply({ephemeral:true});
   const respondEarly=payload=>i.deferred||i.replied?i.editReply(payload):i.reply(payload);
@@ -82,6 +83,53 @@ async function execute(i,ctx){
     return i.reply(payload);
   };
   try{
+    if(['reactionroleadd','reactionroleremove','reactionrolelist','reactionroletoggle'].includes(n)){
+      if(!isAdmin(i)){await respond({content:'Only server administrators can manage reaction roles.',ephemeral:true});return true;}
+      const config=reactionRolesService.getConfig(i.guild.id);
+      if(n==='reactionroletoggle'){
+        const enabled=i.options.getBoolean('enabled',true);
+        reactionRolesService.setConfig(i.guild.id,{...config,enabled});
+        await respond({content:'Reaction roles are now **'+(enabled?'enabled':'disabled')+'** for this server.',ephemeral:true});
+        return true;
+      }
+      if(n==='reactionrolelist'){
+        const entries=config.entries||[];
+        const lines=entries.slice(0,25).map((entry,index)=>'**'+(index+1)+'.** '+entry.emoji+' → <@&'+entry.roleId+'> · <#'+entry.channelId+'> · message `'+entry.messageId+'`'+(entry.description?' — '+entry.description:''));
+        await respond({content:entries.length?'**Reaction-role mappings ('+entries.length+')**\n'+lines.join('\n')+(entries.length>25?'\n…and '+(entries.length-25)+' more.':''):'No reaction-role mappings configured yet.',ephemeral:true});
+        return true;
+      }
+      if(n==='reactionroleremove'){
+        const messageId=i.options.getString('message_id',true),emoji=i.options.getString('emoji',true);
+        const removed=reactionRolesService.removeEntry(i.guild.id,messageId,emoji);
+        await respond({content:removed?'Removed the reaction-role mapping for '+emoji+' on message `'+messageId+'`.':'No matching mapping was found. Use the same emoji text that was used when adding it.',ephemeral:true});
+        return true;
+      }
+      const channel=i.options.getChannel('channel',true),messageId=i.options.getString('message_id',true),emoji=i.options.getString('emoji',true),role=i.options.getRole('role',true),description=i.options.getString('description')||'';
+      const botMember=i.guild.members.me||await i.guild.members.fetchMe().catch(()=>null);
+      if(!botMember||!botMember.permissions.has(PermissionFlagsBits.ManageRoles)){
+        await respond({content:'SPIDEY BOT needs the **Manage Roles** permission before reaction roles can assign roles.',ephemeral:true});return true;
+      }
+      if(role.managed||role.position>=botMember.roles.highest.position){
+        await respond({content:'Move the SPIDEY BOT role above '+role.toString()+' in Server Settings → Roles before mapping this role.',ephemeral:true});return true;
+      }
+      const channelPermissions=channel.permissionsFor(botMember);
+      if(!channelPermissions?.has(PermissionFlagsBits.ViewChannel)||!channelPermissions.has(PermissionFlagsBits.ReadMessageHistory)||!channelPermissions.has(PermissionFlagsBits.AddReactions)){
+        await respond({content:'SPIDEY BOT needs **View Channel**, **Read Message History**, and **Add Reactions** in '+channel.toString()+'.',ephemeral:true});return true;
+      }
+      let message;
+      try{message=await channel.messages.fetch(messageId);}
+      catch(error){await respond({content:'Could not find that message in '+channel.toString()+'. Check the message ID and bot channel permissions.',ephemeral:true});return true;}
+      let savedEntry=null;
+      try{
+        savedEntry=await reactionRolesService.addEntry(i.guild.id,{channelId:channel.id,messageId,emoji,roleId:role.id,description});
+        await message.react(emoji);
+        await respond({content:'Reaction role created: react with '+emoji+' on '+message.url+' to receive '+role.toString()+'.',ephemeral:true});
+      }catch(error){
+        if(savedEntry)reactionRolesService.removeEntry(i.guild.id,messageId,emoji);
+        await respond({content:'Could not create this reaction role: '+String(error.message||error).slice(0,1200),ephemeral:true});
+      }
+      return true;
+    }
     if(n==='avatar'){await i.reply(u.displayAvatarURL({size:1024,dynamic:true}));return true;}
     if(n==='userinfo'){const m=await i.guild.members.fetch(u.id).catch(()=>null);await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle(u.tag).setThumbnail(u.displayAvatarURL()).addFields({name:'ID',value:u.id,inline:true},{name:'Joined',value:m?.joinedAt?.toISOString()||'Unknown',inline:true},{name:'Created',value:u.createdAt.toISOString(),inline:true},{name:'Roles',value:m?.roles.cache.filter(r=>r.id!==i.guild.id).map(r=>r.toString()).slice(0,20).join(', ')||'None'})]});return true;}
     if(n==='ticket')return ticketRuntime.execute(i);
