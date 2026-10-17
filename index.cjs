@@ -1042,8 +1042,14 @@ client.on('interactionCreate', async interaction => {
           model.supportedGenerationMethods.includes('generateContent') &&
           /gemini/i.test(model.name || '')
         );
-        const preferredNames = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3-flash'];
-        availableModels.sort((a, b) => {
+        // Prefer current text-capable Flash models and exclude audio/TTS,
+        // image, embedding, and other specialist models from text chat.
+        const textModels = availableModels.filter(model =>
+          !/(tts|audio|image|embedding|robotics|live|aqa|veo)/i.test(String(model.name || ''))
+        );
+        const candidates = textModels.length ? textModels : availableModels;
+        const preferredNames = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
+        candidates.sort((a, b) => {
           const score = name => {
             const simple = String(name || '').replace(/^models\//, '').toLowerCase();
             const exact = preferredNames.indexOf(simple);
@@ -1053,6 +1059,7 @@ client.on('interactionCreate', async interaction => {
           };
           return score(a.name) - score(b.name);
         });
+        availableModels.splice(0, availableModels.length, ...candidates);
         if (!availableModels.length) {
           console.error('[Gemini AI] No Gemini model supporting generateContent was returned by the model list.');
           return interaction.editReply('The AI service is temporarily unavailable because no supported Gemini model is available for this API key.');
@@ -1062,7 +1069,7 @@ client.on('interactionCreate', async interaction => {
         // time. Try each advertised generateContent model instead of failing /ask
         // on the first unavailable model.
         const requestBody = {
-          system_instruction: { parts: [{ text: `You are ${assistantName}, the helpful AI assistant for SPIDEY BOT on Discord. Answer clearly and conversationally. For current facts such as exchange rates, do not invent live values; explain when you cannot verify a live source. Keep replies suitable for Discord.` }] },
+          system_instruction: { parts: [{ text: `You are ${assistantName}, the AI assistant configured by this Discord server's administrator. Answer the user's exact question directly and specifically. Do not give generic conversation starters or redirect the user to DMs unless they explicitly ask about private messaging. If the user asks a factual question, answer it; if information is missing, ask one concise clarifying question. For current facts such as exchange rates, never invent live values—state clearly if you cannot verify a live source. Keep replies useful and concise for Discord.` }] },
           contents: [{ role: 'user', parts: [{ text: question }] }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 700 }
         };
