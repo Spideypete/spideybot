@@ -395,6 +395,7 @@ async function execute(i,ctx){
       const target=i.options.getChannel('channel',true),pingRole=i.options.getRole('ping_role');
       const result=socialNotifications.addNotification(i.guild.id,{platform,username:handle,channelId:target.id,pingRoleId:pingRole?.id||null,enabled:true});
       if(!result.success){await i.reply({content:result.error,ephemeral:true});return true;}
+      socialNotifications.setConfig(i.guild.id,{enabled:true});
       await i.reply({content:'Saved the '+platform.toUpperCase()+' alert for **'+handle+'** in '+target.toString()+'. Alert configuration is stored; live delivery still depends on a configured monitor for that provider.',ephemeral:true});
       return true;
     }
