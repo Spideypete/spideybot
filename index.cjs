@@ -1206,64 +1206,21 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Never mutate the shared global Discord command registry from the staging deployment.
-  // The test service uses the same bot token as production, so global registration here would affect production servers.
-  const isTestingDeployment = process.env.RAILWAY_SERVICE_NAME === 'spidey-bot-testing' || String(process.env.RAILWAY_PUBLIC_DOMAIN || '').includes('spidey-bot-testing');
-  if (isTestingDeployment) {
-    console.log('🧪 Testing deployment: clearing shared global commands and registering test commands per guild.');
-    try {
-      const rest = new REST({ version: '10' }).setToken(token);
-
-      // Production and testing share this Discord application/token. Remove the shared
-      // global registry so old production slash commands cannot shadow the test suite.
-      // Guild-scoped commands below remain available immediately in the owned test servers.
-      const cleared = await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
-      console.log(`🧹 Global slash command registry cleared (${Array.isArray(cleared) ? cleared.length : 0} commands remain).`);
-
-      const commands = spideyCommands.map(cmd => cmd.toJSON());
-      for (const guild of client.guilds.cache.values()) {
-        const result = await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands });
-        console.log(`🧪 Registered ${result.length} test slash commands for guild ${guild.id} (${guild.name})`);
-      }
-    } catch (error) {
-      console.error('[Testing guild command registration] Failed:', error.message || error);
-    }
-  } else {
-    // Auto-clear and re-register on startup
+  // Production and testing share this Discord application. Never register a global
+  // command set: it can shadow or conflict with the version being tested. Keep all
+  // commands guild-scoped in both environments and clear legacy global commands.
   try {
-    console.log('📝 Auto-clearing and registering slash commands...');
     const rest = new REST({ version: '10' }).setToken(token);
-    
-    // First clear all (one by one with delays)
-    const existing = await rest.get(Routes.applicationCommands(client.user.id));
-    if (Array.isArray(existing) && existing.length > 0) {
-      console.log(`🗑️ Found ${existing.length} existing commands, clearing...`);
-      for (let i = 0; i < existing.length; i++) {
-        try {
-          await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
-          // 1 second delay every 5 deletions
-          if (i > 0 && i % 5 === 0) {
-            await new Promise(r => setTimeout(r, 1000));
-            console.log(`🗑️ Cleared ${i+1}...`);
-          }
-        } catch(e) {}
-      }
-      console.log('🗑️ All cleared');
-    } else {
-      console.log('📝 No existing commands to clear');
-    }
-    
-    // Now register fresh
+    const cleared = await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
+    console.log(`🧹 Shared global slash commands cleared (${Array.isArray(cleared) ? cleared.length : 0} remain).`);
+
     const commands = spideyCommands.map(cmd => cmd.toJSON());
-    console.log(`➡️ Registering ${commands.length} commands...`);
-    await new Promise(r => setTimeout(r, 500));
-    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log(`✅ Registered ${data.length} slash commands`);
+    for (const guild of client.guilds.cache.values()) {
+      const result = await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands });
+      console.log(`✅ Registered ${result.length} guild-scoped slash commands for ${guild.id} (${guild.name})`);
+    }
   } catch (error) {
-    console.error("❌ Error:", error.message || error);
-  }
-
-
+    console.error('[Guild-scoped slash command registration] Failed:', error.message || error);
   }
 
   // Pre-fetch members for all guilds so dashboard stats work immediately
