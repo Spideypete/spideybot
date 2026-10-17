@@ -11,6 +11,7 @@ const levelXpCooldown=new Map();
 const achievements=require('../achievements/achievements.service.cjs');
 const inviteTracker=require('../invite-tracker/invite-tracker.service.cjs');
 const ticketRuntime=require('../tickets/ticketing.runtime.cjs');
+const customSlashRuntime=require('../custom-commands/custom-slash-runtime.cjs');
 const reactionRolesService=require('../reaction-roles/reaction-roles.service.cjs');
 const fmt=n=>new Intl.NumberFormat().format(Math.max(0,n||0));
 const isAdmin=i=>!!i.member?.permissions?.has(PermissionFlagsBits.Administrator);
