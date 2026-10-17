@@ -173,7 +173,7 @@ async function execute(i,ctx){
       if(n==='unban'){
         if(!hasPerm(PermissionFlagsBits.BanMembers)) return deny('❌ You need Ban Members permission.');
         const userId=String(i.options.getString('user_id')||'').trim();
-        if(!/^\\d{17,20}$/.test(userId)) return deny('❌ Enter a valid Discord user ID (17–20 digits).');
+        if(!/^\d{17,20}$/.test(userId)) return deny('❌ Enter a valid Discord user ID (17–20 digits).');
         const existingBan=await i.guild.bans.fetch(userId).catch(()=>null);
         if(!existingBan) return deny('ℹ️ That user is not currently banned from this server.');
         await i.guild.bans.remove(userId,'Unbanned by '+i.user.tag);
@@ -187,7 +187,7 @@ async function execute(i,ctx){
         if(n==='warnings'){
           const list=svc.getWarnings(i.guild.id,targetUser.id);
           const description=list.length
-            ? list.map((w,index)=>(index+1)+'. '+String(w.reason||'No reason').slice(0,300)+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\\n')
+            ? list.map((w,index)=>(index+1)+'. '+String(w.reason||'No reason').slice(0,300)+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\n')
             : 'No warnings recorded for this member.';
           return respond({content:description.slice(0,1900),ephemeral:true});
         }
