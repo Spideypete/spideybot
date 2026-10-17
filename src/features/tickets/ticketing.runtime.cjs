@@ -2,7 +2,7 @@ const {
   ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChannelType,
   EmbedBuilder, ModalBuilder, PermissionFlagsBits, TextInputBuilder, TextInputStyle
 } = require('discord.js');
-const svc = require('../testify-suite/testify-suite.service.cjs');
+const svc = require('../spidey-suite/spidey-suite.service.cjs');
 const defaults = {enabled:true,categoryId:null,ticketChannelId:null,supportRoleId:null,logChannelId:null,transcriptChannelId:null,ticketPrefix:'ticket',maxTicketsPerUser:1,panelTitle:'Need help? Open a ticket',panelDescription:'Select the button below to contact our support team.',buttonLabel:'Create Ticket',welcomeMessage:'Hello {user}, please describe your issue and a staff member will be with you shortly.',questions:[],allowUserClose:true,claimEnabled:true,allowReopen:true,transcriptsEnabled:true,autoCloseHours:0,records:{},nextNumber:1};
 const getConfig = id => { const all=svc.get(id),t=all.tickets||{}; return Object.assign({},defaults,t,{enabled:all.plugins?.ticketing!==false&&t.enabled!==false}); };
 const saveConfig = (id, patch) => svc.save(id, {tickets:Object.assign({}, getConfig(id), patch)}).tickets;
