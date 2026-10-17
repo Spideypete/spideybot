@@ -327,7 +327,7 @@ async function execute(i,ctx){
     return true;
   }
   if(commandRoot==='blackjack'||commandRoot==='slots'){
-    const bet=i.options.getInteger('bet',true),cfg=svc.get(i.guild.id),economy=cfg.economy,account=svc.balance(i.guild.id,i.user.id);
+    const bet=i.options.getInteger('bet',true),cfg=svc.get(i.guild.id),economy=cfg.economy;economy.users=economy.users||{};const account=economy.users[i.user.id]||(economy.users[i.user.id]={cash:0,bank:0,daily:0,work:0,inventory:[],pet:null});
     if(account.cash<bet){await i.reply({content:'You do not have enough cash for that bet.',ephemeral:true});return true;}
     account.cash-=bet;
     if(commandRoot==='slots'){
@@ -351,7 +351,7 @@ async function execute(i,ctx){
       const count=Object.values(lottery.tickets).reduce((sum,n)=>sum+Number(n||0),0);
       await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎟️ Server lottery').setDescription('Tickets cost **100 coins** each.').addFields({name:'Tickets sold',value:fmt(count),inline:true},{name:'Ticket holders',value:String(Object.keys(lottery.tickets).length),inline:true},{name:'Prize pool',value:fmt(count*100)+' coins',inline:true})]});return true;
     }
-    const amount=i.options.getInteger('tickets_amount',true),account=svc.balance(i.guild.id,i.user.id),cost=amount*100;
+    const amount=i.options.getInteger('tickets_amount',true),cost=amount*100;economy.users=economy.users||{};const account=economy.users[i.user.id]||(economy.users[i.user.id]={cash:0,bank:0,daily:0,work:0,inventory:[],pet:null});
     if(account.cash<cost){await i.reply({content:'You need '+fmt(cost)+' coins to buy '+amount+' ticket(s).',ephemeral:true});return true;}
     account.cash-=cost;lottery.tickets[i.user.id]=(Number(lottery.tickets[i.user.id])||0)+amount;lottery.channelId=i.channelId;lottery.updatedAt=Date.now();svc.save(i.guild.id,{economy,lottery});
     await i.reply({content:'🎟️ Bought '+amount+' lottery ticket(s) for '+fmt(cost)+' coins. Your total: '+lottery.tickets[i.user.id]+'.',ephemeral:true});return true;
@@ -403,7 +403,7 @@ async function execute(i,ctx){
   if(commandRoot==='pay'){
     const target=i.options.getUser('user',true),amount=i.options.getInteger('amount',true);
     if(target.bot||target.id===i.user.id){await i.reply({content:'Choose another human member as the payment recipient.',ephemeral:true});return true;}
-    const cfg=svc.get(i.guild.id),economy=cfg.economy,from=svc.balance(i.guild.id,i.user.id),to=svc.balance(i.guild.id,target.id);
+    const cfg=svc.get(i.guild.id),economy=cfg.economy;economy.users=economy.users||{};const defaults={cash:0,bank:0,daily:0,work:0,inventory:[],pet:null},from=economy.users[i.user.id]||(economy.users[i.user.id]={...defaults}),to=economy.users[target.id]||(economy.users[target.id]={...defaults});
     if(from.cash<amount){await i.reply({content:'You do not have enough cash for that payment.',ephemeral:true});return true;}
     from.cash-=amount;to.cash+=amount;svc.save(i.guild.id,{economy});
     await i.reply('💸 '+i.user.toString()+' paid '+target.toString()+' **'+fmt(amount)+'** '+String(economy.currency||'coins')+'.');
