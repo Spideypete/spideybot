@@ -302,14 +302,18 @@ async function renderWelcomePanel(id,f,c){
 }
 
 async function renderReactionRolesPanel(id,f,c){
- const [channelResult,roleResult,settingsResult]=await Promise.all([
+ const [channelResult,roleResult,settingsResult,emojiResult]=await Promise.all([
   api('/api/guild/'+encodeURIComponent(id)+'/channels'),
   api('/api/guild/'+encodeURIComponent(id)+'/roles'),
-  api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id))
+  api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id)),
+  api('/api/guild/'+encodeURIComponent(id)+'/emojis').catch(()=>({emojis:[]}))
  ]);
  const channels=(channelResult.channels||[]).filter(x=>x.type==='text');
  const roles=(roleResult.roles||[]).filter(x=>!x.managed);
+ const serverEmojis=emojiResult.emojis||[];
+ const unicodeEmojis=['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😍','🥰','😘','😎','🤔','😭','😡','👍','👎','👏','🙌','🙏','❤️','💙','💜','🔥','✨','⭐','🎉','🎮','🎯','🏆','✅','❌','⚠️','💯','👀','💀','🐱','🐶','🍀','🌟'];
  const rr=settingsResult.config||{};
+ const emojiOptions='<optgroup label="Standard emojis">'+unicodeEmojis.map(e=>'<option value="'+esc(e)+'" '+(String((rr.entries||[]).find(x=>x.emoji===e)?.emoji||'')===e?'selected':'')+'>'+esc(e)+' '+esc(e)+'</option>').join('')+'</optgroup>'+(serverEmojis.length?'<optgroup label="Server emojis">'+serverEmojis.map(e=>{const value=(e.animated?'<a:':'<:')+e.name+':'+e.id+'>';return '<option value="'+esc(value)+'" '+(((rr.entries||[]).some(x=>x.emoji===value||x.emoji===e.id||x.emoji===e.name+':'+e.id))?'selected':'')+'>'+esc((e.animated?'🎞 ':'')+':'+e.name+':')+'</option>';}).join('')+'</optgroup>':'');
  try{await api('/api/bot-config/react-roles/settings?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({enabled:true})});}catch(err){console.warn('[dashboard] could not enable reaction roles defaults',err);}
  const entries=Array.isArray(rr.entries)?rr.entries:[];
  const entryRows=entries.map((e,i)=>'<div class="rr-entry"><div><strong>'+esc(e.emoji||'😀')+' → '+esc(e.roleName||roles.find(r=>r.id===e.roleId)?.name||'Role')+'</strong><p>#'+esc(e.channelName||channels.find(ch=>ch.id===e.channelId)?.name||'channel')+' · Message '+esc(e.messageId||'')+'</p></div><button type="button" class="rr-remove" data-remove-rr="'+i+'">Remove</button></div>').join('');
@@ -328,7 +332,7 @@ async function renderReactionRolesPanel(id,f,c){
  '<div id="rrEmbedPanel" hidden>'+input('rrEmbedTitle','Embed title','Choose your roles')+'<label class="field">Embed description<textarea id="rrEmbedDescription" rows="4" maxlength="4000">React below to choose your roles.</textarea></label>'+input('rrEmbedColor','Embed color (hex)','5865F2')+input('rrEmbedFooter','Footer','SPIDEY BOT • Reaction Roles')+input('rrEmbedImage','Image URL','')+'</div>'+
  '</div>'+
  '<div id="rrExistingMessage" hidden><label class="field">Message channel<select id="rrExistingChannel">'+channelOptions+'</select></label>'+input('rrMessageId','Existing message ID','')+'<p class="mention-help">Paste the message ID from the selected server and channel. The bot must be able to view the channel and message.</p></div>'+
- '<div class="rr-mapping"><h4>Emoji → role mapping</h4><div class="rr-mapping-grid">'+input('rrEmoji','Emoji (Unicode or custom emoji)','🎮')+'<label class="field">Role to assign<select id="rrRole">'+roleOptions+'</select></label></div><p class="mention-help">When a member adds this reaction, the bot assigns the selected role. Removing the reaction removes the role.</p></div>'+
+ '<div class="rr-mapping"><h4>Emoji → role mapping</h4><div class="rr-mapping-grid"><label class="field">Choose emoji<select id="rrEmoji"><option value="">Choose an emoji</option>'+emojiOptions+'</select></label><label class="field">Role to assign<select id="rrRole">'+roleOptions+'</select></label></div><p class="mention-help">Choose from standard emojis or the custom emojis listed in the Emojis panel. New server emojis appear here after refreshing/reopening this panel.</p></div>'+
  '<div class="rr-options">'+check('rrAllowMultiple','Allow members to select multiple roles',rr.allowMultiple!==false)+check('rrRemoveOnUnreact','Remove role when reaction is removed',rr.removeOnUnreact!==false)+check('rrDmConfirm','Send a DM confirmation',!!(rr.dmConfirm||rr.dmConfirmations))+'</div>'+
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Language and notifications</h3><p>Choose the language and whether the bot should send optional notices to a server channel.</p></div></div><label class="field">Panel language<select id="rrLanguage"><option value="en" '+((rr.language||'en')==='en'?'selected':'')+'>English</option><option value="es" '+(rr.language==='es'?'selected':'')+'>Español</option><option value="fr" '+(rr.language==='fr'?'selected':'')+'>Français</option><option value="de" '+(rr.language==='de'?'selected':'')+'>Deutsch</option><option value="pt" '+(rr.language==='pt'?'selected':'')+'>Português</option><option value="pl" '+(rr.language==='pl'?'selected':'')+'>Polski</option><option value="ru" '+(rr.language==='ru'?'selected':'')+'>Русский</option></select></label>'+check('rrUpdateNotifications','Enable update notifications',!!rr.updateNotifications)+check('rrErrorReporting','Enable error reporting',!!rr.errorReporting)+'<label class="field">Notification/error channel<select id="rrNotificationChannel">'+optionList(channels,rr.notificationChannelId||'','Choose a channel (optional)')+'</select></label><p class="mention-help">These preferences are stored per server. Notification delivery requires the bot to have permission to send messages in the selected channel.</p></section>'+
  '<div class="panel-actions"><button class="select" id="rrCreateSave" type="button">Save reaction role</button><button class="select" id="rrSaveSettings" type="button">Save settings only</button></div></section>'+
