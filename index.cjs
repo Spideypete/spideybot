@@ -2131,7 +2131,7 @@ client.on("messageCreate", async (msg) => {
       
       // Add timeout
       const data = await Promise.race([
-        rest.put(Routes.applicationCommands(client.user.id), { body: commands }),
+        rest.put(Routes.applicationGuildCommands(client.user.id, msg.guild.id), { body: commands }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000))
       ]);
       
@@ -2153,12 +2153,12 @@ client.on("messageCreate", async (msg) => {
     const replyMsg = await msg.reply("🗑️ Clearing all slash commands (may take a few minutes)...");
     try {
       const rest = new REST({ version: '10' }).setToken(token);
-      const existing = await rest.get(Routes.applicationCommands(client.user.id));
+      const existing = await rest.get(Routes.applicationGuildCommands(client.user.id, msg.guild.id));
       if (Array.isArray(existing) && existing.length > 0) {
         let cleared = 0;
         for (let i = 0; i < existing.length; i++) {
           try {
-            await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
+            await rest.delete(Routes.applicationGuildCommand(client.user.id, msg.guild.id, existing[i].id));
             cleared++;
             if (i > 0 && i % 3 === 0) {
               await new Promise(r => setTimeout(r, 1000)); // 1 sec delay every 3 to avoid rate limits
