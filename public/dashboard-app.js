@@ -132,6 +132,7 @@ function addStyles(){
  document.head.appendChild(s);
 }
 (function installEssentialsPurpleGlow(){if(document.getElementById('essentials-purple-glow'))return;const style=document.createElement('style');style.id='essentials-purple-glow';style.textContent=".nav-title{color:#5b21b6!important;text-shadow:0 0 8px rgba(139,92,246,.10);letter-spacing:.035em}.overview-feature-group .overview-feature-card{border-color:rgba(139,92,246,.48);box-shadow:0 0 0 1px rgba(139,92,246,.12),0 0 15px rgba(139,92,246,.14);transition:border-color .18s ease,box-shadow .18s ease,transform .12s ease}.overview-feature-group .overview-feature-card.is-on{border-color:rgba(168,85,247,.88);box-shadow:0 0 0 1px rgba(168,85,247,.25),0 0 21px rgba(139,92,246,.26),inset 0 0 16px rgba(139,92,246,.045)}.overview-feature-group .overview-feature-card.is-off{border-color:rgba(139,92,246,.38);box-shadow:0 0 0 1px rgba(139,92,246,.10),0 0 11px rgba(139,92,246,.10)}.overview-feature-group .overview-feature-card .overview-toggle.on{background:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.22),0 0 12px rgba(139,92,246,.48)}.overview-feature-group .overview-feature-card .overview-feature-status{color:#a78bfa}";document.head.appendChild(style);})();
+function installSidebarHeadingGlow(){if(document.getElementById('sidebar-heading-purple-glow'))return;const style=document.createElement('style');style.id='sidebar-heading-purple-glow';style.textContent=".sidebar .nav-title-main,.sidebar .nav-title-essentials,.sidebar .nav-title-server-management,.sidebar .nav-title-social-alerts,.sidebar .nav-title-games-community,.sidebar .nav-title-advanced,.sidebar .nav-title-administration{color:#4b2568!important;text-shadow:0 0 2px rgba(75,37,104,.10),0 0 5px rgba(75,37,104,.10)}.dark .sidebar .nav-title-main,.dark .sidebar .nav-title-essentials,.dark .sidebar .nav-title-server-management,.dark .sidebar .nav-title-social-alerts,.dark .sidebar .nav-title-games-community,.dark .sidebar .nav-title-advanced,.dark .sidebar .nav-title-administration{color:#b49acb!important;text-shadow:0 0 3px rgba(139,92,246,.10),0 0 6px rgba(139,92,246,.10)}";document.head.appendChild(style);}
 function switcher(){ return ''; }
 async function toggleFeature(id,f,current){
  const next=!enabled(current,f);
@@ -923,13 +924,13 @@ async function buildNavigation(){
  const id=guildId();let c={plugins:{}};
  if(id){try{c=await load(id);}catch(err){console.warn('[dashboard] feature config',err);}}
  navigation.innerHTML='';
- const main=document.createElement('div');main.className='nav-title';main.textContent='Main';navigation.appendChild(main);
+ const main=document.createElement('div');main.className='nav-title nav-title-main';main.textContent='Main';navigation.appendChild(main);
  const nav=document.createElement('nav');nav.className='nav';
  const overviewButton=document.createElement('button');overviewButton.type='button';overviewButton.dataset.section='overview';overviewButton.innerHTML='<span class="icon">'+icon('house')+'</span>Overview';overviewButton.onclick=()=>select('overview');nav.appendChild(overviewButton);const premiumButton=document.createElement('button');premiumButton.type='button';premiumButton.dataset.section='premium';premiumButton.innerHTML='<span class="icon">'+icon('crown')+'</span>Premium';premiumButton.onclick=()=>select('premium');nav.appendChild(premiumButton);navigation.appendChild(nav);
  FEATURES.forEach(group=>{
    const visible=group[1].filter(f=>f[0]!=='premium');
    if(!visible.length)return;
-   const heading=document.createElement('div');heading.className='nav-title';heading.textContent=group[0];navigation.appendChild(heading);
+   const heading=document.createElement('div');heading.className='nav-title nav-title-'+group[0].toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');heading.textContent=group[0];navigation.appendChild(heading);
    const groupNav=document.createElement('nav');groupNav.className='nav';
    visible.forEach(f=>{const on=enabled(c,f);const b=document.createElement('button');b.type='button';b.dataset.section=f[0];b.classList.toggle('feature-disabled',!on);b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);b.onclick=()=>{if(!enabled(c,f)){alert(f[1]+' is switched off. Turn it on from Overview → Panels first.');return;}select(f[0]);};groupNav.appendChild(b);});
    navigation.appendChild(groupNav);
@@ -953,5 +954,6 @@ async function select(section){
  }
 }
 addStyles();
+installSidebarHeadingGlow();
 window.spideyDashboard={select,guildId,FEATURES};
 buildNavigation().then(()=>select('overview'));
