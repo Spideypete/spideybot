@@ -18,9 +18,11 @@ const DEFAULTS = {
 const clone=v=>JSON.parse(JSON.stringify(v));
 function get(guildId){
   const c=getGuildConfig(guildId);
-  if(!c.spideySuite)updateGuildConfig(guildId,{spideySuite:clone(DEFAULTS)});
+  // Migrate existing per-server settings without losing users' saved configuration.
+  const legacy = c['testifySuite'];
+  if(!c.spideySuite)updateGuildConfig(guildId,{spideySuite:clone(legacy||DEFAULTS)});
   const fresh=getGuildConfig(guildId);
-  const out={...clone(DEFAULTS),...(fresh.spideySuite||{})};
+  const out={...clone(DEFAULTS),...(fresh.spideySuite||legacy||{})};
   for(const k of ['plugins','channels','roles','messages','sticky','counting','profiles','warnings','commandToggles','automod','audit','welcome','autorole','economy','levels','tickets','polls']){
     const base=clone(DEFAULTS[k]||{});
     out[k]={...base,...(out[k]||{})};
