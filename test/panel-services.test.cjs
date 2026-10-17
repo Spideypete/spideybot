@@ -17,8 +17,8 @@ function readConfig() {
 }
 
 test('registered slash command definitions serialize with unique roots and subcommands', () => {
-  const { testifyCommands } = require('../src/features/testify-suite/testify-suite.commands.cjs');
-  const definitions = testifyCommands.map(command => command.toJSON());
+  const { spideyCommands } = require('../src/features/spidey-suite/spidey-suite.commands.cjs');
+  const definitions = spideyCommands.map(command => command.toJSON());
   const rootNames = definitions.map(command => command.name);
   assert.ok(definitions.length > 0);
   assert.equal(new Set(rootNames).size, rootNames.length, 'slash command root names must be unique');
@@ -30,7 +30,7 @@ test('registered slash command definitions serialize with unique roots and subco
 
 test('custom slash runtime replaces template variables and persists its counter', async () => {
   const guildId = 'guild-custom-slash-runtime';
-  const suiteService = require('../src/features/testify-suite/testify-suite.service.cjs');
+  const suiteService = require('../src/features/spidey-suite/spidey-suite.service.cjs');
   const runtime = require('../src/features/custom-commands/custom-slash-runtime.cjs');
   suiteService.save(guildId, {
     customCommands: {
@@ -80,7 +80,7 @@ test('custom commands create, match, count, and persist', async () => {
 
 test('the live invite-tracker service persists manual adjustments and leaderboard stats', () => {
   const guildId = 'guild-live-invite-tracker';
-  const suiteService = require('../src/features/testify-suite/testify-suite.service.cjs');
+  const suiteService = require('../src/features/spidey-suite/spidey-suite.service.cjs');
   const tracker = require('../src/features/invite-tracker/invite-tracker.service.cjs');
   const listeners = {};
   const fakeClient = {
