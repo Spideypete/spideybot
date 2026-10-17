@@ -1056,29 +1056,54 @@ client.on('interactionCreate', async interaction => {
         const availableModels = (modelResponse.data?.models || []).filter(model =>
           Array.isArray(model.supportedGenerationMethods) &&
           model.supportedGenerationMethods.includes('generateContent') &&
-          /gemini/i.test(model.name || '') &&
-          /flash/i.test(model.name || '')
+          /gemini/i.test(model.name || '')
         );
         const preferredNames = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3-flash'];
         availableModels.sort((a, b) => {
           const score = name => {
             const simple = String(name || '').replace(/^models\//, '').toLowerCase();
             const exact = preferredNames.indexOf(simple);
-            return exact >= 0 ? exact : 100;
+            if (exact >= 0) return exact;
+            if (/flash/i.test(simple)) return 10;
+            return 100;
           };
           return score(a.name) - score(b.name);
         });
-        const selectedModel = availableModels[0]?.name;
-        if (!selectedModel) {
-          console.error('[Gemini AI] No Flash model supporting generateContent was returned by the model list.');
+        if (!availableModels.length) {
+          console.error('[Gemini AI] No Gemini model supporting generateContent was returned by the model list.');
           return interaction.editReply('The AI service is temporarily unavailable because no supported Gemini model is available for this API key.');
         }
-        console.log('[Gemini AI] Using available model:', selectedModel);
-        const response = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/${selectedModel}:generateContent`,
-          { system_instruction: { parts: [{ text: `You are ${assistantName}, the helpful AI assistant for SPIDEY BOT on Discord. Answer clearly and conversationally. For current facts such as exchange rates, do not invent live values; explain when you cannot verify a live source. Keep replies suitable for Discord.` }] }, contents: [{ role: 'user', parts: [{ text: question }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 700 } },
-          { headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' }, timeout: 25000 }
-        );
+
+        // Some Google AI projects list models that still return 404 at generation
+        // time. Try each advertised generateContent model instead of failing /ask
+        // on the first unavailable model.
+        const requestBody = {
+          system_instruction: { parts: [{ text: \`You are \${assistantName}, the helpful AI assistant for SPIDEY BOT on Discord. Answer clearly and conversationally. For current facts such as exchange rates, do not invent live values; explain when you cannot verify a live source. Keep replies suitable for Discord.\` }] },
+          contents: [{ role: 'user', parts: [{ text: question }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 700 }
+        };
+        let response;
+        let lastModelError;
+        for (const model of availableModels) {
+          try {
+            const modelName = String(model.name || '').replace(/^\/+/, '');
+            console.log('[Gemini AI] Trying model:', modelName);
+            response = await axios.post(
+              \`https://generativelanguage.googleapis.com/v1beta/\${modelName}:generateContent\`,
+              requestBody,
+              { headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' }, timeout: 25000 }
+            );
+            console.log('[Gemini AI] Model succeeded:', modelName);
+            break;
+          } catch (modelError) {
+            lastModelError = modelError;
+            const status = modelError.response?.status;
+            const apiMessage = modelError.response?.data?.error?.message;
+            console.error('[Gemini AI] Model failed:', model.name, status || modelError.message, apiMessage ? String(apiMessage).slice(0, 250) : '');
+            if (![400, 404, 429].includes(status)) throw modelError;
+          }
+        }
+        if (!response) throw lastModelError || new Error('No Gemini model could generate a response');
         const answer = response.data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim();
         if (!answer) {
           const blockReason = response.data?.promptFeedback?.blockReason;
