@@ -317,6 +317,7 @@ async function renderReactionRolesPanel(id,f,c){
  const roleOptions=optionList(roles,'','Choose a role');
  body.innerHTML=card('Reaction Roles','Create custom text/embed messages and map emoji reactions to server roles. Settings apply only to the selected server.',
  '<div class="welcome-panel reaction-roles-panel">'+
+ '<p class="mention-help" role="note" style="padding:12px 14px;border:1px solid rgba(145,70,255,.45);border-radius:10px;background:rgba(145,70,255,.08);color:var(--text-primary,#fff)"><strong>⚠️ Discord role hierarchy:</strong> Move the <strong>SPIDEY BOT</strong> role above every role you want it to assign or remove in <strong>Server Settings → Roles</strong>. The bot also needs the <strong>Manage Roles</strong> permission. Discord will block reaction roles below the bot’s highest role.</p>'+
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Create reaction role</h3><p>Post a new message or attach a reaction role to a message that already exists.</p></div></div>'+
  '<label class="field">Message action<select id="rrMessageAction"><option value="create">Create a new message</option><option value="existing">Use an existing message</option></select></label>'+
  '<div id="rrCreateMessage">'+
