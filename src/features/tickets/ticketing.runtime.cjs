@@ -110,8 +110,9 @@ async function close(i,t,c) {
  if(i.user.id!==t.userId&&!isStaff(i,c))return i.reply({content:'Only the ticket owner or support staff can close this ticket.',ephemeral:true});
  if(i.user.id===t.userId&&!c.allowUserClose&&!isStaff(i,c))return i.reply({content:'Ticket owners are not allowed to close tickets in this server.',ephemeral:true});
  if(t.status!=='open')return i.reply({content:'This ticket is already closed.',ephemeral:true});
- await i.deferReply({ephemeral:true});t.status='closed';t.closedAt=new Date().toISOString();saveConfig(i.guild.id,{records:c.records});
- await i.channel.send({embeds:[new EmbedBuilder().setColor(0xed4245).setTitle('🔒 '+t.id+' closed').setDescription('Closed by '+i.user+'.').setTimestamp()],components:[row(t,c)].filter(Boolean)});
+ const closeReason=i.isChatInputCommand?.()?String(i.options.getString('reason')||'No reason provided'):'Closed using ticket controls';
+ await i.deferReply({ephemeral:true});t.status='closed';t.closedAt=new Date().toISOString();t.closeReason=closeReason;saveConfig(i.guild.id,{records:c.records});
+ await i.channel.send({embeds:[new EmbedBuilder().setColor(0xed4245).setTitle('🔒 '+t.id+' closed').setDescription('Closed by '+i.user+'.\\n**Reason:** '+closeReason.slice(0,900)).setTimestamp()],components:[row(t,c)].filter(Boolean)});
  await i.channel.permissionOverwrites.edit(t.userId,{SendMessages:false,ViewChannel:true}).catch(e=>console.error('[TICKET CLOSE PERMISSIONS]',e.message));
  await transcript(i.guild,t,c);await log(i.guild,c,'Ticket closed',t.id+' closed by <@'+i.user.id+'>.');
  return i.editReply({content:'Ticket closed.'});
