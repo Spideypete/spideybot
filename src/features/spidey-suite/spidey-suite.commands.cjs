@@ -88,6 +88,19 @@ S('invites','Invite tracking, statistics and administration',b=>b
  .addSubcommand(sub('remove','Remove successful invites (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Number of invites').setRequired(true).setMinValue(1).setMaxValue(100000))))
  .addSubcommand(sub('reset','Reset invite totals (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
  .setDefaultMemberPermissions(PermissionFlagsBits.UseApplicationCommands)),
+S('reactionrole','Create and manage self-assignable reaction roles',b=>b
+ .addSubcommand(sub('add','Map an emoji reaction on a message to a role',s=>s
+  .addChannelOption(o=>o.setName('channel').setDescription('Channel containing the message').setRequired(true).addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement))
+  .addStringOption(o=>o.setName('message_id').setDescription('ID of the message to add reactions to').setRequired(true).setMinLength(17).setMaxLength(20))
+  .addStringOption(o=>o.setName('emoji').setDescription('Unicode emoji or custom emoji markup').setRequired(true).setMaxLength(100))
+  .addRoleOption(o=>o.setName('role').setDescription('Role members receive').setRequired(true))
+  .addStringOption(o=>o.setName('description').setDescription('Optional label for this role').setRequired(false).setMaxLength(100))))
+ .addSubcommand(sub('remove','Remove a reaction-role mapping',s=>s
+  .addStringOption(o=>o.setName('message_id').setDescription('ID of the mapped message').setRequired(true).setMinLength(17).setMaxLength(20))
+  .addStringOption(o=>o.setName('emoji').setDescription('Emoji used by the mapping').setRequired(true).setMaxLength(100))))
+ .addSubcommand(sub('list','List this server reaction-role mappings'))
+ .addSubcommand(sub('toggle','Enable or disable reaction roles',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Whether reaction roles are enabled').setRequired(true))))
+ .setDefaultMemberPermissions(A)),
 S('ticket','Create and manage private support tickets',b=>b
  .addSubcommand(sub('panel','Publish the configured ticket panel'))
  .addSubcommand(sub('create','Open a support ticket'))
