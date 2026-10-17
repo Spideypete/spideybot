@@ -326,6 +326,36 @@ async function execute(i,ctx){
     await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎶 Music queue').setDescription(tracks.length?tracks.map((track,index)=>'**'+(index+1)+'.** '+String(track.title||'Unknown track').slice(0,180)+' · '+String(track.duration||'Unknown')).join('\\n'):'No upcoming tracks.')]});
     return true;
   }
+  if(commandRoot==='blackjack'||commandRoot==='slots'){
+    const bet=i.options.getInteger('bet',true),cfg=svc.get(i.guild.id),economy=cfg.economy,account=svc.balance(i.guild.id,i.user.id);
+    if(account.cash<bet){await i.reply({content:'You do not have enough cash for that bet.',ephemeral:true});return true;}
+    account.cash-=bet;
+    if(commandRoot==='slots'){
+      const symbols=['🍒','🍋','🍇','🔔','⭐','💎'],spin=[0,1,2].map(()=>symbols[Math.floor(Math.random()*symbols.length)]);
+      const counts=spin.reduce((m,s)=>(m[s]=(m[s]||0)+1,m),{}),max=Math.max(...Object.values(counts));
+      const payout=max===3?bet*5:max===2?bet*2:0;account.cash+=payout;svc.save(i.guild.id,{economy});
+      await i.reply({embeds:[new EmbedBuilder().setColor(payout>bet?0x2ecc71:0x6d3df5).setTitle('🎰 Slots').setDescription(spin.join('  ')).addFields({name:'Bet',value:fmt(bet),inline:true},{name:'Payout',value:fmt(payout),inline:true},{name:'Net',value:(payout-bet>=0?'+':'')+fmt(payout-bet),inline:true},{name:'Cash balance',value:fmt(account.cash),inline:true})]});return true;
+    }
+    const card=()=>{const n=1+Math.floor(Math.random()*13);return {value:n===1?11:Math.min(n,10),label:n===1?'A':n===11?'J':n===12?'Q':n===13?'K':String(n)};};
+    const hand=()=>[card(),card()];
+    const score=cards=>{let total=cards.reduce((n,x)=>n+x.value,0),aces=cards.filter(x=>x.label==='A').length;while(total>21&&aces-->0)total-=10;return total;};
+    const player=hand(),dealer=hand();let dealerScore=score(dealer);while(dealerScore<17){dealer.push(card());dealerScore=score(dealer);}
+    const playerScore=score(player),won=playerScore<=21&&(dealerScore>21||playerScore>dealerScore),push=playerScore===dealerScore&&playerScore<=21,payout=won?bet*2:push?bet:0;
+    account.cash+=payout;svc.save(i.guild.id,{economy});
+    const label=won?'You win!':push?'Push — bet returned.':'Dealer wins.';
+    await i.reply({embeds:[new EmbedBuilder().setColor(won?0x2ecc71:push?0x747f8d:0xed4245).setTitle('🃏 Blackjack').setDescription('**Your hand:** '+player.map(x=>x.label).join(', ')+' (**'+playerScore+'**)\\n**Dealer:** '+dealer.map(x=>x.label).join(', ')+' (**'+dealerScore+'**)\\n\\n'+label).addFields({name:'Bet',value:fmt(bet),inline:true},{name:'Payout',value:fmt(payout),inline:true},{name:'Cash balance',value:fmt(account.cash),inline:true})]});return true;
+  }
+  if(commandRoot==='lottery'){
+    const cfg=svc.get(i.guild.id),economy=cfg.economy,lottery={...(cfg.lottery||{}),tickets:{...((cfg.lottery||{}).tickets||{})}};
+    if(commandSub==='info'){
+      const count=Object.values(lottery.tickets).reduce((sum,n)=>sum+Number(n||0),0);
+      await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎟️ Server lottery').setDescription('Tickets cost **100 coins** each.').addFields({name:'Tickets sold',value:fmt(count),inline:true},{name:'Ticket holders',value:String(Object.keys(lottery.tickets).length),inline:true},{name:'Prize pool',value:fmt(count*100)+' coins',inline:true})]});return true;
+    }
+    const amount=i.options.getInteger('tickets_amount',true),account=svc.balance(i.guild.id,i.user.id),cost=amount*100;
+    if(account.cash<cost){await i.reply({content:'You need '+fmt(cost)+' coins to buy '+amount+' ticket(s).',ephemeral:true});return true;}
+    account.cash-=cost;lottery.tickets[i.user.id]=(Number(lottery.tickets[i.user.id])||0)+amount;lottery.channelId=i.channelId;lottery.updatedAt=Date.now();svc.save(i.guild.id,{economy,lottery});
+    await i.reply({content:'🎟️ Bought '+amount+' lottery ticket(s) for '+fmt(cost)+' coins. Your total: '+lottery.tickets[i.user.id]+'.',ephemeral:true});return true;
+  }
   if(commandRoot==='alerts'){
     if(!isAdmin(i)){await i.reply({content:'Only administrators can manage social alerts.',ephemeral:true});return true;}
     const platform=i.options.getString('platform',commandSub!=='list'),handle=i.options.getString('handle');
