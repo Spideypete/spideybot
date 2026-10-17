@@ -161,29 +161,40 @@ async function execute(i,ctx){
     if(n==='hack'){await i.reply('💻 Connecting...');setTimeout(()=>i.editReply('💻 Scanning... | 📦 Downloading memes... | 😂 Fake hack complete.').catch(()=>{}),900);return true;}
     if(n==='relationship'){await i.reply('💜 Compatibility: '+(50+Math.floor(Math.random()*51))+'%');return true;}
 
-    if(['warn','warnings','kick','ban','mute','unmute'].includes(n)){
-      const targetUser = i.options.getUser('user');
-      if(!targetUser) return respond({content:'❌ Select a member using the user option.',ephemeral:true});
-      const reason = String(i.options.getString('reason') || 'No reason provided').slice(0, 450);
+    if(['warn','warnings','kick','ban','mute','unmute','unban'].includes(n)){
       const hasPerm = perm => isAdmin(i) || !!i.memberPermissions?.has(perm);
-      const member = await i.guild.members.fetch(targetUser.id).catch(() => null);
+
+      // Unban uses a user ID rather than the member option used by other mod commands.
+      if(n==='unban'){
+        if(!hasPerm(PermissionFlagsBits.BanMembers)) return respond({content:'❌ You need Ban Members permission.',ephemeral:true});
+        const userId=String(i.options.getString('user_id')||'').trim();
+        if(!/^\d{17,20}$/.test(userId)) return respond({content:'❌ Enter a valid Discord user ID (17–20 digits).',ephemeral:true});
+        const existingBan=await i.guild.bans.fetch(userId).catch(()=>null);
+        if(!existingBan) return respond({content:'ℹ️ That user is not currently banned from this server.',ephemeral:true});
+        await i.guild.bans.remove(userId,'Unbanned by '+i.user.tag);
+        await respond({content:'✅ Unbanned <@'+userId+'>.'});
+        return true;
+      }
+
+      const targetUser=i.options.getUser('user');
+      if(!targetUser) return respond({content:'❌ Select a member using the user option.',ephemeral:true});
+      const reason=String(i.options.getString('reason')||'No reason provided').slice(0,450);
+      const member=await i.guild.members.fetch(targetUser.id).catch(()=>null);
 
       if(n==='warnings'){
-        if(!hasPerm(PermissionFlagsBits.ModerateMembers) && !hasPerm(PermissionFlagsBits.KickMembers)) {
-          return respond({content:'❌ You need Moderate Members or Kick Members permission to view warning history.',ephemeral:true});
-        }
-        const list = svc.getWarnings(i.guild.id, targetUser.id);
-        const description = list.length
-          ? list.map((w,index)=>(index+1)+'. '+String(w.reason||'No reason').slice(0,300)+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\n')
+        if(!hasPerm(PermissionFlagsBits.ModerateMembers)&&!hasPerm(PermissionFlagsBits.KickMembers)) return respond({content:'❌ You need Moderate Members or Kick Members permission to view warning history.',ephemeral:true});
+        const list=svc.getWarnings(i.guild.id,targetUser.id);
+        const description=list.length
+          ? list.map((w,index)=>(index+1)+'. '+String(w.reason||'No reason').slice(0,300)+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\\n')
           : 'No warnings recorded for this member.';
         return respond({content:description.slice(0,1900),ephemeral:true});
       }
 
       if(n==='warn'){
-        if(!hasPerm(PermissionFlagsBits.ModerateMembers) && !hasPerm(PermissionFlagsBits.KickMembers)) return respond({content:'❌ You need Moderate Members or Kick Members permission.',ephemeral:true});
+        if(!hasPerm(PermissionFlagsBits.ModerateMembers)&&!hasPerm(PermissionFlagsBits.KickMembers)) return respond({content:'❌ You need Moderate Members or Kick Members permission.',ephemeral:true});
         if(!member) return respond({content:'❌ That member is not currently in this server.',ephemeral:true});
-        if(targetUser.id===i.user.id || targetUser.id===i.client.user.id) return respond({content:'❌ You cannot warn yourself or the bot.',ephemeral:true});
-        const list = svc.addWarning(i.guild.id,targetUser.id,{reason,by:i.user.id,at:Date.now()});
+        if(targetUser.id===i.user.id||targetUser.id===i.client.user.id) return respond({content:'❌ You cannot warn yourself or the bot.',ephemeral:true});
+        const list=svc.addWarning(i.guild.id,targetUser.id,{reason,by:i.user.id,at:Date.now()});
         await respond({content:'⚠️ Warned '+targetUser.tag+'. Total warnings: '+list.length+'. Reason: '+reason});
         await sendModerationLog(i,'WARN',targetUser,reason);
         return true;
@@ -203,7 +214,7 @@ async function execute(i,ctx){
       if(n==='ban'){
         if(!hasPerm(PermissionFlagsBits.BanMembers)) return respond({content:'❌ You need Ban Members permission.',ephemeral:true});
         if(targetUser.id===i.user.id) return respond({content:'❌ You cannot ban yourself.',ephemeral:true});
-        if(member && !member.bannable) return respond({content:'❌ I cannot ban that member. Check that the bot has Ban Members permission and its highest role is above the target member.',ephemeral:true});
+        if(member&&!member.bannable) return respond({content:'❌ I cannot ban that member. Check that the bot has Ban Members permission and its highest role is above the target member.',ephemeral:true});
         await i.guild.members.ban(targetUser.id,{reason});
         await respond({content:'🔨 Banned '+targetUser.tag+'. Reason: '+reason});
         await sendModerationLog(i,'BAN',targetUser,reason);
@@ -214,8 +225,8 @@ async function execute(i,ctx){
         if(!hasPerm(PermissionFlagsBits.ModerateMembers)) return respond({content:'❌ You need Moderate Members permission.',ephemeral:true});
         if(!member) return respond({content:'❌ That member is not currently in this server.',ephemeral:true});
         if(targetUser.id===i.user.id) return respond({content:'❌ You cannot timeout yourself.',ephemeral:true});
-        const minutes = i.options.getInteger('minutes');
-        if(!Number.isInteger(minutes) || minutes < 1 || minutes > 40320) return respond({content:'❌ Timeout duration must be between 1 minute and 28 days.',ephemeral:true});
+        const minutes=i.options.getInteger('minutes');
+        if(!Number.isInteger(minutes)||minutes<1||minutes>40320) return respond({content:'❌ Timeout duration must be between 1 minute and 28 days.',ephemeral:true});
         if(!member.moderatable) return respond({content:'❌ I cannot timeout that member. Check that the bot has Moderate Members permission and its highest role is above the target member.',ephemeral:true});
         await member.timeout(minutes*60*1000,reason);
         await respond({content:'🔇 Timed out '+targetUser.tag+' for '+minutes+' minute(s). Reason: '+reason});
