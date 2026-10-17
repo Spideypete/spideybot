@@ -15,7 +15,7 @@ const {
   REST,
   Routes
 } = require("discord.js");
-const { testifyCommands } = require("./src/features/testify-suite/testify-suite.commands.cjs");
+const { spideyCommands } = require("./src/features/spidey-suite/spidey-suite.commands.cjs");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
@@ -55,7 +55,7 @@ const {
 const { createFeaturesRouter } = require("./src/routes/features.js");
 
 // Feature services and handlers
-const { execute: handleTestifyInteraction, handlePrefix: handleTestifyPrefix, registerTestifyHandlers } = require("./src/features/testify-suite/testify-suite.handler.cjs");
+const { execute: handlespideyInteraction, handlePrefix: handlespideyPrefix, registerspideyHandlers } = require("./src/features/spidey-suite/spidey-suite.handler.cjs");
 const customSlashRuntime = require("./src/features/custom-commands/custom-slash-runtime.cjs");
 
 // Integrated server command suite: slash + prefix commands, AutoMod, XP, economy and admin tools.
@@ -872,7 +872,7 @@ function setCachedMemberStats(guildId, data) {
 // ------------------------------------------------------------------
 // Command metadata for the integrated command suite.
 const COMMANDS_META = {};
-for (const command of testifyCommands) {
+for (const command of spideyCommands) {
   const json = typeof command.toJSON === 'function' ? command.toJSON() : command;
   COMMANDS_META[json.name] = {
     category: 'commands',
@@ -1002,7 +1002,7 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
-// Testify command handlers are registered once after the client is ready below.
+// spidey command handlers are registered once after the client is ready below.
 try {
   require("./src/features/reaction-roles/reaction-roles.handler.cjs").registerReactionRolesHandler(client);
   console.log("✅ Reaction role add/remove handlers registered");
@@ -1048,7 +1048,7 @@ client.on('interactionCreate', async interaction => {
       }
     }
     if (interaction.isChatInputCommand()) {
-      // Testify commands are dispatched by the legacy interaction router below.
+      // spidey commands are dispatched by the legacy interaction router below.
       // Do not execute the same interaction twice; duplicate dispatch can cause
       // failed replies and Discord "Unknown interaction" errors.
       if (await customSlashRuntime.handleCustomSlashCommand(interaction)) return;
@@ -1062,7 +1062,7 @@ client.on('interactionCreate', async interaction => {
 });
 client.on('messageCreate', async message => {
   try {
-    if (await handleTestifyPrefix(message, { client })) return;
+    if (await handlespideyPrefix(message, { client })) return;
   } catch (e) {
     console.error('[COMMANDS] prefix handler failed:', e);
   }
@@ -1122,7 +1122,7 @@ client.once("ready", async () => {
     console.log('🧪 Testing deployment: registering commands per connected guild only; global production commands are not modified.');
     try {
       const rest = new REST({ version: '10' }).setToken(token);
-      const commands = testifyCommands.map(cmd => cmd.toJSON());
+      const commands = spideyCommands.map(cmd => cmd.toJSON());
       for (const guild of client.guilds.cache.values()) {
         const result = await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands });
         console.log(`🧪 Registered ${result.length} test slash commands for guild ${guild.id} (${guild.name})`);
@@ -1156,7 +1156,7 @@ client.once("ready", async () => {
     }
     
     // Now register fresh
-    const commands = testifyCommands.map(cmd => cmd.toJSON());
+    const commands = spideyCommands.map(cmd => cmd.toJSON());
     console.log(`➡️ Registering ${commands.length} commands...`);
     await new Promise(r => setTimeout(r, 500));
     const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
@@ -1190,7 +1190,7 @@ async function registerSlashCommands(forceOverwrite = false) {
 
   try {
     const rest = new REST({ version: '10' }).setToken(token);
-    const commands = testifyCommands.map(cmd => cmd.toJSON());
+    const commands = spideyCommands.map(cmd => cmd.toJSON());
     const rawGuildIds = process.env.REGISTER_GUILD_IDS || process.env.GUILD_ID || '';
     const guildIds = rawGuildIds
       .split(',')
@@ -1354,7 +1354,7 @@ app.get('/api/guilds', async (req, res) => {
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot && !msg.guild.config?.messageCountingBots) return;
   if (!msg.member) return;
-  if (await handleTestifyPrefix(msg, { client })) return;
+  if (await handlespideyPrefix(msg, { client })) return;
   
   // LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
   const guildConfig = getGuildConfig(msg.guild.id);
@@ -2106,7 +2106,7 @@ client.on("messageCreate", async (msg) => {
     const replyMsg = await msg.reply("🔁 Registering slash commands...");
     try {
       const rest = new REST({ version: '10' }).setToken(token);
-      const commands = testifyCommands.map(cmd => cmd.toJSON());
+      const commands = spideyCommands.map(cmd => cmd.toJSON());
       console.log(`📝 Pushing ${commands.length} commands...`);
       const startTime = Date.now();
       
@@ -3177,9 +3177,9 @@ client.on("interactionCreate", async (interaction) => {
   // and Discord rejects it with Unknown interaction (10062).
   if (interaction.isChatInputCommand() && interaction.commandName === "ask") return;
 
-  // Dispatch modular Testify commands before the legacy monolith handles interactions.
+  // Dispatch modular spidey commands before the legacy monolith handles interactions.
   if (interaction.isChatInputCommand()) {
-    const handled = await handleTestifyInteraction(interaction, { client });
+    const handled = await handlespideyInteraction(interaction, { client });
     if (handled) return;
   }
 
@@ -9061,7 +9061,7 @@ client.once('ready', () => {
   }
 
   console.log('🔧 Registering unified command/event handlers...');
-  try { registerTestifyHandlers(client); console.log('✅ Core command/event handlers registered'); } catch (err) { console.error('❌ Failed to register core command/event handlers:', err.message); }
+  try { registerspideyHandlers(client); console.log('✅ Core command/event handlers registered'); } catch (err) { console.error('❌ Failed to register core command/event handlers:', err.message); }
 
 
 });
