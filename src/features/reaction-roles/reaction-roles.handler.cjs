@@ -80,13 +80,21 @@ async function sendDmConfirmation(user, message, guild, settings) {
 async function handleReactionAdd(reaction, user) {
   if (user.bot) return;
   const guild = reaction.message.guild;
+  console.log(`[reaction-roles] Reaction add received: guild=${guild?.id || "none"} message=${reaction.message.id} emoji=${reaction.emoji.toString()} user=${user.id}`);
   if (!guild) return;
 
   const settings = service.getConfig(guild.id);
-  if (settings.enabled === false) return;
+  if (settings.enabled === false) {
+    console.log(`[reaction-roles] Ignoring reaction: feature disabled for guild ${guild.id}`);
+    return;
+  }
   const entries = service.getEntriesForMessage(guild.id, reaction.message.id);
   const entry = entries.find((e) => entryMatchesEmoji(e, reaction.emoji));
-  if (!entry) return;
+  if (!entry) {
+    console.log(`[reaction-roles] No mapping matched message ${reaction.message.id}; mappings for message=${entries.length}; notificationChannel=${settings.notificationChannelId || "unset"}; updates=${settings.updateNotifications}; dm=${settings.dmConfirm || settings.dmConfirmations}`);
+    return;
+  }
+  console.log(`[reaction-roles] Matched role mapping: role=${entry.roleId}; notificationChannel=${settings.notificationChannelId || "unset"}; updates=${settings.updateNotifications}; errors=${settings.errorReporting}; dm=${settings.dmConfirm || settings.dmConfirmations}`);
 
   const member = await resolveMember(guild, user.id);
   if (!member) return;
@@ -182,7 +190,13 @@ function registerReactionRolesHandler(client) {
 
   client.on("messageReactionAdd", async (reaction, user) => {
     const fetched = await fetchReaction(reaction);
-    if (fetched) await handleReactionAdd(fetched, user);
+    if (fetched) {
+      try {
+        await handleReactionAdd(fetched, user);
+      } catch (error) {
+        console.error("[reaction-roles] Unhandled reaction-add handler error:", error?.stack || error?.message || error);
+      }
+    }
   });
 
   client.on("messageReactionRemove", async (reaction, user) => {
