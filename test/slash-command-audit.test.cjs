@@ -43,13 +43,13 @@ test('every moderation slash command is routed to an implemented moderation hand
 });
 
 test('all deployments clear shared globals and register commands only per guild', () => {
-  assert.match(indexSource, /Routes\\.applicationCommands\\(client\\.user\\.id\\),\\s*\\{\\s*body:\\s*\\[\\]\\s*\\}/,
+  assert.ok(indexSource.includes('rest.put(Routes.applicationCommands(client.user.id), { body: [] })'),
     'startup must clear legacy global commands');
-  assert.match(indexSource, /Routes\\.applicationGuildCommands\\(client\\.user\\.id,\\s*guild\\.id\\)/,
+  assert.ok(indexSource.includes('rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands })'),
     'startup must register commands per guild');
-  assert.doesNotMatch(indexSource, /Routes\\.applicationCommands\\(client\\.user\\.id\\),\\s*\\{\\s*body:\\s*commands\\s*\\}/,
+  assert.ok(!indexSource.includes('rest.put(Routes.applicationCommands(client.user.id), { body: commands })'),
     'no deployment may publish the command list globally');
-  assert.equal((indexSource.match(/Routes\\.applicationCommands\\(client\\.user\\.id\\)/g) || []).length, 1,
+  assert.equal(indexSource.split('Routes.applicationCommands(client.user.id)').length - 1, 1,
     'the global command route should only be used to clear legacy commands');
 });
 
