@@ -239,7 +239,7 @@ async function execute(i,ctx){
     if(n==='unban'){
       if(!i.memberPermissions?.has(PermissionFlagsBits.BanMembers)&&!isAdmin(i)) return respond({content:'❌ You need Ban Members permission.',ephemeral:true});
       const userId = String(i.options.getString('user_id') || '').trim();
-      if(!/^\\d{17,20}$/.test(userId)) return respond({content:'❌ Enter a valid Discord user ID (17–20 digits).',ephemeral:true});
+      if(!/^\d{17,20}$/.test(userId)) return respond({content:'❌ Enter a valid Discord user ID (17–20 digits).',ephemeral:true});
       const existingBan = await i.guild.bans.fetch(userId).catch(() => null);
       if(!existingBan) return respond({content:'ℹ️ That user is not currently banned from this server.',ephemeral:true});
       await i.guild.bans.remove(userId, 'Unbanned by '+i.user.tag);
