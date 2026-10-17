@@ -228,6 +228,25 @@ async function execute(i,ctx){
     await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📨 Invite statistics — '+target.username).addFields({name:'Successful joins',value:fmt(stats.joins),inline:true},{name:'Members left',value:fmt(stats.leaves),inline:true},{name:'Active invites',value:fmt(stats.active),inline:true})]});
     return true;
   }
+  if(commandRoot==='timeout'){
+    const target=i.options.getUser('user',true),member=await i.guild.members.fetch(target.id).catch(()=>null),minutes=i.options.getInteger('duration',true),reasonText=i.options.getString('reason')||'No reason provided';
+    if(!i.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)){await i.reply({content:'You need Moderate Members permission to timeout users.',ephemeral:true});return true;}
+    if(!member){await i.reply({content:'That user is not a member of this server.',ephemeral:true});return true;}
+    const bot=i.guild.members.me||await i.guild.members.fetchMe().catch(()=>null);
+    if(!bot?.permissions.has(PermissionFlagsBits.ModerateMembers)||!member.moderatable){await i.reply({content:'SPIDEY BOT cannot timeout this member. Check permissions and role hierarchy.',ephemeral:true});return true;}
+    if(member.id===i.guild.ownerId||member.roles.highest.position>=i.member.roles.highest.position&&!isAdmin(i)){await i.reply({content:'You cannot timeout a member with an equal or higher role.',ephemeral:true});return true;}
+    await member.timeout(minutes*60000,reasonText);
+    await sendModerationLog(i,'MUTE',target,reasonText);
+    await i.reply({content:'⏱️ Timed out '+target.toString()+' for '+minutes+' minute(s). Reason: '+reasonText,allowedMentions:{parse:[]}});
+    return true;
+  }
+  if(commandRoot==='cases'){
+    const target=i.options.getUser('user',true),warnings=svc.getWarnings(i.guild.id,target.id);
+    const cfg=svc.get(i.guild.id),events=(cfg.audit?.entries||[]).filter(e=>String(e.targetId||e.userId||'')===target.id||String(e.target||'').includes(target.id)).slice(-15).reverse();
+    const rows=warnings.slice(-15).reverse().map((w,index)=>'**Warn '+(warnings.length-index)+'** — '+String(w.reason||'No reason').slice(0,250)+' · <@'+String(w.by||'0')+'>').concat(events.map(e=>'**'+String(e.type||e.title||'Case')+'** — '+String(e.description||'').slice(0,200)));
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('Moderation cases — '+target.username).setDescription(rows.length?rows.join('\\n'):'No stored warnings or matching audit cases were found.').setFooter({text:warnings.length+' warning(s) recorded'})],ephemeral:true});
+    return true;
+  }
   if(commandRoot==='command'){
     if(!isAdmin(i)){await i.reply({content:'Only administrators can change command policies.',ephemeral:true});return true;}
     const cfg=svc.get(i.guild.id);
@@ -700,7 +719,7 @@ async function execute(i,ctx){
           if(!hasPerm(PermissionFlagsBits.BanMembers)) return deny('❌ You need Ban Members permission.');
           if(member&&!canModerateTarget(member)) return deny('❌ You cannot ban a member whose highest role is equal to or above yours.');
           if(member&&!member.bannable) return deny('❌ I cannot ban that member. Check the bot’s Ban Members permission and role hierarchy.');
-          await i.guild.members.ban(targetUser.id,{reason});
+          await i.guild.members.ban(targetUser.id,{reason,deleteMessageSeconds:Math.max(0,Math.min(7,Number(i.options.getInteger('delete_messages_duration'))||0))*86400});
           await respond({content:'🔨 Banned '+targetUser.tag+'. Reason: '+reason});
           await sendModerationLog(i,'BAN',targetUser,reason);
           return true;
@@ -753,8 +772,16 @@ async function execute(i,ctx){
         if(!i.channel?.isTextBased?.()||!i.channel.messages?.bulkDelete) return deny('❌ This command only works in a text channel.');
         const amount=i.options.getInteger('amount');
         if(!Number.isInteger(amount)||amount<1||amount>100) return deny('❌ Choose between 1 and 100 messages.');
-        const deleted=await i.channel.bulkDelete(amount,true);
-        await respond({content:'🧹 Deleted '+deleted.size+' recent messages. Messages older than 14 days are skipped.',ephemeral:true});
+        const filterUser=i.options.getUser('user');
+        let deleted;
+        if(filterUser){
+          const fetched=await i.channel.messages.fetch({limit:100});
+          const matches=fetched.filter(message=>message.author.id===filterUser.id).first(amount);
+          deleted=matches.length?await i.channel.bulkDelete(matches,true):new Map();
+        }else{
+          deleted=await i.channel.bulkDelete(amount,true);
+        }
+        await respond({content:'🧹 Deleted '+deleted.size+' recent message(s)'+(filterUser?' from '+filterUser.toString():'')+'. Messages older than 14 days are skipped.',ephemeral:true});
         return true;
       }
 
