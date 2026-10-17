@@ -67,6 +67,9 @@ async function syncGuildCustomSlashCommands(client, guildId, previousItems, next
 
 async function handleCustomSlashCommand(interaction) {
   if (!interaction?.guildId || !interaction.isChatInputCommand?.()) return false;
+  // Built-in commands (including /mod mute and /mod unmute) must bypass custom
+  // command config loading so the main router can acknowledge them within 3 seconds.
+  if (RESERVED_NAMES.has(String(interaction.commandName || '').toLowerCase())) return false;
   const config = svc.get(interaction.guildId);
   const custom = config.customCommands || {};
   const items = Array.isArray(custom.items) ? custom.items : [];
