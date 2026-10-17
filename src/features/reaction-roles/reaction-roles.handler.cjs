@@ -1,3 +1,4 @@
+const { PermissionFlagsBits } = require("discord.js");
 const service = require("./reaction-roles.service.cjs");
 
 let registered = false;
@@ -57,16 +58,27 @@ async function handleReactionAdd(reaction, user) {
   const member = await resolveMember(guild, user.id);
   if (!member) return;
 
-  const role = guild.roles.cache.get(entry.roleId);
+  const role = guild.roles.cache.get(entry.roleId) || await guild.roles.fetch(entry.roleId).catch(() => null);
   if (!role) {
-    console.warn(
-      `[reaction-roles] Skipping assign: role ${entry.roleId} no longer exists in ${guild.id}.`
-    );
+    console.warn(`[reaction-roles] Skipping assign: role ${entry.roleId} no longer exists in ${guild.id}.`);
     return;
   }
   if (member.roles.cache.has(role.id)) return;
 
   try {
+    const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
+    if (!botMember) {
+      console.error(`[reaction-roles] Cannot assign ${role.name}: could not resolve the bot member in ${guild.name} (${guild.id}).`);
+      return;
+    }
+    if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+      console.error(`[reaction-roles] Cannot assign ${role.name} in ${guild.name}: the bot is missing the Manage Roles permission.`);
+      return;
+    }
+    if (role.managed || role.position >= botMember.roles.highest.position) {
+      console.error(`[reaction-roles] Cannot assign ${role.name} in ${guild.name}: move the SPIDEY BOT role above this role in Server Settings > Roles.`);
+      return;
+    }
     if (settings.allowMultiple === false) {
       const otherRoleIds = [...new Set(entries.filter(e => e.roleId !== role.id).map(e => e.roleId))].filter(roleId => member.roles.cache.has(roleId));
       if (otherRoleIds.length) await member.roles.remove(otherRoleIds, "Reaction role single-selection mode");
@@ -85,7 +97,11 @@ async function handleReactionAdd(reaction, user) {
         .catch(() => {});
     }
   } catch (e) {
-    console.error("[reaction-roles] Failed to assign role:", e.message);
+    if (e.code === 50013 || e.code === "50013") {
+      console.error(`[reaction-roles] Discord denied assigning ${role.name} in ${guild.name}. Check that SPIDEY BOT has Manage Roles and its highest role is above the target role.`);
+    } else {
+      console.error("[reaction-roles] Failed to assign role:", e.message);
+    }
   }
 }
 
@@ -103,11 +119,9 @@ async function handleReactionRemove(reaction, user) {
   const member = await resolveMember(guild, user.id);
   if (!member) return;
 
-  const role = guild.roles.cache.get(entry.roleId);
+  const role = guild.roles.cache.get(entry.roleId) || await guild.roles.fetch(entry.roleId).catch(() => null);
   if (!role) {
-    console.warn(
-      `[reaction-roles] Skipping remove: role ${entry.roleId} no longer exists in ${guild.id}.`
-    );
+    console.warn(`[reaction-roles] Skipping remove: role ${entry.roleId} no longer exists in ${guild.id}.`);
     return;
   }
   if (!member.roles.cache.has(role.id)) return;
