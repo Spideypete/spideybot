@@ -1,11 +1,11 @@
 'use strict';
 
 const { REST, Routes, SlashCommandBuilder } = require('discord.js');
-const { testifyCommands } = require('../testify-suite/testify-suite.commands.cjs');
-const svc = require('../testify-suite/testify-suite.service.cjs');
+const { spideyCommands } = require('../spidey-suite/spidey-suite.commands.cjs');
+const svc = require('../spidey-suite/spidey-suite.service.cjs');
 
 const NAME_PATTERN = /^[a-z0-9-]{1,32}$/;
-const RESERVED_NAMES = new Set(testifyCommands.map(command => String(command.name).toLowerCase()));
+const RESERVED_NAMES = new Set(spideyCommands.map(command => String(command.name).toLowerCase()));
 
 function normalizeGuildCommand(command) {
   const clean = {
