@@ -54,6 +54,94 @@ async function execute(i,ctx){
   // /ask belongs exclusively to the dedicated Gemini listener in index.cjs.
   // Never let the modular suite acknowledge the same interaction a second time.
   if(i.commandName==='ask')return false;
+  const commandRoot=i.commandName, commandSub=i.options.getSubcommand(false);
+  // New mapping commands that have dedicated behavior not covered by the legacy aliases.
+  if(commandRoot==='welcome' && commandSub==='test' || commandRoot==='goodbye' && commandSub==='test'){
+    const config=await serverMessages.getConfig(i.guild.id);
+    const isWelcome=commandRoot==='welcome';
+    const enabled=isWelcome?config.enableWelcome:config.enableGoodbye;
+    const channelId=isWelcome?config.welcomeChannel:config.goodbyeChannel;
+    const template=isWelcome?config.welcomeMessage:config.goodbyeMessage;
+    const embedConfig=isWelcome?config.welcomeEmbed:config.goodbyeEmbed;
+    if(!enabled || !channelId){
+      await i.reply({content:'This message is not fully configured yet. Enable it and choose its channel in the dashboard first.',ephemeral:true});
+      return true;
+    }
+    const target=i.guild.channels.cache.get(channelId)||await i.guild.channels.fetch(channelId).catch(()=>null);
+    if(!target?.isTextBased()){
+      await i.reply({content:'The configured message channel is missing or is not a text channel.',ephemeral:true});
+      return true;
+    }
+    const mockMember=await i.guild.members.fetch(i.user.id).catch(()=>null);
+    const payload={};
+    const message=serverMessages.replaceVariables(template,mockMember||i.user,i.guild);
+    const embed=serverMessages.buildEmbed(embedConfig,mockMember||i.user,i.guild);
+    if(message)payload.content=message;
+    if(embed)payload.embeds=[embed];
+    if(!Object.keys(payload).length)payload.content=isWelcome?'Welcome message preview':'Goodbye message preview';
+    const preview=await target.send({...payload,allowedMentions:{parse:[]}});
+    await i.reply({content:'Preview sent to '+target.toString()+': '+preview.url,ephemeral:true});
+    return true;
+  }
+  if(commandRoot==='levels' && commandSub==='leaderboard'){
+    const rows=svc.topXp(i.guild.id);
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🏆 XP Leaderboard').setDescription(rows.length?rows.slice(0,10).map((x,index)=>'**'+(index+1)+'.** <@'+x.id+'> — Level '+(x.level||0)+' · '+fmt(x.xp||0)+' XP').join('\\n'):'No XP has been earned yet.') ]});
+    return true;
+  }
+  if(commandRoot==='levels' && commandSub==='xp'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can adjust XP.',ephemeral:true});return true;}
+    const action=i.options.getString('action',true),target=i.options.getUser('user',true),amount=i.options.getInteger('amount',true);
+    const cfg=svc.get(i.guild.id),levels=cfg.levels;levels.users=levels.users||{};
+    const current=levels.users[target.id]||{xp:0,level:0};
+    const next=action==='give'?(Number(current.xp)||0)+amount:action==='take'?Math.max(0,(Number(current.xp)||0)-amount):amount;
+    levels.users[target.id]={xp:next,level:Math.floor(next/Math.max(1,Number(levels.xpPerLevel)||500))};
+    svc.save(i.guild.id,{levels});
+    await i.reply({content:'Updated XP for '+target.toString()+': '+fmt(next)+' XP (Level '+levels.users[target.id].level+').',ephemeral:true});
+    return true;
+  }
+  if(commandRoot==='invite' && commandSub==='leaderboard'){
+    const rows=inviteTracker.leaderboard(i.guild.id,10);
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('🏆 Invite leaderboard').setDescription(rows.length?rows.map((x,index)=>'**'+(index+1)+'.** <@'+x.userId+'> — **'+fmt(x.active)+'** active invites').join('\\n'):'No invite data has been recorded yet.')]});
+    return true;
+  }
+  if(commandRoot==='cc'){
+    if(!isAdmin(i)){await i.reply({content:'Only server administrators can manage custom commands.',ephemeral:true});return true;}
+    const cfg=svc.get(i.guild.id),custom=cfg.customCommands||{},items=Array.isArray(custom.items)?custom.items.slice():[];
+    if(commandSub==='list'){
+      await i.reply({content:items.length?items.map(x=>'• /'+x.name+(x.enabled===false?' (disabled)':'')).join('\\n'):'No custom commands configured.',ephemeral:true});
+      return true;
+    }
+    const name=String(i.options.getString('name',true)).trim().toLowerCase();
+    if(!/^[a-z0-9-]{1,32}$/.test(name)){await i.reply({content:'Use 1–32 lowercase letters, numbers, or hyphens for the command name.',ephemeral:true});return true;}
+    if(commandSub==='delete'){
+      const next=items.filter(x=>String(x.name).toLowerCase()!==name);
+      if(next.length===items.length){await i.reply({content:'No custom command named /'+name+' was found.',ephemeral:true});return true;}
+      svc.save(i.guild.id,{customCommands:{...custom,items:next}});
+      try{await customSlashRuntime.syncGuildCustomSlashCommands(ctx.client,i.guild.id,items,next);}
+      catch(error){svc.save(i.guild.id,{customCommands:custom});await i.reply({content:'Could not unregister that command: '+String(error.message||error).slice(0,800),ephemeral:true});return true;}
+      await i.reply({content:'Deleted /'+name+'.',ephemeral:true});return true;
+    }
+    const response=i.options.getString('response',true);
+    if(items.some(x=>String(x.name).toLowerCase()===name)){await i.reply({content:'/'+name+' already exists. Delete it first if you want to replace it.',ephemeral:true});return true;}
+    const next=[...items,{name,messageTemplate:response,enabled:true,counterEnabled:false,count:0}];
+    if(next.length>25){await i.reply({content:'This server already has the maximum of 25 custom commands.',ephemeral:true});return true;}
+    try{
+      await customSlashRuntime.syncGuildCustomSlashCommands(ctx.client,i.guild.id,items,next);
+      svc.save(i.guild.id,{customCommands:{...custom,items:next}});
+      await i.reply({content:'Created /'+name+'. It is now registered for this server.',ephemeral:true});
+    }catch(error){await i.reply({content:'Could not create /'+name+': '+String(error.message||error).slice(0,800),ephemeral:true});}
+    return true;
+  }
+  if(commandRoot==='premium'){
+    const cfg=svc.get(i.guild.id),premium=cfg.premium||cfg.subscription||{};
+    if(commandSub==='status'){
+      const active=Boolean(premium.active||premium.status==='active'||premium.tier&&premium.tier!=='free');
+      await i.reply({embeds:[new EmbedBuilder().setColor(active?0x6d3df5:0x747f8d).setTitle('SPIDEY BOT Premium').setDescription(active?'Premium is recorded as active for this server.':'No active Premium subscription is recorded in the bot configuration.').addFields({name:'Tier',value:String(premium.tier||'Free'),inline:true},{name:'Expires',value:premium.expiresAt?String(premium.expiresAt):'Not recorded',inline:true})],ephemeral:true});
+      return true;
+    }
+    await i.reply({content:'Premium key redemption is not connected to a verified subscription/key store yet. No key was redeemed. Configure the subscription provider before using this command.',ephemeral:true});
+    return true;
+  }
   const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:warn':'warn','mod:warnings':'warnings','mod:kick':'kick','mod:ban':'ban','mod:mute':'mute','mod:unmute':'unmute','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset','reactionrole:add':'reactionroleadd','reactionrole:remove':'reactionroleremove','reactionrole:list':'reactionrolelist','reactionrole:toggle':'reactionroletoggle'},n=alias[(root+':'+sub)]||root;
   const deferredModerationCommands=['warn','warnings','kick','ban','mute','unmute','unban','purge','softban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread','reactionroleadd','reactionroleremove','reactionrolelist','reactionroletoggle'];
   // Acknowledge these interactions immediately, before config checks or Discord API requests.
