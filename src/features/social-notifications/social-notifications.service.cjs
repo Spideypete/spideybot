@@ -80,6 +80,7 @@ function addNotification(guildId, notification) {
     platform: notification.platform,
     username: notification.username,
     channelId: notification.channelId,
+    pingRoleId: notification.pingRoleId || null,
     enabled: notification.enabled !== false,
     lastChecked: null,
     isLive: false,
@@ -113,6 +114,23 @@ function removeNotification(guildId, platform, username) {
   saveGuildConfig(guildId, guildConfig);
 
   return { success: true, notification: removed };
+}
+
+function updateFeedStatus(guildId, platform, username, itemId, title, url) {
+  const sn = getSocialNotifications(guildId);
+  if (!sn.notifications) return { success: false, error: 'No notifications configured.' };
+  const notification = sn.notifications.find(n => n.platform === platform && n.username.toLowerCase() === username.toLowerCase());
+  if (!notification) return { success: false, error: 'Notification not found.' };
+  const previousId = notification.lastItemId || null;
+  const hadPreviousCheck = Boolean(notification.lastChecked);
+  notification.lastItemId = String(itemId || '');
+  notification.streamTitle = String(title || notification.streamTitle || '');
+  notification.latestUrl = String(url || notification.latestUrl || '');
+  notification.lastChecked = new Date().toISOString();
+  const guildConfig = getGuildConfig(guildId);
+  guildConfig.socialNotifications = sn;
+  saveGuildConfig(guildId, guildConfig);
+  return { success: true, isNew: hadPreviousCheck && Boolean(itemId) && String(itemId) !== String(previousId), notification };
 }
 
 function toggleNotification(guildId, platform, username) {
@@ -186,5 +204,6 @@ module.exports = {
   toggleNotification,
   getEnabledNotifications,
   getNotifications,
-  updateStreamStatus
+  updateStreamStatus,
+  updateFeedStatus
 };
