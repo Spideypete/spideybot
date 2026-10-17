@@ -1273,29 +1273,31 @@ function registerSpideyHandlers(client){
       try{await achievements.trackMessage(msg,{...(c.achievements||{}),enabled:c.plugins?.achievements!==false&&(c.achievements?.enabled!==false)});}catch(err){console.error('[ACHIEVEMENTS TRACKER]',err.message);}
       if(featureIsOn(c,'automod')&&a.enabled===true){
         const content=String(msg.content||''),now=Date.now(),key=msg.guild.id+':'+msg.author.id;
+        const whitelist=Array.isArray(a.whitelist)?a.whitelist:[];
+        const isWhitelisted=whitelist.includes('channel:'+msg.channelId)||whitelist.includes('user:'+msg.author.id)||msg.member?.roles?.cache?.some(role=>whitelist.includes('role:'+role.id));
         let reason=null;
-        if(a.antiInvite!==false&&/(?:discord\.gg\/|discord(?:app)?\.com\/invite\/)/i.test(content))reason='Discord invite link';
-        if(!reason&&a.antiLink&&/https?:\/\//i.test(content)){
+        if(!isWhitelisted&&a.antiInvite!==false&&/(?:discord\.gg\/|discord(?:app)?\.com\/invite\/)/i.test(content))reason='Discord invite link';
+        if(!isWhitelisted&&!reason&&a.antiLink&&/https?:\/\//i.test(content)){
           const urls=content.match(/https?:\/\/[^\s<>]+/gi)||[],blockedDomains=Array.isArray(a.blockedDomains)?a.blockedDomains.map(x=>String(x).toLowerCase().replace(/^https?:\/\//,'').split('/')[0]).filter(Boolean):[];
           const suspicious=['free-nitro','nitro-free','gift-discord','steamcommunity','robux-free','discordapp.com/invite','bit.ly/discord'];
           if(urls.some(raw=>{let host='';try{host=new URL(raw).hostname.toLowerCase();}catch{}return suspicious.some(x=>raw.toLowerCase().includes(x))||blockedDomains.some(x=>host===x||host.endsWith('.'+x));}))reason='Suspicious or blocked link';
         }
-        const term=!reason?findAutoModTerm(content,c):null;
+        const term=!isWhitelisted&&!reason?findAutoModTerm(content,c):null;
         if(!reason&&term)reason='Blocked keyword matched';
-        if(!reason&&a.massMention!==false){
+        if(!isWhitelisted&&!reason&&a.massMention!==false){
           const count=(msg.mentions.users.size||0)+(msg.mentions.roles.size||0)+(msg.mentions.everyone?1:0);
           if(count>Math.max(1,Math.min(50,Number(a.maxMentions)||5)))reason='Mass mention limit exceeded';
         }
-        if(!reason&&a.caps&&content.length>=12){
+        if(!isWhitelisted&&!reason&&a.caps&&content.length>=12){
           const letters=content.match(/[A-Za-z]/g)||[],upper=content.match(/[A-Z]/g)||[];
           if(letters.length>=12&&upper.length/letters.length>=0.8)reason='Excessive capitalisation';
         }
-        if(!reason&&a.antiDuplicate){
+        if(!isWhitelisted&&!reason&&a.antiDuplicate){
           const repeated=autoModRepeat.get(key);
           if(repeated&&repeated.content===normalizeText(content)&&now-repeated.at<30000)reason='Repeated identical message';
           autoModRepeat.set(key,{content:normalizeText(content),at:now});
         }
-        if(!reason&&a.antiSpam!==false){
+        if(!isWhitelisted&&!reason&&a.antiSpam!==false){
           const windowMs=Math.max(1000,Math.min(60000,Number(a.windowMs)||8000)),threshold=Math.max(2,Math.min(30,Number(a.maxMessages)||6));
           const hits=(autoModRate.get(key)||[]).filter(t=>now-t<windowMs);hits.push(now);autoModRate.set(key,hits);
           if(hits.length>=threshold)reason='Rapid-message spam';
