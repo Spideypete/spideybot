@@ -1251,6 +1251,7 @@ async function registerSlashCommands(forceOverwrite = false) {
       .split(',')
       .map(id => id.trim())
       .filter(Boolean);
+    if (guildIds.length === 0) guildIds.push(...client.guilds.cache.keys());
     
     if (guildIds.length > 0) {
       console.log(`📝 Registering ${commands.length} slash commands to ${guildIds.length} guild(s)...`);
@@ -1290,45 +1291,8 @@ async function registerSlashCommands(forceOverwrite = false) {
       return { success: true, count: commands.length, guilds: results };
     }
 
-    console.log(`📝 Registering ${commands.length} modern slash commands globally...`);
-    console.log('⏳ Global registration can take up to 1 hour to appear everywhere.');
-
-    // First delete existing global commands if forceOverwrite
-    if (forceOverwrite) {
-      try {
-        const existing = await rest.get(Routes.applicationCommands(client.user.id));
-        if (Array.isArray(existing)) {
-          console.log(`🗑️ Deleting ${existing.length} existing commands before re-registration...`);
-          for (let i = 0; i < existing.length; i++) {
-            const cmd = existing[i];
-            try {
-              await rest.delete(Routes.applicationCommand(client.user.id, cmd.id));
-              // Add small delay every 5 deletions to avoid rate limiting
-              if (i > 0 && i % 5 === 0) {
-                await new Promise(r => setTimeout(r, 250));
-              }
-            } catch(e) {
-              // Ignore individual delete errors
-            }
-          }
-        }
-      } catch(e) {
-        console.warn('Could not fetch existing commands to delete:', e.message);
-      }
-    }
-
-    // Register commands globally
-    const startTime = Date.now();
-    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    const duration = Date.now() - startTime;
-
-    if (Array.isArray(data)) {
-      console.log(`✅ Registered ${data.length} slash commands globally (took ${duration}ms)`);
-      return { success: true, count: data.length };
-    }
-
-    console.log(`✅ Commands registered globally (took ${duration}ms)`);
-    return { success: true, count: commands.length };
+    console.warn('No guild IDs available; refusing to register slash commands globally.');
+    return { success: false, error: 'No guild IDs available for guild-scoped registration.' };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error('❌ Failed to register slash commands:', errMsg);
