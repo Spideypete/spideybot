@@ -1002,7 +1002,7 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
-registerTestifyHandlers(client);
+// Testify command handlers are registered once after the client is ready below.
 try {
   require("./src/features/reaction-roles/reaction-roles.handler.cjs").registerReactionRolesHandler(client);
   console.log("✅ Reaction role add/remove handlers registered");
