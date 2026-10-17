@@ -1116,10 +1116,20 @@ client.on('interactionCreate', async interaction => {
       if (await customSlashRuntime.handleCustomSlashCommand(interaction)) return;
     }
   } catch (e) {
-    console.error('[COMMANDS] interaction handler failed:', e);
+    const isAsk = interaction.isChatInputCommand?.() && interaction.commandName === 'ask';
+    console.error(isAsk ? '[Gemini AI] /ask interaction handler failed:' : '[COMMANDS] interaction handler failed:', e);
     const unknownInteraction = e?.code === 10062 || e?.rawError?.code === 10062;
     if (!unknownInteraction && interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
-      await interaction.reply({content:'❌ Command failed to execute.',ephemeral:true}).catch(()=>{});
+      const message = isAsk
+        ? 'I could not start the AI request. Please try /ask again in a moment.'
+        : '❌ Command failed to execute.';
+      await interaction.reply({content: message, ephemeral:true}).catch(replyError => {
+        console.error('[COMMANDS] Failed to send interaction error response:', replyError?.message || replyError);
+      });
+    } else if (isAsk && interaction.deferred && !interaction.replied) {
+      await interaction.editReply('The AI request could not be completed. Please try /ask again in a moment.').catch(replyError => {
+        console.error('[Gemini AI] Failed to send /ask fallback response:', replyError?.message || replyError);
+      });
     }
   }
 });
