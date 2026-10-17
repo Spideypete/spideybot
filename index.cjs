@@ -1010,23 +1010,7 @@ const client = new Client({
 });
 
 // spidey command handlers are registered once after the client is ready below.
-try {
-  require("./src/features/reaction-roles/reaction-roles.handler.cjs").registerReactionRolesHandler(client);
-  console.log("✅ Reaction role add/remove handlers registered");
-} catch (err) {
-  console.error("❌ Failed to register reaction role handlers:", err.message);
-}
-
-try {
-  require("./src/features/server-messages/server-messages.handler.cjs").initialize(
-    client,
-    path.join(__dirname, "config.json")
-  );
-  console.log("✅ Welcome/goodbye member event handlers registered");
-} catch (err) {
-  console.error("❌ Failed to register welcome/goodbye handlers:", err.message);
-}
-
+// Register /ask first so it can acknowledge Discord interactions before feature listeners run.
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
 const handledAskInteractions = new WeakSet();
 client.on('interactionCreate', async interaction => {
@@ -1132,6 +1116,24 @@ client.on('interactionCreate', async interaction => {
     }
   }
 });
+
+try {
+  require("./src/features/reaction-roles/reaction-roles.handler.cjs").registerReactionRolesHandler(client);
+  console.log("✅ Reaction role add/remove handlers registered");
+} catch (err) {
+  console.error("❌ Failed to register reaction role handlers:", err.message);
+}
+
+try {
+  require("./src/features/server-messages/server-messages.handler.cjs").initialize(
+    client,
+    path.join(__dirname, "config.json")
+  );
+  console.log("✅ Welcome/goodbye member event handlers registered");
+} catch (err) {
+  console.error("❌ Failed to register welcome/goodbye handlers:", err.message);
+}
+
 client.on('messageCreate', async message => {
   try {
     if (await handleSpideyPrefix(message, { client })) return;
