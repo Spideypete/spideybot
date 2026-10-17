@@ -1021,10 +1021,16 @@ try {
 }
 
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
+const handledAskInteractions = new WeakSet();
 client.on('interactionCreate', async interaction => {
   try {
     if (interaction.isChatInputCommand() && interaction.commandName === 'ask') {
-      await interaction.deferReply();
+      // A Discord interaction must be acknowledged only once. Guard this event
+      // before the first await so duplicate dispatch cannot race another handler.
+      if (handledAskInteractions.has(interaction)) return;
+      handledAskInteractions.add(interaction);
+      if (!interaction.deferred && !interaction.replied) await interaction.deferReply();
+      if (interaction.replied) return;
       const question = interaction.options.getString('question', true).trim();
       const guildConfig = interaction.guildId ? getGuildConfig(interaction.guildId) : {};
       const aiSettings = guildConfig.aiAssistantSettings || {};
@@ -1055,7 +1061,8 @@ client.on('interactionCreate', async interaction => {
     }
   } catch (e) {
     console.error('[COMMANDS] interaction handler failed:', e);
-    if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
+    const unknownInteraction = e?.code === 10062 || e?.rawError?.code === 10062;
+    if (!unknownInteraction && interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
       await interaction.reply({content:'❌ Command failed to execute.',ephemeral:true}).catch(()=>{});
     }
   }
