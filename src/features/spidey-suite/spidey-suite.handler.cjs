@@ -328,7 +328,7 @@ async function execute(i,ctx){
         if(!hasPerm(PermissionFlagsBits.ManageMessages)) return deny('❌ You need Manage Messages permission.');
         const channel=i.options.getChannel('channel');
         if(!channel?.isTextBased?.()) return deny('❌ Choose a text channel.');
-        await channel.send({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('Announcement').setDescription(i.options.getString('message').slice(0,4000)).setTimestamp()});
+        await channel.send({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('Announcement').setDescription(i.options.getString('message').slice(0,4000)).setTimestamp()]});
         await respond({content:'📣 Announcement sent to '+channel.toString()+'.',ephemeral:true});
         return true;
       }
