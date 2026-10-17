@@ -227,6 +227,29 @@ async function execute(i,ctx){
     await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📨 Invite statistics — '+target.username).addFields({name:'Successful joins',value:fmt(stats.joins),inline:true},{name:'Members left',value:fmt(stats.leaves),inline:true},{name:'Active invites',value:fmt(stats.active),inline:true})]});
     return true;
   }
+  if(commandRoot==='command'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can change command policies.',ephemeral:true});return true;}
+    const cfg=svc.get(i.guild.id);
+    if(commandSub==='logging'){
+      svc.save(i.guild.id,{commandLogging:i.options.getBoolean('enabled',true)});
+      await i.reply({content:'Command logging '+(i.options.getBoolean('enabled',true)?'enabled':'disabled')+'.',ephemeral:true});return true;
+    }
+    const name=i.options.getString('command_name',true).toLowerCase(),decision=i.options.getString('decision',true),type=i.options.getString('target_type',true),id=i.options.getString('target_id',true);
+    const overrides={...(cfg.commandOverrides||{}),[name]:{...(cfg.commandOverrides?.[name]||{}),[type+':'+id]:decision}};
+    svc.save(i.guild.id,{commandOverrides:overrides});
+    await i.reply({content:'Saved /'+name+' override: '+decision+' for '+type+' '+id+'.',ephemeral:true});return true;
+  }
+  if(commandRoot==='system'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can use system controls.',ephemeral:true});return true;}
+    const cfg=svc.get(i.guild.id),sub=commandSub;
+    if(sub==='diagnostic'){
+      const me=i.guild.members.me,perms=me?.permissions?.toArray()||[];
+      await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('SPIDEY BOT diagnostics').addFields({name:'Bot user',value:ctx.client.user?.tag||'Not ready',inline:true},{name:'Guild',value:i.guild.name,inline:true},{name:'Gateway ping',value:String(ctx.client.ws.ping)+' ms',inline:true},{name:'Node.js',value:process.version,inline:true},{name:'Memory RSS',value:Math.round(process.memoryUsage().rss/1048576)+' MB',inline:true},{name:'Maintenance',value:String(Boolean(cfg.maintenanceMode)),inline:true},{name:'Bot permissions',value:perms.slice(0,20).join(', ')||'Unavailable'})],ephemeral:true});return true;
+    }
+    const mode=i.options.getString('mode',true),enabled=mode==='on';
+    svc.save(i.guild.id,{maintenanceMode:enabled});
+    await i.reply({content:'Maintenance mode '+(enabled?'enabled':'disabled')+' for this server.',ephemeral:true});return true;
+  }
   if(commandRoot==='emoji'){
     if(!isAdmin(i)){await i.reply({content:'Only administrators can manage server emojis.',ephemeral:true});return true;}
     if(!i.guild.members.me?.permissions.has(PermissionFlagsBits.ManageGuildExpressions)){await i.reply({content:'SPIDEY BOT needs Manage Expressions permission.',ephemeral:true});return true;}
@@ -405,6 +428,10 @@ async function execute(i,ctx){
   if(deferredModerationCommands.includes(n)&&!i.deferred&&!i.replied) await i.deferReply({ephemeral:true});
   const respondEarly=payload=>i.deferred||i.replied?i.editReply(payload):i.reply(payload);
   const c=svc.get(i.guild.id),u=who(i);
+  if(c.maintenanceMode===true&&!isAdmin(i)&&!['system'].includes(root)){
+    await i.reply({content:'SPIDEY BOT is in maintenance mode for this server. Please try again later.',ephemeral:true});return true;
+  }
+
   const custom=(Array.isArray(c.customCommands?.items)?c.customCommands.items:[]).find(x=>x.name===root&&x.enabled!==false);
   if(custom){
     if(c.blacklist?.includes(i.user.id)){await respondEarly({content:'You are blocked from using SPIDEY BOT features in this server.',ephemeral:true});return true;}
@@ -420,6 +447,13 @@ async function execute(i,ctx){
   const featureKey=featureForCommand(n);
   if(!featureIsOn(c,featureKey)){await respondEarly({content:'That feature is currently disabled by this server.',ephemeral:true});return true;}
   if(c.commandToggles?.[n]===false&&!isAdmin(i)){await respondEarly({content:'That command is disabled by this server.',ephemeral:true});return true;}
+  const commandPolicy=c.commandOverrides?.[n]||{};
+  const channelPolicy=commandPolicy['channel:'+i.channelId];
+  const rolePolicies=Object.entries(commandPolicy).filter(([key])=>key.startsWith('role:'));
+  const matchingRolePolicy=rolePolicies.find(([key])=>i.member?.roles?.cache?.has(key.slice(5)));
+  const decision=matchingRolePolicy?.[1]||channelPolicy;
+  if(decision==='deny'&&!isAdmin(i)){await respondEarly({content:'This command is denied for your role or this channel.',ephemeral:true});return true;}
+  if(decision==='allow'&&channelPolicy!=='allow'&&!matchingRolePolicy&&!isAdmin(i)){await respondEarly({content:'This command is only allowed for configured roles or channels.',ephemeral:true});return true;}
   const respond=payload=>{
     if(i.deferred||i.replied){
       if(payload&&typeof payload==='object'&&!Array.isArray(payload)){
