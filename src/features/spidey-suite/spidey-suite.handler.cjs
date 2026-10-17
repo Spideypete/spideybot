@@ -223,6 +223,58 @@ async function execute(i,ctx){
     await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📨 Invite statistics — '+target.username).addFields({name:'Successful joins',value:fmt(stats.joins),inline:true},{name:'Members left',value:fmt(stats.leaves),inline:true},{name:'Active invites',value:fmt(stats.active),inline:true})]});
     return true;
   }
+  if(commandRoot==='pay'){
+    const target=i.options.getUser('user',true),amount=i.options.getInteger('amount',true);
+    if(target.bot||target.id===i.user.id){await i.reply({content:'Choose another human member as the payment recipient.',ephemeral:true});return true;}
+    const cfg=svc.get(i.guild.id),economy=cfg.economy,from=svc.balance(i.guild.id,i.user.id),to=svc.balance(i.guild.id,target.id);
+    if(from.cash<amount){await i.reply({content:'You do not have enough cash for that payment.',ephemeral:true});return true;}
+    from.cash-=amount;to.cash+=amount;svc.save(i.guild.id,{economy});
+    await i.reply('💸 '+i.user.toString()+' paid '+target.toString()+' **'+fmt(amount)+'** '+String(economy.currency||'coins')+'.');
+    return true;
+  }
+  if(commandRoot==='remind'){
+    const raw=String(i.options.getString('time',true)).trim().toLowerCase(),task=i.options.getString('task',true);
+    const match=raw.match(/^(\\d{1,5})(s|m|h|d)$/);
+    if(!match){await i.reply({content:'Use a duration like 10m, 2h, or 1d.',ephemeral:true});return true;}
+    const amount=Number(match[1]),unit={s:1000,m:60000,h:3600000,d:86400000}[match[2]],delay=amount*unit;
+    if(!Number.isFinite(delay)||delay<10000||delay>30*86400000){await i.reply({content:'Reminders must be at least 10 seconds and no more than 30 days away.',ephemeral:true});return true;}
+    const cfg=svc.get(i.guild.id),items=Array.isArray(cfg.reminders)?cfg.reminders.slice():[];
+    const item={id:Date.now().toString(36)+'-'+i.user.id,userId:i.user.id,task,dueAt:Date.now()+delay,createdAt:Date.now()};
+    items.push(item);svc.save(i.guild.id,{reminders:items});
+    await i.reply({content:'⏰ Reminder saved for <t:'+Math.floor(item.dueAt/1000)+':R>. I’ll send it to your DMs when it is due.',ephemeral:true});
+    return true;
+  }
+  if(commandRoot==='reminders'){
+    const cfg=svc.get(i.guild.id),items=(Array.isArray(cfg.reminders)?cfg.reminders:[]).filter(x=>x.userId===i.user.id).sort((a,b)=>a.dueAt-b.dueAt);
+    await i.reply({content:items.length?items.slice(0,15).map((x,n)=>(n+1)+'. <t:'+Math.floor(x.dueAt/1000)+':R> — '+String(x.task).slice(0,180)).join('\\n'):'You have no pending reminders in this server.',ephemeral:true});
+    return true;
+  }
+  if(commandRoot==='birthday'){
+    const month=i.options.getInteger('month',true),day=i.options.getInteger('day',true);
+    const maxDay=new Date(Date.UTC(2024,month,0)).getUTCDate();
+    if(day>maxDay){await i.reply({content:'That month does not have '+day+' days.',ephemeral:true});return true;}
+    const cfg=svc.get(i.guild.id),birthdays={...(cfg.birthdays||{})};birthdays[i.user.id]={month,day,updatedAt:Date.now()};
+    svc.save(i.guild.id,{birthdays});
+    await i.reply({content:'🎂 Your birthday is saved as '+String(month).padStart(2,'0')+'/'+String(day).padStart(2,'0')+'.',ephemeral:true});
+    return true;
+  }
+  if(commandRoot==='birthdays'){
+    const cfg=svc.get(i.guild.id),now=new Date(),today=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
+    const upcoming=Object.entries(cfg.birthdays||{}).map(([userId,b])=>{let date=Date.UTC(now.getUTCFullYear(),Number(b.month)-1,Number(b.day));if(date<today)date=Date.UTC(now.getUTCFullYear()+1,Number(b.month)-1,Number(b.day));return {userId,date,month:b.month,day:b.day};}).sort((a,b)=>a.date-b.date).slice(0,10);
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎂 Upcoming birthdays').setDescription(upcoming.length?upcoming.map(b=>'<@'+b.userId+'> — <t:'+Math.floor(b.date/1000)+':D>').join('\\n'):'No birthdays have been saved yet.')]});
+    return true;
+  }
+  if(commandRoot==='achievements'){
+    const target=i.options.getUser('user')||i.user,stats=achievements.getStats(i.guild.id,target.id),cfg=svc.get(i.guild.id).achievements||{};
+    const milestones=[...(cfg.messages||[]).map(x=>({metric:'messages',...x})),...(cfg.emojis||[]).map(x=>({metric:'emojis',...x}))];
+    const desc=milestones.length?milestones.map(x=>'<@&'+x.roleId+'> — '+x.threshold+' '+x.metric).join('\\n'):'No achievement milestones are configured in the dashboard.';
+    if(commandSub==='user'){
+      await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('🏅 Achievements — '+target.username).addFields({name:'Messages',value:fmt(stats.message_count),inline:true},{name:'Emojis used',value:fmt(stats.emoji_count),inline:true}).setDescription(desc)]});
+    }else{
+      await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('🏅 Server achievements').setDescription(desc)]});
+    }
+    return true;
+  }
   const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:warn':'warn','mod:warnings':'warnings','mod:kick':'kick','mod:ban':'ban','mod:mute':'mute','mod:unmute':'unmute','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset','reactionrole:add':'reactionroleadd','reactionrole:remove':'reactionroleremove','reactionrole:list':'reactionrolelist','reactionrole:toggle':'reactionroletoggle'},n=alias[(root+':'+sub)]||root;
   const deferredModerationCommands=['warn','warnings','kick','ban','mute','unmute','unban','purge','softban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread','reactionroleadd','reactionroleremove','reactionrolelist','reactionroletoggle'];
   // Acknowledge these interactions immediately, before config checks or Discord API requests.
@@ -791,6 +843,23 @@ const auditActor=async(guild,type,targetId)=>{
 };
 
 function registerSpideyHandlers(client){
+  if(!registerSpideyHandlers.reminderSweep){
+    registerSpideyHandlers.reminderSweep=setInterval(async()=>{
+      for(const guild of client.guilds.cache.values()){
+        try{
+          const cfg=svc.get(guild.id),items=Array.isArray(cfg.reminders)?cfg.reminders:[];
+          const due=items.filter(item=>Number(item.dueAt)<=Date.now()),remaining=items.filter(item=>Number(item.dueAt)>Date.now());
+          if(!due.length)continue;
+          svc.save(guild.id,{reminders:remaining});
+          for(const item of due){
+            try{const user=await client.users.fetch(String(item.userId));await user.send('⏰ **Reminder:** '+String(item.task||'').slice(0,1800));}
+            catch(error){console.warn('[REMINDER DELIVERY] Could not DM reminder owner:',error.message);}
+          }
+        }catch(error){console.error('[REMINDER SWEEP]',error.message);}
+      }
+    },15000);
+    registerSpideyHandlers.reminderSweep.unref?.();
+  }
   ticketRuntime.register(client);
   client.on('interactionCreate',async interaction=>{
     if(!interaction.isButton?.()||!interaction.customId?.startsWith('pollvote:')||!interaction.guild)return;
