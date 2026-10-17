@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 // Subscription Manager - Handles tier management and feature gating
 const fs = require('fs');
 const path = require('path');
@@ -41,6 +42,34 @@ function setFeatureToggles(featureToggles) {
   if (!config.global_configs) config.global_configs = {};
   config.global_configs.featureToggles = featureToggles;
   saveConfig(config);
+}
+
+function redeemActivationKey(guildId, rawKey) {
+  const supplied=String(rawKey||'').trim();
+  if(!supplied) return {success:false,error:'Enter a valid activation key.'};
+  let keys={};
+  try{keys=JSON.parse(process.env.SPIDEY_PREMIUM_KEYS||'{}');}
+  catch{return {success:false,error:'Premium activation keys are misconfigured. Ask the bot owner to fix SPIDEY_PREMIUM_KEYS.'};}
+  if(!keys||typeof keys!=='object'||Array.isArray(keys))return {success:false,error:'Premium activation keys are misconfigured.'};
+  const matched=Object.keys(keys).find(key=>{
+    const a=Buffer.from(crypto.createHash('sha256').update(key).digest('hex'));
+    const b=Buffer.from(crypto.createHash('sha256').update(supplied).digest('hex'));
+    return a.length===b.length&&crypto.timingSafeEqual(a,b);
+  });
+  if(!matched)return {success:false,error:'That activation key is invalid.'};
+  const config=loadConfig(),hash=crypto.createHash('sha256').update(matched).digest('hex');
+  config.global_configs=config.global_configs||{};
+  config.global_configs.redeemedPremiumKeys=config.global_configs.redeemedPremiumKeys||{};
+  if(config.global_configs.redeemedPremiumKeys[hash])return {success:false,error:'That activation key has already been redeemed.'};
+  const spec=keys[matched],tier=String(spec?.tier||'premium').toLowerCase(),months=Number(spec?.durationMonths||1);
+  if(!['premium','pro'].includes(tier)||!Number.isInteger(months)||months<1||months>12)return {success:false,error:'The activation key has an invalid tier or duration.'};
+  setGuildTier(guildId,tier,months);
+  const fresh=loadConfig();
+  fresh.global_configs=fresh.global_configs||{};
+  fresh.global_configs.redeemedPremiumKeys=fresh.global_configs.redeemedPremiumKeys||{};
+  fresh.global_configs.redeemedPremiumKeys[hash]={guildId:String(guildId),redeemedAt:Date.now(),tier,months};
+  saveConfig(fresh);
+  return {success:true,tier,months};
 }
 
 function getGuildTier(guildId) {
@@ -195,6 +224,7 @@ module.exports = {
   getFeatureToggles,
   setFeatureToggles,
   getGuildTier,
+  redeemActivationKey,
   getTierLimits,
   checkEntitlement,
   setGuildTier,
