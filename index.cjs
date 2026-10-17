@@ -3172,6 +3172,11 @@ client.on("messageCreate", async (msg) => {
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS & SLASH COMMANDS) ==============
 client.on("interactionCreate", async (interaction) => {
+  // /ask is handled by the dedicated Gemini listener registered above. It must not
+  // enter this legacy router as well, or both listeners defer the same interaction
+  // and Discord rejects it with Unknown interaction (10062).
+  if (interaction.isChatInputCommand() && interaction.commandName === "ask") return;
+
   // Dispatch modular Testify commands before the legacy monolith handles interactions.
   if (interaction.isChatInputCommand()) {
     const handled = await handleTestifyInteraction(interaction, { client });
