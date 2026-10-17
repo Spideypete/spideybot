@@ -143,6 +143,86 @@ async function execute(i,ctx){
     await i.reply({content:'Premium key redemption is not connected to a verified subscription/key store yet. No key was redeemed. Configure the subscription provider before using this command.',ephemeral:true});
     return true;
   }
+  if(commandRoot==='reactionrole'){
+    if(!isAdmin(i)){await i.reply({content:'Only server administrators can manage reaction roles.',ephemeral:true});return true;}
+    const messageId=i.options.getString('message_id',true),emoji=i.options.getString('emoji',true);
+    if(commandSub==='delete'){
+      const removed=reactionRolesService.removeEntry(i.guild.id,messageId,emoji);
+      await i.reply({content:removed?'Removed the reaction-role mapping.':'No matching reaction-role mapping was found.',ephemeral:true});
+      return true;
+    }
+    const role=i.options.getRole('role',true),botMember=i.guild.members.me||await i.guild.members.fetchMe().catch(()=>null);
+    if(!botMember?.permissions.has(PermissionFlagsBits.ManageRoles)){await i.reply({content:'SPIDEY BOT needs Manage Roles to create reaction roles.',ephemeral:true});return true;}
+    if(role.managed||role.position>=botMember.roles.highest.position){await i.reply({content:'Move the SPIDEY BOT role above '+role.toString()+' before assigning it.',ephemeral:true});return true;}
+    let foundChannel=null,foundMessage=null;
+    for(const candidate of i.guild.channels.cache.values()){
+      if(!candidate.isTextBased?.()||!candidate.messages?.fetch)continue;
+      const message=await candidate.messages.fetch(messageId).catch(()=>null);
+      if(message){foundChannel=candidate;foundMessage=message;break;}
+    }
+    if(!foundMessage){await i.reply({content:'Could not find that message in a channel the bot can access.',ephemeral:true});return true;}
+    let saved=false;
+    try{
+      await reactionRolesService.addEntry(i.guild.id,{channelId:foundChannel.id,messageId,emoji,roleId:role.id});
+      saved=true;
+      await foundMessage.react(emoji);
+      await i.reply({content:'Reaction role created on '+foundMessage.url+' for '+role.toString()+'.',ephemeral:true});
+    }catch(error){
+      if(saved)reactionRolesService.removeEntry(i.guild.id,messageId,emoji);
+      await i.reply({content:'Could not create the reaction role: '+String(error.message||error).slice(0,800),ephemeral:true});
+    }
+    return true;
+  }
+  if(commandRoot==='automod'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can configure AutoMod.',ephemeral:true});return true;}
+    const cfg=svc.get(i.guild.id),a={...(cfg.automod||{})};
+    if(commandSub==='status'){
+      await i.reply({embeds:[new EmbedBuilder().setColor(a.enabled?0x2ecc71:0x747f8d).setTitle('AutoMod status').addFields({name:'Enabled',value:String(Boolean(a.enabled)),inline:true},{name:'Links',value:String(Boolean(a.antiLink)),inline:true},{name:'Invites',value:String(a.antiInvite!==false),inline:true},{name:'Spam',value:String(a.antiSpam!==false),inline:true},{name:'Blocked words',value:String((a.words||[]).length),inline:true})],ephemeral:true});
+      return true;
+    }
+    if(commandSub==='whitelist'){
+      const kind=i.options.getString('target_type',true),id=i.options.getString('target_id',true);
+      const entries=Array.isArray(a.whitelist)?a.whitelist.slice():[];
+      const key=kind+':'+id;
+      if(!entries.includes(key))entries.push(key);
+      a.whitelist=entries;svc.save(i.guild.id,{automod:a});
+      await i.reply({content:'Saved AutoMod whitelist entry '+key+'. Note: enforcement bypass requires the whitelist-aware filter to be enabled.',ephemeral:true});
+      return true;
+    }
+    const group=i.options.getSubcommandGroup(false);
+    if(group==='rule'&&commandSub==='add'){
+      const type=i.options.getString('type',true);
+      a.enabled=true;
+      if(type==='links')a.antiLink=true;
+      if(type==='invites')a.antiInvite=true;
+      if(type==='spam')a.antiSpam=true;
+      if(type==='swears')a.presetProfanity=true;
+      const rules=Array.isArray(a.rules)?a.rules.slice():[];
+      if(!rules.includes(type))rules.push(type);
+      a.rules=rules;svc.save(i.guild.id,{automod:a});
+      await i.reply({content:'Enabled the '+type+' AutoMod rule and saved the server settings.',ephemeral:true});
+      return true;
+    }
+  }
+  if(commandRoot==='auditlog'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can configure or view audit logs.',ephemeral:true});return true;}
+    const cfg=svc.get(i.guild.id),audit={...(cfg.audit||{})};
+    if(commandSub==='channel'){
+      const target=i.options.getChannel('channel',true);
+      audit.enabled=true;audit.channelId=target.id;svc.save(i.guild.id,{audit});
+      await i.reply({content:'Audit log channel saved as '+target.toString()+'.',ephemeral:true});return true;
+    }
+    const filter=String(i.options.getString('user_action')||'').toLowerCase();
+    const limit=i.options.getInteger('limit')||10;
+    const entries=(Array.isArray(audit.entries)?audit.entries:[]).filter(entry=>!filter||JSON.stringify(entry).toLowerCase().includes(filter)).slice(-limit).reverse();
+    await i.reply({content:entries.length?entries.map(e=>'• '+String(e.time||e.timestamp||'Unknown time')+' — '+String(e.title||e.type||'Event')+' — '+String(e.description||'').slice(0,180)).join('\\n'):'No matching audit events are stored.',ephemeral:true});
+    return true;
+  }
+  if(commandRoot==='invites'){
+    const target=i.options.getUser('user')||i.user,stats=inviteTracker.getStats(i.guild.id,target.id);
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📨 Invite statistics — '+target.username).addFields({name:'Successful joins',value:fmt(stats.joins),inline:true},{name:'Members left',value:fmt(stats.leaves),inline:true},{name:'Active invites',value:fmt(stats.active),inline:true})]});
+    return true;
+  }
   const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:warn':'warn','mod:warnings':'warnings','mod:kick':'kick','mod:ban':'ban','mod:mute':'mute','mod:unmute':'unmute','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset','reactionrole:add':'reactionroleadd','reactionrole:remove':'reactionroleremove','reactionrole:list':'reactionrolelist','reactionrole:toggle':'reactionroletoggle'},n=alias[(root+':'+sub)]||root;
   const deferredModerationCommands=['warn','warnings','kick','ban','mute','unmute','unban','purge','softban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread','reactionroleadd','reactionroleremove','reactionrolelist','reactionroletoggle'];
   // Acknowledge these interactions immediately, before config checks or Discord API requests.
