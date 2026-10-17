@@ -1,119 +1,19 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
-const A=PermissionFlagsBits.Administrator, M=PermissionFlagsBits.ManageMessages, C=PermissionFlagsBits.ManageChannels, R=PermissionFlagsBits.ManageRoles;
-const S=(name,description,build)=>{const b=new SlashCommandBuilder().setName(name).setDescription(description).setDMPermission(false);build(b);return b;};
-const sub=(name,description,build)=>s=>{s.setName(name).setDescription(description);if(build)build(s);return s;};
-const commands=[
-S('ask','Ask the SPIDEY BOT AI assistant',b=>b.addStringOption(o=>o.setName('question').setDescription('What would you like to ask?').setRequired(true).setMaxLength(1500))),
+const { SlashCommandBuilder } = require('discord.js');
 
-S('info','Information and profile tools',b=>b
- .addSubcommand(sub('avatar','Show an avatar',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
- .addSubcommand(sub('userinfo','Show member information',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
- .addSubcommand(sub('serverinfo','Show server information'))
- .addSubcommand(sub('roleinfo','Show role information',s=>s.addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
- .addSubcommand(sub('botinfo','Show bot runtime information'))
- .addSubcommand(sub('membercount','Show member counts'))
- .addSubcommand(sub('permissions','Show your permissions'))
- .addSubcommand(sub('profile','Show a profile',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
- .addSubcommand(sub('rank','Show XP rank',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))),
-S('economy','Economy and progression tools',b=>b
- .addSubcommand(sub('daily','Claim daily reward')).addSubcommand(sub('beg','Beg for coins'))
- .addSubcommand(sub('deposit','Deposit coins',s=>s.addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1))))
- .addSubcommand(sub('withdraw','Withdraw coins',s=>s.addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1))))
- .addSubcommand(sub('inventory','Show inventory',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(false))))
- .addSubcommand(sub('shop','Show the shop')).addSubcommand(sub('buy','Buy an item',s=>s.addStringOption(o=>o.setName('item').setDescription('Item').setRequired(true))))
- .addSubcommand(sub('give','Give coins',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Amount').setRequired(true).setMinValue(1))))
- .addSubcommand(sub('rob','Attempt a robbery',s=>s.addUserOption(o=>o.setName('user').setDescription('Target').setRequired(true))))
- .addSubcommand(sub('crime','Commit a risky crime')).addSubcommand(sub('pet','View or adopt a pet',s=>s.addStringOption(o=>o.setName('name').setDescription('Pet name').setRequired(false))))),
-S('fun','Community fun and utility',b=>b
- .addSubcommand(sub('poll','Create a button-voting poll',s=>s.addStringOption(o=>o.setName('question').setDescription('Question').setRequired(true)).addStringOption(o=>o.setName('options').setDescription('Comma-separated options, e.g. Red,Blue,Green').setRequired(false))))
- .addSubcommand(sub('deletepoll','Delete an active poll',s=>s.addStringOption(o=>o.setName('poll_id').setDescription('Poll ID shown in the poll footer').setRequired(true))))
- .addSubcommand(sub('calculator','Calculate arithmetic',s=>s.addStringOption(o=>o.setName('expression').setDescription('Expression').setRequired(true))))
- .addSubcommand(sub('ascii','Render ASCII text',s=>s.addStringOption(o=>o.setName('text').setDescription('Text').setRequired(true))))
- .addSubcommand(sub('advice','Get advice')).addSubcommand(sub('dadjoke','Tell a dad joke')).addSubcommand(sub('wouldyourrather','Would You Rather'))
- .addSubcommand(sub('hack','Fake hack simulation',s=>s.addUserOption(o=>o.setName('user').setDescription('Target').setRequired(false))))
- .addSubcommand(sub('relationship','Playful compatibility',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))),
-S('mod','Moderation and channel management',b=>b
- .addSubcommand(sub('warn','Warn a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
- .addSubcommand(sub('warnings','View a member warning history',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
- .addSubcommand(sub('kick','Kick a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
- .addSubcommand(sub('ban','Ban a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
- .addSubcommand(sub('mute','Timeout a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('minutes').setDescription('Timeout length in minutes').setRequired(true).setMinValue(1).setMaxValue(40320)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
- .addSubcommand(sub('unmute','Remove a member timeout',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
- .addSubcommand(sub('purge','Delete recent messages',s=>s.addIntegerOption(o=>o.setName('amount').setDescription('1-100').setRequired(true).setMinValue(1).setMaxValue(100))))
- .addSubcommand(sub('softban','Ban then unban',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
- .addSubcommand(sub('unban','Unban by user ID',s=>s.addStringOption(o=>o.setName('user_id').setDescription('User ID').setRequired(true))))
- .addSubcommand(sub('clearwarnings','Clear warning history',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
- .addSubcommand(sub('slowmode','Set channel slowmode',s=>s.addIntegerOption(o=>o.setName('seconds').setDescription('0-21600').setRequired(true).setMinValue(0).setMaxValue(21600))))
- .addSubcommand(sub('lock','Lock current channel')).addSubcommand(sub('unlock','Unlock current channel'))
- .addSubcommand(sub('nickname','Set nickname',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('nickname').setDescription('Nickname').setRequired(true))))
- .addSubcommand(sub('role','Add/remove role',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true)).addStringOption(o=>o.setName('action').setDescription('Action').setRequired(true).addChoices({name:'add',value:'add'},{name:'remove',value:'remove'}))))
- .addSubcommand(sub('announce','Send announcement',s=>s.addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(true).addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement)).addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
- .addSubcommand(sub('say','Send a message',s=>s.addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
- .addSubcommand(sub('thread','Create a thread',s=>s.addStringOption(o=>o.setName('name').setDescription('Name').setRequired(true))))).setDefaultMemberPermissions(PermissionFlagsBits.UseApplicationCommands),
-S('automod','Auto-moderation controls',b=>b
- .addSubcommand(sub('toggle','Enable or disable AutoMod',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(false))))
- .addSubcommand(sub('words','Set blocked words',s=>s.addStringOption(o=>o.setName('words').setDescription('Comma separated').setRequired(true))))
- .addSubcommand(sub('links','Toggle link filtering',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true))))
- .addSubcommand(sub('spam','Set spam threshold',s=>s.addIntegerOption(o=>o.setName('messages').setDescription('Messages').setRequired(true).setMinValue(2).setMaxValue(30)))).setDefaultMemberPermissions(A)),
-S('config','Server configuration',b=>b
- .addSubcommand(sub('auditlog','Set audit log channel',s=>s.addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(true).addChannelTypes(ChannelType.GuildText))))
- .addSubcommand(sub('prefix','Set command prefix',s=>s.addStringOption(o=>o.setName('prefix').setDescription('Prefix').setRequired(true).setMinLength(1).setMaxLength(5))))
- .addSubcommand(sub('sticky','Set sticky message',s=>s.addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true))))
- .addSubcommand(sub('unsticky','Remove sticky message')).addSubcommand(sub('counting','Configure counting',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true))))
- .addSubcommand(sub('welcome','Configure welcome',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(false).addChannelTypes(ChannelType.GuildText)).addStringOption(o=>o.setName('type').setDescription('Message format').setRequired(false).addChoices({name:'Normal text',value:'text'},{name:'Embed',value:'embed'})).addStringOption(o=>o.setName('message').setDescription('Message text or embed description').setRequired(false).setMaxLength(4000))))
- .addSubcommand(sub('goodbye','Configure goodbye',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addChannelOption(o=>o.setName('channel').setDescription('Channel').setRequired(false).addChannelTypes(ChannelType.GuildText)).addStringOption(o=>o.setName('type').setDescription('Message format').setRequired(false).addChoices({name:'Normal text',value:'text'},{name:'Embed',value:'embed'})).addStringOption(o=>o.setName('message').setDescription('Message text or embed description').setRequired(false).setMaxLength(4000))))
- .addSubcommand(sub('autorole','Configure autorole',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(false))))
- .addSubcommand(sub('verify','Set verification role',s=>s.addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
- .addSubcommand(sub('toggle','Toggle a command',s=>s.addStringOption(o=>o.setName('command').setDescription('Command').setRequired(true)).addBooleanOption(o=>o.setName('enabled').setDescription('Enabled').setRequired(true)))).setDefaultMemberPermissions(A)),
-S('welcome','Send a welcome configuration update',b=>b
- .addChannelOption(o=>o.setName('channel').setDescription('Welcome channel').setRequired(true).addChannelTypes(ChannelType.GuildText))
- .addStringOption(o=>o.setName('type').setDescription('Message format').setRequired(true).addChoices({name:'Normal text',value:'text'},{name:'Embed',value:'embed'}))
- .addStringOption(o=>o.setName('message').setDescription('Message text or embed description (use {user} to tag the member)').setRequired(true).setMaxLength(4000))
- .setDefaultMemberPermissions(A)),
-S('goodbye','Send a goodbye configuration update',b=>b
- .addChannelOption(o=>o.setName('channel').setDescription('Goodbye channel').setRequired(true).addChannelTypes(ChannelType.GuildText))
- .addStringOption(o=>o.setName('type').setDescription('Message format').setRequired(true).addChoices({name:'Normal text',value:'text'},{name:'Embed',value:'embed'}))
- .addStringOption(o=>o.setName('message').setDescription('Message text or embed description').setRequired(true).setMaxLength(4000))
- .setDefaultMemberPermissions(A)),
-S('levels','XP and leveling controls',b=>b
- .addSubcommand(sub('rewards','Show level rewards')).addSubcommand(sub('setreward','Set a level role reward',s=>s.addIntegerOption(o=>o.setName('level').setDescription('Level').setRequired(true).setMinValue(1).setMaxValue(100)).addRoleOption(o=>o.setName('role').setDescription('Role').setRequired(true))))
- .addSubcommand(sub('reset','Reset member XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
- .addSubcommand(sub('addxp','Add XP to a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('XP to add').setRequired(true).setMinValue(1).setMaxValue(1000000))))
- .addSubcommand(sub('setxp','Set a member total XP',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Total XP').setRequired(true).setMinValue(0).setMaxValue(100000000))))
- .addSubcommand(sub('removexp','Remove XP from a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('XP to remove').setRequired(true).setMinValue(1).setMaxValue(1000000)))).setDefaultMemberPermissions(A)),
-S('invites','Invite tracking, statistics and administration',b=>b
- .addSubcommand(sub('stats','Show invite totals',s=>s.addUserOption(o=>o.setName('user').setDescription('Member to check').setRequired(false))))
- .addSubcommand(sub('leaderboard','Show the invite leaderboard'))
- .addSubcommand(sub('add','Add successful invites (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Number of invites').setRequired(true).setMinValue(1).setMaxValue(100000))))
- .addSubcommand(sub('remove','Remove successful invites (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('amount').setDescription('Number of invites').setRequired(true).setMinValue(1).setMaxValue(100000))))
- .addSubcommand(sub('reset','Reset invite totals (admin only)',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
- .setDefaultMemberPermissions(PermissionFlagsBits.UseApplicationCommands)),
-S('reactionrole','Create and manage self-assignable reaction roles',b=>b
- .addSubcommand(sub('add','Map an emoji reaction on a message to a role',s=>s
-  .addChannelOption(o=>o.setName('channel').setDescription('Channel containing the message').setRequired(true).addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement))
-  .addStringOption(o=>o.setName('message_id').setDescription('ID of the message to add reactions to').setRequired(true).setMinLength(17).setMaxLength(20))
-  .addStringOption(o=>o.setName('emoji').setDescription('Unicode emoji or custom emoji markup').setRequired(true).setMaxLength(100))
-  .addRoleOption(o=>o.setName('role').setDescription('Role members receive').setRequired(true))
-  .addStringOption(o=>o.setName('description').setDescription('Optional label for this role').setRequired(false).setMaxLength(100))))
- .addSubcommand(sub('remove','Remove a reaction-role mapping',s=>s
-  .addStringOption(o=>o.setName('message_id').setDescription('ID of the mapped message').setRequired(true).setMinLength(17).setMaxLength(20))
-  .addStringOption(o=>o.setName('emoji').setDescription('Emoji used by the mapping').setRequired(true).setMaxLength(100))))
- .addSubcommand(sub('list','List this server reaction-role mappings'))
- .addSubcommand(sub('toggle','Enable or disable reaction roles',s=>s.addBooleanOption(o=>o.setName('enabled').setDescription('Whether reaction roles are enabled').setRequired(true))))
- .setDefaultMemberPermissions(A)),
-S('ticket','Create and manage private support tickets',b=>b
- .addSubcommand(sub('panel','Publish the configured ticket panel'))
- .addSubcommand(sub('create','Open a support ticket'))
- .addSubcommand(sub('close','Close this ticket'))
- .addSubcommand(sub('claim','Claim this ticket'))
- .addSubcommand(sub('reopen','Reopen a closed ticket'))
- .addSubcommand(sub('delete','Delete a closed ticket channel'))
- .addSubcommand(sub('stats','View ticket statistics'))),
-S('stats','Show your message and emoji milestone statistics',b=>b.setDMPermission(false)),
-S('system','Internal administration and safe diagnostics',b=>b
- .addSubcommand(sub('stats','Show bot statistics')).addSubcommand(sub('guilds','List bot guilds'))
- .addSubcommand(sub('blacklist','Blacklist a user',s=>s.addUserOption(o=>o.setName('user').setDescription('User').setRequired(true))))
- .addSubcommand(sub('unblacklist','Remove blacklist',s=>s.addUserOption(o=>o.setName('user').setDescription('User').setRequired(true))))
- .addSubcommand(sub('reload','Normalize guild configuration')).addSubcommand(sub('debug','Show safe diagnostics')).setDefaultMemberPermissions(A))
+// Testing reset: keep only the dedicated AI assistant slash command.
+// Add new commands back only after the owner defines their section and behavior.
+const spideyCommands = [
+  new SlashCommandBuilder()
+    .setName('ask')
+    .setDescription('Ask the SPIDEY BOT AI assistant')
+    .setDMPermission(false)
+    .addStringOption(option =>
+      option
+        .setName('question')
+        .setDescription('What would you like to ask?')
+        .setRequired(true)
+        .setMaxLength(1500)
+    )
 ];
-module.exports={spideyCommands:commands};
+
+module.exports = { spideyCommands };
