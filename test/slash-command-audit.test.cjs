@@ -42,17 +42,15 @@ test('every moderation slash command is routed to an implemented moderation hand
   }
 });
 
-test('testing startup clears shared global commands and registers guild-scoped test commands', () => {
-  const start = indexSource.indexOf("if (isTestingDeployment) {");
-  const end = indexSource.indexOf("\n  } else {", start);
-  assert.ok(start >= 0 && end > start, 'testing registration branch must exist');
-  const testingBlock = indexSource.slice(start, end);
-  assert.match(testingBlock, /Routes\.applicationCommands\(client\.user\.id\),\s*\{\s*body:\s*\[\]\s*\}/,
-    'testing startup must clear global commands');
-  assert.match(testingBlock, /Routes\.applicationGuildCommands\(client\.user\.id,\s*guild\.id\)/,
-    'testing startup must register guild-scoped commands');
-  assert.doesNotMatch(testingBlock, /Routes\.applicationCommands\(client\.user\.id\),\s*\{\s*body:\s*commands\s*\}/,
-    'testing startup must never re-register commands globally');
+test('all deployments clear shared globals and register commands only per guild', () => {
+  assert.match(indexSource, /Routes\\.applicationCommands\\(client\\.user\\.id\\),\\s*\\{\\s*body:\\s*\\[\\]\\s*\\}/,
+    'startup must clear legacy global commands');
+  assert.match(indexSource, /Routes\\.applicationGuildCommands\\(client\\.user\\.id,\\s*guild\\.id\\)/,
+    'startup must register commands per guild');
+  assert.doesNotMatch(indexSource, /Routes\\.applicationCommands\\(client\\.user\\.id\\),\\s*\\{\\s*body:\\s*commands\\s*\\}/,
+    'no deployment may publish the command list globally');
+  assert.equal((indexSource.match(/Routes\\.applicationCommands\\(client\\.user\\.id\\)/g) || []).length, 1,
+    'the global command route should only be used to clear legacy commands');
 });
 
 test('moderation command definitions have valid bounded inputs', () => {
