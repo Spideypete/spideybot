@@ -355,7 +355,7 @@ const auditActor=async(guild,type,targetId)=>{
  try{const logs=await guild.fetchAuditLogs({type,limit:5});const now=Date.now();const entry=logs.entries.find(x=>(!targetId||x.target?.id===targetId)&&now-x.createdTimestamp<15000);return entry?.executor?.tag||entry?.executor?.username||null;}catch{return null;}
 };
 
-function registerspideyHandlers(client){
+function registerSpideyHandlers(client){
   ticketRuntime.register(client);
   client.on('interactionCreate',async interaction=>{
     if(!interaction.isButton?.()||!interaction.customId?.startsWith('pollvote:')||!interaction.guild)return;
@@ -481,11 +481,11 @@ function registerspideyHandlers(client){
         }
       }
       if(featureIsOn(c,'automations')&&c.sticky?.[msg.channel.id]){
-        if(!registerspideyHandlers.sticky)registerspideyHandlers.sticky=new Map();
-        const stickyKey=msg.guild.id+':'+msg.channel.id,oldSticky=registerspideyHandlers.sticky.get(stickyKey);
+        if(!registerSpideyHandlers.sticky)registerSpideyHandlers.sticky=new Map();
+        const stickyKey=msg.guild.id+':'+msg.channel.id,oldSticky=registerSpideyHandlers.sticky.get(stickyKey);
         if(oldSticky)oldSticky.delete().catch(()=>{});
         const sent=await msg.channel.send('📌 '+c.sticky[msg.channel.id]).catch(()=>null);
-        if(sent)registerspideyHandlers.sticky.set(stickyKey,sent);
+        if(sent)registerSpideyHandlers.sticky.set(stickyKey,sent);
       }
     }catch(e){console.error('[spidey MESSAGE]',e.message);}
   });
@@ -518,4 +518,4 @@ function registerspideyHandlers(client){
     catch(e){console.error('[AUTOMOD PROFILE UPDATE]',e.message);}
   });
 }
-module.exports={execute,handlePrefix,registerspideyHandlers};
+module.exports={execute,handlePrefix,registerSpideyHandlers};
