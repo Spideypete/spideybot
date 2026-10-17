@@ -111,7 +111,18 @@ async function handleReactionAdd(reaction, user) {
     await sendConfiguredNotice(guild, settings, `❌ Reaction role failed: the configured role no longer exists (role ID ${entry.roleId}).`, true, reaction.message.channel);
     return;
   }
-  if (member.roles.cache.has(role.id)) return;
+  if (member.roles.cache.has(role.id)) {
+    // Still confirm the reaction when the member already has the mapped role.
+    // This commonly happens during testing or when members re-add a reaction.
+    await sendDmConfirmation(
+      user,
+      `ℹ️ You already have the **${role.name}** role in **${guild.name}**.`,
+      guild,
+      settings,
+      reaction.message.channel
+    );
+    return;
+  }
 
   try {
     const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
