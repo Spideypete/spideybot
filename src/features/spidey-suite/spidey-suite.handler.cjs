@@ -514,7 +514,13 @@ async function execute(i,ctx){
     }
     if(n==='avatar'){await i.reply(u.displayAvatarURL({size:1024,dynamic:true}));return true;}
     if(n==='userinfo'){const m=await i.guild.members.fetch(u.id).catch(()=>null);await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle(u.tag).setThumbnail(u.displayAvatarURL()).addFields({name:'ID',value:u.id,inline:true},{name:'Joined',value:m?.joinedAt?.toISOString()||'Unknown',inline:true},{name:'Created',value:u.createdAt.toISOString(),inline:true},{name:'Roles',value:m?.roles.cache.filter(r=>r.id!==i.guild.id).map(r=>r.toString()).slice(0,20).join(', ')||'None'})]});return true;}
-    if(n==='ticket')return ticketRuntime.execute(i);
+    if(n==='ticket'){
+      if(i.options.getSubcommand(false)==='panel'){
+        const selected=i.options.getChannel('channel');
+        if(selected){const current=svc.get(i.guild.id);svc.save(i.guild.id,{tickets:{...(current.tickets||{}),ticketChannelId:selected.id}});}
+      }
+      return ticketRuntime.execute(i);
+    }
     if(n==='serverinfo'){await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle(i.guild.name).setThumbnail(i.guild.iconURL()).addFields({name:'Members',value:String(i.guild.memberCount),inline:true},{name:'Channels',value:String(i.guild.channels.cache.size),inline:true},{name:'Roles',value:String(i.guild.roles.cache.size),inline:true},{name:'Owner',value:'<@'+i.guild.ownerId+'>',inline:true},{name:'Created',value:i.guild.createdAt.toISOString(),inline:true})]});return true;}
     if(n==='roleinfo'){const r=i.options.getRole('role');await i.reply({embeds:[new EmbedBuilder().setColor(r.color||0x6d3df5).setTitle('@'+r.name).addFields({name:'ID',value:r.id,inline:true},{name:'Members',value:String(r.members.size),inline:true},{name:'Position',value:String(r.position),inline:true},{name:'Mentionable',value:String(r.mentionable),inline:true})]});return true;}
     if(n==='botinfo'||n==='botstats'){await i.reply('SPIDEY BOT | Servers: '+ctx.client.guilds.cache.size+' | Uptime: '+Math.floor(process.uptime())+'s | RSS: '+Math.round(process.memoryUsage().rss/1048576)+' MB | WS: '+ctx.client.ws.ping+'ms');return true;}
