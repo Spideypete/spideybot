@@ -10,6 +10,8 @@ const wyr=['Unlimited money or unlimited time?','Always early or always prepared
 const levelXpCooldown=new Map();
 const achievements=require('../achievements/achievements.service.cjs');
 const inviteTracker=require('../invite-tracker/invite-tracker.service.cjs');
+const socialNotifications=require('../social-notifications/social-notifications.service.cjs');
+const giveaways=require('../giveaways/giveaways.service.cjs');
 const ticketRuntime=require('../tickets/ticketing.runtime.cjs');
 const customSlashRuntime=require('../custom-commands/custom-slash-runtime.cjs');
 const reactionRolesService=require('../reaction-roles/reaction-roles.service.cjs');
@@ -222,6 +224,50 @@ async function execute(i,ctx){
     const target=i.options.getUser('user')||i.user,stats=inviteTracker.getStats(i.guild.id,target.id);
     await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📨 Invite statistics — '+target.username).addFields({name:'Successful joins',value:fmt(stats.joins),inline:true},{name:'Members left',value:fmt(stats.leaves),inline:true},{name:'Active invites',value:fmt(stats.active),inline:true})]});
     return true;
+  }
+  if(commandRoot==='alerts'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can manage social alerts.',ephemeral:true});return true;}
+    const platform=i.options.getString('platform',commandSub!=='list'),handle=i.options.getString('handle');
+    if(commandSub==='add'){
+      const target=i.options.getChannel('channel',true),pingRole=i.options.getRole('ping_role');
+      const result=socialNotifications.addNotification(i.guild.id,{platform,username:handle,channelId:target.id,pingRoleId:pingRole?.id||null,enabled:true});
+      if(!result.success){await i.reply({content:result.error,ephemeral:true});return true;}
+      await i.reply({content:'Saved the '+platform.toUpperCase()+' alert for **'+handle+'** in '+target.toString()+'. Alert configuration is stored; live delivery still depends on a configured monitor for that provider.',ephemeral:true});
+      return true;
+    }
+    if(commandSub==='remove'){
+      const result=socialNotifications.removeNotification(i.guild.id,platform,handle);
+      await i.reply({content:result.success?'Removed the '+platform.toUpperCase()+' alert for '+handle+'.':result.error,ephemeral:true});return true;
+    }
+    const entries=socialNotifications.getNotifications(i.guild.id).filter(x=>!platform||x.platform===platform);
+    await i.reply({content:entries.length?entries.slice(0,25).map(x=>'• **'+String(x.platform).toUpperCase()+'** '+x.username+' → <#'+x.channelId+'>'+(x.enabled?'':' (disabled)')).join('\\n'):'No social alerts are configured.',ephemeral:true});
+    return true;
+  }
+  if(commandRoot==='giveaway'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can manage giveaways.',ephemeral:true});return true;}
+    if(commandSub==='start'){
+      const raw=String(i.options.getString('duration',true)).trim().toLowerCase(),match=raw.match(/^(\\d{1,5})(m|h|d)$/);
+      if(!match){await i.reply({content:'Use a duration like 10m, 2h, or 1d.',ephemeral:true});return true;}
+      const minutes=Number(match[1])*({m:1,h:60,d:1440}[match[2]]);
+      if(!Number.isFinite(minutes)||minutes<1||minutes>10080){await i.reply({content:'Giveaway duration must be from 1 minute to 7 days.',ephemeral:true});return true;}
+      const prize=i.options.getString('prize',true),winners=i.options.getInteger('winners',true);
+      const giveaway=giveaways.create(i.guild.id,{prize,duration:minutes,winners,channelId:i.channelId});
+      const embed=new EmbedBuilder().setColor(0x6d3df5).setTitle('🎉 Giveaway: '+prize).setDescription('Click **Enter giveaway** to join.\nWinners: **'+winners+'**\nEnds: <t:'+Math.floor((Date.now()+minutes*60000)/1000)+':R>').setFooter({text:'Giveaway ID: '+giveaway.id}).setTimestamp();
+      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('spidey_giveaway_enter:'+giveaway.id).setLabel('Enter giveaway').setEmoji('🎉').setStyle(ButtonStyle.Primary));
+      const message=await i.channel.send({embeds:[embed],components:[row]});
+      giveaways.updateMessage(i.guild.id,giveaway.id,message.id,i.channelId);
+      await i.reply({content:'Giveaway started. Message: '+message.url,ephemeral:true});return true;
+    }
+    const messageId=i.options.getString('message_id',true);
+    const all=[...giveaways.getActive(i.guild.id),...giveaways.getEnded(i.guild.id)];
+    const target=all.find(g=>String(g.messageId)===messageId);
+    if(!target){await i.reply({content:'No giveaway is linked to that message ID.',ephemeral:true});return true;}
+    const rerolled=giveaways.reroll(i.guild.id,target.id);
+    if(!rerolled){await i.reply({content:'Could not reroll this giveaway.',ephemeral:true});return true;}
+    const winnerText=rerolled.winnerIds?.length?rerolled.winnerIds.map(id=>'<@'+id+'>').join(', '):'No eligible entries.';
+    const ch=i.guild.channels.cache.get(rerolled.channelId);
+    if(ch?.isTextBased())await ch.send('🎉 Giveaway reroll for **'+rerolled.prize+'**: '+winnerText);
+    await i.reply({content:'Giveaway rerolled. Winners: '+winnerText,ephemeral:true});return true;
   }
   if(commandRoot==='pay'){
     const target=i.options.getUser('user',true),amount=i.options.getInteger('amount',true);
@@ -843,6 +889,35 @@ const auditActor=async(guild,type,targetId)=>{
 };
 
 function registerSpideyHandlers(client){
+  if(!registerSpideyHandlers.giveawaySweep){
+    registerSpideyHandlers.giveawaySweep=setInterval(async()=>{
+      for(const guild of client.guilds.cache.values()){
+        try{
+          for(const giveaway of giveaways.getActive(guild.id)){
+            const created=Date.parse(giveaway.createdAt),duration=Math.max(1,Number(giveaway.duration)||60)*60000;
+            if(!Number.isFinite(created)||Date.now()<created+duration)continue;
+            const ended=giveaways.endGiveaway(guild.id,giveaway.id);
+            if(!ended)continue;
+            const channel=guild.channels.cache.get(ended.channelId);
+            if(channel?.isTextBased()){
+              const winners=ended.winnerIds?.length?ended.winnerIds.map(id=>'<@'+id+'>').join(', '):'No eligible entries.';
+              await channel.send({content:'🎉 Giveaway ended: **'+ended.prize+'**. Winner(s): '+winners,allowedMentions:{parse:[]}});
+              const msg=ended.messageId?await channel.messages.fetch(ended.messageId).catch(()=>null):null;
+              if(msg)await msg.edit({components:[]}).catch(()=>{});
+            }
+          }
+        }catch(error){console.error('[GIVEAWAY SWEEP]',error.message);}
+      }
+    },15000);
+    registerSpideyHandlers.giveawaySweep.unref?.();
+  }
+  client.on('interactionCreate',async interaction=>{
+    if(!interaction.isButton?.()||!interaction.customId?.startsWith('spidey_giveaway_enter:')||!interaction.guild)return;
+    const id=interaction.customId.slice('spidey_giveaway_enter:'.length);
+    const giveaway=giveaways.addEntry(interaction.guild.id,id,interaction.user.id);
+    if(!giveaway){await interaction.reply({content:'This giveaway is no longer active.',ephemeral:true}).catch(()=>{});return;}
+    await interaction.reply({content:'You are entered in **'+giveaway.prize+'**. Good luck!',ephemeral:true}).catch(()=>{});
+  });
   if(!registerSpideyHandlers.reminderSweep){
     registerSpideyHandlers.reminderSweep=setInterval(async()=>{
       for(const guild of client.guilds.cache.values()){
