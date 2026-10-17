@@ -93,7 +93,7 @@ function guildId(){
   if(id){localStorage.setItem('selectedServerId',id);localStorage.setItem('guildId',id);}
   return id;
 }
-const endpoint=id=>'/api/features/testify-suite/'+encodeURIComponent(id);
+const endpoint=id=>'/api/features/spidey-suite/'+encodeURIComponent(id);
 const load=async id=>(await api(endpoint(id))).config||{};
 const save=async(id,patch)=>api(endpoint(id),{method:'PUT',body:JSON.stringify(patch)});
 const all=()=>FEATURES.flatMap(g=>g[1]);
@@ -813,7 +813,7 @@ async function renderPanel(id,f,c){
   document.getElementById('publishTicketPanel').onclick=async()=>{
    const next={...t,enabled:yes('ticketEnabled'),ticketChannelId:val('ticketPanelChannel')||null,categoryId:val('ticketCategory')||null,supportRoleId:val('ticketSupportRole')||null,logChannelId:val('ticketLogChannel')||null,transcriptChannelId:val('ticketTranscriptChannel')||null,ticketPrefix:(val('ticketPrefix').trim().toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,20)||'ticket'),maxTicketsPerUser:Math.max(1,Math.min(10,Number(val('ticketMaxOpen'))||1)),panelTitle:val('ticketPanelTitle').trim().slice(0,256)||'Need help? Open a ticket',panelDescription:val('ticketPanelDescription').trim().slice(0,3500),buttonLabel:val('ticketButtonLabel').trim().slice(0,80)||'Create Ticket',welcomeMessage:val('ticketWelcome').trim().slice(0,1800),questions:[val('ticketQ1').trim(),val('ticketQ2').trim(),val('ticketQ3').trim()].filter(Boolean).slice(0,5),allowUserClose:yes('ticketUserClose'),claimEnabled:yes('ticketClaim'),allowReopen:yes('ticketReopen'),transcriptsEnabled:yes('ticketTranscript'),autoCloseHours:Math.max(0,Math.min(8760,Number(val('ticketAutoClose'))||0))};
    const saved=await save(id,{tickets:next});if(saved?.success===false)throw new Error(saved.error||'Save failed');
-   try{const result=await api('/api/features/testify-suite/'+encodeURIComponent(id)+'/ticket-panel',{method:'POST',body:JSON.stringify({})});if(result?.success===false)throw new Error(result.error||'Could not publish panel');alert(result.message||'Ticket panel published.');}
+   try{const result=await api('/api/features/spidey-suite/'+encodeURIComponent(id)+'/ticket-panel',{method:'POST',body:JSON.stringify({})});if(result?.success===false)throw new Error(result.error||'Could not publish panel');alert(result.message||'Ticket panel published.');}
    catch(err){alert('Settings were saved, but the panel could not be published yet. '+(err.message||String(err)));}
   };
   attachToggle(id,f,c);return;
