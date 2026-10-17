@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const configFile = path.join(__dirname, 'config.json');
+const configFile = path.join(__dirname, '../config.json');
 
 function loadConfig() {
   try {
