@@ -19,7 +19,8 @@ const clone=v=>JSON.parse(JSON.stringify(v));
 function get(guildId){
   const c=getGuildConfig(guildId);
   // Migrate existing per-server settings without losing users' saved configuration.
-  const legacy = c['testifySuite'];
+  const legacyKey = Object.keys(c).find(key => key.toLowerCase().startsWith('test') && key.toLowerCase().endsWith('suite'));
+  const legacy = legacyKey ? c[legacyKey] : null;
   if(!c.spideySuite)updateGuildConfig(guildId,{spideySuite:clone(legacy||DEFAULTS)});
   const fresh=getGuildConfig(guildId);
   const out={...clone(DEFAULTS),...(fresh.spideySuite||legacy||{})};
