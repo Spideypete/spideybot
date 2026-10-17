@@ -12,6 +12,7 @@ const achievements=require('../achievements/achievements.service.cjs');
 const inviteTracker=require('../invite-tracker/invite-tracker.service.cjs');
 const socialNotifications=require('../social-notifications/social-notifications.service.cjs');
 const giveaways=require('../giveaways/giveaways.service.cjs');
+const subscriptionManager=require('../../../services/subscription.manager.js');
 const ticketRuntime=require('../tickets/ticketing.runtime.cjs');
 const customSlashRuntime=require('../custom-commands/custom-slash-runtime.cjs');
 const reactionRolesService=require('../reaction-roles/reaction-roles.service.cjs');
@@ -136,10 +137,11 @@ async function execute(i,ctx){
     return true;
   }
   if(commandRoot==='premium'){
-    const cfg=svc.get(i.guild.id),premium=cfg.premium||cfg.subscription||{};
     if(commandSub==='status'){
-      const active=Boolean(premium.active||premium.status==='active'||premium.tier&&premium.tier!=='free');
-      await i.reply({embeds:[new EmbedBuilder().setColor(active?0x6d3df5:0x747f8d).setTitle('SPIDEY BOT Premium').setDescription(active?'Premium is recorded as active for this server.':'No active Premium subscription is recorded in the bot configuration.').addFields({name:'Tier',value:String(premium.tier||'Free'),inline:true},{name:'Expires',value:premium.expiresAt?String(premium.expiresAt):'Not recorded',inline:true})],ephemeral:true});
+      const info=subscriptionManager.getTierInfo(i.guild.id),entitlements=subscriptionManager.getGuildEntitlements(i.guild.id);
+      const active=info.tier!=='free'&&(!info.tierEndDate||info.tierEndDate>Date.now());
+      const expiry=info.tierEndDate?'<t:'+Math.floor(info.tierEndDate/1000)+':F>':'No expiry recorded';
+      await i.reply({embeds:[new EmbedBuilder().setColor(active?0x6d3df5:0x747f8d).setTitle('SPIDEY BOT Premium').setDescription(active?'Premium is active for this server.':'This server is currently on the Free tier.').addFields({name:'Tier',value:String(info.tier||'free').toUpperCase(),inline:true},{name:'Expires',value:expiry,inline:true},{name:'Active giveaways',value:String(entitlements.entitlements.currentGiveaways),inline:true},{name:'Max active giveaways',value:String(entitlements.entitlements.maxGiveaways),inline:true},{name:'Custom commands',value:String(entitlements.entitlements.hasCustomCommands),inline:true},{name:'XP leaderboard',value:String(entitlements.entitlements.hasXP),inline:true})],ephemeral:true});
       return true;
     }
     await i.reply({content:'Premium key redemption is not connected to a verified subscription/key store yet. No key was redeemed. Configure the subscription provider before using this command.',ephemeral:true});
