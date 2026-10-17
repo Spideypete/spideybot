@@ -55,7 +55,7 @@ const {
 const { createFeaturesRouter } = require("./src/routes/features.js");
 
 // Feature services and handlers
-const { execute: handlespideyInteraction, handlePrefix: handlespideyPrefix, registerspideyHandlers } = require("./src/features/spidey-suite/spidey-suite.handler.cjs");
+const { execute: handleSpideyInteraction, handlePrefix: handleSpideyPrefix, registerSpideyHandlers } = require("./src/features/spidey-suite/spidey-suite.handler.cjs");
 const customSlashRuntime = require("./src/features/custom-commands/custom-slash-runtime.cjs");
 
 // Integrated server command suite: slash + prefix commands, AutoMod, XP, economy and admin tools.
@@ -1062,7 +1062,7 @@ client.on('interactionCreate', async interaction => {
 });
 client.on('messageCreate', async message => {
   try {
-    if (await handlespideyPrefix(message, { client })) return;
+    if (await handleSpideyPrefix(message, { client })) return;
   } catch (e) {
     console.error('[COMMANDS] prefix handler failed:', e);
   }
@@ -1354,7 +1354,7 @@ app.get('/api/guilds', async (req, res) => {
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot && !msg.guild.config?.messageCountingBots) return;
   if (!msg.member) return;
-  if (await handlespideyPrefix(msg, { client })) return;
+  if (await handleSpideyPrefix(msg, { client })) return;
   
   // LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
   const guildConfig = getGuildConfig(msg.guild.id);
@@ -3179,7 +3179,7 @@ client.on("interactionCreate", async (interaction) => {
 
   // Dispatch modular spidey commands before the legacy monolith handles interactions.
   if (interaction.isChatInputCommand()) {
-    const handled = await handlespideyInteraction(interaction, { client });
+    const handled = await handleSpideyInteraction(interaction, { client });
     if (handled) return;
   }
 
@@ -9061,7 +9061,7 @@ client.once('ready', () => {
   }
 
   console.log('🔧 Registering unified command/event handlers...');
-  try { registerspideyHandlers(client); console.log('✅ Core command/event handlers registered'); } catch (err) { console.error('❌ Failed to register core command/event handlers:', err.message); }
+  try { registerSpideyHandlers(client); console.log('✅ Core command/event handlers registered'); } catch (err) { console.error('❌ Failed to register core command/event handlers:', err.message); }
 
 
 });
