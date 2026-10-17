@@ -18,6 +18,7 @@ const channel = (o, name='channel', required=true) => o.addChannelOption(x=>x.se
 const role = (o, name='role', required=true) => o.addRoleOption(x=>x.setName(name).setDescription('Target role').setRequired(required));
 const str = (o,name,description,required=true,max=1000) => o.addStringOption(x=>x.setName(name).setDescription(description).setRequired(required).setMaxLength(max));
 const int = (o,name,description,required=true,min=1,max=1000000) => o.addIntegerOption(x=>x.setName(name).setDescription(description).setRequired(required).setMinValue(min).setMaxValue(max));
+const platformOption = (o, required=true) => o.addStringOption(x=>x.setName('platform').setDescription('Platform').setRequired(required).addChoices(...['twitch','youtube','reddit','instagram','rss','kick','podcast','tiktok','x'].map(v=>({name:v.toUpperCase(),value:v}))));
 
 const spideyCommands = [
   S('ask','Ask SPIDEY BOT',b=>str(b,'question','Question for the existing /ask assistant',true,1500)),
@@ -73,9 +74,9 @@ const spideyCommands = [
   S('birthday','Set your birthday',b=>int(b,'month','Month (1–12)',true,1,12).addIntegerOption(x=>x.setName('day').setDescription('Day of month').setRequired(true).setMinValue(1).setMaxValue(31))),
   S('birthdays','Upcoming server birthdays'),
   S('alerts','Social alerts',b=>b
-    .addSubcommand(sub('add','Add a creator/feed alert',s=>s.addStringOption(x=>x.setName('platform').setDescription('Platform').setRequired(true).addChoices(...['twitch','youtube','reddit','instagram','rss','kick','podcast','tiktok','x'].map(v=>({name:v.toUpperCase(),value:v})))).addStringOption(x=>x.setName('handle').setDescription('Creator handle or feed URL').setRequired(true).setMaxLength(500)).addChannelOption(x=>x.setName('channel').setDescription('Notification channel').addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement).setRequired(true)).addRoleOption(x=>x.setName('ping_role').setDescription('Role to ping').setRequired(false))))
-    .addSubcommand(sub('remove','Remove an alert',s=>s.addStringOption(x=>x.setName('platform').setDescription('Platform').setRequired(true).addChoices(...['twitch','youtube','reddit','instagram','rss','kick','podcast','tiktok','x'].map(v=>({name:v.toUpperCase(),value:v})))).addStringOption(y=>y.setName('handle').setDescription('Creator handle/feed URL').setRequired(true).setMaxLength(500))))
-    .addSubcommand(sub('list','List alerts',s=>s.addStringOption(x=>x.setName('platform').setDescription('Optional platform filter').setRequired(false).addChoices(...['twitch','youtube','reddit','instagram','rss','kick','podcast','tiktok','x'].map(v=>({name:v.toUpperCase(),value:v})))))),
+    .addSubcommand(sub('add','Add a creator/feed alert',s=>platformOption(s).addStringOption(x=>x.setName('handle').setDescription('Creator handle or feed URL').setRequired(true).setMaxLength(500)).addChannelOption(x=>x.setName('channel').setDescription('Notification channel').addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement).setRequired(true)).addRoleOption(x=>x.setName('ping_role').setDescription('Role to ping').setRequired(false))))
+    .addSubcommand(sub('remove','Remove an alert',s=>platformOption(s).addStringOption(x=>x.setName('handle').setDescription('Creator handle/feed URL').setRequired(true).setMaxLength(500))))
+    .addSubcommand(sub('list','List alerts',s=>platformOption(s,false))),
   S('giveaway','Giveaways',b=>b
     .addSubcommand(sub('start','Start a giveaway',s=>str(s,'duration','Examples: 10m, 2h, 1d',true,30).addIntegerOption(x=>x.setName('winners').setDescription('Winner count').setMinValue(1).setMaxValue(20).setRequired(true)).addStringOption(x=>x.setName('prize').setDescription('Prize').setRequired(true).setMaxLength(200))))
     .addSubcommand(sub('reroll','Reroll a giveaway winner',s=>str(s,'message_id','Giveaway message ID',true,30)))),
