@@ -777,7 +777,8 @@ async function execute(i,ctx){
         if(filterUser){
           const fetched=await i.channel.messages.fetch({limit:100});
           const matches=fetched.filter(message=>message.author.id===filterUser.id).first(amount);
-          deleted=matches.length?await i.channel.bulkDelete(matches,true):new Map();
+          const results=await Promise.all(matches.map(message=>message.delete().catch(()=>null)));
+          deleted={size:results.filter(Boolean).length};
         }else{
           deleted=await i.channel.bulkDelete(amount,true);
         }
