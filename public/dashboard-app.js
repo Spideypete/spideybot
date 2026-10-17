@@ -132,7 +132,7 @@ function addStyles(){
  document.head.appendChild(s);
 }
 (function installEssentialsPurpleGlow(){if(document.getElementById('essentials-purple-glow'))return;const style=document.createElement('style');style.id='essentials-purple-glow';style.textContent=".nav-title{color:#5b21b6!important;text-shadow:0 0 8px rgba(139,92,246,.10);letter-spacing:.035em}.overview-feature-group .overview-feature-card{border-color:rgba(139,92,246,.48);box-shadow:0 0 0 1px rgba(139,92,246,.12),0 0 15px rgba(139,92,246,.14);transition:border-color .18s ease,box-shadow .18s ease,transform .12s ease}.overview-feature-group .overview-feature-card.is-on{border-color:rgba(168,85,247,.88);box-shadow:0 0 0 1px rgba(168,85,247,.25),0 0 21px rgba(139,92,246,.26),inset 0 0 16px rgba(139,92,246,.045)}.overview-feature-group .overview-feature-card.is-off{border-color:rgba(139,92,246,.38);box-shadow:0 0 0 1px rgba(139,92,246,.10),0 0 11px rgba(139,92,246,.10)}.overview-feature-group .overview-feature-card .overview-toggle.on{background:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.22),0 0 12px rgba(139,92,246,.48)}.overview-feature-group .overview-feature-card .overview-feature-status{color:#a78bfa}";document.head.appendChild(style);})();
-function installSidebarHeadingGlow(){if(document.getElementById('sidebar-heading-purple-glow'))return;const style=document.createElement('style');style.id='sidebar-heading-purple-glow';style.textContent=".sidebar .nav-title-main,.sidebar .nav-title-essentials,.sidebar .nav-title-server-management,.sidebar .nav-title-social-alerts,.sidebar .nav-title-utilities,.sidebar .nav-title-games-community,.sidebar .nav-title-advanced,.sidebar .nav-title-administration{color:#4b2568!important;text-shadow:0 0 2px rgba(75,37,104,.10),0 0 5px rgba(75,37,104,.10)}.dark .sidebar .nav-title-main,.dark .sidebar .nav-title-essentials,.dark .sidebar .nav-title-server-management,.dark .sidebar .nav-title-social-alerts,.dark .sidebar .nav-title-utilities,.dark .sidebar .nav-title-games-community,.dark .sidebar .nav-title-advanced,.dark .sidebar .nav-title-administration{color:#b49acb!important;text-shadow:0 0 3px rgba(139,92,246,.10),0 0 6px rgba(139,92,246,.10)}";document.head.appendChild(style);}
+function installSidebarHeadingGlow(){if(document.getElementById('sidebar-heading-purple-glow'))return;const style=document.createElement('style');style.id='sidebar-heading-purple-glow';style.textContent=".sidebar .nav-group-toggle{width:100%;min-height:35px;height:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 11px 7px;margin-top:3px;border:0;border-radius:7px;background:transparent;color:#4b2568!important;text-shadow:0 0 2px rgba(75,37,104,.10),0 0 5px rgba(75,37,104,.10);font-size:10px;letter-spacing:.65px;font-weight:850;font-style:italic;text-transform:none;text-align:left;cursor:pointer}.sidebar .nav-group-toggle:hover{background:rgba(118,81,168,.08)}.sidebar .nav-group-label{font-weight:850;font-style:italic}.sidebar .nav-group-chevron{font-size:13px;font-style:normal;line-height:1;opacity:.8;text-shadow:none}.sidebar .nav[hidden]{display:none!important}.dark .sidebar .nav-group-toggle{color:#b49acb!important;text-shadow:0 0 3px rgba(139,92,246,.10),0 0 6px rgba(139,92,246,.10)}.dark .sidebar .nav-group-toggle:hover{background:rgba(139,92,246,.12)}";document.head.appendChild(style);}
 function switcher(){ return ''; }
 async function toggleFeature(id,f,current){
  const next=!enabled(current,f);
@@ -919,21 +919,63 @@ async function renderOverview(){
    }
  }));
 }
+const sidebarGroupExpanded=new Map();
+function sidebarGroupKey(name){return String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function addSidebarGroup(name,items,groupConfig){
+ const key=sidebarGroupKey(name);
+ const heading=document.createElement('button');
+ heading.type='button';
+ heading.className='nav-title nav-group-toggle nav-title-'+key;
+ heading.dataset.navGroup=key;
+ heading.setAttribute('aria-controls','sidebar-group-'+key);
+ if(!sidebarGroupExpanded.has(key))sidebarGroupExpanded.set(key,true);
+ const groupNav=document.createElement('nav');
+ groupNav.className='nav';
+ groupNav.id='sidebar-group-'+key;
+ const renderHeading=()=>{
+   const expanded=sidebarGroupExpanded.get(key)!==false;
+   heading.setAttribute('aria-expanded',String(expanded));
+   heading.innerHTML='<span class="nav-group-label">'+esc(name)+'</span><span class="nav-group-chevron" aria-hidden="true">'+(expanded?'▾':'▸')+'</span>';
+   groupNav.hidden=!expanded;
+ };
+ heading.onclick=()=>{
+   sidebarGroupExpanded.set(key,!(sidebarGroupExpanded.get(key)!==false));
+   renderHeading();
+ };
+ items.forEach(item=>{
+   const b=document.createElement('button');
+   b.type='button';
+   if(item.section){
+     b.dataset.section=item.section;
+     b.innerHTML='<span class="icon">'+icon(item.icon||'')+'</span>'+esc(item.label);
+     b.onclick=item.onClick;
+   }else{
+     const f=item.feature;
+     const on=enabled(groupConfig,f);
+     b.dataset.section=f[0];
+     b.classList.toggle('feature-disabled',!on);
+     b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);
+     b.onclick=()=>{if(!enabled(groupConfig,f)){alert(f[1]+' is switched off. Turn it on from Overview → Panels first.');return;}select(f[0]);};
+   }
+   groupNav.appendChild(b);
+ });
+ navigation.appendChild(heading);
+ navigation.appendChild(groupNav);
+ renderHeading();
+}
 async function buildNavigation(){
  if(!navigation)return;
  const id=guildId();let c={plugins:{}};
  if(id){try{c=await load(id);}catch(err){console.warn('[dashboard] feature config',err);}}
  navigation.innerHTML='';
- const main=document.createElement('div');main.className='nav-title nav-title-main';main.textContent='Main';navigation.appendChild(main);
- const nav=document.createElement('nav');nav.className='nav';
- const overviewButton=document.createElement('button');overviewButton.type='button';overviewButton.dataset.section='overview';overviewButton.innerHTML='<span class="icon">'+icon('house')+'</span>Overview';overviewButton.onclick=()=>select('overview');nav.appendChild(overviewButton);const premiumButton=document.createElement('button');premiumButton.type='button';premiumButton.dataset.section='premium';premiumButton.innerHTML='<span class="icon">'+icon('crown')+'</span>Premium';premiumButton.onclick=()=>select('premium');nav.appendChild(premiumButton);navigation.appendChild(nav);
+ addSidebarGroup('Main',[
+   {section:'overview',label:'Overview',icon:'house',onClick:()=>select('overview')},
+   {section:'premium',label:'Premium',icon:'crown',onClick:()=>select('premium')}
+ ],c);
  FEATURES.forEach(group=>{
    const visible=group[1].filter(f=>f[0]!=='premium');
    if(!visible.length)return;
-   const heading=document.createElement('div');heading.className='nav-title nav-title-'+group[0].toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');heading.textContent=group[0];navigation.appendChild(heading);
-   const groupNav=document.createElement('nav');groupNav.className='nav';
-   visible.forEach(f=>{const on=enabled(c,f);const b=document.createElement('button');b.type='button';b.dataset.section=f[0];b.classList.toggle('feature-disabled',!on);b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1]);b.onclick=()=>{if(!enabled(c,f)){alert(f[1]+' is switched off. Turn it on from Overview → Panels first.');return;}select(f[0]);};groupNav.appendChild(b);});
-   navigation.appendChild(groupNav);
+   addSidebarGroup(group[0],visible.map(f=>({feature:f})),c);
  });
 }
 async function select(section){
