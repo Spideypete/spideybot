@@ -225,6 +225,37 @@ async function execute(i,ctx){
     await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📨 Invite statistics — '+target.username).addFields({name:'Successful joins',value:fmt(stats.joins),inline:true},{name:'Members left',value:fmt(stats.leaves),inline:true},{name:'Active invites',value:fmt(stats.active),inline:true})]});
     return true;
   }
+  if(['play','skip','queue','stop'].includes(commandRoot)){
+    const player=ctx.player;
+    if(!player){await i.reply({content:'The music player is not available in this runtime.',ephemeral:true});return true;}
+    const queue=player.nodes.get(i.guild.id);
+    if(commandRoot==='play'){
+      const member=await i.guild.members.fetch(i.user.id).catch(()=>null),voice=member?.voice?.channel;
+      if(!voice){await i.reply({content:'Join a voice channel before using /play.',ephemeral:true});return true;}
+      const botMember=i.guild.members.me;
+      if(botMember&&!voice.permissionsFor(botMember)?.has(PermissionFlagsBits.Connect)){await i.reply({content:'SPIDEY BOT needs Connect permission in your voice channel.',ephemeral:true});return true;}
+      await i.deferReply();
+      try{
+        const result=await player.play(voice,i.options.getString('query',true),{nodeOptions:{metadata:i.channel}});
+        await i.editReply('🎵 Added **'+String(result.track?.title||i.options.getString('query',true)).slice(0,180)+'** to the queue.');
+      }catch(error){await i.editReply('Could not play that query: '+String(error.message||error).slice(0,700));}
+      return true;
+    }
+    if(!queue){await i.reply({content:'There is no active music queue for this server.',ephemeral:true});return true;}
+    if(commandRoot==='skip'){
+      const skipped=await queue.node.skip().catch(()=>false);
+      await i.reply(skipped?'⏭️ Skipped the current track.':'Could not skip the current track.');
+      return true;
+    }
+    if(commandRoot==='stop'){
+      await queue.delete();
+      await i.reply('⏹️ Music stopped and the queue was cleared.');
+      return true;
+    }
+    const tracks=queue.tracks.toArray().slice(0,10);
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎶 Music queue').setDescription(tracks.length?tracks.map((track,index)=>'**'+(index+1)+'.** '+String(track.title||'Unknown track').slice(0,180)+' · '+String(track.duration||'Unknown')).join('\\n'):'No upcoming tracks.')]});
+    return true;
+  }
   if(commandRoot==='alerts'){
     if(!isAdmin(i)){await i.reply({content:'Only administrators can manage social alerts.',ephemeral:true});return true;}
     const platform=i.options.getString('platform',commandSub!=='list'),handle=i.options.getString('handle');
