@@ -225,6 +225,51 @@ async function execute(i,ctx){
     await i.reply({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('📨 Invite statistics — '+target.username).addFields({name:'Successful joins',value:fmt(stats.joins),inline:true},{name:'Members left',value:fmt(stats.leaves),inline:true},{name:'Active invites',value:fmt(stats.active),inline:true})]});
     return true;
   }
+  if(commandRoot==='emoji'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can manage server emojis.',ephemeral:true});return true;}
+    if(!i.guild.members.me?.permissions.has(PermissionFlagsBits.ManageGuildExpressions)){await i.reply({content:'SPIDEY BOT needs Manage Expressions permission.',ephemeral:true});return true;}
+    if(commandSub==='delete'){
+      const name=i.options.getString('name',true).toLowerCase(),target=i.guild.emojis.cache.find(e=>e.name?.toLowerCase()===name||e.id===name);
+      if(!target){await i.reply({content:'No server emoji named '+name+' was found.',ephemeral:true});return true;}
+      await target.delete('Deleted by '+i.user.tag);
+      await i.reply({content:'Deleted emoji :'+target.name+':.',ephemeral:true});return true;
+    }
+    const raw=i.options.getString('url_emoji',true),name=i.options.getString('name',true).replace(/[^a-zA-Z0-9_]/g,'').slice(0,32);
+    if(!/^[a-zA-Z0-9_]{2,32}$/.test(name)){await i.reply({content:'Emoji names must be 2–32 letters, numbers, or underscores.',ephemeral:true});return true;}
+    let source=raw,match=raw.match(/^<a?:[A-Za-z0-9_]{2,32}:(\\d{17,20})>$/);
+    if(match){const animated=raw.startsWith('<a:');source='https://cdn.discordapp.com/emojis/'+match[1]+'.'+(animated?'gif':'png')+'?size=128&quality=lossless';}
+    if(!/^https:\/\//i.test(source)){await i.reply({content:'Provide a valid HTTPS image URL or a Discord custom emoji.',ephemeral:true});return true;}
+    await i.deferReply({ephemeral:true});
+    try{const response=await fetch(source);if(!response.ok)throw new Error('Image download returned HTTP '+response.status);const type=response.headers.get('content-type')||'';if(!type.startsWith('image/'))throw new Error('The URL did not return an image.');const bytes=Buffer.from(await response.arrayBuffer());if(bytes.length>256*1024)throw new Error('Emoji image must be 256 KB or smaller.');const created=await i.guild.emojis.create({attachment:bytes,name,reason:'Added by '+i.user.tag});await i.editReply('Added '+created.toString()+'.');}
+    catch(error){await i.editReply('Could not add emoji: '+String(error.message||error).slice(0,600));}
+    return true;
+  }
+  if(commandRoot==='embed'){
+    if(!isAdmin(i)){await i.reply({content:'Only administrators can create or edit embeds.',ephemeral:true});return true;}
+    if(commandSub==='builder'){
+      const title=i.options.getString('title',true),description=i.options.getString('description',true),target=i.options.getChannel('channel')||i.channel;
+      if(!target?.isTextBased()){await i.reply({content:'Choose a text channel.',ephemeral:true});return true;}
+      const message=await target.send({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle(title).setDescription(description).setFooter({text:'SPIDEY BOT'}).setTimestamp()]});
+      await i.reply({content:'Embed sent: '+message.url,ephemeral:true});return true;
+    }
+    const messageId=i.options.getString('message_id',true),target=i.channel;
+    const message=await target.messages.fetch(messageId).catch(()=>null);
+    if(!message||message.author.id!==ctx.client.user.id||!message.embeds.length){await i.reply({content:'I could not find a SPIDEY BOT embed with that message ID in this channel.',ephemeral:true});return true;}
+    const title=i.options.getString('title'),description=i.options.getString('description');
+    if(!title&&!description){await i.reply({content:'Provide a new title, description, or both.',ephemeral:true});return true;}
+    const embed=EmbedBuilder.from(message.embeds[0]);
+    if(title!==null)embed.setTitle(title);
+    if(description!==null)embed.setDescription(description);
+    await message.edit({embeds:[embed]});await i.reply({content:'Embed updated.',ephemeral:true});return true;
+  }
+  if(commandRoot==='poll'&&commandSub==='results'){
+    const messageId=i.options.getString('message_id',true),cfg=svc.get(i.guild.id),active=cfg.polls?.active||{};
+    const poll=Object.values(active).find(x=>String(x.messageId)===messageId||String(x.id)===messageId);
+    if(!poll){await i.reply({content:'No saved poll matches that message ID.',ephemeral:true});return true;}
+    const counts=poll.options.map((_,index)=>Object.values(poll.votes||{}).reduce((sum,v)=>sum+(Array.isArray(v)?v.includes(index):v===index?1:0),0));
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x5865f2).setTitle('Poll results: '+poll.question).setDescription(poll.options.map((option,index)=>'**'+option+'** — '+counts[index]+' vote(s)').join('\\n'))],ephemeral:true});
+    return true;
+  }
   if(['play','skip','queue','stop'].includes(commandRoot)){
     const player=ctx.player;
     if(!player){await i.reply({content:'The music player is not available in this runtime.',ephemeral:true});return true;}
@@ -479,13 +524,13 @@ async function execute(i,ctx){
       const pollConfig=c.polls||{};
       if(pollConfig.enabled===false){await i.reply({content:'Polls are disabled in this server dashboard settings.',ephemeral:true});return true;}
       const question=String(i.options.getString('question')||'').trim().slice(0,250);
-      const options=String(i.options.getString('options')||'Yes,No').split(',').map(x=>x.trim()).filter(Boolean).slice(0,20);
+      const options=String(i.options.getString('options')||'Yes|No').split(/[|,]/).map(x=>x.trim()).filter(Boolean).slice(0,20);
       const maxOptions=Math.min(20,Math.max(2,Number(pollConfig.maxOptions)||20));
       if(options.length<2){await i.reply({content:'Add at least two comma-separated options, for example: Red, Blue, Green.',ephemeral:true});return true;}
       if(options.length>maxOptions){await i.reply({content:'This server allows up to '+maxOptions+' options per poll.',ephemeral:true});return true;}
       if(options.some(x=>x.length>80)){await i.reply({content:'Each poll option must be 80 characters or fewer.',ephemeral:true});return true;}
       const pollId=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
-      const expiresMinutes=Math.max(0,Number(pollConfig.defaultDurationMinutes)||0);
+      const requestedDuration=i.options.getInteger('duration');const expiresMinutes=Math.max(0,Number(requestedDuration??pollConfig.defaultDurationMinutes)||0);
       const poll={id:pollId,question,options,votes:{},guildId:i.guild.id,channelId:null,messageId:null,createdAt:Date.now(),expiresAt:expiresMinutes?Date.now()+expiresMinutes*60000:null,anonymous:pollConfig.anonymous!==false,allowMultipleVotes:pollConfig.allowMultipleVotes===true,closed:false};
       const renderPoll=()=>{const counts=options.map((_,index)=>Object.values(poll.votes).reduce((sum,v)=>sum+(Array.isArray(v)?v.includes(index):v===index?1:0),0));const embed=new EmbedBuilder().setColor(0x5865f2).setTitle('📊 '+question).setDescription(options.map((option,index)=>'**'+(index+1)+'. '+option+'**\n'+counts[index]+' vote'+(counts[index]===1?'':'s')).join('\n\n')).setFooter({text:'Poll ID: '+pollId+(poll.allowMultipleVotes?' · Multiple choices allowed':' · One choice per member')+(poll.anonymous?' · Anonymous results':'')}).setTimestamp(new Date(poll.createdAt));if(poll.expiresAt)embed.addFields({name:'Closes',value:'<t:'+Math.floor(poll.expiresAt/1000)+':R>'});return embed;};
       const rows=[];for(let start=0;start<options.length;start+=5){const row=new ActionRowBuilder();options.slice(start,start+5).forEach((option,offset)=>row.addComponents(new ButtonBuilder().setCustomId('pollvote:'+pollId+':'+(start+offset)).setLabel(option).setStyle(ButtonStyle.Primary).setDisabled(!!poll.closed)));rows.push(row);}
