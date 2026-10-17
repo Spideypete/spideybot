@@ -76,7 +76,7 @@ const spideyCommands = [
   S('alerts','Social alerts',b=>b
     .addSubcommand(sub('add','Add a creator/feed alert',s=>platformOption(s).addStringOption(x=>x.setName('handle').setDescription('Creator handle or feed URL').setRequired(true).setMaxLength(500)).addChannelOption(x=>x.setName('channel').setDescription('Notification channel').addChannelTypes(ChannelType.GuildText,ChannelType.GuildAnnouncement).setRequired(true)).addRoleOption(x=>x.setName('ping_role').setDescription('Role to ping').setRequired(false))))
     .addSubcommand(sub('remove','Remove an alert',s=>platformOption(s).addStringOption(x=>x.setName('handle').setDescription('Creator handle/feed URL').setRequired(true).setMaxLength(500))))
-    .addSubcommand(sub('list','List alerts',s=>platformOption(s,false))),
+    .addSubcommand(sub('list','List alerts',s=>platformOption(s,false)))),
   S('giveaway','Giveaways',b=>b
     .addSubcommand(sub('start','Start a giveaway',s=>str(s,'duration','Examples: 10m, 2h, 1d',true,30).addIntegerOption(x=>x.setName('winners').setDescription('Winner count').setMinValue(1).setMaxValue(20).setRequired(true)).addStringOption(x=>x.setName('prize').setDescription('Prize').setRequired(true).setMaxLength(200))))
     .addSubcommand(sub('reroll','Reroll a giveaway winner',s=>str(s,'message_id','Giveaway message ID',true,30)))),
