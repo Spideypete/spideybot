@@ -51,7 +51,7 @@ function profile(i,u,c){const l=c.levels.users?.[u.id]||{level:0,xp:0},e=c.econo
 async function execute(i,ctx){
   if(!i.isChatInputCommand()||!i.guild)return false;
   const root=i.commandName,sub=i.options.getSubcommand(false),alias={'info:avatar':'avatar','info:userinfo':'userinfo','info:serverinfo':'serverinfo','info:roleinfo':'roleinfo','info:botinfo':'botinfo','info:membercount':'membercount','info:permissions':'permissions','info:profile':'profile','info:rank':'rank','economy:daily':'daily','economy:beg':'beg','economy:deposit':'deposit','economy:withdraw':'withdraw','economy:inventory':'inventory','economy:shop':'shop','economy:buy':'buy','economy:give':'give','economy:rob':'rob','economy:crime':'crime','economy:pet':'pet','fun:poll':'poll','fun:deletepoll':'deletepoll','fun:calculator':'calculator','fun:ascii':'ascii','fun:advice':'advice','fun:dadjoke':'dadjoke','fun:wouldyourrather':'wouldyourrather','fun:hack':'hack','fun:relationship':'relationship','mod:warn':'warn','mod:warnings':'warnings','mod:kick':'kick','mod:ban':'ban','mod:mute':'mute','mod:unmute':'unmute','mod:purge':'purge','mod:softban':'softban','mod:unban':'unban','mod:clearwarnings':'clearwarnings','mod:slowmode':'slowmode','mod:lock':'lock','mod:unlock':'unlock','mod:nickname':'nickname','mod:role':'role','mod:announce':'announce','mod:say':'say','mod:thread':'thread','automod:toggle':'automod','automod:words':'automodwords','automod:links':'automodlinks','automod:spam':'automodspam','config:auditlog':'auditlog','config:prefix':'setprefix','config:sticky':'sticky','config:unsticky':'unsticky','config:counting':'counting','config:welcome':'welcome','config:goodbye':'goodbye','config:autorole':'autorole','config:verify':'verify','config:toggle':'commandtoggle','levels:rewards':'levelrewards','levels:setreward':'setlevelreward','levels:reset':'resetxp','levels:addxp':'addxp','levels:setxp':'setxp','levels:removexp':'removexp','system:stats':'botstats','system:guilds':'guildlist','system:blacklist':'blacklist','system:unblacklist':'unblacklist','system:reload':'reloadconfig','system:debug':'debug','invites:stats':'invitesstats','invites:leaderboard':'invitesleaderboard','invites:add':'invitesadd','invites:remove':'invitesremove','invites:reset':'invitesreset'},n=alias[(root+':'+sub)]||root;
-  const deferredModerationCommands=['warn','warnings','kick','ban','mute','unmute','unban'];
+  const deferredModerationCommands=['warn','warnings','kick','ban','mute','unmute','unban','purge','softban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread'];
   // Acknowledge these interactions immediately, before config checks or Discord API requests.
   if(deferredModerationCommands.includes(n)&&!i.deferred&&!i.replied) await i.deferReply({ephemeral:true});
   const respondEarly=payload=>i.deferred||i.replied?i.editReply(payload):i.reply(payload);
@@ -161,100 +161,194 @@ async function execute(i,ctx){
     if(n==='hack'){await i.reply('💻 Connecting...');setTimeout(()=>i.editReply('💻 Scanning... | 📦 Downloading memes... | 😂 Fake hack complete.').catch(()=>{}),900);return true;}
     if(n==='relationship'){await i.reply('💜 Compatibility: '+(50+Math.floor(Math.random()*51))+'%');return true;}
 
-    if(['warn','warnings','kick','ban','mute','unmute','unban'].includes(n)){
+    if(['warn','warnings','kick','ban','mute','unmute','unban','purge','softban','clearwarnings','slowmode','lock','unlock','nickname','role','announce','say','thread'].includes(n)){
       const hasPerm = perm => isAdmin(i) || !!i.memberPermissions?.has(perm);
+      const deny = message => respond({content:message,ephemeral:true});
+      const reason = String(i.options.getString('reason',false)||'No reason provided').trim().slice(0,450) || 'No reason provided';
+      const getTargetMember = async user => i.guild.members.fetch(user.id).catch(()=>null);
+      const moderatorMember = await i.guild.members.fetch(i.user.id).catch(()=>null);
+      const canModerateTarget = member => isAdmin(i) || !!(moderatorMember && member && member.roles.highest.comparePositionTo(moderatorMember.roles.highest) < 0);
+      const targetUser = i.options.getUser('user',false);
 
-      // Unban uses a user ID rather than the member option used by other mod commands.
       if(n==='unban'){
-        if(!hasPerm(PermissionFlagsBits.BanMembers)) return respond({content:'❌ You need Ban Members permission.',ephemeral:true});
+        if(!hasPerm(PermissionFlagsBits.BanMembers)) return deny('❌ You need Ban Members permission.');
         const userId=String(i.options.getString('user_id')||'').trim();
-        if(!/^\d{17,20}$/.test(userId)) return respond({content:'❌ Enter a valid Discord user ID (17–20 digits).',ephemeral:true});
+        if(!/^\\d{17,20}$/.test(userId)) return deny('❌ Enter a valid Discord user ID (17–20 digits).');
         const existingBan=await i.guild.bans.fetch(userId).catch(()=>null);
-        if(!existingBan) return respond({content:'ℹ️ That user is not currently banned from this server.',ephemeral:true});
+        if(!existingBan) return deny('ℹ️ That user is not currently banned from this server.');
         await i.guild.bans.remove(userId,'Unbanned by '+i.user.tag);
         await respond({content:'✅ Unbanned <@'+userId+'>.'});
         return true;
       }
 
-      const targetUser=i.options.getUser('user');
-      if(!targetUser) return respond({content:'❌ Select a member using the user option.',ephemeral:true});
-      const reason=String(i.options.getString('reason')||'No reason provided').slice(0,450);
-      const member=await i.guild.members.fetch(targetUser.id).catch(()=>null);
-
-      if(n==='warnings'){
-        if(!hasPerm(PermissionFlagsBits.ModerateMembers)&&!hasPerm(PermissionFlagsBits.KickMembers)) return respond({content:'❌ You need Moderate Members or Kick Members permission to view warning history.',ephemeral:true});
-        const list=svc.getWarnings(i.guild.id,targetUser.id);
-        const description=list.length
-          ? list.map((w,index)=>(index+1)+'. '+String(w.reason||'No reason').slice(0,300)+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\n')
-          : 'No warnings recorded for this member.';
-        return respond({content:description.slice(0,1900),ephemeral:true});
-      }
-
-      if(n==='warn'){
-        if(!hasPerm(PermissionFlagsBits.ModerateMembers)&&!hasPerm(PermissionFlagsBits.KickMembers)) return respond({content:'❌ You need Moderate Members or Kick Members permission.',ephemeral:true});
-        if(!member) return respond({content:'❌ That member is not currently in this server.',ephemeral:true});
-        if(targetUser.id===i.user.id||targetUser.id===i.client.user.id) return respond({content:'❌ You cannot warn yourself or the bot.',ephemeral:true});
+      if(n==='warn'||n==='warnings'){
+        if(!hasPerm(PermissionFlagsBits.ModerateMembers)&&!hasPerm(PermissionFlagsBits.KickMembers)) return deny('❌ You need Moderate Members or Kick Members permission.');
+        if(!targetUser) return deny('❌ Select a member using the user option.');
+        if(n==='warnings'){
+          const list=svc.getWarnings(i.guild.id,targetUser.id);
+          const description=list.length
+            ? list.map((w,index)=>(index+1)+'. '+String(w.reason||'No reason').slice(0,300)+' — <t:'+Math.floor((w.at||Date.now())/1000)+':R>').join('\\n')
+            : 'No warnings recorded for this member.';
+          return respond({content:description.slice(0,1900),ephemeral:true});
+        }
+        if(targetUser.id===i.user.id||targetUser.id===i.client.user.id) return deny('❌ You cannot warn yourself or the bot.');
+        const member=await getTargetMember(targetUser);
+        if(!member) return deny('❌ That member is not currently in this server.');
+        if(!canModerateTarget(member)) return deny('❌ You cannot warn a member whose highest role is equal to or above yours.');
         const list=svc.addWarning(i.guild.id,targetUser.id,{reason,by:i.user.id,at:Date.now()});
         await respond({content:'⚠️ Warned '+targetUser.tag+'. Total warnings: '+list.length+'. Reason: '+reason});
         await sendModerationLog(i,'WARN',targetUser,reason);
         return true;
       }
 
-      if(n==='kick'){
-        if(!hasPerm(PermissionFlagsBits.KickMembers)) return respond({content:'❌ You need Kick Members permission.',ephemeral:true});
-        if(!member) return respond({content:'❌ That member is not currently in this server.',ephemeral:true});
-        if(targetUser.id===i.user.id) return respond({content:'❌ You cannot kick yourself.',ephemeral:true});
-        if(!member.kickable) return respond({content:'❌ I cannot kick that member. Check that the bot has Kick Members permission and its highest role is above the target member.',ephemeral:true});
-        await member.kick(reason);
-        await respond({content:'👢 Kicked '+targetUser.tag+'. Reason: '+reason});
-        await sendModerationLog(i,'KICK',targetUser,reason);
+      if(n==='kick'||n==='ban'||n==='mute'||n==='unmute'||n==='softban'){
+        if(!targetUser) return deny('❌ Select a member using the user option.');
+        if(targetUser.id===i.user.id||targetUser.id===i.client.user.id) return deny('❌ You cannot apply this action to yourself or the bot.');
+        const member=await getTargetMember(targetUser);
+
+        if(n==='kick'){
+          if(!hasPerm(PermissionFlagsBits.KickMembers)) return deny('❌ You need Kick Members permission.');
+          if(!member) return deny('❌ That member is not currently in this server.');
+          if(!canModerateTarget(member)) return deny('❌ You cannot kick a member whose highest role is equal to or above yours.');
+          if(!member.kickable) return deny('❌ I cannot kick that member. Check the bot’s Kick Members permission and role hierarchy.');
+          await member.kick(reason);
+          await respond({content:'👢 Kicked '+targetUser.tag+'. Reason: '+reason});
+          await sendModerationLog(i,'KICK',targetUser,reason);
+          return true;
+        }
+
+        if(n==='ban'){
+          if(!hasPerm(PermissionFlagsBits.BanMembers)) return deny('❌ You need Ban Members permission.');
+          if(member&&!canModerateTarget(member)) return deny('❌ You cannot ban a member whose highest role is equal to or above yours.');
+          if(member&&!member.bannable) return deny('❌ I cannot ban that member. Check the bot’s Ban Members permission and role hierarchy.');
+          await i.guild.members.ban(targetUser.id,{reason});
+          await respond({content:'🔨 Banned '+targetUser.tag+'. Reason: '+reason});
+          await sendModerationLog(i,'BAN',targetUser,reason);
+          return true;
+        }
+
+        if(n==='softban'){
+          if(!hasPerm(PermissionFlagsBits.BanMembers)) return deny('❌ You need Ban Members permission.');
+          if(!member) return deny('❌ Softban requires a member who is currently in this server.');
+          if(!canModerateTarget(member)) return deny('❌ You cannot softban a member whose highest role is equal to or above yours.');
+          if(!member.bannable) return deny('❌ I cannot softban that member. Check the bot’s Ban Members permission and role hierarchy.');
+          await i.guild.members.ban(targetUser.id,{reason,deleteMessageSeconds:0});
+          await i.guild.bans.remove(targetUser.id,'Softbanned by '+i.user.tag+': '+reason);
+          await respond({content:'✅ Softbanned '+targetUser.tag+'. Reason: '+reason});
+          await sendModerationLog(i,'BAN',targetUser,'Softban: '+reason);
+          return true;
+        }
+
+        if(n==='mute'||n==='unmute'){
+          if(!hasPerm(PermissionFlagsBits.ModerateMembers)) return deny('❌ You need Moderate Members permission.');
+          if(!member) return deny('❌ That member is not currently in this server.');
+          if(!canModerateTarget(member)) return deny('❌ You cannot timeout a member whose highest role is equal to or above yours.');
+          if(!member.moderatable) return deny('❌ I cannot manage this member’s timeout. Check the bot’s Moderate Members permission and role hierarchy.');
+          if(n==='mute'){
+            const minutes=i.options.getInteger('minutes');
+            if(!Number.isInteger(minutes)||minutes<1||minutes>40320) return deny('❌ Timeout duration must be between 1 minute and 28 days.');
+            await member.timeout(minutes*60*1000,reason);
+            await respond({content:'🔇 Timed out '+targetUser.tag+' for '+minutes+' minute(s). Reason: '+reason});
+            await sendModerationLog(i,'MUTE',targetUser,reason+' (Duration: '+minutes+' minute(s))');
+            return true;
+          }
+          if(!member.communicationDisabledUntilTimestamp) return deny('ℹ️ That member is not currently timed out.');
+          await member.timeout(null,reason);
+          await respond({content:'🔊 Timeout removed for '+targetUser.tag+'.'});
+          await sendModerationLog(i,'UNMUTE',targetUser,reason);
+          return true;
+        }
+      }
+
+      if(n==='clearwarnings'){
+        if(!hasPerm(PermissionFlagsBits.ModerateMembers)&&!hasPerm(PermissionFlagsBits.KickMembers)) return deny('❌ You need Moderate Members or Kick Members permission.');
+        if(!targetUser) return deny('❌ Select a member using the user option.');
+        const warnings={...(c.warnings||{}),[targetUser.id]:[]};
+        svc.save(i.guild.id,{warnings});
+        await respond({content:'✅ Warning history cleared for '+targetUser.tag+'.',ephemeral:true});
         return true;
       }
 
-      if(n==='ban'){
-        if(!hasPerm(PermissionFlagsBits.BanMembers)) return respond({content:'❌ You need Ban Members permission.',ephemeral:true});
-        if(targetUser.id===i.user.id) return respond({content:'❌ You cannot ban yourself.',ephemeral:true});
-        if(member&&!member.bannable) return respond({content:'❌ I cannot ban that member. Check that the bot has Ban Members permission and its highest role is above the target member.',ephemeral:true});
-        await i.guild.members.ban(targetUser.id,{reason});
-        await respond({content:'🔨 Banned '+targetUser.tag+'. Reason: '+reason});
-        await sendModerationLog(i,'BAN',targetUser,reason);
+      if(n==='purge'){
+        if(!hasPerm(PermissionFlagsBits.ManageMessages)) return deny('❌ You need Manage Messages permission.');
+        if(!i.channel?.isTextBased?.()||!i.channel.messages?.bulkDelete) return deny('❌ This command only works in a text channel.');
+        const amount=i.options.getInteger('amount');
+        if(!Number.isInteger(amount)||amount<1||amount>100) return deny('❌ Choose between 1 and 100 messages.');
+        const deleted=await i.channel.bulkDelete(amount,true);
+        await respond({content:'🧹 Deleted '+deleted.size+' recent messages. Messages older than 14 days are skipped.',ephemeral:true});
         return true;
       }
 
-      if(n==='mute'){
-        if(!hasPerm(PermissionFlagsBits.ModerateMembers)) return respond({content:'❌ You need Moderate Members permission.',ephemeral:true});
-        if(!member) return respond({content:'❌ That member is not currently in this server.',ephemeral:true});
-        if(targetUser.id===i.user.id) return respond({content:'❌ You cannot timeout yourself.',ephemeral:true});
-        const minutes=i.options.getInteger('minutes');
-        if(!Number.isInteger(minutes)||minutes<1||minutes>40320) return respond({content:'❌ Timeout duration must be between 1 minute and 28 days.',ephemeral:true});
-        if(!member.moderatable) return respond({content:'❌ I cannot timeout that member. Check that the bot has Moderate Members permission and its highest role is above the target member.',ephemeral:true});
-        await member.timeout(minutes*60*1000,reason);
-        await respond({content:'🔇 Timed out '+targetUser.tag+' for '+minutes+' minute(s). Reason: '+reason});
-        await sendModerationLog(i,'MUTE',targetUser,reason+' (Duration: '+minutes+' minute(s))');
+      if(n==='slowmode'){
+        if(!hasPerm(PermissionFlagsBits.ManageChannels)) return deny('❌ You need Manage Channels permission.');
+        if(!i.channel?.setRateLimitPerUser) return deny('❌ Slowmode can only be changed in a text channel.');
+        await i.channel.setRateLimitPerUser(i.options.getInteger('seconds'),'Updated by '+i.user.tag);
+        await respond({content:'🐢 Slowmode updated.',ephemeral:true});
         return true;
       }
 
-      if(n==='unmute'){
-        if(!hasPerm(PermissionFlagsBits.ModerateMembers)) return respond({content:'❌ You need Moderate Members permission.',ephemeral:true});
-        if(!member) return respond({content:'❌ That member is not currently in this server.',ephemeral:true});
-        if(!member.communicationDisabledUntilTimestamp) return respond({content:'ℹ️ That member is not currently timed out.',ephemeral:true});
-        if(!member.moderatable) return respond({content:'❌ I cannot remove this timeout. Check that the bot has Moderate Members permission and its highest role is above the target member.',ephemeral:true});
-        await member.timeout(null,reason);
-        await respond({content:'🔊 Timeout removed for '+targetUser.tag+'.'});
-        await sendModerationLog(i,'UNMUTE',targetUser,reason);
+      if(n==='lock'||n==='unlock'){
+        if(!hasPerm(PermissionFlagsBits.ManageChannels)) return deny('❌ You need Manage Channels permission.');
+        if(!i.channel?.permissionOverwrites) return deny('❌ This command only works in a guild channel.');
+        await i.channel.permissionOverwrites.edit(i.guild.roles.everyone,{SendMessages:n==='unlock'?null:false},'Updated by '+i.user.tag);
+        await respond({content:n==='lock'?'🔒 Channel locked.':'🔓 Channel unlocked.',ephemeral:true});
         return true;
       }
+
+      if(n==='nickname'){
+        if(!hasPerm(PermissionFlagsBits.ManageNicknames)) return deny('❌ You need Manage Nicknames permission.');
+        if(!targetUser) return deny('❌ Select a member using the user option.');
+        const member=await getTargetMember(targetUser);
+        if(!member) return deny('❌ That member is not currently in this server.');
+        if(!canModerateTarget(member)) return deny('❌ You cannot change the nickname of a member whose highest role is equal to or above yours.');
+        if(!member.manageable) return deny('❌ I cannot change that member’s nickname because of role hierarchy or missing permissions.');
+        await member.setNickname(i.options.getString('nickname'),'Changed by '+i.user.tag);
+        await respond({content:'✏️ Nickname updated for '+targetUser.tag+'.',ephemeral:true});
+        return true;
+      }
+
+      if(n==='role'){
+        if(!hasPerm(PermissionFlagsBits.ManageRoles)) return deny('❌ You need Manage Roles permission.');
+        if(!targetUser) return deny('❌ Select a member using the user option.');
+        const member=await getTargetMember(targetUser),role=i.options.getRole('role');
+        if(!member) return deny('❌ That member is not currently in this server.');
+        if(!role) return deny('❌ Select a role.');
+        if(role.managed||!role.editable) return deny('❌ I cannot assign that role because it is managed or above the bot’s highest role.');
+        if(!canModerateTarget(member)) return deny('❌ You cannot change roles for a member whose highest role is equal to or above yours.');
+        if(!isAdmin(i)&&role.position>=moderatorMember?.roles.highest.position) return deny('❌ You cannot assign or remove a role equal to or above your highest role.');
+        const action=i.options.getString('action');
+        if(action==='add') await member.roles.add(role,'Updated by '+i.user.tag);
+        else if(action==='remove') await member.roles.remove(role,'Updated by '+i.user.tag);
+        else return deny('❌ Choose add or remove.');
+        await respond({content:'✅ Role '+(action==='add'?'added to ':'removed from ')+targetUser.tag+'.',ephemeral:true});
+        return true;
+      }
+
+      if(n==='announce'){
+        if(!hasPerm(PermissionFlagsBits.ManageMessages)) return deny('❌ You need Manage Messages permission.');
+        const channel=i.options.getChannel('channel');
+        if(!channel?.isTextBased?.()) return deny('❌ Choose a text channel.');
+        await channel.send({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('Announcement').setDescription(i.options.getString('message').slice(0,4000)).setTimestamp()});
+        await respond({content:'📣 Announcement sent to '+channel.toString()+'.',ephemeral:true});
+        return true;
+      }
+
+      if(n==='say'){
+        if(!hasPerm(PermissionFlagsBits.ManageMessages)) return deny('❌ You need Manage Messages permission.');
+        await i.channel.send({content:i.options.getString('message').slice(0,2000),allowedMentions:{parse:[]}});
+        await respond({content:'✅ Message sent.',ephemeral:true});
+        return true;
+      }
+
+      if(n==='thread'){
+        if(!hasPerm(PermissionFlagsBits.CreatePublicThreads)&&!hasPerm(PermissionFlagsBits.CreatePrivateThreads)&&!hasPerm(PermissionFlagsBits.ManageThreads)) return deny('❌ You need permission to create or manage threads.');
+        if(!i.channel?.threads?.create) return deny('❌ Threads cannot be created in this channel.');
+        const thread=await i.channel.threads.create({name:i.options.getString('name').slice(0,100),reason:'Created by '+i.user.tag});
+        await respond({content:'🧵 Created '+thread.toString()+'.',ephemeral:true});
+        return true;
+      }
+      return false;
     }
-    if(n==='purge'){const d=await i.channel.bulkDelete(i.options.getInteger('amount'),true);await i.reply({content:'🧹 Deleted '+d.size+' messages.',ephemeral:true});return true;}
-    if(n==='softban'){const id=i.options.getUser('user').id,m=await i.guild.members.fetch(id).catch(()=>null);if(m&&!m.bannable)return i.reply('❌ I cannot ban that member.');await i.guild.members.ban(id,{reason:i.options.getString('reason')||'Softban'});await i.guild.bans.remove(id,'Softban');await i.reply('✅ Softbanned.');return true;}
-    if(n==='clearwarnings'){const id=i.options.getUser('user').id;c.warnings[id]=[];svc.save(i.guild.id,{warnings:c.warnings});await i.reply('✅ Warning history cleared.');return true;}
-    if(n==='slowmode'){await i.channel.setRateLimitPerUser(i.options.getInteger('seconds'),'SPIDEY BOT');await i.reply('🐢 Slowmode updated.');return true;}
-    if(n==='lock'||n==='unlock'){await i.channel.permissionOverwrites.edit(i.guild.roles.everyone,{SendMessages:n==='unlock'?null:false});await i.reply(n==='lock'?'🔒 Channel locked.':'🔓 Channel unlocked.');return true;}
-    if(n==='nickname'){const m=await i.guild.members.fetch(i.options.getUser('user').id);await m.setNickname(i.options.getString('nickname'));await i.reply('✏️ Nickname updated.');return true;}
-    if(n==='role'){const m=await i.guild.members.fetch(i.options.getUser('user').id),r=i.options.getRole('role');if(i.options.getString('action')==='add')await m.roles.add(r);else await m.roles.remove(r);await i.reply('✅ Role updated.');return true;}
-    if(n==='announce'){const ch=i.options.getChannel('channel');await ch.send({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('Announcement').setDescription(i.options.getString('message')).setTimestamp()]});await i.reply({content:'📣 Sent.',ephemeral:true});return true;}
-    if(n==='say'){await i.channel.send(i.options.getString('message'));await i.reply({content:'Sent.',ephemeral:true});return true;}
-    if(n==='thread'){const t=await i.channel.threads.create({name:i.options.getString('name'),reason:'SPIDEY BOT'});await i.reply('🧵 Created '+t.toString());return true;}
 
     if(['automod','automodwords','automodlinks','automodspam','auditlog','setprefix','sticky','unsticky','counting','welcome','goodbye','autorole','verify','commandtoggle'].includes(n)){
       if(!isAdmin(i))return i.reply({content:'❌ Administrator permission required.',ephemeral:true});
