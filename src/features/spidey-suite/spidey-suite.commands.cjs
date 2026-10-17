@@ -33,6 +33,12 @@ S('fun','Community fun and utility',b=>b
  .addSubcommand(sub('hack','Fake hack simulation',s=>s.addUserOption(o=>o.setName('user').setDescription('Target').setRequired(false))))
  .addSubcommand(sub('relationship','Playful compatibility',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))),
 S('mod','Moderation and channel management',b=>b
+ .addSubcommand(sub('warn','Warn a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
+ .addSubcommand(sub('warnings','View a member warning history',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true))))
+ .addSubcommand(sub('kick','Kick a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
+ .addSubcommand(sub('ban','Ban a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
+ .addSubcommand(sub('mute','Timeout a member',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addIntegerOption(o=>o.setName('minutes').setDescription('Timeout length in minutes').setRequired(true).setMinValue(1).setMaxValue(40320)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
+ .addSubcommand(sub('unmute','Remove a member timeout',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
  .addSubcommand(sub('purge','Delete recent messages',s=>s.addIntegerOption(o=>o.setName('amount').setDescription('1-100').setRequired(true).setMinValue(1).setMaxValue(100))))
  .addSubcommand(sub('softban','Ban then unban',s=>s.addUserOption(o=>o.setName('user').setDescription('Member').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false))))
  .addSubcommand(sub('unban','Unban by user ID',s=>s.addStringOption(o=>o.setName('user_id').setDescription('User ID').setRequired(true))))
