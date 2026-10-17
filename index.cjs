@@ -3023,11 +3023,12 @@ client.on("messageCreate", async (msg) => {
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS & SLASH COMMANDS) ==============
 client.on("interactionCreate", async (interaction) => {
-  // Dispatch modular Testify commands before the legacy monolith handles interactions.
-  if (interaction.isChatInputCommand()) {
-    const handled = await handleTestifyInteraction(interaction, { client });
-    if (handled) return;
-  }
+  // /ask is owned by the dedicated AI assistant handler. Do not let this legacy
+  // monolith process it or send a competing generic failure response.
+  if (interaction.isChatInputCommand() && interaction.commandName === "ask") return;
+
+  // Slash commands handled by the unified bridge above must not be dispatched a
+  // second time here. This listener handles only legacy commands and components.
 
   // Handle autocomplete interactions
   if (interaction.isAutocomplete()) {
