@@ -3198,7 +3198,7 @@ client.on("interactionCreate", async (interaction) => {
 
   // Dispatch modular spidey commands before the legacy monolith handles interactions.
   if (interaction.isChatInputCommand()) {
-    const handled = await handleSpideyInteraction(interaction, { client });
+    const handled = await handleSpideyInteraction(interaction, { client, player });
     if (handled) return;
   }
 
