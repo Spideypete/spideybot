@@ -145,7 +145,10 @@ async function execute(i,ctx){
       await i.reply({embeds:[new EmbedBuilder().setColor(active?0x6d3df5:0x747f8d).setTitle('SPIDEY BOT Premium').setDescription(active?'Premium is active for this server.':'This server is currently on the Free tier.').addFields({name:'Tier',value:String(info.tier||'free').toUpperCase(),inline:true},{name:'Expires',value:expiry,inline:true},{name:'Active giveaways',value:String(entitlements.entitlements.currentGiveaways),inline:true},{name:'Max active giveaways',value:String(entitlements.entitlements.maxGiveaways),inline:true},{name:'Custom commands',value:String(entitlements.entitlements.hasCustomCommands),inline:true},{name:'XP leaderboard',value:String(entitlements.entitlements.hasXP),inline:true})],ephemeral:true});
       return true;
     }
-    await i.reply({content:'Premium key redemption is not connected to a verified subscription/key store yet. No key was redeemed. Configure the subscription provider before using this command.',ephemeral:true});
+    if(!isAdmin(i)){await i.reply({content:'Only server administrators can activate Premium for this server.',ephemeral:true});return true;}
+    const result=subscriptionManager.redeemActivationKey(i.guild.id,i.options.getString('key',true));
+    if(!result.success){await i.reply({content:result.error,ephemeral:true});return true;}
+    await i.reply({content:'Premium activated for this server: **'+result.tier.toUpperCase()+'** for '+result.months+' month(s).',ephemeral:true});
     return true;
   }
   if(commandRoot==='reactionrole'){
