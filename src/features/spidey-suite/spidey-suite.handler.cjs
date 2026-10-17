@@ -1001,6 +1001,22 @@ const auditActor=async(guild,type,targetId)=>{
 };
 
 function registerSpideyHandlers(client){
+  if(!registerSpideyHandlers.commandLoggingListener){
+    registerSpideyHandlers.commandLoggingListener=true;
+    client.on('interactionCreate',async interaction=>{
+      if(!interaction.isChatInputCommand?.()||!interaction.guild)return;
+      try{
+        const cfg=svc.get(interaction.guild.id);
+        if(cfg.commandLogging!==true)return;
+        const channelId=cfg.audit?.channelId||cfg.commandLogChannelId;
+        if(!channelId)return;
+        const target=interaction.guild.channels.cache.get(String(channelId))||await interaction.guild.channels.fetch(String(channelId)).catch(()=>null);
+        if(!target?.isTextBased())return;
+        const pathName=[interaction.commandName,interaction.options.getSubcommandGroup(false),interaction.options.getSubcommand(false)].filter(Boolean).join(' ');
+        await target.send({embeds:[new EmbedBuilder().setColor(0x5865f2).setTitle('Slash command used').addFields({name:'Command',value:'/'+pathName,inline:true},{name:'User',value:interaction.user.toString(),inline:true},{name:'Channel',value:interaction.channel?.toString()||'Unknown',inline:true}).setTimestamp()],allowedMentions:{parse:[]}});
+      }catch(error){console.warn('[COMMAND LOGGING]',error.message);}
+    });
+  }
   if(!registerSpideyHandlers.giveawaySweep){
     registerSpideyHandlers.giveawaySweep=setInterval(async()=>{
       for(const guild of client.guilds.cache.values()){
