@@ -8,6 +8,7 @@ const advice=['Be curious before being certain.','Small consistent actions compo
 const jokes=['Why did the scarecrow win an award? Because he was outstanding in his field.','I only know 25 letters of the alphabet. I do not know y.','Why do programmers prefer dark mode? Because light attracts bugs.'];
 const wyr=['Unlimited money or unlimited time?','Always early or always prepared?','Explore space or the deep ocean?'];
 const levelXpCooldown=new Map();
+const ticTacToeGames=new Map();
 const achievements=require('../achievements/achievements.service.cjs');
 const inviteTracker=require('../invite-tracker/invite-tracker.service.cjs');
 const socialNotifications=require('../social-notifications/social-notifications.service.cjs');
@@ -325,6 +326,18 @@ async function execute(i,ctx){
     const tracks=queue.tracks.toArray().slice(0,10);
     await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎶 Music queue').setDescription(tracks.length?tracks.map((track,index)=>'**'+(index+1)+'.** '+String(track.title||'Unknown track').slice(0,180)+' · '+String(track.duration||'Unknown')).join('\\n'):'No upcoming tracks.')]});
     return true;
+  }
+  if(commandRoot==='tictactoe'){
+    const target=i.options.getUser('user',true);
+    if(target.bot||target.id===i.user.id){await i.reply({content:'Choose another human member to challenge.',ephemeral:true});return true;}
+    const gameId=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);
+    const game={id:gameId,guildId:i.guild.id,channelId:i.channelId,challengerId:i.user.id,opponentId:target.id,board:Array(9).fill(null),turn:i.user.id,ended:false};
+    ticTacToeGames.set(gameId,game);
+    const rows=[];
+    for(let r=0;r<3;r++){const row=new ActionRowBuilder();for(let col=0;col<3;col++){const index=r*3+col;row.addComponents(new ButtonBuilder().setCustomId('spidey_ttt:'+gameId+':'+index).setLabel('·').setStyle(ButtonStyle.Secondary));}rows.push(row);}
+    const message=await i.channel.send({content:'🎮 Tic-tac-toe challenge: '+i.user+' (❌) vs '+target+' (⭕). '+i.user+' goes first.',components:rows,allowedMentions:{users:[i.user.id,target.id]}});
+    game.messageId=message.id;
+    await i.reply({content:'Challenge posted for '+target.toString()+'.',ephemeral:true});return true;
   }
   if(commandRoot==='blackjack'||commandRoot==='slots'){
     const bet=i.options.getInteger('bet',true),cfg=svc.get(i.guild.id),economy=cfg.economy;economy.users=economy.users||{};const account=economy.users[i.user.id]||(economy.users[i.user.id]={cash:0,bank:0,daily:0,work:0,inventory:[],pet:null});
@@ -1037,6 +1050,27 @@ const auditActor=async(guild,type,targetId)=>{
 };
 
 function registerSpideyHandlers(client){
+  if(!registerSpideyHandlers.ticTacToeListener){
+    registerSpideyHandlers.ticTacToeListener=true;
+    client.on('interactionCreate',async interaction=>{
+      if(!interaction.isButton?.()||!interaction.customId?.startsWith('spidey_ttt:'))return;
+      const [,gameId,rawIndex]=interaction.customId.split(':'),game=ticTacToeGames.get(gameId),index=Number(rawIndex);
+      if(!game||game.ended){await interaction.reply({content:'This game has ended or expired.',ephemeral:true}).catch(()=>{});return;}
+      if(interaction.user.id!==game.challengerId&&interaction.user.id!==game.opponentId){await interaction.reply({content:'You are not a player in this game.',ephemeral:true}).catch(()=>{});return;}
+      if(interaction.user.id!==game.turn){await interaction.reply({content:'It is not your turn.',ephemeral:true}).catch(()=>{});return;}
+      if(!Number.isInteger(index)||index<0||index>8||game.board[index]){await interaction.reply({content:'That square is unavailable.',ephemeral:true}).catch(()=>{});return;}
+      game.board[index]=interaction.user.id===game.challengerId?'X':'O';
+      const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      const winner=wins.find(line=>line.every(pos=>game.board[pos]===game.board[line[0]]));
+      if(winner||game.board.every(Boolean))game.ended=true;
+      else game.turn=game.turn===game.challengerId?game.opponentId:game.challengerId;
+      const rows=[];
+      for(let r=0;r<3;r++){const row=new ActionRowBuilder();for(let col=0;col<3;col++){const pos=r*3+col,mark=game.board[pos];row.addComponents(new ButtonBuilder().setCustomId('spidey_ttt:'+gameId+':'+pos).setLabel(mark==='X'?'❌':mark==='O'?'⭕':'·').setStyle(mark==='X'?ButtonStyle.Danger:mark==='O'?ButtonStyle.Primary:ButtonStyle.Secondary).setDisabled(Boolean(mark)||game.ended));}rows.push(row);}
+      const outcome=winner?'🏆 Winner: <@'+interaction.user.id+'>':game.ended?'🤝 Draw!':'Turn: <@'+game.turn+'>';
+      await interaction.update({content:'🎮 Tic-tac-toe: <@'+game.challengerId+'> (❌) vs <@'+game.opponentId+'> (⭕)\\n'+outcome,components:rows,allowedMentions:{users:[game.challengerId,game.opponentId]}});
+      if(game.ended)setTimeout(()=>ticTacToeGames.delete(gameId),10*60*1000).unref?.();
+    });
+  }
   if(!registerSpideyHandlers.commandLoggingListener){
     registerSpideyHandlers.commandLoggingListener=true;
     client.on('interactionCreate',async interaction=>{
