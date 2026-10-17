@@ -74,12 +74,44 @@ async function sendConfiguredNotice(guild, settings, message, isError = false, f
 }
 
 async function sendDmConfirmation(user, message, guild, settings, fallbackChannel = null) {
-  if (!settings?.dmConfirmations && !settings?.dmConfirm) return;
+  if (!settings?.dmConfirmations && !settings?.dmConfirm) return { sent: false, skipped: true };
+
   try {
-    await user.send(message);
+    // Refresh the recipient through this bot client's user cache before opening
+    // the DM. This avoids relying on a possibly stale User object from the
+    // gateway reaction event.
+    const recipient = guild?.client?.users?.fetch
+      ? await guild.client.users.fetch(user.id, { force: true })
+      : user;
+    await recipient.send(message);
+    return { sent: true };
   } catch (error) {
-    console.warn(`[reaction-roles] Could not DM ${user.tag || user.id}; their Discord DMs may be closed: ${error.message}`);
-    await sendConfiguredNotice(guild, settings, `⚠️ Role update succeeded for <@${user.id}>, but I could not send the confirmation DM because their DMs may be closed.`, true, fallbackChannel);
+    console.warn(
+      `[reaction-roles] Could not DM ${user.tag || user.id} (code=${error.code || "unknown"}): ${error.message}`
+    );
+
+    // DM failures must be visible even when optional error-reporting notices
+    // are disabled, otherwise admins cannot tell why confirmation did not arrive.
+    const channel = fallbackChannel;
+    if (channel?.isTextBased?.() && typeof channel.send === "function") {
+      try {
+        await channel.send({
+          content: `⚠️ <@${user.id}> received the role update, but Discord did not allow the confirmation DM. Please enable DMs for server members and try again.`,
+          allowedMentions: { users: [user.id] }
+        });
+      } catch (noticeError) {
+        console.warn("[reaction-roles] Could not post DM-failure notice:", noticeError.message);
+      }
+    } else {
+      await sendConfiguredNotice(
+        guild,
+        settings,
+        `⚠️ Role update succeeded for <@${user.id}>, but Discord rejected the confirmation DM (code ${error.code || "unknown"}).`,
+        true,
+        fallbackChannel
+      );
+    }
+    return { sent: false, error };
   }
 }
 
