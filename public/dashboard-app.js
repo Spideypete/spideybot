@@ -803,7 +803,7 @@ if(k==='achievements'){
   const addRow=(prefix)=>{
    const container=document.getElementById(prefix+'ThresholdRows'),row=document.createElement('div');
    row.className='rr-mapping-grid milestone-threshold-row';row.dataset.milestoneRow=prefix;
-   row.innerHTML='<label class="field">Threshold '+(container.children.length+1)+'<input type="number" min="1" max="100000000" value=""></label><label class="field">Reward role<select>'+optionList(roles,'','Choose a reward role')+'</select></label><button type="button" class="level-reward-action level-reward-remove" data-remove-milestone="'+prefix+'"><span aria-hidden="true">−</span> Remove</button>';
+   row.innerHTML='<label class="field">Threshold '+(container.children.length+1)+'<input type="number" min="1" max="100000000" value=""></label><label class="field">Reward role<select>'+optionList(roles,'','Choose a reward role')+'</select></label>';
    container.appendChild(row);bindButtons();
   };
   const bindButtons=()=>{
