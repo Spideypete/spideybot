@@ -1254,6 +1254,7 @@ async function buildNavigation(){
  navigation.innerHTML='';
  addSidebarGroup('Main',[
    {section:'overview',label:'Overview',icon:'house',onClick:()=>select('overview')},
+   {section:'statistics',label:'Statistics',icon:'chart-line',onClick:()=>select('statistics')},
    {section:'premium',label:'Premium / Pro',icon:'crown',onClick:()=>select('premium')}
  ],c);
  FEATURES.forEach(group=>{
@@ -1262,11 +1263,50 @@ async function buildNavigation(){
    addSidebarGroup(group[0],visible.map(f=>({feature:f})),c);
  });
 }
+async function renderStatistics(id){
+  overview.hidden=true;workspace.hidden=false;
+  title.textContent='Statistics';
+  description.textContent='Live server membership, moderation roles and tracked community growth.';
+  body.innerHTML=card('Loading statistics','Fetching current server statistics…','');
+  const data=await api('/api/dashboard/server-statistics?guildId='+encodeURIComponent(id));
+  const metrics=[
+    ['Members',data.memberCount,'Current server membership'],
+    ['Messages sent',data.messages,'Human messages tracked since rollout'],
+    ['Moderators',data.moderators,'Members with moderation permissions'],
+    ['Administrators',data.administrators,'Members with Administrator permission']
+  ];
+  const metricCards=metrics.map(([label,value,meta])=>'<div class="card stat"><div class="stat-top"><span>'+esc(label)+'</span><div class="stat-icon"></div></div><div class="stat-value">'+Number(value||0).toLocaleString()+'</div><div class="stat-meta">'+esc(meta)+'</div></div>').join('');
+  const joins=Array.isArray(data.joinsThisMonth)?data.joinsThisMonth:[];
+  const labels=Array.isArray(data.joinLabels)?data.joinLabels:[];
+  const max=Math.max(1,...joins);
+  const bars=joins.map((count,index)=>{
+    const height=Math.max(3,Math.round((Number(count||0)/max)*100));
+    const day=Number(labels[index]||index+1);
+    const showLabel=day===1||day%5===0||day===joins.length;
+    return '<div title="'+esc('Day '+day+': '+count+' joined')+'" style="flex:1;min-width:3px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:150px;gap:5px"><div style="width:100%;height:'+height+'%;min-height:3px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--petrol),var(--purple));opacity:'+(Number(count)>0?'1':'.28')+'"></div><span style="font-size:9px;color:var(--muted);height:12px">'+(showLabel?day:'')+'</span></div>';
+  }).join('');
+  body.innerHTML='<div class="stats">'+metricCards+'</div>'+
+    '<div class="card panel section"><div class="panel-head"><div><div class="panel-title">People who joined this month</div><div class="panel-sub">Daily joins recorded by SPIDEY BOT</div></div></div>'+
+    '<div style="display:flex;align-items:flex-end;gap:4px;min-height:180px;padding:12px 4px 0;border-bottom:1px solid var(--border)">'+bars+'</div>'+
+    '<div style="font-size:11px;color:var(--muted);margin-top:12px">Day of month · '+joins.reduce((sum,n)=>sum+Number(n||0),0)+' tracked joins this month</div></div>'+
+    '<div class="card panel section"><div class="panel-head"><div><div class="panel-title">Server Statistics</div><div class="panel-sub">Membership and activity overview inspired by the discord-server-stats project.</div></div></div>'+
+    '<div class="activity"><div class="activity-row"><div class="activity-icon">↗</div><div class="activity-main"><strong>Message tracking</strong><span>'+Number(data.messages||0).toLocaleString()+' human messages recorded since statistics tracking was deployed.</span></div></div>'+
+    '<div class="activity-row"><div class="activity-icon">＋</div><div class="activity-main"><strong>Member growth</strong><span>Daily joins are recorded from deployment onwards. Older join history is not invented.</span></div></div>'+
+    '<div class="activity-row"><div class="activity-icon">♙</div><div class="activity-main"><strong>Role counts</strong><span>Moderator and administrator totals are calculated from members available to the bot and their Discord permissions.</span></div></div></div></div>';
+}
 async function select(section){
  document.querySelectorAll('[data-section]').forEach(b=>b.classList.toggle('active',b.dataset.section===section));
  if(section==='overview'){workspace.hidden=true;overview.hidden=false;renderOverview();return;}
  const id=guildId();
  if(!id){overview.hidden=true;workspace.hidden=false;body.innerHTML=card('Server selection required','No guild ID is available. Return to server selection and choose the server again.','');return;}
+ if(section==='statistics'){
+   try{await renderStatistics(id);}catch(err){
+     console.error('[dashboard] statistics failed',err);
+     overview.hidden=true;workspace.hidden=false;title.textContent='Statistics';description.textContent='Server statistics';
+     body.innerHTML=card('Statistics unavailable','Could not load server statistics.','<div class="activity-row"><div class="activity-main"><strong>Error</strong><span>'+esc(err.message||String(err))+'</span></div></div>');
+   }
+   return;
+ }
  const f=feature(section);
  if(!f){overview.hidden=true;workspace.hidden=false;body.innerHTML=card('Panel unavailable','This section is not registered.','');return;}
  try{
