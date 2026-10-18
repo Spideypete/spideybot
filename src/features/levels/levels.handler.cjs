@@ -26,8 +26,8 @@ async function handleMessageCreate(message) {
   }
   // Bonus XP is awarded once per eligible message and capped to discourage emoji spam.
   if (config.emojiXpEnabled === true && message.content) {
-    const unicodeEmojiCount = (message.content.match(/\\p{Extended_Pictographic}/gu) || []).length;
-    const customEmojiCount = (message.content.match(/<a?:[A-Za-z0-9_]+:\\d+>/g) || []).length;
+    const unicodeEmojiCount = (message.content.match(/\p{Extended_Pictographic}/gu) || []).length;
+    const customEmojiCount = (message.content.match(/<a?:[A-Za-z0-9_]+:\d+>/g) || []).length;
     const emojiCount = Math.min(20, unicodeEmojiCount + customEmojiCount);
     const perEmoji = Math.max(0, Number(config.emojiXpPerMessage ?? 2));
     const cap = Math.max(0, Number(config.maxEmojiXpPerMessage ?? 6));
