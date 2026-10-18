@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head>
+<html lang="en"><head><link rel="icon" type="image/png" href="/spideybot-logo.png?v=2">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark light">
 <title>SPIDEY BOT — Dashboard</title>
 <style>
@@ -82,6 +82,20 @@ button{transition:background .16s ease,border-color .16s ease,color .16s ease,tr
 button:active{transform:translateY(1px)}
 button:not(.nav button):not(.mobile-menu):not(.top-btn){border-radius:8px}
 .field{margin-bottom:14px}
+.stat-counter-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px;margin:22px 0 8px;padding:18px;border:1px solid var(--border);border-radius:13px;background:var(--surface2)}
+.stat-counter-form .field{display:flex;flex-direction:column;gap:10px;min-width:0;margin:0}
+.stat-counter-form .field select,.stat-counter-form .field input{display:block;width:100%;min-width:0;margin-top:3px}
+.stat-counter-actions{margin:14px 0 22px}
+.stat-counter-list{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.stat-counter-list h3{margin-bottom:14px}
+.stat-counter-overview{margin:0 0 22px}
+.stat-counter-overview .panel-head{gap:18px;align-items:center;margin-bottom:10px}
+.stat-counter-overview-value{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.stat-counter-overview-value strong{font-size:27px;font-weight:850}
+.stat-counter-overview-value span,.stat-counter-overview-note{font-size:11px;color:var(--muted)}
+.stat-counter-overview-note{margin-top:5px}
+@media(max-width:620px){.stat-counter-form{grid-template-columns:1fr;gap:16px;padding:14px}.stat-counter-overview .panel-head{align-items:flex-start;flex-direction:column}}
+
 .field label,.field>label{display:block;color:var(--muted);font-size:11px;font-weight:650;margin-bottom:6px}
 .field input,.field select,.field textarea,.select,input,select,textarea{padding:9px 11px;min-height:38px}
 .field textarea,textarea{min-height:88px;resize:vertical}
@@ -230,9 +244,26 @@ td,th{border-color:var(--border)}
 .invite-reward-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:8px}
 .invite-reward-action{flex:0 1 auto;min-width:112px;min-height:30px;padding:5px 10px;font-size:11px;border-radius:8px}
 @media(max-width:520px){.invite-reward-actions{gap:6px}.invite-reward-action{min-width:0;flex:1 1 0;padding:6px 8px}}
+
+/* Plan badge, selected Discord server and account menu */
+.plan-badge{display:inline-flex;align-items:center;gap:5px;margin-left:7px;padding:4px 8px;border-radius:999px;background:var(--accent-soft);color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.03em;vertical-align:middle;white-space:nowrap}
+.plan-badge img{display:block;width:20px;height:20px;object-fit:contain}
+.server-chip{display:flex;align-items:center;gap:8px;max-width:210px;min-width:0;padding:4px 10px 4px 5px;border:1px solid var(--border);border-radius:11px;background:var(--surface);color:var(--text);font-size:12px;font-weight:750}
+.server-chip img{width:28px;height:28px;border-radius:9px;object-fit:cover;background:var(--surface2)}
+.server-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:155px}
+.profile-wrap{position:relative}
+.profile{cursor:pointer;color:var(--text)}
+.profile-chevron{font-size:10px;color:var(--muted);margin-left:2px}
+.profile-dropdown{position:absolute;right:0;top:calc(100% + 8px);z-index:100;min-width:175px;padding:6px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:0 14px 36px rgba(0,0,0,.16)}
+.profile-dropdown[hidden],.plan-badge[hidden]{display:none!important}
+.profile-dropdown a{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:8px;color:var(--text);text-decoration:none;font-size:12px;font-weight:700}
+.profile-dropdown a:hover{background:var(--accent-soft);color:var(--purple)}
+.dark .server-chip,.dark .profile-dropdown{background:var(--surface);border-color:var(--border)}
+@media(max-width:760px){.top-actions{gap:6px}.server-chip{max-width:120px;padding-right:7px}.server-chip span{max-width:76px}.plan-badge{gap:3px;padding:3px 5px}.plan-badge img{width:16px;height:16px}.profile{padding-right:7px}.profile-chevron{display:none}}
+
 </style></head>
 <body class="dark"><div class="app"><aside class="sidebar" id="sidebar"><div class="brand"><img class="brand-logo-image" src="/spideybot-logo.png" alt="SPIDEY BOT" fetchpriority="high"></div><div id="navigation"></div><div class="sidebar-foot"><div class="bot-status"><div><span class="status-dot"></span><span class="status-label">Bot Online</span></div><div class="status-copy">Connected and ready.</div></div></div></aside>
-<main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:10px"><button class="mobile-menu" id="menu">☰</button><div class="crumb"><img class="dashboard-wordmark" src="/spideybot-logo.png" alt="SPIDEY BOT"><span>/</span><span>Dashboard</span></div></div><div class="top-actions"><button class="top-btn" id="theme" title="Toggle theme">☾</button><div class="profile"><div class="avatar" id="userAvatar">SP</div><span id="userName">Administrator</span></div></div></header>
+<main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:10px"><button class="mobile-menu" id="menu">☰</button><div class="crumb"><img class="dashboard-wordmark" src="/spideybot-logo.png" alt="SPIDEY BOT"><span>/</span><span>Dashboard</span><span id="planBadge" class="plan-badge" hidden><img id="planBadgeGif" src="" alt=""><span id="planBadgeText"></span></span></div></div><div class="top-actions"><div class="server-chip" id="serverChip" title="Current Discord server"><img id="serverIcon" src="/spideybot-logo.png" alt=""><span id="serverName">Loading server…</span></div><button class="top-btn" id="theme" title="Toggle theme" aria-label="Toggle theme">☾</button><div class="profile-wrap"><button class="profile" id="profileMenu" type="button" aria-haspopup="true" aria-expanded="false"><div class="avatar" id="userAvatar">SP</div><span id="userName">Administrator</span><span class="profile-chevron">▾</span></button><div class="profile-dropdown" id="profileDropdown" hidden><a href="/dashboard/select?change=1" id="changeServerLink">↔ Change Server</a><a href="/logout" id="logoutLink">↪ Logout</a></div></div></div></header>
 <div class="content"><section id="overview"><div class="page-head"><div><div class="eyebrow">Guild dashboard</div><h1>Server Overview</h1><p>Manage your Discord server with SPIDEY BOT.</p></div></div>
 <div class="stats"><div class="card stat"><div class="stat-top"><span>Members</span><div class="stat-icon"></div></div><div class="stat-value" id="statMembers">—</div><div class="stat-meta">Server members</div></div><div class="card stat"><div class="stat-top"><span>Messages</span><div class="stat-icon"></div></div><div class="stat-value" id="statMessages">—</div><div class="stat-meta">Recent activity</div></div><div class="card stat"><div class="stat-top"><span>Commands</span><div class="stat-icon"></div></div><div class="stat-value" id="statCommands">—</div><div class="stat-meta">Command activity</div></div><div class="card stat"><div class="stat-top"><span>Features</span><div class="stat-icon"></div></div><div class="stat-value" id="statFeatures">—</div><div class="stat-meta">Enabled configuration</div></div></div>
 <div id="pluginCatalog" class="section"></div><div class="grid"><div class="card panel"><div class="panel-head"><div><div class="panel-title">Server activity</div><div class="panel-sub">Recent activity overview</div></div></div><div class="chart"><div class="grid-lines"></div><div class="bars"><i class="bar" style="height:38%"></i><i class="bar" style="height:52%"></i><i class="bar" style="height:45%"></i><i class="bar" style="height:68%"></i><i class="bar" style="height:57%"></i><i class="bar" style="height:82%"></i><i class="bar" style="height:71%"></i><i class="bar" style="height:91%"></i></div></div></div><div class="card panel"><div class="panel-head"><div><div class="panel-title">Dashboard</div><div class="panel-sub">Your server is connected.</div></div></div><div class="activity"><div class="activity-row"><div class="activity-icon"></div><div class="activity-main"><strong>Configuration ready</strong><span>Open a section from the sidebar to manage it.</span></div></div><div class="activity-row"><div class="activity-icon"></div><div class="activity-main"><strong>Protection tools</strong><span>Moderation and AutoMod are available.</span></div></div><div class="activity-row"><div class="activity-icon"></div><div class="activity-main"><strong>Command suite</strong><span>Slash and prefix commands are supported.</span></div></div></div></div></div></section>
@@ -251,7 +282,41 @@ try{savedTheme=localStorage.getItem(THEME_KEY)||'dark'}catch(_){}
 applyTheme(savedTheme);
 document.getElementById('menu').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
 document.getElementById('theme').onclick=()=>applyTheme(document.body.classList.contains('dark')?'light':'dark');
-(function(){const q=new URLSearchParams(location.search),id=q.get('guildId');if(id){localStorage.setItem('selectedServerId',id);localStorage.setItem('guildId',id)}fetch('/api/user',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{const u=d?.user||d;if(!u)return;document.getElementById('userName').textContent=u.global_name||u.username||'Administrator';if(u.avatar&&u.id)document.getElementById('userAvatar').innerHTML='<img src="https://cdn.discordapp.com/avatars/'+u.id+'/'+u.avatar+'.png?size=128" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">'}).catch(()=>{});const gid=id||localStorage.getItem('selectedServerId');if(gid)fetch('/api/member-stats/'+encodeURIComponent(gid),{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{if(!d)return;const set=(x,v)=>document.getElementById(x).textContent=v??'—';set('statMembers',d.total??d.members);set('statMessages',d.messages??d.messageCount);set('statCommands',d.commands??d.commandCount);set('statFeatures',d.features??d.enabledFeatures)}).catch(()=>{})})();
+(function(){
+const q=new URLSearchParams(location.search),id=q.get('guildId');
+if(id){localStorage.setItem('selectedServerId',id);localStorage.setItem('guildId',id)}
+const $=x=>document.getElementById(x);
+const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('/api/user',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{
+ const u=d?.user||d;if(!u)return;
+ $('userName').textContent=u.global_name||u.username||'Administrator';
+ if(u.avatarUrl){$('userAvatar').innerHTML='<img src="'+escapeHtml(u.avatarUrl)+'" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}
+ else if(u.avatar&&u.id){const ext=String(u.avatar).startsWith('a_')?'gif':'png';$('userAvatar').innerHTML='<img src="https://cdn.discordapp.com/avatars/'+encodeURIComponent(u.id)+'/'+encodeURIComponent(u.avatar)+'.'+ext+'?size=128" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}
+}).catch(()=>{});
+const gid=id||localStorage.getItem('selectedServerId')||localStorage.getItem('guildId');
+if(gid){
+ fetch('/api/guilds',{credentials:'include'}).then(r=>r.ok?r.json():[]).then(guilds=>{
+  const server=(guilds||[]).find(g=>String(g.id)===String(gid));
+  if(!server)return;
+  $('serverName').textContent=server.name||'Discord server';
+  $('serverChip').title=server.name||'Current Discord server';
+  if(server.icon){const ext=String(server.icon).startsWith('a_')?'gif':'png';$('serverIcon').src='https://cdn.discordapp.com/icons/'+encodeURIComponent(server.id)+'/'+encodeURIComponent(server.icon)+'.'+ext+'?size=64';}
+  else $('serverIcon').src='/spideybot-logo.png';
+ }).catch(()=>{$('serverName').textContent='Discord server';});
+ fetch('/api/guild/'+encodeURIComponent(gid)+'/tier',{credentials:'include'}).then(r=>r.ok?r.json():null).then(t=>{
+  const tier=String(t?.tier||'free').toLowerCase();if(tier!=='premium'&&tier!=='pro')return;
+  $('planBadgeGif').src=tier==='premium'?'/premium-logo.gif':'/pro-logo.gif';
+  $('planBadgeGif').alt=tier==='premium'?'Premium':'Pro';
+  $('planBadgeText').textContent=tier==='premium'?'Premium':'Pro';
+  $('planBadge').hidden=false;
+ }).catch(()=>{});
+ fetch('/api/member-stats/'+encodeURIComponent(gid),{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{if(!d)return;const set=(x,v)=>$(x).textContent=v??'—';set('statMembers',d.total??d.members);set('statMessages',d.messages??d.messageCount);set('statCommands',d.commands??d.commandCount);set('statFeatures',d.features??d.enabledFeatures)}).catch(()=>{});
+}
+const profileButton=$('profileMenu'),dropdown=$('profileDropdown');
+profileButton?.addEventListener('click',event=>{event.stopPropagation();const opening=dropdown.hidden;dropdown.hidden=!opening;profileButton.setAttribute('aria-expanded',String(opening));});
+document.addEventListener('click',event=>{if(!event.target.closest('.profile-wrap')){dropdown.hidden=true;profileButton?.setAttribute('aria-expanded','false');}});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'){dropdown.hidden=true;profileButton?.setAttribute('aria-expanded','false');}});
+})();
 </script><script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script><script type="module" src="/dashboard-app.js"></script><script>
 (function applyLogoWordmarkEverywhere(){
   if (window.__spideyLogoWordmarkInstalled) return;

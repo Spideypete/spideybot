@@ -20,6 +20,8 @@ const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
+const serverStatistics = require("./services/server-statistics.cjs");
+const serverStatChannels = require("./services/server-stat-channels.cjs");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 require("dotenv").config();
@@ -421,9 +423,13 @@ app.use((req, res, next) => {
     if (isHtml) {
       const originalSend = res.send;
       res.send = function (body) {
-        if (typeof body === 'string' && body.includes('</head>')) {
-          // Inject a small version meta + script for client-side cache awareness
-          body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        if (typeof body === 'string' && /<\/head>/i.test(body)) {
+          // Use the SPIDEY BOT logo as the browser-tab icon on every HTML page.
+          const hasFavicon = /<link[^>]+rel=["'](?:shortcut\s+)?icon["']/i.test(body);
+          const favicon = hasFavicon ? '' : '<link rel="icon" type="image/png" href="/spideybot-logo.png?v=2"><link rel="shortcut icon" type="image/png" href="/spideybot-logo.png?v=2">';
+          // Inject a small version meta + script for client-side cache awareness.
+          body = body.replace(/<\/head>/i, `${favicon}
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="version-timestamp" content="${timestamp}">
@@ -434,6 +440,57 @@ app.use((req, res, next) => {
       };
     }
     next();
+});
+
+// Ensure the same SPIDEY BOT favicon is available for every production route.
+app.get('/favicon.ico', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('png').sendFile(path.join(publicDir, 'spideybot-logo.png'));
+});
+
+// sendFile bypasses res.send in Express, so wrap HTML sendFile responses and pass them
+// through the shared HTML injector above. Keep non-HTML assets on Express's normal path.
+app.use((req, res, next) => {
+  const originalSendFile = res.sendFile.bind(res);
+  res.sendFile = function(filePath, options, callback) {
+    if (typeof filePath === 'string' && /\.html?$/i.test(filePath)) {
+      fs.readFile(filePath, 'utf8', (error, html) => {
+        if (error) {
+          if (typeof options === 'function') return options(error);
+          if (typeof callback === 'function') return callback(error);
+          return next(error);
+        }
+        if (options && typeof options === 'object' && options.headers) res.set(options.headers);
+        res.type('html').send(html);
+        if (typeof options === 'function') options();
+        else if (typeof callback === 'function') callback();
+      });
+      return this;
+    }
+    return originalSendFile(filePath, options, callback);
+  };
+  next();
+});
+
+// Static HTML files are streamed by express.static and don't pass through sendFile.
+// Serve HTML files via res.send so the same favicon injection covers direct .html URLs.
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || !(req.path === '/' || /\.html?$/i.test(req.path))) return next();
+  let relativePath;
+  try { relativePath = decodeURIComponent(req.path === '/' ? '/index.html' : req.path); }
+  catch (_) { return next(); }
+  const roots = [distDir, publicDir];
+  const candidate = roots.map(root => path.resolve(root, '.' + relativePath))
+    .find(file => {
+      const allowed = roots.some(root => file === path.resolve(root) || file.startsWith(path.resolve(root) + path.sep));
+      return allowed && fs.existsSync(file) && fs.statSync(file).isFile();
+    });
+  if (!candidate) return next();
+  fs.readFile(candidate, 'utf8', (error, html) => {
+    if (error) return next();
+    if (!/<html[\s>]/i.test(html) || !/<head[\s>]/i.test(html)) return next();
+    res.type('html').send(html);
+  });
 });
 
 app.set('trust proxy', true);
@@ -530,6 +587,7 @@ app.get('/dashboard-app.js', (req, res) => {
 
 // Serve static files from dist and public
 app.use(express.static(distDir, {
+  index: false,
   etag: false,
   lastModified: false,
   setHeaders: (res, path) => {
@@ -539,6 +597,7 @@ app.use(express.static(distDir, {
   }
 }));
 app.use(express.static(publicDir, {
+  index: false,
   etag: false,
   lastModified: false,
   setHeaders: (res, path) => {
@@ -1170,6 +1229,16 @@ client.on('messageCreate', async message => {
 });
 
 
+// Track only activity observed from the moment this feature is deployed; no historical totals are fabricated.
+client.on("messageCreate", message => {
+  try { serverStatistics.trackMessage(message); }
+  catch (error) { console.error("[server-statistics] message tracking failed:", error.message); }
+});
+client.on("guildMemberAdd", member => {
+  try { serverStatistics.trackJoin(member); }
+  catch (error) { console.error("[server-statistics] join tracking failed:", error.message); }
+});
+
 const token = process.env.TOKEN || "";
 let botLoggedIn = false;
 
@@ -1196,6 +1265,13 @@ player.on("connectionError", (queue, error) => {
 // ============== READY EVENT ==============
 client.once("ready", async () => {
   botLoggedIn = true;
+  serverStatChannels.refreshAll(client).catch(error => console.error("[stat-channels] Initial refresh failed:", error.message));
+  if (!global.__spideyStatChannelRefreshTimer) {
+    global.__spideyStatChannelRefreshTimer = setInterval(() => {
+      serverStatChannels.refreshAll(client).catch(error => console.error("[stat-channels] Scheduled refresh failed:", error.message));
+    }, 5 * 60 * 1000);
+    if (typeof global.__spideyStatChannelRefreshTimer.unref === "function") global.__spideyStatChannelRefreshTimer.unref();
+  }
   try {
     const socialNotificationsHandler = require('./src/features/social-notifications/social-notifications.handler.cjs');
     socialNotificationsHandler.startPolling(client);
@@ -4943,6 +5019,16 @@ const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.e
 
 // ============== HOMEPAGE ==============
 app.get("/", (req, res) => {
+  // Signed-in production users opening the main URL should land on the dashboard.
+  // Unauthenticated visitors still see the public homepage below.
+  if (!isSpideyTestingHost(req) && req.session?.authenticated) {
+    const selectedGuildId = req.session?.selectedGuildId || req.session?.guilds?.[0]?.id;
+    if (selectedGuildId) {
+      return res.redirect(`/dashboard.html?guildId=${encodeURIComponent(String(selectedGuildId))}`);
+    }
+    return res.redirect('/dashboard/select');
+  }
+
   if (isSpideyTestingHost(req)) {
     const guildId = req.session?.selectedGuildId || req.session?.guilds?.[0]?.id;
     if (guildId) return res.redirect(`/dashboard.html?guildId=${encodeURIComponent(guildId)}`);
@@ -4953,7 +5039,7 @@ app.get("/", (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SPIDEY BOT - Complete Discord Bot</title>
+  <link rel="icon" type="image/png" href="/spideybot-logo.png?v=2">\n  <title>SPIDEY BOT - Complete Discord Bot</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -8166,6 +8252,127 @@ app.get("/api/dashboard/active-members", (req, res) => {
     active,
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
   });
+});
+
+app.get("/api/dashboard/server-statistics", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ error: "Missing guildId" });
+  if (!isSpideyTestingHost(req) && !(req.session.guilds || []).some(g => String(g.id) === guildId)) {
+    return res.status(403).json({ error: "You do not have administrator access to this server" });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  try {
+    try { await guild.members.fetch(); } catch (error) {
+      console.warn("[server-statistics] Could not fetch all guild members:", error.message);
+    }
+    const members = guild.members.cache;
+    let administrators = 0, moderators = 0;
+    for (const member of members.values()) {
+      if (member.user.bot) continue;
+      const permissions = member.permissions;
+      if (permissions.has(PermissionFlagsBits.Administrator)) administrators += 1;
+      else if (
+        permissions.has(PermissionFlagsBits.ModerateMembers) ||
+        permissions.has(PermissionFlagsBits.KickMembers) ||
+        permissions.has(PermissionFlagsBits.BanMembers) ||
+        permissions.has(PermissionFlagsBits.ManageMessages) ||
+        permissions.has(PermissionFlagsBits.ManageChannels)
+      ) moderators += 1;
+    }
+    const tracked = serverStatistics.getGuildStats(guildId);
+    res.json({
+      serverName: guild.name,
+      memberCount: guild.memberCount ?? members.size,
+      messages: tracked.messages,
+      moderators,
+      administrators,
+      joinLabels: tracked.joinLabels,
+      joinsThisMonth: tracked.joinsThisMonth,
+      trackingNote: "Message and join tracking starts when this statistics tracker is deployed. Older history is not available."
+    });
+  } catch (error) {
+    console.error("[server-statistics] statistics endpoint failed:", error);
+    res.status(500).json({ error: "Could not load server statistics" });
+  }
+});
+
+app.get("/api/dashboard/stat-channel-counters", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ error: "Missing guildId" });
+  if (!isSpideyTestingHost(req) && !(req.session.guilds || []).some(g => String(g.id) === guildId)) {
+    return res.status(403).json({ error: "You do not have administrator access to this server" });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  const planPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const tier = String(planPolicy?.tier || getGuildConfig(guildId)?.tier || "free").toLowerCase();
+  const limit = tier === "pro" ? 20 : tier === "premium" ? 10 : 5;
+  res.json({ tier, limit, counters: serverStatChannels.list(guildId).map(item => ({
+    ...item,
+    channelName: guild.channels.cache.get(item.channelId)?.name || "Missing channel",
+    roleName: item.roleId ? (guild.roles.cache.get(item.roleId)?.name || "Missing role") : null
+  })), channels: guild.channels.cache.filter(channel => typeof channel.setName === "function").map(channel => ({ id: channel.id, name: channel.name })), roles: guild.roles.cache.filter(role => role.id !== guild.id).map(role => ({ id: role.id, name: role.name })) });
+});
+
+app.post("/api/dashboard/stat-channel-counters", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = String(req.body?.guildId || "");
+  if (!guildId) return res.status(400).json({ error: "Missing guildId" });
+  if (!isSpideyTestingHost(req) && !(req.session.guilds || []).some(g => String(g.id) === guildId)) {
+    return res.status(403).json({ error: "You do not have administrator access to this server" });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  const planPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const tier = String(planPolicy?.tier || getGuildConfig(guildId)?.tier || "free").toLowerCase();
+  const limit = tier === "pro" ? 20 : tier === "premium" ? 10 : 5;
+  try {
+    if (req.body?.action === "remove") {
+      if (!serverStatChannels.remove(guildId, String(req.body.counterId || ""))) return res.status(404).json({ error: "Counter not found" });
+      return res.json({ success: true, counters: serverStatChannels.list(guildId) });
+    }
+    if (serverStatChannels.list(guildId).length >= limit) {
+      return res.status(403).json({ error: "Your " + tier.toUpperCase() + " plan allows up to " + limit + " configured statistics counters. Upgrade your plan for more counters.", upgradeRequired: true, tier, limit });
+    }
+    const createChannel = req.body?.createChannel === true;
+    let channelId = String(req.body?.channelId || "");
+    const metric = String(req.body?.metric || "");
+    const label = String(req.body?.label || "").trim();
+    const roleId = req.body?.roleId ? String(req.body.roleId) : null;
+    const allowedMetrics = new Set(["members", "humans", "bots", "channels", "online", "roleMembers"]);
+    if (!allowedMetrics.has(metric) || (!createChannel && !channelId)) return res.status(400).json({ error: "Choose a channel setup and valid counter type." });
+    if (metric === "roleMembers" && (!roleId || !guild.roles.cache.has(roleId))) return res.status(400).json({ error: "Choose a valid server role for this counter." });
+    let channel = null;
+    let createdChannel = false;
+    if (createChannel) {
+      const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+      if (!botMember?.permissions?.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission to create a channel." });
+      const role = metric === "roleMembers" ? guild.roles.cache.get(roleId) : null;
+      const baseName = role ? role.name : (label || ({members:"members",humans:"human-members",bots:"bot-accounts",channels:"server-channels",online:"online-members"}[metric] || "statistics"));
+      const safeName = String(baseName).normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"").slice(0,90) || "statistics";
+      channel = await guild.channels.create({ name: safeName, type: ChannelType.GuildVoice, reason: "SPIDEY BOT live statistics counter created from dashboard" });
+      channelId = channel.id;
+      createdChannel = true;
+    } else {
+      channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+    }
+    try {
+      if (!channel || typeof channel.setName !== "function") return res.status(400).json({ error: "Choose a text or voice channel that SPIDEY BOT can rename." });
+      const botPermissions = channel.permissionsFor(client.user);
+      if (botPermissions && !botPermissions.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission for that channel." });
+      const counter = serverStatChannels.add(guildId, { channelId, metric, label, roleId });
+      await serverStatChannels.refreshGuild(client, guildId);
+      return res.json({ success: true, createdChannel: createdChannel ? { id: channel.id, name: channel.name } : null, counter, counters: serverStatChannels.list(guildId) });
+    } catch (error) {
+      if (createdChannel && channel) await channel.delete("Cleanup after failed SPIDEY BOT statistics counter setup").catch(() => {});
+      throw error;
+    }
+  } catch (error) {
+    return res.status(400).json({ error: error.message || "Could not save the statistics counter." });
+  }
 });
 
 app.get("/api/dashboard/statistics", (req, res) => {
