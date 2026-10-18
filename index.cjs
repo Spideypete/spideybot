@@ -718,63 +718,9 @@ const TIER_LIMITS = {
   }
 };
 
-function getGuildTier(guildId) {
-  const config = loadConfig();
-  const guild = config.guilds[guildId] || {};
-  
-  if (!guild.tier || guild.tier === 'free') return 'free';
-  if (guild.tier === 'premium' || guild.tier === 'pro') return guild.tier;
-  
-  // Check if expired
-  if (guild.tierEndDate && guild.tierEndDate < Date.now()) {
-    return 'free';
-  }
-  
-  return guild.tier || 'free';
-}
-
-function getTierLimits(guildId) {
-  const tier = getGuildTier(guildId);
-  
-  // Premium: Server Guard, XP, Giveaways, Custom Commands (all unlocked)
-  // Pro: Everything in Premium + Analytics, Invites, Automation
-  return {
-    maxReactRoles: tier === 'free' ? 3 : Infinity,
-    maxGiveaways: tier === 'free' ? 1 : Infinity,
-    maxCustomCommands: tier === 'free' ? 5 : (tier === 'premium' ? 50 : Infinity),
-    hasXP: tier === 'premium' || tier === 'pro',
-    hasCustomCommands: tier === 'premium' || tier === 'pro',
-    hasFullServerGuard: tier === 'premium' || tier === 'pro',
-    hasAnalytics: tier === 'pro',
-    hasInvites: tier === 'pro',
-    hasAutomation: tier === 'pro'
-  };
-}
-
-function checkEntitlement(guildId, feature) {
-  const limits = getTierLimits(guildId);
-  
-  switch (feature) {
-    case 'unlimitedReactRoles':
-      return limits.maxReactRoles !== 3;
-    case 'xpLeaderboards':
-      return limits.hasXP;
-    case 'customCommands':
-      return limits.hasCustomCommands;
-    case 'fullServerGuard':
-      return limits.hasFullServerGuard;
-    case 'analytics':
-      return limits.hasAnalytics;
-    case 'inviteTracking':
-      return limits.hasInvites;
-    case 'automation':
-      return limits.hasAutomation;
-    case 'unlimitedGiveaways':
-      return limits.maxGiveaways === Infinity;
-    default:
-      return false;
-  }
-}
+function getGuildTier(guildId) { return subscriptionManager.getGuildTier(guildId); }
+function getTierLimits(guildId) { return subscriptionManager.getTierLimits(guildId); }
+function checkEntitlement(guildId, feature) { return subscriptionManager.checkEntitlement(guildId, feature); }
 
 function getGuildConfig(guildId) {
   const config = loadConfig();
