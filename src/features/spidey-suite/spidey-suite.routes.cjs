@@ -43,6 +43,16 @@ async function saveGuildSettings(req,res){
   if(Object.prototype.hasOwnProperty.call(patch,'polls')&&!policy.polls&&JSON.stringify(patch.polls)!==JSON.stringify(current.polls)){
     return res.status(403).json({success:false,error:'Polls require Premium or Pro for this server.',upgradeRequired:true,currentTier:policy.tier});
   }
+  if(Object.prototype.hasOwnProperty.call(patch,'commandToggles')&&policy.tier==='free'&&JSON.stringify(patch.commandToggles)!==JSON.stringify(current.commandToggles||{})){
+    return res.status(403).json({success:false,error:'The Free plan can view command status but only Premium or Pro can change command on/off settings.',upgradeRequired:true,currentTier:policy.tier});
+  }
+  if(Object.prototype.hasOwnProperty.call(patch,'xp-levels')){
+    const currentRewards=current['xp-levels']?.levelRoles||{};
+    const nextRewards=patch['xp-levels']?.levelRoles||{};
+    const currentCount=Object.keys(currentRewards).length;
+    const nextCount=Object.keys(nextRewards).length;
+    if(nextCount>policy.levelRoleRewards&&nextCount>currentCount)return rejectLimit('level role rewards',policy.levelRoleRewards);
+  }
   if(Object.prototype.hasOwnProperty.call(patch,'customCommands')){
     const currentItems=Array.isArray(current.customCommands?.items)?current.customCommands.items:[];
     const nextItems=Array.isArray(patch.customCommands?.items)?patch.customCommands.items:[];
