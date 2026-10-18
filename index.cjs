@@ -352,6 +352,11 @@ const SPIDEY_TESTING_HOST = 'spidey-bot-testing-testing.up.railway.app';
 function isSpideyTestingHost(req) {
   return String(req.hostname || '').toLowerCase() === SPIDEY_TESTING_HOST;
 }
+function isTestingOwnerSession(req) {
+  return isSpideyTestingHost(req)
+    && req.session?.authenticated === true
+    && req.session?.user?.id === 'spidey-testing-admin';
+}
 function applyTestingDashboardSession(req) {
   if (!isSpideyTestingHost(req) || !req.session) return;
   req.session.authenticated = true;
@@ -5324,7 +5329,7 @@ app.get("/dashboard/server/:guildId", (req, res) => {
 app.get("/owner-dash", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   const config = loadConfig();
-  if (!config.creator?.ownerId || req.session.user?.id !== config.creator.ownerId) return res.status(403).send('Owner access only.');
+  if (!isTestingOwnerSession(req) && (!config.creator?.ownerId || req.session.user?.id !== config.creator.ownerId)) return res.status(403).send('Owner access only.');
   return res.sendFile(path.join(publicDir, 'owner-console.html'));
 });
 app.get("/owner-console", (req, res) => {
@@ -5775,7 +5780,7 @@ app.get('/api/owner/stats', (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: 'Not authenticated' });
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
-  if (!botOwnerId || req.session.user?.id !== botOwnerId) return res.status(403).json({ error: 'Access denied' });
+  if (!isTestingOwnerSession(req) && (!botOwnerId || req.session.user?.id !== botOwnerId)) return res.status(403).json({ error: 'Access denied' });
 
   const now = Date.now();
   const monthMs = 30 * 24 * 60 * 60 * 1000;
@@ -5828,7 +5833,7 @@ app.post('/api/owner/force-refresh', async (req, res) => {
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
   const userId = req.session.user?.id;
-  if (userId !== botOwnerId || !botOwnerId) {
+  if (!isTestingOwnerSession(req) && (userId !== botOwnerId || !botOwnerId)) {
     return res.status(403).json({ error: 'Access denied' });
   }
 
