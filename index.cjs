@@ -6478,6 +6478,52 @@ app.post("/api/config/:guildId", async (req, res) => {
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
   const guildConfig = config.guilds[guildId];
 
+  const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+  if (req.body && typeof req.body === 'object') {
+    // Embed Messages: enforce saved-template counts on the server, not only in the UI.
+    if (Array.isArray(req.body.embedTemplates) && req.body.embedTemplates.length > policy.embedMessages) {
+      return res.status(403).json({ success: false, error: 'This server can save '+policy.embedMessages+' embed messages on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.embedMessages });
+    }
+    // Currency name and symbol are Premium/Pro customisation.
+    if (!policy.economyCustomCurrency && req.body.economySettings && typeof req.body.economySettings === 'object') {
+      const current = guildConfig.economySettings || {};
+      req.body.economySettings = { ...req.body.economySettings, currencyName: current.currencyName || 'Credits', currencySymbol: current.currencySymbol || '₵' };
+    }
+    if (!policy.economyCustomCurrency && req.body.economy && typeof req.body.economy === 'object') {
+      const current = guildConfig.economy || {};
+      req.body.economy = { ...req.body.economy, currency: current.currency || 'coins' };
+    }
+    // Custom reminder behaviour and birthday events stay at their saved/default values on Free.
+    if (!policy.reminderBehaviour) {
+      for (const key of ['remindersSettings','reminders']) {
+        if (req.body[key] && typeof req.body[key] === 'object') {
+          const current = guildConfig[key] || {};
+          req.body[key] = { ...req.body[key] };
+          for (const field of Object.keys(req.body[key])) if (/behavio|repeat|recurr|scheduleMode/i.test(field)) req.body[key][field] = current[field] ?? req.body[key][field];
+        }
+      }
+    }
+    if (!policy.birthdayCustomEvents) {
+      for (const key of ['birthdaysSettings','birthdaySettings','birthdays']) {
+        if (req.body[key] && typeof req.body[key] === 'object') {
+          const current = guildConfig[key] || {};
+          req.body[key] = { ...req.body[key] };
+          for (const field of Object.keys(req.body[key])) if (/custom.?events?/i.test(field)) req.body[key][field] = current[field] ?? [];
+        }
+      }
+    }
+    // Cap achievement milestone definitions while allowing the free tier to earn them in-channel.
+    for (const key of ['achievementSettings','achievements']) {
+      if (req.body[key] && typeof req.body[key] === 'object') {
+        const value = { ...req.body[key] };
+        if (Array.isArray(value.messages)) value.messages = value.messages.slice(0, policy.achievementsMessages);
+        if (Array.isArray(value.emojis)) value.emojis = value.emojis.slice(0, policy.achievementsEmoji);
+        if (!policy.achievementAnnouncements) value.announcementChannelId = guildConfig[key]?.announcementChannelId || null;
+        req.body[key] = value;
+      }
+    }
+  }
+
   // Preserve active tickets when dashboard updates only ticket settings.
   if (req.body && typeof req.body === 'object' && req.body.tickets && typeof req.body.tickets === 'object') {
     const existingTickets = guildConfig.tickets && typeof guildConfig.tickets === 'object' ? guildConfig.tickets : {};
