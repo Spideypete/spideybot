@@ -960,10 +960,14 @@ if(k==='achievements'){
   attachToggle(id,f,c);return;
  }
  if(k==='customCommands'){
-  const cc=c.customCommands||{items:[]},items=Array.isArray(cc.items)?cc.items:[];
+  const cc=c.customCommands||{items:[]};
+  const customTierRaw=String(c.tier||'free').toLowerCase();
+  const customTier=customTierRaw!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':customTierRaw;
+  const customLimit=customTier==='pro'?100:customTier==='premium'?25:5;
+  const items=(Array.isArray(cc.items)?cc.items:[]).slice(0,customLimit);
   const commandRows=items.map((x,index)=>'<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>/'+esc(x.name)+'</h3><p>'+(x.enabled===false?'Disabled':'Enabled')+' · Used '+Number(x.count||0)+' times</p></div><button type="button" class="rr-remove" data-remove-custom="'+index+'">Remove</button></div><label class="field">Response template<textarea data-custom-message="'+index+'" rows="3" maxlength="1800">'+esc(x.messageTemplate||'')+'</textarea></label><label class="field">Counter label<input data-custom-counter-label="'+index+'" maxlength="80" value="'+esc(x.counterLabel||'Count')+'"></label><label class="check"><span>Increment counter and show {count}</span><input data-custom-counter="'+index+'" type="checkbox" '+(x.counterEnabled===false?'':'checked')+'></label><label class="check"><span>Command enabled</span><input data-custom-enabled="'+index+'" type="checkbox" '+(x.enabled===false?'':'checked')+'></label><div class="panel-actions"><button class="select" type="button" data-save-custom="'+index+'">Save changes</button><button class="select" type="button" data-reset-custom="'+index+'">Reset counter</button></div></section>').join('');
   body.innerHTML=card('Custom Commands','Build real server slash commands such as /kill. Each use increments a saved counter and inserts it into your custom response text.',
-   '<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Create a command</h3><p>Use letters, numbers and hyphens only. Discord command names are lowercase and cannot contain spaces.</p></div></div>'+
+   '<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Create a command</h3><p>'+items.length+' of '+customLimit+' custom commands used on the '+esc(customTier.toUpperCase())+' plan. Use lowercase letters, numbers and hyphens only.</p></div></div>'+
    input('ccName','Command name (example: kill)','')+
    '<label class="field">Response text<textarea id="ccMessage" rows="4" maxlength="1800" placeholder="Ohh, killed! Total kills: {count}"></textarea></label>'+
    check('ccCounter','Increment and show a counter',true)+
@@ -978,7 +982,7 @@ if(k==='achievements'){
    if(!/^[a-z0-9-]{1,32}$/.test(name)){alert('Enter a command name using 1–32 lowercase letters, numbers or hyphens.');return;}
    if(!messageTemplate){alert('Enter the response text for this command.');return;}
    if(items.some(x=>x.name===name)){alert('That custom command already exists.');return;}
-   if(items.length>=25){alert('Discord supports up to 25 custom commands in this panel. Remove one before adding another.');return;}
+   if(items.length>=customLimit){alert('This server has reached its '+customLimit+' custom command limit for the '+customTier.toUpperCase()+' plan.');return;}
    const next={...cc,items:[...items,{name,messageTemplate,counterEnabled:yes('ccCounter'),counterLabel:val('ccCounterLabel').trim(),enabled:yes('ccEnabled'),count:0}]};
    try{const result=await save(id,{customCommands:next});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Custom command saved. Discord may take up to a minute to register /'+name+'.');await renderPanel(id,f,await load(id));}
    catch(err){alert('Could not save custom command: '+(err.message||String(err)));}
