@@ -2,6 +2,8 @@ const express=require('express');
 const {requireFeatureAuth}=require('../../routes/feature-auth.cjs');
 const svc=require('./spidey-suite.service.cjs');
 const customSlashRuntime=require('../custom-commands/custom-slash-runtime.cjs');
+const subscriptionManager=require('../../../services/subscription.manager.js');
+const {getGuildConfig}=require('../../config/config-manager.cjs');
 const router=express.Router();
 
 router.use(requireFeatureAuth);
@@ -11,7 +13,16 @@ function getGuild(req){
 }
 function sendConfig(res,id){
   if(!id)return res.status(400).json({success:false,error:'Missing guildId'});
-  return res.json({success:true,config:svc.get(id),xp:svc.topXp(id),money:svc.topMoney(id)});
+  const config=svc.get(id);
+  const guildMeta=getGuildConfig(id)||{};
+  const policy=subscriptionManager.getGuildPlanPolicy(id);
+  // Always send the server's authoritative subscription alongside its dashboard settings.
+  // The plan lives on the guild record, not inside the spideySuite settings blob.
+  config.tier=policy.tier;
+  config.tierEndDate=guildMeta.tierEndDate||null;
+  config.tierDurationMonths=guildMeta.tierDurationMonths||0;
+  config.planPolicy=Object.fromEntries(Object.entries(policy).map(([key,value])=>[key,value===Infinity?null:value]));
+  return res.json({success:true,config,xp:svc.topXp(id),money:svc.topMoney(id)});
 }
 
 router.get('/',(req,res)=>sendConfig(res,getGuild(req)));
@@ -20,7 +31,31 @@ router.get('/:guildId',(req,res)=>sendConfig(res,getGuild(req)));
 async function saveGuildSettings(req,res){
   const id=getGuild(req);
   if(!id)return res.status(400).json({success:false,error:'Missing guildId'});
-  const patch=req.body||{};
+  const patch={...(req.body||{})};
+  const policy=subscriptionManager.getGuildPlanPolicy(id);
+  const current=svc.get(id);
+  const rejectLimit=(label,limit)=>res.status(403).json({success:false,error:'This server has reached its '+limit+' '+label+' limit for the '+policy.tier.toUpperCase()+' plan.',upgradeRequired:true,limit,currentTier:policy.tier});
+  // Subscription fields are owned by the Owner Console / payment verification only.
+  delete patch.tier;delete patch.tierEndDate;delete patch.tierDurationMonths;delete patch.planPolicy;
+  if(patch.plugins&&typeof patch.plugins==='object'&&!Array.isArray(patch.plugins)){
+    for(const feature of ['music','polls','emojis']) if(!subscriptionManager.isPlanFeatureAllowed(id,feature)) patch.plugins[feature]=false;
+  }
+  if(Object.prototype.hasOwnProperty.call(patch,'polls')&&!policy.polls&&JSON.stringify(patch.polls)!==JSON.stringify(current.polls)){
+    return res.status(403).json({success:false,error:'Polls require Premium or Pro for this server.',upgradeRequired:true,currentTier:policy.tier});
+  }
+  if(Object.prototype.hasOwnProperty.call(patch,'customCommands')){
+    const currentItems=Array.isArray(current.customCommands?.items)?current.customCommands.items:[];
+    const nextItems=Array.isArray(patch.customCommands?.items)?patch.customCommands.items:[];
+    if(nextItems.length>policy.customCommands&&nextItems.length>currentItems.length)return rejectLimit('custom commands',policy.customCommands);
+  }
+  if(Object.prototype.hasOwnProperty.call(patch,'embedTemplates')){
+    const currentTemplates=Array.isArray(current.embedTemplates)?current.embedTemplates:[];
+    const nextTemplates=Array.isArray(patch.embedTemplates)?patch.embedTemplates:[];
+    if(nextTemplates.length>policy.embedMessages&&nextTemplates.length>currentTemplates.length)return rejectLimit('saved embed messages',policy.embedMessages);
+    if(!policy.embedStyling){
+      patch.embedTemplates=nextTemplates.map(template=>({...template,color:'#5865f2',image:'',thumbnail:'',footer:''}));
+    }
+  }
   if(Object.prototype.hasOwnProperty.call(patch,'customCommands')){
     const current=svc.get(id).customCommands||{};
     const previousItems=Array.isArray(current.items)?current.items:[];
