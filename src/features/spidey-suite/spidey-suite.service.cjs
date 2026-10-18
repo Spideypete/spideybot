@@ -9,7 +9,7 @@ const DEFAULTS = {
   welcome: { enabled: false, channelId: null, message: 'Welcome {user} to {server}! We now have {membercount} members.' },
   autorole: { enabled: false, roleId: null },
   sticky: {}, counting: {}, profiles: {}, warnings: {}, commandToggles: {}, blacklist: [],
-  economy: { enabled: true, currency: 'coins', daily: 100, workMin: 20, workMax: 60, cooldown: 300000, users: {}, shop: [] },
+  economy: { enabled: true, currency: 'Web Fluid', daily: 100, workMin: 20, workMax: 60, cooldown: 300000, users: {}, shop: [] },
   levels: { enabled: true, xpPerMessage: 15, xpPerLevel: 500, xpCooldownSeconds: 60, announceChannel: null, announce: true, rewards: {}, users: {} },
   polls: { enabled: true, defaultChannelId: null, anonymous: true, allowMultipleVotes: false, maxOptions: 20, defaultDurationMinutes: 0, adminDelete: true, active: {} },
   tickets: { enabled: true, categoryId: null, ticketChannelId: null, supportRoleId: null, logChannelId: null, transcriptChannelId: null, ticketPrefix: 'ticket', maxTicketsPerUser: 1, panelTitle: 'Need help? Open a ticket', panelDescription: 'Select the button below to contact our support team.', buttonLabel: 'Create Ticket', welcomeMessage: 'Hello {user}, please describe your issue and a staff member will be with you shortly.', questions: [], allowUserClose: true, claimEnabled: true, allowReopen: true, transcriptsEnabled: true, autoCloseHours: 0, records: {}, nextNumber: 1 }
@@ -24,6 +24,7 @@ function get(guildId){
   if(!c.spideySuite)updateGuildConfig(guildId,{spideySuite:clone(legacy||DEFAULTS)});
   const fresh=getGuildConfig(guildId);
   const out={...clone(DEFAULTS),...(fresh.spideySuite||legacy||{})};
+  if(['coins','credits'].includes(String(out.economy?.currency||'').trim().toLowerCase())) out.economy.currency='Web Fluid';
   for(const k of ['plugins','channels','roles','messages','sticky','counting','profiles','warnings','commandToggles','automod','audit','welcome','autorole','economy','levels','tickets','polls']){
     const base=clone(DEFAULTS[k]||{});
     out[k]={...base,...(out[k]||{})};
