@@ -5312,6 +5312,19 @@ app.get("/dashboard", (req, res) => {
 });
 
 app.get("/dashboard/select", (req, res) => {
+  // Testing should open the agreed admin server directly, not show the production
+  // server-selection page. Prefer TRIPPY WEBS, with a safe live-guild fallback.
+  if (isSpideyTestingHost(req)) {
+    const preferredGuildId = "388050334083317772";
+    const liveGuildIds = new Set((req.session?.guilds || []).map(g => String(g.id)));
+    const guildId = liveGuildIds.has(preferredGuildId)
+      ? preferredGuildId
+      : (req.session?.selectedGuildId && liveGuildIds.has(String(req.session.selectedGuildId))
+          ? String(req.session.selectedGuildId)
+          : String(req.session?.guilds?.[0]?.id || ""));
+    if (guildId) return res.redirect(302, "/dashboard.html?guildId=" + encodeURIComponent(guildId));
+    return res.status(503).send("SPIDEY BOT is not connected to a Discord server yet. Please check the testing bot connection.");
+  }
   if (!req.session.authenticated) return res.redirect("/login");
   res.sendFile(path.join(publicDir, 'server-select.html'));
 });
