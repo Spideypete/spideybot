@@ -5875,18 +5875,13 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
   const config = loadConfig();
   const guildId = req.params.guildId;
   const guildConfig = config.guilds[guildId] || {};
-  const tier = guildConfig.tier || 'free';
-  const tierEndDate = guildConfig.tierEndDate || null;
-  const tierDurationMonths = guildConfig.tierDurationMonths || 0;
-  
-  let remainingMonths = 0;
-  if (tierEndDate && tier !== 'free') {
-    const now = Date.now();
-    const msRemaining = tierEndDate - now;
-    remainingMonths = Math.max(0, Math.ceil(msRemaining / (30 * 24 * 60 * 60 * 1000)));
-  }
-  
-  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMonths });
+  const tier = subscriptionManager.getGuildTier(guildId);
+  const rawEndDate = Number(guildConfig.tierEndDate) || null;
+  const tierEndDate = tier === 'free' ? null : rawEndDate;
+  const tierDurationMonths = tier === 'free' ? 0 : (Number(guildConfig.tierDurationMonths) || 0);
+  const remainingMonths = tierEndDate ? Math.max(0, Math.ceil((tierEndDate - Date.now()) / (30 * 24 * 60 * 60 * 1000))) : 0;
+  const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMonths, isLifetime: tier !== 'free' && !tierEndDate, policy: Object.fromEntries(Object.entries(policy).map(([key,value]) => [key, value === Infinity ? null : value])) });
 });
 
 // Get/Update feature toggles (Owner only)
@@ -5951,54 +5946,42 @@ app.post('/api/owner/feature-toggles', (req, res) => {
 // Get entitlements for a guild
 app.get('/api/guild/:guildId/entitlements', (req, res) => {
   const guildId = req.params.guildId;
-  const tier = getGuildTier(guildId);
-  const limits = getTierLimits(guildId);
+  const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const limits = subscriptionManager.getTierLimits(guildId);
   const config = loadConfig();
   const guildConfig = config.guilds[guildId] || {};
-  
-  console.log('[Entitlements] Guild:', guildId, 'Tier:', tier);
-  
-  // Count current usage
   const roleCategories = guildConfig.roleCategories || {};
-  let totalReactRoles = 0;
-  Object.values(roleCategories).forEach(cat => {
-    if (cat.roles && Array.isArray(cat.roles)) {
-      totalReactRoles += cat.roles.length;
-    }
+  const roleKeys = new Set();
+  Object.entries(roleCategories).forEach(([category,cat]) => {
+    if (cat && Array.isArray(cat.roles)) cat.roles.forEach(role => roleKeys.add(String(role.id || role.roleId || category+':'+role.name)));
   });
-  
+  if (Array.isArray(guildConfig.reactRoles?.entries)) guildConfig.reactRoles.entries.forEach(entry => roleKeys.add(String(entry.messageId)+':'+String(entry.emoji)));
+  try {
+    const reactionRoles = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+    reactionRoles.getEntries(guildId).forEach(entry => roleKeys.add(String(entry.messageId)+':'+String(entry.emoji)));
+  } catch (_) {}
+  const totalReactRoles = roleKeys.size;
   const giveaways = guildConfig.giveaways || {};
   const activeGiveaways = getActiveGiveawaysMap(giveaways).activeCount;
-  
-const entitlements = {
-    maxReactRoles: limits.maxReactRoles === Infinity ? 'unlimited' : limits.maxReactRoles,
-    currentReactRoles: totalReactRoles,
-    canAddReactRole: totalReactRoles < (limits.maxReactRoles || 3),
-    maxGiveaways: limits.maxGiveaways === Infinity ? 'unlimited' : limits.maxGiveaways,
-    currentGiveaways: activeGiveaways,
-    canCreateGiveaway: activeGiveaways < (limits.maxGiveaways || 1),
-    // Free: React Roles (max 3)
-    hasReactRoles: tier !== 'free',
-    // Premium and Pro: Server Guard, XP, Custom Commands, Social Notifs (giveaways now free)
-    hasServerGuard: tier === 'premium' || tier === 'pro',
-    hasGiveaways: true, // Giveaways now free
-    hasXP: tier === 'premium' || tier === 'pro',
-    hasCustomCommands: tier === 'premium' || tier === 'pro',
-    hasFullServerGuard: tier === 'premium' || tier === 'pro',
-    hasSocialNotifs: tier === 'premium' || tier === 'pro',
-    // Pro only: Analytics, Invite Tracking, Automation
-    hasAnalytics: tier === 'pro',
-    hasInvites: tier === 'pro',
-    hasAutomation: tier === 'pro',
-    hasLogging: tier === 'premium' || tier === 'pro'
+  const serialiseLimit = value => value === Infinity ? 'unlimited' : value;
+  const entitlements = {
+    maxReactRoles: serialiseLimit(policy.reactionRoles), currentReactRoles: totalReactRoles,
+    canAddReactRole: totalReactRoles < limits.maxReactRoles,
+    maxGiveaways: serialiseLimit(policy.giveawayInviteMessages), currentGiveaways: activeGiveaways,
+    canCreateGiveaway: activeGiveaways < limits.maxGiveaways,
+    hasReactRoles: true, hasGiveaways: true, hasXP: true, hasCustomCommands: true,
+    hasServerGuard: true, hasFullServerGuard: true, hasSocialNotifs: true,
+    hasAnalytics: true, hasInvites: true, hasAutomation: true, hasLogging: true,
+    hasPolls: policy.polls, hasEmojis: policy.emojis, hasMusic: policy.music,
+    embedStyling: policy.embedStyling, achievementAnnouncements: policy.achievementAnnouncements,
+    reminderBehaviour: policy.reminderBehaviour, birthdayCustomEvents: policy.birthdayCustomEvents,
+    economyCustomCurrency: policy.economyCustomCurrency,
+    maxCustomCommands: policy.customCommands, maxInviteMilestones: policy.inviteMilestones,
+    maxEmbedMessages: policy.embedMessages, maxSocialAccountsPerSection: policy.socialAccountsPerSection,
+    maxAchievementMessages: policy.achievementsMessages, maxAchievementEmoji: policy.achievementsEmoji,
+    aiDailyRequests: policy.aiDailyRequests
   };
-  
-  console.log('[Entitlements] Sending:', JSON.stringify(entitlements));
-  
-  res.json({
-    tier,
-    entitlements
-  });
+  res.json({ tier: policy.tier, policy: Object.fromEntries(Object.entries(policy).map(([key,value]) => [key, value === Infinity ? null : value])), entitlements });
 });
 
 // ============== PAYPAL PAYMENT ENDPOINTS ==============
