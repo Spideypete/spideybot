@@ -890,11 +890,18 @@ async function renderPanel(id,f,c){
   attachToggle(id,f,c);return;
 }
 if(k==='achievements'){
-  const a=c.achievements||{},messages=Array.isArray(a.messages)?a.messages:[],emojis=Array.isArray(a.emojis)?a.emojis:[];
+  const a=c.achievements||{};
+  const achTierRaw=String(c.tier||'free').toLowerCase();
+  const achTier=achTierRaw!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':achTierRaw;
+  const achPaid=achTier==='premium'||achTier==='pro';
+  const messageMilestoneLimit=achTier==='pro'?Infinity:achTier==='premium'?15:8;
+  const emojiMilestoneLimit=messageMilestoneLimit;
+  const messages=(Array.isArray(a.messages)?a.messages:[]).slice(0,messageMilestoneLimit);
+  const emojis=(Array.isArray(a.emojis)?a.emojis:[]).slice(0,emojiMilestoneLimit);
   const [channelResult,roleResult]=await Promise.all([api('/api/guild/'+encodeURIComponent(id)+'/channels'),api('/api/guild/'+encodeURIComponent(id)+'/roles')]);
   const channels=(channelResult.channels||[]).filter(x=>x.type==='text'),roles=(roleResult.roles||[]).filter(x=>!x.managed);
   const renderRows=(prefix,entries,defaults)=>'<div id="'+prefix+'ThresholdRows">'+(entries.length?entries:[{threshold:defaults[0],roleId:''}]).map((entry,i)=>'<div class="rr-mapping-grid milestone-threshold-row" data-milestone-row="'+prefix+'"><label class="field">Threshold '+(i+1)+'<input type="number" min="1" max="100000000" value="'+esc(entry.threshold??defaults[i]??'')+'"></label><label class="field">Reward role<select>'+optionList(roles,entry.roleId||'','Choose a reward role')+'</select></label></div>').join('')+'</div>';
-  const section=(prefix,label,entries,defaults)=>'<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+label+'</h3><p>Add as many thresholds as needed. Each threshold can award a different role.</p></div></div>'+renderRows(prefix,entries,defaults)+'<div class="milestone-threshold-actions"><button type="button" class="level-reward-action level-reward-add" data-add-milestone="'+prefix+'"><span aria-hidden="true">＋</span> Add threshold</button><button type="button" class="level-reward-action level-reward-remove" data-remove-last-milestone="'+prefix+'"><span aria-hidden="true">−</span> Remove</button></div></section>';
+  const section=(prefix,label,entries,defaults)=>'<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+label+'</h3><p>'+entries.length+' / '+(prefix==='msg'?messageMilestoneLimit:emojiMilestoneLimit)+' milestones used on the '+esc(achTier.toUpperCase())+' plan. Each threshold can award a different role.</p></div></div>'+renderRows(prefix,entries,defaults)+'<div class="milestone-threshold-actions"><button type="button" class="level-reward-action level-reward-add" data-add-milestone="'+prefix+'"><span aria-hidden="true">＋</span> Add threshold</button><button type="button" class="level-reward-action level-reward-remove" data-remove-last-milestone="'+prefix+'"><span aria-hidden="true">−</span> Remove</button></div></section>';
   body.innerHTML=card('Achievements & milestones','Track message and emoji milestones independently from XP. SQLite stores lifetime totals separately for each member and server.',
    '<div class="welcome-panel">'+check('achEnabled','Enable milestone tracking',a.enabled!==false)+section('msg','Message milestones',messages,[10,100])+section('emoji','Emoji milestones',emojis,[5,50])+
    '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Milestone announcements</h3><p>Post a congratulatory message when a member earns a configured milestone role.</p></div></div><label class="field">Announcement channel<select id="achChannel">'+optionList(channels,a.announcementChannelId||'','Choose a text channel')+'</select></label>'+check('achAnnounce','Send milestone congratulations',a.announce!==false)+'</section>'+
@@ -906,10 +913,11 @@ if(k==='achievements'){
    container.appendChild(row);bindButtons();
   };
   const bindButtons=()=>{
-   body.querySelectorAll('[data-add-milestone]').forEach(btn=>btn.onclick=()=>{const prefix=btn.dataset.addMilestone;if(document.getElementById(prefix+'ThresholdRows').children.length>=50){alert('You can add up to 50 thresholds per milestone type.');return;}addRow(prefix);});
+   body.querySelectorAll('[data-add-milestone]').forEach(btn=>btn.onclick=()=>{const prefix=btn.dataset.addMilestone;const limit=prefix==='msg'?messageMilestoneLimit:emojiMilestoneLimit;if(document.getElementById(prefix+'ThresholdRows').children.length>=limit){alert('This server has reached its '+limit+' milestone limit for the '+achTier.toUpperCase()+' plan.');return;}addRow(prefix);});
    body.querySelectorAll('[data-remove-last-milestone]').forEach(btn=>btn.onclick=()=>{const prefix=btn.dataset.removeLastMilestone,container=document.getElementById(prefix+'ThresholdRows');if(container.children.length<=1){alert('Keep at least one row. You can leave it empty if you do not need that reward.');return;}container.lastElementChild.remove();Array.from(container.children).forEach((row,i)=>{row.querySelector('.field').childNodes[0].textContent='Threshold '+(i+1);});});
   };
   bindButtons();
+  if(!achPaid){['achChannel','achAnnounce'].forEach(key=>{const el=document.getElementById(key);if(el){el.disabled=true;el.title='Premium or Pro required for custom milestone announcements';el.style.opacity='.55';}});const note=document.createElement('p');note.className='plan-locked-inline';note.textContent='Free servers announce achievements in the channel where the milestone was reached. Custom announcement channels require Premium or Pro.';body.querySelector('.welcome-message-section:nth-of-type(3)')?.appendChild(note);}
   document.getElementById('saveAchievements').onclick=async()=>{
    const rows=prefix=>Array.from(document.getElementById(prefix+'ThresholdRows').querySelectorAll('[data-milestone-row]')).map(row=>({threshold:Math.max(1,Math.min(100000000,Number(row.querySelector('input')?.value)||1)),roleId:row.querySelector('select')?.value||null})).filter(x=>x.roleId);
    const result=await save(id,{achievements:{...a,enabled:yes('achEnabled'),messages:rows('msg'),emojis:rows('emoji'),announcementChannelId:val('achChannel')||null,announce:yes('achAnnounce')}});
