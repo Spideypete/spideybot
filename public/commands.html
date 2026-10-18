@@ -560,5 +560,54 @@
       });
     })();
   </script>
+<script>
+(function applyLogoWordmarkEverywhere(){
+  if (window.__spideyLogoWordmarkInstalled) return;
+  window.__spideyLogoWordmarkInstalled = true;
+  const style = document.createElement('style');
+  style.textContent = '.brand-inline-logo{display:inline-block;width:auto;max-width:160px;height:1.15em;object-fit:contain;vertical-align:-.2em}';
+  document.head.appendChild(style);
+  const pattern = /spidey\\s+bot/ig;
+  function replaceInTextNode(node){
+    if(!node || node.nodeType !== Node.TEXT_NODE || !pattern.test(node.nodeValue || '')) { pattern.lastIndex = 0; return; }
+    pattern.lastIndex = 0;
+    const value = node.nodeValue;
+    const fragment = document.createDocumentFragment();
+    let last = 0, match;
+    while((match = pattern.exec(value)) !== null){
+      if(match.index > last) fragment.appendChild(document.createTextNode(value.slice(last, match.index)));
+      const logo = document.createElement('img');
+      logo.className = 'brand-inline-logo';
+      logo.src = '/spideybot-logo.png';
+      logo.alt = match[0];
+      fragment.appendChild(logo);
+      last = match.index + match[0].length;
+    }
+    if(last < value.length) fragment.appendChild(document.createTextNode(value.slice(last)));
+    node.parentNode?.replaceChild(fragment, node);
+  }
+  function scan(root){
+    if(!root) return;
+    if(root.nodeType === Node.TEXT_NODE) { replaceInTextNode(root); return; }
+    if(root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_NODE) return;
+    if(root.nodeType === Node.ELEMENT_NODE && /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|TITLE|OPTION)$/i.test(root.tagName)) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node){
+        const p=node.parentElement;
+        if(!p || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|TITLE|OPTION)$/i.test(p.tagName)) return NodeFilter.FILTER_REJECT;
+        if(p.closest('script,style,noscript,textarea,title,option')) return NodeFilter.FILTER_REJECT;
+        return /spidey\\s+bot/i.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(replaceInTextNode);
+  }
+  scan(document.body);
+  new MutationObserver(records => records.forEach(record => {
+    record.addedNodes?.forEach(node => scan(node));
+    if(record.type === 'characterData') scan(record.target);
+  })).observe(document.body,{subtree:true,childList:true,characterData:true});
+})();
+</script>
 </body>
 </html>
