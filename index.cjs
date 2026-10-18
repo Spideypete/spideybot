@@ -7394,17 +7394,14 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
     const config = loadConfig();
     const guildConfig = config.guilds[guildId] || {};
     const roleCategories = guildConfig.roleCategories || {};
-    let totalRoles = 0;
+    let categoryRoleCount = 0;
     Object.values(roleCategories).forEach(cat => {
-      if (cat.roles && Array.isArray(cat.roles)) {
-        totalRoles += cat.roles.length;
-      }
+      if (cat.roles && Array.isArray(cat.roles)) categoryRoleCount += cat.roles.length;
     });
-    
-    // Also check reactRoles.entries
-    if (guildConfig.reactRoles && guildConfig.reactRoles.entries) {
-      totalRoles += guildConfig.reactRoles.entries.length;
-    }
+    const legacyEntryCount = Array.isArray(guildConfig.reactRoles?.entries) ? guildConfig.reactRoles.entries.length : 0;
+    // Legacy config and the dedicated reaction-role service can represent the same entries;
+    // use the larger count for those mirrors rather than counting them twice.
+    const totalRoles = categoryRoleCount + Math.max(serviceEntries.length, legacyEntryCount);
     
     if (totalRoles >= limits.maxReactRoles) {
       return res.json({ 
