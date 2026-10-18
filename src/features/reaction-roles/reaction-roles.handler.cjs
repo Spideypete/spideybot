@@ -1,5 +1,6 @@
 const { PermissionFlagsBits } = require("discord.js");
 const service = require("./reaction-roles.service.cjs");
+const subscriptionManager = require('../../../services/subscription.manager.js');
 
 let registered = false;
 
@@ -122,6 +123,9 @@ async function handleReactionAdd(reaction, user) {
   if (!guild) return;
 
   const settings = service.getConfig(guild.id);
+  const plan = subscriptionManager.getGuildPlanPolicy(guild.id);
+  // Free servers always send DM confirmations; only Premium/Pro can disable them.
+  if (plan.tier === 'free') { settings.dmConfirm = true; settings.dmConfirmations = true; }
   if (settings.enabled === false) {
     console.log(`[reaction-roles] Ignoring reaction: feature disabled for guild ${guild.id}`);
     return;
