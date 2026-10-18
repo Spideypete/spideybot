@@ -6481,6 +6481,17 @@ app.post("/api/config/:guildId", async (req, res) => {
         return res.status(403).json({ success: false, error: feature[0].toUpperCase()+feature.slice(1)+' requires Premium or Pro for this server.', upgradeRequired: true, currentTier: policy.tier });
       }
     }
+    // Level role rewards are capped server-side so Free servers cannot bypass dashboard controls.
+    for (const key of ['xp-levels','levels']) {
+      const section=req.body[key];
+      const roles=section?.levelRoles;
+      if (roles && typeof roles==='object' && !Array.isArray(roles)) {
+        const currentRoles=guildConfig[key]?.levelRoles||{};
+        const count=Object.keys(roles).filter(levelKey=>roles[levelKey]).length;
+        const currentCount=Object.keys(currentRoles).filter(levelKey=>currentRoles[levelKey]).length;
+        if(count>policy.levelRoleRewards && count>currentCount) return res.status(403).json({success:false,error:'This server can configure '+policy.levelRoleRewards+' level role rewards on the '+policy.tier.toUpperCase()+' plan.',upgradeRequired:true,limit:policy.levelRoleRewards,currentTier:policy.tier});
+      }
+    }
     // Embed Messages: enforce saved-template counts on the server, not only in the UI.
     if (Array.isArray(req.body.embedTemplates) && req.body.embedTemplates.length > policy.embedMessages && req.body.embedTemplates.length > (Array.isArray(guildConfig.embedTemplates) ? guildConfig.embedTemplates.length : 0)) {
       return res.status(403).json({ success: false, error: 'This server can save '+policy.embedMessages+' embed messages on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.embedMessages });
