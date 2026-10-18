@@ -1027,14 +1027,15 @@ client.on('interactionCreate', async interaction => {
       const aiSettings = guildConfig.aiAssistantSettings || {};
       if (aiSettings.enabled === false) return interaction.editReply('The AI Assistant is disabled for this server. An administrator can enable it in the dashboard.');
       if (aiSettings.channelId && interaction.channelId !== String(aiSettings.channelId)) return interaction.editReply('Please use the AI Assistant in the configured channel.');
-      // The requested standard allowance is 50 AI requests per server per UTC day for every tier.
+      // AI allowance is tier-specific and enforced per server per UTC day.
+      const aiDailyLimit = Math.max(1, Number(subscriptionManager.getPlanLimit(interaction.guildId, 'aiDailyRequests')) || 50);
       const aiUsageConfig = loadConfig();
       if (!aiUsageConfig.guilds) aiUsageConfig.guilds = {};
       if (!aiUsageConfig.guilds[interaction.guildId]) aiUsageConfig.guilds[interaction.guildId] = guildConfig;
       const todayUtc = new Date().toISOString().slice(0, 10);
       const usage = aiUsageConfig.guilds[interaction.guildId].aiDailyUsage || { date: todayUtc, count: 0 };
       if (usage.date !== todayUtc) { usage.date = todayUtc; usage.count = 0; }
-      if (Number(usage.count) >= 50) return interaction.editReply('This server has used all 50 AI requests for today. The allowance resets at 00:00 UTC.');
+      if (Number(usage.count) >= aiDailyLimit) return interaction.editReply('This server has used all ' + aiDailyLimit + ' AI requests for today. The allowance resets at 00:00 UTC.');
       usage.count = Number(usage.count || 0) + 1;
       aiUsageConfig.guilds[interaction.guildId].aiDailyUsage = usage;
       fs.writeFileSync('config.json', JSON.stringify(aiUsageConfig, null, 2));
