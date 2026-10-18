@@ -5323,7 +5323,15 @@ app.get("/dashboard/server/:guildId", (req, res) => {
 
 app.get("/owner-dash", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.redirect("/owner-dash.html");
+  const config = loadConfig();
+  if (!config.creator?.ownerId || req.session.user?.id !== config.creator.ownerId) return res.status(403).send('Owner access only.');
+  return res.sendFile(path.join(publicDir, 'owner-console.html'));
+});
+app.get("/owner-console", (req, res) => {
+  if (!req.session.authenticated) return res.redirect("/login");
+  const config = loadConfig();
+  if (!config.creator?.ownerId || req.session.user?.id !== config.creator.ownerId) return res.status(403).send('Owner access only.');
+  return res.sendFile(path.join(publicDir, 'owner-console.html'));
 });
 
 app.get("/premium", (req, res) => {
@@ -5764,75 +5772,51 @@ app.get('/api/owner/test', (req, res) => {
 });
 
 app.get('/api/owner/stats', (req, res) => {
-  if (!req.session.authenticated) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
+  if (!req.session.authenticated) return res.status(401).json({ error: 'Not authenticated' });
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
-  const userId = req.session.user?.id;
-  
-  if (userId !== botOwnerId || !botOwnerId) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+  if (!botOwnerId || req.session.user?.id !== botOwnerId) return res.status(403).json({ error: 'Access denied' });
 
-  const totalServers = client.guilds.cache.size;
-  const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-  let newThisWeek = 0;
-  
+  const now = Date.now();
+  const monthMs = 30 * 24 * 60 * 60 * 1000;
   const servers = [];
-  let freeCount = 0;
-  let premiumCount = 0;
-  let proCount = 0;
-  
-  for (const [guildId, guildConfig] of Object.entries(config.guilds)) {
-    if (guildId === 'creator' || guildId === 'subscriptions' || guildId === 'settings' || 
-        guildId === 'role-categories' || guildId === 'react-roles' || guildId === 'statistics-channels' ||
-        guildId === 'logging') continue;
-    
-    const discordGuild = client.guilds.cache.get(guildId);
-    if (discordGuild) {
-      const joinedAt = discordGuild.joinedAt?.getTime() || 0;
-      if (joinedAt > oneWeekAgo) newThisWeek++;
-      
-      // Tier: 'free', 'premium', or 'pro'
-      const tier = guildConfig.tier || 'free';
-      const tierEndDate = guildConfig.tierEndDate || null;
-      const tierDurationMonths = guildConfig.tierDurationMonths || 0;
-      
-      // Calculate remaining months
-      let remainingMonths = 0;
-      if (tierEndDate && tier !== 'free') {
-        const now = Date.now();
-        const msRemaining = tierEndDate - now;
-        remainingMonths = Math.max(0, Math.ceil(msRemaining / (30 * 24 * 60 * 60 * 1000)));
-      }
-      
-      if (tier === 'premium') premiumCount++;
-      else if (tier === 'pro') proCount++;
-      else freeCount++;
-      
-      servers.push({
-        id: guildId,
-        name: discordGuild.name,
-        icon: discordGuild.icon,
-        memberCount: discordGuild.memberCount,
-        tier: tier,
-        tierEndDate: tierEndDate,
-        tierDurationMonths: tierDurationMonths,
-        remainingMonths: remainingMonths
-      });
-    }
-  }
+  let freeCount = 0, premiumCount = 0, proCount = 0, newThisWeek = 0;
+  const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const purchases = Array.isArray(config.global_configs?.premiumPurchases) ? config.global_configs.premiumPurchases : [];
 
-  res.json({
-    totalServers,
-    freeCount,
-    premiumCount,
-    proCount,
-    newThisWeek,
-    servers
+  for (const guild of client.guilds.cache.values()) {
+    const guildId = guild.id;
+    const guildConfig = config.guilds[guildId] || {};
+    let tier = ['free', 'premium', 'pro'].includes(String(guildConfig.tier || 'free').toLowerCase()) ? String(guildConfig.tier || 'free').toLowerCase() : 'free';
+    const tierEndDate = Number(guildConfig.tierEndDate) || null;
+    const isExpired = tier !== 'free' && tierEndDate && tierEndDate <= now;
+    if (isExpired) tier = 'free';
+    if ((guild.joinedAt?.getTime() || 0) > oneWeekAgo) newThisWeek++;
+    if (tier === 'premium') premiumCount++; else if (tier === 'pro') proCount++; else freeCount++;
+    const lastPurchase = [...purchases].reverse().find(p => String(p.guildId) === guildId) || null;
+    const tierStartDate = Number(guildConfig.tierStartDate) || null;
+    const tierDurationMonths = Number(guildConfig.tierDurationMonths) || 0;
+    const remainingMonths = tierEndDate && tier !== 'free' ? Math.max(0, Math.ceil((tierEndDate - now) / monthMs)) : null;
+    servers.push({
+      id: guildId, name: guild.name, icon: guild.icon, memberCount: guild.memberCount,
+      joinedAt: guild.joinedAt?.toISOString?.() || null, tier, tierStartDate,
+      tierEndDate: isExpired ? null : tierEndDate, tierDurationMonths: tier === 'free' ? 0 : tierDurationMonths,
+      remainingMonths, isLifetime: tier !== 'free' && !tierEndDate,
+      lastPurchase: lastPurchase ? {
+        buyerId: lastPurchase.buyerId || null, buyerName: lastPurchase.buyerName || null,
+        amount: lastPurchase.amount || null, currency: lastPurchase.currency || null,
+        purchasedAt: lastPurchase.purchasedAt || null, orderId: lastPurchase.orderId || null,
+        tier: lastPurchase.tier || null, durationMonths: lastPurchase.durationMonths || null
+      } : null,
+      grantSource: guildConfig.tierSource || null,
+      grantedBy: guildConfig.tierGrantedBy || null
+    });
+  }
+  servers.sort((a,b) => {
+    const order = { pro: 0, premium: 1, free: 2 };
+    return order[a.tier] - order[b.tier] || a.name.localeCompare(b.name);
   });
+  res.json({ totalServers: client.guilds.cache.size, freeCount, premiumCount, proCount, newThisWeek, servers, generatedAt: new Date(now).toISOString() });
 });
 
 app.post('/api/owner/force-refresh', async (req, res) => {
@@ -5868,58 +5852,40 @@ app.post('/api/owner/force-refresh', async (req, res) => {
 });
 
 app.post('/api/owner/tier', (req, res) => {
-  console.log('[Tier Update] Request received:', req.body);
-  
-  if (!req.session.authenticated) {
-    console.log('[Tier Update] Not authenticated');
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
+  if (!req.session.authenticated) return res.status(401).json({ error: 'Not authenticated' });
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
-  const userId = req.session.user?.id;
-  
-  console.log('[Tier Update] User:', userId, 'Owner:', botOwnerId);
-  
-  if (userId !== botOwnerId || !botOwnerId) {
-    console.log('[Tier Update] Access denied');
-    return res.status(403).json({ error: 'Access denied' });
-  }
+  if (!botOwnerId || req.session.user?.id !== botOwnerId) return res.status(403).json({ error: 'Access denied' });
 
-  const { guildId, tier, durationMonths } = req.body;
-  console.log('[Tier Update] Guild:', guildId, 'Tier:', tier, 'Duration:', durationMonths);
-  
-  if (!guildId) {
-    return res.status(400).json({ error: 'guildId required' });
-  }
+  const { guildId, tier, durationMonths, reason } = req.body || {};
+  if (!guildId || !client.guilds.cache.has(String(guildId))) return res.status(404).json({ error: 'That server is not currently in SPIDEY BOT.' });
+  const newTier = String(tier || '').toLowerCase();
+  if (!['free', 'premium', 'pro'].includes(newTier)) return res.status(400).json({ error: 'Tier must be Free, Premium or Pro.' });
+  const duration = Number(durationMonths ?? 0);
+  if (!Number.isInteger(duration) || duration < 0 || duration > 1200) return res.status(400).json({ error: 'Duration must be 0 (lifetime) or a whole number from 1 to 1200 months.' });
 
-  const validTiers = ['free', 'premium', 'pro'];
-  const newTier = validTiers.includes(tier) ? tier : 'free';
-  const duration = parseInt(durationMonths) || 0;
-
-  if (!config.guilds[guildId]) {
-    config.guilds[guildId] = {};
-  }
-  
-  config.guilds[guildId].tier = newTier;
-  
+  const guildConfig = config.guilds[guildId] || (config.guilds[guildId] = {});
+  const now = Date.now();
+  guildConfig.tier = newTier;
+  guildConfig.tierSource = 'owner';
+  guildConfig.tierGrantedBy = req.session.user.id;
+  guildConfig.tierUpdatedAt = now;
+  guildConfig.tierGrantReason = String(reason || '').trim().slice(0, 300) || null;
   if (newTier !== 'free' && duration > 0) {
-    const now = Date.now();
-    const endDate = now + (duration * 30 * 24 * 60 * 60 * 1000);
-    config.guilds[guildId].tierStartDate = now;
-    config.guilds[guildId].tierEndDate = endDate;
-    config.guilds[guildId].tierDurationMonths = duration;
+    guildConfig.tierStartDate = now;
+    guildConfig.tierEndDate = now + duration * 30 * 24 * 60 * 60 * 1000;
+    guildConfig.tierDurationMonths = duration;
   } else {
-    delete config.guilds[guildId].tierStartDate;
-    delete config.guilds[guildId].tierEndDate;
-    delete config.guilds[guildId].tierDurationMonths;
+    delete guildConfig.tierStartDate;
+    delete guildConfig.tierEndDate;
+    guildConfig.tierDurationMonths = 0;
   }
-  
-  console.log('[Tier Update] Saving config for guild:', guildId, 'tier:', newTier, 'endDate:', config.guilds[guildId].tierEndDate);
+  config.global_configs = config.global_configs || {};
+  config.global_configs.ownerTierHistory = Array.isArray(config.global_configs.ownerTierHistory) ? config.global_configs.ownerTierHistory : [];
+  config.global_configs.ownerTierHistory.unshift({ guildId: String(guildId), guildName: client.guilds.cache.get(String(guildId))?.name || 'Unknown server', tier: newTier, durationMonths: newTier === 'free' ? 0 : duration, lifetime: newTier !== 'free' && duration === 0, changedBy: req.session.user.id, changedAt: now, reason: guildConfig.tierGrantReason });
+  config.global_configs.ownerTierHistory = config.global_configs.ownerTierHistory.slice(0, 500);
   saveConfig(config);
-  console.log('[Tier Update] Config saved successfully');
-
-  res.json({ success: true, guildId, tier: newTier, endDate: config.guilds[guildId].tierEndDate, durationMonths: duration });
+  res.json({ success: true, guildId, tier: newTier, endDate: guildConfig.tierEndDate || null, durationMonths: guildConfig.tierDurationMonths, isLifetime: newTier !== 'free' && duration === 0 });
 });
 
 // Get tier for a specific guild (for upsell checks)
@@ -6113,7 +6079,7 @@ app.post('/api/paypal/create-order', async (req, res) => {
       purchase_units: [{
         reference_id: guildId,
         description: `Spidey Bot ${tier.toUpperCase()} Upgrade - ${durationMonths} Months`,
-        custom_id: JSON.stringify({ guildId, tier, durationMonths }),
+        custom_id: JSON.stringify({ guildId, tier, durationMonths, buyerId: req.session.user?.id || null, buyerName: req.session.user?.username || req.session.user?.global_name || null }),
         amount: {
           currency_code: 'USD',
           value: amount.toString()
@@ -6168,12 +6134,14 @@ app.post('/api/paypal/capture-order', async (req, res) => {
       const customId = response.data.purchase_units[0]?.custom_id;
       const purchase = response.data.purchase_units[0]?.payments?.captures?.[0];
       
-      let guildId, tier, durationMonths;
+      let guildId, tier, durationMonths, buyerId = null, buyerName = null;
       try {
         const customData = JSON.parse(customId);
         guildId = customData.guildId;
         tier = customData.tier;
         durationMonths = customData.durationMonths;
+        buyerId = customData.buyerId || null;
+        buyerName = customData.buyerName || null;
       } catch (e) {
         return res.status(400).json({ error: 'Invalid custom data' });
       }
@@ -6189,7 +6157,14 @@ app.post('/api/paypal/capture-order', async (req, res) => {
       config.guilds[guildId].tier = tier;
       config.guilds[guildId].tierEndDate = tierEndDate;
       config.guilds[guildId].tierDurationMonths = durationMonths;
-      
+      config.guilds[guildId].tierStartDate = Date.now();
+      config.guilds[guildId].tierSource = 'paypal';
+      config.guilds[guildId].tierGrantedBy = buyerId;
+      config.global_configs = config.global_configs || {};
+      config.global_configs.premiumPurchases = Array.isArray(config.global_configs.premiumPurchases) ? config.global_configs.premiumPurchases : [];
+      const purchaseRecord = { orderId: String(orderId), guildId: String(guildId), tier, durationMonths: Number(durationMonths), buyerId, buyerName, amount: purchase.amount?.value || null, currency: purchase.amount?.currency_code || null, purchasedAt: new Date().toISOString() };
+      if (!config.global_configs.premiumPurchases.some(p => p.orderId === purchaseRecord.orderId)) config.global_configs.premiumPurchases.unshift(purchaseRecord);
+      config.global_configs.premiumPurchases = config.global_configs.premiumPurchases.slice(0, 1000);
       saveConfig(config);
       
       console.log(`[PayPal] Payment captured: ${tier} ${durationMonths} months for guild ${guildId}, amount: ${purchase.amount.value} ${purchase.amount.currency_code}`);
