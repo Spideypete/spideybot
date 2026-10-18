@@ -154,6 +154,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{max-width
    const btn=$('saveTierBtn');btn.disabled=true;btn.textContent='Saving…';
    try{
      await api('/api/owner/tier',{method:'POST',body:JSON.stringify({guildId:selectedId,tier,durationMonths:duration,reason:$('grantReason').value.trim()})});
+     // Notify any open main-dashboard tab so its navigation, limits and locked panels refresh immediately.
+     localStorage.setItem('spidey-plan-updated',JSON.stringify({guildId:selectedId,tier,updatedAt:Date.now()}));
      setStatus('editorStatus',tier==='free'?'Server moved to Free.':tier.toUpperCase()+' granted '+(duration===0?'for lifetime.':'for '+duration+' month(s).'),'success');
      await loadData();selectServer(selectedId);
    }catch(err){setStatus('editorStatus',err.message,'error');}
