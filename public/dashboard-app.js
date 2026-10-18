@@ -317,7 +317,8 @@ async function renderReactionRolesPanel(id,f,c){
  const serverEmojis=emojiResult.emojis||[];
  const unicodeEmojis=['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😍','🥰','😘','😎','🤔','😭','😡','👍','👎','👏','🙌','🙏','❤️','💙','💜','🔥','✨','⭐','🎉','🎮','🎯','🏆','✅','❌','⚠️','💯','👀','💀','🐱','🐶','🍀','🌟'];
  const rr=settingsResult.config||{};
- const rrTier=String(c.tier||'free').toLowerCase();
+ const rrTierRaw=String(c.tier||'free').toLowerCase();
+ const rrTier=rrTierRaw!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':rrTierRaw;
  const rrPaid=rrTier==='premium'||rrTier==='pro';
  const rrRoleLimit=rrTier==='pro'?'Unlimited':rrTier==='premium'?'8':'3';
  const rrReactionLimit=rrTier==='pro'?'Unlimited':rrTier==='premium'?'10':'5';
@@ -566,7 +567,7 @@ async function renderDebilInspiredPanel(id,f,c){
   :type==='role'?guildSelect('debil_'+field,label,dropdowns.roles,defaultValue,'No role (optional)')
   :input('debil_'+field,label,defaultValue,type)).join('');
  body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+esc(schema.title)+'</h3><p>Settings are saved per server.</p></div></div>'+controls+'<div class="panel-actions">'+button('saveDebilSettings','Save '+f[1])+'</div></section></div>');
- if(k==='economy' && !['premium','pro'].includes((String(c.tier||'free').toLowerCase()))){['debil_currencyName','debil_currencySymbol'].forEach(key=>{const el=document.getElementById(key);if(el){el.disabled=true;el.title='Premium or Pro required';el.style.opacity='.55';}});const note=document.createElement('p');note.className='plan-locked-inline';note.textContent='🔒 Currency name and symbol customisation requires Premium or Pro.';body.querySelector('.welcome-message-section')?.appendChild(note);}
+ if(k==='economy' && !['premium','pro'].includes((String(c.tier||'free').toLowerCase()!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':String(c.tier||'free').toLowerCase()))){['debil_currencyName','debil_currencySymbol'].forEach(key=>{const el=document.getElementById(key);if(el){el.disabled=true;el.title='Premium or Pro required';el.style.opacity='.55';}});const note=document.createElement('p');note.className='plan-locked-inline';note.textContent='🔒 Currency name and symbol customisation requires Premium or Pro.';body.querySelector('.welcome-message-section')?.appendChild(note);}
 
  document.getElementById('saveDebilSettings').onclick=async()=>{
   const next={};
@@ -1054,7 +1055,8 @@ if(k==='achievements'){
 }
 async function renderEmbedsPanel(id,f,c){
  const saved=Array.isArray(c.embedTemplates)?c.embedTemplates:[];
- const embedTier=String(c.tier||'free').toLowerCase();
+ const embedTierRaw=String(c.tier||'free').toLowerCase();
+ const embedTier=embedTierRaw!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':embedTierRaw;
  const embedPaid=embedTier==='premium'||embedTier==='pro';
  const embedLimit=embedTier==='pro'?30:embedTier==='premium'?5:2;
  let fields=[];
