@@ -117,32 +117,29 @@ function redeemActivationKey(guildId, rawKey) {
 
 function getGuildTier(guildId) {
   const config = loadConfig();
-  const guild = config.guilds[guildId] || {};
-  
-  if (!guild.tier || guild.tier === 'free') return 'free';
-  if (guild.tier === 'premium' || guild.tier === 'pro') return guild.tier;
-  
-  // Check if expired
-  if (guild.tierEndDate && guild.tierEndDate < Date.now()) {
-    return 'free';
-  }
-  
-  return guild.tier || 'free';
+  const guild = config.guilds?.[guildId] || {};
+  const tier = String(guild.tier || 'free').toLowerCase();
+  if (!['free','premium','pro'].includes(tier)) return 'free';
+  if (tier !== 'free' && guild.tierEndDate && Number(guild.tierEndDate) <= Date.now()) return 'free';
+  return tier;
 }
 
 function getTierLimits(guildId) {
   const tier = getGuildTier(guildId);
   const toggles = getFeatureToggles();
-  
+  const policy = PLAN_POLICY[tier] || PLAN_POLICY.free;
   return {
-    maxReactRoles: toggles.reactRoles?.[tier] ?? 3,
-    maxGiveaways: toggles.giveaways?.[tier] ?? 1,
-    hasXP: toggles.xpLeaderboards?.[tier] ?? false,
-    hasCustomCommands: toggles.customCommands?.[tier] ?? false,
-    hasFullServerGuard: toggles.fullServerGuard?.[tier] ?? false,
-    hasAnalytics: toggles.analytics?.[tier] ?? false,
-    hasInvites: toggles.inviteTracking?.[tier] ?? false,
-    hasAutomation: toggles.automation?.[tier] ?? false,
+    ...policy,
+    maxReactRoles: toggles.reactRoles?.[tier] ?? policy.reactionRoles,
+    maxGiveaways: toggles.giveaways?.[tier] ?? policy.giveawayInviteMessages,
+    maxCustomCommands: toggles.customCommands?.[tier] ?? policy.customCommands,
+    maxInviteMilestones: toggles.inviteTracking?.[tier] ?? policy.inviteMilestones,
+    hasXP: toggles.xpLeaderboards?.[tier] ?? true,
+    hasCustomCommands: (toggles.customCommands?.[tier] ?? policy.customCommands) > 0,
+    hasFullServerGuard: toggles.fullServerGuard?.[tier] ?? true,
+    hasAnalytics: toggles.analytics?.[tier] ?? true,
+    hasInvites: (toggles.inviteTracking?.[tier] ?? policy.inviteMilestones) > 0,
+    hasAutomation: toggles.automation?.[tier] ?? true,
     hasAntiRaid: toggles.antiRaid?.[tier] ?? true,
     hasAntiSpam: toggles.antiSpam?.[tier] ?? true
   };
@@ -150,27 +147,16 @@ function getTierLimits(guildId) {
 
 function checkEntitlement(guildId, feature) {
   const limits = getTierLimits(guildId);
-  
-  switch (feature) {
-    case 'unlimitedReactRoles':
-      return limits.maxReactRoles !== 3;
-    case 'xpLeaderboards':
-      return limits.hasXP;
-    case 'customCommands':
-      return limits.hasCustomCommands;
-    case 'fullServerGuard':
-      return limits.hasFullServerGuard;
-    case 'analytics':
-      return limits.hasAnalytics;
-    case 'inviteTracking':
-      return limits.hasInvites;
-    case 'automation':
-      return limits.hasAutomation;
-    case 'unlimitedGiveaways':
-      return limits.maxGiveaways === Infinity;
-    default:
-      return false;
-  }
+  if (feature === 'unlimitedReactRoles') return limits.maxReactRoles > 3;
+  if (feature === 'xpLeaderboards') return limits.hasXP;
+  if (feature === 'customCommands') return limits.hasCustomCommands;
+  if (feature === 'fullServerGuard') return limits.hasFullServerGuard;
+  if (feature === 'analytics') return limits.hasAnalytics;
+  if (feature === 'inviteTracking') return limits.hasInvites;
+  if (feature === 'automation') return limits.hasAutomation;
+  if (feature === 'unlimitedGiveaways') return limits.maxGiveaways > 10;
+  if (feature in limits) return Boolean(limits[feature]);
+  return isPlanFeatureAllowed(guildId, feature);
 }
 
 function setGuildTier(guildId, tier, durationMonths = 0) {
@@ -267,6 +253,10 @@ module.exports = {
   getFeatureToggles,
   setFeatureToggles,
   getGuildTier,
+  getGuildPlanPolicy,
+  getPlanLimit,
+  isPlanFeatureAllowed,
+  PLAN_POLICY,
   redeemActivationKey,
   getTierLimits,
   checkEntitlement,
