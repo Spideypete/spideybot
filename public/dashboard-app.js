@@ -465,13 +465,16 @@ async function renderDebilInspiredPanel(id,f,c){
    ['startingBalance','Starting balance',c.economySettings?.startingBalance||0,'number'],
    ['allowTransfers','Allow member-to-member transfers',c.economySettings?.allowTransfers!==false,'check']
   ]},
-  music:{key:'musicSettings',title:'Music settings',intro:'Configure voice music controls. Playback requires a compatible music runtime and audio dependencies.',fields:[
+  music:{key:'musicSettings',title:'Music settings',intro:'Configure SPIDEY BOT voice playback, queue limits, source options and DJ controls. Source availability depends on the installed extractors and upstream platform changes.',fields:[
    ['enabled','Enable music controls',c.musicSettings?.enabled!==false,'check'],
-   ['djRoleId','DJ role ID',c.musicSettings?.djRoleId||'','role'],
+   ['djRoleId','DJ role ID (optional)',c.musicSettings?.djRoleId||'','role'],
    ['musicChannelId','Optional music command channel ID',c.musicSettings?.musicChannelId||'','channel'],
-   ['maxQueueSize','Maximum queue size',c.musicSettings?.maxQueueSize||100,'number'],
+   ['maxQueueSize','Maximum upcoming tracks',c.musicSettings?.maxQueueSize??100,'number'],
+   ['defaultVolume','Default playback volume (0–200)',c.musicSettings?.defaultVolume??100,'number'],
    ['allowPlaylists','Allow playlists',c.musicSettings?.allowPlaylists!==false,'check'],
-   ['allowSkip','Allow skip/pause/resume controls',c.musicSettings?.allowSkip!==false,'check']
+   ['allowSoundCloud','Allow SoundCloud searches/links',c.musicSettings?.allowSoundCloud!==false,'check'],
+   ['allowSpotify','Allow Spotify searches/links when supported',c.musicSettings?.allowSpotify!==false,'check'],
+   ['allowSkip','Allow skip, pause, resume and queue controls',c.musicSettings?.allowSkip!==false,'check']
   ]},
   casino:{key:'casinoSettings',title:'Casino settings',intro:'Configure slots, bet limits, and multipliers for virtual in-server currency.',fields:[
    ['enabled','Enable casino',c.casinoSettings?.enabled!==false,'check'],
