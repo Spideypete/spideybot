@@ -1293,6 +1293,41 @@ async function renderStatistics(id){
     '<div class="activity"><div class="activity-row"><div class="activity-icon">↗</div><div class="activity-main"><strong>Message tracking</strong><span>'+Number(data.messages||0).toLocaleString()+' human messages recorded since statistics tracking was deployed.</span></div></div>'+
     '<div class="activity-row"><div class="activity-icon">＋</div><div class="activity-main"><strong>Member growth</strong><span>Daily joins are recorded from deployment onwards. Older join history is not invented.</span></div></div>'+
     '<div class="activity-row"><div class="activity-icon">♙</div><div class="activity-main"><strong>Role counts</strong><span>Moderator and administrator totals are calculated from members available to the bot and their Discord permissions.</span></div></div></div></div>';
+
+  const counterData = await api('/api/dashboard/stat-channel-counters?guildId='+encodeURIComponent(id));
+  const metricOptions = [
+    ['members','Total members'],['humans','Human members'],['bots','Bot accounts'],
+    ['channels','Server channels'],['online','Online members (cached presence)'],['roleMembers','Members with a selected role']
+  ];
+  const channelOptions = (counterData.channels||[]).map(ch=>'<option value="'+esc(ch.id)+'">'+esc(ch.name)+' · '+esc(ch.id)+'</option>').join('');
+  const roleOptions = (counterData.roles||[]).map(role=>'<option value="'+esc(role.id)+'">'+esc(role.name)+'</option>').join('');
+  const counterRows = (counterData.counters||[]).map(counter=>'<div class="activity-row" style="align-items:center"><div class="activity-main"><strong>'+esc(counter.label||({members:'Members',humans:'People',bots:'Bots',channels:'Channels',online:'Online',roleMembers:'Role members'}[counter.metric]||counter.metric))+': '+esc(counter.channelName)+'</strong><span>'+esc(counter.metric==='roleMembers'?'Role: '+(counter.roleName||counter.roleId):metricOptions.find(item=>item[0]===counter.metric)?.[1]||counter.metric)+' · updates every 5 minutes</span></div><button type="button" class="select" data-remove-stat-counter="'+esc(counter.id)+'">Remove</button></div>').join('');
+  body.insertAdjacentHTML('beforeend',
+    '<div class="card panel section"><div class="panel-head"><div><div class="panel-title">Live statistics channels</div><div class="panel-sub">Configure channels that SPIDEY BOT renames automatically with live server counts. This is an original dashboard integration, not a copied bot.</div></div></div>'+
+    '<p class="muted">Choose a text or voice channel and the value it should display. SPIDEY BOT needs Manage Channels permission. Up to 20 counters per server.</p>'+
+    '<div class="panel-section"><label class="field">Channel<select id="statCounterChannel">'+(channelOptions||'<option value="">No renameable channels found</option>')+'</select></label>'+
+    '<label class="field">Statistic<select id="statCounterMetric">'+metricOptions.map(item=>'<option value="'+item[0]+'">'+item[1]+'</option>').join('')+'</select></label>'+
+    '<label class="field" id="statCounterRoleField" hidden>Role to count<select id="statCounterRole">'+roleOptions+'</select></label>'+
+    '<label class="field">Channel name label (optional)<input id="statCounterLabel" maxlength="45" placeholder="e.g. 👥 Members"></label>'+
+    '<div class="panel-actions"><button type="button" class="select" id="addStatCounter" '+(!channelOptions?'disabled':'')+'>Add live counter</button></div></div>'+
+    '<div class="panel-section"><h3>Configured counters ('+(counterData.counters||[]).length+'/20)</h3><div class="activity">'+(counterRows||'<p class="muted">No live counters configured yet.</p>')+'</div></div></div>');
+  const metricSelect=document.getElementById('statCounterMetric');
+  const roleField=document.getElementById('statCounterRoleField');
+  if(metricSelect&&roleField) metricSelect.addEventListener('change',()=>{roleField.hidden=metricSelect.value!=='roleMembers';});
+  document.getElementById('addStatCounter')?.addEventListener('click',async()=>{
+    const button=document.getElementById('addStatCounter');
+    const payload={guildId:id,channelId:document.getElementById('statCounterChannel')?.value,metric:metricSelect?.value,label:document.getElementById('statCounterLabel')?.value||'',roleId:document.getElementById('statCounterRole')?.value||null};
+    if(payload.metric==='roleMembers'&&!payload.roleId){alert('Choose the role this counter should count.');return;}
+    button.disabled=true;button.textContent='Adding…';
+    try{await api('/api/dashboard/stat-channel-counters',{method:'POST',body:JSON.stringify(payload)});await renderStatistics(id);}
+    catch(error){alert('Could not add live counter: '+(error.message||String(error)));button.disabled=false;button.textContent='Add live counter';}
+  });
+  body.querySelectorAll('[data-remove-stat-counter]').forEach(button=>button.addEventListener('click',async()=>{
+    button.disabled=true;
+    try{await api('/api/dashboard/stat-channel-counters',{method:'POST',body:JSON.stringify({guildId:id,action:'remove',counterId:button.dataset.removeStatCounter})});await renderStatistics(id);}
+    catch(error){alert('Could not remove live counter: '+(error.message||String(error)));button.disabled=false;}
+  }));
+
 }
 async function select(section){
  document.querySelectorAll('[data-section]').forEach(b=>b.classList.toggle('active',b.dataset.section===section));
