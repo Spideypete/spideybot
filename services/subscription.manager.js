@@ -22,21 +22,21 @@ function saveConfig(config) {
 const PLAN_POLICY = {
   free: {
     reactionRoles: 3, reactionsPerMessage: 5, achievementsMessages: 8, achievementsEmoji: 8,
-    customCommands: 5, inviteMilestones: 10, embedMessages: 2, socialAccountsPerSection: 5,
+    customCommands: 5, inviteMilestones: 10, embedMessages: 2, levelRoleRewards: 10, socialAccountsPerSection: 5,
     giveawayInviteMessages: 10, polls: false, emojis: false, music: false, embedStyling: false,
     reactionRoleDmConfirmation: true, achievementAnnouncements: false, reminderBehaviour: false,
     birthdayCustomEvents: false, economyCustomCurrency: false, aiDailyRequests: 50
   },
   premium: {
     reactionRoles: 8, reactionsPerMessage: 10, achievementsMessages: 15, achievementsEmoji: 15,
-    customCommands: 25, inviteMilestones: 20, embedMessages: 5, socialAccountsPerSection: 10,
+    customCommands: 25, inviteMilestones: 20, embedMessages: 5, levelRoleRewards: 20, socialAccountsPerSection: 10,
     giveawayInviteMessages: 20, polls: true, emojis: true, music: true, embedStyling: true,
     reactionRoleDmConfirmation: false, achievementAnnouncements: true, reminderBehaviour: true,
     birthdayCustomEvents: true, economyCustomCurrency: true, aiDailyRequests: 200
   },
   pro: {
     reactionRoles: Infinity, reactionsPerMessage: Infinity, achievementsMessages: Infinity, achievementsEmoji: Infinity,
-    customCommands: 100, inviteMilestones: 100, embedMessages: 30, socialAccountsPerSection: 20,
+    customCommands: 100, inviteMilestones: 100, embedMessages: 30, levelRoleRewards: 100, socialAccountsPerSection: 20,
     giveawayInviteMessages: 100, polls: true, emojis: true, music: true, embedStyling: true,
     reactionRoleDmConfirmation: false, achievementAnnouncements: true, reminderBehaviour: true,
     birthdayCustomEvents: true, economyCustomCurrency: true, aiDailyRequests: 1000
