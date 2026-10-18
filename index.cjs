@@ -20,6 +20,7 @@ const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
+const serverStatistics = require("./services/server-statistics.cjs");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 require("dotenv").config();
@@ -1169,6 +1170,17 @@ client.on('messageCreate', async message => {
   } catch (e) {
     console.error('[COMMANDS] prefix handler failed:', e);
   }
+});
+
+// Persistent statistics: count human messages and member joins from the moment
+// this tracker is deployed. Historical message totals are not fabricated.
+client.on("messageCreate", message => {
+  try { serverStatistics.trackMessage(message); }
+  catch (error) { console.error("[server-statistics] message tracking failed:", error.message); }
+});
+client.on("guildMemberAdd", member => {
+  try { serverStatistics.trackJoin(member); }
+  catch (error) { console.error("[server-statistics] join tracking failed:", error.message); }
 });
 
 
@@ -8180,6 +8192,50 @@ app.get("/api/dashboard/active-members", (req, res) => {
     active,
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
   });
+});
+
+app.get("/api/dashboard/server-statistics", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ error: "Missing guildId" });
+  if (!isSpideyTestingHost(req) && !(req.session.guilds || []).some(g => String(g.id) === guildId)) {
+    return res.status(403).json({ error: "You do not have administrator access to this server" });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  try {
+    try { await guild.members.fetch(); } catch (error) {
+      console.warn("[server-statistics] Could not fetch all guild members:", error.message);
+    }
+    const members = guild.members.cache;
+    let administrators = 0, moderators = 0;
+    for (const member of members.values()) {
+      if (member.user.bot) continue;
+      const permissions = member.permissions;
+      if (permissions.has(PermissionFlagsBits.Administrator)) administrators += 1;
+      else if (
+        permissions.has(PermissionFlagsBits.ModerateMembers) ||
+        permissions.has(PermissionFlagsBits.KickMembers) ||
+        permissions.has(PermissionFlagsBits.BanMembers) ||
+        permissions.has(PermissionFlagsBits.ManageMessages) ||
+        permissions.has(PermissionFlagsBits.ManageChannels)
+      ) moderators += 1;
+    }
+    const tracked = serverStatistics.getGuildStats(guildId);
+    res.json({
+      serverName: guild.name,
+      memberCount: guild.memberCount ?? members.size,
+      messages: tracked.messages,
+      moderators,
+      administrators,
+      joinLabels: tracked.joinLabels,
+      joinsThisMonth: tracked.joinsThisMonth,
+      trackingNote: "Message and join tracking starts when this statistics tracker is deployed. Older history is not available."
+    });
+  } catch (error) {
+    console.error("[server-statistics] statistics endpoint failed:", error);
+    res.status(500).json({ error: "Could not load server statistics" });
+  }
 });
 
 app.get("/api/dashboard/statistics", (req, res) => {
