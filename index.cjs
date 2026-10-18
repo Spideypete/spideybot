@@ -7041,27 +7041,56 @@ app.post("/api/bot-config/custom-commands/delete", express.json(), async (req, r
 // ============== ADMIN PANEL CONFIG ENDPOINTS ==============
 const adminConfigs = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'social-notifs'];
 
-// Refresh stale OAuth guild permissions before denying legitimate production saves.
-// Only guilds Discord confirms with Administrator permission are accepted.
+// Validate access against the current Discord OAuth guild list when possible.
+// A failed session-store write must not turn a successful Discord permission check into a 403.
 async function hasFreshAdminGuildAccess(req, guildId) {
-  const allowed = () => Array.isArray(req.session?.guilds) &&
-    req.session.guilds.some(g => String(g.id) === String(guildId));
-  if (allowed()) return true;
-  if (!req.session?.accessToken) return false;
+  const targetId = String(guildId || '');
+  const cachedGuilds = () => Array.isArray(req.session?.guilds) ? req.session.guilds : [];
+  const allowed = (guilds) => guilds.some(g => String(g?.id || '') === targetId);
+  if (allowed(cachedGuilds())) return true;
+
+  if (!req.session?.accessToken) {
+    console.warn('[admin-config] Denied guild access: no cached admin match and no Discord access token', {
+      guildId: targetId,
+      userId: req.session?.user?.id || null,
+      cachedGuildIds: cachedGuilds().map(g => String(g?.id || ''))
+    });
+    return false;
+  }
+
   try {
-    const axios = require('axios');
     const response = await axios.get('https://discord.com/api/users/@me/guilds?with_counts=true', {
       headers: { Authorization: 'Bearer ' + req.session.accessToken },
-      timeout: 8000
+      timeout: 12000
     });
-    req.session.guilds = (response.data || []).filter(guild => {
+    const adminGuilds = (response.data || []).filter(guild => {
       try { return (BigInt(guild.permissions || 0) & 8n) === 8n; }
       catch (_) { return false; }
     });
-    await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
-    return allowed();
+    req.session.guilds = adminGuilds;
+
+    const hasAccess = allowed(adminGuilds);
+    console.info('[admin-config] Refreshed Discord administrator permissions', {
+      guildId: targetId,
+      userId: req.session?.user?.id || null,
+      adminGuildCount: adminGuilds.length,
+      hasAccess
+    });
+
+    // Session persistence is best-effort here; authorization is based on Discord's
+    // successful live response, not on whether the session store write completes.
+    req.session.save(err => {
+      if (err) console.warn('[admin-config] Could not persist refreshed guild permissions:', err.message);
+    });
+    return hasAccess;
   } catch (err) {
-    console.warn('[admin-config] Discord guild permission refresh failed:', err.response?.status || err.message);
+    console.warn('[admin-config] Discord guild permission refresh failed', {
+      guildId: targetId,
+      userId: req.session?.user?.id || null,
+      status: err.response?.status || null,
+      message: err.message,
+      cachedGuildIds: cachedGuilds().map(g => String(g?.id || ''))
+    });
     return false;
   }
 }
