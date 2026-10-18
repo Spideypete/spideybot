@@ -6475,15 +6475,21 @@ app.post("/api/config/:guildId", async (req, res) => {
 
   const policy = subscriptionManager.getGuildPlanPolicy(guildId);
   if (req.body && typeof req.body === 'object') {
+    // Do not allow Free servers to turn on paid-only runtime features through legacy config APIs.
+    for (const [key, feature] of [['musicSettings','music'], ['polls','polls'], ['pollSettings','polls'], ['emojiSettings','emojis']]) {
+      if (!subscriptionManager.isPlanFeatureAllowed(guildId, feature) && Object.prototype.hasOwnProperty.call(req.body, key) && JSON.stringify(req.body[key]) !== JSON.stringify(guildConfig[key])) {
+        return res.status(403).json({ success: false, error: feature[0].toUpperCase()+feature.slice(1)+' requires Premium or Pro for this server.', upgradeRequired: true, currentTier: policy.tier });
+      }
+    }
     // Embed Messages: enforce saved-template counts on the server, not only in the UI.
-    if (Array.isArray(req.body.embedTemplates) && req.body.embedTemplates.length > policy.embedMessages) {
+    if (Array.isArray(req.body.embedTemplates) && req.body.embedTemplates.length > policy.embedMessages && req.body.embedTemplates.length > (Array.isArray(guildConfig.embedTemplates) ? guildConfig.embedTemplates.length : 0)) {
       return res.status(403).json({ success: false, error: 'This server can save '+policy.embedMessages+' embed messages on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.embedMessages });
     }
     if (Array.isArray(req.body.embedTemplates) && !policy.embedStyling) {
       req.body.embedTemplates = req.body.embedTemplates.map(template => ({ ...template, color: '#5865f2', footer: '', image: '', thumbnail: '' }));
     }
     for (const [key, value] of Object.entries(req.body)) {
-      if (/^(twitch|youtube|tiktok|kick|reddit|rss|podcast|instagram|xalerts)Alerts$/i.test(key) && Array.isArray(value) && value.length > policy.socialAccountsPerSection) {
+      if (/^(twitch|youtube|tiktok|kick|reddit|rss|podcast|instagram|xalerts)Alerts$/i.test(key) && Array.isArray(value) && value.length > policy.socialAccountsPerSection && value.length > (Array.isArray(guildConfig[key]) ? guildConfig[key].length : 0)) {
         return res.status(403).json({ success: false, error: 'This server can save '+policy.socialAccountsPerSection+' accounts per alert section on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.socialAccountsPerSection });
       }
     }
@@ -6496,10 +6502,10 @@ app.post("/api/config/:guildId", async (req, res) => {
       const current = guildConfig.economy || {};
       req.body.economy = { ...req.body.economy, currency: 'coins' };
     }
-    if (req.body.customCommands && typeof req.body.customCommands === 'object' && Array.isArray(req.body.customCommands.items) && req.body.customCommands.items.length > policy.customCommands) {
+    if (req.body.customCommands && typeof req.body.customCommands === 'object' && Array.isArray(req.body.customCommands.items) && req.body.customCommands.items.length > policy.customCommands && req.body.customCommands.items.length > (Array.isArray(guildConfig.customCommands?.items) ? guildConfig.customCommands.items.length : 0)) {
       return res.status(403).json({ success: false, error: 'This server can create '+policy.customCommands+' custom commands on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.customCommands, currentTier: policy.tier });
     }
-    if (req.body.inviteTracker && typeof req.body.inviteTracker === 'object' && Array.isArray(req.body.inviteTracker.rewards) && req.body.inviteTracker.rewards.length > policy.inviteMilestones) {
+    if (req.body.inviteTracker && typeof req.body.inviteTracker === 'object' && Array.isArray(req.body.inviteTracker.rewards) && req.body.inviteTracker.rewards.length > policy.inviteMilestones && req.body.inviteTracker.rewards.length > (Array.isArray(guildConfig.inviteTracker?.rewards) ? guildConfig.inviteTracker.rewards.length : 0)) {
       return res.status(403).json({ success: false, error: 'This server can configure '+policy.inviteMilestones+' invite milestone rewards on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.inviteMilestones, currentTier: policy.tier });
     }
     // Custom reminder behaviour and birthday events stay at their saved/default values on Free.
