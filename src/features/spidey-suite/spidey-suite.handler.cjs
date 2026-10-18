@@ -60,6 +60,17 @@ async function execute(i,ctx){
   // Never let the modular suite acknowledge the same interaction a second time.
   if(i.commandName==='ask')return false;
   const commandRoot=i.commandName, commandSub=i.options.getSubcommand(false);
+  const plan=subscriptionManager.getGuildPlanPolicy(i.guild.id);
+  const premiumOnlyRoots=new Set(['poll','emoji','music']);
+  if(premiumOnlyRoots.has(commandRoot) && !subscriptionManager.isPlanFeatureAllowed(i.guild.id,commandRoot==='emoji'?'emojis':commandRoot)){
+    await i.reply({content:'🔒 This command requires **Premium or Pro** for this server. Upgrade this server in the SPIDEY BOT dashboard to unlock it.',ephemeral:true});return true;
+  }
+  if(commandRoot==='embed' && commandSub==='builder' && !plan.embedStyling){
+    await i.reply({content:'🔒 Custom embed styling (colour, image URL and footer) requires **Premium or Pro** for this server.',ephemeral:true});return true;
+  }
+  if(commandRoot==='music' && !plan.music){
+    await i.reply({content:'🔒 Music is a Premium feature. Upgrade this server to Premium or Pro to use music commands.',ephemeral:true});return true;
+  }
   // New mapping commands that have dedicated behavior not covered by the legacy aliases.
   if(commandRoot==='welcome' && commandSub==='test' || commandRoot==='goodbye' && commandSub==='test'){
     const config=await serverMessages.getConfig(i.guild.id);
@@ -112,6 +123,10 @@ async function execute(i,ctx){
   if(commandRoot==='cc'){
     if(!isAdmin(i)){await i.reply({content:'Only server administrators can manage custom commands.',ephemeral:true});return true;}
     const cfg=svc.get(i.guild.id),custom=cfg.customCommands||{},items=Array.isArray(custom.items)?custom.items.slice():[];
+    const maxCustomCommands=subscriptionManager.getPlanLimit(i.guild.id,'customCommands');
+    if(commandSub!=='list' && commandSub!=='delete' && items.length>=maxCustomCommands && !items.some(x=>String(x.name).toLowerCase()===String(i.options.getString('name')||'').toLowerCase())){
+      await i.reply({content:'🔒 This server has reached its '+maxCustomCommands+' custom-command limit for the '+plan.tier.toUpperCase()+' plan. Upgrade for a higher limit.',ephemeral:true});return true;
+    }
     if(commandSub==='list'){
       await i.reply({content:items.length?items.map(x=>'• /'+x.name+(x.enabled===false?' (disabled)':'')).join('\\n'):'No custom commands configured.',ephemeral:true});
       return true;
@@ -153,6 +168,8 @@ async function execute(i,ctx){
   }
   if(commandRoot==='reactionrole'){
     if(!isAdmin(i)){await i.reply({content:'Only server administrators can manage reaction roles.',ephemeral:true});return true;}
+    const rrLimit=subscriptionManager.getPlanLimit(i.guild.id,'reactionRoles');
+    const rrCounts=reactionRolesService.getAllEntries ? reactionRolesService.getAllEntries(i.guild.id) : null;
     const messageId=i.options.getString('message_id',true),emoji=i.options.getString('emoji',true);
     if(commandSub==='delete'){
       const removed=reactionRolesService.removeEntry(i.guild.id,messageId,emoji);
