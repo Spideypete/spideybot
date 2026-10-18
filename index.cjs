@@ -6020,9 +6020,20 @@ function getPayPalReturnBaseUrl(req) {
   return `${forwardedProto}://${host}`;
 }
 
-function getPaymentGuildAccess(req, guildId) {
-  if (!req.session?.authenticated || !req.session?.user?.id) return false;
-  return Array.isArray(req.session.guilds) && req.session.guilds.some(g => String(g.id) === String(guildId));
+function getPaymentBuyerId(req, guildId) {
+  const userId = String(req.session?.user?.id || '');
+  if (req.session?.authenticated && userId &&
+      Array.isArray(req.session.guilds) &&
+      req.session.guilds.some(g => String(g.id) === String(guildId))) {
+    return userId;
+  }
+  // The no-OAuth testing dashboard may use PayPal Sandbox only, and only for a
+  // server where the testing bot is installed. Production/live checkout always
+  // requires the authenticated Discord account and its server access.
+  const sandboxTestAccess = process.env.SPIDEY_TESTING_NO_AUTH === 'true' &&
+    PAYPAL_MODE === 'sandbox' && typeof isSpideyTestingHost === 'function' &&
+    isSpideyTestingHost(req) && Boolean(client.guilds.cache.get(String(guildId)));
+  return sandboxTestAccess ? `testing-no-auth:${String(guildId)}` : null;
 }
 
 // Create a PayPal order. Pricing and guild ownership are always decided server-side.
@@ -6034,8 +6045,9 @@ app.post('/api/paypal/create-order', async (req, res) => {
     if (!guildId || !['premium', 'pro'].includes(tier) || !Number.isInteger(durationMonths) || !PAYPAL_PRICING[tier][durationMonths]) {
       return res.status(400).json({ error: 'Choose a valid plan and billing period.' });
     }
-    if (!getPaymentGuildAccess(req, guildId)) {
-      return res.status(req.session?.authenticated ? 403 : 401).json({ error: 'Sign in with an account that can manage this Discord server before purchasing.' });
+    const paymentBuyerId = getPaymentBuyerId(req, guildId);
+    if (!paymentBuyerId) {
+      return res.status(req.session?.authenticated ? 403 : 401).json({ error: 'Sign in with an account that can manage this Discord server before purchasing. The no-login testing path is limited to PayPal Sandbox.' });
     }
 
     const amount = PAYPAL_PRICING[tier][durationMonths].toFixed(2);
@@ -6045,7 +6057,7 @@ app.post('/api/paypal/create-order', async (req, res) => {
       purchase_units: [{
         reference_id: guildId,
         description: `Spidey Bot ${tier.toUpperCase()} - ${durationMonths} month(s)`,
-        custom_id: JSON.stringify({ guildId, tier, durationMonths, buyerId: String(req.session.user.id) }),
+        custom_id: JSON.stringify({ guildId, tier, durationMonths, buyerId: paymentBuyerId }),
         amount: { currency_code: 'USD', value: amount }
       }],
       application_context: {
@@ -6069,7 +6081,7 @@ app.post('/api/paypal/create-order', async (req, res) => {
     config.global_configs.paypalPendingOrders = config.global_configs.paypalPendingOrders || {};
     config.global_configs.paypalPendingOrders[String(response.data.id)] = {
       orderId: String(response.data.id), guildId, tier, durationMonths,
-      buyerId: String(req.session.user.id), expectedAmount: amount, currency: 'USD',
+      buyerId: paymentBuyerId, expectedAmount: amount, currency: 'USD',
       status: 'pending', createdAt: new Date().toISOString()
     };
     saveConfig(config);
@@ -6087,8 +6099,9 @@ app.post('/api/paypal/capture-order', async (req, res) => {
     const orderId = String(req.body?.orderId || '');
     const guildId = String(req.body?.guildId || '');
     if (!orderId || !guildId) return res.status(400).json({ error: 'Missing PayPal order or server ID.' });
-    if (!getPaymentGuildAccess(req, guildId)) {
-      return res.status(req.session?.authenticated ? 403 : 401).json({ error: 'Sign in with an account that can manage this Discord server to finish checkout.' });
+    const paymentBuyerId = getPaymentBuyerId(req, guildId);
+    if (!paymentBuyerId) {
+      return res.status(req.session?.authenticated ? 403 : 401).json({ error: 'Sign in with an account that can manage this Discord server to finish checkout. The no-login testing path is limited to PayPal Sandbox.' });
     }
 
     let config = loadConfig();
@@ -6096,7 +6109,7 @@ app.post('/api/paypal/capture-order', async (req, res) => {
     config.global_configs.paypalPendingOrders = config.global_configs.paypalPendingOrders || {};
     config.global_configs.premiumPurchases = Array.isArray(config.global_configs.premiumPurchases) ? config.global_configs.premiumPurchases : [];
     const pending = config.global_configs.paypalPendingOrders[orderId];
-    if (!pending || pending.guildId !== guildId || pending.buyerId !== String(req.session.user.id)) {
+    if (!pending || pending.guildId !== guildId || pending.buyerId !== paymentBuyerId) {
       return res.status(403).json({ error: 'This PayPal order does not belong to this account and server.' });
     }
     const previousPurchase = config.global_configs.premiumPurchases.find(p => String(p.orderId) === orderId);
@@ -6148,7 +6161,7 @@ app.post('/api/paypal/capture-order', async (req, res) => {
     guild.tierEndDate = endsAt;
     guild.tierDurationMonths = Number(pending.durationMonths);
     guild.tierSource = 'paypal';
-    guild.tierGrantedBy = String(req.session.user.id);
+    guild.tierGrantedBy = paymentBuyerId;
 
     const purchaseRecord = {
       orderId, guildId, tier: pending.tier, appliedTier, durationMonths: Number(pending.durationMonths),
