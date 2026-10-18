@@ -7041,6 +7041,31 @@ app.post("/api/bot-config/custom-commands/delete", express.json(), async (req, r
 // ============== ADMIN PANEL CONFIG ENDPOINTS ==============
 const adminConfigs = ['settings', 'subscriptions', 'logging', 'server-guard', 'react-roles', 'role-categories', 'server-messages', 'components', 'custom-commands', 'recordings', 'reminders', 'leaderboards', 'invite-tracking', 'message-counting', 'statistics-channels', 'xp-levels', 'social-notifs'];
 
+// Refresh stale OAuth guild permissions before denying legitimate production saves.
+// Only guilds Discord confirms with Administrator permission are accepted.
+async function hasFreshAdminGuildAccess(req, guildId) {
+  const allowed = () => Array.isArray(req.session?.guilds) &&
+    req.session.guilds.some(g => String(g.id) === String(guildId));
+  if (allowed()) return true;
+  if (!req.session?.accessToken) return false;
+  try {
+    const axios = require('axios');
+    const response = await axios.get('https://discord.com/api/users/@me/guilds?with_counts=true', {
+      headers: { Authorization: 'Bearer ' + req.session.accessToken },
+      timeout: 8000
+    });
+    req.session.guilds = (response.data || []).filter(guild => {
+      try { return (BigInt(guild.permissions || 0) & 8n) === 8n; }
+      catch (_) { return false; }
+    });
+    await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
+    return allowed();
+  } catch (err) {
+    console.warn('[admin-config] Discord guild permission refresh failed:', err.response?.status || err.message);
+    return false;
+  }
+}
+
 // Full guild config blob (must be after named /api/config/* routes)
 app.get("/api/config/:guildId", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false });
@@ -7061,7 +7086,7 @@ app.get("/api/config/:guildId", (req, res) => {
 
 adminConfigs.forEach(configName => {
   // GET endpoint to load config
-  app.get(`/api/config/${configName}`, (req, res) => {
+  app.get(`/api/config/${configName}`, async (req, res) => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
     const guildId = req.query.guildId;
@@ -7071,7 +7096,7 @@ adminConfigs.forEach(configName => {
     // Production continues to require the guild in the authenticated OAuth session.
     const testingGuildAccess = isSpideyTestingHost(req)
       && Boolean(client.guilds.cache.get(String(guildId)));
-    const sessionGuildAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+    const sessionGuildAccess = await hasFreshAdminGuildAccess(req, guildId);
     if (!(testingGuildAccess || sessionGuildAccess)) {
       console.warn(`⚠️ Unauthorized config access attempt: ${req.session.user?.username} tried to access guild ${guildId}`);
       return res.status(403).json({ error: "You don't have admin permissions in this server" });
@@ -7083,7 +7108,7 @@ adminConfigs.forEach(configName => {
   });
 
   // POST endpoint to save config
-  app.post(`/api/config/${configName}`, express.json(), (req, res) => {
+  app.post(`/api/config/${configName}`, express.json(), async (req, res) => {
     if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
 
     const guildId = req.query.guildId;
@@ -7095,7 +7120,7 @@ adminConfigs.forEach(configName => {
     // the normal authenticated session guild membership check.
     const testingGuildAccess = isSpideyTestingHost(req)
       && Boolean(client.guilds.cache.get(String(guildId)));
-    const sessionGuildAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+    const sessionGuildAccess = await hasFreshAdminGuildAccess(req, guildId);
     const hasAccess = testingGuildAccess || sessionGuildAccess;
     if (!hasAccess) {
       console.warn(`⚠️ Unauthorized config save attempt: ${req.session.user?.username} tried to save config for guild ${guildId}`);
