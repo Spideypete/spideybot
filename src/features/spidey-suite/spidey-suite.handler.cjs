@@ -689,14 +689,14 @@ async function execute(i,ctx){
     if(['daily','beg','deposit','withdraw','inventory','shop','buy','give','rob','crime','pet'].includes(n)){
       const e=c.economy,me=svc.balance(i.guild.id,i.user.id),amount=i.options.getInteger('amount');
       if(n==='daily'){if(Date.now()-me.daily<86400000)return i.reply('⏳ Daily reward is still on cooldown.');me.cash+=e.daily||100;me.daily=Date.now();svc.save(i.guild.id,{economy:e});return i.reply('💰 Claimed '+fmt(e.daily||100)+' '+e.currency+'.');}
-      if(n==='beg'){const x=5+Math.floor(Math.random()*26);me.cash+=x;svc.save(i.guild.id,{economy:e});return i.reply('🙏 You received '+x+' coins.');}
+      if(n==='beg'){const x=5+Math.floor(Math.random()*26);me.cash+=x;svc.save(i.guild.id,{economy:e});return i.reply('🙏 You received '+x+' '+e.currency+'.');}
       if(n==='deposit'){if(me.cash<amount)return i.reply('❌ Not enough cash.');me.cash-=amount;me.bank+=amount;svc.save(i.guild.id,{economy:e});return i.reply('🏦 Deposited '+fmt(amount)+'.');}
       if(n==='withdraw'){if(me.bank<amount)return i.reply('❌ Not enough in bank.');me.bank-=amount;me.cash+=amount;svc.save(i.guild.id,{economy:e});return i.reply('🏦 Withdrew '+fmt(amount)+'.');}
       if(n==='inventory'){const x=svc.balance(i.guild.id,u.id);return i.reply('🎒 '+((x.inventory||[]).join(', ')||'Empty'));}
       if(n==='shop'){return i.reply((e.shop||[]).map(x=>'• '+x.name+' — '+fmt(x.price)).join('\n')||'Shop is empty.');}
       if(n==='buy'){const item=(e.shop||[]).find(x=>x.name.toLowerCase()===i.options.getString('item').toLowerCase());if(!item)return i.reply('❌ Item not found.');if(me.cash<item.price)return i.reply('❌ Not enough cash.');me.cash-=item.price;me.inventory.push(item.name);svc.save(i.guild.id,{economy:e});return i.reply('🛒 Bought '+item.name+'.');}
-      if(n==='give'){const to=i.options.getUser('user');if(to.id===i.user.id||me.cash<amount)return i.reply('❌ Invalid target or insufficient cash.');const t=svc.balance(i.guild.id,to.id);me.cash-=amount;t.cash+=amount;svc.save(i.guild.id,{economy:e});return i.reply('💸 Sent '+fmt(amount)+' coins to '+to+'.');}
-      if(n==='rob'||n==='crime'){const x=10+Math.floor(Math.random()*91);if(Math.random()<0.55){me.cash+=x;svc.save(i.guild.id,{economy:e});return i.reply('💰 Success: +'+x+' coins.');}me.cash=Math.max(0,me.cash-Math.ceil(x/2));svc.save(i.guild.id,{economy:e});return i.reply('🚨 Failed and lost some cash.');}
+      if(n==='give'){const to=i.options.getUser('user');if(to.id===i.user.id||me.cash<amount)return i.reply('❌ Invalid target or insufficient cash.');const t=svc.balance(i.guild.id,to.id);me.cash-=amount;t.cash+=amount;svc.save(i.guild.id,{economy:e});return i.reply('💸 Sent '+fmt(amount)+' '+e.currency+' to '+to+'.');}
+      if(n==='rob'||n==='crime'){const x=10+Math.floor(Math.random()*91);if(Math.random()<0.55){me.cash+=x;svc.save(i.guild.id,{economy:e});return i.reply('💰 Success: +'+x+' '+e.currency+'.');}me.cash=Math.max(0,me.cash-Math.ceil(x/2));svc.save(i.guild.id,{economy:e});return i.reply('🚨 Failed and lost some cash.');}
       if(n==='pet'){const name=i.options.getString('name');if(name){me.pet=name;svc.save(i.guild.id,{economy:e});return i.reply('🐾 Pet set to '+name+'.');}return i.reply('🐾 Pet: '+(me.pet||'None'));}
     }
 
