@@ -29,6 +29,12 @@ function getXpLevelsConfig(guildId) {
     guildConfig['xp-levels'] = {
       xpPerLevel: 500,
       xpPerMessage: 15,
+      voiceXpEnabled: false,
+      voiceXpPerInterval: 5,
+      voiceXpIntervalMinutes: 5,
+      emojiXpEnabled: false,
+      emojiXpPerMessage: 2,
+      maxEmojiXpPerMessage: 6,
       levelRoles: {},
       announcementChannel: null,
       announceLevelUps: true,
