@@ -410,7 +410,7 @@
   const style = document.createElement('style');
   style.textContent = '.brand-inline-logo{display:inline-block;width:auto;max-width:160px;height:1.15em;object-fit:contain;vertical-align:-.2em}';
   document.head.appendChild(style);
-  const pattern = /spidey\\s+bot/ig;
+  const pattern = /spidey\s+bot/ig;
   function replaceInTextNode(node){
     if(!node || node.nodeType !== Node.TEXT_NODE || !pattern.test(node.nodeValue || '')) { pattern.lastIndex = 0; return; }
     pattern.lastIndex = 0;
@@ -439,7 +439,7 @@
         const p=node.parentElement;
         if(!p || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|TITLE|OPTION)$/i.test(p.tagName)) return NodeFilter.FILTER_REJECT;
         if(p.closest('script,style,noscript,textarea,title,option')) return NodeFilter.FILTER_REJECT;
-        return /spidey\\s+bot/i.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        return /spidey\s+bot/i.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }
     });
     const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
