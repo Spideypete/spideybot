@@ -149,6 +149,11 @@ class ReactionRolesService {
     return cfg.entries.filter((e) => e.messageId === String(messageId));
   }
 
+  getEntries(guildId) {
+    const cfg = this._guildConfig(guildId, false);
+    return cfg && Array.isArray(cfg.entries) ? cfg.entries.slice() : [];
+  }
+
   setDmConfirmations(guildId, enabled) {
     const cfg = this._guildConfig(guildId, true);
     cfg.dmConfirmations = !!enabled;
