@@ -1280,7 +1280,7 @@ client.once("ready", async () => {
   } catch (err) {
     console.log('🔁 Running commit: unknown');
   }
-  client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
+  client.user.setActivity("Swinging around", { type: "WATCHING" });
   console.log(`📡 guildMemberAdd listeners registered: ${client.listenerCount("guildMemberAdd")} (pid ${process.pid})`);
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
@@ -6586,11 +6586,11 @@ app.post("/api/config/:guildId", async (req, res) => {
     // Currency name and symbol are Premium/Pro customisation.
     if (!policy.economyCustomCurrency && req.body.economySettings && typeof req.body.economySettings === 'object') {
       const current = guildConfig.economySettings || {};
-      req.body.economySettings = { ...req.body.economySettings, currencyName: 'Credits', currencySymbol: '₵' };
+      req.body.economySettings = { ...req.body.economySettings, currencyName: 'Web Fluid', currencySymbol: '🕸️' };
     }
     if (!policy.economyCustomCurrency && req.body.economy && typeof req.body.economy === 'object') {
       const current = guildConfig.economy || {};
-      req.body.economy = { ...req.body.economy, currency: 'coins' };
+      req.body.economy = { ...req.body.economy, currency: 'Web Fluid' };
     }
     if (req.body.customCommands && typeof req.body.customCommands === 'object' && Array.isArray(req.body.customCommands.items) && req.body.customCommands.items.length > policy.customCommands && req.body.customCommands.items.length > (Array.isArray(guildConfig.customCommands?.items) ? guildConfig.customCommands.items.length : 0)) {
       return res.status(403).json({ success: false, error: 'This server can create '+policy.customCommands+' custom commands on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.customCommands, currentTier: policy.tier });
