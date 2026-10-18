@@ -421,12 +421,12 @@ app.use((req, res, next) => {
     if (isHtml) {
       const originalSend = res.send;
       res.send = function (body) {
-        if (typeof body === 'string' && /<\\/head>/i.test(body)) {
+        if (typeof body === 'string' && /<\/head>/i.test(body)) {
           // Use the SPIDEY BOT logo as the browser-tab icon on every HTML page.
-          const hasFavicon = /<link[^>]+rel=["'](?:shortcut\\s+)?icon["']/i.test(body);
+          const hasFavicon = /<link[^>]+rel=["'](?:shortcut\s+)?icon["']/i.test(body);
           const favicon = hasFavicon ? '' : '<link rel="icon" type="image/png" href="/spideybot-logo.png?v=1"><link rel="shortcut icon" type="image/png" href="/spideybot-logo.png?v=1">';
           // Inject a small version meta + script for client-side cache awareness.
-          body = body.replace(/<\\/head>/i, `${favicon}
+          body = body.replace(/<\/head>/i, `${favicon}
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -451,7 +451,7 @@ app.get('/favicon.ico', (req, res) => {
 app.use((req, res, next) => {
   const originalSendFile = res.sendFile.bind(res);
   res.sendFile = function(filePath, options, callback) {
-    if (typeof filePath === 'string' && /\\.html?$/i.test(filePath)) {
+    if (typeof filePath === 'string' && /\.html?$/i.test(filePath)) {
       fs.readFile(filePath, 'utf8', (error, html) => {
         if (error) {
           if (typeof options === 'function') return options(error);
@@ -473,7 +473,7 @@ app.use((req, res, next) => {
 // Static HTML files are streamed by express.static and don't pass through sendFile.
 // Serve HTML files via res.send so the same favicon injection covers direct .html URLs.
 app.use((req, res, next) => {
-  if (req.method !== 'GET' || !(req.path === '/' || /\\.html?$/i.test(req.path))) return next();
+  if (req.method !== 'GET' || !(req.path === '/' || /\.html?$/i.test(req.path))) return next();
   let relativePath;
   try { relativePath = decodeURIComponent(req.path === '/' ? '/index.html' : req.path); }
   catch (_) { return next(); }
@@ -486,7 +486,7 @@ app.use((req, res, next) => {
   if (!candidate) return next();
   fs.readFile(candidate, 'utf8', (error, html) => {
     if (error) return next();
-    if (!/<html[\\s>]/i.test(html) || !/<head[\\s>]/i.test(html)) return next();
+    if (!/<html[\s>]/i.test(html) || !/<head[\s>]/i.test(html)) return next();
     res.type('html').send(html);
   });
 });
