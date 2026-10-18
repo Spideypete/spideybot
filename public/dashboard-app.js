@@ -219,10 +219,11 @@ function embedEditor(prefix,embed,channels,roles){
  '<label class="field">Thumbnail image URL<input id="'+prefix+'Thumbnail" type="url" value="'+esc(e.thumbnail||'')+'" placeholder="https://…"></label>'+
  '<label class="field">Large image URL<input id="'+prefix+'Image" type="url" value="'+esc(e.image||'')+'" placeholder="https://…"></label></div>';
 }
-function messageSection(prefix,label,enabled,channel,type,message,embed,channels,roles){
+function messageSection(prefix,label,enabled,channel,type,message,embed,channels,roles,bannerUrl){
  return '<section class="welcome-message-section" id="'+prefix+'Content"><div class="welcome-section-heading"><div><h3>'+esc(label)+'</h3><p>Sent '+(prefix==='welcome'?'when a member joins':'when a member leaves')+'.</p></div></div>'+
  '<label class="field">'+esc(label)+' channel<select id="'+prefix+'Channel">'+optionList(channels,channel,'Choose a text channel')+'</select></label>'+
  '<label class="field">Message format<select id="'+prefix+'Type"><option value="text" '+((type||'text')==='text'?'selected':'')+'>Normal text</option><option value="embed" '+(type==='embed'?'selected':'')+'>Discord embed</option></select></label>'+
+ '<div class="panel-section"><h3>Banner image</h3><p class="muted">Optional image shown with this '+(prefix==='welcome'?'welcome':'goodbye')+' message. Use a direct HTTPS image URL (PNG, JPG, GIF or WEBP).</p><label class="field">Banner image URL<input id="'+prefix+'Banner" type="url" placeholder="https://example.com/banner.png" value="'+esc(bannerUrl||'')+'"></label><p class="mention-help">The banner is sent as an image embed alongside the message, even when Normal text is selected.</p></div>'+
  '<div id="'+prefix+'TextPanel" '+(type==='embed'?'hidden':'')+'>'+textEditor(prefix,label+' message',message,channels,roles)+'</div>'+
  '<div id="'+prefix+'EmbedPanel" '+(type==='embed'?'':'hidden')+'>'+embedEditor(prefix,embed,channels,roles)+'</div></section>';
 }
@@ -239,10 +240,10 @@ async function renderWelcomePanel(id,f,c){
  try{await api('/api/config/server-messages?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({welcomeEnabled:true,enableWelcome:true,goodbyeEnabled:true,enableGoodbye:true})});}catch(err){console.warn('[dashboard] could not enable welcome/goodbye defaults',err);}
  const welcomeType=sm.welcomeType||(sm.welcomeEmbed?'embed':'text');
  const goodbyeType=sm.goodbyeType||(sm.goodbyeEmbed?'embed':'text');
- const bodyHtml=messageSection('welcome','Welcome message',sm.enableWelcome??sm.welcomeEnabled??false,sm.welcomeChannel||'',welcomeType,sm.welcomeMessage??'Welcome {user} to {server}! 🎉',sm.welcomeEmbed,channels,roles)+
- messageSection('goodbye','Goodbye message',sm.enableGoodbye??sm.goodbyeEnabled??false,sm.goodbyeChannel||'',goodbyeType,sm.goodbyeMessage??'{user} has left {server}. 👋',sm.goodbyeEmbed,channels,roles)+
+ const bodyHtml=messageSection('welcome','Welcome message',sm.enableWelcome??sm.welcomeEnabled??false,sm.welcomeChannel||'',welcomeType,sm.welcomeMessage??'Welcome {user} to {server}! 🎉',sm.welcomeEmbed,channels,roles,sm.welcomeBanner||'')+
+ messageSection('goodbye','Goodbye message',sm.enableGoodbye??sm.goodbyeEnabled??false,sm.goodbyeChannel||'',goodbyeType,sm.goodbyeMessage??'{user} has left {server}. 👋',sm.goodbyeEmbed,channels,roles,sm.goodbyeBanner||'')+
  '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Automatic welcome role</h3><p>Give every new member this role automatically when a role is selected.</p></div></div><label class="field">Role to assign<select id="autoroleRole">'+optionList(roles,sm.autoroleRole||sm.autoroleRoleId||c.autorole?.roleId||'','Choose a role')+'</select></label><p class="mention-help">SPIDEY BOT needs Manage Roles, and its highest role must be above the selected role.</p></section>'+
- '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Admin commands</h3><p>Administrative configuration only. These settings do not change who can run the commands.</p></div></div>'+input('prefix','Prefix (admin use)',c.prefix||'!')+'<div class="command-help"><strong>Existing Discord commands</strong><p>Use your configured welcome/goodbye commands in Discord. In message text, {user} tags the member; inserted channel and role mentions remain clickable.</p></div></section>'+
+ '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Admin commands</h3><p>Administrative configuration only. These settings do not change who can run the commands.</p></div></div>'+input('prefix','Prefix (admin use)',c.prefix||'!')+'<div class="command-help"><strong>Message placeholders you can insert</strong><p>Use <code>{user}</code> to mention the member, <code>{username}</code> for their username, <code>{server}</code> for the server name and <code>{membercount}</code> for the current server member count.</p><div class="button-row"><button type="button" class="secondary" data-insert-user="welcomeText" data-insert-token="{membercount}">Insert member count into welcome</button><button type="button" class="secondary" data-insert-user="goodbyeText" data-insert-token="{membercount}">Insert member count into goodbye</button></div><p>Member count can be used in normal messages and embed titles, descriptions or footers.</p></div></section>'+
  '<div class="panel-actions"><button class="select" id="saveWelcomeSettings" type="button">Save welcome & goodbye settings</button></div>';
  body.innerHTML=card('Welcome & Goodbye','Configure join and leave messages, mentions, embeds and automatic roles.','<div class="welcome-panel">'+bodyHtml+'</div>');
  const setMode=(key)=>{const type=val(key+'Type');document.getElementById(key+'TextPanel').hidden=type==='embed';document.getElementById(key+'EmbedPanel').hidden=type!=='embed';};
@@ -259,7 +260,7 @@ async function renderWelcomePanel(id,f,c){
   el.value=el.value.slice(0,start)+text+el.value.slice(end);
   el.focus();el.selectionStart=el.selectionEnd=start+text.length;el.dispatchEvent(new Event('input',{bubbles:true}));
  }
- document.querySelectorAll('[data-insert-user]').forEach(btn=>btn.addEventListener('click',()=>insertAtCursor(btn.dataset.insertUser,'{user}')));
+ document.querySelectorAll('[data-insert-user]').forEach(btn=>btn.addEventListener('click',()=>insertAtCursor(btn.dataset.insertUser,btn.dataset.insertToken||'{user}')));
  document.querySelectorAll('[data-resolve-ids]').forEach(btn=>btn.addEventListener('click',()=>{
   const id=btn.dataset.resolveIds,el=document.getElementById(id);if(!el)return;
   const channelIds=new Set(channels.map(item=>String(item.id))),roleIds=new Set(roles.map(item=>String(item.id)));
@@ -282,8 +283,8 @@ async function renderWelcomePanel(id,f,c){
   const embeds={welcome:val('welcomeType')==='embed'?makeEmbed('welcome'):null,goodbye:val('goodbyeType')==='embed'?makeEmbed('goodbye'):null};
   if(wordCount(val('welcomeText'))>500||wordCount(val('goodbyeText'))>500||wordCount(val('welcomeDescription'))>500||wordCount(val('goodbyeDescription'))>500){alert('Each message or embed description must be 500 words or fewer.');return;}
   const settings={
-   welcomeEnabled:true,enableWelcome:true,welcomeChannel:val('welcomeChannel')||null,welcomeMessage:messages.welcome,welcomeEmbed:embeds.welcome,welcomeType:val('welcomeType'),
-   goodbyeEnabled:true,enableGoodbye:true,goodbyeChannel:val('goodbyeChannel')||null,goodbyeMessage:messages.goodbye,goodbyeEmbed:embeds.goodbye,goodbyeType:val('goodbyeType'),
+   welcomeEnabled:true,enableWelcome:true,welcomeChannel:val('welcomeChannel')||null,welcomeMessage:messages.welcome,welcomeEmbed:embeds.welcome,welcomeType:val('welcomeType'),welcomeBanner:val('welcomeBanner').trim(),
+   goodbyeEnabled:true,enableGoodbye:true,goodbyeChannel:val('goodbyeChannel')||null,goodbyeMessage:messages.goodbye,goodbyeEmbed:embeds.goodbye,goodbyeType:val('goodbyeType'),goodbyeBanner:val('goodbyeBanner').trim(),
    autoroleEnabled:true,autoroleRole:val('autoroleRole')||null
   };
   for(const key of ['welcome','goodbye']){
