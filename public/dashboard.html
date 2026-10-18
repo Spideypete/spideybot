@@ -82,6 +82,20 @@ button{transition:background .16s ease,border-color .16s ease,color .16s ease,tr
 button:active{transform:translateY(1px)}
 button:not(.nav button):not(.mobile-menu):not(.top-btn){border-radius:8px}
 .field{margin-bottom:14px}
+.stat-counter-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px;margin:22px 0 8px;padding:18px;border:1px solid var(--border);border-radius:13px;background:var(--surface2)}
+.stat-counter-form .field{display:flex;flex-direction:column;gap:10px;min-width:0;margin:0}
+.stat-counter-form .field select,.stat-counter-form .field input{display:block;width:100%;min-width:0;margin-top:3px}
+.stat-counter-actions{margin:14px 0 22px}
+.stat-counter-list{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.stat-counter-list h3{margin-bottom:14px}
+.stat-counter-overview{margin:0 0 22px}
+.stat-counter-overview .panel-head{gap:18px;align-items:center;margin-bottom:10px}
+.stat-counter-overview-value{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.stat-counter-overview-value strong{font-size:27px;font-weight:850}
+.stat-counter-overview-value span,.stat-counter-overview-note{font-size:11px;color:var(--muted)}
+.stat-counter-overview-note{margin-top:5px}
+@media(max-width:620px){.stat-counter-form{grid-template-columns:1fr;gap:16px;padding:14px}.stat-counter-overview .panel-head{align-items:flex-start;flex-direction:column}}
+
 .field label,.field>label{display:block;color:var(--muted);font-size:11px;font-weight:650;margin-bottom:6px}
 .field input,.field select,.field textarea,.select,input,select,textarea{padding:9px 11px;min-height:38px}
 .field textarea,textarea{min-height:88px;resize:vertical}
