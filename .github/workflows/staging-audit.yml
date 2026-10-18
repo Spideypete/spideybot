@@ -1,7 +1,7 @@
 name: Staging audit
 on:
   push:
-    branches: [dashboard-local-dev-no-oauth]
+    branches: [dashboard-local-dev-no-oauth, release/full-production-2026-10-18]
   pull_request:
     branches: [dashboard-local-dev-no-oauth]
 jobs:
