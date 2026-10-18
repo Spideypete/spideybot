@@ -8388,6 +8388,8 @@ app.post("/api/guild/:guildId/emojis", async (req, res) => {
   if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
   const access = await getDashboardGuildAccess(req, guild);
   if (!access.ok) return res.status(access.status).json({ error: access.error });
+  const emojiPolicy = subscriptionManager.getGuildPlanPolicy(guild.id);
+  if (!emojiPolicy.emojis) return res.status(403).json({ success: false, error: "Server emoji management requires Premium or Pro for this server.", upgradeRequired: true, currentTier: emojiPolicy.tier });
   if (!access.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions) && !access.member.permissions.has(PermissionFlagsBits.Administrator)) return res.status(403).json({ error: "You need Manage Expressions permission to add server emojis" });
   const name = String(req.body?.name || "").trim();
   const image = String(req.body?.image || "");
@@ -8416,6 +8418,8 @@ app.delete("/api/guild/:guildId/emojis/:emojiId", async (req, res) => {
   if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
   const access = await getDashboardGuildAccess(req, guild);
   if (!access.ok) return res.status(access.status).json({ error: access.error });
+  const emojiPolicy = subscriptionManager.getGuildPlanPolicy(guild.id);
+  if (!emojiPolicy.emojis) return res.status(403).json({ success: false, error: "Server emoji management requires Premium or Pro for this server.", upgradeRequired: true, currentTier: emojiPolicy.tier });
   if (!access.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions) && !access.member.permissions.has(PermissionFlagsBits.Administrator)) return res.status(403).json({ error: "You need Manage Expressions permission to delete server emojis" });
   const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
   if (!botMember?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Expressions permission" });
