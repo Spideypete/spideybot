@@ -57,6 +57,7 @@ const { createFeaturesRouter } = require("./src/routes/features.js");
 // Feature services and handlers
 const { execute: handleSpideyInteraction, handlePrefix: handleSpideyPrefix, registerSpideyHandlers } = require("./src/features/spidey-suite/spidey-suite.handler.cjs");
 const customSlashRuntime = require("./src/features/custom-commands/custom-slash-runtime.cjs");
+const subscriptionManager = require("./services/subscription.manager.js");
 
 // Integrated server command suite: slash + prefix commands, AutoMod, XP, economy and admin tools.
 
@@ -7211,6 +7212,18 @@ app.post("/api/bot-config/server-guard", express.json(), async (req, res) => {
 
 // ============== REACT ROLES API ENDPOINTS ==============
 // Read live reaction-role settings and mappings for the selected server.
+app.get("/api/subscription/policy", (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild found" });
+  const testingGuildAccess = isSpideyTestingHost(req) && Boolean(client.guilds.cache.get(guildId));
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === guildId);
+  if (!(testingGuildAccess || hasAccess)) return res.status(403).json({ success: false, error: "No access to this server" });
+  const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const serialisable = Object.fromEntries(Object.entries(policy).map(([key,value]) => [key, value === Infinity ? null : value]));
+  res.json({ success: true, policy: serialisable, entitlements: subscriptionManager.getGuildEntitlements(guildId) });
+});
+
 app.get("/api/bot-config/react-roles/settings", (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
@@ -7237,6 +7250,10 @@ app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
     const body = req.body || {};
     const current = service.getConfig(guildId);
     const updated = { ...current };
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    if (policy.tier === 'free' && (body.dmConfirm === false || body.dmConfirmations === false)) {
+      return res.status(403).json({ success: false, error: "Turning off DM confirmations requires Premium or Pro for this server.", upgradeRequired: true, currentTier: policy.tier });
+    }
     for (const key of ['allowMultiple', 'removeOnUnreact', 'enabled', 'language', 'updateNotifications', 'errorReporting']) {
       if (body[key] !== undefined) updated[key] = body[key];
     }
@@ -7310,7 +7327,14 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
     const role = guild.roles.cache.get(roleId);
     if (!role) return res.json({ success: false, error: "Role not found" });
     
-    // Check tier entitlements - limit react roles for free tier
+    // Enforce the shared per-server plan policy for dashboard-created reaction roles.
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    const reactionRoleService = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+    const serviceEntries = reactionRoleService.getEntries(guildId);
+    const sameMessageEntries = reactionRoleService.getEntriesForMessage(guildId, messageId);
+    const alreadyMapped = serviceEntries.some(entry => String(entry.messageId) === String(messageId) && String(entry.emoji) === String(emoji));
+    if (!alreadyMapped && serviceEntries.length >= policy.reactionRoles) return res.status(403).json({ success: false, error: "This server has reached its reaction-role mapping limit for the "+policy.tier.toUpperCase()+" plan.", upgradeRequired: true, currentTier: policy.tier });
+    if (!alreadyMapped && sameMessageEntries.length >= policy.reactionsPerMessage) return res.status(403).json({ success: false, error: "This message has reached its reaction limit for the "+policy.tier.toUpperCase()+" plan.", upgradeRequired: true, currentTier: policy.tier });
     const limits = getTierLimits(guildId);
     const config = loadConfig();
     const guildConfig = config.guilds[guildId] || {};
