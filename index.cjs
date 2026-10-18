@@ -6495,6 +6495,14 @@ app.post("/api/config/:guildId", async (req, res) => {
     if (Array.isArray(req.body.embedTemplates) && req.body.embedTemplates.length > policy.embedMessages) {
       return res.status(403).json({ success: false, error: 'This server can save '+policy.embedMessages+' embed messages on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.embedMessages });
     }
+    if (Array.isArray(req.body.embedTemplates) && !policy.embedStyling) {
+      req.body.embedTemplates = req.body.embedTemplates.map(template => ({ ...template, color: '#5865f2', footer: '', image: '', thumbnail: '' }));
+    }
+    for (const [key, value] of Object.entries(req.body)) {
+      if (/^(twitch|youtube|tiktok|kick|reddit|rss|podcast|instagram|xalerts)Alerts$/i.test(key) && Array.isArray(value) && value.length > policy.socialAccountsPerSection) {
+        return res.status(403).json({ success: false, error: 'This server can save '+policy.socialAccountsPerSection+' accounts per alert section on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.socialAccountsPerSection });
+      }
+    }
     // Currency name and symbol are Premium/Pro customisation.
     if (!policy.economyCustomCurrency && req.body.economySettings && typeof req.body.economySettings === 'object') {
       const current = guildConfig.economySettings || {};
