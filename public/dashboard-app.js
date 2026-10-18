@@ -896,8 +896,8 @@ if(k==='achievements'){
   const achPaid=achTier==='premium'||achTier==='pro';
   const messageMilestoneLimit=achTier==='pro'?Infinity:achTier==='premium'?15:8;
   const emojiMilestoneLimit=messageMilestoneLimit;
-  const messages=(Array.isArray(a.messages)?a.messages:[]).slice(0,messageMilestoneLimit);
-  const emojis=(Array.isArray(a.emojis)?a.emojis:[]).slice(0,emojiMilestoneLimit);
+  const messages=Array.isArray(a.messages)?a.messages:[];
+  const emojis=Array.isArray(a.emojis)?a.emojis:[];
   const [channelResult,roleResult]=await Promise.all([api('/api/guild/'+encodeURIComponent(id)+'/channels'),api('/api/guild/'+encodeURIComponent(id)+'/roles')]);
   const channels=(channelResult.channels||[]).filter(x=>x.type==='text'),roles=(roleResult.roles||[]).filter(x=>!x.managed);
   const renderRows=(prefix,entries,defaults)=>'<div id="'+prefix+'ThresholdRows">'+(entries.length?entries:[{threshold:defaults[0],roleId:''}]).map((entry,i)=>'<div class="rr-mapping-grid milestone-threshold-row" data-milestone-row="'+prefix+'"><label class="field">Threshold '+(i+1)+'<input type="number" min="1" max="100000000" value="'+esc(entry.threshold??defaults[i]??'')+'"></label><label class="field">Reward role<select>'+optionList(roles,entry.roleId||'','Choose a reward role')+'</select></label></div>').join('')+'</div>';
@@ -930,7 +930,7 @@ if(k==='achievements'){
   const inviteTierRaw=String(c.tier||'free').toLowerCase();
   const inviteTier=inviteTierRaw!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':inviteTierRaw;
   const inviteLimit=inviteTier==='pro'?100:inviteTier==='premium'?20:10;
-  const rewards=(Array.isArray(it.rewards)?it.rewards:[]).slice(0,inviteLimit);
+  const rewards=Array.isArray(it.rewards)?it.rewards:[];
   const dropdowns=await guildDropdownOptions(id);
   body.innerHTML=card('Invite Tracker','Track which members invite people, show invite totals and leaderboards, log joins and leaves, and optionally reward invite milestones.', 
    '<div class="welcome-panel">'+
@@ -964,7 +964,7 @@ if(k==='achievements'){
   const customTierRaw=String(c.tier||'free').toLowerCase();
   const customTier=customTierRaw!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':customTierRaw;
   const customLimit=customTier==='pro'?100:customTier==='premium'?25:5;
-  const items=(Array.isArray(cc.items)?cc.items:[]).slice(0,customLimit);
+  const items=Array.isArray(cc.items)?cc.items:[];
   const commandRows=items.map((x,index)=>'<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>/'+esc(x.name)+'</h3><p>'+(x.enabled===false?'Disabled':'Enabled')+' · Used '+Number(x.count||0)+' times</p></div><button type="button" class="rr-remove" data-remove-custom="'+index+'">Remove</button></div><label class="field">Response template<textarea data-custom-message="'+index+'" rows="3" maxlength="1800">'+esc(x.messageTemplate||'')+'</textarea></label><label class="field">Counter label<input data-custom-counter-label="'+index+'" maxlength="80" value="'+esc(x.counterLabel||'Count')+'"></label><label class="check"><span>Increment counter and show {count}</span><input data-custom-counter="'+index+'" type="checkbox" '+(x.counterEnabled===false?'':'checked')+'></label><label class="check"><span>Command enabled</span><input data-custom-enabled="'+index+'" type="checkbox" '+(x.enabled===false?'':'checked')+'></label><div class="panel-actions"><button class="select" type="button" data-save-custom="'+index+'">Save changes</button><button class="select" type="button" data-reset-custom="'+index+'">Reset counter</button></div></section>').join('');
   body.innerHTML=card('Custom Commands','Build real server slash commands such as /kill. Each use increments a saved counter and inserts it into your custom response text.',
    '<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Create a command</h3><p>'+items.length+' of '+customLimit+' custom commands used on the '+esc(customTier.toUpperCase())+' plan. Use lowercase letters, numbers and hyphens only.</p></div></div>'+
