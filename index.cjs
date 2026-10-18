@@ -6547,83 +6547,83 @@ app.post("/api/config/:guildId", async (req, res) => {
 
 // Giveaway API
 app.post("/api/giveaway/create", express.json(), async (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, error: "No guild" });
-  
-  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
-  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
-  
-  const { prize, channel, duration, winners } = req.body;
-  if (!prize) return res.json({ success: false, error: "Prize required" });
-  
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild was selected" });
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions for this server" });
+  const { prize, channel, duration, winners, format, message, embedTitle, embedDescription, emojiId, emojiName, emojiUrl } = req.body || {};
+  if (!String(prize || "").trim()) return res.status(400).json({ success: false, error: "Prize required" });
+  const minutes = Number(duration);
+  const winnerCount = Number(winners || 1);
+  if (!Number.isFinite(minutes) || minutes < 1 || minutes > 525600) return res.status(400).json({ success: false, error: "Duration must be between 1 minute and 365 days" });
+  if (!Number.isInteger(winnerCount) || winnerCount < 1 || winnerCount > 100) return res.status(400).json({ success: false, error: "Winner count must be between 1 and 100" });
+  if (!/^https:\/\/\S+/i.test(String(emojiUrl || "")) && emojiUrl) return res.status(400).json({ success: false, error: "External emoji/image URL must use HTTPS" });
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ success: false, error: "Bot is not connected to this server" });
+  const target = guild.channels.cache.get(String(channel || ""));
+  if (!target || !target.isTextBased() || typeof target.send !== "function") return res.status(400).json({ success: false, error: "Choose a valid text channel" });
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
   const tiers = getTierLimits(guildId);
   const giveaways = config.guilds[guildId].giveaways || {};
   const { activeCount } = getActiveGiveawaysMap(giveaways);
-
-  if (tiers.maxGiveaways !== Infinity && activeCount >= tiers.maxGiveaways) {
-    return res.json({ success: false, error: `Giveaway limit reached (${tiers.maxGiveaways}). Upgrade for more!` });
+  if (tiers.maxGiveaways !== Infinity && activeCount >= tiers.maxGiveaways) return res.status(403).json({ success: false, error: \`Giveaway limit reached (\${tiers.maxGiveaways}). Upgrade for more!\` });
+  let chosenEmoji = null;
+  if (emojiId) {
+    chosenEmoji = guild.emojis.cache.get(String(emojiId)) || await guild.emojis.fetch(String(emojiId)).catch(() => null);
+    if (!chosenEmoji) return res.status(400).json({ success: false, error: "That server emoji could not be found" });
   }
-
-  const name = `${prize.toLowerCase().replace(/\s+/g, '_')}_${Date.now().toString(36)}`;
-  const endsAt = Date.now() + (duration * 60 * 1000);
-
-  config.guilds[guildId].giveaways = giveaways;
-  config.guilds[guildId].giveaways[name] = {
-    prize,
-    channel,
-    duration,
-    winners: winners || 1,
-    status: 'active',
-    endsAt,
-    createdAt: new Date().toISOString(),
-    entries: []
+  const cleanPrize = String(prize).trim().slice(0, 200);
+  const name = \`\${cleanPrize.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'giveaway'}_\${Date.now().toString(36)}\`;
+  const endsAt = Date.now() + minutes * 60 * 1000;
+  const selectedEmoji = chosenEmoji ? \`<:\${chosenEmoji.name}:\${chosenEmoji.id}>\` : "🎁";
+  const giveaway = {
+    prize: cleanPrize, channel: String(channel), channelId: String(channel), channelName: target.name,
+    duration: minutes, winners: winnerCount, status: "active", endsAt,
+    createdAt: new Date().toISOString(), entries: [],
+    format: format === "text" ? "text" : "embed",
+    message: String(message || "").slice(0, 4000),
+    embedTitle: String(embedTitle || "").slice(0, 256),
+    embedDescription: String(embedDescription || "").slice(0, 4000),
+    emojiId: chosenEmoji?.id || null, emojiName: chosenEmoji?.name || null,
+    emojiUrl: String(emojiUrl || "").trim()
   };
-  
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-  
-// Try to post in channel with reaction
-   const guild = client.guilds.cache.get(guildId);
-   if (guild && channel) {
-     const ch = guild.channels.cache.get(channel);
-if (ch) {
-        try {
-          const msg = await ch.send({ embeds: [new EmbedBuilder()
-            .setColor('#9151ff')
-            .setTitle('🎁 Giveaway Started!')
-            .setDescription(`**${prize}**\n\nWinners: ${winners || 1}\nDuration: ${duration} minutes\n\nReact with 🎁 to enter!`)
-            .setFooter({ text: 'SPIDEY BOT • Ends: ' + new Date(endsAt).toLocaleString() })
-          ]});
-         
-         // Save message ID and add reaction
-         config.guilds[guildId].giveaways[name].messageId = msg.id;
-         config.guilds[guildId].giveaways[name].channelId = channel;
-         fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-         
-         await msg.react('🎁');
-       } catch(e) {
-         console.error('Giveaway post error:', e);
-       }
-     }
-   }
-
-  const { active, activeCount: liveCount } = getActiveGiveawaysMap(config.guilds[guildId].giveaways);
-  console.log(`🎁 Giveaway created for guild ${guildId}: ${name} (active: ${liveCount})`);
-  res.json({
-    success: true,
-    name,
-    giveaway: config.guilds[guildId].giveaways[name],
-    activeGiveaways: active,
-    activeCount: liveCount
-  });
+  const contentTemplate = giveaway.message || "A giveaway has started!";
+  const content = contentTemplate.replace(/\{prize\}/gi, cleanPrize).replace(/\{winners\}/gi, String(winnerCount)).replace(/\{duration\}/gi, String(minutes));
+  const embed = new EmbedBuilder().setColor("#9151ff")
+    .setTitle(giveaway.embedTitle || "🎉 Giveaway!")
+    .setDescription(\`\${giveaway.embedDescription || contentTemplate}\\n\\n**Prize:** \${cleanPrize}\\n**Winners:** \${winnerCount}\\n**Duration:** \${minutes} minutes\\n\\nReact with \${selectedEmoji} to enter!\`)
+    .setFooter({ text: "SPIDEY BOT • Ends: " + new Date(endsAt).toLocaleString() });
+  if (giveaway.emojiUrl) embed.setThumbnail(giveaway.emojiUrl);
+  const payload = giveaway.format === "text"
+    ? { content: \`\${content}\\n\\n**Prize:** \${cleanPrize}\\n**Winners:** \${winnerCount}\\n**Duration:** \${minutes} minutes\\nReact with \${selectedEmoji} to enter!\${giveaway.emojiUrl ? "\\n" + giveaway.emojiUrl : ""}\` }
+    : { embeds: [embed] };
+  try {
+    const posted = await target.send(payload);
+    try { await posted.react(chosenEmoji || "🎁"); }
+    catch (reactionError) {
+      if (chosenEmoji) throw new Error("The giveaway was posted, but the bot could not add the selected server emoji reaction. Check its permissions.");
+      throw reactionError;
+    }
+    giveaway.messageId = posted.id;
+    giveaways[name] = giveaway;
+    config.guilds[guildId].giveaways = giveaways;
+    fs.writeFileSync("config.json", JSON.stringify(config, null, 2));
+    const { active, activeCount: liveCount } = getActiveGiveawaysMap(giveaways);
+    return res.json({ success: true, name, giveaway, activeGiveaways: active, activeCount: liveCount });
+  } catch (err) {
+    console.error("Giveaway post error:", err);
+    return res.status(502).json({ success: false, error: err.message || "Discord could not post the giveaway" });
+  }
 });
 
 app.post("/api/giveaway/end", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, error: "No guild" });
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild" });
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions for this server" });
   
   const { name } = req.body;
   
