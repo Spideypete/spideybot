@@ -61,9 +61,11 @@ async function execute(i,ctx){
   if(i.commandName==='ask')return false;
   const commandRoot=i.commandName, commandSub=i.options.getSubcommand(false);
   const plan=subscriptionManager.getGuildPlanPolicy(i.guild.id);
-  const premiumOnlyRoots=new Set(['poll','emoji','music']);
-  if(premiumOnlyRoots.has(commandRoot) && !subscriptionManager.isPlanFeatureAllowed(i.guild.id,commandRoot==='emoji'?'emojis':commandRoot)){
-    await i.reply({content:'🔒 This command requires **Premium or Pro** for this server. Upgrade this server in the SPIDEY BOT dashboard to unlock it.',ephemeral:true});return true;
+  const premiumOnlyRoots=new Set(['poll','emoji']);
+  const musicCommands=new Set(['play','pause','resume','skip','queue','shuffle','loop','volume','stop']);
+  if((premiumOnlyRoots.has(commandRoot) && !subscriptionManager.isPlanFeatureAllowed(i.guild.id,commandRoot==='emoji'?'emojis':commandRoot)) || (musicCommands.has(commandRoot) && !plan.music)){
+    const featureLabel=musicCommands.has(commandRoot)?'Music':commandRoot==='poll'?'Polls':'Emojis';
+    await i.reply({content:'🔒 '+featureLabel+' requires **Premium or Pro** for this server. Upgrade this server in the SPIDEY BOT dashboard to unlock it.',ephemeral:true});return true;
   }
   if(commandRoot==='embed' && commandSub==='builder' && !plan.embedStyling){
     await i.reply({content:'🔒 Custom embed styling (colour, image URL and footer) requires **Premium or Pro** for this server.',ephemeral:true});return true;
@@ -169,7 +171,6 @@ async function execute(i,ctx){
   if(commandRoot==='reactionrole'){
     if(!isAdmin(i)){await i.reply({content:'Only server administrators can manage reaction roles.',ephemeral:true});return true;}
     const rrLimit=subscriptionManager.getPlanLimit(i.guild.id,'reactionRoles');
-    const rrCounts=reactionRolesService.getAllEntries ? reactionRolesService.getAllEntries(i.guild.id) : null;
     const messageId=i.options.getString('message_id',true),emoji=i.options.getString('emoji',true);
     if(commandSub==='delete'){
       const removed=reactionRolesService.removeEntry(i.guild.id,messageId,emoji);
@@ -473,6 +474,9 @@ async function execute(i,ctx){
   if(commandRoot==='giveaway'){
     if(!isAdmin(i)){await i.reply({content:'Only administrators can manage giveaways.',ephemeral:true});return true;}
     if(commandSub==='start'){
+      const giveawayLimit=subscriptionManager.getPlanLimit(i.guild.id,'giveawayInviteMessages');
+      const activeGiveaways=giveaways.getActive(i.guild.id);
+      if(activeGiveaways.length>=giveawayLimit){await i.reply({content:'This server has reached its '+giveawayLimit+' active giveaway limit for the '+plan.tier.toUpperCase()+' plan.',ephemeral:true});return true;}
       const raw=String(i.options.getString('duration',true)).trim().toLowerCase(),match=raw.match(/^(\\d{1,5})(m|h|d)$/);
       if(!match){await i.reply({content:'Use a duration like 10m, 2h, or 1d.',ephemeral:true});return true;}
       const minutes=Number(match[1])*({m:1,h:60,d:1440}[match[2]]);
