@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const socialNotificationsService = require('./social-notifications.service.cjs');
 const socialNotificationsHandler = require('./social-notifications.handler.cjs');
+const subscriptionManager = require('../../../services/subscription.manager.js');
 
 function auth(req, res, next) {
   if (!req.session?.authenticated) {
@@ -50,6 +51,12 @@ router.post('/:guildId', auth, requireGuildAccess, express.json(), (req, res) =>
   }
 
   try {
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    const existingForPlatform = socialNotificationsService.getNotifications(guildId).filter(n => String(n.platform || '').toLowerCase() === platform.toLowerCase());
+    const alreadyExists = existingForPlatform.some(n => String(n.username || '').toLowerCase() === String(username).toLowerCase());
+    if (!alreadyExists && existingForPlatform.length >= policy.socialAccountsPerSection) {
+      return res.status(403).json({ success: false, error: 'This server has reached its '+policy.socialAccountsPerSection+' account limit for '+platform.toUpperCase()+' on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.socialAccountsPerSection, currentCount: existingForPlatform.length });
+    }
     const result = socialNotificationsService.addNotification(guildId, {
       platform: platform.toLowerCase(),
       username,
