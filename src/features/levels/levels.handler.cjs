@@ -19,14 +19,25 @@ async function handleMessageCreate(message) {
   const config = levelsService.getConfig(guildId);
   if (!config || config.enabled === false) return;
 
-  if (!levelsService.canGainXp(guildId, userId, XP_COOLDOWN)) return;
-
-  const xpGain = config.xpPerMessage || 15;
-  const result = levelsService.addXp(guildId, userId, xpGain);
-
-  if (result.leveledUp) {
-    await handleLevelUp(message.guild, message.member, result.level, config);
+  let leveledResult = null;
+  if (levelsService.canGainXp(guildId, userId, XP_COOLDOWN)) {
+    const xpGain = Math.max(0, Number(config.xpPerMessage ?? 15));
+    if (xpGain > 0) leveledResult = levelsService.addXp(guildId, userId, xpGain);
   }
+  // Bonus XP is awarded once per eligible message and capped to discourage emoji spam.
+  if (config.emojiXpEnabled === true && message.content) {
+    const unicodeEmojiCount = (message.content.match(/\\p{Extended_Pictographic}/gu) || []).length;
+    const customEmojiCount = (message.content.match(/<a?:[A-Za-z0-9_]+:\\d+>/g) || []).length;
+    const emojiCount = Math.min(20, unicodeEmojiCount + customEmojiCount);
+    const perEmoji = Math.max(0, Number(config.emojiXpPerMessage ?? 2));
+    const cap = Math.max(0, Number(config.maxEmojiXpPerMessage ?? 6));
+    const bonusXp = Math.min(cap, emojiCount * perEmoji);
+    if (bonusXp > 0) {
+      const bonusResult = levelsService.addXp(guildId, userId, bonusXp);
+      if (bonusResult.leveledUp) leveledResult = bonusResult;
+    }
+  }
+  if (leveledResult?.leveledUp) await handleLevelUp(message.guild, message.member, leveledResult.level, config);
 }
 
 async function handleLevelUp(guild, member, newLevel, config) {
@@ -129,9 +140,47 @@ async function handleGuildMemberUpdate(oldMember, newMember) {
   }
 }
 
+const voiceIntervals = new Map();
+function voiceKey(guildId, userId) { return `${guildId}:${userId}`; }
+function stopVoiceXp(guildId, userId) {
+  const key = voiceKey(guildId, userId), timer = voiceIntervals.get(key);
+  if (timer) clearInterval(timer);
+  voiceIntervals.delete(key);
+}
+function startVoiceXp(member) {
+  if (!member?.guild || member.user?.bot || !member.voice?.channelId) return;
+  const guildId = member.guild.id, userId = member.id;
+  stopVoiceXp(guildId, userId);
+  const config = levelsService.getConfig(guildId);
+  if (!config || config.enabled === false || config.voiceXpEnabled !== true) return;
+  const intervalMinutes = Math.max(1, Number(config.voiceXpIntervalMinutes ?? 5));
+  const timer = setInterval(async () => {
+    try {
+      const current = member.guild.members.cache.get(userId);
+      if (!current || current.user.bot || !current.voice.channelId || current.voice.selfDeaf || current.voice.serverDeaf) { stopVoiceXp(guildId, userId); return; }
+      const latest = levelsService.getConfig(guildId);
+      if (latest.enabled === false || latest.voiceXpEnabled !== true) { stopVoiceXp(guildId, userId); return; }
+      const amount = Math.max(0, Number(latest.voiceXpPerInterval ?? 5));
+      if (!amount) return;
+      const result = levelsService.addXp(guildId, userId, amount);
+      if (result.leveledUp) await handleLevelUp(current.guild, current, result.level, latest);
+    } catch (err) { console.error('[LEVELS VOICE XP]', err.message); }
+  }, intervalMinutes * 60 * 1000);
+  voiceIntervals.set(voiceKey(guildId, userId), timer);
+}
+
 function registerHandlers(client) {
   client.on(Events.MessageCreate, async (message) => {
     await handleMessageCreate(message);
+  });
+  client.on(Events.VoiceStateUpdate, (_oldState, newState) => {
+    const member = newState.member;
+    if (!member) return;
+    if (!newState.channelId) stopVoiceXp(newState.guild.id, member.id);
+    else startVoiceXp(member);
+  });
+  client.on(Events.ClientReady, () => {
+    for (const guild of client.guilds.cache.values()) for (const state of guild.voiceStates.cache.values()) if (state.channelId && state.member) startVoiceXp(state.member);
   });
 
   client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
