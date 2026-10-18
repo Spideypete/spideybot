@@ -332,9 +332,13 @@ async function execute(i,ctx){
       const botMember=i.guild.members.me;
       if(botMember&&!voice.permissionsFor(botMember)?.has(PermissionFlagsBits.Connect)){await i.reply({content:'SPIDEY BOT needs Connect permission in your voice channel.',ephemeral:true});return true;}
       if(queue && Number.isFinite(Number(settings.maxQueueSize)) && queue.tracks.size>=Math.max(1,Number(settings.maxQueueSize))){await i.reply({content:'The music queue is full. Wait for a song to finish or ask an administrator to increase the queue limit.',ephemeral:true});return true;}
+      const query=i.options.getString('query',true);
+      const queryLower=query.toLowerCase();
+      if(settings.allowSoundCloud===false && /soundcloud\.com/.test(queryLower)){await i.reply({content:'SoundCloud links are disabled in this server’s Music settings.',ephemeral:true});return true;}
+      if(settings.allowSpotify===false && /spotify\.com/.test(queryLower)){await i.reply({content:'Spotify links are disabled in this server’s Music settings.',ephemeral:true});return true;}
+      if(settings.allowPlaylists===false && (/youtube\.com\/(playlist|.*[?&]list=)|youtu\.be\/.*[?&]list=|open\.spotify\.com\/(playlist|album)|soundcloud\.com\/[^/]+\/sets\//.test(queryLower))){await i.reply({content:'Playlist links are disabled in this server’s Music settings. Try a single track instead.',ephemeral:true});return true;}
       await i.deferReply();
       try{
-        const query=i.options.getString('query',true);
         const result=await player.play(voice,query,{nodeOptions:{metadata:i.channel,volume:Math.max(0,Math.min(200,Number(settings.defaultVolume??100)))}});
         await i.editReply('🎵 Added **'+String(result.track?.title||query).slice(0,180)+'** to the queue.');
       }catch(error){await i.editReply('Could not play that query: '+String(error.message||error).slice(0,700));}
