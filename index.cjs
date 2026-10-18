@@ -6568,16 +6568,16 @@ app.post("/api/giveaway/create", express.json(), async (req, res) => {
   const tiers = getTierLimits(guildId);
   const giveaways = config.guilds[guildId].giveaways || {};
   const { activeCount } = getActiveGiveawaysMap(giveaways);
-  if (tiers.maxGiveaways !== Infinity && activeCount >= tiers.maxGiveaways) return res.status(403).json({ success: false, error: \`Giveaway limit reached (\${tiers.maxGiveaways}). Upgrade for more!\` });
+  if (tiers.maxGiveaways !== Infinity && activeCount >= tiers.maxGiveaways) return res.status(403).json({ success: false, error: `Giveaway limit reached (${tiers.maxGiveaways}). Upgrade for more!` });
   let chosenEmoji = null;
   if (emojiId) {
     chosenEmoji = guild.emojis.cache.get(String(emojiId)) || await guild.emojis.fetch(String(emojiId)).catch(() => null);
     if (!chosenEmoji) return res.status(400).json({ success: false, error: "That server emoji could not be found" });
   }
   const cleanPrize = String(prize).trim().slice(0, 200);
-  const name = \`\${cleanPrize.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'giveaway'}_\${Date.now().toString(36)}\`;
+  const name = `${cleanPrize.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'giveaway'}_${Date.now().toString(36)}`;
   const endsAt = Date.now() + minutes * 60 * 1000;
-  const selectedEmoji = chosenEmoji ? \`<:\${chosenEmoji.name}:\${chosenEmoji.id}>\` : "🎁";
+  const selectedEmoji = chosenEmoji ? `<:${chosenEmoji.name}:${chosenEmoji.id}>` : "🎁";
   const giveaway = {
     prize: cleanPrize, channel: String(channel), channelId: String(channel), channelName: target.name,
     duration: minutes, winners: winnerCount, status: "active", endsAt,
@@ -6593,11 +6593,11 @@ app.post("/api/giveaway/create", express.json(), async (req, res) => {
   const content = contentTemplate.replace(/\{prize\}/gi, cleanPrize).replace(/\{winners\}/gi, String(winnerCount)).replace(/\{duration\}/gi, String(minutes));
   const embed = new EmbedBuilder().setColor("#9151ff")
     .setTitle(giveaway.embedTitle || "🎉 Giveaway!")
-    .setDescription(\`\${giveaway.embedDescription || contentTemplate}\\n\\n**Prize:** \${cleanPrize}\\n**Winners:** \${winnerCount}\\n**Duration:** \${minutes} minutes\\n\\nReact with \${selectedEmoji} to enter!\`)
+    .setDescription(`${giveaway.embedDescription || contentTemplate}\n\n**Prize:** ${cleanPrize}\n**Winners:** ${winnerCount}\n**Duration:** ${minutes} minutes\n\nReact with ${selectedEmoji} to enter!`)
     .setFooter({ text: "SPIDEY BOT • Ends: " + new Date(endsAt).toLocaleString() });
   if (giveaway.emojiUrl) embed.setThumbnail(giveaway.emojiUrl);
   const payload = giveaway.format === "text"
-    ? { content: \`\${content}\\n\\n**Prize:** \${cleanPrize}\\n**Winners:** \${winnerCount}\\n**Duration:** \${minutes} minutes\\nReact with \${selectedEmoji} to enter!\${giveaway.emojiUrl ? "\\n" + giveaway.emojiUrl : ""}\` }
+    ? { content: `${content}\n\n**Prize:** ${cleanPrize}\n**Winners:** ${winnerCount}\n**Duration:** ${minutes} minutes\nReact with ${selectedEmoji} to enter!${giveaway.emojiUrl ? "\n" + giveaway.emojiUrl : ""}` }
     : { embeds: [embed] };
   try {
     const posted = await target.send(payload);
