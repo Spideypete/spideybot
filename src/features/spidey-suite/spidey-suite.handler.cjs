@@ -61,10 +61,10 @@ async function execute(i,ctx){
   if(i.commandName==='ask')return false;
   const commandRoot=i.commandName, commandSub=i.options.getSubcommand(false);
   const plan=subscriptionManager.getGuildPlanPolicy(i.guild.id);
-  const premiumOnlyRoots=new Set(['poll','emoji']);
+  const premiumOnlyRoots=new Set(['poll','deletepoll','emoji']);
   const musicCommands=new Set(['play','pause','resume','skip','queue','shuffle','loop','volume','stop']);
   if((premiumOnlyRoots.has(commandRoot) && !subscriptionManager.isPlanFeatureAllowed(i.guild.id,commandRoot==='emoji'?'emojis':commandRoot)) || (musicCommands.has(commandRoot) && !plan.music)){
-    const featureLabel=musicCommands.has(commandRoot)?'Music':commandRoot==='poll'?'Polls':'Emojis';
+    const featureLabel=musicCommands.has(commandRoot)?'Music':(commandRoot==='poll'||commandRoot==='deletepoll')?'Polls':'Emojis';
     await i.reply({content:'🔒 '+featureLabel+' requires **Premium or Pro** for this server. Upgrade this server in the SPIDEY BOT dashboard to unlock it.',ephemeral:true});return true;
   }
   if(commandRoot==='embed' && commandSub==='builder' && !plan.embedStyling){
