@@ -7232,7 +7232,10 @@ app.get("/api/bot-config/react-roles/settings", (req, res) => {
   if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
   try {
     const service = require("./src/features/reaction-roles/reaction-roles.service.cjs");
-    res.json({ success: true, config: service.getConfig(guildId) });
+    const config = service.getConfig(guildId);
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    if (policy.tier === 'free') { config.dmConfirm = true; config.dmConfirmations = true; }
+    res.json({ success: true, config, policy: Object.fromEntries(Object.entries(policy).map(([key,value]) => [key,value===Infinity?null:value])) });
   } catch (err) {
     res.status(500).json({ success: false, error: "Could not load reaction role settings" });
   }
@@ -7455,6 +7458,8 @@ app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) =>
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { channelId, type = "embed", content, title, description, color, footer, image } = req.body;
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    const canStyleEmbed = policy.embedStyling;
     if (!channelId) return res.json({ success: false, error: "Channel required" });
     if (type === "text" && !String(content || "").trim()) return res.json({ success: false, error: "Message text is required" });
     if (type !== "text" && !String(title || description || footer || image || "").trim()) return res.json({ success: false, error: "Add a title, description, footer or image to the embed" });
@@ -7469,11 +7474,11 @@ app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) =>
     if (type === "text") {
       payload = { content: String(content).slice(0, 2000) };
     } else {
-      const embed = new EmbedBuilder().setColor(/^#?[0-9a-f]{6}$/i.test(String(color || "")) ? parseInt(String(color).replace("#", ""), 16) : 0x5865F2);
+      const embed = new EmbedBuilder().setColor(canStyleEmbed && /^#?[0-9a-f]{6}$/i.test(String(color || "")) ? parseInt(String(color).replace("#", ""), 16) : 0x5865F2);
       if (title) embed.setTitle(String(title).slice(0, 256));
       if (description) embed.setDescription(String(description).slice(0, 4000));
-      if (footer) embed.setFooter({ text: String(footer).slice(0, 2048) });
-      if (image && /^https?:\/\//i.test(String(image))) embed.setImage(String(image));
+      if (canStyleEmbed && footer) embed.setFooter({ text: String(footer).slice(0, 2048) });
+      if (canStyleEmbed && image && /^https?:\/\//i.test(String(image))) embed.setImage(String(image));
       payload = { embeds: [embed] };
     }
     const msg = await channel.send(payload);
