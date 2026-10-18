@@ -5793,7 +5793,7 @@ app.get('/api/owner/stats', (req, res) => {
     if (isExpired) tier = 'free';
     if ((guild.joinedAt?.getTime() || 0) > oneWeekAgo) newThisWeek++;
     if (tier === 'premium') premiumCount++; else if (tier === 'pro') proCount++; else freeCount++;
-    const lastPurchase = [...purchases].reverse().find(p => String(p.guildId) === guildId) || null;
+    const lastPurchase = purchases.find(p => String(p.guildId) === guildId) || null;
     const tierStartDate = Number(guildConfig.tierStartDate) || null;
     const tierDurationMonths = Number(guildConfig.tierDurationMonths) || 0;
     const remainingMonths = tierEndDate && tier !== 'free' ? Math.max(0, Math.ceil((tierEndDate - now) / monthMs)) : null;
