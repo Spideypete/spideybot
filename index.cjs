@@ -21,6 +21,7 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
 const path = require("path");
 const serverStatistics = require("./services/server-statistics.cjs");
+const serverStatChannels = require("./services/server-stat-channels.cjs");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 require("dotenv").config();
@@ -1225,6 +1226,14 @@ client.once("ready", async () => {
     console.log('🔁 Running commit: unknown');
   }
   client.user.setActivity("🎵 Music & Roles", { type: "WATCHING" });
+  // Refresh configured live-stat channels after startup and every five minutes.
+  serverStatChannels.refreshAll(client).catch(error => console.error("[stat-channels] Initial refresh failed:", error.message));
+  if (!global.__spideyStatChannelRefreshTimer) {
+    global.__spideyStatChannelRefreshTimer = setInterval(() => {
+      serverStatChannels.refreshAll(client).catch(error => console.error("[stat-channels] Scheduled refresh failed:", error.message));
+    }, 5 * 60 * 1000);
+    if (typeof global.__spideyStatChannelRefreshTimer.unref === "function") global.__spideyStatChannelRefreshTimer.unref();
+  }
   console.log(`📡 guildMemberAdd listeners registered: ${client.listenerCount("guildMemberAdd")} (pid ${process.pid})`);
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
@@ -8239,6 +8248,55 @@ app.get("/api/dashboard/server-statistics", async (req, res) => {
   } catch (error) {
     console.error("[server-statistics] statistics endpoint failed:", error);
     res.status(500).json({ error: "Could not load server statistics" });
+  }
+});
+
+app.get("/api/dashboard/stat-channel-counters", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ error: "Missing guildId" });
+  if (!isSpideyTestingHost(req) && !(req.session.guilds || []).some(g => String(g.id) === guildId)) {
+    return res.status(403).json({ error: "You do not have administrator access to this server" });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  res.json({ counters: serverStatChannels.list(guildId).map(item => ({
+    ...item,
+    channelName: guild.channels.cache.get(item.channelId)?.name || "Missing channel",
+    roleName: item.roleId ? (guild.roles.cache.get(item.roleId)?.name || "Missing role") : null
+  })), channels: guild.channels.cache.filter(channel => typeof channel.setName === "function").map(channel => ({ id: channel.id, name: channel.name })), roles: guild.roles.cache.filter(role => role.id !== guild.id).map(role => ({ id: role.id, name: role.name })) });
+});
+
+app.post("/api/dashboard/stat-channel-counters", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = String(req.body?.guildId || "");
+  if (!guildId) return res.status(400).json({ error: "Missing guildId" });
+  if (!isSpideyTestingHost(req) && !(req.session.guilds || []).some(g => String(g.id) === guildId)) {
+    return res.status(403).json({ error: "You do not have administrator access to this server" });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  try {
+    if (req.body?.action === "remove") {
+      if (!serverStatChannels.remove(guildId, String(req.body.counterId || ""))) return res.status(404).json({ error: "Counter not found" });
+      return res.json({ success: true, counters: serverStatChannels.list(guildId) });
+    }
+    const channelId = String(req.body?.channelId || "");
+    const metric = String(req.body?.metric || "");
+    const label = String(req.body?.label || "").trim();
+    const roleId = req.body?.roleId ? String(req.body.roleId) : null;
+    const allowedMetrics = new Set(["members", "humans", "bots", "channels", "online", "roleMembers"]);
+    if (!channelId || !allowedMetrics.has(metric)) return res.status(400).json({ error: "Choose a channel and valid counter type." });
+    const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+    if (!channel || typeof channel.setName !== "function") return res.status(400).json({ error: "Choose a text or voice channel that SPIDEY BOT can rename." });
+    const botPermissions = channel.permissionsFor(client.user);
+    if (botPermissions && !botPermissions.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission for that channel." });
+    if (metric === "roleMembers" && (!roleId || !guild.roles.cache.has(roleId))) return res.status(400).json({ error: "Choose a valid server role for this counter." });
+    const counter = serverStatChannels.add(guildId, { channelId, metric, label, roleId });
+    await serverStatChannels.refreshGuild(client, guildId);
+    return res.json({ success: true, counter, counters: serverStatChannels.list(guildId) });
+  } catch (error) {
+    return res.status(400).json({ error: error.message || "Could not save the statistics counter." });
   }
 });
 
