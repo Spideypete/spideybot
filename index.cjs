@@ -23,6 +23,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 const serverStatistics = require("./services/server-statistics.cjs");
+const serverStatChannels = require("./services/server-stat-channels.cjs");
 require("dotenv").config();
 console.log("[DEBUG] Dotenv loaded, env vars:");
 console.log("[DEBUG] TOKEN:", process.env.TOKEN ? "set" : "NOT SET");
@@ -422,9 +423,12 @@ app.use((req, res, next) => {
     if (isHtml) {
       const originalSend = res.send;
       res.send = function (body) {
-        if (typeof body === 'string' && body.includes('</head>')) {
-          // Inject a small version meta + script for client-side cache awareness
-          body = body.replace('</head>', `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        if (typeof body === 'string' && /<\/head>/i.test(body)) {
+          // Always use the SPIDEY BOT logo as the browser-tab icon.
+          body = body.replace(/<link\b[^>]*\brel=["'](?:shortcut\s+)?icon["'][^>]*>\s*/ig, '');
+          const favicon = '<link rel="icon" type="image/png" href="/spideybot-logo.png?v=3"><link rel="shortcut icon" type="image/png" href="/spideybot-logo.png?v=3">';
+          body = body.replace(/<\/head>/i, `${favicon}
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="version-timestamp" content="${timestamp}">
@@ -435,6 +439,34 @@ app.use((req, res, next) => {
       };
     }
     next();
+});
+
+ 
+// Ensure the shared favicon is added to HTML returned by explicit sendFile routes too.
+app.get('/favicon.ico', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('png').sendFile(path.join(publicDir, 'spideybot-logo.png'));
+});
+app.use((req, res, next) => {
+  const originalSendFile = res.sendFile.bind(res);
+  res.sendFile = function(filePath, options, callback) {
+    if (typeof filePath === 'string' && /\.html?$/i.test(filePath)) {
+      fs.readFile(filePath, 'utf8', (error, html) => {
+        if (error) {
+          if (typeof options === 'function') return options(error);
+          if (typeof callback === 'function') return callback(error);
+          return next(error);
+        }
+        if (options && typeof options === 'object' && options.headers) res.set(options.headers);
+        res.type('html').send(html);
+        if (typeof options === 'function') options();
+        else if (typeof callback === 'function') callback();
+      });
+      return this;
+    }
+    return originalSendFile(filePath, options, callback);
+  };
+  next();
 });
 
 app.set('trust proxy', true);
@@ -527,6 +559,26 @@ app.get('/api/deployment-fingerprint', (req, res) => {
 app.get('/dashboard-app.js', (req, res) => {
   res.set({ 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0', 'Pragma': 'no-cache', 'Expires': '0' });
   res.sendFile(path.join(publicDir, 'dashboard-app.js'));
+});
+
+// Route static HTML through res.send so the shared favicon injection applies to every public page.
+// The protected /dashboard.html route above is deliberately left in control of dashboard access.
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || !(req.path === '/' || /\.html?$/i.test(req.path)) || req.path === '/dashboard.html') return next();
+  let relativePath;
+  try { relativePath = decodeURIComponent(req.path === '/' ? '/index.html' : req.path); }
+  catch (_) { return next(); }
+  const roots = [distDir, publicDir];
+  const candidate = roots.map(root => path.resolve(root, '.' + relativePath)).find(file => {
+    const allowed = roots.some(root => file === path.resolve(root) || file.startsWith(path.resolve(root) + path.sep));
+    return allowed && fs.existsSync(file) && fs.statSync(file).isFile();
+  });
+  if (!candidate) return next();
+  fs.readFile(candidate, 'utf8', (error, html) => {
+    if (error) return next();
+    if (!/<html[\s>]/i.test(html) || !/<head[\s>]/i.test(html)) return next();
+    res.type('html').send(html);
+  });
 });
 
 // Serve static files from dist and public
@@ -1207,6 +1259,13 @@ player.on("connectionError", (queue, error) => {
 // ============== READY EVENT ==============
 client.once("ready", async () => {
   botLoggedIn = true;
+  serverStatChannels.refreshAll(client).catch(error => console.error("[stat-channels] Initial refresh failed:", error.message));
+  if (!global.__spideyStatChannelRefreshTimer) {
+    global.__spideyStatChannelRefreshTimer = setInterval(() => {
+      serverStatChannels.refreshAll(client).catch(error => console.error("[stat-channels] Scheduled refresh failed:", error.message));
+    }, 5 * 60 * 1000);
+    if (typeof global.__spideyStatChannelRefreshTimer.unref === "function") global.__spideyStatChannelRefreshTimer.unref();
+  }
   try {
     const socialNotificationsHandler = require('./src/features/social-notifications/social-notifications.handler.cjs');
     socialNotificationsHandler.startPolling(client);
@@ -8877,6 +8936,758 @@ app.get("/api/dashboard/server-statistics", async (req, res) => {
     res.status(500).json({ error: "Could not load server statistics" });
   }
 });
+
+app.get("/api/dashboard/stat-channel-counters", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ error: "Missing guildId" });
+  if (!(req.session.guilds || []).some(g => String(g.id) === guildId)) {
+    return res.status(403).json({ error: "You do not have administrator access to this server" });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  const planPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const tier = String(planPolicy?.tier || getGuildConfig(guildId)?.tier || "free").toLowerCase();
+  const limit = tier === "pro" ? 20 : tier === "premium" ? 10 : 5;
+  res.json({ tier, limit, counters: serverStatChannels.list(guildId).map(item => ({
+    ...item,
+    channelName: guild.channels.cache.get(item.channelId)?.name || "Missing channel",
+    roleName: item.roleId ? (guild.roles.cache.get(item.roleId)?.name || "Missing role") : null
+  })), channels: guild.channels.cache.filter(channel => typeof channel.setName === "function").map(channel => ({ id: channel.id, name: channel.name })), roles: guild.roles.cache.filter(role => role.id !== guild.id).map(role => ({ id: role.id, name: role.name })) });
+});
+
+app.post("/api/dashboard/stat-channel-counters", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = String(req.body?.guildId || "");
+  if (!guildId) return res.status(400).json({ error: "Missing guildId" });
+  if (!(req.session.guilds || []).some(g => String(g.id) === guildId)) {
+    return res.status(403).json({ error: "You do not have administrator access to this server" });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  const planPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const tier = String(planPolicy?.tier || getGuildConfig(guildId)?.tier || "free").toLowerCase();
+  const limit = tier === "pro" ? 20 : tier === "premium" ? 10 : 5;
+  try {
+    if (req.body?.action === "remove") {
+      if (!serverStatChannels.remove(guildId, String(req.body.counterId || ""))) return res.status(404).json({ error: "Counter not found" });
+      return res.json({ success: true, counters: serverStatChannels.list(guildId) });
+    }
+    if (serverStatChannels.list(guildId).length >= limit) {
+      return res.status(403).json({ error: "Your " + tier.toUpperCase() + " plan allows up to " + limit + " configured statistics counters. Upgrade your plan for more counters.", upgradeRequired: true, tier, limit });
+    }
+    const createChannel = req.body?.createChannel === true;
+    let channelId = String(req.body?.channelId || "");
+    const metric = String(req.body?.metric || "");
+    const label = String(req.body?.label || "").trim();
+    const roleId = req.body?.roleId ? String(req.body.roleId) : null;
+    const allowedMetrics = new Set(["members", "humans", "bots", "channels", "online", "roleMembers"]);
+    if (!allowedMetrics.has(metric) || (!createChannel && !channelId)) return res.status(400).json({ error: "Choose a channel setup and valid counter type." });
+    if (metric === "roleMembers" && (!roleId || !guild.roles.cache.has(roleId))) return res.status(400).json({ error: "Choose a valid server role for this counter." });
+    let channel = null;
+    let createdChannel = false;
+    if (createChannel) {
+      const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+      if (!botMember?.permissions?.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission to create a channel." });
+      const role = metric === "roleMembers" ? guild.roles.cache.get(roleId) : null;
+      const baseName = role ? role.name : (label || ({members:"members",humans:"human-members",bots:"bot-accounts",channels:"server-channels",online:"online-members"}[metric] || "statistics"));
+      const safeName = String(baseName).normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"").slice(0,90) || "statistics";
+      channel = await guild.channels.create({ name: safeName, type: ChannelType.GuildVoice, reason: "SPIDEY BOT live statistics counter created from dashboard" });
+      channelId = channel.id;
+      createdChannel = true;
+    } else {
+      channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+    }
+    try {
+      if (!channel || typeof channel.setName !== "function") return res.status(400).json({ error: "Choose a text or voice channel that SPIDEY BOT can rename." });
+      const botPermissions = channel.permissionsFor(client.user);
+      if (botPermissions && !botPermissions.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission for that channel." });
+      const counter = serverStatChannels.add(guildId, { channelId, metric, label, roleId });
+      await serverStatChannels.refreshGuild(client, guildId);
+      return res.json({ success: true, createdChannel: createdChannel ? { id: channel.id, name: channel.name } : null, counter, counters: serverStatChannels.list(guildId) });
+    } catch (error) {
+      if (createdChannel && channel) await channel.delete("Cleanup after failed SPIDEY BOT statistics counter setup").catch(() => {});
+      throw error;
+    }
+  } catch (error) {
+    return res.status(400).json({ error: error.message || "Could not save the statistics counter." });
+  }
+});
+
+app.get("/api/dashboard/statistics", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.query.guildId;
+  const targetGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
+  
+  if (!targetGuild) return res.json({ memberCount: 0, activeMembers: 0, verifiedMembers: 0, botCount: 0 });
+
+  const config = getGuildConfig(targetGuild.id);
+  const levels = config.levels || {};
+  const userIds = Object.keys(levels).filter(k => !k.includes("_"));
+
+  const memberCount = targetGuild.memberCount;
+  const activeMembers = Math.max(userIds.length, Math.floor(memberCount * 0.1));
+  const verifiedMembers = Math.floor(memberCount * 0.85);
+  const botCount = targetGuild.members.cache.filter(m => m.user.bot).size || Math.floor(memberCount * 0.05);
+
+  res.json({
+    memberCount,
+    activeMembers,
+    verifiedMembers,
+    botCount
+  });
+});
+
+app.get("/api/dashboard/log-statistics", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.query.guildId;
+  const targetGuild = guildId ? client.guilds.cache.get(guildId) : client.guilds.cache.first();
+  
+  if (!targetGuild) return res.json({ totalLogs: 0, modActions: 0, membersJoined: 0, levelUps: 0 });
+
+  const config = loadConfig();
+  const activities = config.guilds[targetGuild.id]?.activities || [];
+  
+  const totalLogs = activities.length;
+  const modActions = activities.filter(a => ['🛡️', '🔨', '🚫', '✂️', '⛔'].includes(a.icon)).length;
+  const membersJoined = activities.filter(a => a.action?.includes('joined')).length;
+  const levelUps = activities.filter(a => a.action?.includes('leveled up')).length;
+
+  res.json({
+    totalLogs,
+    modActions,
+    membersJoined,
+    levelUps
+  });
+});
+
+app.get("/api/dashboard/top-members", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const firstGuild = client.guilds.cache.first();
+  if (!firstGuild) return res.json({ members: [] });
+
+  const config = getGuildConfig(firstGuild.id);
+  const levels = config.levels || {};
+  const xpLevelConfig = config['xp-levels'] || {};
+  const xpPerLevel = xpLevelConfig.xpPerLevel || config.xpSettings?.perLevel || 500;
+
+  const memberXP = Object.keys(levels)
+    .filter(k => !k.includes("_"))
+    .map(userId => {
+      const xp = levels[userId] || 0;
+      const level = Math.floor(xp / xpPerLevel);
+      return { userId, xp, level };
+    })
+    .sort((a, b) => b.xp - a.xp)
+    .slice(0, 10);
+
+  const members = memberXP.map((m, i) => ({
+    rank: i + 1,
+    userId: m.userId,
+    level: m.level,
+    xp: m.xp,
+    username: `User#${m.userId.slice(0, 4)}`
+  }));
+
+  res.json({ members });
+});
+
+// ============== CREATOR ONLY APIS ==============
+
+// Get all servers the bot is in (filtered to only admin-accessible servers)
+app.get("/api/creator/servers", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const ADMIN_PERMISSION = BigInt(8);
+
+  try {
+    // Always fetch fresh guild list from Discord using stored access token
+    let userGuilds = req.session.guilds || [];
+
+    if (req.session.accessToken) {
+      try {
+        const guildsRes = await axios.get("https://discord.com/api/users/@me/guilds", {
+          headers: { Authorization: `Bearer ${req.session.accessToken}` }
+        });
+        // Filter to admin-only guilds and update session
+        userGuilds = guildsRes.data.filter(guild => {
+          const permissions = BigInt(guild.permissions || 0);
+          return (permissions & ADMIN_PERMISSION) === ADMIN_PERMISSION;
+        });
+        req.session.guilds = userGuilds;
+        console.log(`📡 Refreshed guild list from Discord: ${userGuilds.length} admin guilds`);
+      } catch (discordErr) {
+        console.warn(`⚠️ Could not refresh guilds from Discord (token may be expired), using cached data: ${discordErr.message}`);
+        // Fall back to session-stored guilds
+      }
+    }
+
+    console.log(`📡 User has ${userGuilds.length} admin guilds`);
+    console.log(`📡 Bot is in ${client.guilds.cache.size} guilds`);
+
+    // Get IDs of user's admin guilds
+    const adminGuildIds = userGuilds.map(guild => guild.id);
+
+    console.log(`📡 Admin guild IDs: ${adminGuildIds.join(', ')}`);
+    console.log(`📡 Bot guild IDs: ${client.guilds.cache.map(g => g.id).join(', ')}`);
+
+    // Get bot's servers where user is admin — the intersection
+    const servers = client.guilds.cache
+      .filter(guild => adminGuildIds.includes(guild.id))
+      .map(guild => {
+        let iconUrl = null;
+        let iconProxyUrl = null;
+        if (guild.icon) {
+          const isAnimated = guild.icon.startsWith('a_');
+          const ext = isAnimated ? 'gif' : 'png';
+          iconUrl = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+          iconProxyUrl = `/api/image?url=${encodeURIComponent(iconUrl)}`;
+        }
+        return {
+          id: guild.id,
+          name: guild.name,
+          icon: iconUrl,
+          iconProxy: iconProxyUrl,
+          memberCount: guild.memberCount
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    console.log(`📡 Returning ${servers.length} servers to dashboard`);
+    res.json({ servers });
+  } catch (err) {
+    console.error('❌ Error in /api/creator/servers:', err);
+    res.status(500).json({ error: 'Failed to load servers' });
+  }
+});
+
+// Get all channels in a guild
+app.get("/api/channels/:guildId", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  try {
+    await guild.channels.fetch();
+  } catch (e) {
+    console.warn("[api/channels] fetch failed:", e.message);
+  }
+
+  const channels = guild.channels.cache
+    .filter(channel => channel.isTextBased?.() && !channel.isThread?.())
+    .map(channel => ({
+      id: channel.id,
+      name: channel.name,
+      type: channel.type,
+      parentId: channel.parentId
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json({ channels });
+});
+
+// Get all roles in a guild
+app.get("/api/guild/:guildId/roles", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const roles = guild.roles.cache
+    .filter(role => role.name !== "@everyone")
+    .map(role => ({
+      id: role.id,
+      name: role.name,
+      color: role.hexColor
+    }))
+    .sort((a, b) => b.position - a.position);
+
+  res.json({ roles });
+});
+
+// Discord server emoji manager for the dashboard
+async function getDashboardGuildAccess(req, guild) {
+  if (!req.session?.authenticated || !req.session?.guilds?.some(g => g.id === guild.id)) return { ok: false, status: 403, error: "No access to this guild" };
+  // The isolated test dashboard intentionally uses a synthetic admin session instead of OAuth.
+  if (typeof isSpideyTestingHost === "function" && isSpideyTestingHost(req)) {
+    return { ok: true, member: { permissions: { has: () => true } } };
+  }
+  const userId = req.session.user?.id || req.session.passport?.user?.id;
+  if (!userId) return { ok: false, status: 403, error: "Could not verify the signed-in Discord member" };
+  const member = await guild.members.fetch(userId).catch(() => null);
+  if (!member) return { ok: false, status: 403, error: "You must be a member of this Discord server" };
+  return { ok: true, member };
+}
+
+app.get("/api/guild/:guildId/emojis", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  try {
+    const fetched = await guild.emojis.fetch();
+    const emojis = [...fetched.values()].map(emoji => ({
+      id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 128 }),
+      animated: emoji.animated, managed: emoji.managed
+    })).sort((a, b) => a.name.localeCompare(b.name));
+    return res.json({ emojis, count: emojis.length });
+  } catch (err) {
+    console.error("[dashboard emojis list]", err.message);
+    return res.status(502).json({ error: "Could not fetch server emojis. Check the bot's server access." });
+  }
+});
+
+app.post("/api/guild/:guildId/emojis", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  const emojiPolicy = subscriptionManager.getGuildPlanPolicy(guild.id);
+  if (!emojiPolicy.emojis) return res.status(403).json({ success: false, error: "Server emoji management requires Premium or Pro for this server.", upgradeRequired: true, currentTier: emojiPolicy.tier });
+  if (!access.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions) && !access.member.permissions.has(PermissionFlagsBits.Administrator)) return res.status(403).json({ error: "You need Manage Expressions permission to add server emojis" });
+  const name = String(req.body?.name || "").trim();
+  const image = String(req.body?.image || "");
+  if (!/^[A-Za-z0-9_]{2,32}$/.test(name)) return res.status(400).json({ error: "Emoji name must be 2–32 letters, numbers or underscores" });
+  const match = image.match(/^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) return res.status(400).json({ error: "Upload a valid PNG, JPG, GIF or WebP image" });
+  const buffer = Buffer.from(match[2], "base64");
+  if (!buffer.length || buffer.length > 256 * 1024) return res.status(413).json({ error: "Emoji image must be between 1 byte and 256 KB" });
+  const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+  if (!botMember?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions)) {
+    return res.status(403).json({ error: "SPIDEY BOT needs Manage Expressions permission in this server" });
+  }
+  try {
+    const emoji = await guild.emojis.create({ attachment: buffer, name, reason: "Added from the SPIDEY BOT dashboard" });
+    return res.status(201).json({ success: true, emoji: { id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 128 }), animated: emoji.animated } });
+  } catch (err) {
+    console.error("[dashboard emoji create]", err.message);
+    const status = /maximum number|maximum.*emoji|limit/i.test(err.message) ? 409 : 400;
+    return res.status(status).json({ error: "Discord could not create this emoji. Check the server emoji limit, image format, and bot permissions." });
+  }
+});
+
+app.delete("/api/guild/:guildId/emojis/:emojiId", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  const emojiPolicy = subscriptionManager.getGuildPlanPolicy(guild.id);
+  if (!emojiPolicy.emojis) return res.status(403).json({ success: false, error: "Server emoji management requires Premium or Pro for this server.", upgradeRequired: true, currentTier: emojiPolicy.tier });
+  if (!access.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions) && !access.member.permissions.has(PermissionFlagsBits.Administrator)) return res.status(403).json({ error: "You need Manage Expressions permission to delete server emojis" });
+  const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+  if (!botMember?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Expressions permission" });
+  try {
+    const emoji = await guild.emojis.fetch(req.params.emojiId);
+    if (emoji.managed) return res.status(403).json({ error: "This emoji is managed by an integration and cannot be deleted by the bot" });
+    await emoji.delete("Deleted from the SPIDEY BOT dashboard");
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[dashboard emoji delete]", err.message);
+    return res.status(400).json({ error: "Discord could not delete this emoji. Check permissions and that the emoji still exists." });
+  }
+});
+
+// Per-server embed message counters. Counts are persisted in config.json for the testing/production deployment.
+function getEmbedMessageStats(config, guildId) {
+  const stats = config.global_configs?.embedMessageStats?.[guildId] || {};
+  return {
+    templatesCreated: Math.max(0, Number(stats.templatesCreated) || 0),
+    embedsSent: Math.max(0, Number(stats.embedsSent) || 0)
+  };
+}
+app.get("/api/guild/:guildId/embeds/stats", (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  if (!client.guilds.cache.has(guildId)) return res.status(404).json({ error: "The bot cannot find this server." });
+  const config = loadConfig();
+  const guildConfig = config.guilds?.[guildId] || {};
+  res.json({ ...getEmbedMessageStats(config, guildId), savedTemplates: Array.isArray(guildConfig.embedTemplates) ? guildConfig.embedTemplates.length : 0 });
+});
+app.post("/api/guild/:guildId/embeds/template-created", express.json(), (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  if (!client.guilds.cache.has(guildId)) return res.status(404).json({ success: false, error: "The bot cannot find this server." });
+  try {
+    const config = loadConfig();
+    config.global_configs ||= {};
+    config.global_configs.embedMessageStats ||= {};
+    const stats = config.global_configs.embedMessageStats[guildId] ||= { templatesCreated: 0, embedsSent: 0 };
+    stats.templatesCreated = Math.max(0, Number(stats.templatesCreated) || 0) + 1;
+    stats.updatedAt = new Date().toISOString();
+    saveConfig(config);
+    return res.json({ success: true, ...getEmbedMessageStats(config, guildId) });
+  } catch (err) {
+    console.error("[dashboard embeds stats] Could not record template:", err.message);
+    return res.status(500).json({ success: false, error: "Could not update embed statistics." });
+  }
+});
+
+// Publish an embed built in the dashboard to a selected server channel.
+app.post("/api/guild/:guildId/embeds/send", express.json(), async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  const { channelId, embed: requestedEmbed } = req.body || {};
+  if (!channelId || !requestedEmbed || typeof requestedEmbed !== "object") {
+    return res.status(400).json({ success: false, error: "Choose a channel and provide an embed." });
+  }
+  const embedPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const embed = embedPolicy.embedStyling ? requestedEmbed : { ...requestedEmbed, color: '#5865f2', footer: '', image: '', thumbnail: '' };
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ success: false, error: "The bot cannot find this server." });
+
+  try {
+    const member = req.session.user?.id ? await guild.members.fetch(req.session.user.id) : null;
+    if (!member || !(member.permissions.has(PermissionFlagsBits.Administrator) || member.permissions.has(PermissionFlagsBits.ManageGuild))) {
+      return res.status(403).json({ success: false, error: "You need Manage Server permission to publish embeds." });
+    }
+    const channel = await guild.channels.fetch(channelId).catch(() => null);
+    if (!channel || !channel.isTextBased?.() || !channel.send) {
+      return res.status(400).json({ success: false, error: "Select a valid text channel." });
+    }
+    const botMember = guild.members.me;
+    const perms = botMember ? channel.permissionsFor(botMember) : null;
+    if (!perms?.has(PermissionFlagsBits.SendMessages) || !perms.has(PermissionFlagsBits.EmbedLinks)) {
+      return res.status(403).json({ success: false, error: "The bot needs Send Messages and Embed Links permissions in that channel." });
+    }
+
+    const title = typeof embed.title === "string" ? embed.title.trim() : "";
+    const description = typeof embed.description === "string" ? embed.description : "";
+    const author = typeof embed.author === "string" ? embed.author.trim() : "";
+    const footer = typeof embed.footer === "string" ? embed.footer.trim() : "";
+    const url = typeof embed.url === "string" ? embed.url.trim() : "";
+    const image = typeof embed.image === "string" ? embed.image.trim() : "";
+    const thumbnail = typeof embed.thumbnail === "string" ? embed.thumbnail.trim() : "";
+    const fields = Array.isArray(embed.fields) ? embed.fields.slice(0, 25).map(field => ({
+      name: String(field.name || "").trim().slice(0, 256) || "\u200b",
+      value: String(field.value || "").trim().slice(0, 1024) || "\u200b",
+      inline: !!field.inline
+    })).filter(field => field.name !== "\u200b" || field.value !== "\u200b") : [];
+    const validUrl = value => !value || /^https?:\/\//i.test(value);
+    if (!validUrl(url) || !validUrl(image) || !validUrl(thumbnail)) {
+      return res.status(400).json({ success: false, error: "URLs must start with http:// or https://." });
+    }
+    if (title.length > 256 || description.length > 4096 || author.length > 256 || footer.length > 2048) {
+      return res.status(400).json({ success: false, error: "The embed exceeds Discord's character limits." });
+    }
+    if (!title && !description && !fields.length && !image && !thumbnail && !author && !footer) {
+      return res.status(400).json({ success: false, error: "Add content to the embed before publishing." });
+    }
+
+    const color = /^#[0-9a-f]{6}$/i.test(String(embed.color || "")) ? parseInt(String(embed.color).slice(1), 16) : 0x5865F2;
+    const builder = new EmbedBuilder().setColor(color);
+    if (title) builder.setTitle(title);
+    if (description) builder.setDescription(description);
+    if (url) builder.setURL(url);
+    if (author) builder.setAuthor({ name: author });
+    if (footer) builder.setFooter({ text: footer });
+    if (image) builder.setImage(image);
+    if (thumbnail) builder.setThumbnail(thumbnail);
+    if (embed.timestamp) builder.setTimestamp();
+    if (fields.length) builder.addFields(fields);
+    const message = await channel.send({ embeds: [builder] });
+    try {
+      const config = loadConfig();
+      config.global_configs ||= {};
+      config.global_configs.embedMessageStats ||= {};
+      const stats = config.global_configs.embedMessageStats[guildId] ||= { templatesCreated: 0, embedsSent: 0 };
+      stats.embedsSent = Math.max(0, Number(stats.embedsSent) || 0) + 1;
+      stats.updatedAt = new Date().toISOString();
+      saveConfig(config);
+    } catch (statsErr) {
+      console.error("[dashboard embeds stats] Could not record sent embed:", statsErr.message);
+    }
+    return res.json({ success: true, messageId: message.id, channelId: channel.id, channelName: channel.name });
+  } catch (err) {
+    console.error("[dashboard embeds publish] Failed:", err.message);
+    return res.status(500).json({ success: false, error: "Could not publish the embed. Check the bot's channel permissions and try again." });
+  }
+});
+
+// Get channels in a guild for dashboard selectors
+app.get("/api/guild/:guildId/channels", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  try {
+    await guild.channels.fetch();
+  } catch (e) {
+    console.warn("[api/guild/channels] fetch failed:", e.message);
+  }
+
+  const textChannels = guild.channels.cache
+    .filter(ch => ch.isTextBased?.() && !ch.isThread?.() && ch.type !== ChannelType.GuildCategory)
+    .map(ch => ({
+      id: ch.id,
+      name: ch.name,
+      type: 'text'
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+    
+  const categories = guild.channels.cache
+    .filter(ch => ch.type === ChannelType.GuildCategory)
+    .map(ch => ({
+      id: ch.id,
+      name: ch.name,
+      type: 'category'
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json({ channels: [...categories, ...textChannels] });
+});
+
+// Combined resources endpoint for dashboard dropdowns (with optional forced refresh)
+app.get("/api/guild/:guildId/dashboard-resources", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  // Primary access check from OAuth session guild list
+  let hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+
+  // Fallback access check when session guild cache is stale
+  if (!hasAccess && req.session.user?.id) {
+    try {
+      const member = await guild.members.fetch(req.session.user.id);
+      hasAccess = !!member && (member.permissions.has(PermissionFlagsBits.Administrator) || member.permissions.has(PermissionFlagsBits.ManageGuild));
+    } catch (e) {
+      hasAccess = false;
+    }
+  }
+  if (!hasAccess) return res.status(403).json({ error: "No access to this guild" });
+
+  // Always refresh to prevent stale/empty cache payloads
+  try {
+    await Promise.allSettled([
+      guild.channels.fetch(),
+      guild.roles.fetch()
+    ]);
+  } catch (e) {
+    console.warn("[dashboard-resources] refresh failed:", e.message);
+  }
+
+  const botMember = guild.members.me || guild.members.cache.get(client.user?.id);
+  const canViewChannels = !!botMember?.permissions?.has(PermissionFlagsBits.ViewChannel);
+  const canViewRoles = !!botMember;
+
+  const channels = guild.channels.cache
+    .filter(ch => {
+      if (ch.type === ChannelType.GuildCategory) return true;
+      return ch.isTextBased?.() && !ch.isThread?.();
+    })
+    .map(ch => ({
+      id: ch.id,
+      name: ch.name,
+      type: ch.type === ChannelType.GuildCategory ? 'category' : 'text'
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const roles = guild.roles.cache
+    .filter(role => role.name !== "@everyone")
+    .map(role => ({
+      id: role.id,
+      name: role.name,
+      color: role.hexColor,
+      position: role.position
+    }))
+    .sort((a, b) => b.position - a.position);
+
+  const textCount = channels.filter(ch => ch.type === 'text').length;
+  const categoryCount = channels.filter(ch => ch.type === 'category').length;
+
+  res.json({
+    channels,
+    roles,
+    meta: {
+      channelCount: channels.length,
+      textChannelCount: textCount,
+      categoryCount,
+      roleCount: roles.length
+    },
+    permissions: {
+      canViewChannels,
+      canViewRoles
+    },
+    error: channels.length === 0
+      ? (canViewChannels
+        ? "No channels returned from Discord. Re-invite the bot with View Channels permission."
+        : "Bot is missing View Channels permission in this server.")
+      : null
+  });
+});
+
+// Get all roles in a guild
+app.get("/api/roles/:guildId", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const roles = guild.roles.cache
+    .filter(role => role.name !== '@everyone')
+    .map(role => ({
+      id: role.id,
+      name: role.name,
+      color: role.color,
+      position: role.position
+    }))
+    .sort((a, b) => b.position - a.position);
+
+  res.json({ roles });
+});
+
+// Get creator settings (bot nickname, timezone)
+app.get("/api/creator/settings", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const config = loadConfig();
+  const creatorSettings = config.creator || {
+    botNickname: "SPIDEY BOT",
+    timezone: "GMT"
+  };
+
+  res.json(creatorSettings);
+});
+
+// Save creator settings
+app.post("/api/creator/settings", express.json(), (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const config = loadConfig();
+  config.creator = config.creator || {};
+  config.creator.botNickname = req.body.botNickname || "SPIDEY BOT";
+  config.creator.timezone = req.body.timezone || "GMT";
+
+  fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+  res.json({ success: true, settings: config.creator });
+});
+
+// Get member statistics by role for graphs (with caching to avoid rate limits)
+
+// Get admin and mod members for dashboard management panel
+app.get("/api/staff-members/:guildId", async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  // Ensure members are fetched
+  if (guild.members.cache.size <= 1) {
+    try { await guild.members.fetch(); } catch (e) { console.warn('Failed to fetch members:', e.message); }
+  }
+
+  const members = guild.members.cache;
+  const botMember = guild.members.me;
+
+  // Get admins (non-bot members with Administrator permission)
+  const admins = members
+    .filter(m => !m.user.bot && m.permissions.has('Administrator'))
+    .map(m => {
+      const adminRoles = m.roles.cache.filter(r => r.permissions.has('Administrator') && r.name !== '@everyone');
+      return {
+        id: m.user.id,
+        username: m.user.username,
+        displayName: m.displayName,
+        avatar: m.user.avatar ? `https://cdn.discordapp.com/avatars/${m.user.id}/${m.user.avatar}.png?size=64` : null,
+        isOwner: m.id === guild.ownerId,
+        roles: adminRoles.map(r => ({ id: r.id, name: r.name, position: r.position })),
+        canRevoke: m.id !== guild.ownerId && botMember && botMember.roles.highest.position > m.roles.highest.position
+      };
+    })
+    .sort((a, b) => (a.isOwner ? -1 : b.isOwner ? 1 : a.displayName.localeCompare(b.displayName)));
+
+  // Get mods (non-bot, non-admin members with mod-like perms)
+  const mods = members
+    .filter(m => {
+      if (m.user.bot) return false;
+      if (m.permissions.has('Administrator')) return false;
+      return m.permissions.has('ModerateMembers') ||
+             m.permissions.has('KickMembers') ||
+             m.permissions.has('BanMembers') ||
+             m.permissions.has('ManageMessages') ||
+             m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
+    })
+    .map(m => {
+      const modRoles = m.roles.cache.filter(r => {
+        if (r.name === '@everyone') return false;
+        return r.permissions.has('ModerateMembers') ||
+               r.permissions.has('KickMembers') ||
+               r.permissions.has('BanMembers') ||
+               r.permissions.has('ManageMessages') ||
+               r.name.toLowerCase().includes('mod') ||
+               r.name.toLowerCase().includes('staff');
+      });
+      return {
+        id: m.user.id,
+        username: m.user.username,
+        displayName: m.displayName,
+        avatar: m.user.avatar ? `https://cdn.discordapp.com/avatars/${m.user.id}/${m.user.avatar}.png?size=64` : null,
+        roles: modRoles.map(r => ({ id: r.id, name: r.name, position: r.position })),
+        canRevoke: botMember && botMember.roles.highest.position > m.roles.highest.position
+      };
+    })
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+  res.json({ admins, mods, ownerId: guild.ownerId });
+});
+
+// Revoke a role from a member (remove admin/mod role)
+app.post("/api/revoke-role/:guildId", express.json(), async (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
+
+  const guildId = req.params.guildId;
+  const { memberId, roleId } = req.body;
+
+  if (!memberId || !roleId) return res.status(400).json({ error: "Missing memberId or roleId" });
+
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  try {
+    const member = await guild.members.fetch(memberId);
+    if (!member) return res.status(404).json({ error: "Member not found" });
+
+    // Safety: can't revoke roles from the server owner
+    if (member.id === guild.ownerId) {
+      return res.status(403).json({ error: "Cannot revoke roles from the server owner" });
+    }
+
+    const botMember = guild.members.me;
+    if (!botMember || botMember.roles.highest.position <= member.roles.highest.position) {
+      return res.status(403).json({ error: "Bot's role is not high enough to manage this member" });
+    }
+
+    const role = guild.roles.cache.get(roleId);
+    if (!role) return res.status(404).json({ error: "Role not found" });
+
+    if (!member.roles.cache.has(roleId)) {
+      return res.status(400).json({ error: "Member does not have this role" });
+    }
+
+    await member.roles.remove(roleId, `Revoked via dashboard by ${req.session.user.username}`);
+    
+    // Clear the member stats cache so numbers update
+    setCachedMemberStats(guildId, null);
+
+    console.log(`✅ Role "${role.name}" removed from ${member.user.username} by dashboard user ${req.session.user.username}`);
+    res.json({ success: true, message: `Removed role "${role.name}" from ${member.displayName}` });
+  } catch (err) {
+    console.error(`❌ Failed to revoke role: ${err.message}`);
+    res.status(500).json({ error: `Failed to revoke role: ${err.message}` });
+  }
+});
+
 
 app.get("/api/member-stats/:guildId", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
