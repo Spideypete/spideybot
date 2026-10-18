@@ -385,7 +385,7 @@ async function execute(i,ctx){
     const tracks=queue.tracks.toArray().slice(0,10);
     const current=queue.currentTrack;
     const description=(current?'**Now playing:** '+String(current.title||'Unknown track').slice(0,180)+' · '+String(current.duration||'Unknown')+'\\n\\n':'')+(tracks.length?tracks.map((track,index)=>'**'+(index+1)+'.** '+String(track.title||'Unknown track').slice(0,180)+' · '+String(track.duration||'Unknown')).join('\\n'):'No upcoming tracks.');
-    await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎶 Music queue').setDescription(description)});
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎶 Music queue').setDescription(description)]});
     return true;
   }
   if(commandRoot==='tictactoe'){
