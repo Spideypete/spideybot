@@ -4,6 +4,8 @@
 const fs = require('fs');
 const path = require('path');
 
+// Railway sets SPIDEYBOT_CONFIG_PATH to a mounted persistent volume. Local development
+// keeps using the repository config file unless an explicit path is provided.
 const CONFIG_FILE = process.env.SPIDEYBOT_CONFIG_PATH || path.join(__dirname, '../../config.json');
 
 const DEFAULT_GUILD_CONFIG = {
