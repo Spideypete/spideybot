@@ -39,6 +39,7 @@ if (missingEnvVars.length) {
 const express = require("express");
 const helmet = require('helmet');
 const session = require("express-session");
+const { createSqliteSessionStore } = require("./services/sqlite-session-store.cjs");
 const axios = require("axios");
 const {
   RateLimiter,
@@ -328,7 +329,15 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
+const sessionDatabasePath = process.env.SESSION_DB_PATH
+  || (process.env.NODE_ENV === 'production' ? null : path.join(__dirname, '.local', 'sessions.sqlite'));
+if (!sessionDatabasePath) {
+  throw new Error('SESSION_DB_PATH must point to a persistent database file on the production volume (for example /data/sessions.sqlite)');
+}
+const persistentSessionStore = createSqliteSessionStore({ session, databasePath: sessionDatabasePath });
+
 app.use(session({
+  store: persistentSessionStore,
   secret: process.env.SESSION_SECRET || (() => {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('SESSION_SECRET must be set in production');
@@ -337,7 +346,7 @@ app.use(session({
   })(),
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  cookie: {
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
