@@ -566,7 +566,10 @@ async function renderDebilInspiredPanel(id,f,c){
   :type==='channel'?guildSelect('debil_'+field,label,dropdowns.channels,defaultValue,'No channel (optional)')
   :type==='role'?guildSelect('debil_'+field,label,dropdowns.roles,defaultValue,'No role (optional)')
   :input('debil_'+field,label,defaultValue,type)).join('');
- body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+esc(schema.title)+'</h3><p>Settings are saved per server.</p></div></div>'+controls+'<div class="panel-actions">'+button('saveDebilSettings','Save '+f[1])+'</div></section></div>');
+ const aiToday=new Date().toISOString().slice(0,10);
+ const aiUsed=c.aiDailyUsage?.date===aiToday?Math.max(0,Number(c.aiDailyUsage.count)||0):0;
+ const aiUsageNote=k==='ai'?'<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Daily server allowance</h3><p>'+Math.min(50,aiUsed)+' of 50 AI requests used today (UTC). This allowance is per server and is the same on Free, Premium and Pro.</p></div></div><div class="progress-track"><div class="progress-fill" style="width:'+Math.min(100,aiUsed/50*100)+'%"></div></div></section>':'';
+ body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel">'+aiUsageNote+'<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+esc(schema.title)+'</h3><p>Settings are saved per server.</p></div></div>'+controls+'<div class="panel-actions">'+button('saveDebilSettings','Save '+f[1])+'</div></section></div>');
  if(k==='economy' && !['premium','pro'].includes((String(c.tier||'free').toLowerCase()!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':String(c.tier||'free').toLowerCase()))){['debil_currencyName','debil_currencySymbol'].forEach(key=>{const el=document.getElementById(key);if(el){el.disabled=true;el.title='Premium or Pro required';el.style.opacity='.55';}});const note=document.createElement('p');note.className='plan-locked-inline';note.textContent='🔒 Currency name and symbol customisation requires Premium or Pro.';body.querySelector('.welcome-message-section')?.appendChild(note);}
 
  document.getElementById('saveDebilSettings').onclick=async()=>{
