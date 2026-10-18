@@ -39,6 +39,8 @@
       letter-spacing: 0.5px;
     }
     .logo span { color: #9146FF; }
+    .brand-logo-img { display:block; width:auto; max-width:min(210px,42vw); height:44px; object-fit:contain; object-position:left center; }
+    .brand-inline-logo { display:inline-block; width:auto; max-width:180px; height:1.15em; object-fit:contain; vertical-align:-0.2em; }
     nav a {
       color: #999;
       text-decoration: none;
@@ -313,7 +315,7 @@
 </head>
 <body>
   <nav>
-    <div class="logo">SPIDEY <span>BOT</span></div>
+    <div class="logo brand-image-wrap"><img class="brand-logo-img" src="/spideybot-logo.png" alt="SPIDEY BOT"></div>
     <div>
       <a href="/">Home</a>
       <a href="/commands">Features</a>
@@ -332,7 +334,7 @@
 
       <div class="cta-section">
         <h2>Ready to Get Started?</h2>
-        <p>Invite SPIDEY BOT to your Discord server and start using these amazing commands!</p>
+        <p>Invite <img class="brand-inline-logo" src="/spideybot-logo.png" alt="SPIDEY BOT"> to your Discord server and start using these amazing commands!</p>
         <a href="/" class="btn btn-secondary">Back Home</a>
         <a href="/login" class="btn btn-primary">Admin Dashboard</a>
       </div>
@@ -367,12 +369,12 @@
       <div class="footer-section">
         <h3>About</h3>
         <ul>
-          <li style="color: #777; font-size: 0.9rem; line-height: 1.6;">SPIDEY BOT is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
+          <li style="color: #777; font-size: 0.9rem; line-height: 1.6;"><img class="brand-inline-logo" src="/spideybot-logo.png" alt="SPIDEY BOT"> is a feature-rich Discord bot with music, moderation, economy, and 40+ commands.</li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2025 SPIDEY BOT - All rights reserved</p>
+      <p>&copy; 2025 <img class="brand-inline-logo" src="/spideybot-logo.png" alt="SPIDEY BOT"> - All rights reserved</p>
     </div>
   </footer>
 
