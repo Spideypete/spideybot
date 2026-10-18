@@ -1231,7 +1231,7 @@ function addSidebarGroup(name,items,groupConfig){
      b.classList.toggle('feature-disabled',!on);
       const tier=effectiveTier(groupConfig),meta=PANEL_TIER_BADGES[f[0]],locked=meta?.kind==='locked'&&tier==='free';
       b.classList.toggle('feature-plan-locked',!!locked);
-      b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1])+(meta?'<span class="sidebar-tier-badge '+(meta.kind==='locked'?'is-locked':'')+'">'+esc(meta.label)+'</span>':'');
+      b.innerHTML='<span class="icon">'+icon(f[3])+'</span>'+esc(f[1])+((meta?.kind==='locked')?'<span class="sidebar-tier-badge is-locked">'+esc(meta.label)+'</span>':'');
       b.onclick=()=>{if(locked){alert(f[1]+' requires Premium or Pro. Open the Premium panel to view plans.');select('premium');return;}if(!enabled(groupConfig,f)){alert(f[1]+' is switched off. Turn it on from Overview → Panels first.');return;}select(f[0]);};
    }
    groupNav.appendChild(b);
