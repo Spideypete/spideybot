@@ -116,6 +116,9 @@ const PHOSPHOR_ICON_ALIASES={
 };
 // Icons are intentionally disabled until a reliable, self-hosted icon set is added.
 const icon=()=>'';
+async function guildDropdownOptions(id){const [channelResult,roleResult]=await Promise.all([api('/api/guild/'+encodeURIComponent(id)+'/channels').catch(()=>({channels:[]})),api('/api/guild/'+encodeURIComponent(id)+'/roles').catch(()=>({roles:[]}))]);return {channels:(channelResult.channels||[]).filter(ch=>ch.type==='text'||ch.type==='announcement'||ch.type==='news'),roles:(roleResult.roles||[]).filter(role=>!role.managed)};}
+function guildSelect(id,label,items,selected,placeholder){return '<label class="field">'+esc(label)+'<select id="'+id+'">'+optionList(items,selected,placeholder||'Choose…')+'</select></label>';}
+function guildMultiSelect(id,label,items,selectedValues,placeholder){const selected=new Set((selectedValues||[]).map(String));return '<label class="field">'+esc(label)+'<select id="'+id+'" multiple size="4">'+(items||[]).map(item=>'<option value="'+esc(item.id)+'" '+(selected.has(String(item.id))?'selected':'')+'>'+esc(item.name)+' ('+esc(item.id)+')</option>').join('')+'</select><span class="mention-help">'+esc(placeholder||'Hold Ctrl (Windows) or Command (Mac) to select multiple items.')+'</span></label>';}
 const input=(id,label,value,type='text')=>'<label class="field">'+esc(label)+'<input id="'+id+'" type="'+type+'" value="'+esc(value??'')+'"></label>';
 const check=(id,label,value)=>'<label class="check"><span>'+esc(label)+'</span><input id="'+id+'" type="checkbox" '+(value?'checked':'')+'></label>';
 const button=(id,label)=>'<button class="select" id="'+id+'" type="button">'+esc(label)+'</button>';
@@ -447,11 +450,11 @@ async function renderDebilInspiredPanel(id,f,c){
  const schemas={
   giveaways:{key:'giveawaySettings',title:'Giveaway settings',intro:'GiveawayBot-style workflow: timed giveaways, entry buttons, winner selection and rerolls.',fields:[
    ['enabled','Enable giveaway controls',c.giveawaySettings?.enabled!==false,'check'],
-   ['channelId','Default giveaway channel ID',c.giveawaySettings?.channelId||'','text'],
+   ['channelId','Default giveaway channel ID',c.giveawaySettings?.channelId||'','channel'],
    ['defaultDurationMinutes','Default duration (minutes)',c.giveawaySettings?.defaultDurationMinutes||60,'number'],
    ['defaultWinners','Default winner count',c.giveawaySettings?.defaultWinners||1,'number'],
    ['allowReroll','Allow rerolling winners',c.giveawaySettings?.allowReroll!==false,'check'],
-   ['requireRoleId','Optional required role ID',c.giveawaySettings?.requireRoleId||'','text']
+   ['requireRoleId','Optional required role ID',c.giveawaySettings?.requireRoleId||'','role']
   ]},
   economy:{key:'economySettings',title:'Economy settings',intro:'Configure server currency, rewards, and member transfers.',fields:[
    ['enabled','Enable economy',c.economySettings?.enabled!==false,'check'],
@@ -464,8 +467,8 @@ async function renderDebilInspiredPanel(id,f,c){
   ]},
   music:{key:'musicSettings',title:'Music settings',intro:'Configure voice music controls. Playback requires a compatible music runtime and audio dependencies.',fields:[
    ['enabled','Enable music controls',c.musicSettings?.enabled!==false,'check'],
-   ['djRoleId','DJ role ID',c.musicSettings?.djRoleId||'','text'],
-   ['musicChannelId','Optional music command channel ID',c.musicSettings?.musicChannelId||'','text'],
+   ['djRoleId','DJ role ID',c.musicSettings?.djRoleId||'','role'],
+   ['musicChannelId','Optional music command channel ID',c.musicSettings?.musicChannelId||'','channel'],
    ['maxQueueSize','Maximum queue size',c.musicSettings?.maxQueueSize||100,'number'],
    ['allowPlaylists','Allow playlists',c.musicSettings?.allowPlaylists!==false,'check'],
    ['allowSkip','Allow skip/pause/resume controls',c.musicSettings?.allowSkip!==false,'check']
@@ -489,12 +492,12 @@ async function renderDebilInspiredPanel(id,f,c){
    ['rockPaperScissors','Rock Paper Scissors',c.gamesSettings?.rockPaperScissors!==false,'check'],
    ['jokes','Joke command',c.gamesSettings?.jokes!==false,'check'],
    ['quoteCards','Quote image command',c.gamesSettings?.quoteCards!==false,'check'],
-   ['gameChannelId','Optional games channel ID',c.gamesSettings?.gameChannelId||'','text']
+   ['gameChannelId','Optional games channel ID',c.gamesSettings?.gameChannelId||'','channel']
   ]},
   ai:{key:'aiAssistantSettings',title:'Gemini AI Assistant settings',intro:'Powered by Google Gemini. Server admins can customise the assistant name and allowed channel; provider credentials stay private on Railway.',fields:[
    ['enabled','Enable AI Assistant',c.aiAssistantSettings?.enabled!==false,'check'],
    ['assistantName','Assistant name (used for the Discord command)',c.aiAssistantSettings?.assistantName||c.aiAssistantName||'spidey','text'],
-   ['channelId','Optional allowed channel ID',c.aiAssistantSettings?.channelId||'','text'],
+   ['channelId','Optional allowed channel ID',c.aiAssistantSettings?.channelId||'','channel'],
    ['keepConversationContext','Keep conversation context',c.aiAssistantSettings?.keepConversationContext!==false,'check'],
    ['maxResponseLength','Maximum response characters',c.aiAssistantSettings?.maxResponseLength||1900,'number']
   ]},
@@ -502,6 +505,7 @@ async function renderDebilInspiredPanel(id,f,c){
  };
  const schema=schemas[k]; if(!schema)return false;
  const current=c[schema.key]||{};
+ const dropdowns=['giveaways','music','games','ai'].includes(k)?await guildDropdownOptions(id):{channels:[],roles:[]};
  if(k==='premium'){
  const pricing={premium:{1:4.99,3:13.99,6:24.99,12:39.99},pro:{1:7.99,3:21.99,6:39.99,12:69.99}};
  const periods=[{months:1,label:'Monthly'},{months:3,label:'3 Months'},{months:6,label:'6 Months'},{months:12,label:'Yearly'}];
@@ -544,6 +548,8 @@ async function renderDebilInspiredPanel(id,f,c){
 }
  const controls=schema.fields.map(([field,label,defaultValue,type])=>type==='check'
   ?'<label class="check"><span>'+esc(label)+'</span><input type="checkbox" id="debil_'+field+'" '+(defaultValue?'checked':'')+'></label>'
+  :type==='channel'?guildSelect('debil_'+field,label,dropdowns.channels,defaultValue,'No channel (optional)')
+  :type==='role'?guildSelect('debil_'+field,label,dropdowns.roles,defaultValue,'No role (optional)')
   :input('debil_'+field,label,defaultValue,type)).join('');
  body.innerHTML=card(f[1],schema.intro,'<div class="welcome-panel"><section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>'+esc(schema.title)+'</h3><p>Settings are saved per server.</p></div></div>'+controls+'<div class="panel-actions">'+button('saveDebilSettings','Save '+f[1])+'</div></section></div>');
  document.getElementById('saveDebilSettings').onclick=async()=>{
@@ -621,13 +627,14 @@ async function renderPanel(id,f,c){
  }
  if(k==='birthdays'){
   const cfg=c.birthdaySettings||{};
+  const dropdowns=await guildDropdownOptions(id);
   body.innerHTML=card('Birthdays','Inspired by BirthdayBot: customize birthday announcements, birthday roles, privacy-friendly messages, timezone and recurring custom events.',switcher(id,f,c)+
    '<div class="welcome-panel">'+
-   '<section class="welcome-message-section"><h3>Birthday announcements</h3>'+check('birthdayEnabled','Enable birthday celebrations',cfg.enabled!==false)+input('birthdayChannel','Birthday announcement channel ID',cfg.channelId||'')+input('birthdayRole','Birthday role ID (optional)',cfg.roleId||'')+input('birthdayTimezone','Server timezone (IANA)',cfg.timezone||'UTC')+input('birthdayHour','Announcement hour (0–23)',cfg.hour??9,'number')+'</section>'+
+   '<section class="welcome-message-section"><h3>Birthday announcements</h3>'+check('birthdayEnabled','Enable birthday celebrations',cfg.enabled!==false)+guildSelect('birthdayChannel','Birthday announcement channel',dropdowns.channels,cfg.channelId,'Choose a channel')+guildSelect('birthdayRole','Birthday role (optional)',dropdowns.roles,cfg.roleId,'No birthday role')+input('birthdayTimezone','Server timezone (IANA)',cfg.timezone||'UTC')+input('birthdayHour','Announcement hour (0–23)',cfg.hour??9,'number')+'</section>'+
    '<section class="welcome-message-section"><h3>Message and privacy</h3><label class="field">Birthday message<textarea id="birthdayMessage" rows="4" maxlength="1800" placeholder="Happy birthday, {user}! 🎂">'+esc(cfg.message||'Happy birthday, {user}! 🎂')+'</textarea></label>'+check('birthdayPing','Mention the birthday member',cfg.ping!==false)+check('birthdayAge','Allow age to be shown when available',cfg.showAge===true)+check('birthdayTimezoneUser','Use each member timezone when available',cfg.useMemberTimezone===true)+'<p class="mention-help">Supported message placeholder: {user}. Birthdays should not expose a member’s birth year unless the member has chosen to share it.</p></section>'+
    '<section class="welcome-message-section"><h3>Custom events</h3><p class="mention-help">Use one event per line in the format <code>Name | MM-DD | Message</code>. Leave the year out for an annual event, or use <code>YYYY-MM-DD</code> for a one-time event.</p><label class="field">Custom events<textarea id="birthdayEvents" rows="4" maxlength="8000" placeholder="Server anniversary | 04-12 | Happy server anniversary, {server}!">'+esc(cfg.customEventsText||'')+'</textarea></label></section>'+
    '<div class="panel-actions"><button class="select" id="saveBirthdaySettings" type="button">Save Birthdays</button></div></div>');
-  document.getElementById('saveBirthdaySettings').onclick=async()=>{const timezone=val('birthdayTimezone').trim()||'UTC';if(!/^[A-Za-z_+-]+(?:\/[A-Za-z0-9_+.-]+)*$/.test(timezone)){alert('Enter a valid IANA timezone, for example Africa/Nairobi.');return;}const hour=Number(val('birthdayHour'));if(!Number.isInteger(hour)||hour<0||hour>23){alert('Announcement hour must be a whole number from 0 to 23.');return;}const fresh=await load(id);const result=await save(id,{birthdaySettings:{enabled:yes('birthdayEnabled'),channelId:val('birthdayChannel').trim()||null,roleId:val('birthdayRole').trim()||null,timezone,hour,message:val('birthdayMessage').trim().slice(0,1800)||'Happy birthday, {user}! 🎂',ping:yes('birthdayPing'),showAge:yes('birthdayAge'),useMemberTimezone:yes('birthdayTimezoneUser'),customEventsText:val('birthdayEvents').trim().slice(0,8000)}});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Birthday settings saved.');};
+  document.getElementById('saveBirthdaySettings').onclick=async()=>{const timezone=val('birthdayTimezone').trim()||'UTC';if(!/^[A-Za-z_+-]+(?:\/[A-Za-z0-9_+.-]+)*$/.test(timezone)){alert('Enter a valid IANA timezone, for example Africa/Nairobi.');return;}const hour=Number(val('birthdayHour'));if(!Number.isInteger(hour)||hour<0||hour>23){alert('Announcement hour must be a whole number from 0 to 23.');return;}const fresh=await load(id);const result=await save(id,{birthdaySettings:{enabled:yes('birthdayEnabled'),channelId:val('birthdayChannel')||null,roleId:val('birthdayRole')||null,timezone,hour,message:val('birthdayMessage').trim().slice(0,1800)||'Happy birthday, {user}! 🎂',ping:yes('birthdayPing'),showAge:yes('birthdayAge'),useMemberTimezone:yes('birthdayTimezoneUser'),customEventsText:val('birthdayEvents').trim().slice(0,8000)}});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Birthday settings saved.');};
   attachToggle(id,f,c);return;
  }
  if(k==='moderator'){
@@ -698,7 +705,7 @@ async function renderPanel(id,f,c){
    const auditChannels=(channelResult.channels||[]).filter(x=>x.type==='text');
    body.innerHTML=card('Audit Log','Track command usage and server activity in this dashboard, with optional delivery to a Discord staff channel.',
     '<div class="welcome-panel audit-panel">'+
-    '<section class="welcome-message-section"><h3>Audit log delivery</h3><p class="mention-help">Send audit embeds to a staff-only Discord channel and keep a recent timeline visible here.</p>'+check('auditEnabled','Enable audit logging',au.enabled===true)+check('auditCommandUsage','Log slash command usage',au.commandUsage!==false)+'<label class="field">Discord audit channel<select id="auditChannel">'+optionList(auditChannels,au.channelId||'','Dashboard only (no Discord channel)')+'</select><span class="mention-help">Choose a staff-only text channel to receive command and event logs. Leave empty to keep logs in the dashboard only.</span></label>'+input('ignoreChannels','Ignored channel IDs (comma separated)',(au.ignoreChannelIds||[]).join(', '))+'</section>'+
+    '<section class="welcome-message-section"><h3>Audit log delivery</h3><p class="mention-help">Send audit embeds to a staff-only Discord channel and keep a recent timeline visible here.</p>'+check('auditEnabled','Enable audit logging',au.enabled===true)+check('auditCommandUsage','Log slash command usage',au.commandUsage!==false)+'<label class="field">Discord audit channel<select id="auditChannel">'+optionList(auditChannels,au.channelId||'','Dashboard only (no Discord channel)')+'</select><span class="mention-help">Choose a staff-only text channel to receive command and event logs. Leave empty to keep logs in the dashboard only.</span></label>'+guildMultiSelect('ignoreChannels','Ignored channels',auditChannels,au.ignoreChannelIds||[],'Select channels to exclude from audit logging. Hold Ctrl (Windows) or Command (Mac) to select multiple.')+'</section>'+
     '<section class="welcome-message-section"><h3>Messages</h3>'+toggle('auditMessageDelete','Deleted messages',au.events?.messageDelete)+toggle('auditMessageEdit','Edited messages with before/after text',au.events?.messageUpdate)+toggle('auditBulkDelete','Bulk message deletion',au.events?.messageDeleteBulk)+'</section>'+
     '<section class="welcome-message-section"><h3>Members & moderation</h3>'+toggle('auditMemberJoin','Member joins',au.events?.memberJoin)+toggle('auditMemberLeave','Member leaves',au.events?.memberLeave)+toggle('auditMemberUpdate','Username, nickname and role changes',au.events?.memberUpdate)+toggle('auditBan','Bans and unbans',au.events?.bans)+toggle('auditVoice','Voice joins, leaves, moves and mute/deafen changes',au.events?.voice)+'</section>'+
     '<section class="welcome-message-section"><h3>Server structure</h3>'+toggle('auditChannels','Channel create, update and delete',au.events?.channels)+toggle('auditRoles','Role create, update and delete',au.events?.roles)+toggle('auditGuild','Server name and icon changes',au.events?.guild)+'</section>'+
@@ -707,7 +714,7 @@ async function renderPanel(id,f,c){
    document.getElementById('auditSearch').addEventListener('input',()=>{const q=val('auditSearch').toLowerCase();document.querySelectorAll('.audit-entry').forEach(row=>{row.style.display=row.textContent.toLowerCase().includes(q)?'':'none';});});
    document.getElementById('saveAudit').onclick=async()=>{
     const eventSettings={...(au.events||{}),messageDelete:yes('auditMessageDelete'),messageUpdate:yes('auditMessageEdit'),messageDeleteBulk:yes('auditBulkDelete'),memberJoin:yes('auditMemberJoin'),memberLeave:yes('auditMemberLeave'),memberUpdate:yes('auditMemberUpdate'),bans:yes('auditBan'),voice:yes('auditVoice'),channels:yes('auditChannels'),roles:yes('auditRoles'),guild:yes('auditGuild')};
-    const ignoreChannelIds=val('ignoreChannels').split(',').map(x=>x.trim()).filter(Boolean);
+    const ignoreChannelIds=Array.from(document.getElementById('ignoreChannels')?.selectedOptions||[]).map(option=>option.value).filter(Boolean);
     const result=await save(id,{audit:{...au,enabled:yes('auditEnabled'),commandUsage:yes('auditCommandUsage'),channelId:val('auditChannel').trim()||null,ignoreChannelIds,events:eventSettings}});
     if(result.success===false)throw new Error(result.error||'Could not save audit settings');alert('Audit log settings saved.');
    };
@@ -717,6 +724,7 @@ async function renderPanel(id,f,c){
   }
   if(k==='automod'){
   const am=c.automod||{},rules=Array.isArray(am.customRules)?am.customRules:[];
+  const dropdowns=await guildDropdownOptions(id);
   const ruleText=n=>Array.isArray(rules[n]?.terms)?rules[n].terms.join('\\n'):'';
   const area=(id,label,value,help)=>'<label class="field">'+esc(label)+'<textarea id="'+id+'" rows="4" maxlength="30000" placeholder="One term per line, or separate terms with commas">'+esc(value)+'</textarea><span class="mention-help">'+esc(help)+'</span></label>';
   const pick=(id,label,value)=>'<label class="field">'+esc(label)+'<select id="'+id+'">'+[['delete','Delete message'],['timeout','Delete + timeout'],['alert','Alert only']].map(x=>'<option value="'+x[0]+'" '+(value===x[0]?'selected':'')+'>'+x[1]+'</option>').join('')+'</select></label>';
@@ -739,7 +747,7 @@ async function renderPanel(id,f,c){
     check('screenUsername','Screen usernames',am.screenUsername!==false)+check('screenNickname','Screen server nicknames',am.screenNickname!==false)+check('screenActionTimeout','Timeout for prohibited profile terms',!!am.screenActionTimeout))+
    section('Automated responses','Choose what happens when a rule is triggered. Timeout requires the bot to have Moderate Members permission.',
     pick('action','Violation action',am.action||'delete')+input('timeoutMinutes','Timeout duration (minutes, 1–40320)',am.timeoutMinutes||10,'number')+
-    check('alertStaff','Send staff alert',am.alertStaff!==false)+input('logChannel','Private staff log channel ID',am.logChannelId||'')+
+    check('alertStaff','Send staff alert',am.alertStaff!==false)+guildSelect('logChannel','Private staff log channel',dropdowns.channels,am.logChannelId,'Choose a staff log channel')+
     '<p class="mention-help">Use a private channel where only moderators can view AutoMod alerts. The bot needs View Channel and Send Messages permissions.</p>')+
    '<div class="panel-actions"><button class="select" id="saveAutoMod" type="button">Save AutoMod settings</button></div></div>');
   document.getElementById('saveAutoMod').onclick=async()=>{
@@ -749,14 +757,14 @@ async function renderPanel(id,f,c){
     antiSpam:yes('antiSpam'),maxMessages:Math.max(2,Math.min(30,Number(val('max'))||6)),windowMs:Math.max(1,Math.min(60,Number(val('window'))||8))*1000,
     antiInvite:yes('antiInvite'),antiLink:yes('antiLink'),blockedDomains:parseTerms('blockedDomains'),antiDuplicate:yes('antiDuplicate'),caps:yes('caps'),massMention:yes('massMention'),maxMentions:Math.max(1,Math.min(50,Number(val('maxMentions'))||5)),
     screenUsername:yes('screenUsername'),screenNickname:yes('screenNickname'),screenActionTimeout:yes('screenActionTimeout'),action:val('action'),
-    timeoutMinutes:Math.max(1,Math.min(40320,Number(val('timeoutMinutes'))||10)),alertStaff:yes('alertStaff'),logChannelId:val('logChannel').trim()||null}};
+    timeoutMinutes:Math.max(1,Math.min(40320,Number(val('timeoutMinutes'))||10)),alertStaff:yes('alertStaff'),logChannelId:val('logChannel')||null}};
    try{const result=await save(id,patch);if(result.success===false)throw new Error(result.error||'Save failed');alert('AutoMod settings saved.');}
    catch(err){alert('Could not save AutoMod settings: '+(err.message||String(err)));}
   };
   attachToggle(id,f,c);return;
  }
  if(k==='levels'){
-  const currentLevels=c.levels||{},xpConfig=c['xp-levels']||{},xpPerMessage=Math.max(1,Number(currentLevels.xpPerMessage||xpConfig.xpPerMessage)||15),xpPerLevel=Math.max(1,Number(currentLevels.xpPerLevel||xpConfig.xpPerLevel)||500),messagesNeeded=Math.ceil(xpPerLevel/xpPerMessage);
+  const currentLevels=c.levels||{},xpConfig=c['xp-levels']||{},dropdowns=await guildDropdownOptions(id),xpPerMessage=Math.max(1,Number(currentLevels.xpPerMessage||xpConfig.xpPerMessage)||15),xpPerLevel=Math.max(1,Number(currentLevels.xpPerLevel||xpConfig.xpPerLevel)||500),messagesNeeded=Math.ceil(xpPerLevel/xpPerMessage);
   let roles=[];
   try{const roleResult=await api('/api/guild/'+encodeURIComponent(id)+'/roles');roles=(roleResult.roles||[]).filter(r=>!r.managed);}catch(err){console.warn('Could not load roles for level rewards',err);}
   const existingRewards=xpConfig.levelRoles||c.levelRoles||{};
@@ -765,7 +773,7 @@ async function renderPanel(id,f,c){
   const roleOptions=(selected)=>'<option value="">Choose a reward role</option>'+roles.map(r=>'<option value="'+esc(r.id)+'" '+(String(selected||'')===String(r.id)?'selected':'')+'>'+esc(r.name)+'</option>').join('');
   const renderRewardRows=()=>rewardRows.map((row,index)=>'<div class="rr-mapping-grid level-reward-row" data-level-reward-row="'+index+'"><label class="field">Level reached<input type="number" min="1" max="10000" data-level-reward-level value="'+esc(String(row.level||1))+'"></label><label class="field">Give role<select data-level-reward-role>'+roleOptions(row.roleId)+'</select></label><button type="button" class="level-reward-action level-reward-remove" data-remove-level-reward="'+index+'"><span aria-hidden="true">−</span> Remove</button></div>').join('');
   const rewardsHtml='<div class="panel-section"><div class="welcome-section-heading"><div><h3>Level role rewards</h3><p>Automatically give a role when a member reaches the level. Example: Level 1 → Noobie. You can add as many level rewards as your server needs.</p></div><button type="button" class="level-reward-action level-reward-add" id="addLevelReward"><span aria-hidden="true">＋</span> Add more roles</button></div><div id="levelRewardRows">'+renderRewardRows()+'</div><label class="field">'+check('keepOldLevelRoles','Keep previous level reward roles',c.keepOldLevelRoles!==false)+'</label><p class="muted">Turn this off if members should lose earlier level reward roles when they earn a new one. The bot must have Manage Roles permission and its highest role must be above each reward role.</p></div>';
-  body.innerHTML=card(f[1],f[2],switcher(id,f,c)+'<div class="panel-section"><h3>XP progression</h3>'+check('enabled','Enable leveling',currentLevels.enabled!==false)+input('xp','XP earned per eligible message',xpPerMessage,'number')+input('per','XP required per level',xpPerLevel,'number')+input('cooldown','XP cooldown per member (seconds)',currentLevels.xpCooldownSeconds??60,'number')+'<div id="xpEstimate" class="muted">At '+xpPerMessage+' XP per message, it takes about '+messagesNeeded+' eligible messages to earn '+xpPerLevel+' XP.</div></div><div class="panel-section"><h3>Level-up log channel</h3><p class="muted">When someone levels up, SPIDEY BOT posts their current XP, level and XP progress in this channel. It does not post every message.</p>'+check('announce','Enable level-up announcements',currentLevels.announce!==false)+input('channel','Level-up log channel ID',currentLevels.announceChannel||xpConfig.announcementChannel||'')+'</div>'+rewardsHtml+'<div class="panel-section"><h3>Admin XP editing</h3><p class="muted">Server administrators can use <code>/levels addxp</code>, <code>/levels setxp</code>, <code>/levels removexp</code> and <code>/levels reset</code>. The member’s level is recalculated from their total XP.</p></div><div class="panel-actions">'+button('save','Save levels')+'</div>');
+  body.innerHTML=card(f[1],f[2],switcher(id,f,c)+'<div class="panel-section"><h3>XP progression</h3>'+check('enabled','Enable leveling',currentLevels.enabled!==false)+input('xp','XP earned per eligible message',xpPerMessage,'number')+input('per','XP required per level',xpPerLevel,'number')+input('cooldown','XP cooldown per member (seconds)',currentLevels.xpCooldownSeconds??60,'number')+'<div id="xpEstimate" class="muted">At '+xpPerMessage+' XP per message, it takes about '+messagesNeeded+' eligible messages to earn '+xpPerLevel+' XP.</div></div><div class="panel-section"><h3>Level-up log channel</h3><p class="muted">When someone levels up, SPIDEY BOT posts their current XP, level and XP progress in this channel. It does not post every message.</p>'+check('announce','Enable level-up announcements',currentLevels.announce!==false)+guildSelect('channel','Level-up log channel',dropdowns.channels,currentLevels.announceChannel||xpConfig.announcementChannel,'Choose a channel')+'</div>'+rewardsHtml+'<div class="panel-section"><h3>Admin XP editing</h3><p class="muted">Server administrators can use <code>/levels addxp</code>, <code>/levels setxp</code>, <code>/levels removexp</code> and <code>/levels reset</code>. The member’s level is recalculated from their total XP.</p></div><div class="panel-actions">'+button('save','Save levels')+'</div>');
   const updateEstimate=()=>{const xp=Math.max(1,Number(val('xp'))||15),per=Math.max(1,Number(val('per'))||500),needed=Math.ceil(per/xp);const estimate=document.getElementById('xpEstimate');if(estimate)estimate.textContent='At '+xp+' XP per message, it takes about '+needed+' eligible messages to earn '+per+' XP.';};
   document.getElementById('xp').addEventListener('input',updateEstimate);document.getElementById('per').addEventListener('input',updateEstimate);
   const wireRewardButtons=()=>{document.querySelectorAll('[data-remove-level-reward]').forEach(btn=>btn.onclick=()=>{rewardRows.splice(Number(btn.dataset.removeLevelReward),1);if(!rewardRows.length)rewardRows.push({level:1,roleId:''});document.getElementById('levelRewardRows').innerHTML=renderRewardRows();wireRewardButtons();});};
@@ -775,8 +783,8 @@ async function renderPanel(id,f,c){
     const xp=Math.max(1,Math.min(10000,Number(val('xp'))||15)),per=Math.max(1,Math.min(1000000,Number(val('per'))||500)),cooldown=Math.max(0,Math.min(3600,Number(val('cooldown'))||0));
     const levelRoles={};const usedLevels=new Set();
     document.querySelectorAll('.level-reward-row').forEach(row=>{const level=Number(row.querySelector('[data-level-reward-level]').value),roleId=row.querySelector('[data-level-reward-role]').value;if(!Number.isInteger(level)||level<1||level>10000)throw new Error('Each reward level must be a whole number between 1 and 10000.');if(!roleId)return;if(usedLevels.has(level))throw new Error('Each level can only have one reward role.');usedLevels.add(level);levelRoles['level_'+level]=roleId;});
-    const updatedLevels={...currentLevels,enabled:yes('enabled'),xpPerMessage:xp,xpPerLevel:per,xpCooldownSeconds:cooldown,announce:yes('announce'),announceChannel:val('channel').trim()||null};
-    const updatedXpConfig={...xpConfig,xpPerMessage:xp,xpPerLevel:per,xpCooldownSeconds:cooldown,announceLevelUps:yes('announce'),announcementChannel:val('channel').trim()||null,levelRoles};
+    const updatedLevels={...currentLevels,enabled:yes('enabled'),xpPerMessage:xp,xpPerLevel:per,xpCooldownSeconds:cooldown,announce:yes('announce'),announceChannel:val('channel')||null};
+    const updatedXpConfig={...xpConfig,xpPerMessage:xp,xpPerLevel:per,xpCooldownSeconds:cooldown,announceLevelUps:yes('announce'),announcementChannel:val('channel')||null,levelRoles};
     const result=await save(id,{levels:updatedLevels,'xp-levels':updatedXpConfig,keepOldLevelRoles:yes('keepOldLevelRoles')});
     if(result?.success===false)throw new Error(result.error||'Save failed');alert('Levels and level role rewards saved.');
   };
@@ -800,6 +808,7 @@ if(k==='achievements'){
  }
  if(k==='inviteTracker'){
   const it=c.inviteTracker||{},rewards=Array.isArray(it.rewards)?it.rewards:[];
+  const dropdowns=await guildDropdownOptions(id);
   body.innerHTML=card('Invite Tracker','Track which members invite people, show invite totals and leaderboards, log joins and leaves, and optionally reward invite milestones. Based on the feature set of Invitron.', 
    '<div class="welcome-panel">'+
    '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Tracking settings</h3><p>Invite attribution requires the bot to have permission to view server invites.</p></div></div>'+
@@ -812,17 +821,17 @@ if(k==='achievements'){
    input('itRapidThreshold','Flag join bursts at this member count',it.rapidJoinThreshold??5,'number')+
    input('itRapidWindow','Join burst window (seconds)',it.rapidJoinWindowSeconds??60,'number')+
    check('itBlockFraudRewards','Do not award roles for flagged joins',it.blockRewardsForFlagged!==false)+
-   input('itLogChannel','Invite log channel ID',it.logChannelId||'')+
+   guildSelect('itLogChannel','Invite log channel',dropdowns.channels,it.logChannelId,'Choose an invite log channel')+
    input('itReward1Count','First reward: invite threshold',rewards[0]?.threshold??5,'number')+
-   input('itReward1Role','First reward: role ID',rewards[0]?.roleId||'')+
+   guildSelect('itReward1Role','First reward role',dropdowns.roles,rewards[0]?.roleId,'Choose reward role')+
    input('itReward2Count','Second reward: invite threshold',rewards[1]?.threshold??10,'number')+
-   input('itReward2Role','Second reward: role ID',rewards[1]?.roleId||'')+
-   '<p class="mention-help">Feature reference: <a href="https://github.com/e-enes/invitron" target="_blank" rel="noopener noreferrer">Invitron</a>. Available commands: <code>/invites stats</code>, <code>/invites leaderboard</code>. Admins can also add, remove or reset invite counts. Fraud flags are heuristic warnings, not proof of abuse. Make sure the bot role is above any reward roles.</p>'+
+   guildSelect('itReward2Role','Second reward role',dropdowns.roles,rewards[1]?.roleId,'Choose reward role')+
+   '<p class="mention-help">Available commands: <code>/invites stats</code>, <code>/invites leaderboard</code>. Admins can also add, remove or reset invite counts. Fraud flags are heuristic warnings, not proof of abuse. Make sure the bot role is above any reward roles.</p>'+
    '<div class="panel-actions"><button class="select" id="saveInviteTracker" type="button">Save invite tracker</button></div></section></div>');
   document.getElementById('saveInviteTracker').onclick=async()=>{
    const rewards=[];
    for(const n of [1,2]){const threshold=Number(val('itReward'+n+'Count')),roleId=val('itReward'+n+'Role').trim();if(roleId&&Number.isInteger(threshold)&&threshold>0)rewards.push({threshold,roleId});}
-   const minimumAccountAgeHours=Number(val('itMinimumAge')),rapidJoinThreshold=Number(val('itRapidThreshold')),rapidJoinWindowSeconds=Number(val('itRapidWindow'));if(!Number.isFinite(minimumAccountAgeHours)||minimumAccountAgeHours<0||minimumAccountAgeHours>8760||!Number.isInteger(rapidJoinThreshold)||rapidJoinThreshold<2||rapidJoinThreshold>100||!Number.isInteger(rapidJoinWindowSeconds)||rapidJoinWindowSeconds<10||rapidJoinWindowSeconds>3600){alert('Check fraud detection thresholds. Account age must be 0–8760 hours, join count 2–100 and window 10–3600 seconds.');return;}const next={...it,enabled:yes('itEnabled'),logJoins:yes('itLogJoins'),logLeaves:yes('itLogLeaves'),rewardRolesEnabled:yes('itRewardRoles'),fraudDetectionEnabled:yes('itFraudDetection'),minimumAccountAgeHours,rapidJoinThreshold,rapidJoinWindowSeconds,blockRewardsForFlagged:yes('itBlockFraudRewards'),logChannelId:val('itLogChannel').trim()||null,rewards};
+   const minimumAccountAgeHours=Number(val('itMinimumAge')),rapidJoinThreshold=Number(val('itRapidThreshold')),rapidJoinWindowSeconds=Number(val('itRapidWindow'));if(!Number.isFinite(minimumAccountAgeHours)||minimumAccountAgeHours<0||minimumAccountAgeHours>8760||!Number.isInteger(rapidJoinThreshold)||rapidJoinThreshold<2||rapidJoinThreshold>100||!Number.isInteger(rapidJoinWindowSeconds)||rapidJoinWindowSeconds<10||rapidJoinWindowSeconds>3600){alert('Check fraud detection thresholds. Account age must be 0–8760 hours, join count 2–100 and window 10–3600 seconds.');return;}const next={...it,enabled:yes('itEnabled'),logJoins:yes('itLogJoins'),logLeaves:yes('itLogLeaves'),rewardRolesEnabled:yes('itRewardRoles'),fraudDetectionEnabled:yes('itFraudDetection'),minimumAccountAgeHours,rapidJoinThreshold,rapidJoinWindowSeconds,blockRewardsForFlagged:yes('itBlockFraudRewards'),logChannelId:val('itLogChannel')||null,rewards};
    try{const result=await save(id,{inviteTracker:next});if(result?.success===false)throw new Error(result.error||'Save failed');alert('Invite tracker settings saved.');await renderPanel(id,f,await load(id));}
    catch(err){alert('Could not save invite tracker settings: '+(err.message||String(err)));}
   };
