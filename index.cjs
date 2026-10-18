@@ -8352,6 +8352,41 @@ app.delete("/api/guild/:guildId/emojis/:emojiId", async (req, res) => {
   }
 });
 
+// Per-server embed message counters. Counts are persisted in config.json for the testing/production deployment.
+function getEmbedMessageStats(config, guildId) {
+  const stats = config.global_configs?.embedMessageStats?.[guildId] || {};
+  return {
+    templatesCreated: Math.max(0, Number(stats.templatesCreated) || 0),
+    embedsSent: Math.max(0, Number(stats.embedsSent) || 0)
+  };
+}
+app.get("/api/guild/:guildId/embeds/stats", (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  if (!client.guilds.cache.has(guildId)) return res.status(404).json({ error: "The bot cannot find this server." });
+  const config = loadConfig();
+  const guildConfig = config.guilds?.[guildId] || {};
+  res.json({ ...getEmbedMessageStats(config, guildId), savedTemplates: Array.isArray(guildConfig.embedTemplates) ? guildConfig.embedTemplates.length : 0 });
+});
+app.post("/api/guild/:guildId/embeds/template-created", express.json(), (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  if (!client.guilds.cache.has(guildId)) return res.status(404).json({ success: false, error: "The bot cannot find this server." });
+  try {
+    const config = loadConfig();
+    config.global_configs ||= {};
+    config.global_configs.embedMessageStats ||= {};
+    const stats = config.global_configs.embedMessageStats[guildId] ||= { templatesCreated: 0, embedsSent: 0 };
+    stats.templatesCreated = Math.max(0, Number(stats.templatesCreated) || 0) + 1;
+    stats.updatedAt = new Date().toISOString();
+    saveConfig(config);
+    return res.json({ success: true, ...getEmbedMessageStats(config, guildId) });
+  } catch (err) {
+    console.error("[dashboard embeds stats] Could not record template:", err.message);
+    return res.status(500).json({ success: false, error: "Could not update embed statistics." });
+  }
+});
+
 // Publish an embed built in the dashboard to a selected server channel.
 app.post("/api/guild/:guildId/embeds/send", express.json(), async (req, res) => {
   if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
@@ -8413,6 +8448,17 @@ app.post("/api/guild/:guildId/embeds/send", express.json(), async (req, res) => 
     if (embed.timestamp) builder.setTimestamp();
     if (fields.length) builder.addFields(fields);
     const message = await channel.send({ embeds: [builder] });
+    try {
+      const config = loadConfig();
+      config.global_configs ||= {};
+      config.global_configs.embedMessageStats ||= {};
+      const stats = config.global_configs.embedMessageStats[guildId] ||= { templatesCreated: 0, embedsSent: 0 };
+      stats.embedsSent = Math.max(0, Number(stats.embedsSent) || 0) + 1;
+      stats.updatedAt = new Date().toISOString();
+      saveConfig(config);
+    } catch (statsErr) {
+      console.error("[dashboard embeds stats] Could not record sent embed:", statsErr.message);
+    }
     return res.json({ success: true, messageId: message.id, channelId: channel.id, channelName: channel.name });
   } catch (err) {
     console.error("[dashboard embeds publish] Failed:", err.message);
