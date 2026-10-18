@@ -3,6 +3,7 @@
 const {
   Client,
   GatewayIntentBits,
+  ActivityType,
   Partials,
   ActionRowBuilder,
   StringSelectMenuBuilder,
@@ -1280,7 +1281,7 @@ client.once("ready", async () => {
   } catch (err) {
     console.log('🔁 Running commit: unknown');
   }
-  client.user.setActivity("Swinging around", { type: "WATCHING" });
+  client.user.setActivity("Swinging around", { type: ActivityType.Watching });
   console.log(`📡 guildMemberAdd listeners registered: ${client.listenerCount("guildMemberAdd")} (pid ${process.pid})`);
   player.on("error", (queue, error) => {
     console.error("Music player error:", error);
