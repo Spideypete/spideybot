@@ -48,10 +48,23 @@ async function saveGuildSettings(req,res){
   }
   if(Object.prototype.hasOwnProperty.call(patch,'xp-levels')){
     const currentRewards=current['xp-levels']?.levelRoles||{};
-    const nextRewards=patch['xp-levels']?.levelRoles||{};
-    const currentCount=Object.keys(currentRewards).length;
-    const nextCount=Object.keys(nextRewards).length;
-    if(nextCount>policy.levelRoleRewards&&nextCount>currentCount)return rejectLimit('level role rewards',policy.levelRoleRewards);
+    const submittedRewards=patch['xp-levels']?.levelRoles||{};
+    const rewardLevel=key=>Number(String(key).replace(/^level_/,''));
+    const orderedCurrent=Object.entries(currentRewards).sort((a,b)=>rewardLevel(a[0])-rewardLevel(b[0]));
+    const visibleCurrentKeys=new Set(orderedCurrent.slice(0,policy.levelRoleRewards).map(([key])=>key));
+    const retainedPaidRewards=orderedCurrent.slice(policy.levelRoleRewards);
+    const accessibleRewards=Object.fromEntries(Object.entries(submittedRewards).filter(([key])=>
+      visibleCurrentKeys.has(key)||!Object.prototype.hasOwnProperty.call(currentRewards,key)
+    ));
+    if(Object.keys(accessibleRewards).length>policy.levelRoleRewards){
+      return rejectLimit('level role rewards',policy.levelRoleRewards);
+    }
+    // A downgrade changes access, not ownership of saved settings. Preserve reward
+    // rules above the active plan limit and ignore edits to those hidden rules.
+    patch['xp-levels']={...(patch['xp-levels']||{}),levelRoles:{
+      ...accessibleRewards,
+      ...Object.fromEntries(retainedPaidRewards)
+    }};
   }
   if(Object.prototype.hasOwnProperty.call(patch,'customCommands')){
     const currentItems=Array.isArray(current.customCommands?.items)?current.customCommands.items:[];
