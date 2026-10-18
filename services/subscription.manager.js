@@ -126,22 +126,21 @@ function getGuildTier(guildId) {
 
 function getTierLimits(guildId) {
   const tier = getGuildTier(guildId);
-  const toggles = getFeatureToggles();
   const policy = PLAN_POLICY[tier] || PLAN_POLICY.free;
   return {
     ...policy,
-    maxReactRoles: toggles.reactRoles?.[tier] ?? policy.reactionRoles,
-    maxGiveaways: toggles.giveaways?.[tier] ?? policy.giveawayInviteMessages,
-    maxCustomCommands: toggles.customCommands?.[tier] ?? policy.customCommands,
-    maxInviteMilestones: toggles.inviteTracking?.[tier] ?? policy.inviteMilestones,
-    hasXP: toggles.xpLeaderboards?.[tier] ?? true,
-    hasCustomCommands: (toggles.customCommands?.[tier] ?? policy.customCommands) > 0,
-    hasFullServerGuard: toggles.fullServerGuard?.[tier] ?? true,
-    hasAnalytics: toggles.analytics?.[tier] ?? true,
-    hasInvites: (toggles.inviteTracking?.[tier] ?? policy.inviteMilestones) > 0,
-    hasAutomation: toggles.automation?.[tier] ?? true,
-    hasAntiRaid: toggles.antiRaid?.[tier] ?? true,
-    hasAntiSpam: toggles.antiSpam?.[tier] ?? true
+    maxReactRoles: policy.reactionRoles,
+    maxGiveaways: policy.giveawayInviteMessages,
+    maxCustomCommands: policy.customCommands,
+    maxInviteMilestones: policy.inviteMilestones,
+    hasXP: true,
+    hasCustomCommands: true,
+    hasFullServerGuard: true,
+    hasAnalytics: true,
+    hasInvites: true,
+    hasAutomation: true,
+    hasAntiRaid: true,
+    hasAntiSpam: true
   };
 }
 
