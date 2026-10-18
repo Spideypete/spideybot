@@ -6512,6 +6512,9 @@ app.post("/api/config/:guildId", async (req, res) => {
       const current = guildConfig.economy || {};
       req.body.economy = { ...req.body.economy, currency: 'coins' };
     }
+    if (req.body.customCommands && typeof req.body.customCommands === 'object' && Array.isArray(req.body.customCommands.items) && req.body.customCommands.items.length > policy.customCommands) {
+      return res.status(403).json({ success: false, error: 'This server can create '+policy.customCommands+' custom commands on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.customCommands, currentTier: policy.tier });
+    }
     if (req.body.inviteTracker && typeof req.body.inviteTracker === 'object' && Array.isArray(req.body.inviteTracker.rewards) && req.body.inviteTracker.rewards.length > policy.inviteMilestones) {
       return res.status(403).json({ success: false, error: 'This server can configure '+policy.inviteMilestones+' invite milestone rewards on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.inviteMilestones, currentTier: policy.tier });
     }
