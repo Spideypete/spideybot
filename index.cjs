@@ -1003,6 +1003,7 @@ client.on('interactionCreate', async interaction => {
 
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
 const handledAskInteractions = new WeakSet();
+const handledSpideyInteractions = new WeakSet();
 client.on('interactionCreate', async interaction => {
   try {
     if (interaction.isChatInputCommand() && interaction.commandName === 'ask') {
@@ -1112,10 +1113,17 @@ client.on('interactionCreate', async interaction => {
       }
     }
     if (interaction.isChatInputCommand()) {
-      // spidey commands are dispatched by the legacy interaction router below.
-      // Do not execute the same interaction twice; duplicate dispatch can cause
-      // failed replies and Discord "Unknown interaction" errors.
-      if (await customSlashRuntime.handleCustomSlashCommand(interaction)) return;
+      // Dispatch custom slash commands first, then the integrated SPIDEY suite.
+      // Mark handled interactions so the legacy router cannot execute them twice.
+      if (await customSlashRuntime.handleCustomSlashCommand(interaction)) {
+        handledSpideyInteractions.add(interaction);
+        return;
+      }
+      const handled = await handleSpideyInteraction(interaction, { client, player });
+      if (handled) {
+        handledSpideyInteractions.add(interaction);
+        return;
+      }
     }
   } catch (e) {
     const isAsk = interaction.isChatInputCommand?.() && interaction.commandName === 'ask';
@@ -3193,16 +3201,13 @@ client.on("messageCreate", async (msg) => {
 
 // ============== INTERACTIONS (BUTTONS & DROPDOWNS & SLASH COMMANDS) ==============
 client.on("interactionCreate", async (interaction) => {
-  // /ask is handled by the dedicated Gemini listener registered above. It must not
-  // enter this legacy router as well, or both listeners defer the same interaction
-  // and Discord rejects it with Unknown interaction (10062).
+  // /ask is owned by the dedicated AI assistant handler. Do not let this legacy
+  // monolith process it or send a competing generic failure response.
   if (interaction.isChatInputCommand() && interaction.commandName === "ask") return;
 
-  // Dispatch modular spidey commands before the legacy monolith handles interactions.
-  if (interaction.isChatInputCommand()) {
-    const handled = await handleSpideyInteraction(interaction, { client, player });
-    if (handled) return;
-  }
+  // Slash commands handled by the unified bridge above must not be dispatched a
+  // second time here. This listener handles only legacy commands and components.
+  if (handledSpideyInteractions.has(interaction)) return;
 
   // Handle autocomplete interactions
   if (interaction.isAutocomplete()) {
