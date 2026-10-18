@@ -6506,11 +6506,11 @@ app.post("/api/config/:guildId", async (req, res) => {
     // Currency name and symbol are Premium/Pro customisation.
     if (!policy.economyCustomCurrency && req.body.economySettings && typeof req.body.economySettings === 'object') {
       const current = guildConfig.economySettings || {};
-      req.body.economySettings = { ...req.body.economySettings, currencyName: current.currencyName || 'Credits', currencySymbol: current.currencySymbol || '₵' };
+      req.body.economySettings = { ...req.body.economySettings, currencyName: 'Credits', currencySymbol: '₵' };
     }
     if (!policy.economyCustomCurrency && req.body.economy && typeof req.body.economy === 'object') {
       const current = guildConfig.economy || {};
-      req.body.economy = { ...req.body.economy, currency: current.currency || 'coins' };
+      req.body.economy = { ...req.body.economy, currency: 'coins' };
     }
     if (req.body.inviteTracker && typeof req.body.inviteTracker === 'object' && Array.isArray(req.body.inviteTracker.rewards) && req.body.inviteTracker.rewards.length > policy.inviteMilestones) {
       return res.status(403).json({ success: false, error: 'This server can configure '+policy.inviteMilestones+' invite milestone rewards on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.inviteMilestones, currentTier: policy.tier });
@@ -6559,6 +6559,17 @@ app.post("/api/config/:guildId", async (req, res) => {
   }
 
   Object.assign(guildConfig, req.body);
+  if (req.body && (req.body.economySettings || req.body.economy)) {
+    guildConfig.spideySuite = guildConfig.spideySuite || {};
+    const suiteEconomy = guildConfig.spideySuite.economy || {};
+    const settings = guildConfig.economySettings || {};
+    suiteEconomy.currency = policy.economyCustomCurrency
+      ? String((settings.currencySymbol || '₵')+' '+(settings.currencyName || 'Credits')).trim()
+      : 'coins';
+    suiteEconomy.currencyName = policy.economyCustomCurrency ? (settings.currencyName || 'Credits') : 'Coins';
+    suiteEconomy.currencySymbol = policy.economyCustomCurrency ? (settings.currencySymbol || '₵') : '';
+    guildConfig.spideySuite.economy = suiteEconomy;
+  }
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   
   console.log('[CONFIG SAVE] Guild:', guildId, 'Data:', req.body);
