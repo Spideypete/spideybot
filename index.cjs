@@ -5988,184 +5988,180 @@ app.get('/api/guild/:guildId/entitlements', (req, res) => {
 
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || '';
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || '';
-const PAYPAL_MODE = process.env.PAYPAL_MODE || 'sandbox';
-
-const PAYPAL_API_BASE = PAYPAL_MODE === 'live' 
-  ? 'https://api-m.paypal.com' 
-  : 'https://api-m.sandbox.paypal.com';
+const PAYPAL_MODE = process.env.PAYPAL_MODE === 'live' ? 'live' : 'sandbox';
+const PAYPAL_API_BASE = PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+const PAYPAL_PRICING = {
+  premium: { 1: 4.99, 3: 13.99, 6: 24.99, 12: 39.99 },
+  pro: { 1: 7.99, 3: 21.99, 6: 39.99, 12: 69.99 }
+};
 
 async function getPayPalAccessToken() {
-  console.log('[PayPal] Mode:', PAYPAL_MODE, 'Client ID present:', !!PAYPAL_CLIENT_ID, 'Secret present:', !!PAYPAL_CLIENT_SECRET);
-  
   if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-    throw new Error('PayPal credentials not configured');
+    const error = new Error('PayPal is not configured yet. Please contact the bot owner.');
+    error.code = 'PAYPAL_NOT_CONFIGURED';
+    throw error;
   }
-  
   const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
-  const response = await axios.post(`${PAYPAL_API_BASE}/v1/oauth2/token`, 
+  const response = await axios.post(`${PAYPAL_API_BASE}/v1/oauth2/token`,
     'grant_type=client_credentials',
-    {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    }
+    { headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 15000 }
   );
   return response.data.access_token;
 }
 
-// Create PayPal order for premium upgrade
+function getPaymentGuildAccess(req, guildId) {
+  if (!req.session?.authenticated || !req.session?.user?.id) return false;
+  return Array.isArray(req.session.guilds) && req.session.guilds.some(g => String(g.id) === String(guildId));
+}
+
+// Create a PayPal order. Pricing and guild ownership are always decided server-side.
 app.post('/api/paypal/create-order', async (req, res) => {
   try {
-    const { guildId, tier, durationMonths } = req.body;
-    
-    if (!guildId || !tier || !durationMonths) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const guildId = String(req.body?.guildId || '');
+    const tier = String(req.body?.tier || '').toLowerCase();
+    const durationMonths = Number(req.body?.durationMonths);
+    if (!guildId || !['premium', 'pro'].includes(tier) || !Number.isInteger(durationMonths) || !PAYPAL_PRICING[tier][durationMonths]) {
+      return res.status(400).json({ error: 'Choose a valid plan and billing period.' });
     }
-    
-    const config = loadConfig();
-    const guildConfig = config.guilds[guildId] || {};
-    const guildName = guildConfig.guildName || 'Server';
-    
-    const pricing = {
-      premium: { 1: 4.99, 3: 13.99, 6: 24.99, 12: 39.99 },
-      pro: { 1: 7.99, 3: 21.99, 6: 39.99, 12: 69.99 }
-    };
-    
-    const amount = pricing[tier]?.[durationMonths];
-    if (!amount) {
-      return res.status(400).json({ error: 'Invalid tier or duration' });
+    if (!getPaymentGuildAccess(req, guildId)) {
+      return res.status(req.session?.authenticated ? 403 : 401).json({ error: 'Sign in with an account that can manage this Discord server before purchasing.' });
     }
-    
+
+    const amount = PAYPAL_PRICING[tier][durationMonths].toFixed(2);
     const accessToken = await getPayPalAccessToken();
-    
     const orderData = {
       intent: 'CAPTURE',
       purchase_units: [{
         reference_id: guildId,
-        description: `Spidey Bot ${tier.toUpperCase()} Upgrade - ${durationMonths} Months`,
-        custom_id: JSON.stringify({ guildId, tier, durationMonths, buyerId: req.session.user?.id || null, buyerName: req.session.user?.username || req.session.user?.global_name || null }),
-        amount: {
-          currency_code: 'USD',
-          value: amount.toString()
-        }
+        description: `Spidey Bot ${tier.toUpperCase()} - ${durationMonths} month(s)`,
+        custom_id: JSON.stringify({ guildId, tier, durationMonths, buyerId: String(req.session.user.id) }),
+        amount: { currency_code: 'USD', value: amount }
       }],
       application_context: {
         brand_name: 'Spidey Bot',
         landing_page: 'NO_PREFERENCE',
         user_action: 'PAY_NOW',
-        return_url: `${getPublicBaseUrl(req)}/premium?success=true`,
-        cancel_url: `${getPublicBaseUrl(req)}/premium?cancelled=true`
+        return_url: `${getPublicBaseUrl(req)}/dashboard.html?guildId=${encodeURIComponent(guildId)}&paypalReturn=1`,
+        cancel_url: `${getPublicBaseUrl(req)}/dashboard.html?guildId=${encodeURIComponent(guildId)}&paypalCancelled=1`
       }
     };
-    
     const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders`, orderData, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      timeout: 20000
     });
-    
-    res.json({ 
-      orderId: response.data.id, 
-      approvalUrl: response.data.links.find(l => l.rel === 'approve').href 
-    });
+    const approval = response.data.links?.find(link => link.rel === 'approve');
+    if (!response.data.id || !approval?.href) throw new Error('PayPal did not return an approval link.');
+
+    // Save an authoritative pending record. Never trust plan data supplied by the browser at capture time.
+    const config = loadConfig();
+    config.global_configs = config.global_configs || {};
+    config.global_configs.paypalPendingOrders = config.global_configs.paypalPendingOrders || {};
+    config.global_configs.paypalPendingOrders[String(response.data.id)] = {
+      orderId: String(response.data.id), guildId, tier, durationMonths,
+      buyerId: String(req.session.user.id), expectedAmount: amount, currency: 'USD',
+      status: 'pending', createdAt: new Date().toISOString()
+    };
+    saveConfig(config);
+    res.json({ orderId: response.data.id, approvalUrl: approval.href });
   } catch (error) {
+    const notConfigured = error.code === 'PAYPAL_NOT_CONFIGURED';
     console.error('[PayPal Create Order Error]', error.response?.data || error.message);
-    const errorMsg = error.response?.data?.message || error.message || 'Failed to create order';
-    res.status(500).json({ error: errorMsg });
+    res.status(notConfigured ? 503 : 500).json({ error: notConfigured ? error.message : (error.response?.data?.message || 'Could not start PayPal checkout. Please try again.') });
   }
 });
 
-// Capture PayPal order (called after approval)
+// Capture and verify the approved order on the server before granting the plan.
 app.post('/api/paypal/capture-order', async (req, res) => {
   try {
-    const { orderId } = req.body;
-    
-    if (!orderId) {
-      return res.status(400).json({ error: 'Missing orderId' });
+    const orderId = String(req.body?.orderId || '');
+    const guildId = String(req.body?.guildId || '');
+    if (!orderId || !guildId) return res.status(400).json({ error: 'Missing PayPal order or server ID.' });
+    if (!getPaymentGuildAccess(req, guildId)) {
+      return res.status(req.session?.authenticated ? 403 : 401).json({ error: 'Sign in with an account that can manage this Discord server to finish checkout.' });
     }
-    
+
+    let config = loadConfig();
+    config.global_configs = config.global_configs || {};
+    config.global_configs.paypalPendingOrders = config.global_configs.paypalPendingOrders || {};
+    config.global_configs.premiumPurchases = Array.isArray(config.global_configs.premiumPurchases) ? config.global_configs.premiumPurchases : [];
+    const pending = config.global_configs.paypalPendingOrders[orderId];
+    if (!pending || pending.guildId !== guildId || pending.buyerId !== String(req.session.user.id)) {
+      return res.status(403).json({ error: 'This PayPal order does not belong to this account and server.' });
+    }
+    const previousPurchase = config.global_configs.premiumPurchases.find(p => String(p.orderId) === orderId);
+    if (pending.status === 'completed' && previousPurchase) {
+      return res.json({ success: true, tier: previousPurchase.appliedTier || previousPurchase.tier, durationMonths: previousPurchase.durationMonths, alreadyProcessed: true });
+    }
+    if (pending.status !== 'pending') return res.status(409).json({ error: 'This PayPal order is not available for capture.' });
+
     const accessToken = await getPayPalAccessToken();
-    
-    const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`, {}, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
+    const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`, {}, {
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      timeout: 20000
     });
-    
-    if (response.data.status === 'COMPLETED') {
-      const customId = response.data.purchase_units[0]?.custom_id;
-      const purchase = response.data.purchase_units[0]?.payments?.captures?.[0];
-      
-      let guildId, tier, durationMonths, buyerId = null, buyerName = null;
-      try {
-        const customData = JSON.parse(customId);
-        guildId = customData.guildId;
-        tier = customData.tier;
-        durationMonths = customData.durationMonths;
-        buyerId = customData.buyerId || null;
-        buyerName = customData.buyerName || null;
-      } catch (e) {
-        return res.status(400).json({ error: 'Invalid custom data' });
-      }
-      
-      const config = loadConfig();
-      if (!config.guilds[guildId]) {
-        config.guilds[guildId] = {};
-      }
-      
-      const msPerMonth = 30 * 24 * 60 * 60 * 1000;
-      const tierEndDate = Date.now() + (durationMonths * msPerMonth);
-      
-      config.guilds[guildId].tier = tier;
-      config.guilds[guildId].tierEndDate = tierEndDate;
-      config.guilds[guildId].tierDurationMonths = durationMonths;
-      config.guilds[guildId].tierStartDate = Date.now();
-      config.guilds[guildId].tierSource = 'paypal';
-      config.guilds[guildId].tierGrantedBy = buyerId;
-      config.global_configs = config.global_configs || {};
-      config.global_configs.premiumPurchases = Array.isArray(config.global_configs.premiumPurchases) ? config.global_configs.premiumPurchases : [];
-      const purchaseRecord = { orderId: String(orderId), guildId: String(guildId), tier, durationMonths: Number(durationMonths), buyerId, buyerName, amount: purchase.amount?.value || null, currency: purchase.amount?.currency_code || null, purchasedAt: new Date().toISOString() };
-      if (!config.global_configs.premiumPurchases.some(p => p.orderId === purchaseRecord.orderId)) config.global_configs.premiumPurchases.unshift(purchaseRecord);
-      config.global_configs.premiumPurchases = config.global_configs.premiumPurchases.slice(0, 1000);
-      saveConfig(config);
-      
-      console.log(`[PayPal] Payment captured: ${tier} ${durationMonths} months for guild ${guildId}, amount: ${purchase.amount.value} ${purchase.amount.currency_code}`);
-      
-      res.json({ success: true, tier, durationMonths, amount: purchase.amount.value });
-    } else {
-      res.status(400).json({ error: 'Order not completed' });
+    const order = response.data;
+    const unit = order.purchase_units?.[0];
+    const capture = unit?.payments?.captures?.[0];
+    if (order.status !== 'COMPLETED' || capture?.status !== 'COMPLETED') {
+      return res.status(402).json({ error: 'PayPal has not confirmed a completed payment yet.' });
     }
+    if (String(unit?.reference_id || '') !== pending.guildId ||
+        String(unit?.custom_id || '') === '' ||
+        String(capture?.amount?.currency_code || '') !== pending.currency ||
+        Number(capture?.amount?.value) !== Number(pending.expectedAmount)) {
+      console.error('[PayPal] Captured order did not match the pending server-side order:', orderId);
+      return res.status(400).json({ error: 'The payment details did not match this order. The plan was not changed.' });
+    }
+    let custom;
+    try { custom = JSON.parse(unit.custom_id); } catch { return res.status(400).json({ error: 'PayPal order metadata was invalid.' }); }
+    if (String(custom.guildId) !== pending.guildId || String(custom.tier) !== pending.tier ||
+        Number(custom.durationMonths) !== Number(pending.durationMonths) || String(custom.buyerId) !== pending.buyerId) {
+      return res.status(400).json({ error: 'PayPal order metadata did not match the saved purchase. The plan was not changed.' });
+    }
+
+    // Extend an active paid term instead of resetting its remaining time. Never downgrade
+    // an active higher tier because someone purchased a lower tier by mistake.
+    const guild = config.guilds[guildId] || (config.guilds[guildId] = {});
+    const now = Date.now();
+    const currentTier = ['premium', 'pro'].includes(String(guild.tier || '').toLowerCase()) &&
+      Number(guild.tierEndDate || 0) > now ? String(guild.tier).toLowerCase() : 'free';
+    const rank = { free: 0, premium: 1, pro: 2 };
+    const appliedTier = rank[currentTier] > rank[pending.tier] ? currentTier : pending.tier;
+    const startsAt = currentTier !== 'free' ? Math.max(now, Number(guild.tierEndDate) || now) : now;
+    const endsAt = startsAt + Number(pending.durationMonths) * 30 * 24 * 60 * 60 * 1000;
+    guild.tier = appliedTier;
+    guild.tierStartDate = currentTier !== 'free' ? (Number(guild.tierStartDate) || now) : now;
+    guild.tierEndDate = endsAt;
+    guild.tierDurationMonths = Number(pending.durationMonths);
+    guild.tierSource = 'paypal';
+    guild.tierGrantedBy = String(req.session.user.id);
+
+    const purchaseRecord = {
+      orderId, guildId, tier: pending.tier, appliedTier, durationMonths: Number(pending.durationMonths),
+      buyerId: pending.buyerId, amount: capture.amount.value, currency: capture.amount.currency_code,
+      captureId: capture.id || null, purchasedAt: new Date().toISOString(), tierEndDate: endsAt
+    };
+    config.global_configs.premiumPurchases = [purchaseRecord, ...config.global_configs.premiumPurchases.filter(p => String(p.orderId) !== orderId)].slice(0, 1000);
+    pending.status = 'completed';
+    pending.completedAt = purchaseRecord.purchasedAt;
+    pending.captureId = capture.id || null;
+    pending.appliedTier = appliedTier;
+    config.global_configs.paypalPendingOrders[orderId] = pending;
+    saveConfig(config);
+
+    console.log(`[PayPal] Verified payment: ${pending.tier} ${pending.durationMonths} month(s) for guild ${guildId}; applied tier ${appliedTier}; ${capture.amount.value} ${capture.amount.currency_code}`);
+    res.json({ success: true, tier: appliedTier, purchasedTier: pending.tier, durationMonths: Number(pending.durationMonths), tierEndDate: endsAt });
   } catch (error) {
+    const notConfigured = error.code === 'PAYPAL_NOT_CONFIGURED';
     console.error('[PayPal Capture Error]', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to capture order' });
+    res.status(notConfigured ? 503 : 500).json({ error: notConfigured ? error.message : (error.response?.data?.message || 'Could not verify the PayPal payment. No plan change was made.') });
   }
 });
 
-// PayPal Webhook handler
-app.post('/api/paypal/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const webhookEvent = req.body;
-  const eventType = req.headers['x-paypal-event-type'];
-  
-  console.log(`[PayPal Webhook] Received: ${eventType}`);
-  
-  // Verify webhook - in production, validate signature with webhook ID
-  // For now, process the event directly
-  
-  if (eventType === 'PAYMENT.SALE.COMPLETED' || eventType === 'CHECKOUT.ORDER.APPROVED') {
-    try {
-      const customId = webhookEvent?.resource?.purchase_units?.[0]?.custom_id;
-      if (customId) {
-        const customData = JSON.parse(customId);
-        console.log('[PayPal Webhook] Processing payment for:', customData);
-      }
-    } catch (e) {
-      console.error('[PayPal Webhook] Error processing:', e.message);
-    }
-  }
-  
+// PayPal webhooks are informational only; plan activation happens after the authenticated,
+// server-to-server order capture above. Do not grant entitlements from unverified webhook data.
+app.post('/api/paypal/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  console.log('[PayPal Webhook] Received a webhook notification; checkout capture remains the source of truth.');
   res.status(200).send('OK');
 });
 
