@@ -5816,7 +5816,8 @@ app.get('/api/owner/stats', (req, res) => {
     const order = { pro: 0, premium: 1, free: 2 };
     return order[a.tier] - order[b.tier] || a.name.localeCompare(b.name);
   });
-  res.json({ totalServers: client.guilds.cache.size, freeCount, premiumCount, proCount, newThisWeek, servers, generatedAt: new Date(now).toISOString() });
+  const purchaseHistory = purchases.slice(0, 100).map(p => ({ ...p, guildName: client.guilds.cache.get(String(p.guildId))?.name || config.guilds?.[p.guildId]?.guildName || 'Server no longer in bot' }));
+  res.json({ totalServers: client.guilds.cache.size, freeCount, premiumCount, proCount, newThisWeek, servers, purchases: purchaseHistory, generatedAt: new Date(now).toISOString() });
 });
 
 app.post('/api/owner/force-refresh', async (req, res) => {
