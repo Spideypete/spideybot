@@ -6514,11 +6514,16 @@ app.post("/api/config/:guildId", async (req, res) => {
     }
     // Custom reminder behaviour and birthday events stay at their saved/default values on Free.
     if (!policy.reminderBehaviour) {
-      for (const key of ['remindersSettings','reminders']) {
+      for (const key of ['reminderSettings','remindersSettings','reminders']) {
         if (req.body[key] && typeof req.body[key] === 'object') {
           const current = guildConfig[key] || {};
           req.body[key] = { ...req.body[key] };
-          for (const field of Object.keys(req.body[key])) if (/behavio|repeat|recurr|scheduleMode/i.test(field)) req.body[key][field] = current[field] ?? req.body[key][field];
+          for (const field of Object.keys(req.body[key])) {
+            if (/behavio|repeat|recurr|scheduleMode|^dm$|allowMentions/i.test(field)) {
+              const fallback = field === 'allowMentions' ? false : true;
+              req.body[key][field] = current[field] ?? fallback;
+            }
+          }
         }
       }
     }
@@ -6527,7 +6532,7 @@ app.post("/api/config/:guildId", async (req, res) => {
         if (req.body[key] && typeof req.body[key] === 'object') {
           const current = guildConfig[key] || {};
           req.body[key] = { ...req.body[key] };
-          for (const field of Object.keys(req.body[key])) if (/custom.?events?/i.test(field)) req.body[key][field] = current[field] ?? [];
+          for (const field of Object.keys(req.body[key])) if (/custom.?events?/i.test(field)) req.body[key][field] = current[field] ?? (field.toLowerCase().endsWith('text') ? '' : []);
         }
       }
     }
