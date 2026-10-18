@@ -247,6 +247,20 @@ td,th{border-color:var(--border)}
 @media(max-width:760px){.top-actions{gap:6px}.server-chip{max-width:120px;padding-right:7px}.server-chip span{max-width:76px}.plan-badge{gap:3px;padding:3px 5px}.plan-badge img{width:16px;height:16px}.profile{padding-right:7px}.profile-chevron{display:none}}
 
 
+/* Statistics panel cards use the same premium/purple treatment as Essentials. */
+.statistics-essential-card{border:1px solid rgba(118,81,168,.48)!important;box-shadow:0 0 0 1px rgba(118,81,168,.10),0 8px 24px rgba(118,81,168,.08)!important}
+.dark .statistics-essential-card{border-color:rgba(168,139,200,.48)!important;box-shadow:0 0 0 1px rgba(168,139,200,.12),0 8px 24px rgba(0,0,0,.18)!important}
+.stat-counter-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:20px;align-items:start;margin:18px 0 22px}
+.stat-counter-form .field{display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:0;margin:0}
+.stat-counter-form .field select,.stat-counter-form .field input{display:block;width:100%;min-width:0;margin-top:2px}
+.stat-counter-form .field select{min-height:42px}
+.stat-counter-actions{margin-top:16px}
+.overview-statistics-summary{margin:0 0 20px}
+.overview-statistics-summary .panel-head{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.overview-statistics-summary .stats{display:grid;grid-template-columns:minmax(180px,260px);gap:14px;margin:0 0 12px}
+.overview-statistics-summary .stat{min-height:100px}
+@media(max-width:640px){.stat-counter-form{grid-template-columns:minmax(0,1fr);row-gap:16px}.overview-statistics-summary .stats{grid-template-columns:minmax(0,1fr)}}
+
 /* Statistics panel cards: scoped override so the existing Overview layout stays untouched. */
 .statistics-metrics-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
 @media(max-width:1050px){.statistics-metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
