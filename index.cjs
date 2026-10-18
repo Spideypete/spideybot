@@ -5874,7 +5874,11 @@ app.post('/api/owner/tier', (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: 'Not authenticated' });
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
-  if (!botOwnerId || req.session.user?.id !== botOwnerId) return res.status(403).json({ error: 'Access denied' });
+  // Match the same testing-host-only owner access used by the Owner Console and stats API.
+  // This exception cannot pass on the production hostname.
+  if (!isTestingOwnerSession(req) && (!botOwnerId || req.session.user?.id !== botOwnerId)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
 
   const { guildId, tier, durationMonths, reason } = req.body || {};
   if (!guildId || !client.guilds.cache.has(String(guildId))) return res.status(404).json({ error: 'That server is not currently in SPIDEY BOT.' });
