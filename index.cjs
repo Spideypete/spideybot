@@ -3207,7 +3207,6 @@ client.on("interactionCreate", async (interaction) => {
 
   // Slash commands handled by the unified bridge above must not be dispatched a
   // second time here. This listener handles only legacy commands and components.
-  if (handledSpideyInteractions.has(interaction)) return;
 
   // Handle autocomplete interactions
   if (interaction.isAutocomplete()) {
@@ -3242,6 +3241,7 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   // Handle slash command interactions - Individual command handlers
+  if (handledSpideyInteractions.has(interaction)) return;
   if (interaction.isChatInputCommand()) {
     const { commandName, options } = interaction;
     
