@@ -8260,7 +8260,10 @@ app.get("/api/dashboard/stat-channel-counters", async (req, res) => {
   }
   const guild = client.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
-  res.json({ counters: serverStatChannels.list(guildId).map(item => ({
+  const planPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const tier = String(planPolicy?.tier || getGuildConfig(guildId)?.tier || "free").toLowerCase();
+  const limit = tier === "pro" ? 20 : tier === "premium" ? 10 : 5;
+  res.json({ tier, limit, counters: serverStatChannels.list(guildId).map(item => ({
     ...item,
     channelName: guild.channels.cache.get(item.channelId)?.name || "Missing channel",
     roleName: item.roleId ? (guild.roles.cache.get(item.roleId)?.name || "Missing role") : null
@@ -8276,10 +8279,16 @@ app.post("/api/dashboard/stat-channel-counters", express.json(), async (req, res
   }
   const guild = client.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ error: "SPIDEY BOT is not connected to this server" });
+  const planPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const tier = String(planPolicy?.tier || getGuildConfig(guildId)?.tier || "free").toLowerCase();
+  const limit = tier === "pro" ? 20 : tier === "premium" ? 10 : 5;
   try {
     if (req.body?.action === "remove") {
       if (!serverStatChannels.remove(guildId, String(req.body.counterId || ""))) return res.status(404).json({ error: "Counter not found" });
       return res.json({ success: true, counters: serverStatChannels.list(guildId) });
+    }
+    if (serverStatChannels.list(guildId).length >= limit) {
+      return res.status(403).json({ error: "Your " + tier.toUpperCase() + " plan allows up to " + limit + " configured statistics counters. Upgrade your plan for more counters.", upgradeRequired: true, tier, limit });
     }
     const channelId = String(req.body?.channelId || "");
     const metric = String(req.body?.metric || "");
