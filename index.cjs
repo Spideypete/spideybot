@@ -8305,7 +8305,7 @@ app.post("/api/dashboard/stat-channel-counters", express.json(), async (req, res
       if (!botMember?.permissions?.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission to create a channel." });
       const role = metric === "roleMembers" ? guild.roles.cache.get(roleId) : null;
       const baseName = role ? role.name : (label || ({members:"members",humans:"human-members",bots:"bot-accounts",channels:"server-channels",online:"online-members"}[metric] || "statistics"));
-      const safeName = String(baseName).normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"").slice(0,90) || "statistics";
+      const safeName = String(baseName).normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"").slice(0,90) || "statistics";
       channel = await guild.channels.create({ name: safeName, type: ChannelType.GuildVoice, reason: "SPIDEY BOT live statistics counter created from dashboard" });
       channelId = channel.id;
       createdChannel = true;
