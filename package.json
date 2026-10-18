@@ -4,7 +4,7 @@
   "description": "SPIDEY BOT - Discord Bot with Dashboard",
   "main": "index.cjs",
   "scripts": {
-    "start": "node index.cjs",
+    "start": "node scripts/prepare-persistent-config.cjs && node index.cjs",
     "dev": "node index.cjs",
     "prod": "pm2 start pm2.config.js --no-daemon",
     "prod:daemon": "pm2 start pm2.config.js",
@@ -13,7 +13,7 @@
     "logs": "pm2 logs spidey-bot",
     "build": "node build.js",
     "sync": "node build.js",
-    "test": "node --test test/*.test.cjs && node --check index.cjs && node --check public/dashboard-app.js && find src -type f \\( -name '*.cjs' -o -name '*.js' \\) -print0 | xargs -0 -n1 node --check"
+    "test": "node --test test/*.test.cjs && node --check scripts/prepare-persistent-config.cjs && node --check index.cjs && node --check public/dashboard-app.js && find src -type f \\( -name '*.cjs' -o -name '*.js' \\) -print0 | xargs -0 -n1 node --check"
   },
   "keywords": [],
   "author": "",
