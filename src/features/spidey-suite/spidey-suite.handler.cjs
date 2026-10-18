@@ -318,26 +318,63 @@ async function execute(i,ctx){
     await i.reply({embeds:[new EmbedBuilder().setColor(0x5865f2).setTitle('Poll results: '+poll.question).setDescription(poll.options.map((option,index)=>'**'+option+'** — '+counts[index]+' vote(s)').join('\\n'))],ephemeral:true});
     return true;
   }
-  if(['play','skip','queue','stop'].includes(commandRoot)){
+  if(['play','pause','resume','skip','queue','shuffle','loop','volume','stop'].includes(commandRoot)){
     const player=ctx.player;
     if(!player){await i.reply({content:'The music player is not available in this runtime.',ephemeral:true});return true;}
+    const settings=svc.get(i.guild.id).musicSettings||{};
+    if(settings.enabled===false){await i.reply({content:'Music controls are disabled for this server. Ask a server administrator to enable them in the dashboard.',ephemeral:true});return true;}
+    if(settings.musicChannelId && settings.musicChannelId!==i.channelId){await i.reply({content:'Use the configured music channel for music commands.',ephemeral:true});return true;}
     const queue=player.nodes.get(i.guild.id);
     if(commandRoot==='play'){
       const member=await i.guild.members.fetch(i.user.id).catch(()=>null),voice=member?.voice?.channel;
       if(!voice){await i.reply({content:'Join a voice channel before using /play.',ephemeral:true});return true;}
+      if(settings.djRoleId && !isAdmin(i) && !i.member?.roles?.cache?.has(settings.djRoleId)){await i.reply({content:'You need the configured DJ role to control music.',ephemeral:true});return true;}
       const botMember=i.guild.members.me;
       if(botMember&&!voice.permissionsFor(botMember)?.has(PermissionFlagsBits.Connect)){await i.reply({content:'SPIDEY BOT needs Connect permission in your voice channel.',ephemeral:true});return true;}
+      if(queue && Number.isFinite(Number(settings.maxQueueSize)) && queue.tracks.size>=Math.max(1,Number(settings.maxQueueSize))){await i.reply({content:'The music queue is full. Wait for a song to finish or ask an administrator to increase the queue limit.',ephemeral:true});return true;}
       await i.deferReply();
       try{
-        const result=await player.play(voice,i.options.getString('query',true),{nodeOptions:{metadata:i.channel}});
-        await i.editReply('🎵 Added **'+String(result.track?.title||i.options.getString('query',true)).slice(0,180)+'** to the queue.');
+        const query=i.options.getString('query',true);
+        const result=await player.play(voice,query,{nodeOptions:{metadata:i.channel,volume:Math.max(0,Math.min(200,Number(settings.defaultVolume??100)))}});
+        await i.editReply('🎵 Added **'+String(result.track?.title||query).slice(0,180)+'** to the queue.');
       }catch(error){await i.editReply('Could not play that query: '+String(error.message||error).slice(0,700));}
       return true;
     }
     if(!queue){await i.reply({content:'There is no active music queue for this server.',ephemeral:true});return true;}
+    if(settings.djRoleId && !isAdmin(i) && !i.member?.roles?.cache?.has(settings.djRoleId)){await i.reply({content:'You need the configured DJ role to control music.',ephemeral:true});return true;}
+    if(commandRoot!=='queue' && settings.allowSkip===false && ['pause','resume','skip','shuffle','loop','volume','stop'].includes(commandRoot)){await i.reply({content:'Music controls are restricted by this server’s dashboard settings.',ephemeral:true});return true;}
     if(commandRoot==='skip'){
       const skipped=await queue.node.skip().catch(()=>false);
       await i.reply(skipped?'⏭️ Skipped the current track.':'Could not skip the current track.');
+      return true;
+    }
+    if(commandRoot==='pause'){
+      const paused=await queue.node.pause().catch(()=>false);
+      await i.reply(paused?'⏸️ Playback paused.':'Playback could not be paused.');
+      return true;
+    }
+    if(commandRoot==='resume'){
+      const resumed=await queue.node.resume().catch(()=>false);
+      await i.reply(resumed?'▶️ Playback resumed.':'Playback could not be resumed.');
+      return true;
+    }
+    if(commandRoot==='shuffle'){
+      if(queue.tracks.size<2){await i.reply({content:'Add at least two upcoming tracks before shuffling.',ephemeral:true});return true;}
+      queue.tracks.shuffle();
+      await i.reply('🔀 Shuffled the upcoming queue.');
+      return true;
+    }
+    if(commandRoot==='loop'){
+      const mode=i.options.getString('mode',true);
+      const repeatMode=mode==='track'?1:mode==='queue'?2:0;
+      queue.setRepeatMode(repeatMode);
+      await i.reply('🔁 Repeat mode set to **'+mode+'**.');
+      return true;
+    }
+    if(commandRoot==='volume'){
+      const level=i.options.getInteger('level',true);
+      await queue.node.setVolume(level);
+      await i.reply('🔊 Playback volume set to **'+level+'%**.');
       return true;
     }
     if(commandRoot==='stop'){
@@ -346,7 +383,9 @@ async function execute(i,ctx){
       return true;
     }
     const tracks=queue.tracks.toArray().slice(0,10);
-    await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎶 Music queue').setDescription(tracks.length?tracks.map((track,index)=>'**'+(index+1)+'.** '+String(track.title||'Unknown track').slice(0,180)+' · '+String(track.duration||'Unknown')).join('\\n'):'No upcoming tracks.')]});
+    const current=queue.currentTrack;
+    const description=(current?'**Now playing:** '+String(current.title||'Unknown track').slice(0,180)+' · '+String(current.duration||'Unknown')+'\\n\\n':'')+(tracks.length?tracks.map((track,index)=>'**'+(index+1)+'.** '+String(track.title||'Unknown track').slice(0,180)+' · '+String(track.duration||'Unknown')).join('\\n'):'No upcoming tracks.');
+    await i.reply({embeds:[new EmbedBuilder().setColor(0x6d3df5).setTitle('🎶 Music queue').setDescription(description)});
     return true;
   }
   if(commandRoot==='tictactoe'){
