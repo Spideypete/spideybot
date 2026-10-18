@@ -1311,11 +1311,11 @@ async function renderStatistics(id){
   body.insertAdjacentHTML('beforeend',
     '<div class="card panel section"><div class="panel-head"><div><div class="panel-title">Live statistics channels</div><div class="panel-sub">Configure channels that SPIDEY BOT renames automatically with live server counts. This is an original dashboard integration, not a copied bot.</div></div></div>'+
     '<p class="muted">Choose a text or voice channel and the value it should display. SPIDEY BOT needs Manage Channels permission. Up to 20 counters per server.</p>'+
-    '<div class="panel-section"><label class="field">Channel<select id="statCounterChannel">'+(channelOptions||'<option value="">No renameable channels found</option>')+'</select></label>'+
+    '<div class="panel-section"><div class="stat-counter-form"><label class="field">Channel<select id="statCounterChannel">'+(channelOptions||'<option value="">No renameable channels found</option>')+'</select></label>'+
     '<label class="field">Statistic<select id="statCounterMetric">'+metricOptions.map(item=>'<option value="'+item[0]+'">'+item[1]+'</option>').join('')+'</select></label>'+
     '<label class="field" id="statCounterRoleField" hidden>Role to count<select id="statCounterRole">'+roleOptions+'</select></label>'+
     '<label class="field">Channel name label (optional)<input id="statCounterLabel" maxlength="45" placeholder="e.g. 👥 Members"></label>'+
-    '<div class="panel-actions"><button type="button" class="select" id="addStatCounter" '+(!channelOptions?'disabled':'')+'>Add live counter</button></div></div>'+
+    '</div><div class="panel-actions stat-counter-actions"><button type="button" class="select" id="addStatCounter" '+(!channelOptions?'disabled':'')+'>Add live counter</button></div></div>'+
     '<div class="panel-section"><h3>Configured counters ('+(counterData.counters||[]).length+'/20)</h3><div class="activity">'+(counterRows||'<p class="muted">No live counters configured yet.</p>')+'</div></div></div>');
   const metricSelect=document.getElementById('statCounterMetric');
   const roleField=document.getElementById('statCounterRoleField');
