@@ -1011,6 +1011,54 @@ const client = new Client({
 
 // spidey command handlers are registered once after the client is ready below.
 // Register /ask first so it can acknowledge Discord interactions before feature listeners run.
+// Command-usage audit trail. Store the command path and context only; never persist option values.
+const spideySuiteAuditService = require('./src/features/spidey-suite/spidey-suite.service.cjs');
+client.on('interactionCreate', async interaction => {
+  try {
+    if (!interaction.isChatInputCommand?.() || !interaction.guild || !interaction.user || interaction.user.bot) return;
+    const config = spideySuiteAuditService.get(interaction.guild.id);
+    const audit = config.audit || {};
+    if (audit.enabled !== true || audit.commandUsage === false) return;
+    const group = interaction.options.getSubcommandGroup(false);
+    const subcommand = interaction.options.getSubcommand(false);
+    const commandPath = '/' + interaction.commandName + (group ? ' ' + group : '') + (subcommand ? ' ' + subcommand : '');
+    const now = new Date().toISOString();
+    const channelName = interaction.channel?.name || 'Unknown channel';
+    const entry = {
+      type: 'command',
+      title: 'Command used',
+      time: now,
+      actor: interaction.user.tag || interaction.user.username || interaction.user.id,
+      actorId: interaction.user.id,
+      target: commandPath,
+      description: commandPath + ' was invoked.',
+      channel: '#' + channelName,
+      channelId: interaction.channelId || interaction.channel?.id || null
+    };
+    audit.entries = [entry, ...(Array.isArray(audit.entries) ? audit.entries : [])].slice(0, 500);
+    spideySuiteAuditService.save(interaction.guild.id, { audit });
+    if (audit.channelId) {
+      const targetChannel = interaction.guild.channels.cache.get(audit.channelId)
+        || await interaction.guild.channels.fetch(audit.channelId).catch(() => null);
+      if (targetChannel?.isTextBased?.() && targetChannel.send) {
+        const { EmbedBuilder } = require('discord.js');
+        const embed = new EmbedBuilder()
+          .setColor(0x6d3df5)
+          .setTitle('Slash command used')
+          .addFields(
+            { name: 'Command', value: commandPath, inline: true },
+            { name: 'User', value: '<@' + interaction.user.id + '> (' + (interaction.user.tag || interaction.user.username) + ')', inline: true },
+            { name: 'Channel', value: '<#' + (interaction.channelId || interaction.channel?.id || audit.channelId) + '>', inline: true }
+          )
+          .setTimestamp(new Date(now));
+        await targetChannel.send({ embeds: [embed] }).catch(err => console.warn('[AUDIT] Command log delivery failed:', err.message));
+      }
+    }
+  } catch (err) {
+    console.error('[AUDIT] Command usage logging failed:', err.message);
+  }
+});
+
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
 const handledAskInteractions = new WeakSet();
 client.on('interactionCreate', async interaction => {
