@@ -18,20 +18,63 @@ function saveConfig(config) {
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
 }
 
-// Default feature toggles
+// Per-server plan policy. Limits are enforced by the bot and dashboard APIs.
+const PLAN_POLICY = {
+  free: {
+    reactionRoles: 3, reactionsPerMessage: 5, achievementsMessages: 8, achievementsEmoji: 8,
+    customCommands: 5, inviteMilestones: 10, embedMessages: 2, socialAccountsPerSection: 5,
+    giveawayInviteMessages: 10, polls: false, emojis: false, music: false, embedStyling: false,
+    reactionRoleDmConfirmation: true, achievementAnnouncements: false, reminderBehaviour: false,
+    birthdayCustomEvents: false, economyCustomCurrency: false, aiDailyRequests: 50
+  },
+  premium: {
+    reactionRoles: 8, reactionsPerMessage: 10, achievementsMessages: 15, achievementsEmoji: 15,
+    customCommands: 25, inviteMilestones: 20, embedMessages: 5, socialAccountsPerSection: 10,
+    giveawayInviteMessages: 20, polls: true, emojis: true, music: true, embedStyling: true,
+    reactionRoleDmConfirmation: false, achievementAnnouncements: true, reminderBehaviour: true,
+    birthdayCustomEvents: true, economyCustomCurrency: true, aiDailyRequests: 50
+  },
+  pro: {
+    reactionRoles: Infinity, reactionsPerMessage: Infinity, achievementsMessages: Infinity, achievementsEmoji: Infinity,
+    customCommands: 100, inviteMilestones: 100, embedMessages: 30, socialAccountsPerSection: 20,
+    giveawayInviteMessages: 100, polls: true, emojis: true, music: true, embedStyling: true,
+    reactionRoleDmConfirmation: false, achievementAnnouncements: true, reminderBehaviour: true,
+    birthdayCustomEvents: true, economyCustomCurrency: true, aiDailyRequests: 50
+  }
+};
 const DEFAULT_FEATURE_TOGGLES = {
-  reactRoles: { free: 3, premium: Infinity, pro: Infinity },
-  giveaways: { free: 1, premium: Infinity, pro: Infinity },
-  xpLeaderboards: { free: false, premium: true, pro: true },
-  customCommands: { free: false, premium: true, pro: true },
-  fullServerGuard: { free: false, premium: true, pro: true },
-  analytics: { free: false, premium: false, pro: true },
-  inviteTracking: { free: false, premium: false, pro: true },
-  automation: { free: false, premium: false, pro: true },
+  reactRoles: { free: 3, premium: 8, pro: Infinity },
+  giveaways: { free: 10, premium: 20, pro: 100 },
+  xpLeaderboards: { free: true, premium: true, pro: true },
+  customCommands: { free: 5, premium: 25, pro: 100 },
+  fullServerGuard: { free: true, premium: true, pro: true },
+  analytics: { free: true, premium: true, pro: true },
+  inviteTracking: { free: 10, premium: 20, pro: 100 },
+  automation: { free: true, premium: true, pro: true },
   antiRaid: { free: true, premium: true, pro: true },
   antiSpam: { free: true, premium: true, pro: true }
 };
-
+function getGuildPlanPolicy(guildId) {
+  const tier = getGuildTier(guildId);
+  return { tier, ...(PLAN_POLICY[tier] || PLAN_POLICY.free) };
+}
+function getPlanLimit(guildId, key) {
+  return getGuildPlanPolicy(guildId)[key] ?? PLAN_POLICY.free[key] ?? 0;
+}
+function isPlanFeatureAllowed(guildId, feature) {
+  const policy = getGuildPlanPolicy(guildId);
+  if (feature === 'welcome' || feature === 'goodbye' || feature === 'moderator' || feature === 'automod' || feature === 'audit' || feature === 'levels' || feature === 'ticketing' || feature === 'casino' || feature === 'lottery' || feature === 'games' || feature === 'system' || feature === 'achievements' || feature === 'reminders' || feature === 'birthdays' || feature === 'economy' || feature === 'customCommands' || feature === 'inviteTracker' || feature === 'giveaways' || feature === 'embeds' || feature === 'socialAlerts') return true;
+  if (feature === 'reactionRoles') return true;
+  if (feature === 'music') return policy.music;
+  if (feature === 'polls') return policy.polls;
+  if (feature === 'emojis') return policy.emojis;
+  if (feature === 'embedStyling') return policy.embedStyling;
+  if (feature === 'reminderBehaviour') return policy.reminderBehaviour;
+  if (feature === 'birthdayCustomEvents') return policy.birthdayCustomEvents;
+  if (feature === 'achievementAnnouncements') return policy.achievementAnnouncements;
+  if (feature === 'economyCustomCurrency') return policy.economyCustomCurrency;
+  return true;
+}
 function getFeatureToggles() {
   const config = loadConfig();
   return config.global_configs?.featureToggles || DEFAULT_FEATURE_TOGGLES;
