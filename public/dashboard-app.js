@@ -1311,22 +1311,48 @@ async function renderStatistics(id){
   body.insertAdjacentHTML('beforeend',
     '<div class="card panel section statistics-essential-card"><div class="panel-head"><div><div class="panel-title">Live statistics channels</div><div class="panel-sub">Configure channels that SPIDEY BOT renames automatically with live server counts. This is an original dashboard integration, not a copied bot.</div></div></div>'+
     '<p class="muted">Choose a text or voice channel and the value it should display. SPIDEY BOT needs Manage Channels permission. Your '+esc(String(counterData.tier||'free').toUpperCase())+' plan allows '+Number(counterData.limit||5)+' configured counters per server.</p>'+
-    '<div class="panel-section"><div class="stat-counter-form"><label class="field">Channel<select id="statCounterChannel">'+(channelOptions||'<option value="">No renameable channels found</option>')+'</select></label>'+
+    '<div class="panel-section"><div class="stat-counter-form">'+
+    '<label class="field">Channel setup<select id="statCounterMode"><option value="existing">Choose an existing channel</option><option value="create">Create a channel automatically</option></select></label>'+
+    '<label class="field" id="statCounterExistingField">Existing channel<select id="statCounterChannel">'+(channelOptions||'<option value="">No renameable channels found</option>')+'</select></label>'+
     '<label class="field">Statistic<select id="statCounterMetric">'+metricOptions.map(item=>'<option value="'+item[0]+'">'+item[1]+'</option>').join('')+'</select></label>'+
     '<label class="field" id="statCounterRoleField" hidden>Role to count<select id="statCounterRole">'+roleOptions+'</select></label>'+
     '<label class="field">Channel name label (optional)<input id="statCounterLabel" maxlength="45" placeholder="e.g. 👥 Members"></label>'+
-    '</div><div class="panel-actions stat-counter-actions"><button type="button" class="select" id="addStatCounter" '+(!channelOptions||(counterData.counters||[]).length>=Number(counterData.limit||5)?'disabled':'')+'>Add live counter</button></div></div>'+
+    '</div><p class="muted" id="statCounterCreateHelp" hidden>A new voice channel will be created automatically. For role counters, the selected role name will be used as the channel label.</p><div class="panel-actions stat-counter-actions"><button type="button" class="select" id="addStatCounter" '+((!channelOptions)&&(counterData.counters||[]).length>=Number(counterData.limit||5)?'disabled':'')+'>Add live counter</button></div></div>'+
     '<div class="panel-section"><h3>Configured counters ('+(counterData.counters||[]).length+'/'+Number(counterData.limit||5)+')</h3><div class="activity">'+(counterRows||'<p class="muted">No live counters configured yet.</p>')+'</div></div></div>');
   const metricSelect=document.getElementById('statCounterMetric');
   const roleField=document.getElementById('statCounterRoleField');
-  if(metricSelect&&roleField) metricSelect.addEventListener('change',()=>{roleField.hidden=metricSelect.value!=='roleMembers';});
-  document.getElementById('addStatCounter')?.addEventListener('click',async()=>{
-    const button=document.getElementById('addStatCounter');
-    const payload={guildId:id,channelId:document.getElementById('statCounterChannel')?.value,metric:metricSelect?.value,label:document.getElementById('statCounterLabel')?.value||'',roleId:document.getElementById('statCounterRole')?.value||null};
+  const modeSelect=document.getElementById('statCounterMode');
+  const existingField=document.getElementById('statCounterExistingField');
+  const createHelp=document.getElementById('statCounterCreateHelp');
+  const labelInput=document.getElementById('statCounterLabel');
+  const addButton=document.getElementById('addStatCounter');
+  function updateCounterForm(){
+    const creating=modeSelect?.value==='create';
+    if(existingField) existingField.hidden=creating;
+    if(createHelp) createHelp.hidden=!creating;
+    if(roleField) roleField.hidden=metricSelect?.value!=='roleMembers';
+    if(addButton){addButton.textContent=creating?'Create channel and add counter':'Add live counter';addButton.disabled=(!creating&&!channelOptions)||(counterData.counters||[]).length>=Number(counterData.limit||5);}
+    if(creating&&metricSelect?.value==='roleMembers'&&labelInput&&!labelInput.value.trim()){
+      const selectedRole=document.getElementById('statCounterRole')?.selectedOptions?.[0]?.textContent||'';
+      labelInput.placeholder=selectedRole?'e.g. '+selectedRole:'e.g. Moderators';
+    }
+  }
+  modeSelect?.addEventListener('change',updateCounterForm);
+  metricSelect?.addEventListener('change',updateCounterForm);
+  document.getElementById('statCounterRole')?.addEventListener('change',updateCounterForm);
+  updateCounterForm();
+  addButton?.addEventListener('click',async()=>{
+    const button=addButton;
+    const creating=modeSelect?.value==='create';
+    const roleId=document.getElementById('statCounterRole')?.value||null;
+    const selectedRole=document.getElementById('statCounterRole')?.selectedOptions?.[0]?.textContent||'';
+    const typedLabel=labelInput?.value?.trim()||'';
+    const payload={guildId:id,channelId:creating?undefined:document.getElementById('statCounterChannel')?.value,createChannel:creating,metric:metricSelect?.value,label:typedLabel||(creating&&metricSelect?.value==='roleMembers'?selectedRole:''),roleId};
     if(payload.metric==='roleMembers'&&!payload.roleId){alert('Choose the role this counter should count.');return;}
-    button.disabled=true;button.textContent='Adding…';
+    if(creating&&payload.metric==='roleMembers'&&!selectedRole){alert('Choose the role to use for the new channel name.');return;}
+    button.disabled=true;button.textContent=creating?'Creating channel…':'Adding…';
     try{await api('/api/dashboard/stat-channel-counters',{method:'POST',body:JSON.stringify(payload)});await renderStatistics(id);}
-    catch(error){alert('Could not add live counter: '+(error.message||String(error)));button.disabled=false;button.textContent='Add live counter';}
+    catch(error){alert('Could not add live counter: '+(error.message||String(error)));button.disabled=false;button.textContent=creating?'Create channel and add counter':'Add live counter';}
   });
   body.querySelectorAll('[data-remove-stat-counter]').forEach(button=>button.addEventListener('click',async()=>{
     button.disabled=true;
