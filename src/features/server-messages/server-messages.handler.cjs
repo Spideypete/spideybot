@@ -26,7 +26,8 @@ async function handleGuildMemberAdd(member) {
 
     const payload = {}
     if (msgData.message) payload.content = msgData.message
-    if (msgData.embed) payload.embeds = [msgData.embed]
+    const embeds = [msgData.embed, msgData.bannerEmbed].filter(Boolean)
+    if (embeds.length) payload.embeds = embeds
 
     if (!payload.content && !payload.embeds) return
 
@@ -56,7 +57,8 @@ async function handleGuildMemberRemove(member) {
 
     const payload = {}
     if (msgData.message) payload.content = msgData.message
-    if (msgData.embed) payload.embeds = [msgData.embed]
+    const embeds = [msgData.embed, msgData.bannerEmbed].filter(Boolean)
+    if (embeds.length) payload.embeds = embeds
 
     if (!payload.content && !payload.embeds) return
 
