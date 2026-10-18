@@ -178,6 +178,29 @@ td,th{border-color:var(--border)}
 .spidey-toast-close:hover{color:#fff}
 @media(max-width:600px){.spidey-toast-host{top:12px;right:12px;width:calc(100vw - 24px)}}
 .ai-assistant-note{border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--muted);font-size:12px;line-height:1.55}.premium-empty{min-height:150px;display:grid;place-items:center;text-align:center;color:var(--muted)}
+
+/* Level role reward actions — match the dashboard's purple/petrol theme */
+.level-reward-action{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:36px;padding:8px 13px;border:1px solid var(--border);
+  border-radius:10px;background:var(--surface2);color:var(--text);
+  font-size:12px;font-weight:750;line-height:1.2;white-space:nowrap;
+  box-shadow:0 3px 10px rgba(45,25,60,.06);
+  transition:background .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.level-reward-action span{font-size:16px;line-height:1;color:var(--petrol)}
+.level-reward-add{background:var(--accent-soft);border-color:rgba(118,81,168,.35);color:var(--purple)}
+.level-reward-add:hover{background:var(--accent-soft);border-color:var(--purple);box-shadow:0 0 0 2px rgba(118,81,168,.12),0 5px 16px rgba(86,48,111,.12);transform:translateY(-1px)}
+.level-reward-add span{color:var(--purple)}
+.level-reward-remove{background:var(--surface);color:var(--muted)}
+.level-reward-remove:hover{background:var(--petrol-soft);border-color:var(--petrol);color:var(--text);box-shadow:0 0 0 2px rgba(37,143,153,.12)}
+.dark .level-reward-add{background:#2d263c;border-color:#55416d;color:#d7c4f0}
+.dark .level-reward-add:hover{background:#362b49;border-color:#9670c4;box-shadow:0 0 0 2px rgba(150,112,196,.16)}
+.dark .level-reward-add span{color:#c4a5f5}
+.dark .level-reward-remove{background:#202227;border-color:#383b44;color:#b4b5bd}
+.dark .level-reward-remove:hover{background:#24383a;border-color:#258f99;color:#ededf0;box-shadow:0 0 0 2px rgba(37,143,153,.16)}
+.level-reward-action:focus-visible{outline:2px solid var(--petrol);outline-offset:2px}
+
 </style></head>
 <body class="dark"><div class="app"><aside class="sidebar" id="sidebar"><div class="brand"><div class="brand-mark" aria-label="SPIDEY BOT logo"><svg viewBox="0 0 64 64" width="31" height="31" role="img" aria-hidden="true"><defs><linearGradient id="spideyGlow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7651a8"/><stop offset="1" stop-color="#258f99"/></linearGradient></defs><circle cx="32" cy="32" r="29" fill="#171020" stroke="url(#spideyGlow)" stroke-width="3"/><g fill="none" stroke="#7651a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 27 13 18 8 22 15 33 8 44 15 46 25 37"/><path d="M41 27 51 18 56 22 49 33 56 44 49 46 39 37"/></g><path d="M32 15 23 27 19 38 32 49 45 38 41 27Z" fill="url(#spideyGlow)"/><path d="M23 31 30 35 32 29 34 35 41 31 38 41 32 45 26 41Z" fill="#bdeff0"/><path d="M26 30 30 32 27 36Z M38 30 34 32 37 36Z" fill="#171020"/></svg></div><div><div class="brand-name">SPIDEY BOT</div><div class="brand-sub">Discord Dashboard</div></div></div><div id="navigation"></div><div class="sidebar-foot"><div class="bot-status"><div><span class="status-dot"></span><span class="status-label">Bot Online</span></div><div class="status-copy">SPIDEY BOT is connected and ready.</div></div></div></aside>
 <main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:10px"><button class="mobile-menu" id="menu">☰</button><div class="crumb"><strong>SPIDEY BOT</strong><span>/</span><span>Dashboard</span></div></div><div class="top-actions"><button class="top-btn" id="theme" title="Toggle theme">☾</button><div class="profile"><div class="avatar" id="userAvatar">SP</div><span id="userName">Administrator</span></div></div></header>
