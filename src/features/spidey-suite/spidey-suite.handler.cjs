@@ -177,6 +177,11 @@ async function execute(i,ctx){
       await i.reply({content:removed?'Removed the reaction-role mapping.':'No matching reaction-role mapping was found.',ephemeral:true});
       return true;
     }
+    const currentEntries=reactionRolesService.getEntries(i.guild.id);
+    const alreadyMapped=currentEntries.some(entry=>String(entry.messageId)===String(messageId)&&String(entry.emoji)===String(emoji));
+    if(!alreadyMapped && currentEntries.length>=rrLimit){await i.reply({content:'This server has reached its '+(Number.isFinite(rrLimit)?rrLimit:'unlimited')+' reaction-role mapping limit for the '+plan.tier.toUpperCase()+' plan.',ephemeral:true});return true;}
+    const perMessageLimit=subscriptionManager.getPlanLimit(i.guild.id,'reactionsPerMessage');
+    if(!alreadyMapped && reactionRolesService.getEntriesForMessage(i.guild.id,messageId).length>=perMessageLimit){await i.reply({content:'This message has reached its '+perMessageLimit+' reaction limit for the '+plan.tier.toUpperCase()+' plan.',ephemeral:true});return true;}
     const role=i.options.getRole('role',true),botMember=i.guild.members.me||await i.guild.members.fetchMe().catch(()=>null);
     if(!botMember?.permissions.has(PermissionFlagsBits.ManageRoles)){await i.reply({content:'SPIDEY BOT needs Manage Roles to create reaction roles.',ephemeral:true});return true;}
     if(role.managed||role.position>=botMember.roles.highest.position){await i.reply({content:'Move the SPIDEY BOT role above '+role.toString()+' before assigning it.',ephemeral:true});return true;}
