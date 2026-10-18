@@ -218,6 +218,18 @@ td,th{border-color:var(--border)}
   .level-reward-row .level-reward-action{grid-column:1/-1;justify-self:start}
 }
 
+
+
+/* Message and emoji milestone controls: equal-size buttons on one row. */
+.milestone-threshold-actions{display:flex;align-items:stretch;justify-content:space-between;gap:12px;width:100%;margin-top:12px}
+.milestone-threshold-actions .level-reward-action{flex:1 1 0;width:0;min-width:0;min-height:42px;padding:10px 16px;font-size:13px}
+@media(max-width:520px){.milestone-threshold-actions{gap:8px}.milestone-threshold-actions .level-reward-action{padding:10px 8px}}
+
+
+/* Compact, aligned invite reward controls. */
+.invite-reward-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:8px}
+.invite-reward-action{flex:0 1 auto;min-width:112px;min-height:30px;padding:5px 10px;font-size:11px;border-radius:8px}
+@media(max-width:520px){.invite-reward-actions{gap:6px}.invite-reward-action{min-width:0;flex:1 1 0;padding:6px 8px}}
 </style></head>
 <body class="dark"><div class="app"><aside class="sidebar" id="sidebar"><div class="brand"><div class="brand-mark" aria-label="SPIDEY BOT logo"><svg viewBox="0 0 64 64" width="31" height="31" role="img" aria-hidden="true"><defs><linearGradient id="spideyGlow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7651a8"/><stop offset="1" stop-color="#258f99"/></linearGradient></defs><circle cx="32" cy="32" r="29" fill="#171020" stroke="url(#spideyGlow)" stroke-width="3"/><g fill="none" stroke="#7651a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 27 13 18 8 22 15 33 8 44 15 46 25 37"/><path d="M41 27 51 18 56 22 49 33 56 44 49 46 39 37"/></g><path d="M32 15 23 27 19 38 32 49 45 38 41 27Z" fill="url(#spideyGlow)"/><path d="M23 31 30 35 32 29 34 35 41 31 38 41 32 45 26 41Z" fill="#bdeff0"/><path d="M26 30 30 32 27 36Z M38 30 34 32 37 36Z" fill="#171020"/></svg></div><div><div class="brand-name">SPIDEY BOT</div><div class="brand-sub">Discord Dashboard</div></div></div><div id="navigation"></div><div class="sidebar-foot"><div class="bot-status"><div><span class="status-dot"></span><span class="status-label">Bot Online</span></div><div class="status-copy">SPIDEY BOT is connected and ready.</div></div></div></aside>
 <main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:10px"><button class="mobile-menu" id="menu">☰</button><div class="crumb"><strong>SPIDEY BOT</strong><span>/</span><span>Dashboard</span></div></div><div class="top-actions"><button class="top-btn" id="theme" title="Toggle theme">☾</button><div class="profile"><div class="avatar" id="userAvatar">SP</div><span id="userName">Administrator</span></div></div></header>
@@ -241,14 +253,3 @@ document.getElementById('menu').onclick=()=>document.getElementById('sidebar').c
 document.getElementById('theme').onclick=()=>applyTheme(document.body.classList.contains('dark')?'light':'dark');
 (function(){const q=new URLSearchParams(location.search),id=q.get('guildId');if(id){localStorage.setItem('selectedServerId',id);localStorage.setItem('guildId',id)}fetch('/api/user',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{const u=d?.user||d;if(!u)return;document.getElementById('userName').textContent=u.global_name||u.username||'Administrator';if(u.avatar&&u.id)document.getElementById('userAvatar').innerHTML='<img src="https://cdn.discordapp.com/avatars/'+u.id+'/'+u.avatar+'.png?size=128" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">'}).catch(()=>{});const gid=id||localStorage.getItem('selectedServerId');if(gid)fetch('/api/member-stats/'+encodeURIComponent(gid),{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{if(!d)return;const set=(x,v)=>document.getElementById(x).textContent=v??'—';set('statMembers',d.total??d.members);set('statMessages',d.messages??d.messageCount);set('statCommands',d.commands??d.commandCount);set('statFeatures',d.features??d.enabledFeatures)}).catch(()=>{})})();
 </script><script type="module" src="/dashboard-app.js"></script></body></html>
-
-/* Message and emoji milestone controls: equal-size buttons on one row. */
-.milestone-threshold-actions{display:flex;align-items:stretch;justify-content:space-between;gap:12px;width:100%;margin-top:12px}
-.milestone-threshold-actions .level-reward-action{flex:1 1 0;width:0;min-width:0;min-height:42px;padding:10px 16px;font-size:13px}
-@media(max-width:520px){.milestone-threshold-actions{gap:8px}.milestone-threshold-actions .level-reward-action{padding:10px 8px}}
-
-
-/* Compact, aligned invite reward controls. */
-.invite-reward-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:8px}
-.invite-reward-action{flex:0 1 auto;min-width:112px;min-height:30px;padding:5px 10px;font-size:11px;border-radius:8px}
-@media(max-width:520px){.invite-reward-actions{gap:6px}.invite-reward-action{min-width:0;flex:1 1 0;padding:6px 8px}}
