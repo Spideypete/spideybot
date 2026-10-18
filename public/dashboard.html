@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><link rel="icon" type="image/png" href="/spideybot-logo.png?v=2">
+<html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark light">
 <title>SPIDEY BOT — Dashboard</title>
 <style>
@@ -82,20 +82,6 @@ button{transition:background .16s ease,border-color .16s ease,color .16s ease,tr
 button:active{transform:translateY(1px)}
 button:not(.nav button):not(.mobile-menu):not(.top-btn){border-radius:8px}
 .field{margin-bottom:14px}
-.stat-counter-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px;margin:22px 0 8px;padding:18px;border:1px solid var(--border);border-radius:13px;background:var(--surface2)}
-.stat-counter-form .field{display:flex;flex-direction:column;gap:10px;min-width:0;margin:0}
-.stat-counter-form .field select,.stat-counter-form .field input{display:block;width:100%;min-width:0;margin-top:3px}
-.stat-counter-actions{margin:14px 0 22px}
-.stat-counter-list{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
-.stat-counter-list h3{margin-bottom:14px}
-.stat-counter-overview{margin:0 0 22px}
-.stat-counter-overview .panel-head{gap:18px;align-items:center;margin-bottom:10px}
-.stat-counter-overview-value{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.stat-counter-overview-value strong{font-size:27px;font-weight:850}
-.stat-counter-overview-value span,.stat-counter-overview-note{font-size:11px;color:var(--muted)}
-.stat-counter-overview-note{margin-top:5px}
-@media(max-width:620px){.stat-counter-form{grid-template-columns:1fr;gap:16px;padding:14px}.stat-counter-overview .panel-head{align-items:flex-start;flex-direction:column}}
-
 .field label,.field>label{display:block;color:var(--muted);font-size:11px;font-weight:650;margin-bottom:6px}
 .field input,.field select,.field textarea,.select,input,select,textarea{padding:9px 11px;min-height:38px}
 .field textarea,textarea{min-height:88px;resize:vertical}
@@ -244,7 +230,6 @@ td,th{border-color:var(--border)}
 .invite-reward-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:8px}
 .invite-reward-action{flex:0 1 auto;min-width:112px;min-height:30px;padding:5px 10px;font-size:11px;border-radius:8px}
 @media(max-width:520px){.invite-reward-actions{gap:6px}.invite-reward-action{min-width:0;flex:1 1 0;padding:6px 8px}}
-
 /* Plan badge, selected Discord server and account menu */
 .plan-badge{display:inline-flex;align-items:center;gap:5px;margin-left:7px;padding:4px 8px;border-radius:999px;background:var(--accent-soft);color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.03em;vertical-align:middle;white-space:nowrap}
 .plan-badge img{display:block;width:20px;height:20px;object-fit:contain}
@@ -260,6 +245,12 @@ td,th{border-color:var(--border)}
 .profile-dropdown a:hover{background:var(--accent-soft);color:var(--purple)}
 .dark .server-chip,.dark .profile-dropdown{background:var(--surface);border-color:var(--border)}
 @media(max-width:760px){.top-actions{gap:6px}.server-chip{max-width:120px;padding-right:7px}.server-chip span{max-width:76px}.plan-badge{gap:3px;padding:3px 5px}.plan-badge img{width:16px;height:16px}.profile{padding-right:7px}.profile-chevron{display:none}}
+
+
+/* Statistics panel cards: scoped override so the existing Overview layout stays untouched. */
+.statistics-metrics-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+@media(max-width:1050px){.statistics-metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.statistics-metrics-grid{grid-template-columns:1fr}}
 
 </style></head>
 <body class="dark"><div class="app"><aside class="sidebar" id="sidebar"><div class="brand"><img class="brand-logo-image" src="/spideybot-logo.png" alt="SPIDEY BOT" fetchpriority="high"></div><div id="navigation"></div><div class="sidebar-foot"><div class="bot-status"><div><span class="status-dot"></span><span class="status-label">Bot Online</span></div><div class="status-copy">Connected and ready.</div></div></div></aside>
@@ -282,8 +273,7 @@ try{savedTheme=localStorage.getItem(THEME_KEY)||'dark'}catch(_){}
 applyTheme(savedTheme);
 document.getElementById('menu').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
 document.getElementById('theme').onclick=()=>applyTheme(document.body.classList.contains('dark')?'light':'dark');
-(function(){
-const q=new URLSearchParams(location.search),id=q.get('guildId');
+(function(){const q=new URLSearchParams(location.search),id=q.get('guildId');
 if(id){localStorage.setItem('selectedServerId',id);localStorage.setItem('guildId',id)}
 const $=x=>document.getElementById(x);
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
