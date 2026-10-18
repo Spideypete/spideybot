@@ -246,3 +246,9 @@ document.getElementById('theme').onclick=()=>applyTheme(document.body.classList.
 .milestone-threshold-actions{display:flex;align-items:stretch;justify-content:space-between;gap:12px;width:100%;margin-top:12px}
 .milestone-threshold-actions .level-reward-action{flex:1 1 0;width:0;min-width:0;min-height:42px;padding:10px 16px;font-size:13px}
 @media(max-width:520px){.milestone-threshold-actions{gap:8px}.milestone-threshold-actions .level-reward-action{padding:10px 8px}}
+
+
+/* Compact, aligned invite reward controls. */
+.invite-reward-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:8px}
+.invite-reward-action{flex:0 1 auto;min-width:112px;min-height:30px;padding:5px 10px;font-size:11px;border-radius:8px}
+@media(max-width:520px){.invite-reward-actions{gap:6px}.invite-reward-action{min-width:0;flex:1 1 0;padding:6px 8px}}
