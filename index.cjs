@@ -350,35 +350,16 @@ app.use(session({
 // Production/main keeps the normal Discord OAuth flow. Keep the hostname exact and never
 // enable this on a custom domain or the production service.
 const SPIDEY_TESTING_HOST = 'spidey-bot-testing-testing.up.railway.app';
-function isSpideyTestingHost(req) {
-  return String(req.hostname || '').toLowerCase() === SPIDEY_TESTING_HOST;
+function isSpideyTestingHost(_req) {
+  // Release-candidate safety: testing-host bypasses are disabled for production release.
+  return false;
 }
-function isTestingOwnerSession(req) {
-  return isSpideyTestingHost(req)
-    && req.session?.authenticated === true
-    && req.session?.user?.id === 'spidey-testing-admin';
+function isTestingOwnerSession(_req) {
+  // Synthetic testing-owner identities must never authorize release builds.
+  return false;
 }
-function applyTestingDashboardSession(req) {
-  if (!isSpideyTestingHost(req) || !req.session) return;
-  req.session.authenticated = true;
-  req.session.user = {
-    id: 'spidey-testing-admin',
-    username: 'Spidey Testing Admin',
-    global_name: 'Spidey Testing Admin',
-    avatar: null
-  };
-  // Treat every server the testing bot is connected to as available to the dashboard.
-  // This list is rebuilt on every request so newly joined servers appear without OAuth.
-  req.session.guilds = client.guilds.cache.map(guild => ({
-    id: guild.id,
-    name: guild.name,
-    icon: guild.icon,
-    owner: true,
-    permissions: '8'
-  }));
-  if (!req.session.guilds.some(guild => guild.id === req.session.selectedGuildId)) {
-    req.session.selectedGuildId = req.session.guilds[0]?.id || null;
-  }
+function applyTestingDashboardSession(_req) {
+  // No synthetic authentication is applied in the production release candidate.
 }
 app.use((req, res, next) => {
   applyTestingDashboardSession(req);
@@ -5739,15 +5720,6 @@ app.get("/api/dashboard/servers", async (req, res) => {
 });
 
 // ============== OWNER DASH API ==============
-app.get('/api/owner/test', (req, res) => {
-  const config = loadConfig();
-  res.json({
-    configOwnerId: config.creator?.ownerId,
-    sessionUserId: req.session.user?.id,
-    authenticated: req.session.authenticated
-  });
-});
-
 app.get('/api/owner/stats', (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: 'Not authenticated' });
   const config = loadConfig();
