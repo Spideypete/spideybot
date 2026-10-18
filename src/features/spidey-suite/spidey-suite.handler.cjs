@@ -462,6 +462,9 @@ async function execute(i,ctx){
     const platform=i.options.getString('platform',commandSub!=='list'),handle=i.options.getString('handle');
     if(commandSub==='add'){
       const target=i.options.getChannel('channel',true),pingRole=i.options.getRole('ping_role');
+      const alertPolicy=subscriptionManager.getGuildPlanPolicy(i.guild.id);
+      const existingAlerts=socialNotifications.getNotifications(i.guild.id).filter(x=>String(x.platform||'').toLowerCase()===String(platform||'').toLowerCase());
+      if(!existingAlerts.some(x=>String(x.username||'').toLowerCase()===String(handle||'').toLowerCase())&&existingAlerts.length>=alertPolicy.socialAccountsPerSection){await i.reply({content:'This server has reached its '+alertPolicy.socialAccountsPerSection+' account limit for '+String(platform).toUpperCase()+' on the '+alertPolicy.tier.toUpperCase()+' plan.',ephemeral:true});return true;}
       const result=socialNotifications.addNotification(i.guild.id,{platform,username:handle,channelId:target.id,pingRoleId:pingRole?.id||null,enabled:true});
       if(!result.success){await i.reply({content:result.error,ephemeral:true});return true;}
       socialNotifications.setConfig(i.guild.id,{enabled:true});
