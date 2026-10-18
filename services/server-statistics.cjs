@@ -23,7 +23,7 @@ function persist() {
   }).catch(error => console.error("[server-statistics] Could not persist statistics:", error.message));
 }
 function getGuild(guildId) {
-  if (!state.guilds[guildId]) state.guilds[guildId] = { messages: 0, joinsByDay: {} };
+  if (!state.guilds[guildId]) state.guilds[guildId] = { messages: 0, joinsByDay: {}, trackingSince: new Date().toISOString() };
   const record = state.guilds[guildId];
   if (!Number.isFinite(record.messages)) record.messages = 0;
   if (!record.joinsByDay || typeof record.joinsByDay !== "object") record.joinsByDay = {};
