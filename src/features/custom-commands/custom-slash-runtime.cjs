@@ -3,6 +3,7 @@
 const { REST, Routes, SlashCommandBuilder } = require('discord.js');
 const { spideyCommands } = require('../spidey-suite/spidey-suite.commands.cjs');
 const svc = require('../spidey-suite/spidey-suite.service.cjs');
+const subscriptionManager = require('../../../services/subscription.manager.js');
 
 const NAME_PATTERN = /^[a-z0-9-]{1,32}$/;
 const RESERVED_NAMES = new Set(spideyCommands.map(command => String(command.name).toLowerCase()));
@@ -24,7 +25,8 @@ async function syncGuildCustomSlashCommands(client, guildId, previousItems, next
   if (!client?.isReady?.() || !client.user?.id) throw new Error('Bot is not ready to register commands yet.');
   if (!token) throw new Error('Discord bot token is unavailable.');
   if (!Array.isArray(nextItems)) throw new Error('Custom command items must be an array.');
-  if (nextItems.length > 25) throw new Error('A server can have at most 25 custom commands from this panel.');
+  const plan = subscriptionManager.getGuildPlanPolicy(guildId);
+  const commandLimit = Number.isFinite(plan.customCommands) ? plan.customCommands : 100;
 
   const rest = new REST({ version: '10' }).setToken(token);
   const globalCommands = await rest.get(Routes.applicationCommands(client.user.id));
@@ -55,7 +57,7 @@ async function syncGuildCustomSlashCommands(client, guildId, previousItems, next
     }
   }
 
-  const custom = nextItems.map(item => new SlashCommandBuilder()
+  const custom = nextItems.slice(0, commandLimit).map(item => new SlashCommandBuilder()
     .setName(String(item.name).toLowerCase())
     .setDescription(('Custom response command: ' + String(item.name)).slice(0, 100))
     .setDMPermission(false)
@@ -73,8 +75,15 @@ async function handleCustomSlashCommand(interaction) {
   const config = svc.get(interaction.guildId);
   const custom = config.customCommands || {};
   const items = Array.isArray(custom.items) ? custom.items : [];
-  const item = items.find(command => String(command?.name || '').toLowerCase() === interaction.commandName.toLowerCase());
-  if (!item) return false;
+  const itemIndex = items.findIndex(command => String(command?.name || '').toLowerCase() === interaction.commandName.toLowerCase());
+  if (itemIndex < 0) return false;
+  const item = items[itemIndex];
+  const plan = subscriptionManager.getGuildPlanPolicy(interaction.guildId);
+  const commandLimit = Number.isFinite(plan.customCommands) ? plan.customCommands : 100;
+  if (itemIndex >= commandLimit) {
+    await interaction.reply({ content: '🔒 This custom command is locked because this server is on the '+plan.tier.toUpperCase()+' plan. Only the first '+commandLimit+' saved custom commands are available on this plan. Upgrade to Premium or Pro to unlock more.', ephemeral: true });
+    return true;
+  }
 
   if (item.enabled === false) {
     await interaction.reply({ content: 'This custom command is currently disabled.', ephemeral: true });
