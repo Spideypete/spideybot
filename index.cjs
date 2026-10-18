@@ -6106,11 +6106,14 @@ app.post('/api/paypal/capture-order', async (req, res) => {
     if (pending.status !== 'pending') return res.status(409).json({ error: 'This PayPal order is not available for capture.' });
 
     const accessToken = await getPayPalAccessToken();
-    const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`, {}, {
-      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      timeout: 20000
-    });
-    const order = response.data;
+    const orderUrl = `${PAYPAL_API_BASE}/v2/checkout/orders/${encodeURIComponent(orderId)}`;
+    const authHeaders = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' };
+    // Fetch first so a retry can recover if PayPal captured the payment but the app
+    // restarted before the successful activation was saved.
+    let order = (await axios.get(orderUrl, { headers: authHeaders, timeout: 20000 })).data;
+    if (order.status === 'APPROVED') {
+      order = (await axios.post(`${orderUrl}/capture`, {}, { headers: authHeaders, timeout: 20000 })).data;
+    }
     const unit = order.purchase_units?.[0];
     const capture = unit?.payments?.captures?.[0];
     if (order.status !== 'COMPLETED' || capture?.status !== 'COMPLETED') {
