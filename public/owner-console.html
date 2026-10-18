@@ -68,7 +68,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{max-width
 (() => {
  'use strict';
  const $ = id => document.getElementById(id);
- let servers = [], activeFilter = 'all', selectedId = '';
+ let servers = [], purchases = [], activeFilter = 'all', selectedId = '';
  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
  const date = value => { if(!value) return 'No expiry'; const d = new Date(value); return Number.isNaN(d.getTime()) ? 'Unknown' : d.toLocaleString(); };
  const planName = tier => ({free:'Free',premium:'Premium',pro:'Pro'}[tier] || 'Free');
@@ -125,9 +125,9 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{max-width
    setStatus('editorStatus','','');
  }
  function renderPurchases(){
-   const items=servers.filter(s=>s.lastPurchase).map(s=>({server:s,p:s.lastPurchase})).sort((a,b)=>new Date(b.p.purchasedAt||0)-new Date(a.p.purchasedAt||0)).slice(0,8);
+   const items=purchases.slice(0,8);
    if(!items.length){$('recentPurchases').innerHTML='<div class="empty">No paid upgrade history recorded yet.</div>';return;}
-   $('recentPurchases').innerHTML=items.map(({server:s,p})=>'<div class="activity-row"><strong>'+escapeHtml(s.name)+' · '+escapeHtml(planName(p.tier||s.tier))+'</strong><small>Buyer: '+escapeHtml(p.buyerName||p.buyerId||'Not recorded')+'<br>'+escapeHtml(p.durationMonths||'?')+' months · '+escapeHtml(p.amount?(p.currency||'USD')+' '+p.amount:'Amount unavailable')+'<br>'+escapeHtml(date(p.purchasedAt))+'</small></div>').join('');
+   $('recentPurchases').innerHTML=items.map(p=>'<div class="activity-row"><strong>'+escapeHtml(p.guildName||servers.find(s=>s.id===p.guildId)?.name||'Discord server')+' · '+escapeHtml(planName(p.tier))+'</strong><small>Buyer: '+escapeHtml(p.buyerName||p.buyerId||'Not recorded')+(p.buyerId?' ('+escapeHtml(p.buyerId)+')':'')+'<br>'+escapeHtml(p.durationMonths||'?')+' months · '+escapeHtml(p.amount?(p.currency||'USD')+' '+p.amount:'Amount unavailable')+'<br>'+escapeHtml(date(p.purchasedAt))+'</small></div>').join('');
  }
  async function loadData(){
    $('refreshBtn').disabled=true;
@@ -135,6 +135,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{max-width
    try{
      const data=await api('/api/owner/stats');
      servers=Array.isArray(data.servers)?data.servers:[];
+     purchases=Array.isArray(data.purchases)?data.purchases:[];
      $('totalServers').textContent=Number(data.totalServers||0).toLocaleString();
      $('freeServers').textContent=Number(data.freeCount||0).toLocaleString();
      $('premiumServers').textContent=Number(data.premiumCount||0).toLocaleString();
