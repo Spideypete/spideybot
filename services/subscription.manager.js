@@ -187,12 +187,16 @@ function getGuildEntitlements(guildId) {
   const guildConfig = config.guilds[guildId] || {};
   
   const roleCategories = guildConfig.roleCategories || {};
-  let totalReactRoles = 0;
-  Object.values(roleCategories).forEach(cat => {
-    if (cat.roles && Array.isArray(cat.roles)) {
-      totalReactRoles += cat.roles.length;
-    }
+  const roleKeys = new Set();
+  Object.entries(roleCategories).forEach(([category,cat]) => {
+    if (cat && Array.isArray(cat.roles)) cat.roles.forEach(role => roleKeys.add(String(role.id || role.roleId || category+':'+role.name)));
   });
+  if (Array.isArray(guildConfig.reactRoles?.entries)) guildConfig.reactRoles.entries.forEach(entry => roleKeys.add(String(entry.messageId)+':'+String(entry.emoji)));
+  try {
+    const reactionRoles = require('../src/features/reaction-roles/reaction-roles.service.cjs');
+    reactionRoles.getEntries(guildId).forEach(entry => roleKeys.add(String(entry.messageId)+':'+String(entry.emoji)));
+  } catch (_) {}
+  const totalReactRoles = roleKeys.size;
   
   const giveaways = guildConfig.giveaways || {};
   const activeGiveaways = Object.values(giveaways).filter(g => g.status === 'active').length;
