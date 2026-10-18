@@ -6,10 +6,12 @@ const DEFAULT_SERVER_MESSAGES = Object.freeze({
   enableWelcome: false,
   welcomeMessage: 'Welcome {user} to {server}! 🎉',
   welcomeChannel: null,
+  welcomeBanner: '',
   welcomeEmbed: null,
   enableGoodbye: false,
   goodbyeMessage: '{user} has left {server}. 👋',
   goodbyeChannel: null,
+  goodbyeBanner: '',
   goodbyeEmbed: null,
   enableBoost: false,
   welcomeType: 'text',
@@ -180,6 +182,19 @@ class ServerMessagesService {
     return embed
   }
 
+  buildBannerEmbed(bannerUrl, member, guild) {
+    if (!bannerUrl || typeof bannerUrl !== 'string') return null
+    const resolved = this.replaceVariables(bannerUrl.trim(), member, guild)
+    if (!/^https:\/\//i.test(resolved)) return null
+    try {
+      const { EmbedBuilder } = require('discord.js')
+      return new EmbedBuilder().setImage(resolved)
+    } catch (err) {
+      console.error('[ServerMessages] Invalid banner image:', err.message)
+      return null
+    }
+  }
+
   async getWelcomeMessage(guildId, member) {
     const config = await this.getConfig(guildId)
     if (!config.enableWelcome || !config.welcomeChannel) return null
@@ -188,6 +203,7 @@ class ServerMessagesService {
       message: this.replaceVariables(config.welcomeMessage, member, member.guild),
       channelId: config.welcomeChannel,
       embed: this.buildEmbed(config.welcomeEmbed, member, member.guild),
+      bannerEmbed: this.buildBannerEmbed(config.welcomeBanner, member, member.guild),
       enabled: config.enableWelcome
     }
   }
@@ -200,6 +216,7 @@ class ServerMessagesService {
       message: this.replaceVariables(config.goodbyeMessage, member, member.guild),
       channelId: config.goodbyeChannel,
       embed: this.buildEmbed(config.goodbyeEmbed, member, member.guild),
+      bannerEmbed: this.buildBannerEmbed(config.goodbyeBanner, member, member.guild),
       enabled: config.enableGoodbye
     }
   }
