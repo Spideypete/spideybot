@@ -595,13 +595,16 @@ async function renderGiveawaysPanel(id,f,c){
  const channels=(channelResult.channels||[]).filter(ch=>['text','announcement','news'].includes(ch.type));
  const emojis=emojiResult.emojis||[];
  const existing=giveawayResult.giveaways||{};
+ const giveawayTierRaw=String(c.tier||'free').toLowerCase();
+ const giveawayTier=giveawayTierRaw!=='free'&&c.tierEndDate&&Number(c.tierEndDate)<=Date.now()?'free':giveawayTierRaw;
+ const giveawayLimit=giveawayTier==='pro'?100:giveawayTier==='premium'?20:10;
  const active=Object.entries(existing).filter(([,g])=>g.status==='active');
  const options='<option value="🎁">🎁 Default giveaway emoji</option>'+emojis.map(e=>'<option value="'+esc(e.id)+'">'+(e.animated?'GIF ':'')+':'+esc(e.name)+':</option>').join('');
  const durationOptions='<option value="minutes">Minutes</option><option value="hours" selected>Hours</option><option value="days">Days</option>';
  const renderActive=()=>active.length?active.map(([name,g])=>'<div class="giveaway-active-row"><div class="giveaway-active-copy"><strong>'+esc(g.prize||name)+'</strong><span>#'+esc(g.channelName||g.channel||g.channelId||'channel not set')+' · '+esc(String(g.winners||1))+' winner(s) · ends '+esc(g.endsAt?new Date(g.endsAt).toLocaleString():'at scheduled time')+'</span></div><button type="button" class="select giveaway-remove" data-remove-giveaway="'+esc(name)+'">Remove</button></div>').join(''):'<p class="mention-help">No active giveaways for this server yet.</p>';
  const draw=()=>{body.innerHTML=card(f[1],'Create and manage giveaways for this Discord server.',
   '<div class="welcome-panel">'+
-   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Post a giveaway</h3><p>Choose the format, message, entry emoji and duration, then post it to Discord.</p></div></div>'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Post a giveaway</h3><p>'+active.length+' of '+giveawayLimit+' active giveaway messages used on the '+esc(giveawayTier.toUpperCase())+' plan. Choose the format, message, entry emoji and duration, then post it to Discord.</p></div></div>'+
    '<label class="field">Giveaway prize<input id="gwPrize" maxlength="200" placeholder="e.g. Nitro, game key, gift card"></label>'+
    '<label class="field">Post to channel<select id="gwChannel">'+optionList(channels,'','Choose a text channel')+'</select></label>'+
    '<label class="field">Message format<select id="gwFormat"><option value="text">Normal text</option><option value="embed" selected>Embed</option></select></label>'+
