@@ -424,7 +424,7 @@ app.use((req, res, next) => {
         if (typeof body === 'string' && /<\/head>/i.test(body)) {
           // Use the SPIDEY BOT logo as the browser-tab icon on every HTML page.
           const hasFavicon = /<link[^>]+rel=["'](?:shortcut\s+)?icon["']/i.test(body);
-          const favicon = hasFavicon ? '' : '<link rel="icon" type="image/png" href="/spideybot-logo.png?v=1"><link rel="shortcut icon" type="image/png" href="/spideybot-logo.png?v=1">';
+          const favicon = hasFavicon ? '' : '<link rel="icon" type="image/png" href="/spideybot-logo.png?v=2"><link rel="shortcut icon" type="image/png" href="/spideybot-logo.png?v=2">';
           // Inject a small version meta + script for client-side cache awareness.
           body = body.replace(/<\/head>/i, `${favicon}
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
