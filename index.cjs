@@ -8290,20 +8290,39 @@ app.post("/api/dashboard/stat-channel-counters", express.json(), async (req, res
     if (serverStatChannels.list(guildId).length >= limit) {
       return res.status(403).json({ error: "Your " + tier.toUpperCase() + " plan allows up to " + limit + " configured statistics counters. Upgrade your plan for more counters.", upgradeRequired: true, tier, limit });
     }
-    const channelId = String(req.body?.channelId || "");
+    const createChannel = req.body?.createChannel === true;
+    let channelId = String(req.body?.channelId || "");
     const metric = String(req.body?.metric || "");
     const label = String(req.body?.label || "").trim();
     const roleId = req.body?.roleId ? String(req.body.roleId) : null;
     const allowedMetrics = new Set(["members", "humans", "bots", "channels", "online", "roleMembers"]);
-    if (!channelId || !allowedMetrics.has(metric)) return res.status(400).json({ error: "Choose a channel and valid counter type." });
-    const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
-    if (!channel || typeof channel.setName !== "function") return res.status(400).json({ error: "Choose a text or voice channel that SPIDEY BOT can rename." });
-    const botPermissions = channel.permissionsFor(client.user);
-    if (botPermissions && !botPermissions.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission for that channel." });
+    if (!allowedMetrics.has(metric) || (!createChannel && !channelId)) return res.status(400).json({ error: "Choose a channel setup and valid counter type." });
     if (metric === "roleMembers" && (!roleId || !guild.roles.cache.has(roleId))) return res.status(400).json({ error: "Choose a valid server role for this counter." });
-    const counter = serverStatChannels.add(guildId, { channelId, metric, label, roleId });
-    await serverStatChannels.refreshGuild(client, guildId);
-    return res.json({ success: true, counter, counters: serverStatChannels.list(guildId) });
+    let channel = null;
+    let createdChannel = false;
+    if (createChannel) {
+      const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+      if (!botMember?.permissions?.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission to create a channel." });
+      const role = metric === "roleMembers" ? guild.roles.cache.get(roleId) : null;
+      const baseName = role ? role.name : (label || ({members:"members",humans:"human-members",bots:"bot-accounts",channels:"server-channels",online:"online-members"}[metric] || "statistics"));
+      const safeName = String(baseName).normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"").slice(0,90) || "statistics";
+      channel = await guild.channels.create({ name: safeName, type: ChannelType.GuildVoice, reason: "SPIDEY BOT live statistics counter created from dashboard" });
+      channelId = channel.id;
+      createdChannel = true;
+    } else {
+      channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+    }
+    try {
+      if (!channel || typeof channel.setName !== "function") return res.status(400).json({ error: "Choose a text or voice channel that SPIDEY BOT can rename." });
+      const botPermissions = channel.permissionsFor(client.user);
+      if (botPermissions && !botPermissions.has(PermissionFlagsBits.ManageChannels)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Channels permission for that channel." });
+      const counter = serverStatChannels.add(guildId, { channelId, metric, label, roleId });
+      await serverStatChannels.refreshGuild(client, guildId);
+      return res.json({ success: true, createdChannel: createdChannel ? { id: channel.id, name: channel.name } : null, counter, counters: serverStatChannels.list(guildId) });
+    } catch (error) {
+      if (createdChannel && channel) await channel.delete("Cleanup after failed SPIDEY BOT statistics counter setup").catch(() => {});
+      throw error;
+    }
   } catch (error) {
     return res.status(400).json({ error: error.message || "Could not save the statistics counter." });
   }
