@@ -42,7 +42,7 @@ async function awardMilestones(message,stats,config){
    if(!botMember?.permissions.has(PermissionFlagsBits.ManageRoles)||role.managed||botMember.roles.highest.comparePositionTo(role)<=0){console.warn('[ACHIEVEMENTS] Missing Manage Roles or role hierarchy prevents role assignment:',role.id);continue;}
    try{
     await message.member.roles.add(role,'Achievement milestone reached: '+item.metric+' '+reward.threshold);
-    if(config.announce!==false){
+    if(!policy.achievementAnnouncements||config.announce!==false){
      const channelId=policy.achievementAnnouncements?(config.announcementChannelId||message.channelId):message.channelId;
      const channel=message.guild.channels.cache.get(channelId);
      if(channel?.isTextBased()&&channel.send)await channel.send({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('🏅 Achievement unlocked!').setDescription(message.author.toString()+' earned '+role.toString()+' for reaching **'+reward.threshold+' '+item.metric+'**.').setTimestamp()]}).catch(e=>console.warn('[ACHIEVEMENTS] Announcement failed:',e.message));
