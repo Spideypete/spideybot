@@ -6562,6 +6562,10 @@ app.post("/api/config/:guildId", async (req, res) => {
   }
 
   Object.assign(guildConfig, req.body);
+  if (req.body && req.body.musicSettings && typeof req.body.musicSettings === 'object') {
+    guildConfig.spideySuite = guildConfig.spideySuite || {};
+    guildConfig.spideySuite.musicSettings = { ...(guildConfig.spideySuite.musicSettings || {}), ...req.body.musicSettings };
+  }
   if (req.body && (req.body.economySettings || req.body.economy)) {
     guildConfig.spideySuite = guildConfig.spideySuite || {};
     const suiteEconomy = guildConfig.spideySuite.economy || {};
