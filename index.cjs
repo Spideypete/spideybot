@@ -6512,6 +6512,9 @@ app.post("/api/config/:guildId", async (req, res) => {
       const current = guildConfig.economy || {};
       req.body.economy = { ...req.body.economy, currency: current.currency || 'coins' };
     }
+    if (req.body.inviteTracker && typeof req.body.inviteTracker === 'object' && Array.isArray(req.body.inviteTracker.rewards) && req.body.inviteTracker.rewards.length > policy.inviteMilestones) {
+      return res.status(403).json({ success: false, error: 'This server can configure '+policy.inviteMilestones+' invite milestone rewards on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.inviteMilestones, currentTier: policy.tier });
+    }
     // Custom reminder behaviour and birthday events stay at their saved/default values on Free.
     if (!policy.reminderBehaviour) {
       for (const key of ['reminderSettings','remindersSettings','reminders']) {
