@@ -568,6 +568,73 @@ async function renderDebilInspiredPanel(id,f,c){
  return true;
 }
 
+
+async function renderGiveawaysPanel(id,f,c){
+ const [channelResult,emojiResult,giveawayResult]=await Promise.all([
+  api('/api/guild/'+encodeURIComponent(id)+'/channels'),
+  api('/api/guild/'+encodeURIComponent(id)+'/emojis').catch(()=>({emojis:[]})),
+  api('/api/config/giveaways?guildId='+encodeURIComponent(id)).catch(()=>({giveaways:{}}))
+ ]);
+ const channels=(channelResult.channels||[]).filter(ch=>['text','announcement','news'].includes(ch.type));
+ const emojis=emojiResult.emojis||[];
+ const existing=giveawayResult.giveaways||{};
+ const active=Object.entries(existing).filter(([,g])=>g.status==='active');
+ const options='<option value="🎁">🎁 Default giveaway emoji</option>'+emojis.map(e=>'<option value="'+esc(e.id)+'">'+(e.animated?'GIF ':'')+':'+esc(e.name)+':</option>').join('');
+ const durationOptions='<option value="minutes">Minutes</option><option value="hours" selected>Hours</option><option value="days">Days</option>';
+ const renderActive=()=>active.length?active.map(([name,g])=>'<div class="giveaway-active-row"><div class="giveaway-active-copy"><strong>'+esc(g.prize||name)+'</strong><span>#'+esc(g.channelName||g.channel||g.channelId||'channel not set')+' · '+esc(String(g.winners||1))+' winner(s) · ends '+esc(g.endsAt?new Date(g.endsAt).toLocaleString():'at scheduled time')+'</span></div><button type="button" class="select giveaway-remove" data-remove-giveaway="'+esc(name)+'">Remove</button></div>').join(''):'<p class="mention-help">No active giveaways for this server yet.</p>';
+ const draw=()=>{body.innerHTML=card(f[1],'Create and manage giveaways for this Discord server.',
+  '<div class="welcome-panel">'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Post a giveaway</h3><p>Choose the format, message, entry emoji and duration, then post it to Discord.</p></div></div>'+
+   '<label class="field">Giveaway prize<input id="gwPrize" maxlength="200" placeholder="e.g. Nitro, game key, gift card"></label>'+
+   '<label class="field">Post to channel<select id="gwChannel">'+optionList(channels,'','Choose a text channel')+'</select></label>'+
+   '<label class="field">Message format<select id="gwFormat"><option value="text">Normal text</option><option value="embed" selected>Embed</option></select></label>'+
+   '<div id="gwTextFields"><label class="field">Text shown in the giveaway<textarea id="gwMessage" rows="5" maxlength="4000" placeholder="Enter the message members will see. Use {prize}, {winners} and {duration} if helpful."></textarea></label></div>'+
+   '<div id="gwEmbedFields"><label class="field">Embed title<input id="gwTitle" maxlength="256" value="🎉 Giveaway!"></label><label class="field">Embed description<textarea id="gwDescription" rows="5" maxlength="4000" placeholder="Write the giveaway details shown inside the embed."></textarea></label></div>'+
+   '<label class="field">Entry emoji<select id="gwEmoji">'+options+'</select><span class="mention-help">Choose an emoji from this server, or use an external emoji/image URL below. The selected server emoji will be used as the reaction to enter.</span></label>'+
+   '<label class="field">External emoji/image URL (optional)<input id="gwEmojiUrl" type="url" placeholder="https://example.com/emoji.png"><span class="mention-help">Use a direct HTTPS image URL. It will appear as an image on the giveaway post. External URLs cannot be used as Discord reaction emojis, so the 🎁 reaction is used if no server emoji is selected.</span></label>'+
+   '<div class="embed-two-col"><label class="field">How long will it run?<input id="gwDuration" type="number" min="1" max="525600" value="24"></label><label class="field">Duration unit<select id="gwDurationUnit">'+durationOptions+'</select></label></div>'+
+   '<label class="field">Number of winners<input id="gwWinners" type="number" min="1" max="100" value="1"></label>'+
+   '<div class="panel-actions"><button type="button" class="select" id="gwPost">Post giveaway</button></div></section>'+
+   '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Active giveaways</h3><p>Remove a giveaway to delete its post from Discord and remove it from the active list.</p></div><button type="button" class="select" id="gwRefresh">Refresh</button></div><div class="giveaway-active-list">'+renderActive()+'</div></section>'+
+  '</div>');
+  const fmt=document.getElementById('gwFormat');
+  const toggleFormat=()=>{document.getElementById('gwTextFields').hidden=fmt.value!=='text';document.getElementById('gwEmbedFields').hidden=fmt.value!=='embed';};
+  fmt.addEventListener('change',toggleFormat);toggleFormat();
+  document.getElementById('gwPost').onclick=async()=>{
+   const prize=val('gwPrize').trim(),channel=val('gwChannel'),format=val('gwFormat');
+   const durationValue=Math.max(1,Number(val('gwDuration'))||0),unit=val('gwDurationUnit');
+   const duration=Math.round(durationValue*(unit==='days'?1440:unit==='hours'?60:1));
+   const winners=Math.max(1,Math.min(100,Number(val('gwWinners'))||1));
+   const emojiValue=val('gwEmoji'),emoji=emojis.find(e=>String(e.id)===String(emojiValue));
+   const emojiUrl=val('gwEmojiUrl').trim();
+   if(!prize||!channel){alert('Enter a prize and choose a channel.');return;}
+   if(emojiUrl&&!/^https:\/\/\S+/i.test(emojiUrl)){alert('The external emoji/image URL must start with https://');return;}
+   const btn=document.getElementById('gwPost');btn.disabled=true;btn.textContent='Posting…';
+   try{
+    const result=await api('/api/giveaway/create?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({
+     prize,channel,duration,winners,format,
+     message:val('gwMessage').trim(),
+     embedTitle:val('gwTitle').trim(),
+     embedDescription:val('gwDescription').trim(),
+     emojiId:emoji?.id||null,emojiName:emoji?.name||null,emojiUrl
+    })});
+    if(!result.success)throw new Error(result.error||'Could not post giveaway');
+    alert('Giveaway posted to Discord.');
+    const refreshed=await api('/api/config/giveaways?guildId='+encodeURIComponent(id));
+    for(const key of Object.keys(existing))delete existing[key];
+    Object.assign(existing,refreshed.giveaways||{});
+    active.splice(0,active.length,...Object.entries(existing).filter(([,g])=>g.status==='active'));
+    draw();
+   }catch(err){alert('Could not post giveaway: '+(err.message||String(err)));btn.disabled=false;btn.textContent='Post giveaway';}
+  };
+  document.getElementById('gwRefresh').onclick=async()=>{try{const result=await api('/api/config/giveaways?guildId='+encodeURIComponent(id));for(const key of Object.keys(existing))delete existing[key];Object.assign(existing,result.giveaways||{});active.splice(0,active.length,...Object.entries(existing).filter(([,g])=>g.status==='active'));draw();}catch(err){alert('Could not refresh giveaways: '+err.message);}};
+  body.querySelectorAll('[data-remove-giveaway]').forEach(btn=>btn.onclick=async()=>{if(!confirm('Remove this giveaway and delete its Discord post?'))return;btn.disabled=true;try{const result=await api('/api/giveaway/end?guildId='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({name:btn.dataset.removeGiveaway})});if(!result.success)throw new Error(result.error||'Could not remove giveaway');delete existing[btn.dataset.removeGiveaway];active.splice(0,active.length,...Object.entries(existing).filter(([,g])=>g.status==='active'));draw();}catch(err){alert('Could not remove giveaway: '+err.message);btn.disabled=false;}});
+ };
+ if(!document.getElementById('giveaway-panel-styles')){const st=document.createElement('style');st.id='giveaway-panel-styles';st.textContent='.giveaway-active-list{display:grid;gap:9px}.giveaway-active-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.giveaway-active-copy{display:grid;gap:4px;min-width:0}.giveaway-active-copy strong{font-size:12px;overflow-wrap:anywhere}.giveaway-active-copy span{font-size:10px;color:var(--muted);overflow-wrap:anywhere}.giveaway-remove{flex:0 0 auto}.welcome-message-section [hidden]{display:none!important}@media(max-width:600px){.giveaway-active-row{align-items:flex-start;flex-direction:column}.giveaway-remove{align-self:flex-end}}';document.head.appendChild(st);}
+ draw();
+ attachToggle(id,f,c);
+}
+
 const PANEL_COMMANDS={welcome:['/welcome','/goodbye'],reactionRoles:['/reactionrole'],moderator:['/mod purge','/mod softban','/mod unban','/mod clearwarnings','/mod slowmode','/mod lock','/mod unlock'],automod:['/automod'],audit:['/auditlog'],levels:['/rank','/leaderboard','/level'],achievements:['/stats'],customCommands:['/your-custom-command'],inviteTracker:['/invites stats','/invites leaderboard'],ticketing:['/ticket'],emojis:['/emoji'],polls:['/fun poll'],embeds:['/embed'],reminders:['/remind'],birthdays:['/birthday'],twitch:['/twitch'],youtube:['/youtube'],reddit:['/reddit'],instagram:['/instagram'],rss:['/rss'],kick:['/kick'],podcast:['/podcast'],tiktok:['/tiktok'],xalerts:['/x'],giveaways:['/giveaway'],economy:['/economy daily','/economy beg','/economy shop'],music:['/play','/skip','/stop'],casino:['/casino'],lottery:['/lottery'],games:['/fun calculator','/fun advice','/fun dadjoke'],ai:['/ask'],commands:['/help','/adminhelp'],system:['/adminhelp'],premium:[]};
 function commandStrip(panelKey){const cmds=PANEL_COMMANDS[panelKey]||[];return '<section class="panel-command-strip"><div><strong>Discord commands for this panel</strong><p>Use these in your server. Permissions and enabled features may affect availability.</p></div><div class="panel-command-list">'+(cmds.length?cmds.map(c=>'<code>'+esc(c)+'</code>').join(''):'<span class="panel-command-empty">No Discord commands available yet.</span>')+'</div></section>';}
 if(!document.getElementById('panel-command-pricing-styles')){const st=document.createElement('style');st.id='panel-command-pricing-styles';st.textContent=".panel-command-strip{margin-top:16px;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}.panel-command-strip strong{font-size:12px}.panel-command-strip p{font-size:10px;color:var(--muted);margin:4px 0 10px}.panel-command-list{display:flex;gap:7px;flex-wrap:wrap}.panel-command-list code{padding:5px 8px;border-radius:7px;background:var(--surface-2);font-size:11px}.panel-command-empty{font-size:11px;color:var(--muted)}.billing-period-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 8px}.billing-period-tab{border:1px solid var(--border);border-radius:10px;padding:9px 15px;background:var(--surface);color:var(--text);cursor:pointer;font-weight:700;font-size:12px}.billing-period-tab.active{border-color:var(--petrol);background:var(--surface-2);box-shadow:0 0 0 1px var(--petrol)}.billing-period-note{font-size:11px;color:var(--muted);margin:0 0 16px}.pricing-pay-button{display:block;width:100%;margin-top:18px;border:0;border-radius:9px;padding:11px 12px;background:var(--petrol);color:#fff;font-weight:800;cursor:pointer}.pricing-pay-button:disabled{opacity:.55;cursor:not-allowed}.pricing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.pricing-card{border:1px solid var(--border);border-radius:15px;padding:17px;background:var(--surface);min-width:0}.pricing-featured{border-color:var(--petrol);box-shadow:0 0 0 1px var(--petrol)}.pricing-card-head{display:flex;justify-content:space-between;gap:6px;align-items:center}.pricing-card-head h3{font-size:16px}.pricing-card-head span{font-size:9px;color:var(--petrol);font-weight:850}.pricing-price{display:flex;align-items:baseline;gap:6px;margin:16px 0 8px}.pricing-price strong{font-size:29px}.pricing-price span,.pricing-desc{font-size:11px;color:var(--muted)}.pricing-card ul{padding:0;list-style:none;margin:15px 0 0;display:grid;gap:10px}.pricing-card li{font-size:11px;line-height:1.45;display:flex;gap:7px}.pricing-card li span{color:var(--petrol);font-weight:900}@media(max-width:950px){.pricing-grid{grid-template-columns:1fr}}";document.head.appendChild(st);}
@@ -575,7 +642,8 @@ async function renderPanel(id,f,c){
  try {
 
  const k=f[0];
- if(['giveaways','economy','music','casino','lottery','games','ai','premium'].includes(k)){await renderDebilInspiredPanel(id,f,c);return;}
+ if(k==='giveaways'){await renderGiveawaysPanel(id,f,c);return;}
+ if(['economy','music','casino','lottery','games','ai','premium'].includes(k)){await renderDebilInspiredPanel(id,f,c);return;}
  if(k==='welcome'){await renderWelcomePanel(id,f,c);return;}
  if(k==='reactionRoles'){await renderReactionRolesPanel(id,f,c);return;}
  if(['rss','reddit','podcast','instagram','xalerts'].includes(k)){await renderSourceAlertPanel(id,f,c);return;}
