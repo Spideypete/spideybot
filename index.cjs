@@ -6009,6 +6009,17 @@ async function getPayPalAccessToken() {
   return response.data.access_token;
 }
 
+function getPayPalReturnBaseUrl(req) {
+  // Use the host the buyer is actually using. BASE_URL may intentionally point at
+  // production while this Railway testing branch has its own domain.
+  const host = String(req.get('x-forwarded-host') || req.get('host') || '').split(',')[0].trim();
+  const forwardedProto = String(req.get('x-forwarded-proto') || req.protocol || 'https').split(',')[0].trim().toLowerCase();
+  if (!host || !/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host) || !['http', 'https'].includes(forwardedProto)) {
+    throw new Error('Could not determine a safe PayPal return URL for this dashboard host.');
+  }
+  return `${forwardedProto}://${host}`;
+}
+
 function getPaymentGuildAccess(req, guildId) {
   if (!req.session?.authenticated || !req.session?.user?.id) return false;
   return Array.isArray(req.session.guilds) && req.session.guilds.some(g => String(g.id) === String(guildId));
@@ -6041,8 +6052,8 @@ app.post('/api/paypal/create-order', async (req, res) => {
         brand_name: 'Spidey Bot',
         landing_page: 'NO_PREFERENCE',
         user_action: 'PAY_NOW',
-        return_url: `${getPublicBaseUrl(req)}/dashboard.html?guildId=${encodeURIComponent(guildId)}&paypalReturn=1`,
-        cancel_url: `${getPublicBaseUrl(req)}/dashboard.html?guildId=${encodeURIComponent(guildId)}&paypalCancelled=1`
+        return_url: `${getPayPalReturnBaseUrl(req)}/dashboard.html?guildId=${encodeURIComponent(guildId)}&paypalReturn=1`,
+        cancel_url: `${getPayPalReturnBaseUrl(req)}/dashboard.html?guildId=${encodeURIComponent(guildId)}&paypalCancelled=1`
       }
     };
     const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders`, orderData, {
