@@ -1288,4 +1288,15 @@ async function select(section){
 addStyles();
 installSidebarHeadingGlow();
 window.spideyDashboard={select,guildId,FEATURES};
+// The Owner Console broadcasts plan changes to other dashboard tabs on this origin.
+// Reload the selected server's authoritative plan and rerender the active panel immediately.
+window.addEventListener('storage',async event=>{
+ if(event.key!=='spidey-plan-updated'||!event.newValue)return;
+ let update;try{update=JSON.parse(event.newValue)}catch(_){return;}
+ const id=guildId();
+ if(!id||String(update.guildId)!==String(id))return;
+ const active=document.querySelector('[data-section].active')?.dataset.section||'overview';
+ await buildNavigation();
+ await select(active);
+});
 buildNavigation().then(()=>select('overview'));
