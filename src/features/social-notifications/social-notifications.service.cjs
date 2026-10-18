@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const CONFIG_FILE = path.join(__dirname, '../../config.json');
+const CONFIG_FILE = process.env.SPIDEYBOT_CONFIG_PATH || path.join(__dirname, '../../../config.json');
 
 function loadConfig() {
   if (fs.existsSync(CONFIG_FILE)) {
@@ -12,6 +12,13 @@ function loadConfig() {
 
 function saveConfig(config) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+}
+
+function saveGuildConfig(guildId, guildConfig) {
+  const config = loadConfig();
+  if (!config.guilds) config.guilds = {};
+  config.guilds[guildId] = guildConfig;
+  saveConfig(config);
 }
 
 function getGuildConfig(guildId) {
@@ -30,6 +37,9 @@ function getSocialNotifications(guildId) {
       enabled: false,
       notifications: []
     };
+    const config = loadConfig();
+    config.guilds[guildId] = guildConfig;
+    saveConfig(config);
   }
   return guildConfig.socialNotifications;
 }
@@ -51,7 +61,7 @@ function setConfig(guildId, config) {
   const merged = { ...sn, ...config };
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = merged;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 }
 
 function addNotification(guildId, notification) {
@@ -70,6 +80,7 @@ function addNotification(guildId, notification) {
     platform: notification.platform,
     username: notification.username,
     channelId: notification.channelId,
+    pingRoleId: notification.pingRoleId || null,
     enabled: notification.enabled !== false,
     lastChecked: null,
     isLive: false,
@@ -80,7 +91,7 @@ function addNotification(guildId, notification) {
   sn.notifications.push(entry);
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = sn;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true, notification: entry };
 }
@@ -100,9 +111,26 @@ function removeNotification(guildId, platform, username) {
   const removed = sn.notifications.splice(index, 1)[0];
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = sn;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true, notification: removed };
+}
+
+function updateFeedStatus(guildId, platform, username, itemId, title, url) {
+  const sn = getSocialNotifications(guildId);
+  if (!sn.notifications) return { success: false, error: 'No notifications configured.' };
+  const notification = sn.notifications.find(n => n.platform === platform && n.username.toLowerCase() === username.toLowerCase());
+  if (!notification) return { success: false, error: 'Notification not found.' };
+  const previousId = notification.lastItemId || null;
+  const hadPreviousCheck = Boolean(notification.lastChecked);
+  notification.lastItemId = String(itemId || '');
+  notification.streamTitle = String(title || notification.streamTitle || '');
+  notification.latestUrl = String(url || notification.latestUrl || '');
+  notification.lastChecked = new Date().toISOString();
+  const guildConfig = getGuildConfig(guildId);
+  guildConfig.socialNotifications = sn;
+  saveGuildConfig(guildId, guildConfig);
+  return { success: true, isNew: hadPreviousCheck && Boolean(itemId) && String(itemId) !== String(previousId), notification };
 }
 
 function toggleNotification(guildId, platform, username) {
@@ -121,7 +149,7 @@ function toggleNotification(guildId, platform, username) {
 
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = sn;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return { success: true, notification };
 }
@@ -157,7 +185,7 @@ function updateStreamStatus(guildId, platform, username, isLive, title) {
 
   const guildConfig = getGuildConfig(guildId);
   guildConfig.socialNotifications = sn;
-  saveConfig(loadConfig());
+  saveGuildConfig(guildId, guildConfig);
 
   return {
     success: true,
@@ -176,5 +204,6 @@ module.exports = {
   toggleNotification,
   getEnabledNotifications,
   getNotifications,
-  updateStreamStatus
+  updateStreamStatus,
+  updateFeedStatus
 };

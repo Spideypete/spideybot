@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const CONFIG_FILE = path.join(__dirname, '../../config.json');
+const CONFIG_FILE = path.join(__dirname, '../../../config.json');
 
 function loadConfig() {
   if (fs.existsSync(CONFIG_FILE)) {
@@ -81,6 +81,18 @@ function create(guildId, data) {
   guildConfig.giveaways = giveaways;
   saveConfig(loadConfig());
 
+  return giveaway;
+}
+
+function updateMessage(guildId, id, messageId, channelId) {
+  const giveaways = getGiveaways(guildId);
+  const giveaway = giveaways[id];
+  if (!giveaway) return null;
+  giveaway.messageId = String(messageId);
+  giveaway.channelId = String(channelId);
+  const guildConfig = getGuildConfig(guildId);
+  guildConfig.giveaways = giveaways;
+  saveConfig(loadConfig());
   return giveaway;
 }
 
@@ -165,6 +177,7 @@ module.exports = {
   getEnded,
   getGiveaway,
   create,
+  updateMessage,
   endGiveaway,
   reroll,
   deleteGiveaway,

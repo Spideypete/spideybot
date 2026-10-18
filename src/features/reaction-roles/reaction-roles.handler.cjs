@@ -1,4 +1,6 @@
+const { PermissionFlagsBits } = require("discord.js");
 const service = require("./reaction-roles.service.cjs");
+const subscriptionManager = require('../../../services/subscription.manager.js');
 
 let registered = false;
 
@@ -43,39 +45,159 @@ async function fetchReaction(reaction) {
   }
 }
 
+async function sendConfiguredNotice(guild, settings, message, isError = false, fallbackChannel = null) {
+  if (!guild) return false;
+  if (isError ? !settings?.errorReporting : !settings?.updateNotifications) return false;
+  // A notification channel is optional in the dashboard. If none is configured,
+  // deliver the notice in the reaction-role message's channel instead of silently dropping it.
+  const targetChannelId = settings?.notificationChannelId || fallbackChannel?.id;
+  if (!targetChannelId) return false;
+  try {
+    const channel = fallbackChannel && String(fallbackChannel.id) === String(targetChannelId)
+      ? fallbackChannel
+      : (guild.channels.cache.get(String(targetChannelId))
+        || await guild.channels.fetch(String(targetChannelId)).catch(() => null));
+    if (!channel?.isTextBased?.() || typeof channel.send !== "function") {
+      console.warn("[reaction-roles] Configured notification channel is missing or not text-based.");
+      return false;
+    }
+    const me = guild.members.me || await guild.members.fetchMe().catch(() => null);
+    if (me && channel.permissionsFor(me)?.has("SendMessages") === false) {
+      console.warn("[reaction-roles] Bot cannot send messages in the configured notification channel.");
+      return false;
+    }
+    await channel.send({ content: message.slice(0, 1900), allowedMentions: { parse: [] } });
+    return true;
+  } catch (error) {
+    console.warn("[reaction-roles] Could not send configured notice:", error.message);
+    return false;
+  }
+}
+
+async function sendDmConfirmation(user, message, guild, settings, fallbackChannel = null) {
+  if (!settings?.dmConfirmations && !settings?.dmConfirm) return { sent: false, skipped: true };
+
+  try {
+    // Refresh the recipient through this bot client's user cache before opening
+    // the DM. This avoids relying on a possibly stale User object from the
+    // gateway reaction event.
+    const recipient = guild?.client?.users?.fetch
+      ? await guild.client.users.fetch(user.id, { force: true })
+      : user;
+    await recipient.send(message);
+    return { sent: true };
+  } catch (error) {
+    console.warn(
+      `[reaction-roles] Could not DM ${user.tag || user.id} (code=${error.code || "unknown"}): ${error.message}`
+    );
+
+    // DM failures must be visible even when optional error-reporting notices
+    // are disabled, otherwise admins cannot tell why confirmation did not arrive.
+    const channel = fallbackChannel;
+    if (channel?.isTextBased?.() && typeof channel.send === "function") {
+      try {
+        await channel.send({
+          content: `⚠️ <@${user.id}> received the role update, but Discord did not allow the confirmation DM. Please enable DMs for server members and try again.`,
+          allowedMentions: { users: [user.id] }
+        });
+      } catch (noticeError) {
+        console.warn("[reaction-roles] Could not post DM-failure notice:", noticeError.message);
+      }
+    } else {
+      await sendConfiguredNotice(
+        guild,
+        settings,
+        `⚠️ Role update succeeded for <@${user.id}>, but Discord rejected the confirmation DM (code ${error.code || "unknown"}).`,
+        true,
+        fallbackChannel
+      );
+    }
+    return { sent: false, error };
+  }
+}
+
 async function handleReactionAdd(reaction, user) {
   if (user.bot) return;
   const guild = reaction.message.guild;
+  console.log(`[reaction-roles] Reaction add received: guild=${guild?.id || "none"} message=${reaction.message.id} emoji=${reaction.emoji.toString()} user=${user.id}`);
   if (!guild) return;
 
+  const settings = service.getConfig(guild.id);
+  const plan = subscriptionManager.getGuildPlanPolicy(guild.id);
+  // Free servers always send DM confirmations; only Premium/Pro can disable them.
+  if (plan.tier === 'free') { settings.dmConfirm = true; settings.dmConfirmations = true; }
+  if (settings.enabled === false) {
+    console.log(`[reaction-roles] Ignoring reaction: feature disabled for guild ${guild.id}`);
+    return;
+  }
   const entries = service.getEntriesForMessage(guild.id, reaction.message.id);
   const entry = entries.find((e) => entryMatchesEmoji(e, reaction.emoji));
-  if (!entry) return;
+  if (!entry) {
+    console.log(`[reaction-roles] No mapping matched message ${reaction.message.id}; mappings for message=${entries.length}; notificationChannel=${settings.notificationChannelId || "unset"}; updates=${settings.updateNotifications}; dm=${settings.dmConfirm || settings.dmConfirmations}`);
+    return;
+  }
+  console.log(`[reaction-roles] Matched role mapping: role=${entry.roleId}; notificationChannel=${settings.notificationChannelId || "unset"}; updates=${settings.updateNotifications}; errors=${settings.errorReporting}; dm=${settings.dmConfirm || settings.dmConfirmations}`);
 
   const member = await resolveMember(guild, user.id);
   if (!member) return;
 
-  const role = guild.roles.cache.get(entry.roleId);
+  const role = guild.roles.cache.get(entry.roleId) || await guild.roles.fetch(entry.roleId).catch(() => null);
   if (!role) {
-    console.warn(
-      `[reaction-roles] Skipping assign: role ${entry.roleId} no longer exists in ${guild.id}.`
+    console.warn(`[reaction-roles] Skipping assign: role ${entry.roleId} no longer exists in ${guild.id}.`);
+    await sendConfiguredNotice(guild, settings, `❌ Reaction role failed: the configured role no longer exists (role ID ${entry.roleId}).`, true, reaction.message.channel);
+    return;
+  }
+  if (member.roles.cache.has(role.id)) {
+    // Still confirm the reaction when the member already has the mapped role.
+    // This commonly happens during testing or when members re-add a reaction.
+    await sendDmConfirmation(
+      user,
+      `ℹ️ You already have the **${role.name}** role in **${guild.name}**.`,
+      guild,
+      settings,
+      reaction.message.channel
     );
     return;
   }
-  if (member.roles.cache.has(role.id)) return;
 
   try {
+    const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
+    if (!botMember) {
+      console.error(`[reaction-roles] Cannot assign ${role.name}: could not resolve the bot member in ${guild.name} (${guild.id}).`);
+      await sendConfiguredNotice(guild, settings, `❌ Could not assign **${role.name}** to <@${user.id}>: bot member could not be resolved.`, true, reaction.message.channel);
+      return;
+    }
+    if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+      console.error(`[reaction-roles] Cannot assign ${role.name} in ${guild.name}: the bot is missing the Manage Roles permission.`);
+      await sendConfiguredNotice(guild, settings, `❌ Could not assign **${role.name}** to <@${user.id}>: SPIDEY BOT needs the **Manage Roles** permission.`, true, reaction.message.channel);
+      return;
+    }
+    if (role.managed || role.position >= botMember.roles.highest.position) {
+      console.error(`[reaction-roles] Cannot assign ${role.name} in ${guild.name}: move the SPIDEY BOT role above this role in Server Settings > Roles.`);
+      await sendConfiguredNotice(guild, settings, `❌ Could not assign **${role.name}** to <@${user.id}>: move the SPIDEY BOT role above this role in Server Settings → Roles.`, true, reaction.message.channel);
+      return;
+    }
+    if (settings.allowMultiple === false) {
+      const otherRoleIds = [...new Set(entries.filter(e => e.roleId !== role.id).map(e => e.roleId))].filter(roleId => member.roles.cache.has(roleId));
+      if (otherRoleIds.length) await member.roles.remove(otherRoleIds, "Reaction role single-selection mode");
+      for (const otherEntry of entries.filter(e => e.emoji !== entry.emoji)) {
+        const otherReaction = reaction.message.reactions.cache.find(r => entryMatchesEmoji(otherEntry, r.emoji));
+        if (otherReaction) await otherReaction.users.remove(user.id).catch(() => {});
+      }
+    }
     await member.roles.add(role, "Reaction role assigned");
     console.log(
       `[reaction-roles] Assigned ${role.name} to ${user.tag} in ${guild.name}`
     );
-    if (service.getConfig(guild.id).dmConfirmations) {
-      await user
-        .send(`✅ You've been given the **${role.name}** role in **${guild.name}**!`)
-        .catch(() => {});
-    }
+    await sendConfiguredNotice(guild, settings, `✅ <@${user.id}> was given the **${role.name}** role.`, false, reaction.message.channel);
+    await sendDmConfirmation(user, `✅ You've been given the **${role.name}** role in **${guild.name}**!`, guild, settings, reaction.message.channel);
   } catch (e) {
-    console.error("[reaction-roles] Failed to assign role:", e.message);
+    if (e.code === 50013 || e.code === "50013") {
+      console.error(`[reaction-roles] Discord denied assigning ${role.name} in ${guild.name}. Check that SPIDEY BOT has Manage Roles and its highest role is above the target role.`);
+    } else {
+      console.error("[reaction-roles] Failed to assign role:", e.message);
+    }
+    await sendConfiguredNotice(guild, settings, `❌ Failed to assign **${role.name}** to <@${user.id}>: ${e.message || "unknown Discord error"}`, true, reaction.message.channel);
   }
 }
 
@@ -84,6 +206,8 @@ async function handleReactionRemove(reaction, user) {
   const guild = reaction.message.guild;
   if (!guild) return;
 
+  const settings = service.getConfig(guild.id);
+  if (settings.enabled === false || settings.removeOnUnreact === false) return;
   const entries = service.getEntriesForMessage(guild.id, reaction.message.id);
   const entry = entries.find((e) => entryMatchesEmoji(e, reaction.emoji));
   if (!entry) return;
@@ -91,11 +215,10 @@ async function handleReactionRemove(reaction, user) {
   const member = await resolveMember(guild, user.id);
   if (!member) return;
 
-  const role = guild.roles.cache.get(entry.roleId);
+  const role = guild.roles.cache.get(entry.roleId) || await guild.roles.fetch(entry.roleId).catch(() => null);
   if (!role) {
-    console.warn(
-      `[reaction-roles] Skipping remove: role ${entry.roleId} no longer exists in ${guild.id}.`
-    );
+    console.warn(`[reaction-roles] Skipping remove: role ${entry.roleId} no longer exists in ${guild.id}.`);
+    await sendConfiguredNotice(guild, settings, `❌ Reaction role removal failed: the configured role no longer exists (role ID ${entry.roleId}).`, true, reaction.message.channel);
     return;
   }
   if (!member.roles.cache.has(role.id)) return;
@@ -105,13 +228,11 @@ async function handleReactionRemove(reaction, user) {
     console.log(
       `[reaction-roles] Removed ${role.name} from ${user.tag} in ${guild.name}`
     );
-    if (service.getConfig(guild.id).dmConfirmations) {
-      await user
-        .send(`➖ Your **${role.name}** role in **${guild.name}** has been removed.`)
-        .catch(() => {});
-    }
+    await sendConfiguredNotice(guild, settings, `➖ <@${user.id}> had the **${role.name}** role removed.`, false, reaction.message.channel);
+    await sendDmConfirmation(user, `➖ Your **${role.name}** role in **${guild.name}** has been removed.`, guild, settings, reaction.message.channel);
   } catch (e) {
     console.error("[reaction-roles] Failed to remove role:", e.message);
+    await sendConfiguredNotice(guild, settings, `❌ Failed to remove **${role.name}** from <@${user.id}>: ${e.message || "unknown Discord error"}`, true, reaction.message.channel);
   }
 }
 
@@ -122,7 +243,13 @@ function registerReactionRolesHandler(client) {
 
   client.on("messageReactionAdd", async (reaction, user) => {
     const fetched = await fetchReaction(reaction);
-    if (fetched) await handleReactionAdd(fetched, user);
+    if (fetched) {
+      try {
+        await handleReactionAdd(fetched, user);
+      } catch (error) {
+        console.error("[reaction-roles] Unhandled reaction-add handler error:", error?.stack || error?.message || error);
+      }
+    }
   });
 
   client.on("messageReactionRemove", async (reaction, user) => {

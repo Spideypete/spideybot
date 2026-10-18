@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { loadConfig, saveConfig, getGuildConfig } = require('../../config/config-manager.cjs');
 
-const CONFIG_FILE = path.join(__dirname, '../../config.json');
+const CONFIG_FILE = process.env.SPIDEYBOT_CONFIG_PATH || path.join(__dirname, '../../../config.json');
 
 const DEFAULT_COMMAND = Object.freeze({
   response: '',

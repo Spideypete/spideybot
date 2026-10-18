@@ -85,7 +85,7 @@ async function handleReactionAdd(reaction, user) {
 
   for (const [id, giveaway] of Object.entries(giveaways)) {
     if (giveaway.messageId === message.id && giveaway.status === 'active') {
-      if (reaction.emoji.name === '🎁' || reaction.emoji.name === '🎉') {
+      if ((giveaway.emojiId && reaction.emoji.id === String(giveaway.emojiId)) || (!giveaway.emojiId && (reaction.emoji.name === '🎁' || reaction.emoji.name === '🎉'))) {
         giveawaysService.addEntry(guildId, id, user.id);
       }
       break;

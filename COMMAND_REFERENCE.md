@@ -7,14 +7,19 @@ Type `//command` in your Discord server. Bot prefix is `//` (configurable via `/
 
 ## 🎵 MUSIC COMMANDS
 
-| Command | Usage | Description |
+| Slash command | Usage | Description |
 |---------|-------|-------------|
-| `//play` | `//play [song name or YouTube URL]` | Search and play from YouTube |
-| `//queue` | `//queue` | Show next 10 songs in queue |
-| `//loop` | `//loop` | Toggle queue repeat mode |
-| `//shuffle` | `//shuffle` | Randomize the queue order |
-| `//volume` | `//volume [0-200]` | Adjust playback volume (0=mute, 200=double) |
-| `⏮ ⏸ ▶ ⏭ ⏹` | Click buttons | Control buttons during playback |
+| `/play` | `/play query:<song name or supported URL>` | Play a track or add it to the queue |
+| `/queue` | `/queue` | Show the current track and up to 10 upcoming tracks |
+| `/pause` | `/pause` | Pause playback |
+| `/resume` | `/resume` | Resume playback |
+| `/skip` | `/skip` | Skip the current track |
+| `/stop` | `/stop` | Stop playback and clear the queue |
+| `/shuffle` | `/shuffle` | Shuffle upcoming tracks |
+| `/loop` | `/loop mode:<off, track, queue>` | Turn repeat off, repeat the current track, or repeat the queue |
+| `/volume` | `/volume level:<0–200>` | Set playback volume |
+
+Music settings, channel restrictions, DJ role requirements and queue limits are configured per server in the dashboard. Supported source availability depends on the installed extractors and changes made by audio platforms.
 
 ---
 

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const socialNotificationsService = require('./social-notifications.service.cjs');
 const socialNotificationsHandler = require('./social-notifications.handler.cjs');
+const subscriptionManager = require('../../../services/subscription.manager.js');
 
 function auth(req, res, next) {
   if (!req.session?.authenticated) {
@@ -10,7 +11,14 @@ function auth(req, res, next) {
   next();
 }
 
-router.get('/:guildId', auth, (req, res) => {
+function requireGuildAccess(req, res, next) {
+  const guildId = req.params.guildId;
+  const allowed = Array.isArray(req.session?.guilds) && req.session.guilds.some(g => String(g.id) === String(guildId));
+  if (!allowed) return res.status(403).json({ error: "You don't have admin permissions in this server" });
+  next();
+}
+
+router.get('/:guildId', auth, requireGuildAccess, (req, res) => {
   const notifications = socialNotificationsService.getNotifications(req.params.guildId);
   const config = socialNotificationsService.getConfig(req.params.guildId);
 
@@ -20,7 +28,7 @@ router.get('/:guildId', auth, (req, res) => {
   });
 });
 
-router.post('/:guildId', auth, express.json(), (req, res) => {
+router.post('/:guildId', auth, requireGuildAccess, express.json(), (req, res) => {
   const { guildId } = req.params;
   const { platform, username, channelId } = req.body;
 
@@ -43,6 +51,12 @@ router.post('/:guildId', auth, express.json(), (req, res) => {
   }
 
   try {
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    const existingForPlatform = socialNotificationsService.getNotifications(guildId).filter(n => String(n.platform || '').toLowerCase() === platform.toLowerCase());
+    const alreadyExists = existingForPlatform.some(n => String(n.username || '').toLowerCase() === String(username).toLowerCase());
+    if (!alreadyExists && existingForPlatform.length >= policy.socialAccountsPerSection) {
+      return res.status(403).json({ success: false, error: 'This server has reached its '+policy.socialAccountsPerSection+' account limit for '+platform.toUpperCase()+' on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.socialAccountsPerSection, currentCount: existingForPlatform.length });
+    }
     const result = socialNotificationsService.addNotification(guildId, {
       platform: platform.toLowerCase(),
       username,
@@ -59,7 +73,7 @@ router.post('/:guildId', auth, express.json(), (req, res) => {
   }
 });
 
-router.delete('/:guildId/:platform/:username', auth, express.json(), (req, res) => {
+router.delete('/:guildId/:platform/:username', auth, requireGuildAccess, express.json(), (req, res) => {
   const { guildId, platform, username } = req.params;
 
   try {
@@ -73,7 +87,7 @@ router.delete('/:guildId/:platform/:username', auth, express.json(), (req, res) 
   }
 });
 
-router.post('/:guildId/:platform/:username/toggle', auth, express.json(), (req, res) => {
+router.post('/:guildId/:platform/:username/toggle', auth, requireGuildAccess, express.json(), (req, res) => {
   const { guildId, platform, username } = req.params;
 
   try {
@@ -87,11 +101,11 @@ router.post('/:guildId/:platform/:username/toggle', auth, express.json(), (req, 
   }
 });
 
-router.post('/:guildId/check', auth, express.json(), async (req, res) => {
+router.post('/:guildId/check', auth, requireGuildAccess, express.json(), async (req, res) => {
   const { guildId } = req.params;
 
   try {
-    const results = await socialNotificationsHandler.checkNow(guildId);
+    const results = await socialNotificationsHandler.checkNow(guildId, req.app.locals.discordClient);
     res.json({ success: true, results });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

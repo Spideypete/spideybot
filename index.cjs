@@ -15,7 +15,7 @@ const {
   REST,
   Routes
 } = require("discord.js");
-const { testifyCommands } = require("./src/features/testify-suite/testify-suite.commands.cjs");
+const { spideyCommands } = require("./src/features/spidey-suite/spidey-suite.commands.cjs");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("fs");
@@ -39,6 +39,7 @@ if (missingEnvVars.length) {
 const express = require("express");
 const helmet = require('helmet');
 const session = require("express-session");
+const { createSqliteSessionStore } = require("./services/sqlite-session-store.cjs");
 const axios = require("axios");
 const {
   RateLimiter,
@@ -55,7 +56,9 @@ const {
 const { createFeaturesRouter } = require("./src/routes/features.js");
 
 // Feature services and handlers
-const { execute: handleTestifyInteraction, handlePrefix: handleTestifyPrefix, registerTestifyHandlers } = require("./src/features/testify-suite/testify-suite.handler.cjs");
+const { execute: handleSpideyInteraction, handlePrefix: handleSpideyPrefix, registerSpideyHandlers } = require("./src/features/spidey-suite/spidey-suite.handler.cjs");
+const customSlashRuntime = require("./src/features/custom-commands/custom-slash-runtime.cjs");
+const subscriptionManager = require("./services/subscription.manager.js");
 
 // Integrated server command suite: slash + prefix commands, AutoMod, XP, economy and admin tools.
 
@@ -320,13 +323,21 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
+const sessionDatabasePath = process.env.SESSION_DB_PATH
+  || (process.env.NODE_ENV === 'production' ? null : path.join(__dirname, '.local', 'sessions.sqlite'));
+if (!sessionDatabasePath) {
+  throw new Error('SESSION_DB_PATH must point to a persistent database file on the production volume (for example /data/sessions.sqlite)');
+}
+const persistentSessionStore = createSqliteSessionStore({ session, databasePath: sessionDatabasePath });
+
 app.use(session({
+  store: persistentSessionStore,
   secret: process.env.SESSION_SECRET || (() => {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('SESSION_SECRET must be set in production');
@@ -335,13 +346,62 @@ app.use(session({
   })(),
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  cookie: {
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production'
   }
 }));
+
+// DASHBOARD AUTH BYPASS FOR THE DEDICATED RAILWAY TESTING HOST ONLY.
+// The public testing URL is intentionally unauthenticated while the dashboard is being built.
+// Production/main keeps the normal Discord OAuth flow. Keep the hostname exact and never
+// enable this on a custom domain or the production service.
+const SPIDEY_TESTING_HOST = 'spidey-bot-testing-testing.up.railway.app';
+function isSpideyTestingHost(_req) {
+  // Release-candidate safety: testing-host bypasses are disabled for production release.
+  return false;
+}
+function isTestingOwnerSession(_req) {
+  // Synthetic testing-owner identities must never authorize release builds.
+  return false;
+}
+function applyTestingDashboardSession(_req) {
+  // No synthetic authentication is applied in the production release candidate.
+}
+app.use((req, res, next) => {
+  applyTestingDashboardSession(req);
+
+  if (isSpideyTestingHost(req) && (req.path === '/login' || req.path.startsWith('/auth/discord'))) {
+    const guildId = req.session?.guilds?.[0]?.id;
+    return res.redirect(guildId ? `/dashboard.html?guildId=${encodeURIComponent(guildId)}` : '/dashboard/select');
+  }
+
+  // Preserve the existing local-only synthetic context for local UI development.
+  const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(String(req.hostname || '').toLowerCase());
+  const devBypassEnabled = process.env.NODE_ENV !== 'production'
+    && process.env.SPIDEY_DASHBOARD_DEV_AUTH_BYPASS === 'true'
+    && isLocalHost;
+  if (devBypassEnabled && req.session) {
+    req.session.authenticated = true;
+    req.session.user = req.session.user || {
+      id: 'local-dev-user',
+      username: 'Local Developer',
+      global_name: 'Local Developer',
+      avatar: null
+    };
+    req.session.guilds = [{
+      id: '000000000000000001',
+      name: 'SPIDEY BOT UI Development Server',
+      icon: null,
+      owner: true,
+      permissions: '8'
+    }];
+    req.session.selectedGuildId = req.session.selectedGuildId || '000000000000000001';
+  }
+  next();
+});
 
 // Inject version timestamp and cache-busting to ALL HTML pages
 app.use((req, res, next) => {
@@ -385,6 +445,14 @@ app.use(rateLimiter.middleware());
 
 // Protect the admin dashboard before static middleware can serve the file.
 app.use('/dashboard.html', (req, res, next) => {
+  if (isSpideyTestingHost(req)) {
+    if (!req.query.guildId) {
+      const guildId = String(req.session?.selectedGuildId || req.session?.guilds?.[0]?.id || '');
+      if (guildId) return res.redirect(307, `/dashboard.html?guildId=${encodeURIComponent(guildId)}`);
+      return res.redirect('/dashboard/select');
+    }
+    return next();
+  }
   if (!req.session.authenticated) return res.redirect('/login');
   if (!req.query.guildId) return res.redirect('/dashboard/select');
   next();
@@ -394,8 +462,14 @@ app.use('/dashboard.html', (req, res, next) => {
 // A selected guild is the final destination. This route never renders a
 // server selector and never redirects a valid selected-server request.
 app.get('/dashboard.html', (req, res) => {
-  if (!req.session.authenticated) return res.redirect('/login');
-  if (!req.query.guildId) return res.redirect('/dashboard/select');
+  if (!isSpideyTestingHost(req) && !req.session.authenticated) return res.redirect('/login');
+  if (!req.query.guildId) {
+    const testingGuildId = isSpideyTestingHost(req)
+      ? (req.session?.selectedGuildId || req.session?.guilds?.[0]?.id)
+      : null;
+    if (testingGuildId) return res.redirect(`/dashboard.html?guildId=${encodeURIComponent(testingGuildId)}`);
+    return res.redirect('/dashboard/select');
+  }
 
   res.set({
     'Cache-Control': 'private, no-store, no-cache, max-age=0, must-revalidate',
@@ -445,6 +519,13 @@ app.get('/api/deployment-fingerprint', (req, res) => {
     dashboardPath: DASHBOARD_FILE,
     node: process.version
   });
+});
+
+// Always serve the current public dashboard app before dist static assets. Older dist bundles
+// can otherwise shadow public/dashboard-app.js and call the removed testify-suite API route.
+app.get('/dashboard-app.js', (req, res) => {
+  res.set({ 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0', 'Pragma': 'no-cache', 'Expires': '0' });
+  res.sendFile(path.join(publicDir, 'dashboard-app.js'));
 });
 
 // Serve static files from dist and public
@@ -627,63 +708,9 @@ const TIER_LIMITS = {
   }
 };
 
-function getGuildTier(guildId) {
-  const config = loadConfig();
-  const guild = config.guilds[guildId] || {};
-  
-  if (!guild.tier || guild.tier === 'free') return 'free';
-  if (guild.tier === 'premium' || guild.tier === 'pro') return guild.tier;
-  
-  // Check if expired
-  if (guild.tierEndDate && guild.tierEndDate < Date.now()) {
-    return 'free';
-  }
-  
-  return guild.tier || 'free';
-}
-
-function getTierLimits(guildId) {
-  const tier = getGuildTier(guildId);
-  
-  // Premium: Server Guard, XP, Giveaways, Custom Commands (all unlocked)
-  // Pro: Everything in Premium + Analytics, Invites, Automation
-  return {
-    maxReactRoles: tier === 'free' ? 3 : Infinity,
-    maxGiveaways: tier === 'free' ? 1 : Infinity,
-    maxCustomCommands: tier === 'free' ? 5 : (tier === 'premium' ? 50 : Infinity),
-    hasXP: tier === 'premium' || tier === 'pro',
-    hasCustomCommands: tier === 'premium' || tier === 'pro',
-    hasFullServerGuard: tier === 'premium' || tier === 'pro',
-    hasAnalytics: tier === 'pro',
-    hasInvites: tier === 'pro',
-    hasAutomation: tier === 'pro'
-  };
-}
-
-function checkEntitlement(guildId, feature) {
-  const limits = getTierLimits(guildId);
-  
-  switch (feature) {
-    case 'unlimitedReactRoles':
-      return limits.maxReactRoles !== 3;
-    case 'xpLeaderboards':
-      return limits.hasXP;
-    case 'customCommands':
-      return limits.hasCustomCommands;
-    case 'fullServerGuard':
-      return limits.hasFullServerGuard;
-    case 'analytics':
-      return limits.hasAnalytics;
-    case 'inviteTracking':
-      return limits.hasInvites;
-    case 'automation':
-      return limits.hasAutomation;
-    case 'unlimitedGiveaways':
-      return limits.maxGiveaways === Infinity;
-    default:
-      return false;
-  }
-}
+function getGuildTier(guildId) { return subscriptionManager.getGuildTier(guildId); }
+function getTierLimits(guildId) { return subscriptionManager.getTierLimits(guildId); }
+function checkEntitlement(guildId, feature) { return subscriptionManager.checkEntitlement(guildId, feature); }
 
 function getGuildConfig(guildId) {
   const config = loadConfig();
@@ -794,7 +821,7 @@ function setCachedMemberStats(guildId, data) {
 // ------------------------------------------------------------------
 // Command metadata for the integrated command suite.
 const COMMANDS_META = {};
-for (const command of testifyCommands) {
+for (const command of spideyCommands) {
   const json = typeof command.toJSON === 'function' ? command.toJSON() : command;
   COMMANDS_META[json.name] = {
     category: 'commands',
@@ -924,25 +951,219 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
-registerTestifyHandlers(client);
-
-// Unified command bridge: slash commands and prefix commands share the integrated command handler.
+// spidey command handlers are registered once after the client is ready below.
+// Register /ask first so it can acknowledge Discord interactions before feature listeners run.
+// Command-usage audit trail. Store the command path and context only; never persist option values.
+const spideySuiteAuditService = require('./src/features/spidey-suite/spidey-suite.service.cjs');
 client.on('interactionCreate', async interaction => {
   try {
+    if (!interaction.isChatInputCommand?.() || !interaction.guild || !interaction.user || interaction.user.bot) return;
+    const config = spideySuiteAuditService.get(interaction.guild.id);
+    const audit = config.audit || {};
+    if (audit.enabled !== true || audit.commandUsage === false) return;
+    const group = interaction.options.getSubcommandGroup(false);
+    const subcommand = interaction.options.getSubcommand(false);
+    const commandPath = '/' + interaction.commandName + (group ? ' ' + group : '') + (subcommand ? ' ' + subcommand : '');
+    const now = new Date().toISOString();
+    const channelName = interaction.channel?.name || 'Unknown channel';
+    const entry = {
+      type: 'command',
+      title: 'Command used',
+      time: now,
+      actor: interaction.user.tag || interaction.user.username || interaction.user.id,
+      actorId: interaction.user.id,
+      target: commandPath,
+      description: commandPath + ' was invoked.',
+      channel: '#' + channelName,
+      channelId: interaction.channelId || interaction.channel?.id || null
+    };
+    audit.entries = [entry, ...(Array.isArray(audit.entries) ? audit.entries : [])].slice(0, 500);
+    spideySuiteAuditService.save(interaction.guild.id, { audit });
+    if (audit.channelId) {
+      const targetChannel = interaction.guild.channels.cache.get(audit.channelId)
+        || await interaction.guild.channels.fetch(audit.channelId).catch(() => null);
+      if (targetChannel?.isTextBased?.() && targetChannel.send) {
+        const { EmbedBuilder } = require('discord.js');
+        const embed = new EmbedBuilder()
+          .setColor(0x6d3df5)
+          .setTitle('Slash command used')
+          .addFields(
+            { name: 'Command', value: commandPath, inline: true },
+            { name: 'User', value: '<@' + interaction.user.id + '> (' + (interaction.user.tag || interaction.user.username) + ')', inline: true },
+            { name: 'Channel', value: '<#' + (interaction.channelId || interaction.channel?.id || audit.channelId) + '>', inline: true }
+          )
+          .setTimestamp(new Date(now));
+        await targetChannel.send({ embeds: [embed] }).catch(err => console.warn('[AUDIT] Command log delivery failed:', err.message));
+      }
+    }
+  } catch (err) {
+    console.error('[AUDIT] Command usage logging failed:', err.message);
+  }
+});
+
+// Unified command bridge: slash commands and prefix commands share the integrated command handler.
+const handledAskInteractions = new WeakSet();
+const handledSpideyInteractions = new WeakSet();
+client.on('interactionCreate', async interaction => {
+  try {
+    if (interaction.isChatInputCommand() && interaction.commandName === 'ask') {
+      // A Discord interaction must be acknowledged only once. Guard this event
+      // before the first await so duplicate dispatch cannot race another handler.
+      if (handledAskInteractions.has(interaction)) return;
+      handledAskInteractions.add(interaction);
+      if (!interaction.deferred && !interaction.replied) await interaction.deferReply();
+      if (interaction.replied) return;
+      const question = interaction.options.getString('question', true).trim();
+      const guildConfig = interaction.guildId ? getGuildConfig(interaction.guildId) : {};
+      const aiSettings = guildConfig.aiAssistantSettings || {};
+      if (aiSettings.enabled === false) return interaction.editReply('The AI Assistant is disabled for this server. An administrator can enable it in the dashboard.');
+      if (aiSettings.channelId && interaction.channelId !== String(aiSettings.channelId)) return interaction.editReply('Please use the AI Assistant in the configured channel.');
+      // AI allowance is tier-specific and enforced per server per UTC day.
+      const aiDailyLimit = Math.max(1, Number(subscriptionManager.getPlanLimit(interaction.guildId, 'aiDailyRequests')) || 50);
+      const aiUsageConfig = loadConfig();
+      if (!aiUsageConfig.guilds) aiUsageConfig.guilds = {};
+      if (!aiUsageConfig.guilds[interaction.guildId]) aiUsageConfig.guilds[interaction.guildId] = guildConfig;
+      const todayUtc = new Date().toISOString().slice(0, 10);
+      const usage = aiUsageConfig.guilds[interaction.guildId].aiDailyUsage || { date: todayUtc, count: 0 };
+      if (usage.date !== todayUtc) { usage.date = todayUtc; usage.count = 0; }
+      if (Number(usage.count) >= aiDailyLimit) return interaction.editReply('This server has used all ' + aiDailyLimit + ' AI requests for today. The allowance resets at 00:00 UTC.');
+      usage.count = Number(usage.count || 0) + 1;
+      aiUsageConfig.guilds[interaction.guildId].aiDailyUsage = usage;
+      fs.writeFileSync('config.json', JSON.stringify(aiUsageConfig, null, 2));
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) { console.error('[Gemini AI] GEMINI_API_KEY is missing from the runtime environment.'); return interaction.editReply('The AI service is temporarily unavailable because its server configuration is incomplete. Please contact the bot owner.'); }
+      const assistantName = String(aiSettings.assistantName || guildConfig.aiAssistantName || 'Spidey').trim().slice(0, 32) || 'Spidey';
+      try {
+        // Discover a model that this API key can actually use instead of assuming
+        // a fixed model name that may not be available to every Google AI project.
+        const modelResponse = await axios.get(
+          'https://generativelanguage.googleapis.com/v1beta/models',
+          { headers: { 'x-goog-api-key': apiKey }, timeout: 12000, params: { pageSize: 100 } }
+        );
+        const availableModels = (modelResponse.data?.models || []).filter(model =>
+          Array.isArray(model.supportedGenerationMethods) &&
+          model.supportedGenerationMethods.includes('generateContent') &&
+          /gemini/i.test(model.name || '')
+        );
+        // Prefer current text-capable Flash models and exclude audio/TTS,
+        // image, embedding, and other specialist models from text chat.
+        const textModels = availableModels.filter(model =>
+          !/(tts|audio|image|embedding|robotics|live|aqa|veo)/i.test(String(model.name || ''))
+        );
+        const candidates = textModels.length ? textModels : availableModels;
+        const preferredNames = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
+        candidates.sort((a, b) => {
+          const score = name => {
+            const simple = String(name || '').replace(/^models\//, '').toLowerCase();
+            const exact = preferredNames.indexOf(simple);
+            if (exact >= 0) return exact;
+            if (/flash/i.test(simple)) return 10;
+            return 100;
+          };
+          return score(a.name) - score(b.name);
+        });
+        availableModels.splice(0, availableModels.length, ...candidates);
+        if (!availableModels.length) {
+          console.error('[Gemini AI] No Gemini model supporting generateContent was returned by the model list.');
+          return interaction.editReply('The AI service is temporarily unavailable because no supported Gemini model is available for this API key.');
+        }
+
+        // Some Google AI projects list models that still return 404 at generation
+        // time. Try each advertised generateContent model instead of failing /ask
+        // on the first unavailable model.
+        const requestBody = {
+          system_instruction: { parts: [{ text: `You are ${assistantName}, the AI assistant configured by this Discord server's administrator. Answer the user's exact question directly and specifically. Do not give generic conversation starters or redirect the user to DMs unless they explicitly ask about private messaging. If the user asks a factual question, answer it; if information is missing, ask one concise clarifying question. For current facts such as exchange rates, never invent live values—state clearly if you cannot verify a live source. Keep replies useful and concise for Discord.` }] },
+          contents: [{ role: 'user', parts: [{ text: question }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 700 }
+        };
+        let response;
+        let lastModelError;
+        for (const model of availableModels) {
+          try {
+            const modelName = String(model.name || '').replace(/^\/+/, '');
+            console.log('[Gemini AI] Trying model:', modelName);
+            response = await axios.post(
+              `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent`,
+              requestBody,
+              { headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' }, timeout: 25000 }
+            );
+            console.log('[Gemini AI] Model succeeded:', modelName);
+            break;
+          } catch (modelError) {
+            lastModelError = modelError;
+            const status = modelError.response?.status;
+            const apiMessage = modelError.response?.data?.error?.message;
+            console.error('[Gemini AI] Model failed:', model.name, status || modelError.message, apiMessage ? String(apiMessage).slice(0, 250) : '');
+            if (![400, 404, 429].includes(status)) throw modelError;
+          }
+        }
+        if (!response) throw lastModelError || new Error('No Gemini model could generate a response');
+        const answer = response.data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim();
+        if (!answer) {
+          const blockReason = response.data?.promptFeedback?.blockReason;
+          console.warn('[Gemini AI] No answer returned; block reason:', blockReason || 'none');
+          return interaction.editReply('I could not generate an answer just now. Please try again.');
+        }
+        return interaction.editReply({ content: answer.slice(0, 1900) });
+      } catch (error) {
+        const status = error.response?.status || error.message;
+        const apiMessage = error.response?.data?.error?.message;
+        console.error('[Gemini AI] request failed:', status, apiMessage ? String(apiMessage).slice(0, 300) : '');
+        return interaction.editReply('The AI service is temporarily unavailable. Please try again shortly.');
+      }
+    }
     if (interaction.isChatInputCommand()) {
-      const handled = await handleTestifyInteraction(interaction, { client });
-      if (handled) return;
+      // Dispatch custom slash commands first, then the integrated SPIDEY suite.
+      // Mark handled interactions so the legacy router cannot execute them twice.
+      if (await customSlashRuntime.handleCustomSlashCommand(interaction)) {
+        handledSpideyInteractions.add(interaction);
+        return;
+      }
+      const handled = await handleSpideyInteraction(interaction, { client, player });
+      if (handled) {
+        handledSpideyInteractions.add(interaction);
+        return;
+      }
     }
   } catch (e) {
-    console.error('[COMMANDS] interaction handler failed:', e);
-    if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
-      await interaction.reply({content:'❌ Command failed to execute.',ephemeral:true}).catch(()=>{});
+    const isAsk = interaction.isChatInputCommand?.() && interaction.commandName === 'ask';
+    console.error(isAsk ? '[Gemini AI] /ask interaction handler failed:' : '[COMMANDS] interaction handler failed:', e);
+    const unknownInteraction = e?.code === 10062 || e?.rawError?.code === 10062;
+    if (!unknownInteraction && interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
+      const message = isAsk
+        ? 'I could not start the AI request. Please try /ask again in a moment.'
+        : '❌ Command failed to execute.';
+      await interaction.reply({content: message, ephemeral:true}).catch(replyError => {
+        console.error('[COMMANDS] Failed to send interaction error response:', replyError?.message || replyError);
+      });
+    } else if (isAsk && interaction.deferred && !interaction.replied) {
+      await interaction.editReply('The AI request could not be completed. Please try /ask again in a moment.').catch(replyError => {
+        console.error('[Gemini AI] Failed to send /ask fallback response:', replyError?.message || replyError);
+      });
     }
   }
 });
+
+try {
+  require("./src/features/reaction-roles/reaction-roles.handler.cjs").registerReactionRolesHandler(client);
+  console.log("✅ Reaction role add/remove handlers registered");
+} catch (err) {
+  console.error("❌ Failed to register reaction role handlers:", err.message);
+}
+
+try {
+  require("./src/features/server-messages/server-messages.handler.cjs").initialize(
+    client,
+    path.join(__dirname, "config.json")
+  );
+  console.log("✅ Welcome/goodbye member event handlers registered");
+} catch (err) {
+  console.error("❌ Failed to register welcome/goodbye handlers:", err.message);
+}
+
 client.on('messageCreate', async message => {
   try {
-    if (await handleTestifyPrefix(message, { client })) return;
+    if (await handleSpideyPrefix(message, { client })) return;
   } catch (e) {
     console.error('[COMMANDS] prefix handler failed:', e);
   }
@@ -975,10 +1196,16 @@ player.on("connectionError", (queue, error) => {
 // ============== READY EVENT ==============
 client.once("ready", async () => {
   botLoggedIn = true;
+  try {
+    const socialNotificationsHandler = require('./src/features/social-notifications/social-notifications.handler.cjs');
+    socialNotificationsHandler.startPolling(client);
+  } catch (error) {
+    console.error('[Social Alerts] Could not start polling:', error.message);
+  }
   console.log(`✅ Logged in as ${client.user.tag}`);
   try {
     const { execSync } = require('child_process');
-    const commit = execSync('git rev-parse --short HEAD').toString().trim();
+    const commit = execSync('git rev-parse --short HEAD 2>/dev/null').toString().trim();
     console.log(`🔁 Running commit: ${commit} (pid:${process.pid})`);
   } catch (err) {
     console.log('🔁 Running commit: unknown');
@@ -989,38 +1216,21 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Auto-clear and re-register on startup
+  // Production and testing share this Discord application. Never register a global
+  // command set: it can shadow or conflict with the version being tested. Keep all
+  // commands guild-scoped in both environments and clear legacy global commands.
   try {
-    console.log('📝 Auto-clearing and registering slash commands...');
     const rest = new REST({ version: '10' }).setToken(token);
-    
-    // First clear all (one by one with delays)
-    const existing = await rest.get(Routes.applicationCommands(client.user.id));
-    if (Array.isArray(existing) && existing.length > 0) {
-      console.log(`🗑️ Found ${existing.length} existing commands, clearing...`);
-      for (let i = 0; i < existing.length; i++) {
-        try {
-          await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
-          // 1 second delay every 5 deletions
-          if (i > 0 && i % 5 === 0) {
-            await new Promise(r => setTimeout(r, 1000));
-            console.log(`🗑️ Cleared ${i+1}...`);
-          }
-        } catch(e) {}
-      }
-      console.log('🗑️ All cleared');
-    } else {
-      console.log('📝 No existing commands to clear');
+    const cleared = await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
+    console.log(`🧹 Shared global slash commands cleared (${Array.isArray(cleared) ? cleared.length : 0} remain).`);
+
+    const commands = spideyCommands.map(cmd => cmd.toJSON());
+    for (const guild of client.guilds.cache.values()) {
+      const result = await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands });
+      console.log(`✅ Registered ${result.length} guild-scoped slash commands for ${guild.id} (${guild.name})`);
     }
-    
-    // Now register fresh
-    const commands = testifyCommands.map(cmd => cmd.toJSON());
-    console.log(`➡️ Registering ${commands.length} commands...`);
-    await new Promise(r => setTimeout(r, 500));
-    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log(`✅ Registered ${data.length} slash commands`);
   } catch (error) {
-    console.error("❌ Error:", error.message || error);
+    console.error('[Guild-scoped slash command registration] Failed:', error.message || error);
   }
 
   // Pre-fetch members for all guilds so dashboard stats work immediately
@@ -1045,12 +1255,13 @@ async function registerSlashCommands(forceOverwrite = false) {
 
   try {
     const rest = new REST({ version: '10' }).setToken(token);
-    const commands = testifyCommands.map(cmd => cmd.toJSON());
+    const commands = spideyCommands.map(cmd => cmd.toJSON());
     const rawGuildIds = process.env.REGISTER_GUILD_IDS || process.env.GUILD_ID || '';
     const guildIds = rawGuildIds
       .split(',')
       .map(id => id.trim())
       .filter(Boolean);
+    if (guildIds.length === 0) guildIds.push(...client.guilds.cache.keys());
     
     if (guildIds.length > 0) {
       console.log(`📝 Registering ${commands.length} slash commands to ${guildIds.length} guild(s)...`);
@@ -1090,45 +1301,8 @@ async function registerSlashCommands(forceOverwrite = false) {
       return { success: true, count: commands.length, guilds: results };
     }
 
-    console.log(`📝 Registering ${commands.length} modern slash commands globally...`);
-    console.log('⏳ Global registration can take up to 1 hour to appear everywhere.');
-
-    // First delete existing global commands if forceOverwrite
-    if (forceOverwrite) {
-      try {
-        const existing = await rest.get(Routes.applicationCommands(client.user.id));
-        if (Array.isArray(existing)) {
-          console.log(`🗑️ Deleting ${existing.length} existing commands before re-registration...`);
-          for (let i = 0; i < existing.length; i++) {
-            const cmd = existing[i];
-            try {
-              await rest.delete(Routes.applicationCommand(client.user.id, cmd.id));
-              // Add small delay every 5 deletions to avoid rate limiting
-              if (i > 0 && i % 5 === 0) {
-                await new Promise(r => setTimeout(r, 250));
-              }
-            } catch(e) {
-              // Ignore individual delete errors
-            }
-          }
-        }
-      } catch(e) {
-        console.warn('Could not fetch existing commands to delete:', e.message);
-      }
-    }
-
-    // Register commands globally
-    const startTime = Date.now();
-    const data = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    const duration = Date.now() - startTime;
-
-    if (Array.isArray(data)) {
-      console.log(`✅ Registered ${data.length} slash commands globally (took ${duration}ms)`);
-      return { success: true, count: data.length };
-    }
-
-    console.log(`✅ Commands registered globally (took ${duration}ms)`);
-    return { success: true, count: commands.length };
+    console.warn('No guild IDs available; refusing to register slash commands globally.');
+    return { success: false, error: 'No guild IDs available for guild-scoped registration.' };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error('❌ Failed to register slash commands:', errMsg);
@@ -1137,6 +1311,10 @@ async function registerSlashCommands(forceOverwrite = false) {
 }
 
 // ============== API ENDPOINTS FOR DASHBOARD ==============
+// Social alert API used by the Twitch, YouTube, TikTok and Kick dashboard panels.
+app.locals.discordClient = client;
+app.use('/api/social-notifications', require('./src/features/social-notifications/social-notifications.routes.cjs'));
+
 app.get('/api/config', (req, res) => {
   const config = loadConfig();
   const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot&permissions=8`;
@@ -1205,7 +1383,7 @@ app.get('/api/guilds', async (req, res) => {
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot && !msg.guild.config?.messageCountingBots) return;
   if (!msg.member) return;
-  if (await handleTestifyPrefix(msg, { client })) return;
+  if (await handleSpideyPrefix(msg, { client })) return;
   
   // LOAD FRESH CONFIG FROM DASHBOARD FOR ALL FEATURES
   const guildConfig = getGuildConfig(msg.guild.id);
@@ -1957,13 +2135,13 @@ client.on("messageCreate", async (msg) => {
     const replyMsg = await msg.reply("🔁 Registering slash commands...");
     try {
       const rest = new REST({ version: '10' }).setToken(token);
-      const commands = testifyCommands.map(cmd => cmd.toJSON());
+      const commands = spideyCommands.map(cmd => cmd.toJSON());
       console.log(`📝 Pushing ${commands.length} commands...`);
       const startTime = Date.now();
       
       // Add timeout
       const data = await Promise.race([
-        rest.put(Routes.applicationCommands(client.user.id), { body: commands }),
+        rest.put(Routes.applicationGuildCommands(client.user.id, msg.guild.id), { body: commands }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000))
       ]);
       
@@ -1985,12 +2163,12 @@ client.on("messageCreate", async (msg) => {
     const replyMsg = await msg.reply("🗑️ Clearing all slash commands (may take a few minutes)...");
     try {
       const rest = new REST({ version: '10' }).setToken(token);
-      const existing = await rest.get(Routes.applicationCommands(client.user.id));
+      const existing = await rest.get(Routes.applicationGuildCommands(client.user.id, msg.guild.id));
       if (Array.isArray(existing) && existing.length > 0) {
         let cleared = 0;
         for (let i = 0; i < existing.length; i++) {
           try {
-            await rest.delete(Routes.applicationCommand(client.user.id, existing[i].id));
+            await rest.delete(Routes.applicationGuildCommand(client.user.id, msg.guild.id, existing[i].id));
             cleared++;
             if (i > 0 && i % 3 === 0) {
               await new Promise(r => setTimeout(r, 1000)); // 1 sec delay every 3 to avoid rate limits
@@ -3063,6 +3241,7 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   // Handle slash command interactions - Individual command handlers
+  if (handledSpideyInteractions.has(interaction)) return;
   if (interaction.isChatInputCommand()) {
     const { commandName, options } = interaction;
     
@@ -4764,6 +4943,11 @@ const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.e
 
 // ============== HOMEPAGE ==============
 app.get("/", (req, res) => {
+  if (isSpideyTestingHost(req)) {
+    const guildId = req.session?.selectedGuildId || req.session?.guilds?.[0]?.id;
+    if (guildId) return res.redirect(`/dashboard.html?guildId=${encodeURIComponent(guildId)}`);
+    return res.redirect('/dashboard/select');
+  }
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5082,6 +5266,19 @@ app.get("/dashboard", (req, res) => {
 });
 
 app.get("/dashboard/select", (req, res) => {
+  // Testing should open the agreed admin server directly, not show the production
+  // server-selection page. Prefer TRIPPY WEBS, with a safe live-guild fallback.
+  if (isSpideyTestingHost(req)) {
+    const preferredGuildId = "388050334083317772";
+    const liveGuildIds = new Set((req.session?.guilds || []).map(g => String(g.id)));
+    const guildId = liveGuildIds.has(preferredGuildId)
+      ? preferredGuildId
+      : (req.session?.selectedGuildId && liveGuildIds.has(String(req.session.selectedGuildId))
+          ? String(req.session.selectedGuildId)
+          : String(req.session?.guilds?.[0]?.id || ""));
+    if (guildId) return res.redirect(302, "/dashboard.html?guildId=" + encodeURIComponent(guildId));
+    return res.status(503).send("SPIDEY BOT is not connected to a Discord server yet. Please check the testing bot connection.");
+  }
   if (!req.session.authenticated) return res.redirect("/login");
   res.sendFile(path.join(publicDir, 'server-select.html'));
 });
@@ -5098,7 +5295,15 @@ app.get("/dashboard/server/:guildId", (req, res) => {
 
 app.get("/owner-dash", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  res.redirect("/owner-dash.html");
+  const config = loadConfig();
+  if (!isTestingOwnerSession(req) && (!config.creator?.ownerId || req.session.user?.id !== config.creator.ownerId)) return res.status(403).send('Owner access only.');
+  return res.sendFile(path.join(publicDir, 'owner-console.html'));
+});
+app.get("/owner-console", (req, res) => {
+  if (!req.session.authenticated) return res.redirect("/login");
+  const config = loadConfig();
+  if (!config.creator?.ownerId || req.session.user?.id !== config.creator.ownerId) return res.status(403).send('Owner access only.');
+  return res.sendFile(path.join(publicDir, 'owner-console.html'));
 });
 
 app.get("/premium", (req, res) => {
@@ -5529,85 +5734,53 @@ app.get("/api/dashboard/servers", async (req, res) => {
 });
 
 // ============== OWNER DASH API ==============
-app.get('/api/owner/test', (req, res) => {
-  const config = loadConfig();
-  res.json({
-    configOwnerId: config.creator?.ownerId,
-    sessionUserId: req.session.user?.id,
-    authenticated: req.session.authenticated
-  });
-});
-
 app.get('/api/owner/stats', (req, res) => {
-  if (!req.session.authenticated) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
+  if (!req.session.authenticated) return res.status(401).json({ error: 'Not authenticated' });
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
-  const userId = req.session.user?.id;
-  
-  if (userId !== botOwnerId || !botOwnerId) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+  if (!isTestingOwnerSession(req) && (!botOwnerId || req.session.user?.id !== botOwnerId)) return res.status(403).json({ error: 'Access denied' });
 
-  const totalServers = client.guilds.cache.size;
-  const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-  let newThisWeek = 0;
-  
+  const now = Date.now();
+  const monthMs = 30 * 24 * 60 * 60 * 1000;
   const servers = [];
-  let freeCount = 0;
-  let premiumCount = 0;
-  let proCount = 0;
-  
-  for (const [guildId, guildConfig] of Object.entries(config.guilds)) {
-    if (guildId === 'creator' || guildId === 'subscriptions' || guildId === 'settings' || 
-        guildId === 'role-categories' || guildId === 'react-roles' || guildId === 'statistics-channels' ||
-        guildId === 'logging') continue;
-    
-    const discordGuild = client.guilds.cache.get(guildId);
-    if (discordGuild) {
-      const joinedAt = discordGuild.joinedAt?.getTime() || 0;
-      if (joinedAt > oneWeekAgo) newThisWeek++;
-      
-      // Tier: 'free', 'premium', or 'pro'
-      const tier = guildConfig.tier || 'free';
-      const tierEndDate = guildConfig.tierEndDate || null;
-      const tierDurationMonths = guildConfig.tierDurationMonths || 0;
-      
-      // Calculate remaining months
-      let remainingMonths = 0;
-      if (tierEndDate && tier !== 'free') {
-        const now = Date.now();
-        const msRemaining = tierEndDate - now;
-        remainingMonths = Math.max(0, Math.ceil(msRemaining / (30 * 24 * 60 * 60 * 1000)));
-      }
-      
-      if (tier === 'premium') premiumCount++;
-      else if (tier === 'pro') proCount++;
-      else freeCount++;
-      
-      servers.push({
-        id: guildId,
-        name: discordGuild.name,
-        icon: discordGuild.icon,
-        memberCount: discordGuild.memberCount,
-        tier: tier,
-        tierEndDate: tierEndDate,
-        tierDurationMonths: tierDurationMonths,
-        remainingMonths: remainingMonths
-      });
-    }
-  }
+  let freeCount = 0, premiumCount = 0, proCount = 0, newThisWeek = 0;
+  const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const purchases = Array.isArray(config.global_configs?.premiumPurchases) ? config.global_configs.premiumPurchases : [];
 
-  res.json({
-    totalServers,
-    freeCount,
-    premiumCount,
-    proCount,
-    newThisWeek,
-    servers
+  for (const guild of client.guilds.cache.values()) {
+    const guildId = guild.id;
+    const guildConfig = config.guilds[guildId] || {};
+    let tier = ['free', 'premium', 'pro'].includes(String(guildConfig.tier || 'free').toLowerCase()) ? String(guildConfig.tier || 'free').toLowerCase() : 'free';
+    const tierEndDate = Number(guildConfig.tierEndDate) || null;
+    const isExpired = tier !== 'free' && tierEndDate && tierEndDate <= now;
+    if (isExpired) tier = 'free';
+    if ((guild.joinedAt?.getTime() || 0) > oneWeekAgo) newThisWeek++;
+    if (tier === 'premium') premiumCount++; else if (tier === 'pro') proCount++; else freeCount++;
+    const lastPurchase = purchases.find(p => String(p.guildId) === guildId) || null;
+    const tierStartDate = Number(guildConfig.tierStartDate) || null;
+    const tierDurationMonths = Number(guildConfig.tierDurationMonths) || 0;
+    const remainingMonths = tierEndDate && tier !== 'free' ? Math.max(0, Math.ceil((tierEndDate - now) / monthMs)) : null;
+    servers.push({
+      id: guildId, name: guild.name, icon: guild.icon, memberCount: guild.memberCount,
+      joinedAt: guild.joinedAt?.toISOString?.() || null, tier, tierStartDate,
+      tierEndDate: isExpired ? null : tierEndDate, tierDurationMonths: tier === 'free' ? 0 : tierDurationMonths,
+      remainingMonths, isLifetime: tier !== 'free' && !tierEndDate,
+      lastPurchase: lastPurchase ? {
+        buyerId: lastPurchase.buyerId || null, buyerName: lastPurchase.buyerName || null,
+        amount: lastPurchase.amount || null, currency: lastPurchase.currency || null,
+        purchasedAt: lastPurchase.purchasedAt || null, orderId: lastPurchase.orderId || null,
+        tier: lastPurchase.tier || null, durationMonths: lastPurchase.durationMonths || null
+      } : null,
+      grantSource: guildConfig.tierSource || null,
+      grantedBy: guildConfig.tierGrantedBy || null
+    });
+  }
+  servers.sort((a,b) => {
+    const order = { pro: 0, premium: 1, free: 2 };
+    return order[a.tier] - order[b.tier] || a.name.localeCompare(b.name);
   });
+  const purchaseHistory = purchases.slice(0, 100).map(p => ({ ...p, guildName: client.guilds.cache.get(String(p.guildId))?.name || config.guilds?.[p.guildId]?.guildName || 'Server no longer in bot' }));
+  res.json({ totalServers: client.guilds.cache.size, freeCount, premiumCount, proCount, newThisWeek, servers, purchases: purchaseHistory, generatedAt: new Date(now).toISOString() });
 });
 
 app.post('/api/owner/force-refresh', async (req, res) => {
@@ -5618,7 +5791,7 @@ app.post('/api/owner/force-refresh', async (req, res) => {
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
   const userId = req.session.user?.id;
-  if (userId !== botOwnerId || !botOwnerId) {
+  if (!isTestingOwnerSession(req) && (userId !== botOwnerId || !botOwnerId)) {
     return res.status(403).json({ error: 'Access denied' });
   }
 
@@ -5643,58 +5816,44 @@ app.post('/api/owner/force-refresh', async (req, res) => {
 });
 
 app.post('/api/owner/tier', (req, res) => {
-  console.log('[Tier Update] Request received:', req.body);
-  
-  if (!req.session.authenticated) {
-    console.log('[Tier Update] Not authenticated');
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
+  if (!req.session.authenticated) return res.status(401).json({ error: 'Not authenticated' });
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
-  const userId = req.session.user?.id;
-  
-  console.log('[Tier Update] User:', userId, 'Owner:', botOwnerId);
-  
-  if (userId !== botOwnerId || !botOwnerId) {
-    console.log('[Tier Update] Access denied');
+  // Match the same testing-host-only owner access used by the Owner Console and stats API.
+  // This exception cannot pass on the production hostname.
+  if (!isTestingOwnerSession(req) && (!botOwnerId || req.session.user?.id !== botOwnerId)) {
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  const { guildId, tier, durationMonths } = req.body;
-  console.log('[Tier Update] Guild:', guildId, 'Tier:', tier, 'Duration:', durationMonths);
-  
-  if (!guildId) {
-    return res.status(400).json({ error: 'guildId required' });
-  }
+  const { guildId, tier, durationMonths, reason } = req.body || {};
+  if (!guildId || !client.guilds.cache.has(String(guildId))) return res.status(404).json({ error: 'That server is not currently in SPIDEY BOT.' });
+  const newTier = String(tier || '').toLowerCase();
+  if (!['free', 'premium', 'pro'].includes(newTier)) return res.status(400).json({ error: 'Tier must be Free, Premium or Pro.' });
+  const duration = Number(durationMonths ?? 0);
+  if (!Number.isInteger(duration) || duration < 0 || duration > 1200) return res.status(400).json({ error: 'Duration must be 0 (lifetime) or a whole number from 1 to 1200 months.' });
 
-  const validTiers = ['free', 'premium', 'pro'];
-  const newTier = validTiers.includes(tier) ? tier : 'free';
-  const duration = parseInt(durationMonths) || 0;
-
-  if (!config.guilds[guildId]) {
-    config.guilds[guildId] = {};
-  }
-  
-  config.guilds[guildId].tier = newTier;
-  
+  const guildConfig = config.guilds[guildId] || (config.guilds[guildId] = {});
+  const now = Date.now();
+  guildConfig.tier = newTier;
+  guildConfig.tierSource = 'owner';
+  guildConfig.tierGrantedBy = req.session.user.id;
+  guildConfig.tierUpdatedAt = now;
+  guildConfig.tierGrantReason = String(reason || '').trim().slice(0, 300) || null;
   if (newTier !== 'free' && duration > 0) {
-    const now = Date.now();
-    const endDate = now + (duration * 30 * 24 * 60 * 60 * 1000);
-    config.guilds[guildId].tierStartDate = now;
-    config.guilds[guildId].tierEndDate = endDate;
-    config.guilds[guildId].tierDurationMonths = duration;
+    guildConfig.tierStartDate = now;
+    guildConfig.tierEndDate = now + duration * 30 * 24 * 60 * 60 * 1000;
+    guildConfig.tierDurationMonths = duration;
   } else {
-    delete config.guilds[guildId].tierStartDate;
-    delete config.guilds[guildId].tierEndDate;
-    delete config.guilds[guildId].tierDurationMonths;
+    delete guildConfig.tierStartDate;
+    delete guildConfig.tierEndDate;
+    guildConfig.tierDurationMonths = 0;
   }
-  
-  console.log('[Tier Update] Saving config for guild:', guildId, 'tier:', newTier, 'endDate:', config.guilds[guildId].tierEndDate);
+  config.global_configs = config.global_configs || {};
+  config.global_configs.ownerTierHistory = Array.isArray(config.global_configs.ownerTierHistory) ? config.global_configs.ownerTierHistory : [];
+  config.global_configs.ownerTierHistory.unshift({ guildId: String(guildId), guildName: client.guilds.cache.get(String(guildId))?.name || 'Unknown server', tier: newTier, durationMonths: newTier === 'free' ? 0 : duration, lifetime: newTier !== 'free' && duration === 0, changedBy: req.session.user.id, changedAt: now, reason: guildConfig.tierGrantReason });
+  config.global_configs.ownerTierHistory = config.global_configs.ownerTierHistory.slice(0, 500);
   saveConfig(config);
-  console.log('[Tier Update] Config saved successfully');
-
-  res.json({ success: true, guildId, tier: newTier, endDate: config.guilds[guildId].tierEndDate, durationMonths: duration });
+  res.json({ success: true, guildId, tier: newTier, endDate: guildConfig.tierEndDate || null, durationMonths: guildConfig.tierDurationMonths, isLifetime: newTier !== 'free' && duration === 0 });
 });
 
 // Get tier for a specific guild (for upsell checks)
@@ -5702,18 +5861,13 @@ app.get('/api/guild/:guildId/tier', (req, res) => {
   const config = loadConfig();
   const guildId = req.params.guildId;
   const guildConfig = config.guilds[guildId] || {};
-  const tier = guildConfig.tier || 'free';
-  const tierEndDate = guildConfig.tierEndDate || null;
-  const tierDurationMonths = guildConfig.tierDurationMonths || 0;
-  
-  let remainingMonths = 0;
-  if (tierEndDate && tier !== 'free') {
-    const now = Date.now();
-    const msRemaining = tierEndDate - now;
-    remainingMonths = Math.max(0, Math.ceil(msRemaining / (30 * 24 * 60 * 60 * 1000)));
-  }
-  
-  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMonths });
+  const tier = subscriptionManager.getGuildTier(guildId);
+  const rawEndDate = Number(guildConfig.tierEndDate) || null;
+  const tierEndDate = tier === 'free' ? null : rawEndDate;
+  const tierDurationMonths = tier === 'free' ? 0 : (Number(guildConfig.tierDurationMonths) || 0);
+  const remainingMonths = tierEndDate ? Math.max(0, Math.ceil((tierEndDate - Date.now()) / (30 * 24 * 60 * 60 * 1000))) : 0;
+  const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+  res.json({ guildId, tier, tierEndDate, tierDurationMonths, remainingMonths, isLifetime: tier !== 'free' && !tierEndDate, policy: Object.fromEntries(Object.entries(policy).map(([key,value]) => [key, value === Infinity ? null : value])) });
 });
 
 // Get/Update feature toggles (Owner only)
@@ -5778,229 +5932,249 @@ app.post('/api/owner/feature-toggles', (req, res) => {
 // Get entitlements for a guild
 app.get('/api/guild/:guildId/entitlements', (req, res) => {
   const guildId = req.params.guildId;
-  const tier = getGuildTier(guildId);
-  const limits = getTierLimits(guildId);
+  const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const limits = subscriptionManager.getTierLimits(guildId);
   const config = loadConfig();
   const guildConfig = config.guilds[guildId] || {};
-  
-  console.log('[Entitlements] Guild:', guildId, 'Tier:', tier);
-  
-  // Count current usage
   const roleCategories = guildConfig.roleCategories || {};
-  let totalReactRoles = 0;
-  Object.values(roleCategories).forEach(cat => {
-    if (cat.roles && Array.isArray(cat.roles)) {
-      totalReactRoles += cat.roles.length;
-    }
+  const roleKeys = new Set();
+  Object.entries(roleCategories).forEach(([category,cat]) => {
+    if (cat && Array.isArray(cat.roles)) cat.roles.forEach(role => roleKeys.add(String(role.id || role.roleId || category+':'+role.name)));
   });
-  
+  if (Array.isArray(guildConfig.reactRoles?.entries)) guildConfig.reactRoles.entries.forEach(entry => roleKeys.add(String(entry.messageId)+':'+String(entry.emoji)));
+  try {
+    const reactionRoles = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+    reactionRoles.getEntries(guildId).forEach(entry => roleKeys.add(String(entry.messageId)+':'+String(entry.emoji)));
+  } catch (_) {}
+  const totalReactRoles = roleKeys.size;
   const giveaways = guildConfig.giveaways || {};
   const activeGiveaways = getActiveGiveawaysMap(giveaways).activeCount;
-  
-const entitlements = {
-    maxReactRoles: limits.maxReactRoles === Infinity ? 'unlimited' : limits.maxReactRoles,
-    currentReactRoles: totalReactRoles,
-    canAddReactRole: totalReactRoles < (limits.maxReactRoles || 3),
-    maxGiveaways: limits.maxGiveaways === Infinity ? 'unlimited' : limits.maxGiveaways,
-    currentGiveaways: activeGiveaways,
-    canCreateGiveaway: activeGiveaways < (limits.maxGiveaways || 1),
-    // Free: React Roles (max 3)
-    hasReactRoles: tier !== 'free',
-    // Premium and Pro: Server Guard, XP, Custom Commands, Social Notifs (giveaways now free)
-    hasServerGuard: tier === 'premium' || tier === 'pro',
-    hasGiveaways: true, // Giveaways now free
-    hasXP: tier === 'premium' || tier === 'pro',
-    hasCustomCommands: tier === 'premium' || tier === 'pro',
-    hasFullServerGuard: tier === 'premium' || tier === 'pro',
-    hasSocialNotifs: tier === 'premium' || tier === 'pro',
-    // Pro only: Analytics, Invite Tracking, Automation
-    hasAnalytics: tier === 'pro',
-    hasInvites: tier === 'pro',
-    hasAutomation: tier === 'pro',
-    hasLogging: tier === 'premium' || tier === 'pro'
+  const serialiseLimit = value => value === Infinity ? 'unlimited' : value;
+  const entitlements = {
+    maxReactRoles: serialiseLimit(policy.reactionRoles), currentReactRoles: totalReactRoles,
+    canAddReactRole: totalReactRoles < limits.maxReactRoles,
+    maxGiveaways: serialiseLimit(policy.giveawayInviteMessages), currentGiveaways: activeGiveaways,
+    canCreateGiveaway: activeGiveaways < limits.maxGiveaways,
+    hasReactRoles: true, hasGiveaways: true, hasXP: true, hasCustomCommands: true,
+    hasServerGuard: true, hasFullServerGuard: true, hasSocialNotifs: true,
+    hasAnalytics: true, hasInvites: true, hasAutomation: true, hasLogging: true,
+    hasPolls: policy.polls, hasEmojis: policy.emojis, hasMusic: policy.music,
+    embedStyling: policy.embedStyling, achievementAnnouncements: policy.achievementAnnouncements,
+    reminderBehaviour: policy.reminderBehaviour, birthdayCustomEvents: policy.birthdayCustomEvents,
+    economyCustomCurrency: policy.economyCustomCurrency,
+    maxCustomCommands: policy.customCommands, maxInviteMilestones: policy.inviteMilestones,
+    maxEmbedMessages: policy.embedMessages, maxSocialAccountsPerSection: policy.socialAccountsPerSection,
+    maxAchievementMessages: policy.achievementsMessages, maxAchievementEmoji: policy.achievementsEmoji,
+    aiDailyRequests: policy.aiDailyRequests
   };
-  
-  console.log('[Entitlements] Sending:', JSON.stringify(entitlements));
-  
-  res.json({
-    tier,
-    entitlements
-  });
+  res.json({ tier: policy.tier, policy: Object.fromEntries(Object.entries(policy).map(([key,value]) => [key, value === Infinity ? null : value])), entitlements });
 });
 
 // ============== PAYPAL PAYMENT ENDPOINTS ==============
 
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || '';
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || '';
-const PAYPAL_MODE = process.env.PAYPAL_MODE || 'sandbox';
-
-const PAYPAL_API_BASE = PAYPAL_MODE === 'live' 
-  ? 'https://api-m.paypal.com' 
-  : 'https://api-m.sandbox.paypal.com';
+const PAYPAL_MODE = process.env.PAYPAL_MODE === 'live' ? 'live' : 'sandbox';
+const PAYPAL_API_BASE = PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+const PAYPAL_PRICING = {
+  premium: { 1: 4.99, 3: 13.99, 6: 24.99, 12: 39.99 },
+  pro: { 1: 7.99, 3: 21.99, 6: 39.99, 12: 69.99 }
+};
 
 async function getPayPalAccessToken() {
-  console.log('[PayPal] Mode:', PAYPAL_MODE, 'Client ID present:', !!PAYPAL_CLIENT_ID, 'Secret present:', !!PAYPAL_CLIENT_SECRET);
-  
   if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-    throw new Error('PayPal credentials not configured');
+    const error = new Error('PayPal is not configured yet. Please contact the bot owner.');
+    error.code = 'PAYPAL_NOT_CONFIGURED';
+    throw error;
   }
-  
   const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
-  const response = await axios.post(`${PAYPAL_API_BASE}/v1/oauth2/token`, 
+  const response = await axios.post(`${PAYPAL_API_BASE}/v1/oauth2/token`,
     'grant_type=client_credentials',
-    {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    }
+    { headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 15000 }
   );
   return response.data.access_token;
 }
 
-// Create PayPal order for premium upgrade
+function getPayPalReturnBaseUrl(req) {
+  // Use the host the buyer is actually using. BASE_URL may intentionally point at
+  // production while this Railway testing branch has its own domain.
+  const host = String(req.get('x-forwarded-host') || req.get('host') || '').split(',')[0].trim();
+  const forwardedProto = String(req.get('x-forwarded-proto') || req.protocol || 'https').split(',')[0].trim().toLowerCase();
+  if (!host || !/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host) || !['http', 'https'].includes(forwardedProto)) {
+    throw new Error('Could not determine a safe PayPal return URL for this dashboard host.');
+  }
+  return `${forwardedProto}://${host}`;
+}
+
+function getPaymentBuyerId(req, guildId) {
+  const userId = String(req.session?.user?.id || '');
+  if (req.session?.authenticated && userId &&
+      Array.isArray(req.session.guilds) &&
+      req.session.guilds.some(g => String(g.id) === String(guildId))) {
+    return userId;
+  }
+  // The no-OAuth testing dashboard may use PayPal Sandbox only, and only for a
+  // server where the testing bot is installed. Production/live checkout always
+  // requires the authenticated Discord account and its server access.
+  const sandboxTestAccess = process.env.SPIDEY_TESTING_NO_AUTH === 'true' &&
+    PAYPAL_MODE === 'sandbox' && typeof isSpideyTestingHost === 'function' &&
+    isSpideyTestingHost(req) && Boolean(client.guilds.cache.get(String(guildId)));
+  return sandboxTestAccess ? `testing-no-auth:${String(guildId)}` : null;
+}
+
+// Create a PayPal order. Pricing and guild ownership are always decided server-side.
 app.post('/api/paypal/create-order', async (req, res) => {
   try {
-    const { guildId, tier, durationMonths } = req.body;
-    
-    if (!guildId || !tier || !durationMonths) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const guildId = String(req.body?.guildId || '');
+    const tier = String(req.body?.tier || '').toLowerCase();
+    const durationMonths = Number(req.body?.durationMonths);
+    if (!guildId || !['premium', 'pro'].includes(tier) || !Number.isInteger(durationMonths) || !PAYPAL_PRICING[tier][durationMonths]) {
+      return res.status(400).json({ error: 'Choose a valid plan and billing period.' });
     }
-    
-    const config = loadConfig();
-    const guildConfig = config.guilds[guildId] || {};
-    const guildName = guildConfig.guildName || 'Server';
-    
-    const pricing = {
-      premium: { 1: 5, 3: 13, 6: 24, 12: 42 },
-      pro: { 1: 8, 3: 21, 6: 36, 12: 60 }
-    };
-    
-    const amount = pricing[tier]?.[durationMonths];
-    if (!amount) {
-      return res.status(400).json({ error: 'Invalid tier or duration' });
+    const paymentBuyerId = getPaymentBuyerId(req, guildId);
+    if (!paymentBuyerId) {
+      return res.status(req.session?.authenticated ? 403 : 401).json({ error: 'Sign in with an account that can manage this Discord server before purchasing. The no-login testing path is limited to PayPal Sandbox.' });
     }
-    
+
+    const amount = PAYPAL_PRICING[tier][durationMonths].toFixed(2);
     const accessToken = await getPayPalAccessToken();
-    
     const orderData = {
       intent: 'CAPTURE',
       purchase_units: [{
         reference_id: guildId,
-        description: `Spidey Bot ${tier.toUpperCase()} Upgrade - ${durationMonths} Months`,
-        custom_id: JSON.stringify({ guildId, tier, durationMonths }),
-        amount: {
-          currency_code: 'USD',
-          value: amount.toString()
-        }
+        description: `Spidey Bot ${tier.toUpperCase()} - ${durationMonths} month(s)`,
+        custom_id: JSON.stringify({ guildId, tier, durationMonths, buyerId: paymentBuyerId }),
+        amount: { currency_code: 'USD', value: amount }
       }],
       application_context: {
         brand_name: 'Spidey Bot',
         landing_page: 'NO_PREFERENCE',
         user_action: 'PAY_NOW',
-        return_url: `${getPublicBaseUrl(req)}/premium?success=true`,
-        cancel_url: `${getPublicBaseUrl(req)}/premium?cancelled=true`
+        return_url: `${getPayPalReturnBaseUrl(req)}/dashboard.html?guildId=${encodeURIComponent(guildId)}&paypalReturn=1`,
+        cancel_url: `${getPayPalReturnBaseUrl(req)}/dashboard.html?guildId=${encodeURIComponent(guildId)}&paypalCancelled=1`
       }
     };
-    
     const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders`, orderData, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      timeout: 20000
     });
-    
-    res.json({ 
-      orderId: response.data.id, 
-      approvalUrl: response.data.links.find(l => l.rel === 'approve').href 
-    });
+    const approval = response.data.links?.find(link => link.rel === 'approve');
+    if (!response.data.id || !approval?.href) throw new Error('PayPal did not return an approval link.');
+
+    // Save an authoritative pending record. Never trust plan data supplied by the browser at capture time.
+    const config = loadConfig();
+    config.global_configs = config.global_configs || {};
+    config.global_configs.paypalPendingOrders = config.global_configs.paypalPendingOrders || {};
+    config.global_configs.paypalPendingOrders[String(response.data.id)] = {
+      orderId: String(response.data.id), guildId, tier, durationMonths,
+      buyerId: paymentBuyerId, expectedAmount: amount, currency: 'USD',
+      status: 'pending', createdAt: new Date().toISOString()
+    };
+    saveConfig(config);
+    res.json({ orderId: response.data.id, approvalUrl: approval.href });
   } catch (error) {
+    const notConfigured = error.code === 'PAYPAL_NOT_CONFIGURED';
     console.error('[PayPal Create Order Error]', error.response?.data || error.message);
-    const errorMsg = error.response?.data?.message || error.message || 'Failed to create order';
-    res.status(500).json({ error: errorMsg });
+    res.status(notConfigured ? 503 : 500).json({ error: notConfigured ? error.message : (error.response?.data?.message || 'Could not start PayPal checkout. Please try again.') });
   }
 });
 
-// Capture PayPal order (called after approval)
+// Capture and verify the approved order on the server before granting the plan.
 app.post('/api/paypal/capture-order', async (req, res) => {
   try {
-    const { orderId } = req.body;
-    
-    if (!orderId) {
-      return res.status(400).json({ error: 'Missing orderId' });
+    const orderId = String(req.body?.orderId || '');
+    const guildId = String(req.body?.guildId || '');
+    if (!orderId || !guildId) return res.status(400).json({ error: 'Missing PayPal order or server ID.' });
+    const paymentBuyerId = getPaymentBuyerId(req, guildId);
+    if (!paymentBuyerId) {
+      return res.status(req.session?.authenticated ? 403 : 401).json({ error: 'Sign in with an account that can manage this Discord server to finish checkout. The no-login testing path is limited to PayPal Sandbox.' });
     }
-    
+
+    let config = loadConfig();
+    config.global_configs = config.global_configs || {};
+    config.global_configs.paypalPendingOrders = config.global_configs.paypalPendingOrders || {};
+    config.global_configs.premiumPurchases = Array.isArray(config.global_configs.premiumPurchases) ? config.global_configs.premiumPurchases : [];
+    const pending = config.global_configs.paypalPendingOrders[orderId];
+    if (!pending || pending.guildId !== guildId || pending.buyerId !== paymentBuyerId) {
+      return res.status(403).json({ error: 'This PayPal order does not belong to this account and server.' });
+    }
+    const previousPurchase = config.global_configs.premiumPurchases.find(p => String(p.orderId) === orderId);
+    if (pending.status === 'completed' && previousPurchase) {
+      return res.json({ success: true, tier: previousPurchase.appliedTier || previousPurchase.tier, durationMonths: previousPurchase.durationMonths, alreadyProcessed: true });
+    }
+    if (pending.status !== 'pending') return res.status(409).json({ error: 'This PayPal order is not available for capture.' });
+
     const accessToken = await getPayPalAccessToken();
-    
-    const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`, {}, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (response.data.status === 'COMPLETED') {
-      const customId = response.data.purchase_units[0]?.custom_id;
-      const purchase = response.data.purchase_units[0]?.payments?.captures?.[0];
-      
-      let guildId, tier, durationMonths;
-      try {
-        const customData = JSON.parse(customId);
-        guildId = customData.guildId;
-        tier = customData.tier;
-        durationMonths = customData.durationMonths;
-      } catch (e) {
-        return res.status(400).json({ error: 'Invalid custom data' });
-      }
-      
-      const config = loadConfig();
-      if (!config.guilds[guildId]) {
-        config.guilds[guildId] = {};
-      }
-      
-      const msPerMonth = 30 * 24 * 60 * 60 * 1000;
-      const tierEndDate = Date.now() + (durationMonths * msPerMonth);
-      
-      config.guilds[guildId].tier = tier;
-      config.guilds[guildId].tierEndDate = tierEndDate;
-      config.guilds[guildId].tierDurationMonths = durationMonths;
-      
-      saveConfig(config);
-      
-      console.log(`[PayPal] Payment captured: ${tier} ${durationMonths} months for guild ${guildId}, amount: ${purchase.amount.value} ${purchase.amount.currency_code}`);
-      
-      res.json({ success: true, tier, durationMonths, amount: purchase.amount.value });
-    } else {
-      res.status(400).json({ error: 'Order not completed' });
+    const orderUrl = `${PAYPAL_API_BASE}/v2/checkout/orders/${encodeURIComponent(orderId)}`;
+    const authHeaders = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' };
+    // Fetch first so a retry can recover if PayPal captured the payment but the app
+    // restarted before the successful activation was saved.
+    let order = (await axios.get(orderUrl, { headers: authHeaders, timeout: 20000 })).data;
+    if (order.status === 'APPROVED') {
+      order = (await axios.post(`${orderUrl}/capture`, {}, { headers: authHeaders, timeout: 20000 })).data;
     }
+    const unit = order.purchase_units?.[0];
+    const capture = unit?.payments?.captures?.[0];
+    if (order.status !== 'COMPLETED' || capture?.status !== 'COMPLETED') {
+      return res.status(402).json({ error: 'PayPal has not confirmed a completed payment yet.' });
+    }
+    if (String(unit?.reference_id || '') !== pending.guildId ||
+        String(unit?.custom_id || '') === '' ||
+        String(capture?.amount?.currency_code || '') !== pending.currency ||
+        Number(capture?.amount?.value) !== Number(pending.expectedAmount)) {
+      console.error('[PayPal] Captured order did not match the pending server-side order:', orderId);
+      return res.status(400).json({ error: 'The payment details did not match this order. The plan was not changed.' });
+    }
+    let custom;
+    try { custom = JSON.parse(unit.custom_id); } catch { return res.status(400).json({ error: 'PayPal order metadata was invalid.' }); }
+    if (String(custom.guildId) !== pending.guildId || String(custom.tier) !== pending.tier ||
+        Number(custom.durationMonths) !== Number(pending.durationMonths) || String(custom.buyerId) !== pending.buyerId) {
+      return res.status(400).json({ error: 'PayPal order metadata did not match the saved purchase. The plan was not changed.' });
+    }
+
+    // Extend an active paid term instead of resetting its remaining time. Never downgrade
+    // an active higher tier because someone purchased a lower tier by mistake.
+    const guild = config.guilds[guildId] || (config.guilds[guildId] = {});
+    const now = Date.now();
+    const currentTier = ['premium', 'pro'].includes(String(guild.tier || '').toLowerCase()) &&
+      Number(guild.tierEndDate || 0) > now ? String(guild.tier).toLowerCase() : 'free';
+    const rank = { free: 0, premium: 1, pro: 2 };
+    const appliedTier = rank[currentTier] > rank[pending.tier] ? currentTier : pending.tier;
+    const startsAt = currentTier !== 'free' ? Math.max(now, Number(guild.tierEndDate) || now) : now;
+    const endsAt = startsAt + Number(pending.durationMonths) * 30 * 24 * 60 * 60 * 1000;
+    guild.tier = appliedTier;
+    guild.tierStartDate = currentTier !== 'free' ? (Number(guild.tierStartDate) || now) : now;
+    guild.tierEndDate = endsAt;
+    guild.tierDurationMonths = Number(pending.durationMonths);
+    guild.tierSource = 'paypal';
+    guild.tierGrantedBy = paymentBuyerId;
+
+    const purchaseRecord = {
+      orderId, guildId, tier: pending.tier, appliedTier, durationMonths: Number(pending.durationMonths),
+      buyerId: pending.buyerId, amount: capture.amount.value, currency: capture.amount.currency_code,
+      captureId: capture.id || null, purchasedAt: new Date().toISOString(), tierEndDate: endsAt
+    };
+    config.global_configs.premiumPurchases = [purchaseRecord, ...config.global_configs.premiumPurchases.filter(p => String(p.orderId) !== orderId)].slice(0, 1000);
+    pending.status = 'completed';
+    pending.completedAt = purchaseRecord.purchasedAt;
+    pending.captureId = capture.id || null;
+    pending.appliedTier = appliedTier;
+    config.global_configs.paypalPendingOrders[orderId] = pending;
+    saveConfig(config);
+
+    console.log(`[PayPal] Verified payment: ${pending.tier} ${pending.durationMonths} month(s) for guild ${guildId}; applied tier ${appliedTier}; ${capture.amount.value} ${capture.amount.currency_code}`);
+    res.json({ success: true, tier: appliedTier, purchasedTier: pending.tier, durationMonths: Number(pending.durationMonths), tierEndDate: endsAt });
   } catch (error) {
+    const notConfigured = error.code === 'PAYPAL_NOT_CONFIGURED';
     console.error('[PayPal Capture Error]', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to capture order' });
+    res.status(notConfigured ? 503 : 500).json({ error: notConfigured ? error.message : (error.response?.data?.message || 'Could not verify the PayPal payment. No plan change was made.') });
   }
 });
 
-// PayPal Webhook handler
-app.post('/api/paypal/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const webhookEvent = req.body;
-  const eventType = req.headers['x-paypal-event-type'];
-  
-  console.log(`[PayPal Webhook] Received: ${eventType}`);
-  
-  // Verify webhook - in production, validate signature with webhook ID
-  // For now, process the event directly
-  
-  if (eventType === 'PAYMENT.SALE.COMPLETED' || eventType === 'CHECKOUT.ORDER.APPROVED') {
-    try {
-      const customId = webhookEvent?.resource?.purchase_units?.[0]?.custom_id;
-      if (customId) {
-        const customData = JSON.parse(customId);
-        console.log('[PayPal Webhook] Processing payment for:', customData);
-      }
-    } catch (e) {
-      console.error('[PayPal Webhook] Error processing:', e.message);
-    }
-  }
-  
+// PayPal webhooks are informational only; plan activation happens after the authenticated,
+// server-to-server order capture above. Do not grant entitlements from unverified webhook data.
+app.post('/api/paypal/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  console.log('[PayPal Webhook] Received a webhook notification; checkout capture remains the source of truth.');
   res.status(200).send('OK');
 });
 
@@ -6211,7 +6385,7 @@ app.get("/api/config/tickets", (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({});
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const config = loadConfig();
@@ -6235,7 +6409,7 @@ app.post("/api/config/tickets", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.status(400).json({ success: false, error: "No guildId provided" });
 
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const category = req.body?.category || "";
@@ -6276,7 +6450,7 @@ app.get("/api/config/giveaways", (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ giveaways: {}, activeGiveaways: {}, activeCount: 0 });
 
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const config = loadConfig();
@@ -6291,17 +6465,104 @@ app.get("/api/config/giveaways", (req, res) => {
   });
 });
 
-app.post("/api/config/:guildId", (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false });
-
+app.post("/api/config/:guildId", async (req, res) => {
   const guildId = req.params.guildId;
+  const testingGuildAccess = isSpideyTestingHost(req)
+    && Boolean(client.guilds.cache.get(String(guildId)));
+  if (!isSpideyTestingHost(req) && !req.session.authenticated) {
+    return res.status(401).json({ success: false, error: "Not authenticated" });
+  }
   const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
+  const sessionGuildAccess = userGuilds.some(g => String(g.id) === String(guildId));
+  if (!(testingGuildAccess || sessionGuildAccess)) {
+    return res.status(403).json({ success: false, error: "No access" });
+  }
 
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
   const guildConfig = config.guilds[guildId];
+
+  const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+  if (req.body && typeof req.body === 'object') {
+    // Do not allow Free servers to turn on paid-only runtime features through legacy config APIs.
+    for (const [key, feature] of [['musicSettings','music'], ['polls','polls'], ['pollSettings','polls'], ['emojiSettings','emojis']]) {
+      if (!subscriptionManager.isPlanFeatureAllowed(guildId, feature) && Object.prototype.hasOwnProperty.call(req.body, key) && JSON.stringify(req.body[key]) !== JSON.stringify(guildConfig[key])) {
+        return res.status(403).json({ success: false, error: feature[0].toUpperCase()+feature.slice(1)+' requires Premium or Pro for this server.', upgradeRequired: true, currentTier: policy.tier });
+      }
+    }
+    // Level role rewards are capped server-side so Free servers cannot bypass dashboard controls.
+    for (const key of ['xp-levels','levels']) {
+      const section=req.body[key];
+      const roles=section?.levelRoles;
+      if (roles && typeof roles==='object' && !Array.isArray(roles)) {
+        const currentRoles=guildConfig[key]?.levelRoles||{};
+        const count=Object.keys(roles).filter(levelKey=>roles[levelKey]).length;
+        const currentCount=Object.keys(currentRoles).filter(levelKey=>currentRoles[levelKey]).length;
+        if(count>policy.levelRoleRewards) return res.status(403).json({success:false,error:'This server can configure '+policy.levelRoleRewards+' level role rewards on the '+policy.tier.toUpperCase()+' plan. Remove extra rewards before saving.',upgradeRequired:true,limit:policy.levelRoleRewards,currentTier:policy.tier});
+      }
+    }
+    // Embed Messages: enforce saved-template counts on the server, not only in the UI.
+    if (Array.isArray(req.body.embedTemplates) && req.body.embedTemplates.length > policy.embedMessages && req.body.embedTemplates.length > (Array.isArray(guildConfig.embedTemplates) ? guildConfig.embedTemplates.length : 0)) {
+      return res.status(403).json({ success: false, error: 'This server can save '+policy.embedMessages+' embed messages on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.embedMessages });
+    }
+    if (Array.isArray(req.body.embedTemplates) && !policy.embedStyling) {
+      req.body.embedTemplates = req.body.embedTemplates.map(template => ({ ...template, color: '#5865f2', footer: '', image: '', thumbnail: '' }));
+    }
+    for (const [key, value] of Object.entries(req.body)) {
+      if (/^(twitch|youtube|tiktok|kick|reddit|rss|podcast|instagram|xalerts)Alerts$/i.test(key) && Array.isArray(value) && value.length > policy.socialAccountsPerSection && value.length > (Array.isArray(guildConfig[key]) ? guildConfig[key].length : 0)) {
+        return res.status(403).json({ success: false, error: 'This server can save '+policy.socialAccountsPerSection+' accounts per alert section on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, currentTier: policy.tier, limit: policy.socialAccountsPerSection });
+      }
+    }
+    // Currency name and symbol are Premium/Pro customisation.
+    if (!policy.economyCustomCurrency && req.body.economySettings && typeof req.body.economySettings === 'object') {
+      const current = guildConfig.economySettings || {};
+      req.body.economySettings = { ...req.body.economySettings, currencyName: 'Credits', currencySymbol: '₵' };
+    }
+    if (!policy.economyCustomCurrency && req.body.economy && typeof req.body.economy === 'object') {
+      const current = guildConfig.economy || {};
+      req.body.economy = { ...req.body.economy, currency: 'coins' };
+    }
+    if (req.body.customCommands && typeof req.body.customCommands === 'object' && Array.isArray(req.body.customCommands.items) && req.body.customCommands.items.length > policy.customCommands && req.body.customCommands.items.length > (Array.isArray(guildConfig.customCommands?.items) ? guildConfig.customCommands.items.length : 0)) {
+      return res.status(403).json({ success: false, error: 'This server can create '+policy.customCommands+' custom commands on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.customCommands, currentTier: policy.tier });
+    }
+    if (req.body.inviteTracker && typeof req.body.inviteTracker === 'object' && Array.isArray(req.body.inviteTracker.rewards) && req.body.inviteTracker.rewards.length > policy.inviteMilestones && req.body.inviteTracker.rewards.length > (Array.isArray(guildConfig.inviteTracker?.rewards) ? guildConfig.inviteTracker.rewards.length : 0)) {
+      return res.status(403).json({ success: false, error: 'This server can configure '+policy.inviteMilestones+' invite milestone rewards on the '+policy.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: policy.inviteMilestones, currentTier: policy.tier });
+    }
+    // Custom reminder behaviour and birthday events stay at their saved/default values on Free.
+    if (!policy.reminderBehaviour) {
+      for (const key of ['reminderSettings','remindersSettings','reminders']) {
+        if (req.body[key] && typeof req.body[key] === 'object') {
+          const current = guildConfig[key] || {};
+          req.body[key] = { ...req.body[key] };
+          for (const field of Object.keys(req.body[key])) {
+            if (/behavio|repeat|recurr|scheduleMode|^dm$|allowMentions/i.test(field)) {
+              const fallback = field === 'allowMentions' ? false : true;
+              req.body[key][field] = current[field] ?? fallback;
+            }
+          }
+        }
+      }
+    }
+    if (!policy.birthdayCustomEvents) {
+      for (const key of ['birthdaysSettings','birthdaySettings','birthdays']) {
+        if (req.body[key] && typeof req.body[key] === 'object') {
+          const current = guildConfig[key] || {};
+          req.body[key] = { ...req.body[key] };
+          for (const field of Object.keys(req.body[key])) if (/custom.?events?/i.test(field)) req.body[key][field] = current[field] ?? (field.toLowerCase().endsWith('text') ? '' : []);
+        }
+      }
+    }
+    // Cap achievement milestone definitions while allowing the free tier to earn them in-channel.
+    for (const key of ['achievementSettings','achievements']) {
+      if (req.body[key] && typeof req.body[key] === 'object') {
+        const value = { ...req.body[key] };
+        if (Array.isArray(value.messages)) value.messages = value.messages.slice(0, policy.achievementsMessages);
+        if (Array.isArray(value.emojis)) value.emojis = value.emojis.slice(0, policy.achievementsEmoji);
+        if (!policy.achievementAnnouncements) value.announcementChannelId = guildConfig[key]?.announcementChannelId || null;
+        req.body[key] = value;
+      }
+    }
+  }
 
   // Preserve active tickets when dashboard updates only ticket settings.
   if (req.body && typeof req.body === 'object' && req.body.tickets && typeof req.body.tickets === 'object') {
@@ -6311,6 +6572,21 @@ app.post("/api/config/:guildId", (req, res) => {
   }
 
   Object.assign(guildConfig, req.body);
+  if (req.body && req.body.musicSettings && typeof req.body.musicSettings === 'object') {
+    guildConfig.spideySuite = guildConfig.spideySuite || {};
+    guildConfig.spideySuite.musicSettings = { ...(guildConfig.spideySuite.musicSettings || {}), ...req.body.musicSettings };
+  }
+  if (req.body && (req.body.economySettings || req.body.economy)) {
+    guildConfig.spideySuite = guildConfig.spideySuite || {};
+    const suiteEconomy = guildConfig.spideySuite.economy || {};
+    const settings = guildConfig.economySettings || {};
+    suiteEconomy.currency = policy.economyCustomCurrency
+      ? String((settings.currencySymbol || '₵')+' '+(settings.currencyName || 'Credits')).trim()
+      : 'coins';
+    suiteEconomy.currencyName = policy.economyCustomCurrency ? (settings.currencyName || 'Credits') : 'Coins';
+    suiteEconomy.currencySymbol = policy.economyCustomCurrency ? (settings.currencySymbol || '₵') : '';
+    guildConfig.spideySuite.economy = suiteEconomy;
+  }
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
   
   console.log('[CONFIG SAVE] Guild:', guildId, 'Data:', req.body);
@@ -6319,83 +6595,83 @@ app.post("/api/config/:guildId", (req, res) => {
 
 // Giveaway API
 app.post("/api/giveaway/create", express.json(), async (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, error: "No guild" });
-  
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
-  
-  const { prize, channel, duration, winners } = req.body;
-  if (!prize) return res.json({ success: false, error: "Prize required" });
-  
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild was selected" });
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === guildId);
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions for this server" });
+  const { prize, channel, duration, winners, format, message, embedTitle, embedDescription, emojiId, emojiName, emojiUrl } = req.body || {};
+  if (!String(prize || "").trim()) return res.status(400).json({ success: false, error: "Prize required" });
+  const minutes = Number(duration);
+  const winnerCount = Number(winners || 1);
+  if (!Number.isFinite(minutes) || minutes < 1 || minutes > 525600) return res.status(400).json({ success: false, error: "Duration must be between 1 minute and 365 days" });
+  if (!Number.isInteger(winnerCount) || winnerCount < 1 || winnerCount > 100) return res.status(400).json({ success: false, error: "Winner count must be between 1 and 100" });
+  if (!/^https:\/\/\S+/i.test(String(emojiUrl || "")) && emojiUrl) return res.status(400).json({ success: false, error: "External emoji/image URL must use HTTPS" });
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ success: false, error: "Bot is not connected to this server" });
+  const target = guild.channels.cache.get(String(channel || ""));
+  if (!target || !target.isTextBased() || typeof target.send !== "function") return res.status(400).json({ success: false, error: "Choose a valid text channel" });
   const config = loadConfig();
   if (!config.guilds[guildId]) config.guilds[guildId] = {};
   const tiers = getTierLimits(guildId);
   const giveaways = config.guilds[guildId].giveaways || {};
   const { activeCount } = getActiveGiveawaysMap(giveaways);
-
-  if (tiers.maxGiveaways !== Infinity && activeCount >= tiers.maxGiveaways) {
-    return res.json({ success: false, error: `Giveaway limit reached (${tiers.maxGiveaways}). Upgrade for more!` });
+  if (tiers.maxGiveaways !== Infinity && activeCount >= tiers.maxGiveaways) return res.status(403).json({ success: false, error: `Giveaway limit reached (${tiers.maxGiveaways}). Upgrade for more!` });
+  let chosenEmoji = null;
+  if (emojiId) {
+    chosenEmoji = guild.emojis.cache.get(String(emojiId)) || await guild.emojis.fetch(String(emojiId)).catch(() => null);
+    if (!chosenEmoji) return res.status(400).json({ success: false, error: "That server emoji could not be found" });
   }
-
-  const name = `${prize.toLowerCase().replace(/\s+/g, '_')}_${Date.now().toString(36)}`;
-  const endsAt = Date.now() + (duration * 60 * 1000);
-
-  config.guilds[guildId].giveaways = giveaways;
-  config.guilds[guildId].giveaways[name] = {
-    prize,
-    channel,
-    duration,
-    winners: winners || 1,
-    status: 'active',
-    endsAt,
-    createdAt: new Date().toISOString(),
-    entries: []
+  const cleanPrize = String(prize).trim().slice(0, 200);
+  const name = `${cleanPrize.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'giveaway'}_${Date.now().toString(36)}`;
+  const endsAt = Date.now() + minutes * 60 * 1000;
+  const selectedEmoji = chosenEmoji ? `<:${chosenEmoji.name}:${chosenEmoji.id}>` : "🎁";
+  const giveaway = {
+    prize: cleanPrize, channel: String(channel), channelId: String(channel), channelName: target.name,
+    duration: minutes, winners: winnerCount, status: "active", endsAt,
+    createdAt: new Date().toISOString(), entries: [],
+    format: format === "text" ? "text" : "embed",
+    message: String(message || "").slice(0, 4000),
+    embedTitle: String(embedTitle || "").slice(0, 256),
+    embedDescription: String(embedDescription || "").slice(0, 4000),
+    emojiId: chosenEmoji?.id || null, emojiName: chosenEmoji?.name || null,
+    emojiUrl: String(emojiUrl || "").trim()
   };
-  
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-  
-// Try to post in channel with reaction
-   const guild = client.guilds.cache.get(guildId);
-   if (guild && channel) {
-     const ch = guild.channels.cache.get(channel);
-if (ch) {
-        try {
-          const msg = await ch.send({ embeds: [new EmbedBuilder()
-            .setColor('#9151ff')
-            .setTitle('🎁 Giveaway Started!')
-            .setDescription(`**${prize}**\n\nWinners: ${winners || 1}\nDuration: ${duration} minutes\n\nReact with 🎁 to enter!`)
-            .setFooter({ text: 'SPIDEY BOT • Ends: ' + new Date(endsAt).toLocaleString() })
-          ]});
-         
-         // Save message ID and add reaction
-         config.guilds[guildId].giveaways[name].messageId = msg.id;
-         config.guilds[guildId].giveaways[name].channelId = channel;
-         fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-         
-         await msg.react('🎁');
-       } catch(e) {
-         console.error('Giveaway post error:', e);
-       }
-     }
-   }
-
-  const { active, activeCount: liveCount } = getActiveGiveawaysMap(config.guilds[guildId].giveaways);
-  console.log(`🎁 Giveaway created for guild ${guildId}: ${name} (active: ${liveCount})`);
-  res.json({
-    success: true,
-    name,
-    giveaway: config.guilds[guildId].giveaways[name],
-    activeGiveaways: active,
-    activeCount: liveCount
-  });
+  const contentTemplate = giveaway.message || "A giveaway has started!";
+  const content = contentTemplate.replace(/\{prize\}/gi, cleanPrize).replace(/\{winners\}/gi, String(winnerCount)).replace(/\{duration\}/gi, String(minutes));
+  const embed = new EmbedBuilder().setColor("#9151ff")
+    .setTitle(giveaway.embedTitle || "🎉 Giveaway!")
+    .setDescription(`${giveaway.embedDescription || contentTemplate}\n\n**Prize:** ${cleanPrize}\n**Winners:** ${winnerCount}\n**Duration:** ${minutes} minutes\n\nReact with ${selectedEmoji} to enter!`)
+    .setFooter({ text: "SPIDEY BOT • Ends: " + new Date(endsAt).toLocaleString() });
+  if (giveaway.emojiUrl) embed.setThumbnail(giveaway.emojiUrl);
+  const payload = giveaway.format === "text"
+    ? { content: `${content}\n\n**Prize:** ${cleanPrize}\n**Winners:** ${winnerCount}\n**Duration:** ${minutes} minutes\nReact with ${selectedEmoji} to enter!${giveaway.emojiUrl ? "\n" + giveaway.emojiUrl : ""}` }
+    : { embeds: [embed] };
+  try {
+    const posted = await target.send(payload);
+    try { await posted.react(chosenEmoji || "🎁"); }
+    catch (reactionError) {
+      if (chosenEmoji) throw new Error("The giveaway was posted, but the bot could not add the selected server emoji reaction. Check its permissions.");
+      throw reactionError;
+    }
+    giveaway.messageId = posted.id;
+    giveaways[name] = giveaway;
+    config.guilds[guildId].giveaways = giveaways;
+    fs.writeFileSync("config.json", JSON.stringify(config, null, 2));
+    const { active, activeCount: liveCount } = getActiveGiveawaysMap(giveaways);
+    return res.json({ success: true, name, giveaway, activeGiveaways: active, activeCount: liveCount });
+  } catch (err) {
+    console.error("Giveaway post error:", err);
+    return res.status(502).json({ success: false, error: err.message || "Discord could not post the giveaway" });
+  }
 });
 
 app.post("/api/giveaway/end", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, error: "No guild" });
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild" });
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions for this server" });
   
   const { name } = req.body;
   
@@ -6437,7 +6713,7 @@ app.post("/api/ticket/message", express.json(), async (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, error: "No guild" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
   
   const { channel, title, description, buttonLabel } = req.body;
@@ -6601,7 +6877,7 @@ app.get("/api/bot-config/custom-commands", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
   
   try {
@@ -6629,7 +6905,7 @@ app.post("/api/bot-config/custom-commands/save", express.json(), async (req, res
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
   
   try {
@@ -6669,7 +6945,7 @@ app.post("/api/bot-config/custom-commands/delete", express.json(), async (req, r
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ error: "No admin permissions" });
   
   try {
@@ -6705,7 +6981,7 @@ app.get("/api/config/:guildId", (req, res) => {
   }
 
   const userGuilds = req.session.guilds || [];
-  const hasAccess = userGuilds.some(g => g.id === guildId);
+  const hasAccess = userGuilds.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No access" });
 
   const config = loadConfig();
@@ -6720,9 +6996,12 @@ adminConfigs.forEach(configName => {
     const guildId = req.query.guildId;
     if (!guildId) return res.json({});
 
-    // Verify user has admin access to this guild
-    const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-    if (!hasAccess) {
+    // Testing dashboard: allow only guilds the bot is actually connected to.
+    // Production continues to require the guild in the authenticated OAuth session.
+    const testingGuildAccess = isSpideyTestingHost(req)
+      && Boolean(client.guilds.cache.get(String(guildId)));
+    const sessionGuildAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+    if (!(testingGuildAccess || sessionGuildAccess)) {
       console.warn(`⚠️ Unauthorized config access attempt: ${req.session.user?.username} tried to access guild ${guildId}`);
       return res.status(403).json({ error: "You don't have admin permissions in this server" });
     }
@@ -6740,7 +7019,13 @@ adminConfigs.forEach(configName => {
     if (!guildId) return res.json({ success: false, error: "No guild found" });
 
     // Verify user has admin access to this guild
-    const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+    // Testing-only bypass: trust only guilds the bot is currently connected to,
+    // and only when the exact Railway testing hostname is used. Production keeps
+    // the normal authenticated session guild membership check.
+    const testingGuildAccess = isSpideyTestingHost(req)
+      && Boolean(client.guilds.cache.get(String(guildId)));
+    const sessionGuildAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+    const hasAccess = testingGuildAccess || sessionGuildAccess;
     if (!hasAccess) {
       console.warn(`⚠️ Unauthorized config save attempt: ${req.session.user?.username} tried to save config for guild ${guildId}`);
       return res.status(403).json({ error: "You don't have admin permissions in this server" });
@@ -6749,22 +7034,62 @@ adminConfigs.forEach(configName => {
     const config = loadConfig();
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId][configName]) config.guilds[guildId][configName] = {};
-
-    Object.assign(config.guilds[guildId][configName], req.body);
+    const planForSave = subscriptionManager.getGuildPlanPolicy(guildId);
+    const incoming = { ...(req.body || {}) };
+    const existingPanelConfig = config.guilds[guildId][configName] || {};
+    if (configName === 'invite-tracking') {
+      for (const [key,value] of Object.entries(incoming)) {
+        if (/milestone|reward/i.test(key) && Array.isArray(value) && value.length > planForSave.inviteMilestones) {
+          return res.status(403).json({ success: false, error: 'This server can configure '+planForSave.inviteMilestones+' invite milestone rewards on the '+planForSave.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: planForSave.inviteMilestones, currentTier: planForSave.tier });
+        }
+      }
+    }
+    if (configName === 'reminders' && !planForSave.reminderBehaviour) {
+      for (const [key,value] of Object.entries(incoming)) {
+        if (/behavio|repeat|recurr|scheduleMode/i.test(key)) incoming[key] = existingPanelConfig[key] ?? value;
+      }
+    }
+    if (configName === 'birthdays' && !planForSave.birthdayCustomEvents) {
+      for (const [key,value] of Object.entries(incoming)) {
+        if (/custom.?events?/i.test(key)) incoming[key] = existingPanelConfig[key] ?? [];
+      }
+    }
+    Object.assign(config.guilds[guildId][configName], incoming);
 
     // Keep dashboard "server-messages" tab and runtime serverMessages in sync
     if (configName === 'server-messages') {
       if (!config.guilds[guildId].serverMessages) config.guilds[guildId].serverMessages = {};
       const body = req.body || {};
-      Object.assign(config.guilds[guildId].serverMessages, {
-        enableWelcome: body.welcomeEnabled ?? body.enableWelcome ?? config.guilds[guildId].serverMessages.enableWelcome,
-        welcomeChannel: body.welcomeChannel || config.guilds[guildId].serverMessages.welcomeChannel,
-        welcomeMessage: body.welcomeMessage ?? config.guilds[guildId].serverMessages.welcomeMessage,
-        enableGoodbye: body.goodbyeEnabled ?? body.enableGoodbye ?? config.guilds[guildId].serverMessages.enableGoodbye,
-        goodbyeChannel: body.goodbyeChannel || config.guilds[guildId].serverMessages.goodbyeChannel,
-        goodbyeMessage: body.goodbyeMessage ?? config.guilds[guildId].serverMessages.goodbyeMessage
+      const currentMessages = config.guilds[guildId].serverMessages;
+      const legacyMessages = config.guilds[guildId]['server-messages'];
+      Object.assign(currentMessages, {
+        enableWelcome: body.welcomeEnabled ?? body.enableWelcome ?? currentMessages.enableWelcome,
+        welcomeChannel: body.welcomeChannel !== undefined ? body.welcomeChannel : currentMessages.welcomeChannel,
+        welcomeMessage: body.welcomeMessage !== undefined ? body.welcomeMessage : currentMessages.welcomeMessage,
+        welcomeEmbed: body.welcomeEmbed !== undefined ? body.welcomeEmbed : currentMessages.welcomeEmbed,
+        welcomeType: body.welcomeType !== undefined ? body.welcomeType : currentMessages.welcomeType,
+        enableGoodbye: body.goodbyeEnabled ?? body.enableGoodbye ?? currentMessages.enableGoodbye,
+        goodbyeChannel: body.goodbyeChannel !== undefined ? body.goodbyeChannel : currentMessages.goodbyeChannel,
+        goodbyeMessage: body.goodbyeMessage !== undefined ? body.goodbyeMessage : currentMessages.goodbyeMessage,
+        goodbyeEmbed: body.goodbyeEmbed !== undefined ? body.goodbyeEmbed : currentMessages.goodbyeEmbed,
+        goodbyeType: body.goodbyeType !== undefined ? body.goodbyeType : currentMessages.goodbyeType
       });
-      if (body.welcomeChannel) config.guilds[guildId].welcomeChannelId = body.welcomeChannel;
+      // Keep both persisted shapes canonical so an old alias cannot override a new toggle.
+      if (body.welcomeEnabled !== undefined || body.enableWelcome !== undefined) {
+        const enabled = body.welcomeEnabled ?? body.enableWelcome;
+        currentMessages.enableWelcome = enabled;
+        currentMessages.welcomeEnabled = enabled;
+        legacyMessages.enableWelcome = enabled;
+        legacyMessages.welcomeEnabled = enabled;
+      }
+      if (body.goodbyeEnabled !== undefined || body.enableGoodbye !== undefined) {
+        const enabled = body.goodbyeEnabled ?? body.enableGoodbye;
+        currentMessages.enableGoodbye = enabled;
+        currentMessages.goodbyeEnabled = enabled;
+        legacyMessages.enableGoodbye = enabled;
+        legacyMessages.goodbyeEnabled = enabled;
+      }
+      if (body.welcomeChannel !== undefined) config.guilds[guildId].welcomeChannelId = body.welcomeChannel;
     }
 
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
@@ -6780,7 +7105,7 @@ app.post("/api/bot-config/prefix", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) {
     return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
   }
@@ -6811,7 +7136,7 @@ app.post("/api/bot-config/language", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) {
     return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
   }
@@ -6844,7 +7169,7 @@ app.post("/api/bot-config/roles", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) {
     return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
   }
@@ -6876,7 +7201,7 @@ app.post("/api/bot-config/channels", express.json(), (req, res) => {
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
   
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) {
     return res.status(403).json({ success: false, message: "You don't have admin permissions in this server" });
   }
@@ -6905,7 +7230,7 @@ app.post("/api/bot-config/logging", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -6923,7 +7248,7 @@ app.post("/api/bot-config/server-guard", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -6952,25 +7277,71 @@ app.post("/api/bot-config/server-guard", express.json(), async (req, res) => {
 });
 
 // ============== REACT ROLES API ENDPOINTS ==============
+// Read live reaction-role settings and mappings for the selected server.
+app.get("/api/subscription/policy", (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild found" });
+  const testingGuildAccess = isSpideyTestingHost(req) && Boolean(client.guilds.cache.get(guildId));
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === guildId);
+  if (!(testingGuildAccess || hasAccess)) return res.status(403).json({ success: false, error: "No access to this server" });
+  const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const serialisable = Object.fromEntries(Object.entries(policy).map(([key,value]) => [key, value === Infinity ? null : value]));
+  res.json({ success: true, policy: serialisable, entitlements: subscriptionManager.getGuildEntitlements(guildId) });
+});
+
+app.get("/api/bot-config/react-roles/settings", (req, res) => {
+  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.query.guildId;
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild found" });
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
+  if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
+  try {
+    const service = require("./src/features/reaction-roles/reaction-roles.service.cjs");
+    const config = service.getConfig(guildId);
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    if (policy.tier === 'free') { config.dmConfirm = true; config.dmConfirmations = true; }
+    res.json({ success: true, config, policy: Object.fromEntries(Object.entries(policy).map(([key,value]) => [key,value===Infinity?null:value])) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Could not load reaction role settings" });
+  }
+});
+
 // Save react role settings (allowMultiple, removeOnUnreact, dmConfirm)
 app.post("/api/bot-config/react-roles/settings", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
-    const { ReactionRolesService } = require('./src/features/reaction-roles/reaction-roles.service.cjs');
-    const service = new ReactionRolesService();
-    const { allowMultiple, removeOnUnreact, dmConfirm } = req.body;
-    const config = service.getConfig(guildId);
-    const updated = { ...config, allowMultiple, removeOnUnreact, dmConfirm };
+    const service = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+    const body = req.body || {};
+    const current = service.getConfig(guildId);
+    const updated = { ...current };
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    if (policy.tier === 'free' && (body.dmConfirm === false || body.dmConfirmations === false)) {
+      return res.status(403).json({ success: false, error: "Turning off DM confirmations requires Premium or Pro for this server.", upgradeRequired: true, currentTier: policy.tier });
+    }
+    for (const key of ['allowMultiple', 'removeOnUnreact', 'enabled', 'language', 'updateNotifications', 'errorReporting']) {
+      if (body[key] !== undefined) updated[key] = body[key];
+    }
+    if (body.notificationChannelId !== undefined) updated.notificationChannelId = body.notificationChannelId || null;
+    if (typeof body.dmConfirm === 'boolean') {
+      updated.dmConfirm = body.dmConfirm;
+      updated.dmConfirmations = body.dmConfirm;
+    }
+    if (typeof body.dmConfirmations === 'boolean') updated.dmConfirmations = body.dmConfirmations;
     service.setConfig(guildId, updated);
-    console.log(`✅ React roles settings saved (Guild: ${guildId})`);
-    res.json({ success: true, message: "React roles settings saved" });
+    const saved = service.getConfig(guildId);
+    if (typeof body.enabled === 'boolean' && saved.enabled !== body.enabled) {
+      throw new Error('Reaction Roles enabled state did not persist');
+    }
+    console.log(`✅ React roles settings saved (Guild: ${guildId}; enabled: ${saved.enabled})`);
+    res.json({ success: true, config: saved, message: "React roles settings saved" });
   } catch (err) {
     console.error('❌ Error saving react roles settings:', err);
-    res.json({ success: false, message: "Error saving settings" });
+    res.status(500).json({ success: false, error: err.message || "Error saving settings" });
   }
 });
 
@@ -6979,7 +7350,7 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { channelId, messageId, emoji, roleId, requiredRoleIds } = req.body;
@@ -7025,22 +7396,26 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
     const role = guild.roles.cache.get(roleId);
     if (!role) return res.json({ success: false, error: "Role not found" });
     
-    // Check tier entitlements - limit react roles for free tier
+    // Enforce the shared per-server plan policy for dashboard-created reaction roles.
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    const reactionRoleService = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+    const serviceEntries = reactionRoleService.getEntries(guildId);
+    const sameMessageEntries = reactionRoleService.getEntriesForMessage(guildId, messageId);
+    const alreadyMapped = serviceEntries.some(entry => String(entry.messageId) === String(messageId) && String(entry.emoji) === String(emoji));
+    if (!alreadyMapped && serviceEntries.length >= policy.reactionRoles) return res.status(403).json({ success: false, error: "This server has reached its reaction-role mapping limit for the "+policy.tier.toUpperCase()+" plan.", upgradeRequired: true, currentTier: policy.tier });
+    if (!alreadyMapped && sameMessageEntries.length >= policy.reactionsPerMessage) return res.status(403).json({ success: false, error: "This message has reached its reaction limit for the "+policy.tier.toUpperCase()+" plan.", upgradeRequired: true, currentTier: policy.tier });
     const limits = getTierLimits(guildId);
     const config = loadConfig();
     const guildConfig = config.guilds[guildId] || {};
     const roleCategories = guildConfig.roleCategories || {};
-    let totalRoles = 0;
+    let categoryRoleCount = 0;
     Object.values(roleCategories).forEach(cat => {
-      if (cat.roles && Array.isArray(cat.roles)) {
-        totalRoles += cat.roles.length;
-      }
+      if (cat.roles && Array.isArray(cat.roles)) categoryRoleCount += cat.roles.length;
     });
-    
-    // Also check reactRoles.entries
-    if (guildConfig.reactRoles && guildConfig.reactRoles.entries) {
-      totalRoles += guildConfig.reactRoles.entries.length;
-    }
+    const legacyEntryCount = Array.isArray(guildConfig.reactRoles?.entries) ? guildConfig.reactRoles.entries.length : 0;
+    // Legacy config and the dedicated reaction-role service can represent the same entries;
+    // use the larger count for those mirrors rather than counting them twice.
+    const totalRoles = categoryRoleCount + Math.max(serviceEntries.length, legacyEntryCount);
     
     if (totalRoles >= limits.maxReactRoles) {
       return res.json({ 
@@ -7053,15 +7428,17 @@ app.post("/api/bot-config/react-roles/add", express.json(), async (req, res) => 
       });
     }
     
-    // Try to add the reaction to the message
+    // Try to add the reaction and register it with the live reaction-role handler.
     try {
       await message.react(emoji);
+      const reactionRoleService = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+      await reactionRoleService.addEntry(guildId, { channelId, messageId, emoji, roleId, description: role.name });
     } catch (e) {
-      console.warn('Could not add reaction:', e.message);
-      return res.json({ success: false, error: "Could not add reaction. Make sure the emoji is valid and the bot has permissions." });
+      console.warn('Could not register reaction role:', e.message);
+      return res.json({ success: false, error: e.message || "Could not add reaction. Check emoji and bot permissions." });
     }
 
-    // Save to config - reuse existing config from above
+    // Keep legacy dashboard config in sync for existing UI consumers.
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId].reactRoles) config.guilds[guildId].reactRoles = { entries: [], allowMultiple: true, removeOnUnreact: true, dmConfirm: false };
@@ -7098,7 +7475,7 @@ app.post("/api/bot-config/react-roles/remove", express.json(), async (req, res) 
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { index } = req.body;
@@ -7107,6 +7484,8 @@ app.post("/api/bot-config/react-roles/remove", express.json(), async (req, res) 
     if (!entries || index < 0 || index >= entries.length) return res.json({ success: false, message: "Invalid index" });
 
     const removed = entries.splice(index, 1)[0];
+    const reactionRoleService = require('./src/features/reaction-roles/reaction-roles.service.cjs');
+    reactionRoleService.removeEntry(guildId, removed.messageId, removed.emoji);
 
     // Try to remove the bot's reaction from the message
     try {
@@ -7138,27 +7517,34 @@ app.post("/api/bot-config/react-roles/post", express.json(), async (req, res) =>
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
-    const { channelId, title, description } = req.body;
-    if (!channelId || !title) return res.json({ success: false, error: "Channel and title required" });
+    const { channelId, type = "embed", content, title, description, color, footer, image } = req.body;
+    const policy = subscriptionManager.getGuildPlanPolicy(guildId);
+    const canStyleEmbed = policy.embedStyling;
+    if (!channelId) return res.json({ success: false, error: "Channel required" });
+    if (type === "text" && !String(content || "").trim()) return res.json({ success: false, error: "Message text is required" });
+    if (type !== "text" && !String(title || description || footer || image || "").trim()) return res.json({ success: false, error: "Add a title, description, footer or image to the embed" });
 
     const guild = client.guilds.cache.get(guildId);
     if (!guild) return res.json({ success: false, error: "Guild not found in bot cache" });
 
     const channel = guild.channels.cache.get(channelId);
-    if (!channel) return res.json({ success: false, error: "Channel not found" });
+    if (!channel || !channel.isTextBased?.() || !channel.send) return res.json({ success: false, error: "Select a text channel" });
 
-    // Build and send embed
-    const embed = new EmbedBuilder()
-      .setColor(0x00D4FF)
-      .setTitle(title)
-      .setDescription(description || 'React below to claim your roles!')
-      .setFooter({ text: 'SPIDEY BOT • React to get roles' })
-      .setTimestamp();
-
-    const msg = await channel.send({ embeds: [embed] });
+    let payload;
+    if (type === "text") {
+      payload = { content: String(content).slice(0, 2000) };
+    } else {
+      const embed = new EmbedBuilder().setColor(canStyleEmbed && /^#?[0-9a-f]{6}$/i.test(String(color || "")) ? parseInt(String(color).replace("#", ""), 16) : 0x5865F2);
+      if (title) embed.setTitle(String(title).slice(0, 256));
+      if (description) embed.setDescription(String(description).slice(0, 4000));
+      if (canStyleEmbed && footer) embed.setFooter({ text: String(footer).slice(0, 2048) });
+      if (canStyleEmbed && image && /^https?:\/\//i.test(String(image))) embed.setImage(String(image));
+      payload = { embeds: [embed] };
+    }
+    const msg = await channel.send(payload);
     console.log(`✅ React role message posted: ${msg.id} in #${channel.name} (Guild: ${guildId})`);
     addActivity(guildId, "📨", "Admin", `posted reaction role message in #${channel.name}`);
     res.json({ success: true, messageId: msg.id, message: "Message posted" });
@@ -7173,7 +7559,7 @@ app.post("/api/bot-config/verification/post", express.json(), async (req, res) =
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   
   try {
@@ -7232,7 +7618,7 @@ app.post("/api/bot-config/role-category/delete", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { categoryName } = req.body;
@@ -7258,7 +7644,7 @@ app.post("/api/bot-config/setup-category", express.json(), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, error: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, error: "No admin permissions" });
   try {
     const { categoryName, channelId } = req.body;
@@ -7315,7 +7701,7 @@ app.post("/api/bot-config/typed-role/add", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { type, roles, roleId, roleName } = req.body;
@@ -7363,7 +7749,7 @@ app.post("/api/bot-config/typed-role/remove", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "No admin permissions" });
   try {
     const { type, index } = req.body;
@@ -7391,7 +7777,7 @@ app.post("/api/bot-config/anti-spam", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -7411,7 +7797,7 @@ app.post("/api/bot-config/raid", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -7431,7 +7817,7 @@ app.post("/api/bot-config/permissions", express.json(), (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.query.guildId;
   if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  const hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
   if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
 
   try {
@@ -7448,11 +7834,24 @@ app.post("/api/bot-config/permissions", express.json(), (req, res) => {
 });
 
 app.post("/api/bot-config/messages", express.json(), (req, res) => {
-  if (!req.session.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
-  const guildId = req.query.guildId;
-  if (!guildId) return res.json({ success: false, message: "No guild found" });
-  const hasAccess = req.session.guilds?.some(g => g.id === guildId);
-  if (!hasAccess) return res.status(403).json({ success: false, message: "You don't have admin permissions" });
+  const guildId = String(req.query.guildId || "");
+  if (!guildId) return res.status(400).json({ success: false, error: "No guild found" });
+
+  // The no-OAuth testing dashboard is permitted only when explicitly enabled on
+  // the isolated test deployment. Never enable this bypass in production.
+  const testDashboardAccess =
+    process.env.RAILWAY_ENVIRONMENT_NAME === "testing" &&
+    process.env.SPIDEY_TESTING_NO_AUTH === "true" &&
+    client.guilds.cache.has(guildId);
+
+  if (!testDashboardAccess && !req.session?.authenticated) {
+    return res.status(401).json({ success: false, error: "Not authenticated" });
+  }
+
+  const sessionHasGuild = req.session?.guilds?.some(g => String(g.id) === guildId);
+  if (!testDashboardAccess && !sessionHasGuild) {
+    return res.status(403).json({ success: false, error: "You don't have admin permissions" });
+  }
 
   try {
     const config = loadConfig();
@@ -7964,6 +8363,207 @@ app.get("/api/guild/:guildId/roles", (req, res) => {
   res.json({ roles });
 });
 
+// Discord server emoji manager for the dashboard
+async function getDashboardGuildAccess(req, guild) {
+  if (!req.session?.authenticated || !req.session?.guilds?.some(g => g.id === guild.id)) return { ok: false, status: 403, error: "No access to this guild" };
+  // The isolated test dashboard intentionally uses a synthetic admin session instead of OAuth.
+  if (typeof isSpideyTestingHost === "function" && isSpideyTestingHost(req)) {
+    return { ok: true, member: { permissions: { has: () => true } } };
+  }
+  const userId = req.session.user?.id || req.session.passport?.user?.id;
+  if (!userId) return { ok: false, status: 403, error: "Could not verify the signed-in Discord member" };
+  const member = await guild.members.fetch(userId).catch(() => null);
+  if (!member) return { ok: false, status: 403, error: "You must be a member of this Discord server" };
+  return { ok: true, member };
+}
+
+app.get("/api/guild/:guildId/emojis", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  try {
+    const fetched = await guild.emojis.fetch();
+    const emojis = [...fetched.values()].map(emoji => ({
+      id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 128 }),
+      animated: emoji.animated, managed: emoji.managed
+    })).sort((a, b) => a.name.localeCompare(b.name));
+    return res.json({ emojis, count: emojis.length });
+  } catch (err) {
+    console.error("[dashboard emojis list]", err.message);
+    return res.status(502).json({ error: "Could not fetch server emojis. Check the bot's server access." });
+  }
+});
+
+app.post("/api/guild/:guildId/emojis", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  const emojiPolicy = subscriptionManager.getGuildPlanPolicy(guild.id);
+  if (!emojiPolicy.emojis) return res.status(403).json({ success: false, error: "Server emoji management requires Premium or Pro for this server.", upgradeRequired: true, currentTier: emojiPolicy.tier });
+  if (!access.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions) && !access.member.permissions.has(PermissionFlagsBits.Administrator)) return res.status(403).json({ error: "You need Manage Expressions permission to add server emojis" });
+  const name = String(req.body?.name || "").trim();
+  const image = String(req.body?.image || "");
+  if (!/^[A-Za-z0-9_]{2,32}$/.test(name)) return res.status(400).json({ error: "Emoji name must be 2–32 letters, numbers or underscores" });
+  const match = image.match(/^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) return res.status(400).json({ error: "Upload a valid PNG, JPG, GIF or WebP image" });
+  const buffer = Buffer.from(match[2], "base64");
+  if (!buffer.length || buffer.length > 256 * 1024) return res.status(413).json({ error: "Emoji image must be between 1 byte and 256 KB" });
+  const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+  if (!botMember?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions)) {
+    return res.status(403).json({ error: "SPIDEY BOT needs Manage Expressions permission in this server" });
+  }
+  try {
+    const emoji = await guild.emojis.create({ attachment: buffer, name, reason: "Added from the SPIDEY BOT dashboard" });
+    return res.status(201).json({ success: true, emoji: { id: emoji.id, name: emoji.name, url: emoji.imageURL({ size: 128 }), animated: emoji.animated } });
+  } catch (err) {
+    console.error("[dashboard emoji create]", err.message);
+    const status = /maximum number|maximum.*emoji|limit/i.test(err.message) ? 409 : 400;
+    return res.status(status).json({ error: "Discord could not create this emoji. Check the server emoji limit, image format, and bot permissions." });
+  }
+});
+
+app.delete("/api/guild/:guildId/emojis/:emojiId", async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guild = client.guilds.cache.get(req.params.guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found or bot is not connected" });
+  const access = await getDashboardGuildAccess(req, guild);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+  const emojiPolicy = subscriptionManager.getGuildPlanPolicy(guild.id);
+  if (!emojiPolicy.emojis) return res.status(403).json({ success: false, error: "Server emoji management requires Premium or Pro for this server.", upgradeRequired: true, currentTier: emojiPolicy.tier });
+  if (!access.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions) && !access.member.permissions.has(PermissionFlagsBits.Administrator)) return res.status(403).json({ error: "You need Manage Expressions permission to delete server emojis" });
+  const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+  if (!botMember?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions)) return res.status(403).json({ error: "SPIDEY BOT needs Manage Expressions permission" });
+  try {
+    const emoji = await guild.emojis.fetch(req.params.emojiId);
+    if (emoji.managed) return res.status(403).json({ error: "This emoji is managed by an integration and cannot be deleted by the bot" });
+    await emoji.delete("Deleted from the SPIDEY BOT dashboard");
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[dashboard emoji delete]", err.message);
+    return res.status(400).json({ error: "Discord could not delete this emoji. Check permissions and that the emoji still exists." });
+  }
+});
+
+// Per-server embed message counters. Counts are persisted in config.json for the testing/production deployment.
+function getEmbedMessageStats(config, guildId) {
+  const stats = config.global_configs?.embedMessageStats?.[guildId] || {};
+  return {
+    templatesCreated: Math.max(0, Number(stats.templatesCreated) || 0),
+    embedsSent: Math.max(0, Number(stats.embedsSent) || 0)
+  };
+}
+app.get("/api/guild/:guildId/embeds/stats", (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  if (!client.guilds.cache.has(guildId)) return res.status(404).json({ error: "The bot cannot find this server." });
+  const config = loadConfig();
+  const guildConfig = config.guilds?.[guildId] || {};
+  res.json({ ...getEmbedMessageStats(config, guildId), savedTemplates: Array.isArray(guildConfig.embedTemplates) ? guildConfig.embedTemplates.length : 0 });
+});
+app.post("/api/guild/:guildId/embeds/template-created", express.json(), (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  if (!client.guilds.cache.has(guildId)) return res.status(404).json({ success: false, error: "The bot cannot find this server." });
+  try {
+    const config = loadConfig();
+    config.global_configs ||= {};
+    config.global_configs.embedMessageStats ||= {};
+    const stats = config.global_configs.embedMessageStats[guildId] ||= { templatesCreated: 0, embedsSent: 0 };
+    stats.templatesCreated = Math.max(0, Number(stats.templatesCreated) || 0) + 1;
+    stats.updatedAt = new Date().toISOString();
+    saveConfig(config);
+    return res.json({ success: true, ...getEmbedMessageStats(config, guildId) });
+  } catch (err) {
+    console.error("[dashboard embeds stats] Could not record template:", err.message);
+    return res.status(500).json({ success: false, error: "Could not update embed statistics." });
+  }
+});
+
+// Publish an embed built in the dashboard to a selected server channel.
+app.post("/api/guild/:guildId/embeds/send", express.json(), async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
+  const guildId = req.params.guildId;
+  const { channelId, embed: requestedEmbed } = req.body || {};
+  if (!channelId || !requestedEmbed || typeof requestedEmbed !== "object") {
+    return res.status(400).json({ success: false, error: "Choose a channel and provide an embed." });
+  }
+  const embedPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const embed = embedPolicy.embedStyling ? requestedEmbed : { ...requestedEmbed, color: '#5865f2', footer: '', image: '', thumbnail: '' };
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ success: false, error: "The bot cannot find this server." });
+
+  try {
+    const member = req.session.user?.id ? await guild.members.fetch(req.session.user.id) : null;
+    if (!member || !(member.permissions.has(PermissionFlagsBits.Administrator) || member.permissions.has(PermissionFlagsBits.ManageGuild))) {
+      return res.status(403).json({ success: false, error: "You need Manage Server permission to publish embeds." });
+    }
+    const channel = await guild.channels.fetch(channelId).catch(() => null);
+    if (!channel || !channel.isTextBased?.() || !channel.send) {
+      return res.status(400).json({ success: false, error: "Select a valid text channel." });
+    }
+    const botMember = guild.members.me;
+    const perms = botMember ? channel.permissionsFor(botMember) : null;
+    if (!perms?.has(PermissionFlagsBits.SendMessages) || !perms.has(PermissionFlagsBits.EmbedLinks)) {
+      return res.status(403).json({ success: false, error: "The bot needs Send Messages and Embed Links permissions in that channel." });
+    }
+
+    const title = typeof embed.title === "string" ? embed.title.trim() : "";
+    const description = typeof embed.description === "string" ? embed.description : "";
+    const author = typeof embed.author === "string" ? embed.author.trim() : "";
+    const footer = typeof embed.footer === "string" ? embed.footer.trim() : "";
+    const url = typeof embed.url === "string" ? embed.url.trim() : "";
+    const image = typeof embed.image === "string" ? embed.image.trim() : "";
+    const thumbnail = typeof embed.thumbnail === "string" ? embed.thumbnail.trim() : "";
+    const fields = Array.isArray(embed.fields) ? embed.fields.slice(0, 25).map(field => ({
+      name: String(field.name || "").trim().slice(0, 256) || "\u200b",
+      value: String(field.value || "").trim().slice(0, 1024) || "\u200b",
+      inline: !!field.inline
+    })).filter(field => field.name !== "\u200b" || field.value !== "\u200b") : [];
+    const validUrl = value => !value || /^https?:\/\//i.test(value);
+    if (!validUrl(url) || !validUrl(image) || !validUrl(thumbnail)) {
+      return res.status(400).json({ success: false, error: "URLs must start with http:// or https://." });
+    }
+    if (title.length > 256 || description.length > 4096 || author.length > 256 || footer.length > 2048) {
+      return res.status(400).json({ success: false, error: "The embed exceeds Discord's character limits." });
+    }
+    if (!title && !description && !fields.length && !image && !thumbnail && !author && !footer) {
+      return res.status(400).json({ success: false, error: "Add content to the embed before publishing." });
+    }
+
+    const color = /^#[0-9a-f]{6}$/i.test(String(embed.color || "")) ? parseInt(String(embed.color).slice(1), 16) : 0x5865F2;
+    const builder = new EmbedBuilder().setColor(color);
+    if (title) builder.setTitle(title);
+    if (description) builder.setDescription(description);
+    if (url) builder.setURL(url);
+    if (author) builder.setAuthor({ name: author });
+    if (footer) builder.setFooter({ text: footer });
+    if (image) builder.setImage(image);
+    if (thumbnail) builder.setThumbnail(thumbnail);
+    if (embed.timestamp) builder.setTimestamp();
+    if (fields.length) builder.addFields(fields);
+    const message = await channel.send({ embeds: [builder] });
+    try {
+      const config = loadConfig();
+      config.global_configs ||= {};
+      config.global_configs.embedMessageStats ||= {};
+      const stats = config.global_configs.embedMessageStats[guildId] ||= { templatesCreated: 0, embedsSent: 0 };
+      stats.embedsSent = Math.max(0, Number(stats.embedsSent) || 0) + 1;
+      stats.updatedAt = new Date().toISOString();
+      saveConfig(config);
+    } catch (statsErr) {
+      console.error("[dashboard embeds stats] Could not record sent embed:", statsErr.message);
+    }
+    return res.json({ success: true, messageId: message.id, channelId: channel.id, channelName: channel.name });
+  } catch (err) {
+    console.error("[dashboard embeds publish] Failed:", err.message);
+    return res.status(500).json({ success: false, error: "Could not publish the embed. Check the bot's channel permissions and try again." });
+  }
+});
+
 // Get channels in a guild for dashboard selectors
 app.get("/api/guild/:guildId/channels", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Not authenticated" });
@@ -8007,7 +8607,7 @@ app.get("/api/guild/:guildId/dashboard-resources", async (req, res) => {
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
   // Primary access check from OAuth session guild list
-  let hasAccess = req.session.guilds?.some(g => g.id === guildId);
+  let hasAccess = req.session.guilds?.some(g => String(g.id) === String(guildId));
 
   // Fallback access check when session guild cache is stale
   if (!hasAccess && req.session.user?.id) {
@@ -8256,19 +8856,10 @@ app.get("/api/member-stats/:guildId", async (req, res) => {
     return res.json(cached);
   }
 
-  // Use cached member data if available, otherwise fetch
-  const memberCache = guild.members.cache;
-  
-  // If cache is too small (likely not fetched yet), fetch now
-  if (memberCache.size <= 1) {
-    console.log(`📊 Member cache empty for ${guildId}, fetching...`);
-    try {
-      await guild.members.fetch();
-    } catch (err) {
-      console.warn(`⚠️ Failed to fetch members for ${guildId}:`, err.message);
-    }
-  }
-  
+  // Use the Gateway-maintained member cache. Full guild member fetches use
+  // Discord Gateway opcode 8 and can be rate-limited if repeated from dashboard
+  // polling. The startup pre-fetch populates this cache; avoid fetching it again
+  // from every cache miss/request.
   const members = guild.members.cache;
   
   // Count non-bot members (humans)
@@ -8304,35 +8895,8 @@ app.get("/api/member-stats/:guildId", async (req, res) => {
   // Cache the stats
   setCachedMemberStats(guildId, stats);
   
-  // Fetch fresh data in background (don't wait for it)
-  guild.members.fetch().then(freshMembers => {
-    const freshHumans = freshMembers.filter(m => !m.user.bot);
-    const freshVerified = freshHumans.filter(m => !m.pending && m.roles.cache.size > 1).size;
-    const freshAdmins = freshMembers.filter(m => !m.user.bot && m.permissions.has('Administrator')).size;
-    const freshMods = freshMembers.filter(m => {
-      if (m.user.bot) return false;
-      if (m.permissions.has('Administrator')) return false;
-      return m.permissions.has('ModerateMembers') || 
-             m.permissions.has('KickMembers') || 
-             m.permissions.has('BanMembers') || 
-             m.permissions.has('ManageMessages') ||
-             m.roles.cache.some(r => r.name.toLowerCase().includes('mod') || r.name.toLowerCase().includes('staff'));
-    }).size;
-    
-    const freshStats = {
-      total: freshMembers.size,
-      members: freshHumans.size,
-      verified: freshVerified,
-      bots: freshMembers.filter(m => m.user.bot).size,
-      admins: freshAdmins,
-      mods: freshMods,
-      roles: guild.roles.cache.map(r => ({ id: r.id, name: r.name, count: r.members.size }))
-    };
-    setCachedMemberStats(guildId, freshStats);
-    console.log(`✅ Updated member stats cache for guild ${guildId}`);
-  }).catch(err => {
-    console.warn(`⚠️ Background member fetch failed for guild ${guildId}:`, err.message);
-  });
+  // Do not trigger a second full member fetch here. Stats are calculated from
+  // the cached members above and refreshed from Gateway events/startup sync.
 
   res.json(stats);
 });
@@ -8670,7 +9234,7 @@ client.once('ready', () => {
   }
 
   console.log('🔧 Registering unified command/event handlers...');
-  try { registerTestifyHandlers(client); console.log('✅ Core command/event handlers registered'); } catch (err) { console.error('❌ Failed to register core command/event handlers:', err.message); }
+  try { registerSpideyHandlers(client); console.log('✅ Core command/event handlers registered'); } catch (err) { console.error('❌ Failed to register core command/event handlers:', err.message); }
 
 
 });

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPIDEY BOT — Owner Console</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+:root{color-scheme:dark;--bg:#09090f;--panel:#12121c;--panel2:#171725;--border:#29283b;--muted:#9694ad;--text:#f7f5ff;--purple:#a879ff;--purple2:#7044e8;--green:#50e0a0;--amber:#ffc66d;--red:#ff788b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 65% -15%,rgba(122,74,232,.22),transparent 42%),var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{max-width:1500px;margin:auto;padding:28px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}.brand{display:flex;align-items:center;gap:13px}.owner-brand-logo{display:block;width:auto;max-width:min(220px,35vw);height:44px;object-fit:contain}.logo{width:44px;height:44px;display:grid;place-items:center;border:1px solid #6848a5;background:linear-gradient(145deg,#32234f,#171524);border-radius:14px;color:#d6c0ff;font-size:22px;box-shadow:0 0 25px #7945d522}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--purple);font-weight:800;text-transform:uppercase}.top h1{margin:2px 0 0;font-size:25px;letter-spacing:-.7px}.top p{margin:3px 0 0;color:var(--muted)}.top-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.btn{border:1px solid var(--border);border-radius:10px;background:#1a1928;color:var(--text);padding:10px 14px;font-weight:700}.btn:hover{border-color:#8061cb}.btn.primary{background:linear-gradient(135deg,#8c5be8,#6639ce);border-color:#986eff;box-shadow:0 6px 22px #7044e833}.btn:disabled{opacity:.55;cursor:wait}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}.stat{position:relative;overflow:hidden;background:linear-gradient(145deg,#171724,#11111a);border:1px solid var(--border);border-radius:16px;padding:20px}.stat:after{content:"";position:absolute;right:-30px;top:-35px;width:100px;height:100px;border-radius:50%;background:var(--glow);filter:blur(38px);opacity:.25}.stat .label{color:var(--muted);font-weight:650}.stat .value{font-size:34px;line-height:1.25;font-weight:850;margin:8px 0 2px;letter-spacing:-1px}.stat .sub{font-size:12px;color:var(--muted)}.stat.total{--glow:#56d6e8}.stat.free{--glow:#9b9bb0}.stat.premium{--glow:#ffc66d}.stat.pro{--glow:#aa72ff}.stat.total .value{color:#71e4f0}.stat.free .value{color:#c2c1d0}.stat.premium .value{color:var(--amber)}.stat.pro .value{color:#c4a1ff}
+.layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(330px,.8fr);gap:18px;align-items:start}.panel{background:rgba(18,18,28,.94);border:1px solid var(--border);border-radius:16px;overflow:hidden}.panel-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-head h2{font-size:16px;margin:0}.panel-head p{color:var(--muted);font-size:12px;margin:3px 0 0}.panel-body{padding:18px 20px}.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field label{color:#c8c4dc;font-size:12px;font-weight:700}.field input,.field select,.field textarea,.search{width:100%;background:#0c0c14;color:var(--text);border:1px solid #333148;border-radius:9px;padding:10px 11px;outline:none}.field input:focus,.field select:focus,.search:focus{border-color:var(--purple);box-shadow:0 0 0 3px #a879ff19}.search-wrap{flex:1;min-width:200px}.search{height:41px}.filters{display:flex;gap:7px;flex-wrap:wrap}.filter{padding:8px 11px;border:1px solid var(--border);border-radius:9px;color:#b9b5ce;background:#13131e;font-weight:700;font-size:12px}.filter.active{background:#302247;border-color:#7957b4;color:#e5d5ff}.server-list{display:flex;flex-direction:column;gap:8px}.server{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid #29283a;border-radius:12px;background:#101019}.server:hover{border-color:#50406d}.server-main{display:flex;align-items:center;gap:11px;min-width:0}.server-icon{width:42px;height:42px;flex:0 0 42px;border-radius:13px;display:grid;place-items:center;background:#252137;color:#d3baff;font-size:16px;font-weight:800;overflow:hidden}.server-icon img{width:100%;height:100%;object-fit:cover}.server-name{font-weight:800;overflow-wrap:anywhere}.server-meta{font-size:11px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.server-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}.tier{font-size:10px;letter-spacing:.5px;font-weight:850;text-transform:uppercase;padding:5px 8px;border-radius:7px;border:1px solid}.tier.free{color:#b7b6c7;background:#242430;border-color:#454456}.tier.premium{color:#ffd58e;background:#382b1a;border-color:#7c5b2d}.tier.pro{color:#d5baff;background:#302047;border-color:#714ca5}.manage{padding:7px 10px;border:1px solid #514269;background:#1e192b;color:#e6d7ff;border-radius:8px;font-size:12px;font-weight:800}.empty{padding:28px;text-align:center;color:var(--muted)}.pagination-note{margin-top:12px;color:var(--muted);font-size:11px}.editor{position:sticky;top:16px}.editor .panel-body{display:flex;flex-direction:column;gap:15px}.selected{padding:11px;border:1px solid #413454;background:#201a2d;border-radius:10px}.selected strong{display:block;overflow-wrap:anywhere}.selected small{color:var(--muted)}.tier-choice{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.tier-choice label{cursor:pointer}.tier-choice input{position:absolute;opacity:0;pointer-events:none}.tier-choice span{display:block;text-align:center;padding:11px 5px;border:1px solid #37344b;border-radius:9px;background:#0d0d15;font-weight:800}.tier-choice input:checked+span{border-color:#a879ff;background:#33234b;color:#e5d2ff;box-shadow:0 0 0 2px #a879ff20}.duration-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.checkline{display:flex;align-items:center;gap:8px;color:#c8c4dc;font-size:12px}.checkline input{accent-color:var(--purple)}.help{color:var(--muted);font-size:11px;margin-top:-8px}.detail-box{border-top:1px solid var(--border);padding-top:13px;margin-top:2px}.detail-box h3{font-size:12px;color:#d7c6ff;margin:0 0 9px}.detail-line{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12px}.detail-line span:first-child{color:var(--muted)}.detail-line span:last-child{text-align:right;overflow-wrap:anywhere}.activity{display:flex;flex-direction:column;gap:9px}.activity-row{border:1px solid #29283a;border-radius:10px;padding:10px 11px}.activity-row strong{display:block;font-size:12px}.activity-row small{color:var(--muted);font-size:11px}.status{font-size:12px;color:var(--muted);min-height:18px}.status.error{color:var(--red)}.status.success{color:var(--green)}.footer{padding:18px 0 0;color:#6f6d84;text-align:center;font-size:11px}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.editor{position:static}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.shell{padding:15px}.top{align-items:flex-start}.top h1{font-size:21px}.top-actions{justify-content:flex-end}.stats{gap:8px}.stat{padding:14px}.stat .value{font-size:27px}.panel-head,.panel-body{padding:15px}.server{grid-template-columns:1fr}.server-right{justify-content:flex-start;padding-left:53px}.duration-row{grid-template-columns:1fr}.logo{width:38px;height:38px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="top">
+ <div class="brand"><img class="owner-brand-logo" src="/spideybot-logo.png" alt="SPIDEY BOT"><div><div class="eyebrow">PRIVATE ACCESS</div><h1>Owner Console</h1><p>Server control, subscriptions and plan management</p></div></div>
+ <div class="top-actions"><button class="btn" id="refreshBtn">↻ Refresh data</button><a class="btn" href="/dashboard.html?guildId=388050334083317772" style="text-decoration:none">Admin dashboard ↗</a></div>
+</header>
+<div id="pageStatus" class="status" role="status">Checking owner access…</div>
+<section class="stats" aria-label="Server subscription totals">
+ <article class="stat total"><div class="label">Servers in bot</div><div class="value" id="totalServers">—</div><div class="sub">Discord servers SPIDEY BOT is in</div></article>
+ <article class="stat free"><div class="label">Free</div><div class="value" id="freeServers">—</div><div class="sub">No active paid tier</div></article>
+ <article class="stat premium"><div class="label">Premium</div><div class="value" id="premiumServers">—</div><div class="sub">Active Premium subscriptions</div></article>
+ <article class="stat pro"><div class="label">Pro</div><div class="value" id="proServers">—</div><div class="sub">Active Pro subscriptions</div></article>
+</section>
+<div class="layout">
+ <section class="panel">
+  <div class="panel-head"><div><h2>All Discord servers</h2><p>See every server the bot is currently in, its plan and subscription expiry.</p></div><span id="serverCount" class="eyebrow">0 SERVERS</span></div>
+  <div class="panel-body">
+   <div class="tools"><div class="search-wrap"><input class="search" id="serverSearch" placeholder="Search by server name or ID…" autocomplete="off"></div><div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="free">Free</button><button class="filter" data-filter="premium">Premium</button><button class="filter" data-filter="pro">Pro</button></div></div>
+   <div id="serverList" class="server-list"><div class="empty">Loading servers…</div></div>
+   <div class="pagination-note">Counts include every server currently connected to the bot. Expired subscriptions are counted as Free.</div>
+  </div>
+ </section>
+ <aside>
+  <section class="panel editor">
+   <div class="panel-head"><div><h2>Manage server plan</h2><p>Grant, change, extend or remove a subscription.</p></div></div>
+   <div class="panel-body">
+    <div class="field"><label for="serverPicker">Select Discord server</label><select id="serverPicker"><option value="">Choose a server…</option></select></div>
+    <div id="selectedSummary" class="selected"><strong>No server selected</strong><small>Choose a server from the list or dropdown.</small></div>
+    <div class="field"><label>Plan</label><div class="tier-choice">
+     <label><input type="radio" name="tier" value="free" checked><span>Free</span></label>
+     <label><input type="radio" name="tier" value="premium"><span>💎 Premium</span></label>
+     <label><input type="radio" name="tier" value="pro"><span>✦ Pro</span></label>
+    </div></div>
+    <div class="duration-row">
+     <div class="field"><label for="durationMonths">Duration (months)</label><input type="number" id="durationMonths" min="1" max="1200" step="1" value="1"></div>
+     <div class="field"><label for="grantReason">Reason (optional)</label><input id="grantReason" maxlength="300" placeholder="e.g. Partner grant"></div>
+    </div>
+    <label class="checkline"><input type="checkbox" id="lifetime"> Lifetime / no expiry</label>
+    <div class="help">Set any duration from 1 to 1,200 months, or choose lifetime. Free has no expiry.</div>
+    <button class="btn primary" id="saveTierBtn">Save plan changes</button>
+    <div id="editorStatus" class="status" role="status"></div>
+    <div class="detail-box"><h3>Subscription details</h3><div id="subscriptionDetails" class="empty" style="padding:10px 0;text-align:left">Select a server to view details.</div></div>
+   </div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+   <div class="panel-head"><div><h2>Recent paid upgrades</h2><p>Buyer details are captured for new PayPal purchases.</p></div></div>
+   <div class="panel-body"><div id="recentPurchases" class="activity"><div class="empty">No paid upgrade history yet.</div></div><div class="pagination-note">Older purchases may not have buyer details if they were processed before purchase tracking was added.</div></div>
+  </section>
+ </aside>
+</div>
+<div class="footer">Private owner controls · Access is verified server-side through your Discord account.</div>
+</div>
+<script>
+(() => {
+ 'use strict';
+ const $ = id => document.getElementById(id);
+ let servers = [], purchases = [], activeFilter = 'all', selectedId = '';
+ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+ const date = value => { if(!value) return 'No expiry'; const d = new Date(value); return Number.isNaN(d.getTime()) ? 'Unknown' : d.toLocaleString(); };
+ const planName = tier => ({free:'Free',premium:'Premium',pro:'Pro'}[tier] || 'Free');
+ const setStatus = (target, message, type='') => { const el=$(target); el.textContent=message; el.className='status'+(type?' '+type:''); };
+ async function api(url, options={}) {
+   const response = await fetch(url, {credentials:'include', ...options, headers:{'Content-Type':'application/json',...(options.headers||{})}});
+   const data = await response.json().catch(()=>({error:'The server returned an unreadable response.'}));
+   if(response.status===401){ location.href='/login'; throw new Error('Please sign in again.'); }
+   if(response.status===403) throw new Error('Owner access only. Sign in with the Discord account configured as the bot owner.');
+   if(!response.ok) throw new Error(data.error || 'Request failed.');
+   return data;
+ }
+ function visibleServers(){
+   const q=$('serverSearch').value.trim().toLowerCase();
+   return servers.filter(s=>(activeFilter==='all'||s.tier===activeFilter) && (!q||s.name.toLowerCase().includes(q)||s.id.includes(q)));
+ }
+ function renderServers(){
+   const list=visibleServers();
+   $('serverCount').textContent=list.length+' SERVER'+(list.length===1?'':'S');
+   if(!list.length){$('serverList').innerHTML='<div class="empty">No servers match this search.</div>';return;}
+   $('serverList').innerHTML=list.map(s=>{
+     const icon=s.icon ? '<img src="https://cdn.discordapp.com/icons/'+encodeURIComponent(s.id)+'/'+encodeURIComponent(s.icon)+'.png?size=96" alt="" loading="lazy">' : escapeHtml((s.name||'?').slice(0,1).toUpperCase());
+     const exp=s.tier==='free'?'Free plan':s.isLifetime?'Lifetime access':s.tierEndDate?'Expires '+escapeHtml(date(s.tierEndDate)):'Expiry not recorded';
+     const buyer=s.lastPurchase ? 'Buyer: '+escapeHtml(s.lastPurchase.buyerName||s.lastPurchase.buyerId||'Not recorded') : (s.tier==='free'?'No paid plan':'Buyer not recorded');
+     return '<article class="server"><div class="server-main"><div class="server-icon">'+icon+'</div><div style="min-width:0"><div class="server-name">'+escapeHtml(s.name)+'</div><div class="server-meta">ID: '+escapeHtml(s.id)+' · '+Number(s.memberCount||0).toLocaleString()+' members<br>'+exp+'<br>'+buyer+'</div></div></div><div class="server-right"><span class="tier '+escapeHtml(s.tier)+'">'+escapeHtml(planName(s.tier))+'</span><button class="manage" data-manage="'+escapeHtml(s.id)+'">Manage</button></div></article>';
+   }).join('');
+   $('serverList').querySelectorAll('[data-manage]').forEach(btn=>btn.addEventListener('click',()=>selectServer(btn.dataset.manage)));
+ }
+ function renderPicker(){
+   const old=selectedId;
+   $('serverPicker').innerHTML='<option value="">Choose a server…</option>'+servers.map(s=>'<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+' · '+escapeHtml(planName(s.tier))+'</option>').join('');
+   if(servers.some(s=>s.id===old)) $('serverPicker').value=old;
+ }
+ function selectServer(id){
+   selectedId=id;
+   const s=servers.find(x=>x.id===id);
+   $('serverPicker').value=id||'';
+   if(!s){$('selectedSummary').innerHTML='<strong>No server selected</strong><small>Choose a server from the list or dropdown.</small>';return;}
+   $('selectedSummary').innerHTML='<strong>'+escapeHtml(s.name)+'</strong><small>'+escapeHtml(s.id)+' · '+Number(s.memberCount||0).toLocaleString()+' members · Current plan: '+escapeHtml(planName(s.tier))+'</small>';
+   document.querySelectorAll('input[name="tier"]').forEach(r=>r.checked=r.value===s.tier);
+   $('durationMonths').value=s.tierDurationMonths>0?s.tierDurationMonths:1;
+   $('lifetime').checked=!!s.isLifetime;
+   $('grantReason').value='';
+   const buyer=s.lastPurchase;
+   $('subscriptionDetails').innerHTML=
+    '<div class="detail-line"><span>Current plan</span><span>'+escapeHtml(planName(s.tier))+'</span></div>'+
+    '<div class="detail-line"><span>Start date</span><span>'+escapeHtml(s.tierStartDate?date(s.tierStartDate):'Not recorded')+'</span></div>'+
+    '<div class="detail-line"><span>Expiry</span><span>'+escapeHtml(s.tier==='free'?'—':s.isLifetime?'Lifetime / no expiry':date(s.tierEndDate))+'</span></div>'+
+    '<div class="detail-line"><span>Duration granted</span><span>'+escapeHtml(s.tier==='free'?'—':s.isLifetime?'Lifetime':(s.tierDurationMonths||'Unknown')+' months')+'</span></div>'+
+    '<div class="detail-line"><span>Last paid buyer</span><span>'+escapeHtml(buyer?(buyer.buyerName||buyer.buyerId||'Not recorded'):'Not recorded')+'</span></div>'+
+    '<div class="detail-line"><span>Payment date</span><span>'+escapeHtml(buyer?date(buyer.purchasedAt):'Not recorded')+'</span></div>'+
+    '<div class="detail-line"><span>Amount</span><span>'+escapeHtml(buyer&&buyer.amount?(buyer.currency||'USD')+' '+buyer.amount:'Not recorded')+'</span></div>'+
+    '<div class="detail-line"><span>Last change source</span><span>'+escapeHtml(s.grantSource||'Not recorded')+'</span></div>';
+   setStatus('editorStatus','','');
+ }
+ function renderPurchases(){
+   const items=purchases.slice(0,8);
+   if(!items.length){$('recentPurchases').innerHTML='<div class="empty">No paid upgrade history recorded yet.</div>';return;}
+   $('recentPurchases').innerHTML=items.map(p=>'<div class="activity-row"><strong>'+escapeHtml(p.guildName||servers.find(s=>s.id===p.guildId)?.name||'Discord server')+' · '+escapeHtml(planName(p.tier))+'</strong><small>Buyer: '+escapeHtml(p.buyerName||p.buyerId||'Not recorded')+(p.buyerId?' ('+escapeHtml(p.buyerId)+')':'')+'<br>'+escapeHtml(p.durationMonths||'?')+' months · '+escapeHtml(p.amount?(p.currency||'USD')+' '+p.amount:'Amount unavailable')+'<br>'+escapeHtml(date(p.purchasedAt))+'</small></div>').join('');
+ }
+ async function loadData(){
+   $('refreshBtn').disabled=true;
+   setStatus('pageStatus','Loading live Discord server and subscription data…');
+   try{
+     const data=await api('/api/owner/stats');
+     servers=Array.isArray(data.servers)?data.servers:[];
+     purchases=Array.isArray(data.purchases)?data.purchases:[];
+     $('totalServers').textContent=Number(data.totalServers||0).toLocaleString();
+     $('freeServers').textContent=Number(data.freeCount||0).toLocaleString();
+     $('premiumServers').textContent=Number(data.premiumCount||0).toLocaleString();
+     $('proServers').textContent=Number(data.proCount||0).toLocaleString();
+     renderPicker();renderServers();renderPurchases();
+     if(selectedId&&servers.some(s=>s.id===selectedId)) selectServer(selectedId);
+     setStatus('pageStatus','Live data updated '+new Date(data.generatedAt||Date.now()).toLocaleTimeString(),'success');
+   }catch(err){setStatus('pageStatus',err.message,'error');$('serverList').innerHTML='<div class="empty">'+escapeHtml(err.message)+'</div>';}
+   finally{$('refreshBtn').disabled=false;}
+ }
+ async function saveTier(){
+   if(!selectedId){setStatus('editorStatus','Choose a server first.','error');return;}
+   const tier=document.querySelector('input[name="tier"]:checked')?.value||'free';
+   const duration= $('lifetime').checked || tier==='free' ? 0 : Number($('durationMonths').value);
+   if(tier!=='free'&&duration!==0&&(!Number.isInteger(duration)||duration<1||duration>1200)){setStatus('editorStatus','Enter a whole duration between 1 and 1,200 months, or select lifetime.','error');return;}
+   const btn=$('saveTierBtn');btn.disabled=true;btn.textContent='Saving…';
+   try{
+     await api('/api/owner/tier',{method:'POST',body:JSON.stringify({guildId:selectedId,tier,durationMonths:duration,reason:$('grantReason').value.trim()})});
+     // Notify any open main-dashboard tab so its navigation, limits and locked panels refresh immediately.
+     localStorage.setItem('spidey-plan-updated',JSON.stringify({guildId:selectedId,tier,updatedAt:Date.now()}));
+     setStatus('editorStatus',tier==='free'?'Server moved to Free.':tier.toUpperCase()+' granted '+(duration===0?'for lifetime.':'for '+duration+' month(s).'),'success');
+     await loadData();selectServer(selectedId);
+   }catch(err){setStatus('editorStatus',err.message,'error');}
+   finally{btn.disabled=false;btn.textContent='Save plan changes';}
+ }
+ $('refreshBtn').addEventListener('click',loadData);
+ $('serverSearch').addEventListener('input',renderServers);
+ $('serverPicker').addEventListener('change',e=>selectServer(e.target.value));
+ $('saveTierBtn').addEventListener('click',saveTier);
+ $('lifetime').addEventListener('change',e=>{$('durationMonths').disabled=e.target.checked||document.querySelector('input[name="tier"]:checked')?.value==='free';});
+ document.querySelectorAll('input[name="tier"]').forEach(r=>r.addEventListener('change',()=>{$('durationMonths').disabled=$('lifetime').checked||document.querySelector('input[name="tier"]:checked')?.value==='free';}));
+ document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{activeFilter=btn.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===btn));renderServers();}));
+ loadData();
+ setInterval(loadData,60000);
+})();
+</script>
+<script>
+(function applyLogoWordmarkEverywhere(){
+  if (window.__spideyLogoWordmarkInstalled) return;
+  window.__spideyLogoWordmarkInstalled = true;
+  const style = document.createElement('style');
+  style.textContent = '.brand-inline-logo{display:inline-block;width:auto;max-width:160px;height:1.15em;object-fit:contain;vertical-align:-.2em}';
+  document.head.appendChild(style);
+  const pattern = /spidey\s+bot/ig;
+  function replaceInTextNode(node){
+    if(!node || node.nodeType !== Node.TEXT_NODE || !pattern.test(node.nodeValue || '')) { pattern.lastIndex = 0; return; }
+    pattern.lastIndex = 0;
+    const value = node.nodeValue;
+    const fragment = document.createDocumentFragment();
+    let last = 0, match;
+    while((match = pattern.exec(value)) !== null){
+      if(match.index > last) fragment.appendChild(document.createTextNode(value.slice(last, match.index)));
+      const logo = document.createElement('img');
+      logo.className = 'brand-inline-logo';
+      logo.src = '/spideybot-logo.png';
+      logo.alt = match[0];
+      fragment.appendChild(logo);
+      last = match.index + match[0].length;
+    }
+    if(last < value.length) fragment.appendChild(document.createTextNode(value.slice(last)));
+    node.parentNode?.replaceChild(fragment, node);
+  }
+  function scan(root){
+    if(!root) return;
+    if(root.nodeType === Node.TEXT_NODE) { replaceInTextNode(root); return; }
+    if(root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_NODE) return;
+    if(root.nodeType === Node.ELEMENT_NODE && /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|TITLE|OPTION)$/i.test(root.tagName)) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node){
+        const p=node.parentElement;
+        if(!p || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|TITLE|OPTION)$/i.test(p.tagName)) return NodeFilter.FILTER_REJECT;
+        if(p.closest('script,style,noscript,textarea,title,option')) return NodeFilter.FILTER_REJECT;
+        return /spidey\s+bot/i.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(replaceInTextNode);
+  }
+  scan(document.body);
+  new MutationObserver(records => records.forEach(record => {
+    record.addedNodes?.forEach(node => scan(node));
+    if(record.type === 'characterData') scan(record.target);
+  })).observe(document.body,{subtree:true,childList:true,characterData:true});
+})();
+</script>
+</body>
+</html>
