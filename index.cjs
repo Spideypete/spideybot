@@ -6998,8 +6998,27 @@ adminConfigs.forEach(configName => {
     const config = loadConfig();
     if (!config.guilds[guildId]) config.guilds[guildId] = {};
     if (!config.guilds[guildId][configName]) config.guilds[guildId][configName] = {};
-
-    Object.assign(config.guilds[guildId][configName], req.body);
+    const planForSave = subscriptionManager.getGuildPlanPolicy(guildId);
+    const incoming = { ...(req.body || {}) };
+    const existingPanelConfig = config.guilds[guildId][configName] || {};
+    if (configName === 'invite-tracking') {
+      for (const [key,value] of Object.entries(incoming)) {
+        if (/milestone|reward/i.test(key) && Array.isArray(value) && value.length > planForSave.inviteMilestones) {
+          return res.status(403).json({ success: false, error: 'This server can configure '+planForSave.inviteMilestones+' invite milestone rewards on the '+planForSave.tier.toUpperCase()+' plan.', upgradeRequired: true, limit: planForSave.inviteMilestones, currentTier: planForSave.tier });
+        }
+      }
+    }
+    if (configName === 'reminders' && !planForSave.reminderBehaviour) {
+      for (const [key,value] of Object.entries(incoming)) {
+        if (/behavio|repeat|recurr|scheduleMode/i.test(key)) incoming[key] = existingPanelConfig[key] ?? value;
+      }
+    }
+    if (configName === 'birthdays' && !planForSave.birthdayCustomEvents) {
+      for (const [key,value] of Object.entries(incoming)) {
+        if (/custom.?events?/i.test(key)) incoming[key] = existingPanelConfig[key] ?? [];
+      }
+    }
+    Object.assign(config.guilds[guildId][configName], incoming);
 
     // Keep dashboard "server-messages" tab and runtime serverMessages in sync
     if (configName === 'server-messages') {
