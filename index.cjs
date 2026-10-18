@@ -8450,10 +8450,12 @@ app.post("/api/guild/:guildId/embeds/template-created", express.json(), (req, re
 app.post("/api/guild/:guildId/embeds/send", express.json(), async (req, res) => {
   if (!req.session?.authenticated) return res.status(401).json({ success: false, error: "Not authenticated" });
   const guildId = req.params.guildId;
-  const { channelId, embed } = req.body || {};
-  if (!channelId || !embed || typeof embed !== "object") {
+  const { channelId, embed: requestedEmbed } = req.body || {};
+  if (!channelId || !requestedEmbed || typeof requestedEmbed !== "object") {
     return res.status(400).json({ success: false, error: "Choose a channel and provide an embed." });
   }
+  const embedPolicy = subscriptionManager.getGuildPlanPolicy(guildId);
+  const embed = embedPolicy.embedStyling ? requestedEmbed : { ...requestedEmbed, color: '#5865f2', footer: '', image: '', thumbnail: '' };
   const guild = client.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ success: false, error: "The bot cannot find this server." });
 
