@@ -6489,7 +6489,7 @@ app.post("/api/config/:guildId", async (req, res) => {
         const currentRoles=guildConfig[key]?.levelRoles||{};
         const count=Object.keys(roles).filter(levelKey=>roles[levelKey]).length;
         const currentCount=Object.keys(currentRoles).filter(levelKey=>currentRoles[levelKey]).length;
-        if(count>policy.levelRoleRewards && count>currentCount) return res.status(403).json({success:false,error:'This server can configure '+policy.levelRoleRewards+' level role rewards on the '+policy.tier.toUpperCase()+' plan.',upgradeRequired:true,limit:policy.levelRoleRewards,currentTier:policy.tier});
+        if(count>policy.levelRoleRewards) return res.status(403).json({success:false,error:'This server can configure '+policy.levelRoleRewards+' level role rewards on the '+policy.tier.toUpperCase()+' plan. Remove extra rewards before saving.',upgradeRequired:true,limit:policy.levelRoleRewards,currentTier:policy.tier});
       }
     }
     // Embed Messages: enforce saved-template counts on the server, not only in the UI.
