@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const Database = require('better-sqlite3');
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const subscriptionManager=require('../../../services/subscription.manager.js');
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(process.cwd(), 'data');
 fs.mkdirSync(dataDir, { recursive: true });
 const db = new Database(path.join(dataDir, 'achievements.sqlite'));
@@ -28,8 +29,12 @@ function getStats(guildId,userId){return readStats.get(String(guildId),String(us
 const rowsOf=rows=>(Array.isArray(rows)?rows:[]).map(r=>({threshold:Math.max(1,Number(r.threshold)||1),roleId:String(r.roleId||'')})).filter(r=>r.roleId).sort((a,b)=>a.threshold-b.threshold);
 async function awardMilestones(message,stats,config){
  if(config.enabled===false||!message.member)return;
+ const policy=subscriptionManager.getGuildPlanPolicy(message.guild.id);
  const botMember=message.guild.members.me;
- for(const item of [{total:stats.message_count,rows:rowsOf(config.messages),metric:'messages'},{total:stats.emoji_count,rows:rowsOf(config.emojis),metric:'emojis used'}]){
+ for(const item of [
+  {total:stats.message_count,rows:rowsOf(config.messages).slice(0,policy.achievementsMessages),metric:'messages'},
+  {total:stats.emoji_count,rows:rowsOf(config.emojis).slice(0,policy.achievementsEmoji),metric:'emojis used'}
+ ]){
   for(const reward of item.rows){
    if(item.total<reward.threshold||message.member.roles.cache.has(reward.roleId))continue;
    const role=message.guild.roles.cache.get(reward.roleId)||await message.guild.roles.fetch(reward.roleId).catch(()=>null);
@@ -38,7 +43,8 @@ async function awardMilestones(message,stats,config){
    try{
     await message.member.roles.add(role,'Achievement milestone reached: '+item.metric+' '+reward.threshold);
     if(config.announce!==false){
-     const channelId=config.announcementChannelId||message.channelId,channel=message.guild.channels.cache.get(channelId);
+     const channelId=policy.achievementAnnouncements?(config.announcementChannelId||message.channelId):message.channelId;
+     const channel=message.guild.channels.cache.get(channelId);
      if(channel?.isTextBased()&&channel.send)await channel.send({embeds:[new EmbedBuilder().setColor(0x1595a3).setTitle('🏅 Achievement unlocked!').setDescription(message.author.toString()+' earned '+role.toString()+' for reaching **'+reward.threshold+' '+item.metric+'**.').setTimestamp()]}).catch(e=>console.warn('[ACHIEVEMENTS] Announcement failed:',e.message));
     }
    }catch(e){console.warn('[ACHIEVEMENTS] Role assignment failed:',role.id,e.message);}
