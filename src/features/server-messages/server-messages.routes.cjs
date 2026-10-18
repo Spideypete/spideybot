@@ -12,13 +12,36 @@ function createServerMessagesRoutes(configPath) {
     next()
   }
 
-  function requireGuildAccess(req, res, next) {
-    const guildId = req.params.guildId
-    const hasAccess = req.session?.guilds?.some((g) => g.id === guildId)
-    if (!hasAccess) {
-      return res.status(403).json({ error: "You don't have admin permissions in this server" })
+  async function requireGuildAccess(req, res, next) {
+    const guildId = String(req.params.guildId || '');
+    const hasAccess = () => Array.isArray(req.session?.guilds) &&
+      req.session.guilds.some((g) => String(g.id) === guildId);
+
+    // OAuth guild permissions can be stale in an existing dashboard session.
+    // Refresh from Discord before denying a legitimate administrator.
+    if (!hasAccess() && req.session?.accessToken) {
+      try {
+        const axios = require('axios');
+        const response = await axios.get('https://discord.com/api/users/@me/guilds?with_counts=true', {
+          headers: { Authorization: 'Bearer ' + req.session.accessToken },
+          timeout: 8000
+        });
+        req.session.guilds = (response.data || []).filter((guild) => {
+          try { return (BigInt(guild.permissions || 0) & 8n) === 8n; }
+          catch (_) { return false; }
+        });
+        await new Promise((resolve, reject) => {
+          req.session.save((err) => err ? reject(err) : resolve());
+        });
+      } catch (err) {
+        console.warn('[ServerMessages] Could not refresh Discord administrator guilds:', err.response?.status || err.message);
+      }
     }
-    next()
+
+    if (!hasAccess()) {
+      return res.status(403).json({ error: "You don't have admin permissions in this server" });
+    }
+    next();
   }
 
   router.get('/:guildId', requireAuth, requireGuildAccess, async (req, res) => {
