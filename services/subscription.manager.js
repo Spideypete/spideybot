@@ -235,7 +235,7 @@ function getTierFeatures(tier) {
 function getTierInfo(guildId) {
   const config = loadConfig();
   const guildConfig = config.guilds[guildId] || {};
-  const tier = guildConfig.tier || 'free';
+  const tier = getGuildTier(guildId);
   const tierEndDate = guildConfig.tierEndDate || null;
   const tierDurationMonths = guildConfig.tierDurationMonths || 0;
   
