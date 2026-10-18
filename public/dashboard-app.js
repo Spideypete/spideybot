@@ -809,7 +809,7 @@ if(k==='achievements'){
  if(k==='inviteTracker'){
   const it=c.inviteTracker||{},rewards=Array.isArray(it.rewards)?it.rewards:[];
   const dropdowns=await guildDropdownOptions(id);
-  body.innerHTML=card('Invite Tracker','Track which members invite people, show invite totals and leaderboards, log joins and leaves, and optionally reward invite milestones. Based on the feature set of Invitron.', 
+  body.innerHTML=card('Invite Tracker','Track which members invite people, show invite totals and leaderboards, log joins and leaves, and optionally reward invite milestones.', 
    '<div class="welcome-panel">'+
    '<section class="welcome-message-section"><div class="welcome-section-heading"><div><h3>Tracking settings</h3><p>Invite attribution requires the bot to have permission to view server invites.</p></div></div>'+
    check('itEnabled','Enable invite tracking',it.enabled!==false)+
