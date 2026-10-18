@@ -66,8 +66,8 @@ function isPlanFeatureAllowed(guildId, feature) {
   if (feature === 'welcome' || feature === 'goodbye' || feature === 'moderator' || feature === 'automod' || feature === 'audit' || feature === 'levels' || feature === 'ticketing' || feature === 'casino' || feature === 'lottery' || feature === 'games' || feature === 'system' || feature === 'achievements' || feature === 'reminders' || feature === 'birthdays' || feature === 'economy' || feature === 'customCommands' || feature === 'inviteTracker' || feature === 'giveaways' || feature === 'embeds' || feature === 'socialAlerts') return true;
   if (feature === 'reactionRoles') return true;
   if (feature === 'music') return policy.music;
-  if (feature === 'polls') return policy.polls;
-  if (feature === 'emojis') return policy.emojis;
+  if (feature === 'polls' || feature === 'poll') return policy.polls;
+  if (feature === 'emojis' || feature === 'emoji') return policy.emojis;
   if (feature === 'embedStyling') return policy.embedStyling;
   if (feature === 'reminderBehaviour') return policy.reminderBehaviour;
   if (feature === 'birthdayCustomEvents') return policy.birthdayCustomEvents;
