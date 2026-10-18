@@ -5283,6 +5283,10 @@ app.get("/dashboard", (req, res) => {
 });
 
 app.get("/dashboard/select", (req, res) => {
+  // The profile menu can explicitly request the selector even on the testing host.
+  if (isSpideyTestingHost(req) && req.query.change === "1") {
+    return res.sendFile(path.join(publicDir, 'server-select.html'));
+  }
   // Testing should open the agreed admin server directly, not show the production
   // server-selection page. Prefer TRIPPY WEBS, with a safe live-guild fallback.
   if (isSpideyTestingHost(req)) {
