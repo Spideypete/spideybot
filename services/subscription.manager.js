@@ -32,14 +32,14 @@ const PLAN_POLICY = {
     customCommands: 25, inviteMilestones: 20, embedMessages: 5, socialAccountsPerSection: 10,
     giveawayInviteMessages: 20, polls: true, emojis: true, music: true, embedStyling: true,
     reactionRoleDmConfirmation: false, achievementAnnouncements: true, reminderBehaviour: true,
-    birthdayCustomEvents: true, economyCustomCurrency: true, aiDailyRequests: 50
+    birthdayCustomEvents: true, economyCustomCurrency: true, aiDailyRequests: 200
   },
   pro: {
     reactionRoles: Infinity, reactionsPerMessage: Infinity, achievementsMessages: Infinity, achievementsEmoji: Infinity,
     customCommands: 100, inviteMilestones: 100, embedMessages: 30, socialAccountsPerSection: 20,
     giveawayInviteMessages: 100, polls: true, emojis: true, music: true, embedStyling: true,
     reactionRoleDmConfirmation: false, achievementAnnouncements: true, reminderBehaviour: true,
-    birthdayCustomEvents: true, economyCustomCurrency: true, aiDailyRequests: 50
+    birthdayCustomEvents: true, economyCustomCurrency: true, aiDailyRequests: 1000
   }
 };
 const DEFAULT_FEATURE_TOGGLES = {
