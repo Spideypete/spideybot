@@ -1328,7 +1328,13 @@ async function renderStatistics(id){
   const addButton=document.getElementById('addStatCounter');
   function updateCounterForm(){
     const creating=modeSelect?.value==='create';
-    if(existingField) existingField.hidden=creating;
+    if(existingField){
+      existingField.hidden=false;
+      const existingChannelSelect=document.getElementById('statCounterChannel');
+      if(existingChannelSelect) existingChannelSelect.disabled=creating;
+      existingField.style.opacity=creating?'0.55':'1';
+      existingField.style.transition='opacity 160ms ease';
+    }
     if(createHelp) createHelp.hidden=!creating;
     if(roleField) roleField.hidden=metricSelect?.value!=='roleMembers';
     if(addButton){addButton.textContent=creating?'Create channel and add counter':'Add live counter';addButton.disabled=(!creating&&!channelOptions)||(counterData.counters||[]).length>=Number(counterData.limit||5);}
