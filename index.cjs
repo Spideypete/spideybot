@@ -6536,7 +6536,19 @@ app.get("/api/config/giveaways", (req, res) => {
   });
 });
 
-app.post("/api/config/:guildId", async (req, res) => {
+app.post("/api/config/:guildId", async (req, res, next) => {
+  // Let named config endpoints (for example /api/config/server-messages?guildId=...)
+  // handle their own query-string guildId and authorization. Without this guard,
+  // Express treats "server-messages" as :guildId and returns "No access" here
+  // before the dedicated POST handler registered below can run.
+  const namedConfigRoutes = new Set([
+    'settings', 'subscriptions', 'logging', 'server-guard', 'react-roles',
+    'role-categories', 'server-messages', 'components', 'custom-commands',
+    'recordings', 'reminders', 'leaderboards', 'invite-tracking',
+    'message-counting', 'statistics-channels', 'xp-levels', 'social-notifs'
+  ]);
+  if (namedConfigRoutes.has(String(req.params.guildId || ''))) return next();
+
   const guildId = req.params.guildId;
   const testingGuildAccess = isSpideyTestingHost(req)
     && Boolean(client.guilds.cache.get(String(guildId)));
