@@ -7045,14 +7045,40 @@ const adminConfigs = ['settings', 'subscriptions', 'logging', 'server-guard', 'r
 // A failed session-store write must not turn a successful Discord permission check into a 403.
 async function hasFreshAdminGuildAccess(req, guildId) {
   const targetId = String(guildId || '');
+  const userId = String(req.session?.user?.id || req.session?.user?.userId || '');
   const cachedGuilds = () => Array.isArray(req.session?.guilds) ? req.session.guilds : [];
   const allowed = (guilds) => guilds.some(g => String(g?.id || '') === targetId);
+
+  // First use the live Discord bot guild/member data. This avoids relying on
+  // incomplete OAuth session fields while still checking the actual user's
+  // Administrator permission in the requested server.
+  try {
+    const guild = client.guilds.cache.get(targetId);
+    if (guild && userId) {
+      if (String(guild.ownerId) === userId) return true;
+      let member = guild.members.cache.get(userId);
+      if (!member) member = await guild.members.fetch(userId);
+      if (member?.permissions?.has(PermissionFlagsBits.Administrator)) return true;
+      console.warn('[admin-config] Bot verified user is not a guild administrator', {
+        guildId: targetId, userId
+      });
+      return false;
+    }
+  } catch (err) {
+    console.warn('[admin-config] Could not verify administrator via bot guild member', {
+      guildId: targetId, userId, message: err.message
+    });
+  }
+
+  // OAuth session fallback. Guild ID membership alone is only trusted when it
+  // came from the current administrator-guild list.
   if (allowed(cachedGuilds())) return true;
 
-  if (!req.session?.accessToken) {
-    console.warn('[admin-config] Denied guild access: no cached admin match and no Discord access token', {
+  const accessToken = req.session?.accessToken || req.session?.access_token;
+  if (!accessToken) {
+    console.warn('[admin-config] Denied guild access: no live bot member verification or OAuth access token', {
       guildId: targetId,
-      userId: req.session?.user?.id || null,
+      userId: userId || null,
       cachedGuildIds: cachedGuilds().map(g => String(g?.id || ''))
     });
     return false;
@@ -7060,7 +7086,7 @@ async function hasFreshAdminGuildAccess(req, guildId) {
 
   try {
     const response = await axios.get('https://discord.com/api/users/@me/guilds?with_counts=true', {
-      headers: { Authorization: 'Bearer ' + req.session.accessToken },
+      headers: { Authorization: 'Bearer ' + accessToken },
       timeout: 12000
     });
     const adminGuilds = (response.data || []).filter(guild => {
@@ -7068,28 +7094,19 @@ async function hasFreshAdminGuildAccess(req, guildId) {
       catch (_) { return false; }
     });
     req.session.guilds = adminGuilds;
-
     const hasAccess = allowed(adminGuilds);
     console.info('[admin-config] Refreshed Discord administrator permissions', {
-      guildId: targetId,
-      userId: req.session?.user?.id || null,
-      adminGuildCount: adminGuilds.length,
-      hasAccess
+      guildId: targetId, userId: userId || null,
+      adminGuildCount: adminGuilds.length, hasAccess
     });
-
-    // Session persistence is best-effort here; authorization is based on Discord's
-    // successful live response, not on whether the session store write completes.
     req.session.save(err => {
       if (err) console.warn('[admin-config] Could not persist refreshed guild permissions:', err.message);
     });
     return hasAccess;
   } catch (err) {
     console.warn('[admin-config] Discord guild permission refresh failed', {
-      guildId: targetId,
-      userId: req.session?.user?.id || null,
-      status: err.response?.status || null,
-      message: err.message,
-      cachedGuildIds: cachedGuilds().map(g => String(g?.id || ''))
+      guildId: targetId, userId: userId || null,
+      status: err.response?.status || null, message: err.message
     });
     return false;
   }
