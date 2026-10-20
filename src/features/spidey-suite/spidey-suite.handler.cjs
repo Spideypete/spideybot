@@ -1310,33 +1310,14 @@ function registerSpideyHandlers(client){
   client.on('guildUpdate',(oldGuild,newGuild)=>{if(oldGuild.name!==newGuild.name||oldGuild.icon!==newGuild.icon)writeAuditEvent(newGuild,{type:'guild',title:'Server updated',description:'Server settings or identity changed: '+oldGuild.name+' → '+newGuild.name+'.',target:newGuild.name,color:0xe67e22},'guild');});
 
   client.on('guildMemberAdd',async member=>{
+    // Welcome delivery is owned by server-messages.handler.cjs. Keep autorole
+    // here, but do not send a second welcome from the command-suite listener.
     const c=svc.get(member.guild.id);
     if(!featureIsOn(c,'welcome'))return;
     if(c.autorole.enabled&&c.autorole.roleId){
       try{const role=member.guild.roles.cache.get(c.autorole.roleId)||await member.guild.roles.fetch(c.autorole.roleId).catch(()=>null);if(role&&!member.roles.cache.has(role.id))await member.roles.add(role,'Configured automatic welcome role');}
       catch(e){console.error('[spidey AUTOROLE]',e.message);}
     }
-    try{
-      const cfg=await serverMessages.getConfig(member.guild.id);
-      if(!cfg.enableWelcome||!cfg.welcomeChannel)return;
-      const channel=member.guild.channels.cache.get(cfg.welcomeChannel)||await member.guild.channels.fetch(cfg.welcomeChannel).catch(()=>null);
-      if(!channel?.send)return;
-      const payload={},message=serverMessages.replaceVariables(cfg.welcomeMessage,member,member.guild),embed=serverMessages.buildEmbed(cfg.welcomeEmbed,member,member.guild);
-      if(message)payload.content=message;if(embed)payload.embeds=[embed];
-      if(Object.keys(payload).length)await channel.send(payload);
-    }catch(e){console.error('[spidey WELCOME]',e.message);}
-  });
-  client.on('guildMemberRemove',async member=>{
-    try{
-      const c=svc.get(member.guild.id);if(!featureIsOn(c,'welcome'))return;
-      const cfg=await serverMessages.getConfig(member.guild.id);
-      if(!cfg.enableGoodbye||!cfg.goodbyeChannel)return;
-      const channel=member.guild.channels.cache.get(cfg.goodbyeChannel)||await member.guild.channels.fetch(cfg.goodbyeChannel).catch(()=>null);
-      if(!channel?.send)return;
-      const payload={},message=serverMessages.replaceVariables(cfg.goodbyeMessage,member,member.guild),embed=serverMessages.buildEmbed(cfg.goodbyeEmbed,member,member.guild);
-      if(message)payload.content=message;if(embed)payload.embeds=[embed];
-      if(Object.keys(payload).length)await channel.send(payload);
-    }catch(e){console.error('[spidey GOODBYE]',e.message);}
   });
   client.on('messageCreate',async msg=>{
     try{
