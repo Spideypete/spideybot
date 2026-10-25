@@ -37,8 +37,25 @@ if (!fs.existsSync(persistentPath)) {
   console.log('[PERSISTENCE] Seeded persistent config from the bundled config.json.');
 } else {
   // Refuse to continue with corrupt persisted data; do not silently replace it.
-  JSON.parse(fs.readFileSync(persistentPath, 'utf8'));
-  console.log('[PERSISTENCE] Existing persistent config found; keeping saved settings.');
+  const persistentConfig = JSON.parse(fs.readFileSync(persistentPath, 'utf8'));
+  // Reconcile only the owner allowlist from the bundled config; preserve all server settings/data.
+  const bundledConfig = JSON.parse(fs.readFileSync(repoConfigPath, 'utf8'));
+  persistentConfig.creator = persistentConfig.creator || {};
+  const ownerIds = [
+    persistentConfig.creator.ownerId,
+    ...(Array.isArray(persistentConfig.creator.ownerIds) ? persistentConfig.creator.ownerIds : []),
+    bundledConfig.creator?.ownerId,
+    ...(Array.isArray(bundledConfig.creator?.ownerIds) ? bundledConfig.creator.ownerIds : [])
+  ].map(id => String(id || '').trim()).filter(Boolean);
+  const uniqueOwnerIds = [...new Set(ownerIds)];
+  const currentOwnerIds = Array.isArray(persistentConfig.creator.ownerIds) ? persistentConfig.creator.ownerIds.map(String) : [];
+  if (JSON.stringify(currentOwnerIds) !== JSON.stringify(uniqueOwnerIds)) {
+    persistentConfig.creator.ownerIds = uniqueOwnerIds;
+    fs.writeFileSync(persistentPath, JSON.stringify(persistentConfig, null, 2), { encoding: 'utf8', mode: 0o600 });
+    console.log('[PERSISTENCE] Reconciled configured owner allowlist; other saved settings preserved.');
+  } else {
+    console.log('[PERSISTENCE] Existing persistent config found; keeping saved settings.');
+  }
 }
 
 try {
