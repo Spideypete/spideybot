@@ -1148,7 +1148,7 @@ client.on('interactionCreate', async interaction => {
             const status = modelError.response?.status;
             const apiMessage = modelError.response?.data?.error?.message;
             console.error('[Gemini AI] Model failed:', model.name, status || modelError.message, apiMessage ? String(apiMessage).slice(0, 250) : '');
-            if (![400, 404, 429].includes(status)) throw modelError;
+            if (![400, 404, 429, 500, 502, 503, 504].includes(status)) throw modelError;
           }
         }
         if (!response) throw lastModelError || new Error('No Gemini model could generate a response');
