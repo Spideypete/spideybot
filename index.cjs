@@ -692,6 +692,18 @@ function loadConfig() {
   return { guilds: {} };
 }
 
+// Owner allowlist supports the legacy single ownerId plus multiple configured owners.
+function isConfiguredOwner(userId, config = loadConfig()) {
+  if (!userId) return false;
+  const configuredIds = [
+    config.creator?.ownerId,
+    ...(Array.isArray(config.creator?.ownerIds) ? config.creator.ownerIds : []),
+    process.env.BOT_OWNER_ID,
+    ...(process.env.BOT_OWNER_IDS || "").split(",")
+  ].map(id => String(id || "").trim()).filter(Boolean);
+  return configuredIds.includes(String(userId));
+}
+
 function saveConfig(config) {
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
 }
@@ -5367,13 +5379,13 @@ app.get("/dashboard/server/:guildId", (req, res) => {
 app.get("/owner-dash", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   const config = loadConfig();
-  if (!isTestingOwnerSession(req) && (!config.creator?.ownerId || req.session.user?.id !== config.creator.ownerId)) return res.status(403).send('Owner access only.');
+  if (!isTestingOwnerSession(req) && !isConfiguredOwner(req.session.user?.id, config)) return res.status(403).send('Owner access only.');
   return res.sendFile(path.join(publicDir, 'owner-console.html'));
 });
 app.get("/owner-console", (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   const config = loadConfig();
-  if (!config.creator?.ownerId || req.session.user?.id !== config.creator.ownerId) return res.status(403).send('Owner access only.');
+  if (!isConfiguredOwner(req.session.user?.id, config)) return res.status(403).send('Owner access only.');
   return res.sendFile(path.join(publicDir, 'owner-console.html'));
 });
 
@@ -5749,9 +5761,9 @@ app.get("/api/user", (req, res) => {
 
   const config = loadConfig();
   // Allow override via env var for easy deployment
-  const botOwnerId = process.env.BOT_OWNER_ID || config.creator?.ownerId || '';
-  console.log(`[Owner Check] Config loaded, ownerId from env: "${process.env.BOT_OWNER_ID}", from config: "${config.creator?.ownerId}", final: "${botOwnerId}"`);
-  const isOwner = user.id === botOwnerId && botOwnerId !== '';
+  const botOwnerId = config.creator?.ownerId || '';
+  const isOwner = isConfiguredOwner(user.id, config);
+  console.log(`[Owner Check] Configured owner IDs checked; user: "${user.id}", isOwner: ${isOwner}`);
   console.log(`[Owner Check] User: ${user.id}, IsOwner: ${isOwner}`);
 
   res.json({
@@ -5809,7 +5821,7 @@ app.get('/api/owner/stats', (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: 'Not authenticated' });
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
-  if (!isTestingOwnerSession(req) && (!botOwnerId || req.session.user?.id !== botOwnerId)) return res.status(403).json({ error: 'Access denied' });
+  if (!isTestingOwnerSession(req) && !isConfiguredOwner(req.session.user?.id, config)) return res.status(403).json({ error: 'Access denied' });
 
   const now = Date.now();
   const monthMs = 30 * 24 * 60 * 60 * 1000;
@@ -5862,7 +5874,7 @@ app.post('/api/owner/force-refresh', async (req, res) => {
   const config = loadConfig();
   const botOwnerId = config.creator?.ownerId || '';
   const userId = req.session.user?.id;
-  if (!isTestingOwnerSession(req) && (userId !== botOwnerId || !botOwnerId)) {
+  if (!isTestingOwnerSession(req) && !isConfiguredOwner(userId, config)) {
     return res.status(403).json({ error: 'Access denied' });
   }
 
@@ -5892,7 +5904,7 @@ app.post('/api/owner/tier', (req, res) => {
   const botOwnerId = config.creator?.ownerId || '';
   // Match the same testing-host-only owner access used by the Owner Console and stats API.
   // This exception cannot pass on the production hostname.
-  if (!isTestingOwnerSession(req) && (!botOwnerId || req.session.user?.id !== botOwnerId)) {
+  if (!isTestingOwnerSession(req) && !isConfiguredOwner(req.session.user?.id, config)) {
     return res.status(403).json({ error: 'Access denied' });
   }
 
@@ -5953,9 +5965,9 @@ app.get('/api/owner/feature-toggles', (req, res) => {
   const botOwnerId = config.creator?.ownerId || '';
   const userId = req.session.user?.id;
   
-  console.log('[Feature Toggles] Bot Owner:', botOwnerId, 'Session User:', userId);
+  console.log('[Feature Toggles] Owner allowlist checked; session user:', userId);
   
-  if (userId !== botOwnerId) {
+  if (!isConfiguredOwner(userId, config)) {
     return res.status(403).json({ error: 'Access denied' });
   }
   
@@ -5971,7 +5983,7 @@ app.post('/api/owner/feature-toggles', (req, res) => {
   const botOwnerId = config.creator?.ownerId || '';
   const userId = req.session.user?.id;
   
-  if (userId !== botOwnerId) {
+  if (!isConfiguredOwner(userId, config)) {
     return res.status(403).json({ error: 'Access denied' });
   }
   
