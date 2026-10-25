@@ -1062,7 +1062,7 @@ client.on('interactionCreate', async interaction => {
           !/(tts|audio|image|embedding|robotics|live|aqa|veo)/i.test(String(model.name || ''))
         );
         const candidates = textModels.length ? textModels : availableModels;
-        const preferredNames = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
+        const preferredNames = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-3-flash', 'gemini-2.0-flash'];
         candidates.sort((a, b) => {
           const score = name => {
             const simple = String(name || '').replace(/^models\//, '').toLowerCase();
@@ -1096,7 +1096,7 @@ client.on('interactionCreate', async interaction => {
             response = await axios.post(
               `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent`,
               requestBody,
-              { headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' }, timeout: 25000 }
+              { headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' }, timeout: 15000 }
             );
             console.log('[Gemini AI] Model succeeded:', modelName);
             break;
@@ -1105,7 +1105,10 @@ client.on('interactionCreate', async interaction => {
             const status = modelError.response?.status;
             const apiMessage = modelError.response?.data?.error?.message;
             console.error('[Gemini AI] Model failed:', model.name, status || modelError.message, apiMessage ? String(apiMessage).slice(0, 250) : '');
-            if (![400, 404, 429].includes(status)) throw modelError;
+            // Retry another advertised model on transient provider/network failures, including timeouts.
+            // Keep the per-model timeout bounded so /ask can fall back promptly.
+            const retryable = !status || [400, 404, 408, 429, 500, 502, 503, 504].includes(status);
+            if (!retryable) throw modelError;
           }
         }
         if (!response) throw lastModelError || new Error('No Gemini model could generate a response');
