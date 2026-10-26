@@ -773,7 +773,7 @@ async function renderPanel(id,f,c){
    '<label class="field">Unverified role (optional)<select id="verificationUnverifiedRole"><option value="">No unverified role</option>'+roles.filter(r=>!r.managed).map(r=>'<option value="'+esc(r.id)+'" '+(String(modCfg.verification?.unverifiedRoleId||'')===String(r.id)?'selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select></label>'+
    '<label class="field">Verification message<textarea id="verificationMessage" rows="4" maxlength="1800" placeholder="Please read our rules, then click Verify below to unlock the server.">'+esc(modCfg.verification?.message||'Welcome! Please read the server rules, then click Verify below to unlock the rest of the server.')+'</textarea></label>'+
    '<label class="field">Button label<input id="verificationButtonLabel" maxlength="80" value="'+esc(modCfg.verification?.buttonLabel||'Verify')+'" placeholder="Verify"></label>'+
-   '<p class="mention-help">The bot needs Manage Roles and Send Messages in the verification channel, and its role must be above both verification roles. The Verify button should only be used after the verification button handler is enabled.</p></section>'+
+   '<p class="mention-help">When you save with verification enabled, SPIDEY BOT will post or update the verification message in the selected channel. It needs View Channel, Send Messages, Embed Links and Manage Roles, and its bot role must be above both verification roles. Set Discord channel permissions so unverified members can only see the rules and verification channels.</p></section>'+
    '<section class="welcome-message-section"><h3>Strike punishment ladder</h3><p class="mention-help">Configure escalation thresholds. Vortex supports None, Mute, Kick, Softban and Ban; timed mute/ban actions can have a duration.</p>'+
    [1,2,3,4,5].map(n=>'<div class="mod-punishment-row"><strong>'+n+' '+(n===1?'strike':'strikes')+'</strong><select id="punishmentAction'+n+'">'+['none','mute','kick','softban','ban'].map(v=>'<option value="'+v+'">'+v.charAt(0).toUpperCase()+v.slice(1)+'</option>').join('')+'</select><input id="punishmentTime'+n+'" placeholder="Duration (optional, e.g. 10m)"></div>').join('')+
    '</section><div class="panel-actions"><button class="select" id="saveModerationSettings" type="button">Save moderation settings</button></div></div>');
@@ -812,9 +812,24 @@ async function renderPanel(id,f,c){
    const verification={...(modCfg.verification||{}),enabled:yes('verificationEnabled'),channelId:val('verificationChannel')||null,verifiedRoleId:val('verificationVerifiedRole')||null,roleId:val('verificationVerifiedRole')||null,unverifiedRoleId:val('verificationUnverifiedRole')||null,message:val('verificationMessage').trim().slice(0,1800)||'Welcome! Please read the server rules, then click Verify below to unlock the rest of the server.',buttonLabel:val('verificationButtonLabel').trim().slice(0,80)||'Verify'};
    if(verification.enabled&&(!verification.channelId||!verification.verifiedRoleId)){alert('Choose a verification channel and a verified role before enabling verification.');return;}
    if(verification.unverifiedRoleId&&verification.unverifiedRoleId===verification.verifiedRoleId){alert('The verified and unverified roles must be different.');return;}
-   const result=await api('/api/config/'+encodeURIComponent(id),{method:'POST',body:JSON.stringify({modRoleIds:chosenRoles,modRoleId:chosenRoles[0]||null,modLogChannelId:moderationChannel,messageLogChannelId:messageChannel,serverLogChannelId:serverChannel,strikePunishments:punishments,punishments,logging,verification})});
-   if(result.success!==true)throw new Error(result.error||'Could not save moderation settings');
-   alert('Moderation settings saved.');
+   const saveButton=document.getElementById('saveModerationSettings');
+   saveButton.disabled=true;saveButton.textContent='Saving…';
+   try{
+    const result=await api('/api/config/'+encodeURIComponent(id),{method:'POST',body:JSON.stringify({modRoleIds:chosenRoles,modRoleId:chosenRoles[0]||null,modLogChannelId:moderationChannel,messageLogChannelId:messageChannel,serverLogChannelId:serverChannel,strikePunishments:punishments,punishments,logging,verification})});
+    if(result.success!==true)throw new Error(result.error||'Could not save moderation settings');
+    if(verification.enabled){
+     saveButton.textContent='Publishing verification…';
+     const published=await api('/api/verification/'+encodeURIComponent(id)+'/post',{method:'POST',body:JSON.stringify({})});
+     if(published.success!==true)throw new Error(published.error||'Settings saved, but the verification message could not be published');
+     alert('Moderation settings saved and verification message '+(published.updated?'updated':'posted')+' in Discord.');
+    }else{
+     alert('Moderation settings saved. Member verification is disabled, so no verification message was posted.');
+    }
+   }catch(error){
+    alert((verification.enabled?'Settings may be saved, but verification could not be published: ':'Could not save moderation settings: ')+(error.message||String(error)));
+   }finally{
+    saveButton.disabled=false;saveButton.textContent='Save moderation settings';
+   }
   };
   return;
  }
