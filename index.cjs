@@ -1380,11 +1380,7 @@ client.on("guildMemberAdd", async member => {
     if (!member.roles.cache.has(role.id)) {
       await member.roles.add(role, 'Account age below the server verification minimum');
       console.log('[ACCOUNT AGE] Quarantined member', member.id, 'account age', ageDays.toFixed(1), 'days; minimum', minimumDays, 'days. No kick, ban, or mute performed.');
-      const logChannelId = String(cfg.modLogChannelId || cfg.logging?.moderationLogging?.modLogChannel || '');
-      const logChannel = logChannelId ? (member.guild.channels.cache.get(logChannelId) || await member.guild.channels.fetch(logChannelId).catch(() => null)) : null;
-      if (logChannel?.isTextBased?.() && typeof logChannel.send === 'function') {
-        await logChannel.send({ content: '🔒 **Account-age quarantine**: <@' + member.id + '> was assigned <@&' + role.id + '> because their Discord account is ' + ageDays.toFixed(1) + ' days old; minimum required age is ' + minimumDays + ' days. No kick, ban, or mute was performed.' }).catch(() => {});
-      }
+      await sendVerificationLog(member.guild, cfg, 'Account-age quarantine applied', 'Member: <@' + member.id + '> (' + member.id + ')\nAccount age: ' + ageDays.toFixed(2) + ' days\nMinimum required: ' + minimumDays + ' days\nAssigned role: <@&' + role.id + '>\nAction: quarantined. No kick, ban, or mute.', 0xe67e22);
     }
   } catch (error) {
     console.error('[ACCOUNT AGE] Join screening failed:', error.message || error);
