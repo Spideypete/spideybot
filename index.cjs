@@ -1068,6 +1068,30 @@ client.on('interactionCreate', async interaction => {
 });
 
 
+/* Send verification/account-age events to the server's dedicated log channel. */
+async function sendVerificationLog(guild, cfg, title, description, color = 0x6d3df5) {
+  try {
+    const channelId = String(cfg?.verification?.logChannelId || '');
+    if (!channelId || !guild) return false;
+    const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+    if (!channel?.isTextBased?.() || typeof channel.send !== 'function') {
+      console.warn('[VERIFICATION LOG] Configured log channel is unavailable in guild', guild.id);
+      return false;
+    }
+    const embed = new EmbedBuilder()
+      .setColor(color)
+      .setTitle(String(title || 'Verification event').slice(0, 256))
+      .setDescription(String(description || 'No details provided').slice(0, 4000))
+      .addFields({ name: 'Server', value: guild.name.slice(0, 1024), inline: true })
+      .setTimestamp();
+    await channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
+    return true;
+  } catch (error) {
+    console.error('[VERIFICATION LOG] Could not send event:', error.message || error);
+    return false;
+  }
+}
+
 /* SPIDEY BOT member verification: publish button actions and role assignment. */
 client.on('interactionCreate', async interaction => {
   if (!interaction.isButton?.() || !String(interaction.customId || '').startsWith('spidey_verify:')) return;
@@ -1080,11 +1104,13 @@ client.on('interactionCreate', async interaction => {
     const cfg = getGuildConfig(guild.id);
     const verification = cfg.verification || {};
     if (verification.enabled !== true) {
+      await sendVerificationLog(guild, cfg, 'Verification failed — disabled', 'Member: <@' + interaction.user.id + '> (' + interaction.user.id + ') attempted verification while verification was disabled.', 0xe74c3c);
       await interaction.reply({ content: 'Verification is currently disabled for this server. Please contact a moderator.', ephemeral: true });
       return;
     }
     const verifiedRoleId = String(verification.verifiedRoleId || verification.roleId || '');
     if (!verifiedRoleId) {
+      await sendVerificationLog(guild, cfg, 'Verification failed — configuration', 'Member: <@' + interaction.user.id + '> (' + interaction.user.id + '). No verified role is configured.', 0xe74c3c);
       await interaction.reply({ content: 'Verification is not configured correctly. Please contact a server administrator.', ephemeral: true });
       return;
     }
@@ -1094,6 +1120,7 @@ client.on('interactionCreate', async interaction => {
     if (minimumAccountAgeDays > 0 && accountAgeDays < minimumAccountAgeDays) {
       const quarantineRoleId = String(verification.quarantineRoleId || '');
       if (!quarantineRoleId) {
+        await sendVerificationLog(guild, cfg, 'Account age issue — quarantine role missing', 'Member: <@' + member.id + '> (' + member.id + ')\nAccount age: ' + accountAgeDays.toFixed(2) + ' days\nMinimum required: ' + minimumAccountAgeDays + ' days\nThe member was blocked from verification, but no quarantine role is configured.', 0xe67e22);
         await interaction.reply({ content: 'Your Discord account is too new to verify here. Please contact a moderator. The server has not configured its quarantine role correctly.', ephemeral: true });
         return;
       }
@@ -1102,6 +1129,7 @@ client.on('interactionCreate', async interaction => {
       if (!quarantineRole || quarantineRole.managed || quarantineRole.id === guild.id ||
           !botMember.permissions.has(PermissionFlagsBits.ManageRoles) ||
           botMember.roles.highest.comparePositionTo(quarantineRole) <= 0) {
+        await sendVerificationLog(guild, cfg, 'Account age issue — quarantine assignment failed', 'Member: <@' + member.id + '> (' + member.id + ')\nAccount age: ' + accountAgeDays.toFixed(2) + ' days\nMinimum required: ' + minimumAccountAgeDays + ' days\nQuarantine role: <@&' + quarantineRoleId + '>\nSPIDEY BOT could not assign the role; check Manage Roles and role hierarchy.', 0xe74c3c);
         await interaction.reply({ content: 'Your account is too new to verify, but SPIDEY BOT cannot assign the configured quarantine role. Please contact a moderator.', ephemeral: true });
         return;
       }
@@ -1113,26 +1141,31 @@ client.on('interactionCreate', async interaction => {
           await logChannel.send({ content: '🔒 **Account-age quarantine**: <@' + member.id + '> was assigned <@&' + quarantineRole.id + '> because their Discord account is ' + accountAgeDays.toFixed(1) + ' days old; minimum required age is ' + minimumAccountAgeDays + ' days. No kick, ban, or mute was performed.' }).catch(() => {});
         }
       }
+      await sendVerificationLog(guild, cfg, 'Verification blocked — account too young', 'Member: <@' + member.id + '> (' + member.id + ')\nAccount age: ' + accountAgeDays.toFixed(2) + ' days\nMinimum required: ' + minimumAccountAgeDays + ' days\nQuarantine role: <@&' + quarantineRoleId + '>\nAction: verification denied. No kick, ban, or mute.', 0xe67e22);
       await interaction.reply({ content: '🔒 Your Discord account is ' + accountAgeDays.toFixed(1) + ' days old. This server requires accounts to be at least ' + minimumAccountAgeDays + ' days old before verification. You have been placed in quarantine until a moderator reviews your account.', ephemeral: true });
       return;
     }
     const verifiedRole = await guild.roles.fetch(verifiedRoleId).catch(() => null);
     if (!verifiedRole || verifiedRole.managed || verifiedRole.id === guild.id) {
+      await sendVerificationLog(guild, cfg, 'Verification failed — verified role unavailable', 'Member: <@' + member.id + '> (' + member.id + '). The configured verified role is missing or cannot be assigned.', 0xe74c3c);
       await interaction.reply({ content: 'The configured verified role is unavailable. Please contact a server administrator.', ephemeral: true });
       return;
     }
     const botMember = guild.members.me || await guild.members.fetchMe();
     if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles) || botMember.roles.highest.comparePositionTo(verifiedRole) <= 0) {
+      await sendVerificationLog(guild, cfg, 'Verification failed — role permissions', 'Member: <@' + member.id + '> (' + member.id + '). SPIDEY BOT could not assign the verified role because Manage Roles or role hierarchy is insufficient.', 0xe74c3c);
       await interaction.reply({ content: 'I cannot assign the verified role. An administrator must give me Manage Roles and move my bot role above the verified role.', ephemeral: true });
       return;
     }
     if (member.roles.cache.has(verifiedRole.id)) {
+      await sendVerificationLog(guild, cfg, 'Verification button used — already verified', 'Member: <@' + member.id + '> (' + member.id + ') pressed Verify but already has <@&' + verifiedRole.id + '>.', 0x3498db);
       await interaction.reply({ content: 'You are already verified. You can access the server.', ephemeral: true });
       return;
     }
     const unverifiedRoleId = String(verification.unverifiedRoleId || '');
     const unverifiedRole = unverifiedRoleId ? await guild.roles.fetch(unverifiedRoleId).catch(() => null) : null;
     if (unverifiedRole && (unverifiedRole.managed || unverifiedRole.id === guild.id || botMember.roles.highest.comparePositionTo(unverifiedRole) <= 0)) {
+      await sendVerificationLog(guild, cfg, 'Verification failed — unverified role permissions', 'Member: <@' + member.id + '> (' + member.id + '). SPIDEY BOT could not remove the configured unverified role.', 0xe74c3c);
       await interaction.reply({ content: 'I cannot remove the configured unverified role. Please ask a server administrator to check my role permissions and hierarchy.', ephemeral: true });
       return;
     }
@@ -1140,9 +1173,11 @@ client.on('interactionCreate', async interaction => {
     if (unverifiedRole && member.roles.cache.has(unverifiedRole.id)) {
       await member.roles.remove(unverifiedRole, 'Member completed server verification');
     }
+    await sendVerificationLog(guild, cfg, 'Member verified successfully', 'Member: <@' + member.id + '> (' + member.id + ')\nAssigned role: <@&' + verifiedRole.id + '>' + (unverifiedRole && member.roles.cache.has(unverifiedRole.id) ? '\nRemoved unverified role: <@&' + unverifiedRole.id + '>' : '') + '\nAction: verification completed successfully.', 0x2ecc71);
     await interaction.reply({ content: '✅ You are verified! Welcome to the server.', ephemeral: true });
   } catch (error) {
     console.error('[VERIFICATION] Button action failed:', error);
+    if (interaction.guild) await sendVerificationLog(interaction.guild, getGuildConfig(interaction.guild.id), 'Verification failed — unexpected error', 'Member: <@' + interaction.user.id + '> (' + interaction.user.id + ')\nError: ' + String(error?.message || error).slice(0, 1200), 0xe74c3c);
     const reply = { content: 'Verification could not be completed. Please contact a moderator.', ephemeral: true };
     if (interaction.deferred || interaction.replied) await interaction.followUp(reply).catch(() => {});
     else await interaction.reply(reply).catch(() => {});
@@ -1339,6 +1374,7 @@ client.on("guildMemberAdd", async member => {
         !botMember.permissions.has(PermissionFlagsBits.ManageRoles) ||
         botMember.roles.highest.comparePositionTo(role) <= 0) {
       console.warn('[ACCOUNT AGE] Cannot quarantine new member', member.id, 'in guild', member.guild.id, '- check role and Manage Roles hierarchy.');
+      await sendVerificationLog(member.guild, cfg, 'Account-age issue — quarantine failed on join', 'Member: <@' + member.id + '> (' + member.id + ')\nAccount age: ' + ageDays.toFixed(2) + ' days\nMinimum required: ' + minimumDays + ' days\nQuarantine role: <@&' + quarantineRoleId + '>\nSPIDEY BOT could not assign quarantine; check Manage Roles and role hierarchy.', 0xe74c3c);
       return;
     }
     if (!member.roles.cache.has(role.id)) {
@@ -1352,6 +1388,8 @@ client.on("guildMemberAdd", async member => {
     }
   } catch (error) {
     console.error('[ACCOUNT AGE] Join screening failed:', error.message || error);
+    const cfg = getGuildConfig(member.guild.id);
+    await sendVerificationLog(member.guild, cfg, 'Account-age screening error', 'Member: <@' + member.id + '> (' + member.id + ')\nError: ' + String(error?.message || error).slice(0, 1200), 0xe74c3c);
   }
 });
 
