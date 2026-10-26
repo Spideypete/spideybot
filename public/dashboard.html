@@ -220,10 +220,11 @@ td,th{border-color:var(--border)}
 
 
 
-/* Message and emoji milestone controls: equal-size buttons on one row. */
-.milestone-threshold-actions{display:flex;align-items:stretch;justify-content:space-between;gap:12px;width:100%;margin-top:12px}
-.milestone-threshold-actions .level-reward-action{flex:1 1 0;width:0;min-width:0;min-height:42px;padding:10px 16px;font-size:13px}
-@media(max-width:520px){.milestone-threshold-actions{gap:8px}.milestone-threshold-actions .level-reward-action{padding:10px 8px}}
+/* Compact Add/Remove controls for message and emoji milestones. */
+.milestone-threshold-actions{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;margin-top:8px}
+.milestone-threshold-actions .level-reward-action{flex:0 0 auto;width:auto;min-width:0;min-height:30px;padding:5px 10px;font-size:11px;line-height:1.2;border-radius:8px}
+.milestone-threshold-actions .level-reward-action span{font-size:12px;line-height:1}
+@media(max-width:520px){.milestone-threshold-actions{gap:6px}.milestone-threshold-actions .level-reward-action{padding:5px 8px;font-size:11px}}
 
 
 /* Compact, aligned invite reward controls. */
