@@ -39,13 +39,11 @@ test('all requested slash command definitions serialize within Discord command l
   }
 });
 
-test('all deployments clear shared globals and register commands only per guild', () => {
-  assert.ok(indexSource.includes('rest.put(Routes.applicationCommands(client.user.id), { body: [] })'),
-    'startup must clear legacy global commands');
+test('built-in slash commands are registered globally and per guild', () => {
+  assert.ok(indexSource.includes('rest.put(Routes.applicationCommands(client.user.id), { body: commands })'),
+    'startup must publish global slash commands so Discord can detect slash-command support');
   assert.ok(indexSource.includes('rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands })'),
-    'startup must register commands per guild');
-  assert.ok(!indexSource.includes('rest.put(Routes.applicationCommands(client.user.id), { body: commands })'),
-    'no deployment may publish the command list globally');
-  assert.equal(indexSource.split('Routes.applicationCommands(client.user.id)').length - 1, 1,
-    'the global command route should only be used to clear legacy commands');
+    'startup must retain guild-scoped commands for fast updates');
+  assert.ok(indexSource.includes('Routes.applicationCommands(client.user.id)'),
+    'global command registration route must be present');
 });
