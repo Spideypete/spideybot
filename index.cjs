@@ -1009,6 +1009,7 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.DirectMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildVoiceStates,
@@ -7482,7 +7483,8 @@ app.post('/api/verification/:guildId/post', async (req, res) => {
     return res.status(403).json({ success: false, error: 'Give me Manage Roles and move my bot role above the verified role' });
   }
   const messageText = String(verification.message || 'Welcome! Please read the server rules, then click Verify below to unlock the rest of the server.').slice(0, 1800);
-  const buttonLabel = String(verification.buttonLabel || 'Verify').trim().slice(0, 80) || 'Verify';
+  const configuredButtonLabel = String(verification.buttonLabel || 'Verify').trim().slice(0, 80) || 'Verify';
+  const buttonLabel = verification.method === 'dm_text' || verification.method === 'dm_image' ? 'Start verification in DM' : configuredButtonLabel;
   const embed = new EmbedBuilder()
     .setColor(0x6d3df5)
     .setTitle('Server Verification')
