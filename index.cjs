@@ -1092,6 +1092,141 @@ async function sendVerificationLog(guild, cfg, title, description, color = 0x6d3
   }
 }
 
+/* Discord-native DM verification challenges. No external page or browser widget is used. */
+const pendingDmVerification = new Map();
+
+function makeDmImageChallenge() {
+  const targetIndices = new Set();
+  while (targetIndices.size < 3) targetIndices.add(crypto.randomInt(0, 9));
+  const distractors = ['🚗', '🚌', '🚲', '🚕', '🚙', '🚐'];
+  const tiles = Array.from({ length: 9 }, (_, i) => targetIndices.has(i) ? '🚦' : distractors[crypto.randomInt(0, distractors.length)]);
+  return { targetIndices: [...targetIndices], tiles };
+}
+
+async function completeDmVerification(guildId, userId, methodLabel) {
+  const guild = client.guilds.cache.get(String(guildId));
+  if (!guild) throw new Error('The original server is no longer available.');
+  const cfg = getGuildConfig(guild.id);
+  const verification = cfg.verification || {};
+  if (verification.enabled !== true) throw new Error('Verification is disabled for this server.');
+  const member = await guild.members.fetch(String(userId)).catch(() => null);
+  if (!member) throw new Error('You are no longer a member of the server.');
+  const minimumDays = Math.max(0, Math.min(3650, Number(verification.minimumAccountAgeDays) || 0));
+  const ageDays = Math.max(0, (Date.now() - member.user.createdTimestamp) / 86400000);
+  if (minimumDays > 0 && ageDays < minimumDays) {
+    await sendVerificationLog(guild, cfg, 'DM verification blocked — account too young', 'Member: <@' + userId + '> (' + userId + ')\nMethod: ' + methodLabel + '\nAccount age: ' + ageDays.toFixed(2) + ' days\nMinimum required: ' + minimumDays + ' days.', 0xe67e22);
+    throw new Error('Your account is younger than this server’s minimum account age. Please contact a moderator.');
+  }
+  const verifiedRoleId = String(verification.verifiedRoleId || verification.roleId || '');
+  const role = verifiedRoleId ? await guild.roles.fetch(verifiedRoleId).catch(() => null) : null;
+  const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
+  if (!role || role.managed || role.id === guild.id || !botMember ||
+      !botMember.permissions.has(PermissionFlagsBits.ManageRoles) ||
+      botMember.roles.highest.comparePositionTo(role) <= 0) {
+    await sendVerificationLog(guild, cfg, 'DM verification failed — role permissions', 'Member: <@' + userId + '> (' + userId + ')\nMethod: ' + methodLabel + '\nVerified role is missing or the bot cannot assign it.', 0xe74c3c);
+    throw new Error('The server’s verified role is unavailable. Please contact a moderator.');
+  }
+  if (member.roles.cache.has(role.id)) {
+    await sendVerificationLog(guild, cfg, 'DM verification attempted — already verified', 'Member: <@' + userId + '> (' + userId + ')\nMethod: ' + methodLabel + '\nMember already has the verified role.', 0x3498db);
+    return { alreadyVerified: true, guild, member };
+  }
+  await member.roles.add(role, 'Completed SPIDEY BOT ' + methodLabel + ' verification');
+  const unverifiedRoleId = String(verification.unverifiedRoleId || '');
+  if (unverifiedRoleId && unverifiedRoleId !== role.id && member.roles.cache.has(unverifiedRoleId)) {
+    const unverifiedRole = await guild.roles.fetch(unverifiedRoleId).catch(() => null);
+    if (unverifiedRole && !unverifiedRole.managed && botMember.roles.highest.comparePositionTo(unverifiedRole) > 0) {
+      await member.roles.remove(unverifiedRole, 'Completed SPIDEY BOT verification').catch(async error => {
+        await sendVerificationLog(guild, cfg, 'DM verification warning — unverified role removal failed', 'Member: <@' + userId + '> (' + userId + ')\nMethod: ' + methodLabel + '\nRole: <@&' + unverifiedRoleId + '>\nError: ' + String(error.message || error).slice(0, 700), 0xe67e22);
+      });
+    }
+  }
+  await sendVerificationLog(guild, cfg, 'DM verification successful', 'Member: <@' + userId + '> (' + userId + ')\nMethod: ' + methodLabel + '\nAssigned verified role: <@&' + role.id + '>.', 0x2ecc71);
+  return { alreadyVerified: false, guild, member };
+}
+
+client.on('messageCreate', async message => {
+  if (!message?.author || message.author.bot || message.guild) return;
+  const pending = [...pendingDmVerification.entries()].find(([, item]) =>
+    item.userId === message.author.id && item.method === 'dm_text');
+  if (!pending) return;
+  const [key, challenge] = pending;
+  if (Date.now() > challenge.expiresAt) {
+    pendingDmVerification.delete(key);
+    const guild = client.guilds.cache.get(challenge.guildId);
+    if (guild) await sendVerificationLog(guild, getGuildConfig(guild.id), 'DM text challenge expired', 'Member: <@' + message.author.id + '> (' + message.author.id + ')\nChallenge expired before a correct answer was received.', 0xe67e22);
+    await message.reply('This verification challenge expired. Please return to the server and press Verify to start again.').catch(() => {});
+    return;
+  }
+  if (String(message.content || '').trim().toUpperCase() !== challenge.answer) {
+    challenge.attempts += 1;
+    const guild = client.guilds.cache.get(challenge.guildId);
+    if (challenge.attempts >= 3) {
+      pendingDmVerification.delete(key);
+      if (guild) await sendVerificationLog(guild, getGuildConfig(guild.id), 'DM text challenge failed', 'Member: <@' + message.author.id + '> (' + message.author.id + ')\nMethod: Type the text\nResult: three incorrect answers; no verified role was granted.', 0xe74c3c);
+      await message.reply('That answer is incorrect. This challenge has ended after 3 attempts. Return to the server and press Verify to try again.').catch(() => {});
+    } else {
+      await message.reply('That answer is not correct. Please try again (' + challenge.attempts + '/3 incorrect attempts).').catch(() => {});
+    }
+    return;
+  }
+  pendingDmVerification.delete(key);
+  try {
+    const result = await completeDmVerification(challenge.guildId, message.author.id, 'Type the text');
+    await message.reply(result.alreadyVerified ? 'You are already verified in **' + result.guild.name + '**.' : '✅ You are verified in **' + result.guild.name + '**.').catch(() => {});
+  } catch (error) {
+    const guild = client.guilds.cache.get(challenge.guildId);
+    if (guild) await sendVerificationLog(guild, getGuildConfig(guild.id), 'DM text verification failed', 'Member: <@' + message.author.id + '> (' + message.author.id + ')\nError: ' + String(error.message || error).slice(0, 900), 0xe74c3c);
+    await message.reply(error.message || 'Verification could not be completed. Please contact a moderator.').catch(() => {});
+  }
+});
+
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isButton?.() || !String(interaction.customId || '').startsWith('spidey_dmverify:')) return;
+  if (interaction.guild || !interaction.user) {
+    await interaction.reply({ content: 'Please use this challenge in the DM sent by SPIDEY BOT.', ephemeral: true }).catch(() => {});
+    return;
+  }
+  const parts = String(interaction.customId).split(':');
+  const nonce = parts[1];
+  const tileIndex = Number(parts[2]);
+  const challenge = pendingDmVerification.get(nonce);
+  if (!challenge || challenge.method !== 'dm_image' || challenge.userId !== interaction.user.id || Date.now() > challenge.expiresAt) {
+    if (challenge) pendingDmVerification.delete(nonce);
+    await interaction.reply({ content: 'This picture challenge has expired. Return to the server and press Verify to start again.', ephemeral: true }).catch(() => {});
+    return;
+  }
+  if (!challenge.targetIndices.includes(tileIndex)) {
+    pendingDmVerification.delete(nonce);
+    await interaction.update({ content: '❌ Incorrect selection. No role was granted. Return to the server and press Verify to try again.', components: [] }).catch(() => {});
+    const guild = client.guilds.cache.get(challenge.guildId);
+    if (guild) await sendVerificationLog(guild, getGuildConfig(guild.id), 'DM image challenge failed', 'Member: <@' + interaction.user.id + '> (' + interaction.user.id + ')\nMethod: Image selection\nResult: incorrect tile selected; no verified role was granted.', 0xe74c3c);
+    return;
+  }
+  challenge.selected.add(tileIndex);
+  if (challenge.selected.size < challenge.targetIndices.length) {
+    const rows = interaction.message.components.map(row => new ActionRowBuilder().addComponents(
+      row.components.map(button => {
+        const b = ButtonBuilder.from(button);
+        const match = String(button.customId || '').match(/^spidey_dmverify:[^:]+:(\d+)$/);
+        if (match && Number(match[1]) === tileIndex) b.setDisabled(true);
+        return b;
+      })
+    ));
+    await interaction.update({ content: 'Select every tile showing a traffic light. Correct tiles selected: ' + challenge.selected.size + '/' + challenge.targetIndices.length, components: rows }).catch(() => {});
+    return;
+  }
+  pendingDmVerification.delete(nonce);
+  await interaction.update({ content: 'Checking your selections…', components: [] }).catch(() => {});
+  try {
+    const result = await completeDmVerification(challenge.guildId, interaction.user.id, 'Image selection');
+    await interaction.message.edit({ content: result.alreadyVerified ? 'You are already verified in **' + result.guild.name + '**.' : '✅ You are verified in **' + result.guild.name + '**.', components: [] }).catch(() => {});
+  } catch (error) {
+    const guild = client.guilds.cache.get(challenge.guildId);
+    if (guild) await sendVerificationLog(guild, getGuildConfig(guild.id), 'DM image verification failed', 'Member: <@' + interaction.user.id + '> (' + interaction.user.id + ')\nError: ' + String(error.message || error).slice(0, 900), 0xe74c3c);
+    await interaction.message.edit({ content: error.message || 'Verification could not be completed. Please contact a moderator.', components: [] }).catch(() => {});
+  }
+});
+
 /* SPIDEY BOT member verification: publish button actions and role assignment. */
 client.on('interactionCreate', async interaction => {
   if (!interaction.isButton?.() || !String(interaction.customId || '').startsWith('spidey_verify:')) return;
@@ -1143,6 +1278,43 @@ client.on('interactionCreate', async interaction => {
       }
       await sendVerificationLog(guild, cfg, 'Verification blocked — account too young', 'Member: <@' + member.id + '> (' + member.id + ')\nAccount age: ' + accountAgeDays.toFixed(2) + ' days\nMinimum required: ' + minimumAccountAgeDays + ' days\nQuarantine role: <@&' + quarantineRoleId + '>\nAction: verification denied. No kick, ban, or mute.', 0xe67e22);
       await interaction.reply({ content: '🔒 Your Discord account is ' + accountAgeDays.toFixed(1) + ' days old. This server requires accounts to be at least ' + minimumAccountAgeDays + ' days old before verification. You have been placed in quarantine until a moderator reviews your account.', ephemeral: true });
+      return;
+    }
+    const verificationMethod = String(verification.method || 'button');
+    if (verificationMethod === 'dm_text' || verificationMethod === 'dm_image') {
+      const challengeKey = guild.id + ':' + interaction.user.id;
+      for (const [key, item] of pendingDmVerification.entries()) {
+        if (item.guildId === guild.id && item.userId === interaction.user.id) pendingDmVerification.delete(key);
+      }
+      try {
+        const dm = await interaction.user.createDM();
+        if (verificationMethod === 'dm_text') {
+          const answer = crypto.randomBytes(3).toString('hex').toUpperCase();
+          pendingDmVerification.set(challengeKey, { guildId: guild.id, userId: interaction.user.id, method: 'dm_text', answer, attempts: 0, expiresAt: Date.now() + 5 * 60 * 1000 });
+          await dm.send({ embeds: [new EmbedBuilder().setColor(0x6d3df5).setTitle('SPIDEY BOT verification').setDescription('Type the code below by replying to this DM.\n\n**' + answer + '**\n\nThis challenge expires in 5 minutes and allows 3 incorrect attempts.').setFooter({ text: guild.name + ' · SPIDEY BOT' })] });
+          await sendVerificationLog(guild, cfg, 'DM text challenge started', 'Member: <@' + interaction.user.id + '> (' + interaction.user.id + ')\nMethod: Type the text\nChallenge expires in 5 minutes.', 0x3498db);
+        } else {
+          const nonce = crypto.randomBytes(6).toString('hex');
+          const puzzle = makeDmImageChallenge();
+          pendingDmVerification.set(nonce, { guildId: guild.id, userId: interaction.user.id, method: 'dm_image', targetIndices: puzzle.targetIndices, selected: new Set(), expiresAt: Date.now() + 5 * 60 * 1000 });
+          const rows = [];
+          for (let start = 0; start < puzzle.tiles.length; start += 5) {
+            const row = new ActionRowBuilder();
+            puzzle.tiles.slice(start, start + 5).forEach((emoji, offset) => {
+              const index = start + offset;
+              row.addComponents(new ButtonBuilder().setCustomId('spidey_dmverify:' + nonce + ':' + index).setEmoji(emoji).setStyle(ButtonStyle.Secondary));
+            });
+            rows.push(row);
+          }
+          await dm.send({ embeds: [new EmbedBuilder().setColor(0x6d3df5).setTitle('SPIDEY BOT picture verification').setDescription('Select **all 3 tiles showing traffic lights (🚦)** using the buttons below. If you select a wrong tile, the challenge fails and no role is granted. This challenge expires in 5 minutes.').setFooter({ text: guild.name + ' · SPIDEY BOT' })], components: rows });
+          await sendVerificationLog(guild, cfg, 'DM image challenge started', 'Member: <@' + interaction.user.id + '> (' + interaction.user.id + ')\nMethod: Image selection\nChallenge expires in 5 minutes.', 0x3498db);
+        }
+        await interaction.reply({ content: 'I sent your verification challenge in a private DM. Complete it there to receive your role.', ephemeral: true });
+      } catch (dmError) {
+        pendingDmVerification.delete(challengeKey);
+        await sendVerificationLog(guild, cfg, 'DM verification failed — could not send challenge', 'Member: <@' + interaction.user.id + '> (' + interaction.user.id + ')\nMethod: ' + verificationMethod + '\nError: ' + String(dmError.message || dmError).slice(0, 900), 0xe74c3c);
+        await interaction.reply({ content: 'I could not DM you. Enable direct messages from server members in your Discord privacy settings, then press Verify again.', ephemeral: true }).catch(() => {});
+      }
       return;
     }
     const verifiedRole = await guild.roles.fetch(verifiedRoleId).catch(() => null);
