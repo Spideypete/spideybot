@@ -1067,6 +1067,61 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+
+/* SPIDEY BOT member verification: publish button actions and role assignment. */
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isButton?.() || !String(interaction.customId || '').startsWith('spidey_verify:')) return;
+  if (!interaction.guild || !interaction.member) {
+    await interaction.reply({ content: 'Verification can only be completed inside a server.', ephemeral: true }).catch(() => {});
+    return;
+  }
+  try {
+    const guild = interaction.guild;
+    const cfg = getGuildConfig(guild.id);
+    const verification = cfg.verification || {};
+    if (verification.enabled !== true) {
+      await interaction.reply({ content: 'Verification is currently disabled for this server. Please contact a moderator.', ephemeral: true });
+      return;
+    }
+    const verifiedRoleId = String(verification.verifiedRoleId || verification.roleId || '');
+    if (!verifiedRoleId) {
+      await interaction.reply({ content: 'Verification is not configured correctly. Please contact a server administrator.', ephemeral: true });
+      return;
+    }
+    const member = await guild.members.fetch(interaction.user.id);
+    const verifiedRole = await guild.roles.fetch(verifiedRoleId).catch(() => null);
+    if (!verifiedRole || verifiedRole.managed || verifiedRole.id === guild.id) {
+      await interaction.reply({ content: 'The configured verified role is unavailable. Please contact a server administrator.', ephemeral: true });
+      return;
+    }
+    const botMember = guild.members.me || await guild.members.fetchMe();
+    if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles) || botMember.roles.highest.comparePositionTo(verifiedRole) <= 0) {
+      await interaction.reply({ content: 'I cannot assign the verified role. An administrator must give me Manage Roles and move my bot role above the verified role.', ephemeral: true });
+      return;
+    }
+    if (member.roles.cache.has(verifiedRole.id)) {
+      await interaction.reply({ content: 'You are already verified. You can access the server.', ephemeral: true });
+      return;
+    }
+    const unverifiedRoleId = String(verification.unverifiedRoleId || '');
+    const unverifiedRole = unverifiedRoleId ? await guild.roles.fetch(unverifiedRoleId).catch(() => null) : null;
+    if (unverifiedRole && (unverifiedRole.managed || unverifiedRole.id === guild.id || botMember.roles.highest.comparePositionTo(unverifiedRole) <= 0)) {
+      await interaction.reply({ content: 'I cannot remove the configured unverified role. Please ask a server administrator to check my role permissions and hierarchy.', ephemeral: true });
+      return;
+    }
+    await member.roles.add(verifiedRole, 'Member completed server verification');
+    if (unverifiedRole && member.roles.cache.has(unverifiedRole.id)) {
+      await member.roles.remove(unverifiedRole, 'Member completed server verification');
+    }
+    await interaction.reply({ content: '✅ You are verified! Welcome to the server.', ephemeral: true });
+  } catch (error) {
+    console.error('[VERIFICATION] Button action failed:', error);
+    const reply = { content: 'Verification could not be completed. Please contact a moderator.', ephemeral: true };
+    if (interaction.deferred || interaction.replied) await interaction.followUp(reply).catch(() => {});
+    else await interaction.reply(reply).catch(() => {});
+  }
+});
+
 // Unified command bridge: slash commands and prefix commands share the integrated command handler.
 const handledAskInteractions = new WeakSet();
 const handledSpideyInteractions = new WeakSet();
@@ -7135,6 +7190,76 @@ async function hasFreshAdminGuildAccess(req, guildId) {
     return false;
   }
 }
+
+
+/* Publish or refresh the member verification message for a server administrator. */
+app.post('/api/verification/:guildId/post', async (req, res) => {
+  if (!req.session?.authenticated) return res.status(401).json({ success: false, error: 'Not authenticated' });
+  const guildId = String(req.params.guildId || '');
+  if (!guildId || !(await hasFreshAdminGuildAccess(req, guildId))) {
+    return res.status(403).json({ success: false, error: 'No administrator access to this server' });
+  }
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ success: false, error: 'SPIDEY BOT is not connected to this server' });
+  const config = loadConfig();
+  const guildConfig = config.guilds?.[guildId];
+  const verification = guildConfig?.verification;
+  if (!verification?.enabled) return res.status(400).json({ success: false, error: 'Enable verification and save settings before publishing the message' });
+  const channelId = String(verification.channelId || '');
+  const verifiedRoleId = String(verification.verifiedRoleId || verification.roleId || '');
+  if (!channelId || !verifiedRoleId) return res.status(400).json({ success: false, error: 'Choose a verification channel and verified role first' });
+  const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+  if (!channel?.isTextBased?.() || typeof channel.send !== 'function') {
+    return res.status(400).json({ success: false, error: 'The selected verification channel is missing or is not a text channel' });
+  }
+  const role = await guild.roles.fetch(verifiedRoleId).catch(() => null);
+  if (!role || role.managed || role.id === guild.id) return res.status(400).json({ success: false, error: 'The selected verified role is unavailable or cannot be assigned' });
+  const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
+  if (!botMember || !channel.permissionsFor(botMember)?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks])) {
+    return res.status(403).json({ success: false, error: 'I need View Channel, Send Messages and Embed Links permissions in the verification channel' });
+  }
+  if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles) || botMember.roles.highest.comparePositionTo(role) <= 0) {
+    return res.status(403).json({ success: false, error: 'Give me Manage Roles and move my bot role above the verified role' });
+  }
+  const messageText = String(verification.message || 'Welcome! Please read the server rules, then click Verify below to unlock the rest of the server.').slice(0, 1800);
+  const buttonLabel = String(verification.buttonLabel || 'Verify').trim().slice(0, 80) || 'Verify';
+  const embed = new EmbedBuilder()
+    .setColor(0x6d3df5)
+    .setTitle('Server Verification')
+    .setDescription(messageText)
+    .setFooter({ text: guild.name + ' · SPIDEY BOT' })
+    .setTimestamp();
+  const components = [new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('spidey_verify:' + guildId).setLabel(buttonLabel).setStyle(ButtonStyle.Success).setEmoji('✅')
+  )];
+  try {
+    let posted = null;
+    const previousMessageId = String(verification.messageId || '');
+    if (previousMessageId) {
+      const previousChannel = guild.channels.cache.get(String(verification.messageChannelId || channelId))
+        || await guild.channels.fetch(String(verification.messageChannelId || channelId)).catch(() => null);
+      if (previousChannel?.isTextBased?.()) {
+        const previousMessage = await previousChannel.messages.fetch(previousMessageId).catch(() => null);
+        if (previousMessage) {
+          if (previousChannel.id === channel.id) {
+            posted = await previousMessage.edit({ embeds: [embed], components });
+          } else {
+            await previousMessage.edit({ components: [] }).catch(() => {});
+          }
+        }
+      }
+    }
+    if (!posted) posted = await channel.send({ embeds: [embed], components, allowedMentions: { parse: [] } });
+    verification.messageId = posted.id;
+    verification.messageChannelId = channel.id;
+    guildConfig.verification = verification;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    return res.json({ success: true, channelId: channel.id, messageId: posted.id, updated: Boolean(previousMessageId && posted.id === previousMessageId) });
+  } catch (error) {
+    console.error('[VERIFICATION] Could not publish verification message:', error);
+    return res.status(500).json({ success: false, error: 'Discord could not publish the verification message. Check the bot permissions and try again.' });
+  }
+});
 
 // Full guild config blob (must be after named /api/config/* routes)
 app.get("/api/config/:guildId", (req, res) => {
