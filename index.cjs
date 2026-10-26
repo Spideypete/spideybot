@@ -1089,6 +1089,33 @@ client.on('interactionCreate', async interaction => {
       return;
     }
     const member = await guild.members.fetch(interaction.user.id);
+    const minimumAccountAgeDays = Math.max(0, Math.min(3650, Number(verification.minimumAccountAgeDays) || 0));
+    const accountAgeDays = Math.max(0, (Date.now() - member.user.createdTimestamp) / 86400000);
+    if (minimumAccountAgeDays > 0 && accountAgeDays < minimumAccountAgeDays) {
+      const quarantineRoleId = String(verification.quarantineRoleId || '');
+      if (!quarantineRoleId) {
+        await interaction.reply({ content: 'Your Discord account is too new to verify here. Please contact a moderator. The server has not configured its quarantine role correctly.', ephemeral: true });
+        return;
+      }
+      const quarantineRole = await guild.roles.fetch(quarantineRoleId).catch(() => null);
+      const botMember = guild.members.me || await guild.members.fetchMe();
+      if (!quarantineRole || quarantineRole.managed || quarantineRole.id === guild.id ||
+          !botMember.permissions.has(PermissionFlagsBits.ManageRoles) ||
+          botMember.roles.highest.comparePositionTo(quarantineRole) <= 0) {
+        await interaction.reply({ content: 'Your account is too new to verify, but SPIDEY BOT cannot assign the configured quarantine role. Please contact a moderator.', ephemeral: true });
+        return;
+      }
+      if (!member.roles.cache.has(quarantineRole.id)) {
+        await member.roles.add(quarantineRole, 'Account age below the server verification minimum');
+        const logChannelId = String(cfg.modLogChannelId || cfg.logging?.moderationLogging?.modLogChannel || '');
+        const logChannel = logChannelId ? (guild.channels.cache.get(logChannelId) || await guild.channels.fetch(logChannelId).catch(() => null)) : null;
+        if (logChannel?.isTextBased?.() && typeof logChannel.send === 'function') {
+          await logChannel.send({ content: '🔒 **Account-age quarantine**: <@' + member.id + '> was assigned <@&' + quarantineRole.id + '> because their Discord account is ' + accountAgeDays.toFixed(1) + ' days old; minimum required age is ' + minimumAccountAgeDays + ' days. No kick, ban, or mute was performed.' }).catch(() => {});
+        }
+      }
+      await interaction.reply({ content: '🔒 Your Discord account is ' + accountAgeDays.toFixed(1) + ' days old. This server requires accounts to be at least ' + minimumAccountAgeDays + ' days old before verification. You have been placed in quarantine until a moderator reviews your account.', ephemeral: true });
+      return;
+    }
     const verifiedRole = await guild.roles.fetch(verifiedRoleId).catch(() => null);
     if (!verifiedRole || verifiedRole.managed || verifiedRole.id === guild.id) {
       await interaction.reply({ content: 'The configured verified role is unavailable. Please contact a server administrator.', ephemeral: true });
@@ -1296,9 +1323,36 @@ client.on("messageCreate", message => {
   try { serverStatistics.trackMessage(message); }
   catch (error) { console.error("[server-statistics] message tracking failed:", error.message); }
 });
-client.on("guildMemberAdd", member => {
+client.on("guildMemberAdd", async member => {
   try { serverStatistics.trackJoin(member); }
   catch (error) { console.error("[server-statistics] join tracking failed:", error.message); }
+  try {
+    const cfg = getGuildConfig(member.guild.id);
+    const verification = cfg.verification || {};
+    const minimumDays = Math.max(0, Math.min(3650, Number(verification.minimumAccountAgeDays) || 0));
+    const ageDays = Math.max(0, (Date.now() - member.user.createdTimestamp) / 86400000);
+    const quarantineRoleId = String(verification.quarantineRoleId || '');
+    if (minimumDays <= 0 || ageDays >= minimumDays || !quarantineRoleId) return;
+    const role = await member.guild.roles.fetch(quarantineRoleId).catch(() => null);
+    const botMember = member.guild.members.me || await member.guild.members.fetchMe().catch(() => null);
+    if (!role || !botMember || role.managed || role.id === member.guild.id ||
+        !botMember.permissions.has(PermissionFlagsBits.ManageRoles) ||
+        botMember.roles.highest.comparePositionTo(role) <= 0) {
+      console.warn('[ACCOUNT AGE] Cannot quarantine new member', member.id, 'in guild', member.guild.id, '- check role and Manage Roles hierarchy.');
+      return;
+    }
+    if (!member.roles.cache.has(role.id)) {
+      await member.roles.add(role, 'Account age below the server verification minimum');
+      console.log('[ACCOUNT AGE] Quarantined member', member.id, 'account age', ageDays.toFixed(1), 'days; minimum', minimumDays, 'days. No kick, ban, or mute performed.');
+      const logChannelId = String(cfg.modLogChannelId || cfg.logging?.moderationLogging?.modLogChannel || '');
+      const logChannel = logChannelId ? (member.guild.channels.cache.get(logChannelId) || await member.guild.channels.fetch(logChannelId).catch(() => null)) : null;
+      if (logChannel?.isTextBased?.() && typeof logChannel.send === 'function') {
+        await logChannel.send({ content: '🔒 **Account-age quarantine**: <@' + member.id + '> was assigned <@&' + role.id + '> because their Discord account is ' + ageDays.toFixed(1) + ' days old; minimum required age is ' + minimumDays + ' days. No kick, ban, or mute was performed.' }).catch(() => {});
+      }
+    }
+  } catch (error) {
+    console.error('[ACCOUNT AGE] Join screening failed:', error.message || error);
+  }
 });
 
 const token = process.env.TOKEN || "";
