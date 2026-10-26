@@ -5600,7 +5600,7 @@ app.get("/", (req, res) => {
     <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.2) 0%, rgba(145, 70, 255, 0.1) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
       <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 2rem;">💎 And So Much More! 💎</h2>
       <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">From seamless integrations to advanced settings, we've got everything you need and more! Need help or have questions? Join our community Discord and connect with us!</p>
-      <a href="https://discord.com/invite/spideybot" target="_blank" class="btn btn-primary">Join Our Discord →</a>
+      <a href="https://discord.gg/uSSAMB7yPW" target="_blank" class="btn btn-primary">Join Our Discord →</a>
     </div>
 
     <!-- Support Section -->
@@ -5630,7 +5630,7 @@ app.get("/", (req, res) => {
       <div class="footer-section">
         <h3>Community</h3>
         <ul>
-          <li><a href="#" onclick="return false;">Discord Server</a></li>
+          <li><a href="https://discord.gg/uSSAMB7yPW" target="_blank" rel="noopener noreferrer">Discord Server</a></li>
           <li><a href="#" onclick="return false;">Twitter</a></li>
           <li><a href="#" onclick="return false;">GitHub</a></li>
         </ul>
