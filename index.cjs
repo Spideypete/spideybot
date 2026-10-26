@@ -1615,21 +1615,23 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Production and testing share this Discord application. Never register a global
-  // command set: it can shadow or conflict with the version being tested. Keep all
-  // commands guild-scoped in both environments and clear legacy global commands.
+  // Publish the built-in slash commands globally so Discord can detect that this
+  // application supports slash commands (required for App Directory eligibility).
+  // Also keep guild-scoped copies for near-instant updates in servers where the bot
+  // is installed. Custom server commands continue to be managed separately.
   try {
     const rest = new REST({ version: '10' }).setToken(token);
-    const cleared = await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
-    console.log(`🧹 Shared global slash commands cleared (${Array.isArray(cleared) ? cleared.length : 0} remain).`);
-
     const commands = spideyCommands.map(cmd => cmd.toJSON());
+
+    const globalResult = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    console.log(`🌐 Registered ${globalResult.length} global slash commands for Discord app discovery.`);
+
     for (const guild of client.guilds.cache.values()) {
       const result = await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands });
       console.log(`✅ Registered ${result.length} guild-scoped slash commands for ${guild.id} (${guild.name})`);
     }
   } catch (error) {
-    console.error('[Guild-scoped slash command registration] Failed:', error.message || error);
+    console.error('[Slash command registration] Failed:', error.message || error);
   }
 
   // Pre-fetch members for all guilds so dashboard stats work immediately
