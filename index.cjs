@@ -5344,6 +5344,8 @@ const botInviteURL = `https://discord.com/oauth2/authorize?client_id=${process.e
 
 // ============== HOMEPAGE ==============
 app.get("/", (req, res) => {
+  // Never let browsers or intermediary caches keep an older homepage with stale community links.
+  res.set({ "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0", "Pragma": "no-cache", "Expires": "0" });
   if (isSpideyTestingHost(req)) {
     const guildId = req.session?.selectedGuildId || req.session?.guilds?.[0]?.id;
     if (guildId) return res.redirect(`/dashboard.html?guildId=${encodeURIComponent(guildId)}`);
@@ -5600,7 +5602,7 @@ app.get("/", (req, res) => {
     <div style="background: linear-gradient(135deg, rgba(145, 70, 255, 0.2) 0%, rgba(145, 70, 255, 0.1) 100%); border: 2px solid rgba(145, 70, 255, 0.3); border-radius: 15px; padding: 3rem; text-align: center; margin-bottom: 4rem;">
       <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 2rem;">💎 And So Much More! 💎</h2>
       <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">From seamless integrations to advanced settings, we've got everything you need and more! Need help or have questions? Join our community Discord and connect with us!</p>
-      <a href="https://discord.gg/uSSAMB7yPW" target="_blank" class="btn btn-primary">Join Our Discord →</a>
+      <a href="/community" class="btn btn-primary">Join Our Discord →</a>
     </div>
 
     <!-- Support Section -->
@@ -5630,7 +5632,7 @@ app.get("/", (req, res) => {
       <div class="footer-section">
         <h3>Community</h3>
         <ul>
-          <li><a href="https://discord.gg/uSSAMB7yPW" target="_blank" rel="noopener noreferrer">Discord Server</a></li>
+          <li><a href="/community">Discord Server</a></li>
           <li><a href="#" onclick="return false;">Twitter</a></li>
           <li><a href="#" onclick="return false;">GitHub</a></li>
         </ul>
@@ -5655,6 +5657,13 @@ app.get("/", (req, res) => {
 </html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(indexHtml);
+});
+
+
+// Canonical community invite endpoint: always send visitors to the current Discord invite.
+app.get("/community", (req, res) => {
+  res.set({ "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0", "Pragma": "no-cache", "Expires": "0" });
+  res.redirect(302, "https://discord.gg/uSSAMB7yPW");
 });
 
 // ============== DISCORD OAUTH LOGIN ==============
