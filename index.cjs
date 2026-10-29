@@ -10518,7 +10518,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // ============== REGISTER MODULAR FEATURE HANDLERS ==============
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log('🔧 Running backward compatibility migration...');
   
   try {
