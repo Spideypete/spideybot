@@ -1586,7 +1586,7 @@ player.on("connectionError", (queue, error) => {
 });
 
 // ============== READY EVENT ==============
-client.once("ready", async () => {
+client.once("clientReady", async () => {
   botLoggedIn = true;
   serverStatChannels.refreshAll(client).catch(error => console.error("[stat-channels] Initial refresh failed:", error.message));
   if (!global.__spideyStatChannelRefreshTimer) {
@@ -1654,17 +1654,9 @@ client.once("ready", async () => {
     console.error('[Slash command registration] Failed:', error.message || error);
   }
 
-  // Pre-fetch members for all guilds so dashboard stats work immediately
-  console.log('📊 Pre-fetching members for all guilds...');
-  for (const guild of client.guilds.cache.values()) {
-    try {
-      await guild.members.fetch();
-      console.log(`  ✅ Fetched ${guild.members.cache.size} members for ${guild.name}`);
-    } catch (err) {
-      console.warn(`  ⚠️ Failed to fetch members for ${guild.name}: ${err.message}`);
-    }
-  }
-  console.log('📊 Member pre-fetch complete');
+  // Avoid a bulk Gateway member request at startup. Discord can rate-limit
+  // opcode 8, and guild.memberCount remains available without fetching everyone.
+  console.log('📊 Skipping bulk member pre-fetch; using Discord guild counts and cached member data.');
 });
 
 // Reusable function to register slash commands
