@@ -86,7 +86,7 @@ async function refreshGuild(client, guildId) {
         const current = getGuildCounters(guild.id);
         state.guilds[guild.id] = current.filter(item => item.id !== counter.id && item.channelId !== counter.channelId);
         persist();
-        console.warn("[stat-channels] Removed stale counter for unavailable/non-renamable channel", counter.channelId, "in guild", guild.id, "- recreate it in the dashboard if needed.");
+        console.info("[stat-channels] Cleaned up unavailable counter configuration for channel", counter.channelId, "in guild", guild.id, ". Recreate it in the dashboard if needed.");
         continue;
       }
       const value = metricValue(guild, counter);
