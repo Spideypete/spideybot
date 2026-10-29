@@ -75,14 +75,18 @@ async function refreshGuild(client, guildId) {
   if (!guild) return;
   const counters = list(guild.id);
   if (!counters.length) return;
-  try { await guild.members.fetch(); } catch (error) {
-    console.warn("[stat-channels] Member refresh was partial for", guild.id, error.message);
-  }
+  // Do not request every guild member over the Gateway on each refresh.
+  // Member-based counters use the members already cached by normal bot activity.
   for (const counter of counters) {
     try {
       const channel = guild.channels.cache.get(counter.channelId) || await guild.channels.fetch(counter.channelId).catch(() => null);
       if (!channel || typeof channel.setName !== "function") {
-        console.warn("[stat-channels] Configured counter channel missing or not renameable:", counter.channelId);
+        // A deleted/inaccessible channel can never be updated. Remove its stale
+        // configuration so this warning does not repeat every five minutes.
+        const current = getGuildCounters(guild.id);
+        state.guilds[guild.id] = current.filter(item => item.id !== counter.id && item.channelId !== counter.channelId);
+        persist();
+        console.warn("[stat-channels] Removed stale counter for unavailable/non-renamable channel", counter.channelId, "in guild", guild.id, "- recreate it in the dashboard if needed.");
         continue;
       }
       const value = metricValue(guild, counter);
