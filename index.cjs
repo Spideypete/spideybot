@@ -1615,20 +1615,40 @@ client.once("ready", async () => {
     console.error("Music player error:", error);
   });
 
-  // Publish the built-in slash commands globally so Discord can detect that this
-  // application supports slash commands (required for App Directory eligibility).
-  // Also keep guild-scoped copies for near-instant updates in servers where the bot
-  // is installed. Custom server commands continue to be managed separately.
+  // Keep one authoritative slash-command set per server. Publishing the same
+  // built-ins globally and at guild scope can leave users seeing duplicate entries
+  // (for example two /ask options, where one is stale). Remove global copies and
+  // register the current built-ins at guild scope, retaining server-specific custom
+  // commands that are not part of the built-in suite.
   try {
     const rest = new REST({ version: '10' }).setToken(token);
     const commands = spideyCommands.map(cmd => cmd.toJSON());
+    const builtInNames = new Set(commands.map(command => String(command.name).toLowerCase()));
 
-    const globalResult = await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log(`🌐 Registered ${globalResult.length} global slash commands for Discord app discovery.`);
+    const globalResult = await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
+    console.log(`🧹 Cleared ${globalResult.length} global slash commands so guild commands are the single source of truth.`);
 
     for (const guild of client.guilds.cache.values()) {
-      const result = await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: commands });
-      console.log(`✅ Registered ${result.length} guild-scoped slash commands for ${guild.id} (${guild.name})`);
+      const route = Routes.applicationGuildCommands(client.user.id, guild.id);
+      const existing = await rest.get(route);
+      const retainedCustom = (Array.isArray(existing) ? existing : [])
+        .filter(command => !builtInNames.has(String(command.name).toLowerCase()))
+        .map(command => {
+          const clean = {
+            name: command.name,
+            description: command.description,
+            type: command.type || 1,
+            options: command.options || []
+          };
+          for (const key of ['default_member_permissions', 'dm_permission', 'nsfw', 'contexts', 'integration_types']) {
+            if (command[key] !== undefined) clean[key] = command[key];
+          }
+          return clean;
+        });
+
+      const merged = [...commands, ...retainedCustom].slice(0, 100);
+      const result = await rest.put(route, { body: merged });
+      console.log(`✅ Registered ${commands.length} built-in commands and preserved ${retainedCustom.length} custom commands for ${guild.id} (${guild.name}); total ${result.length}.`);
     }
   } catch (error) {
     console.error('[Slash command registration] Failed:', error.message || error);
