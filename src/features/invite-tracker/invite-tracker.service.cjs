@@ -115,7 +115,7 @@ async function onLeave(member) {
 }
 function initialize(client,svc) {
   module.exports._svc=svc;
-  client.once('ready',async()=>{for(const guild of client.guilds.cache.values())await refreshGuild(guild);});
+  client.once('clientReady',async()=>{for(const guild of client.guilds.cache.values())await refreshGuild(guild);});
   client.on('inviteCreate',invite=>refreshGuild(invite.guild));
   client.on('inviteDelete',invite=>refreshGuild(invite.guild));
   client.on('guildCreate',guild=>refreshGuild(guild));
