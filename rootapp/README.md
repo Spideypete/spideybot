@@ -8,16 +8,16 @@ Full Root App (client + server + networking), generated and built with the offic
 
 ## Local setup
 
-1. Use Node.js 22 or newer.
+1. Use Node.js 24 (the current Root server runtime) or newer.
 2. Generate the official starter project in this directory with:
 
    ```bash
-   npx @rootsdk/create-root --app "SPIDEY BOT"
+   npx @rootsdk/create-root --app spidey-bot-root
    ```
 
    If the generator requires an empty directory, run it in a temporary sibling directory and merge its generated files into this directory without overwriting this README or .gitignore.
 
-3. Keep the development credential in `server/.env`:
+3. Keep the development credential in `server/.env` (never in GitHub):
 
    ```env
    DEV_TOKEN=YOUR_ROTATED_DEV_TOKEN
