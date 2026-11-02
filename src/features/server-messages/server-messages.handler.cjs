@@ -46,9 +46,10 @@ function startFreePlanPromotion(client, configPath) {
   const subscriptionManager = require('../../../services/subscription.manager.js')
 
   const checkAndSend = async () => {
-    if (!client.isReady?.()) return
-
-    for (const guild of client.guilds.cache.values()) {
+    if (!client.isReady?.() || global.__spideyFreePlanPromotionRunning) return
+    global.__spideyFreePlanPromotionRunning = true
+    try {
+      for (const guild of client.guilds.cache.values()) {
       try {
         if (subscriptionManager.getGuildTier(guild.id) !== 'free') continue
 
@@ -121,6 +122,9 @@ function startFreePlanPromotion(client, configPath) {
       } catch (error) {
         console.error('[FreePlanPromotion] Failed for guild', guild.id, error.message)
       }
+      }
+    } finally {
+      global.__spideyFreePlanPromotionRunning = false
     }
   }
 
