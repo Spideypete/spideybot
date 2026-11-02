@@ -1,0 +1,20 @@
+# Local credentials
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
+# Dependencies and generated output
+node_modules/
+client/node_modules/
+server/node_modules/
+client/dist/
+server/dist/
+networking/gen/
+*.pkg
+
+# Local tooling
+.DS_Store
+.vscode/
