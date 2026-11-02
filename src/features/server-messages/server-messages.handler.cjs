@@ -43,7 +43,6 @@ const FREE_PLAN_PROMOTION = [
 function startFreePlanPromotion(client, configPath) {
   if (global.__spideyFreePlanPromotionTimer) return
 
-  const resolvedConfigPath = path.resolve(configPath || path.join(process.cwd(), 'config.json'))
   const subscriptionManager = require('../../../services/subscription.manager.js')
 
   const checkAndSend = async () => {
